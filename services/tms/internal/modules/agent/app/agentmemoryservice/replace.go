@@ -3,8 +3,8 @@ package agentmemoryservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,16 +19,16 @@ const fieldReplaces = "replacesMemoryId"
 
 func (s *Service) planReplacement(
 	ctx context.Context,
-	req *agentports.RememberRequest,
-	entity *agent.Memory,
-) (*agent.Memory, bool, error) {
+	req *agentmemoryports.RememberRequest,
+	entity *agentmemory.Memory,
+) (*agentmemory.Memory, bool, error) {
 	notVisible := errortypes.NewValidationError(
 		fieldReplaces,
 		errortypes.ErrInvalid,
 		"No memory with that id is visible here",
 	)
 
-	replaced, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	replaced, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         req.Replaces,
 		TenantInfo: req.TenantInfo,
 	})
@@ -65,8 +65,8 @@ func (s *Service) planReplacement(
 func (s *Service) alreadyReplaced(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	entity *agent.Memory,
-	replaced *agent.Memory,
+	entity *agentmemory.Memory,
+	replaced *agentmemory.Memory,
 ) (bool, error) {
 	same := sameMemoryRequest(tenant, entity)
 	same.IncludeSuggested = true
@@ -79,16 +79,16 @@ func (s *Service) alreadyReplaced(
 		*existing.SupersedesID == replaced.ID, nil
 }
 
-func Replaceable(status agent.MemoryStatus) bool {
-	return status == agent.MemoryStatusActive || status == agent.MemoryStatusPaused
+func Replaceable(status agentmemory.MemoryStatus) bool {
+	return status == agentmemory.MemoryStatusActive || status == agentmemory.MemoryStatusPaused
 }
 
-func ReplacedFreely(replaced *agent.Memory, personID pulid.ID, agentID *pulid.ID) bool {
+func ReplacedFreely(replaced *agentmemory.Memory, personID pulid.ID, agentID *pulid.ID) bool {
 	switch replaced.Scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		return personID.IsNotNil() && replaced.OwnerUserID != nil &&
 			*replaced.OwnerUserID == personID
-	case agent.MemoryScopeAgent:
+	case agentmemory.MemoryScopeAgent:
 		return agentID != nil && replaced.AgentDefinitionID != nil &&
 			*replaced.AgentDefinitionID == *agentID
 	default:
@@ -98,14 +98,14 @@ func ReplacedFreely(replaced *agent.Memory, personID pulid.ID, agentID *pulid.ID
 
 func (s *Service) replacementReads(
 	ctx context.Context,
-	req *agentports.RememberRequest,
-	entity *agent.Memory,
-	replaced *agent.Memory,
+	req *agentmemoryports.RememberRequest,
+	entity *agentmemory.Memory,
+	replaced *agentmemory.Memory,
 ) bool {
 	if replaced.Status.IsSuggestion() {
 		return false
 	}
-	if replaced.Scope == agent.MemoryScopeAgent {
+	if replaced.Scope == agentmemory.MemoryScopeAgent {
 		return entity.AgentDefinitionID != nil && replaced.AgentDefinitionID != nil &&
 			*entity.AgentDefinitionID == *replaced.AgentDefinitionID
 	}
@@ -116,13 +116,13 @@ func (s *Service) replacementReads(
 	return s.promptReader(ctx, req.TenantInfo, req.PersonUserID).Reads(replaced)
 }
 
-func inheritReaders(entity, replaced *agent.Memory) {
+func inheritReaders(entity, replaced *agentmemory.Memory) {
 	entity.SetAudience(
 		replaced.Scope,
 		pulid.ConvertFromPtr(replaced.OwnerUserID),
 		pulid.ConvertFromPtr(replaced.RoleID),
 	)
-	if replaced.Scope == agent.MemoryScopeAgent {
+	if replaced.Scope == agentmemory.MemoryScopeAgent {
 		entity.AgentDefinitionID = pulid.ClonePointer(replaced.AgentDefinitionID)
 	}
 	if entity.SubjectType == "" && replaced.SubjectType != "" {
@@ -137,8 +137,8 @@ func inheritReaders(entity, replaced *agent.Memory) {
 
 func (s *Service) retireReplaced(
 	ctx context.Context,
-	replaced *agent.Memory,
-	replacement *agent.Memory,
+	replaced *agentmemory.Memory,
+	replacement *agentmemory.Memory,
 	actor *permissionports.RequestActor,
 ) {
 	if !Replaceable(replaced.Status) || replaced.ID == replacement.ID {
@@ -146,10 +146,10 @@ func (s *Service) retireReplaced(
 	}
 
 	tenant := pagination.TenantInfo{OrgID: replaced.OrganizationID, BuID: replaced.BusinessUnitID}
-	retired, err := s.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	retired, err := s.repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         replaced.ID,
 		TenantInfo: tenant,
-		Status:     agent.MemoryStatusRetired,
+		Status:     agentmemory.MemoryStatusRetired,
 		ByUserID:   StatusActor(actor),
 		At:         timeutils.NowUnix(),
 	})
@@ -169,14 +169,14 @@ func (s *Service) retireReplaced(
 
 func (s *Service) recordReplaced(
 	ctx context.Context,
-	replacement *agent.Memory,
+	replacement *agentmemory.Memory,
 	actor *permissionports.RequestActor,
 ) {
 	if !replacement.Replaces() {
 		return
 	}
 
-	retired, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	retired, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID: *replacement.SupersedesID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: replacement.OrganizationID,
@@ -191,7 +191,7 @@ func (s *Service) recordReplaced(
 
 		return
 	}
-	if retired.Status != agent.MemoryStatusRetired {
+	if retired.Status != agentmemory.MemoryStatusRetired {
 		return
 	}
 

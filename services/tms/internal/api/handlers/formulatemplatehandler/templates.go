@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -397,8 +397,8 @@ func (h *Handler) patch(c *gin.Context) {
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
-// @Param request body formulatemplateservice.ImportTemplatesRequest true "Import request"
-// @Success 200 {object} formulatemplateservice.ImportTemplatesResponse
+// @Param request body formulatemplateimportservice.ImportTemplatesRequest true "Import request"
+// @Success 200 {object} formulatemplateimportservice.ImportTemplatesResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
@@ -408,7 +408,7 @@ func (h *Handler) patch(c *gin.Context) {
 func (h *Handler) importTemplates(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req formulatemplateservice.ImportTemplatesRequest
+	var req formulatemplateimportservice.ImportTemplatesRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -420,7 +420,7 @@ func (h *Handler) importTemplates(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	result, err := h.service.Import(c.Request.Context(), &req)
+	result, err := h.imports.Import(c.Request.Context(), &req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

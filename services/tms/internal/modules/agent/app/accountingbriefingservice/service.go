@@ -9,10 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentboardbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -38,7 +38,7 @@ type Params struct {
 	Collections   collectionports.Service
 	Briefs        accountingbriefports.AccountingBriefRepository
 	Organizations tenantports.OrganizationRepository
-	Completion    agentports.CompletionService
+	Completion    llmports.CompletionService
 	Logger        *zap.Logger
 }
 
@@ -47,7 +47,7 @@ type Dependencies struct {
 	Collections   collectionports.Service
 	Briefs        accountingbriefports.AccountingBriefRepository
 	Organizations tenantports.OrganizationRepository
-	Completion    agentports.CompletionService
+	Completion    llmports.CompletionService
 	Logger        *zap.Logger
 	Now           func() time.Time
 }
@@ -57,7 +57,7 @@ type Service struct {
 	collections   collectionports.Service
 	briefs        accountingbriefports.AccountingBriefRepository
 	organizations tenantports.OrganizationRepository
-	completion    agentports.CompletionService
+	completion    llmports.CompletionService
 	l             *zap.Logger
 	now           func() time.Time
 }
@@ -258,9 +258,9 @@ func (s *Service) narrate(
 		ctx,
 		s.completion,
 		s.l,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
-			Task:         aiprovider.TaskDailyBriefing,
+			Task:         aitask.TaskDailyBriefing,
 			System:       systemPrompt,
 			Context:      buildContext(facts, plain),
 			OutputSchema: outputSchema(allowed),

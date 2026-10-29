@@ -11,11 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/reflectutils"
 	"github.com/stretchr/testify/assert"
@@ -62,14 +65,23 @@ func TestAnAgentRunsARealScriptThroughTheWholeTurn(t *testing.T) {
 		"shipment_list": {
 			"count": 3, "hasMore": false,
 			"items": []any{
-				map[string]any{"customer": "Acme", "pickup": "Dock A, Dallas TX · 2026-10-16T07:00 to 2026-10-16T14:00"},
-				map[string]any{"customer": "Acme", "pickup": "Dock B, Austin TX · 2026-10-14T07:00 to 2026-10-14T14:00"},
-				map[string]any{"customer": "Bolt", "pickup": "Dock C, Reno NV · 2026-10-19T08:00 to 2026-10-19T12:00"},
+				map[string]any{
+					"customer": "Acme",
+					"pickup":   "Dock A, Dallas TX · 2026-10-16T07:00 to 2026-10-16T14:00",
+				},
+				map[string]any{
+					"customer": "Acme",
+					"pickup":   "Dock B, Austin TX · 2026-10-14T07:00 to 2026-10-14T14:00",
+				},
+				map[string]any{
+					"customer": "Bolt",
+					"pickup":   "Dock C, Reno NV · 2026-10-19T08:00 to 2026-10-19T12:00",
+				},
 			},
 		},
 	}
-	completion := &agenttest.ScriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		{ModelIdentifier: scriptModel, ToolCalls: []agentports.ToolCall{{
+	completion := &agenttest.ScriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		{ModelIdentifier: scriptModel, ToolCalls: []llmports.ToolCall{{
 			ID:   "call_script",
 			Name: codemode.ToolRunScript,
 			Arguments: map[string]any{
@@ -82,12 +94,15 @@ func TestAnAgentRunsARealScriptThroughTheWholeTurn(t *testing.T) {
 	}}
 	rt := realScriptRuntime(t, rec, responses, completion)
 
-	spec := &AgentSpec{Name: "Billing exceptions", Tools: []string{"shipment_list", "customer_list"}}
+	spec := &AgentSpec{
+		Name:  "Billing exceptions",
+		Tools: []string{"shipment_list", "customer_list"},
+	}
 	tenant := Tenant{OrganizationID: OrganizationID, BusinessUnitID: BusinessUnitID, UserID: UserID}
 	primary := definitionFor(spec, MainAgentID, tenant)
 	definitions := map[pulid.ID]*agentdefinition.Definition{primary.ID: primary}
 	c := &Case{Agent: *spec}
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: primary,
 		Actor:      actorFor(false, tenant),
 		Context:    contextFor(c, definitions, tenant),
@@ -117,7 +132,7 @@ func realScriptRuntime(
 	t *testing.T,
 	rec *recorder,
 	responses map[string]map[string]any,
-	completion agentports.CompletionService,
+	completion llmports.CompletionService,
 ) *agentruntime.Service {
 	t.Helper()
 
@@ -126,8 +141,8 @@ func realScriptRuntime(
 		newToolDeps(rec, responses).fakes()...,
 	)
 	var (
-		queries []agentports.AgentQueryTool
-		actions []agentports.AgentTool
+		queries []agenttoolports.AgentQueryTool
+		actions []agenttoolports.AgentTool
 	)
 	for _, provider := range append(
 		agentquerytoolservice.ToolProviders(),
@@ -136,18 +151,18 @@ func realScriptRuntime(
 		tool, err := reflectutils.Construct(provider, suppliedFor(provider, fakes))
 		require.NoError(t, err)
 		switch typed := tool.(type) {
-		case agentports.AgentQueryTool:
+		case agenttoolports.AgentQueryTool:
 			queries = append(queries, &recordingQuery{
 				inner:    typed,
 				rec:      rec,
 				response: responses[typed.Name()],
 			})
-		case agentports.AgentTool:
+		case agenttoolports.AgentTool:
 			actions = append(actions, recordedAction(typed, rec))
 		}
 	}
 
-	kit := agentevalgate.FromTools(queries, actions, agentruntime.RuntimePolicies())
+	kit := agentevalgate.FromTools(queries, actions, runtimetools.Policies())
 	return kit.NewRuntime(agentevalgate.RuntimeParams{
 		Completion:  completion,
 		Permissions: &agenttest.StubPermissions{},
@@ -156,7 +171,7 @@ func realScriptRuntime(
 	})
 }
 
-func offeredTools(req *agentports.ChatCompletionRequest) []string {
+func offeredTools(req *llmports.ChatCompletionRequest) []string {
 	names := make([]string, 0, len(req.Tools))
 	for _, tool := range req.Tools {
 		names = append(names, tool.Name)
@@ -171,7 +186,7 @@ type scriptToolAnswer struct {
 	Result sonic.NoCopyRawMessage `json:"result"`
 }
 
-func scriptAnswer(t *testing.T, req *agentports.ChatCompletionRequest) scriptToolAnswer {
+func scriptAnswer(t *testing.T, req *llmports.ChatCompletionRequest) scriptToolAnswer {
 	t.Helper()
 
 	for _, message := range req.Messages {

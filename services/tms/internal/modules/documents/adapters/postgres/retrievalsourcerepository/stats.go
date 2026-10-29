@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
@@ -31,17 +31,17 @@ type sourceTable struct {
 var sourceTables = map[airetrieval.SourceType]sourceTable{
 	airetrieval.SourceTypeMemory: {
 		ids: func(after pulid.ID, limit int) keel.Projection {
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			return m.Pick(m.ID).
 				Where(keel.When(after.IsNotNil(), m.ID.Gt(after))).
 				Order(m.ID.Asc()).
 				Limit(limit)
 		},
 		count: func(ctx context.Context, db *keel.DB) (int64, error) {
-			return agentdb.Memories.Query().Count(ctx, db)
+			return agentmemorydb.Memories.Query().Count(ctx, db)
 		},
 		sample: func(limit int) *keel.CTETable {
-			m := agentdb.Memories
+			m := agentmemorydb.Memories
 			return charsSample(m.Pick(charCount(m.Content)).
 				Order(m.ID.Desc()).
 				Limit(limit))
@@ -110,7 +110,7 @@ func sourceTableFor(sourceType airetrieval.SourceType) (sourceTable, error) {
 
 func (r *repository) CountSources(
 	ctx context.Context,
-	req agentports.CountRetrievalSourcesRequest,
+	req retrievalports.CountRetrievalSourcesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -133,42 +133,46 @@ func (r *repository) CountSources(
 
 func (r *repository) AverageSourceChars(
 	ctx context.Context,
-	req agentports.AverageRetrievalSourceCharsRequest,
-) (agentports.RetrievalSourceChars, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agentports.RetrievalSourceChars, error) {
-		var out agentports.RetrievalSourceChars
+	req retrievalports.AverageRetrievalSourceCharsRequest,
+) (retrievalports.RetrievalSourceChars, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (retrievalports.RetrievalSourceChars, error) {
+			var out retrievalports.RetrievalSourceChars
 
-		if err := validateTenant(req.TenantInfo); err != nil {
-			return out, err
-		}
+			if err := validateTenant(req.TenantInfo); err != nil {
+				return out, err
+			}
 
-		table, err := sourceTableFor(req.SourceType)
-		if err != nil {
-			return out, err
-		}
+			table, err := sourceTableFor(req.SourceType)
+			if err != nil {
+				return out, err
+			}
 
-		sample := req.Sample
-		if sample <= 0 {
-			sample = defaultCharsSample
-		}
-		sample = intutils.Clamp(sample, 1, maxCharsSample)
+			sample := req.Sample
+			if sample <= 0 {
+				sample = defaultCharsSample
+			}
+			sample = intutils.Clamp(sample, 1, maxCharsSample)
 
-		newest := table.sample(sample)
-		out, err = keel.IntoOne[agentports.RetrievalSourceChars](
-			ctx,
-			r.db.Keel(ctx),
-			newest.Query().
-				With(newest).
-				Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(newest.Col("chars").Avg()).Coalesce(0))),
-		)
-		if err != nil {
-			return agentports.RetrievalSourceChars{}, fmt.Errorf(
-				"measure %s text: %w",
-				req.SourceType,
-				err,
+			newest := table.sample(sample)
+			out, err = keel.IntoOne[retrievalports.RetrievalSourceChars](
+				ctx,
+				r.db.Keel(ctx),
+				newest.Query().
+					With(newest).
+					Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(newest.Col("chars").Avg()).Coalesce(0))),
 			)
-		}
+			if err != nil {
+				return retrievalports.RetrievalSourceChars{}, fmt.Errorf(
+					"measure %s text: %w",
+					req.SourceType,
+					err,
+				)
+			}
 
-		return out, nil
-	})
+			return out, nil
+		},
+	)
 }

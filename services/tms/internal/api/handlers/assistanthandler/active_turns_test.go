@@ -9,10 +9,11 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -24,17 +25,17 @@ import (
 // liveRecords is a person's replies in progress. Anything else asked of it
 // panics, which is how a test learns the route went somewhere it should not.
 type liveRecords struct {
-	agentports.AssistantTurnRepository
+	assistantturnports.AssistantTurnRepository
 
-	live  []*agentports.LiveAssistantTurn
-	asked *agentports.ListLiveAssistantTurnsRequest
+	live  []*assistantturnports.LiveAssistantTurn
+	asked *assistantturnports.ListLiveAssistantTurnsRequest
 }
 
 func (r *liveRecords) ListLive(
 	_ context.Context,
-	req agentports.ListLiveAssistantTurnsRequest,
-) ([]*agentports.LiveAssistantTurn, error) {
-	r.asked = &req
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
+	r.asked = req
 
 	return r.live, nil
 }
@@ -48,8 +49,8 @@ func getActiveTurns(
 	gin.SetMode(gin.TestMode)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
 		Service: &reachedService{},
@@ -89,15 +90,15 @@ func TestActiveTurns_ListsTheCallersRepliesInProgress(t *testing.T) {
 	t.Parallel()
 
 	userID, buID, orgID := pulid.MustNew("usr_"), pulid.MustNew("bu_"), pulid.MustNew("org_")
-	turn := conversation.AssistantTurn{
+	turn := conversationturn.AssistantTurn{
 		ID:        pulid.MustNew("atrn_"),
 		ThreadID:  pulid.MustNew("athr_"),
 		UserID:    userID,
-		Origin:    conversation.AssistantTurnOriginDecisionFollowUp,
+		Origin:    conversationturn.AssistantTurnOriginDecisionFollowUp,
 		Status:    conversation.AssistantTurnStatusRunning,
 		StartedAt: 1_700_000_000,
 	}
-	records := &liveRecords{live: []*agentports.LiveAssistantTurn{{
+	records := &liveRecords{live: []*assistantturnports.LiveAssistantTurn{{
 		AssistantTurn: turn,
 		ThreadTitle:   "Late loads this week",
 	}}}

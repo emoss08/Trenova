@@ -3,6 +3,7 @@ package businesscentral
 import (
 	"strings"
 
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/google/uuid"
 )
 
@@ -20,17 +21,17 @@ type CompanyRef struct {
 }
 
 func NewCompanyRef(tenantID, environment, companyID string) (CompanyRef, error) {
-	tenant, err := guid(tenantID)
+	tenant, err := GUID(tenantID)
 	if err != nil {
-		return CompanyRef{}, ErrInvalidCompanyRef
+		return CompanyRef{}, businesscentralerrors.ErrInvalidCompanyRef
 	}
-	company, err := guid(companyID)
+	company, err := GUID(companyID)
 	if err != nil {
-		return CompanyRef{}, ErrInvalidCompanyRef
+		return CompanyRef{}, businesscentralerrors.ErrInvalidCompanyRef
 	}
 	env := strings.TrimSpace(environment)
 	if !ValidEnvironmentName(env) {
-		return CompanyRef{}, ErrInvalidEnvironment
+		return CompanyRef{}, businesscentralerrors.ErrInvalidEnvironment
 	}
 	return CompanyRef{TenantID: tenant, Environment: env, CompanyID: company}, nil
 }
@@ -41,12 +42,12 @@ func ParseCompanyRef(raw string) (CompanyRef, error) {
 	if len(value) <= envStart ||
 		value[compactGUIDLength] != refSeparator ||
 		value[2*compactGUIDLength+1] != refSeparator {
-		return CompanyRef{}, ErrInvalidCompanyRef
+		return CompanyRef{}, businesscentralerrors.ErrInvalidCompanyRef
 	}
 	tenant := value[:compactGUIDLength]
 	company := value[compactGUIDLength+1 : 2*compactGUIDLength+1]
 	if !isHex(tenant) || !isHex(company) {
-		return CompanyRef{}, ErrInvalidCompanyRef
+		return CompanyRef{}, businesscentralerrors.ErrInvalidCompanyRef
 	}
 	return NewCompanyRef(tenant, value[envStart:], company)
 }
@@ -67,47 +68,47 @@ func (r CompanyRef) String() string {
 }
 
 func ValidEnvironmentName(name string) bool {
-	if name == "" || len(name) > maxEnvironmentLength || !isLetter(name[0]) {
+	if name == "" || len(name) > maxEnvironmentLength || !IsLetter(name[0]) {
 		return false
 	}
 	for idx := range len(name) {
 		ch := name[idx]
-		if !isLetter(ch) && !isDigit(ch) && ch != '_' && ch != '-' {
+		if !IsLetter(ch) && !IsDigit(ch) && ch != '_' && ch != '-' {
 			return false
 		}
 	}
 	return true
 }
 
-func guid(raw string) (string, error) {
+func GUID(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return "", ErrIDRequired
+		return "", businesscentralerrors.ErrIDRequired
 	}
 	switch len(value) {
 	case guidLength:
 		if !isHex(strings.ReplaceAll(value, "-", "")) {
-			return "", ErrInvalidID
+			return "", businesscentralerrors.ErrInvalidID
 		}
 	case compactGUIDLength:
 		if !isHex(value) {
-			return "", ErrInvalidID
+			return "", businesscentralerrors.ErrInvalidID
 		}
 	default:
-		return "", ErrInvalidID
+		return "", businesscentralerrors.ErrInvalidID
 	}
 	parsed, err := uuid.Parse(value)
 	if err != nil {
-		return "", ErrInvalidID
+		return "", businesscentralerrors.ErrInvalidID
 	}
 	return parsed.String(), nil
 }
 
-func guids(ids []string, limit int) ([]string, error) {
+func GUIDs(ids []string, limit int) ([]string, error) {
 	out := make([]string, 0, len(ids))
 	seen := make(map[string]struct{}, len(ids))
 	for _, raw := range ids {
-		id, err := guid(raw)
+		id, err := GUID(raw)
 		if err != nil {
 			return nil, err
 		}
@@ -118,7 +119,7 @@ func guids(ids []string, limit int) ([]string, error) {
 		out = append(out, id)
 	}
 	if len(out) > limit {
-		return nil, ErrTooManyIDs
+		return nil, businesscentralerrors.ErrTooManyIDs
 	}
 	return out, nil
 }
@@ -130,17 +131,17 @@ func compactGUID(value string) string {
 func isHex(value string) bool {
 	for idx := range len(value) {
 		ch := value[idx]
-		if !isDigit(ch) && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F') {
+		if !IsDigit(ch) && (ch < 'a' || ch > 'f') && (ch < 'A' || ch > 'F') {
 			return false
 		}
 	}
 	return value != ""
 }
 
-func isLetter(ch byte) bool {
+func IsLetter(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
 
-func isDigit(ch byte) bool {
+func IsDigit(ch byte) bool {
 	return ch >= '0' && ch <= '9'
 }

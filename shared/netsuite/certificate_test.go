@@ -17,6 +17,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,25 +110,25 @@ func TestClientAssertionValidates(t *testing.T) {
 	_, err = client.ClientAssertion(netsuite.AssertionRequest{
 		AccountID: testAccount, PrivateKey: key,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCertificate)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCertificate)
 	_, err = client.ClientAssertion(netsuite.AssertionRequest{
 		AccountID: testAccount, CertificateID: "has space", PrivateKey: key,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCertificate)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCertificate)
 	_, err = client.ClientAssertion(netsuite.AssertionRequest{
 		AccountID: testAccount, CertificateID: testCertificateID,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 	p384, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	require.NoError(t, err)
 	_, err = client.ClientAssertion(netsuite.AssertionRequest{
 		AccountID: testAccount, CertificateID: testCertificateID, PrivateKey: p384,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 	_, err = client.ClientAssertion(netsuite.AssertionRequest{
 		AccountID: "bad id", CertificateID: testCertificateID, PrivateKey: key,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestTokenFromCertificate(t *testing.T) {
@@ -169,7 +170,7 @@ func TestTokenFromCertificateRejectedAsInvalidClient(t *testing.T) {
 	_, err := client.TokenFromCertificate(t.Context(), netsuite.CertificateGrant{
 		AccountID: testAccount, CertificateID: testCertificateID, PrivateKey: newKey(t),
 	})
-	assert.True(t, netsuite.IsInvalidClient(err))
+	assert.True(t, netsuiteerrors.IsInvalidClient(err))
 }
 
 func TestNewCertificateRoundTrips(t *testing.T) {
@@ -221,19 +222,19 @@ func TestNewCertificateValidates(t *testing.T) {
 	t.Parallel()
 
 	_, err := netsuite.NewCertificate(netsuite.CertificateRequest{Subject: " "})
-	require.ErrorIs(t, err, netsuite.ErrSubjectRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrSubjectRequired)
 	_, err = netsuite.NewCertificate(netsuite.CertificateRequest{
 		Subject: strings.Repeat("a", 65),
 	})
-	require.ErrorIs(t, err, netsuite.ErrSubjectRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrSubjectRequired)
 	_, err = netsuite.NewCertificate(netsuite.CertificateRequest{
 		Subject: "Trenova", Validity: 3 * 365 * 24 * time.Hour,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidValidity)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidValidity)
 	_, err = netsuite.NewCertificate(netsuite.CertificateRequest{
 		Subject: "Trenova", Validity: -time.Hour,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidValidity)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidValidity)
 }
 
 func TestParsePrivateKey(t *testing.T) {
@@ -253,7 +254,7 @@ func TestParsePrivateKey(t *testing.T) {
 	require.NoError(t, err)
 	_, err = netsuite.ParsePrivateKey(
 		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8}))
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 
 	p384, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
 	require.NoError(t, err)
@@ -261,12 +262,12 @@ func TestParsePrivateKey(t *testing.T) {
 	require.NoError(t, err)
 	_, err = netsuite.ParsePrivateKey(
 		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: pkcs8}))
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 
 	for _, raw := range [][]byte{nil, []byte("not pem"),
 		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte{1}}),
 		pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: []byte{1, 2}})} {
 		_, err = netsuite.ParsePrivateKey(raw)
-		require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 	}
 }

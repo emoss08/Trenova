@@ -41,6 +41,37 @@ scenarios:
             number with the customer and how each is late: every one when there are a few, the
             most pressing ones when there are many, saying the list is cut and offering the rest.
 
+  - name: behind-schedule-every-load
+    description: >
+      Every load behind schedule, read from the stops rather than the Delayed status a person
+      sets. The board once listed the earliest forty pickups, and the agent answered from the
+      seven late moves it could see as though they were all of them.
+    steps:
+      - say: "which loads are behind schedule right now? all of them, not just the delayed ones"
+        expect:
+          calls: ["dispatch_get_board|shipment_list"]
+          maxCalls: 4
+          maxFailedCalls: 0
+          noProposals: true
+          noRecordIds: true
+          facts:
+            - sql: >
+                select count(distinct sm.shipment_id) from shipment_moves sm
+                join stops st on st.shipment_move_id = sm.id
+                where sm.status not in ('Completed', 'Canceled')
+                  and st.status in ('New', 'InTransit')
+                  and coalesce(st.actual_arrival, 0) <= 0
+                  and st.scheduled_window_start > 0
+                  and case when coalesce(st.scheduled_window_end, 0) > 0
+                        then st.scheduled_window_end else st.scheduled_window_start end
+                      < extract(epoch from now())
+              note: how many shipments have a stop past its window with no arrival
+          rubric: >
+            Gives the number of loads behind schedule from the tool's own count, says it read
+            the stops rather than the Delayed status, names the furthest behind with what each is
+            late to do, and points to the list beside the conversation for the rest rather than
+            answering from part of it as though it were all of it.
+
   - name: load-by-description
     description: >
       Nobody types a pro number from memory. The load is named by customer and destination,

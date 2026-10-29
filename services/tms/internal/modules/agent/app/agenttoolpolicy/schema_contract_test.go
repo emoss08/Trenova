@@ -23,6 +23,8 @@ var domainOwnedSchemas = map[string]string{
 	"report_preview:parameters": "as report_run",
 	"formula_preview:inputs": "keyed by the inputs each Tariff source declares; the " +
 		"Tariff checker checks every value against its declared type",
+	"analysis_run:datasets[].definition": "as report_create; the report compiler " +
+		"refuses a dataset definition it cannot compile",
 }
 
 func domainOwned(tool, path string) bool {

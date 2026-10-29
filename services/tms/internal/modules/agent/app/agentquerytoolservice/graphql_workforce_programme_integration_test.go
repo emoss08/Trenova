@@ -9,14 +9,18 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/schedulingrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdrugalcoholrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -52,8 +56,8 @@ func writeProgramme(
 	t *testing.T,
 	tenant *agentreadtest.Tenant,
 	workers workerports.WorkerRepository,
-	schedules workerports.SchedulingRepository,
-	draws workerports.WorkerDrugAlcoholRepository,
+	schedules workerscheduleports.SchedulingRepository,
+	draws workerdotports.WorkerDrugAlcoholRepository,
 	label string,
 ) *programmeTenant {
 	t.Helper()
@@ -66,8 +70,8 @@ func writeProgramme(
 	driver, err := workers.Create(ctx, testWorker(tenant, "S"+label, false, pulid.Nil))
 	require.NoError(t, err)
 	out.workerID = driver.ID
-	template := func(code string, status domaintypes.Status) *worker.ShiftTemplate {
-		row, templateErr := schedules.CreateTemplate(ctx, &worker.ShiftTemplate{
+	template := func(code string, status domaintypes.Status) *workerschedule.ShiftTemplate {
+		row, templateErr := schedules.CreateTemplate(ctx, &workerschedule.ShiftTemplate{
 			BusinessUnitID: bu, OrganizationID: org, Status: status, Code: code + label,
 			Name: "Pattern " + code + label, DaysOfWeek: "0111110", StartMinute: 360,
 			DurationMinutes: 600, CycleWeeks: 1,
@@ -75,10 +79,16 @@ func writeProgramme(
 		require.NoError(t, templateErr)
 		return row
 	}
-	early, late := template("E", domaintypes.StatusActive), template("R", domaintypes.StatusInactive)
+	early, late := template(
+		"E",
+		domaintypes.StatusActive,
+	), template(
+		"R",
+		domaintypes.StatusInactive,
+	)
 	out.active, out.retired = early.ID.String(), late.ID.String()
 	ended := now - 86400*10
-	for _, assignment := range []*worker.WorkerShiftAssignment{
+	for _, assignment := range []*workerschedule.WorkerShiftAssignment{
 		{ShiftTemplateID: late.ID, EffectiveFrom: now - 86400*100, EffectiveTo: &ended},
 		{ShiftTemplateID: early.ID, EffectiveFrom: now - 86400*9},
 	} {
@@ -88,32 +98,32 @@ func writeProgramme(
 		require.NoError(t, assignErr)
 		out.assignments = append(out.assignments, row.ID.String())
 	}
-	preference, err := schedules.UpsertPreference(ctx, &worker.WorkerAvailabilityPreference{
+	preference, err := schedules.UpsertPreference(ctx, &workerschedule.WorkerAvailabilityPreference{
 		BusinessUnitID: bu, OrganizationID: org, WorkerID: driver.ID, DayOfWeek: 6,
-		Preference: worker.AvailabilityUnavailable, Note: "Family day " + label,
+		Preference: workerschedule.AvailabilityUnavailable, Note: "Family day " + label,
 	})
 	require.NoError(t, err)
 	preference.Note = "Family day, every week " + label
 	_, err = schedules.UpsertPreference(ctx, preference)
 	require.NoError(t, err, "a second statement for the weekday replaces the first")
 	out.preference = preference.ID.String()
-	for _, status := range []worker.ShiftSwapStatus{worker.SwapProposed, worker.SwapDeclined} {
-		swap, swapErr := schedules.CreateSwap(ctx, &worker.ShiftSwapRequest{
+	for _, status := range []workerschedule.ShiftSwapStatus{workerschedule.SwapProposed, workerschedule.SwapDeclined} {
+		swap, swapErr := schedules.CreateSwap(ctx, &workerschedule.ShiftSwapRequest{
 			BusinessUnitID: bu, OrganizationID: org, RequestingWorkerID: driver.ID,
 			Status: status, ShiftDate: now + 86400*7, Reason: "Appointment " + label,
 		})
 		require.NoError(t, swapErr)
-		if status == worker.SwapProposed {
+		if status == workerschedule.SwapProposed {
 			out.openSwap = swap.ID.String()
 		} else {
 			out.closedSwap = swap.ID.String()
 		}
 	}
 
-	pool := func(code string, status domaintypes.Status) *worker.DOTRandomPool {
-		row, poolErr := draws.CreatePool(ctx, &worker.DOTRandomPool{
+	pool := func(code string, status domaintypes.Status) *dotrandom.DOTRandomPool {
+		row, poolErr := draws.CreatePool(ctx, &dotrandom.DOTRandomPool{
 			BusinessUnitID: bu, OrganizationID: org, Code: code + label, Name: "Pool " + code,
-			Status: status, Period: worker.RandomPeriodQuarterly, DrugRatePercent: 50,
+			Status: status, Period: dotrandom.RandomPeriodQuarterly, DrugRatePercent: 50,
 			AlcoholRatePercent: 10, IncludedDriverTypes: []string{},
 		})
 		require.NoError(t, poolErr)
@@ -121,16 +131,16 @@ func writeProgramme(
 	}
 	active, retired := pool("A", domaintypes.StatusActive), pool("I", domaintypes.StatusInactive)
 	out.pool, out.retiredPool = active.ID.String(), retired.ID.String()
-	draw, err := draws.CreateDrawWithEntries(ctx, &worker.DOTRandomDraw{
+	draw, err := draws.CreateDrawWithEntries(ctx, &dotrandom.DOTRandomDraw{
 		ID: pulid.MustNew("drdraw_"), BusinessUnitID: bu, OrganizationID: org,
 		PoolID: active.ID, PeriodKey: "2026-Q4", PeriodStart: now - 86400*30,
-		PeriodEnd: now + 86400*60, Status: worker.RandomDrawStatusFinal, PoolSize: 1,
+		PeriodEnd: now + 86400*60, Status: dotrandom.RandomDrawStatusFinal, PoolSize: 1,
 		DrugTarget: 1, DrugSelected: 1, Seed: "seed" + label, Method: "sha256-rank",
 		DrawnAt: now, FinalizedAt: &now,
-	}, []*worker.DOTRandomDrawEntry{{
+	}, []*dotrandom.DOTRandomDrawEntry{{
 		ID: pulid.MustNew("drde_"), BusinessUnitID: bu, OrganizationID: org,
-		WorkerID: driver.ID, Substance: worker.DOTSubstanceDrug, Rank: 1,
-		Status: worker.RandomEntrySelected,
+		WorkerID: driver.ID, Substance: workerdot.DOTSubstanceDrug, Rank: 1,
+		Status: dotrandom.RandomEntrySelected,
 	}})
 	require.NoError(t, err)
 	out.draw = draw.ID.String()
@@ -153,7 +163,9 @@ func rowIDs(t *testing.T, raw any) []string {
 	return out
 }
 
-func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -173,14 +185,20 @@ func TestConvertedLists_SchedulingAndRandomTestingReadTheTenantsOwnUnderRowLevel
 		workerdrugalcoholservice.Params{Logger: logger, Repo: draws, WorkerRepo: workers})
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers},
+	)
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	theirs := agentreadtest.SeedTenant(t, admin, "B")
 	ours := writeProgramme(t, mine, workers, schedules, draws, "A")
 	other := writeProgramme(t, theirs, workers, schedules, draws, "B")
 	actor := mine.Actor
-	tool := func(name string) agentports.AgentQueryTool {
+	tool := func(name string) agenttoolports.AgentQueryTool {
 		converted, err := agentquerytoolservice.ConvertedListTool(name, reader, engine)
 		require.NoError(t, err)
 		return converted

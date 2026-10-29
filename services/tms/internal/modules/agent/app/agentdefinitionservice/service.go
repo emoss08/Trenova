@@ -8,9 +8,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -36,11 +45,11 @@ type Params struct {
 	DB           kernelports.Transactor
 	Repo         agentdefinitionports.AgentDefinitionRepository
 	Versions     agentdefinitionports.AgentDefinitionVersionRepository
-	Proposals    agentports.AgentProposalRepository
-	AgentPlans   agentports.AgentPlanRepository
-	Tools        agentports.AgentToolRegistry
-	QueryTools   agentports.AgentQueryToolRegistry
-	Contexts     agentports.RuntimeContextBuilder
+	Proposals    agentproposalports.AgentProposalRepository
+	AgentPlans   agentplanports.AgentPlanRepository
+	Tools        agenttoolports.AgentToolRegistry
+	QueryTools   agenttoolports.AgentQueryToolRegistry
+	Contexts     agentruntimeports.RuntimeContextBuilder
 	AuditService auditports.AuditService
 	// Schedules keeps the schedule behind a scheduled or continuous agent
 	// in line with the agent as it is saved.
@@ -59,11 +68,11 @@ type Service struct {
 	db          kernelports.Transactor
 	repo        agentdefinitionports.AgentDefinitionRepository
 	versions    agentdefinitionports.AgentDefinitionVersionRepository
-	proposals   agentports.AgentProposalRepository
-	agentPlans  agentports.AgentPlanRepository
-	tools       agentports.AgentToolRegistry
-	queryTools  agentports.AgentQueryToolRegistry
-	contexts    agentports.RuntimeContextBuilder
+	proposals   agentproposalports.AgentProposalRepository
+	agentPlans  agentplanports.AgentPlanRepository
+	tools       agenttoolports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
+	contexts    agentruntimeports.RuntimeContextBuilder
 	audit       auditports.AuditService
 	schedules   agentdefinitionports.AgentDefinitionScheduler
 	extensions  agentextensionports.AgentExtensionGate
@@ -280,7 +289,7 @@ func (s *Service) withdrawAndDelete(
 ) error {
 	proposals, err := s.proposals.ExpirePendingByDefinition(
 		ctx,
-		agentports.ExpireAgentProposalsByDefinitionRequest{
+		agentproposalports.ExpireAgentProposalsByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},
@@ -291,7 +300,7 @@ func (s *Service) withdrawAndDelete(
 
 	plans, err := s.agentPlans.ExpirePendingByDefinition(
 		ctx,
-		agentports.ExpireAgentPlansByDefinitionRequest{
+		agentplanports.ExpireAgentPlansByDefinitionRequest{
 			AgentDefinitionID: req.ID,
 			TenantInfo:        req.TenantInfo,
 		},
@@ -314,7 +323,7 @@ func (s *Service) withdrawAndDelete(
 }
 
 func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
-	templates := agentdefinition.AllTemplates()
+	templates := agenttemplate.AllTemplates()
 	descriptors := make([]agentdefinitionports.AgentTemplateDescriptor, 0, len(templates))
 
 	for _, template := range templates {
@@ -322,16 +331,16 @@ func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
 			Template:             template,
 			Label:                template.Label(),
 			Description:          template.Description(),
-			StarterInstructions:  template.StarterInstructions(),
+			StarterInstructions:  agentinstructions.StarterInstructions(template),
 			StarterTools:         registeredStarterTools(template, s.tools, s.queryTools),
-			StarterTrigger:       template.StarterTrigger(),
-			StarterEvents:        template.StarterEvents(),
-			StarterCron:          template.StarterCron(),
-			StarterCeiling:       template.StarterCeiling(),
-			StarterDataAccess:    template.StarterDataAccess(),
+			StarterTrigger:       agentpreset.StarterTrigger(template),
+			StarterEvents:        agentpreset.StarterEvents(template),
+			StarterCron:          agentpreset.StarterCron(template),
+			StarterCeiling:       agentpreset.StarterCeiling(template),
+			StarterDataAccess:    agentpreset.StarterDataAccess(template),
 			StarterOutput:        starterOutput(template),
-			StarterDailyRunLimit: template.StarterDailyRunLimit(),
-			StarterShadow:        template.StarterShadow(),
+			StarterDailyRunLimit: agentpreset.StarterDailyRunLimit(template),
+			StarterShadow:        agentpreset.StarterShadow(template),
 			ContextProviders:     agentdefinition.AllContextProviders(),
 		})
 	}
@@ -339,8 +348,8 @@ func (s *Service) Templates() []agentdefinitionports.AgentTemplateDescriptor {
 	return descriptors
 }
 
-func starterOutput(template agentdefinition.Template) agentdefinition.OutputMode {
-	if template.StarterTrigger() == agentdefinition.TriggerChat {
+func starterOutput(template agenttemplate.Template) agentdefinition.OutputMode {
+	if agentpreset.StarterTrigger(template) == agentdefinition.TriggerChat {
 		return agentdefinition.OutputConversational
 	}
 
@@ -377,8 +386,8 @@ func (s *Service) activeExtensions(
 	return extensionState(active), nil
 }
 
-func (s *Service) EventKinds() []agent.EventDescriptor {
-	return agent.KnownEvents()
+func (s *Service) EventKinds() []agenttrigger.EventDescriptor {
+	return agenttrigger.KnownEvents()
 }
 
 func (s *Service) PreviewPrompt(
@@ -391,11 +400,11 @@ func (s *Service) PreviewPrompt(
 	}
 	apply(definition, req.Definition)
 
-	runtimeContext := agentdefinition.RuntimeContext{
+	runtimeContext := agentturn.RuntimeContext{
 		Trigger: definition.TriggerMode.RunTrigger(),
 	}
 	if s.contexts != nil {
-		built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+		built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 			Definition: definition,
 			Actor:      req.Actor,
 			Trigger:    definition.TriggerMode.RunTrigger(),
@@ -406,7 +415,7 @@ func (s *Service) PreviewPrompt(
 		runtimeContext = built
 	}
 
-	return definition.BuildSystemPrompt(runtimeContext), nil
+	return agentprompt.BuildSystemPrompt(definition, runtimeContext), nil
 }
 
 // validate checks the definition as it would be saved. previous is the

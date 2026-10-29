@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -20,9 +20,9 @@ const shipmentFieldTenderStatus = "tenderStatus"
 
 func (t *SendEDILoadTenderTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +30,8 @@ func (t *SendEDILoadTenderTool) Preview(
 	summary := "Would tender this shipment to another organization over EDI."
 	plan, err := t.tenders.PlanLoadTender(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -42,21 +42,21 @@ func (t *SendEDILoadTenderTool) Preview(
 		Resource: permission.ResourceEDI,
 		ID:       plan.SourcePartner.ID,
 		Label:    receiver,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{receiver},
 		Subject: "Load tender for shipment " + plan.SourceShipment.ProNumber,
 		Body:    tenderBody(&plan.Payload),
 	})
 
 	tendered := *plan.SourceShipment
-	status := shipment.TenderStatusTendered
+	status := shipmentvocab.TenderStatusTendered
 	tendered.TenderStatus = &status
 	marked, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       plan.SourceShipment.ID,
 		Label:    plan.SourceShipment.ProNumber,
-		Version:  common.PinnedVersion(plan.SourceShipment.Version),
+		Version:  changepreview.PinnedVersion(plan.SourceShipment.Version),
 	}, plan.SourceShipment, &tendered, toolpreview.Only(shipmentFieldTenderStatus))
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (t *SendEDILoadTenderTool) Preview(
 		"Would tender shipment %s to %s over EDI and mark it Tendered until they answer.",
 		plan.SourceShipment.ProNumber, receiver,
 	)
-	if plan.Status == edi.TransferStatusMappingRequired {
+	if plan.Status == editransfer.TransferStatusMappingRequired {
 		summary += fmt.Sprintf(
 			" %s has to map %d of its customers, locations or other records to its own "+
 				"before it can accept.",
@@ -77,7 +77,7 @@ func (t *SendEDILoadTenderTool) Preview(
 	return toolpreview.Build(summary, sent, marked), nil
 }
 
-func tenderBody(payload *edi.LoadTenderPayload) string {
+func tenderBody(payload *editransfer.LoadTenderPayload) string {
 	lines := make([]string, 0, 4)
 	if payload.BOL != "" {
 		lines = append(lines, "BOL: "+payload.BOL)
@@ -102,9 +102,9 @@ func tenderBody(payload *edi.LoadTenderPayload) string {
 
 func (t *SendEDIStatusUpdateTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +112,8 @@ func (t *SendEDIStatusUpdateTool) Preview(
 	summary := "Would send the trading partner an EDI 214 shipment status."
 	document, err := t.documents.PlanGenerateDocument(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -127,8 +127,8 @@ func (t *SendEDIStatusUpdateTool) Preview(
 		Resource: permission.ResourceEDI,
 		ID:       req.EDIPartnerID,
 		Label:    partner,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{partner},
 		Subject: "EDI 214 shipment status",
 		Body:    document.RawX12,
@@ -146,7 +146,7 @@ func (t *SendEDIStatusUpdateTool) Preview(
 	return toolpreview.Build(summary, sent), nil
 }
 
-func diagnosticNotes(document *ediservice.EDIDocumentPreview) string {
+func diagnosticNotes(document *edioutbound.EDIDocumentPreview) string {
 	notes := make([]string, 0, len(document.Diagnostics))
 	for _, diagnostic := range document.Diagnostics {
 		if message := strings.TrimSpace(diagnostic.Message); message != "" {

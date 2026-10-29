@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ratematrixportsmock"
@@ -119,8 +121,8 @@ func expectReviews(deps *testDeps) {
 	deps.reviewRepo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			review *ratematrix.RateMatrixReview,
-		) (*ratematrix.RateMatrixReview, error) {
+			review *ratematrixreview.RateMatrixReview,
+		) (*ratematrixreview.RateMatrixReview, error) {
 			return review, nil
 		}).Maybe()
 }
@@ -179,7 +181,7 @@ func TestReplacingCellsOfAnApprovedMatrixReturnsItToDraft(t *testing.T) {
 	err := deps.svc.ReplaceCells(t.Context(), &ratematrixports.ReplaceRateMatrixCellsRequest{
 		TenantInfo:   tenant,
 		RateMatrixID: matrix.ID,
-		Cells: []*ratematrix.RateMatrixCell{
+		Cells: []*ratematrixcell.RateMatrixCell{
 			{D0Key: "SE", Value: decimal.RequireFromString("2.35")},
 			nil,
 			{D0Key: "NE", Value: decimal.RequireFromString("2.60")},
@@ -208,7 +210,7 @@ func TestReplacingCellsRefusesOverlappingPostalRanges(t *testing.T) {
 	err := deps.svc.ReplaceCells(t.Context(), &ratematrixports.ReplaceRateMatrixCellsRequest{
 		TenantInfo:   tenant,
 		RateMatrixID: matrix.ID,
-		Cells: []*ratematrix.RateMatrixCell{
+		Cells: []*ratematrixcell.RateMatrixCell{
 			{D0Key: "30000", D0KeyTo: "31999", Value: decimal.NewFromInt(1)},
 			{D0Key: "31500", D0KeyTo: "32999", Value: decimal.NewFromInt(2)},
 		},
@@ -244,12 +246,12 @@ func TestApprovePublishesTheDraftAsTheNextVersion(t *testing.T) {
 	expectHeaderSave(deps)
 	expectReviews(deps)
 	deps.repo.EXPECT().CountMisfitCells(mock.Anything, mock.Anything).Return(int64(0), nil)
-	var published *ratematrix.RateMatrixVersion
+	var published *ratematrixversion.RateMatrixVersion
 	deps.versionRepo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			version *ratematrix.RateMatrixVersion,
-		) (*ratematrix.RateMatrixVersion, error) {
+			version *ratematrixversion.RateMatrixVersion,
+		) (*ratematrixversion.RateMatrixVersion, error) {
 			published = version
 			return version, nil
 		})
@@ -322,8 +324,8 @@ func TestApproveOwnLetsTheSubmitterAndEditorPublishTheirOwnDraft(t *testing.T) {
 	deps.versionRepo.EXPECT().Create(mock.Anything, mock.Anything).
 		RunAndReturn(func(
 			_ context.Context,
-			version *ratematrix.RateMatrixVersion,
-		) (*ratematrix.RateMatrixVersion, error) {
+			version *ratematrixversion.RateMatrixVersion,
+		) (*ratematrixversion.RateMatrixVersion, error) {
 			return version, nil
 		})
 	deps.repo.EXPECT().CopyVersion(mock.Anything, mock.Anything).Return(int64(3), nil)
@@ -451,7 +453,7 @@ func TestRestoringThePublishedVersionDiscardsTheDraft(t *testing.T) {
 	expectLoad(deps, matrix)
 	deps.versionRepo.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		Return(&ratematrix.RateMatrixVersion{
+		Return(&ratematrixversion.RateMatrixVersion{
 			RateMatrixID:  matrix.ID,
 			VersionNumber: 4,
 			ValueType:     ratematrix.ValueTypePercent,

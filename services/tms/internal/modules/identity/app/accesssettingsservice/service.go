@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -63,7 +64,7 @@ func (s *Service) Update(
 	if !req.RequireRoleActivation {
 		dynamic, dErr := s.rbac.ListRoleConstraints(ctx, permissionports.ListRoleConstraintsRequest{
 			OrganizationID: tenant.OrgID,
-			Type:           permission.RoleConstraintTypeDSD,
+			Type:           rbac.RoleConstraintTypeDSD,
 		})
 		if dErr != nil {
 			return nil, fmt.Errorf("read dynamic separation of duty constraints: %w", dErr)

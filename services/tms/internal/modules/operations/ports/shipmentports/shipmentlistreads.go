@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -33,7 +34,7 @@ type ActiveHoldReader interface {
 	ActiveHolds(
 		ctx context.Context,
 		req *ActiveHoldsRequest,
-	) ([]*shipment.ShipmentHold, error)
+	) ([]*shipmenthold.ShipmentHold, error)
 }
 
 type NewestCommentsRequest struct {

@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -622,7 +625,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.LastSuiteRun, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 			{
 				Name:     "activeCases",
@@ -744,7 +747,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.LastSuiteRun, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 			{
 				Name:     "openRegression",
@@ -830,7 +833,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").ID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -840,7 +843,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.Enabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -850,7 +853,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.RunHourLocal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -860,7 +863,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.Timezone, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -870,7 +873,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.MaxCasesPerAgent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -882,7 +885,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").NightlyBudgetUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -894,7 +897,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return gqlexec.Resolver[resolverAgentQualityControl](ec, "AgentQualityControl").MonthlyBudgetUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -904,7 +907,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.JudgeEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -914,7 +917,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.JudgeSampleRate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -924,7 +927,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.RegressionThreshold, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -934,7 +937,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.MinCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -944,7 +947,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.ForceRerunDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -954,7 +957,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -964,7 +967,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.Control)
+					obj := o.(*agentqualitycontrol.Control)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1177,7 +1180,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.WorstRegression, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 		}},
 		{Object: "AgentQualityPoint", Fields: []*gqlexec.Field{
@@ -1219,7 +1222,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRunStatus),
 			},
 			{
 				Name:     "regression",
@@ -1238,7 +1241,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1248,7 +1251,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1258,7 +1261,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1268,7 +1271,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.AgentDefinitionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1280,7 +1283,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").AgentName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1290,10 +1293,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Trigger, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunTrigger),
+				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRunTrigger),
 			},
 			{
 				Name:       "fingerprint",
@@ -1301,7 +1304,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").Fingerprint(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
@@ -1311,7 +1314,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.FingerprintHash, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1324,7 +1327,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentFingerprintChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").FingerprintChanges(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentFingerprintChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentFingerprintChangeᚄ),
@@ -1336,7 +1339,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").ChangeSummary(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1346,7 +1349,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.SuiteRevision, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1356,17 +1359,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatus),
+				Marshal: gqlexec.Marshal(marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRunStatus),
 			},
 			{
 				Name:     "casesTotal",
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesTotal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1376,7 +1379,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesPassed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1386,7 +1389,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesFailed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1396,7 +1399,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesSkipped, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1406,7 +1409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.HardFailures, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1415,7 +1418,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "deterministicScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.DeterministicScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -1424,7 +1427,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "judgeScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.JudgeScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -1433,7 +1436,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "qualityScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.QualityScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -1442,7 +1445,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "baselineScore",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.BaselineScore, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -1451,7 +1454,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "baselineRunId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.BaselineRunID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1461,7 +1464,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Regression, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1473,7 +1476,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[resolverAgentSuiteRun](ec, "AgentSuiteRun").CostUsd(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
@@ -1483,7 +1486,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.StartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1492,7 +1495,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "finishedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.FinishedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1502,7 +1505,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Comments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1512,7 +1515,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.WorkflowID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1521,7 +1524,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "requestedByUserId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.RequestedByUserID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1531,7 +1534,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1541,7 +1544,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1551,7 +1554,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*agentquality.SuiteRun)
+					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1610,7 +1613,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentSuiteRunCaseEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation),
+				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
 			{
 				Name:     "cursor",
@@ -1676,7 +1679,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AgentSuiteRunEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 			{
 				Name:     "cursor",
@@ -1928,7 +1931,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ReplayAgentEvalCase(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation),
+				Marshal: gqlexec.Marshal(marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation),
 			},
 			{
 				Name:       "runAgentSuite",
@@ -1941,7 +1944,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RunAgentSuite(ctx, fc.Args["agentDefinitionId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 			{
 				Name:       "updateAgentQualityControl",
@@ -1954,7 +1957,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAgentQualityControl(ctx, fc.Args["input"].(gqlmodel.UpdateAgentQualityControlInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐControl),
+				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitycontrolᚐControl),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -2066,7 +2069,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentSuiteRun(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun),
+				Marshal: gqlexec.Marshal(marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
 			{
 				Name:       "agentSuiteRunCaseConnection",
@@ -2092,7 +2095,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AgentQualityControl(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐControl),
+				Marshal: gqlexec.Marshal(marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitycontrolᚐControl),
 			},
 		}},
 	},
@@ -2132,17 +2135,17 @@ type resolverAgentQualityAgent interface {
 }
 
 type resolverAgentQualityControl interface {
-	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
-	NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
-	MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
+	ID(ctx context.Context, obj *agentqualitycontrol.Control) (*string, error)
+	NightlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
+	MonthlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
 }
 
 type resolverAgentSuiteRun interface {
-	AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error)
-	FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
-	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+	AgentName(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	Fingerprint(ctx context.Context, obj *agentqualitysuite.SuiteRun) (map[string]any, error)
+	FingerprintChanges(ctx context.Context, obj *agentqualitysuite.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
+	ChangeSummary(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 }
 
 type resolverAgentWorstRatedAnswer interface {
@@ -2153,9 +2156,9 @@ type resolverMutation interface {
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
-	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
-	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
-	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
+	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error)
+	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error)
 }
 
 type resolverQuery interface {
@@ -2166,9 +2169,9 @@ type resolverQuery interface {
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswerConnection(ctx context.Context, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
 	AgentSuiteRunConnection(ctx context.Context, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunConnection, error)
-	AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error)
+	AgentSuiteRun(ctx context.Context, id string) (*agentqualitysuite.SuiteRun, error)
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
-	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
+	AgentQualityControl(ctx context.Context) (*agentqualitycontrol.Control, error)
 }
 
 var (
@@ -3126,7 +3129,7 @@ func marshalNAgentEvalCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.Evaluation) graphql.Marshaler {
+func marshalNAgentEvaluation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentevaluationᚐEvaluation(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentevaluation.Evaluation) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3206,7 +3209,7 @@ func marshalNAgentQualityAgentEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AgentQualityAgentEdge", v)
 }
 
-func marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentquality.Control) graphql.Marshaler {
+func marshalNAgentQualityControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitycontrolᚐControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualitycontrol.Control) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3246,7 +3249,7 @@ func marshalNAgentRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return res
 }
 
-func marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentquality.SuiteRun) graphql.Marshaler {
+func marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualitysuite.SuiteRun) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3302,7 +3305,7 @@ func marshalNAgentSuiteRunEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "AgentSuiteRunEdge", v)
 }
 
-func marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentquality.SuiteRunStatus) graphql.Marshaler {
+func marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRunStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentqualitysuite.SuiteRunStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3310,7 +3313,7 @@ func marshalNAgentSuiteRunStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAgentSuiteRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRunTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentquality.SuiteRunTrigger) graphql.Marshaler {
+func marshalNAgentSuiteRunTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRunTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentqualitysuite.SuiteRunTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3482,7 +3485,7 @@ func marshalOAgentEvalCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return ec.MarshalType(ctx, sel, "AgentEvalCase", v)
 }
 
-func marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐSuiteRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentquality.SuiteRun) graphql.Marshaler {
+func marshalOAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentqualitysuite.SuiteRun) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

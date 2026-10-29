@@ -7,7 +7,7 @@ import (
 	"time"
 
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 	gax "github.com/googleapis/gax-go/v2"
 	"github.com/stretchr/testify/require"
@@ -107,11 +107,9 @@ func TestGCPAutokeyManagerUsesEnvelopeAAD(t *testing.T) {
 
 func testService() *Service {
 	svc, err := New(Params{
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{
-					Key: "unit-test-encryption-key-with-at-least-32-bytes",
-				},
+		SecurityConfig: &securityconfig.Config{
+			Encryption: securityconfig.EncryptionConfig{
+				Key: "unit-test-encryption-key-with-at-least-32-bytes",
 			},
 		},
 	})

@@ -234,3 +234,13 @@ type DeleteInboundMessagesRequest struct {
 	TenantInfo pagination.TenantInfo
 	IDs        []pulid.ID
 }
+
+type GetInboundAttachmentRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+type GetInboundAttachmentsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}

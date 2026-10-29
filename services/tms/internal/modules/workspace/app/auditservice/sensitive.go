@@ -15,7 +15,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -97,7 +97,7 @@ var sensitiveFieldPatterns = []string{
 	`(?i)configuration\.apiKey`,
 }
 
-func NewSensitiveDataManager(cfg config.EncryptionConfig) *SensitiveDataManager {
+func NewSensitiveDataManager(cfg *securityconfig.EncryptionConfig) *SensitiveDataManager {
 	sdm := &SensitiveDataManager{
 		fields:                make(map[permission.Resource]map[string]SensitiveFieldConfig),
 		patternCache:          make(map[string]*regexp.Regexp),
@@ -108,7 +108,7 @@ func NewSensitiveDataManager(cfg config.EncryptionConfig) *SensitiveDataManager 
 
 	sdm.precompileFieldPatterns()
 
-	if cfg.Key != "" {
+	if cfg != nil && cfg.Key != "" {
 		hash := sha256.Sum256([]byte(cfg.Key))
 		sdm.encryptionKey = hash[:]
 	}

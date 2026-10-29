@@ -10,10 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (r *ExtractionRolloutResolver) Serving(ctx context.Context, obj *extractionrollout.ExtractionRollout) (bool, error) {
@@ -34,13 +35,13 @@ func (r *MutationResolver) UpdateExtractionRollout(ctx context.Context, input gq
 		return nil, err
 	}
 
-	providerID, err := base.OptionalID(input.ProviderID)
+	providerID, err := gqlid.OptionalID(input.ProviderID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.ExtractionRolloutService.Update(ctx, &extractionrolloutports.UpdateExtractionRolloutRequest{
-		TenantInfo:                 base.TenantInfo(authCtx),
+		TenantInfo:                 resolvercore.TenantInfo(authCtx),
 		Enabled:                    input.Enabled,
 		ProviderID:                 providerID,
 		Percent:                    input.Percent,
@@ -56,7 +57,7 @@ func (r *QueryResolver) ExtractionRollout(ctx context.Context) (*extractionrollo
 		return nil, err
 	}
 
-	return r.ExtractionRolloutService.Get(ctx, base.TenantInfo(authCtx))
+	return r.ExtractionRolloutService.Get(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) ExtractionRolloutReport(ctx context.Context) (*extractionrolloutports.ExtractionRolloutReport, error) {
@@ -65,5 +66,5 @@ func (r *QueryResolver) ExtractionRolloutReport(ctx context.Context) (*extractio
 		return nil, err
 	}
 
-	return r.ExtractionRolloutService.Report(ctx, base.TenantInfo(authCtx))
+	return r.ExtractionRolloutService.Report(ctx, resolvercore.TenantInfo(authCtx))
 }

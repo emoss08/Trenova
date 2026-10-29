@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -61,6 +62,11 @@ type GetRoleByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type GetRolesByIDsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	RoleIDs    []pulid.ID            `json:"roleIds"`
+}
+
 type GetUserRoleAssignmentsByIDRequest struct {
 	TenantInfo       pagination.TenantInfo `json:"-"`
 	RoleAssignmentID pulid.ID              `json:"roleAssignmentID"`
@@ -83,20 +89,21 @@ type RoleRepository interface {
 	List(
 		ctx context.Context,
 		req *ListRolesRequest,
-	) (*pagination.ListResult[*permission.Role], error)
+	) (*pagination.ListResult[*rbac.Role], error)
 	ListConnection(
 		ctx context.Context,
 		req *ListRoleConnectionRequest,
-	) (*pagination.CursorListResult[*permission.Role], error)
+	) (*pagination.CursorListResult[*rbac.Role], error)
 	SelectOptions(
 		ctx context.Context,
 		req *pagination.SelectQueryRequest,
-	) (*pagination.ListResult[*permission.Role], error)
-	Create(ctx context.Context, role *permission.Role) error
-	Update(ctx context.Context, role *permission.Role) error
+	) (*pagination.ListResult[*rbac.Role], error)
+	Create(ctx context.Context, role *rbac.Role) error
+	Update(ctx context.Context, role *rbac.Role) error
 	Delete(ctx context.Context, req DeleteRoleRequest) error
-	GetByID(ctx context.Context, req GetRoleByIDRequest) (*permission.Role, error)
-	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
+	GetByID(ctx context.Context, req GetRoleByIDRequest) (*rbac.Role, error)
+	GetByIDs(ctx context.Context, req GetRolesByIDsRequest) ([]*rbac.Role, error)
+	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error)
 	GetUsersWithRole(ctx context.Context, roleID pulid.ID) ([]ImpactedUser, error)
 	ListUsersWithPermission(
 		ctx context.Context,
@@ -105,26 +112,26 @@ type RoleRepository interface {
 	GetUserRoleAssignments(
 		ctx context.Context,
 		userID, orgID pulid.ID,
-	) ([]*permission.UserRoleAssignment, error)
-	CreateAssignment(ctx context.Context, assignment *permission.UserRoleAssignment) error
+	) ([]*rbac.UserRoleAssignment, error)
+	CreateAssignment(ctx context.Context, assignment *rbac.UserRoleAssignment) error
 	DeleteAssignment(
 		ctx context.Context,
 		req DeleteRoleAssignmentRequest,
-	) (*permission.UserRoleAssignment, error)
+	) (*rbac.UserRoleAssignment, error)
 	DeleteUserAssignments(
 		ctx context.Context,
 		userID, orgID pulid.ID,
-	) ([]*permission.UserRoleAssignment, error)
+	) ([]*rbac.UserRoleAssignment, error)
 	ListOrphanedAssignments(
 		ctx context.Context,
 		now int64,
 		limit int,
 	) ([]OrphanedAssignment, error)
-	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
-	UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error
+	CreateResourcePermission(ctx context.Context, rp *rbac.ResourcePermission) error
+	UpdateResourcePermission(ctx context.Context, rp *rbac.ResourcePermission) error
 	DeleteResourcePermission(ctx context.Context, req DeleteResourcePermissionRequest) error
 	GetResourcePermissionsByRoleID(
 		ctx context.Context,
 		roleID pulid.ID,
-	) ([]*permission.ResourcePermission, error)
+	) ([]*rbac.ResourcePermission, error)
 }

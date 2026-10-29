@@ -20,18 +20,25 @@ type Params struct {
 	fx.In
 
 	Service              invoiceadjustmentports.InvoiceAdjustmentService
+	Drafts               invoiceadjustmentports.InvoiceAdjustmentDraftService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service invoiceadjustmentports.InvoiceAdjustmentService
+	drafts  invoiceadjustmentports.InvoiceAdjustmentDraftService
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
-	return &Handler{service: p.Service, eh: p.ErrorHandler, pm: p.PermissionMiddleware}
+	return &Handler{
+		service: p.Service,
+		drafts:  p.Drafts,
+		eh:      p.ErrorHandler,
+		pm:      p.PermissionMiddleware,
+	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -138,7 +145,7 @@ func (h *Handler) createDraft(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.CreateDraft(
+	resp, err := h.drafts.CreateDraft(
 		c.Request.Context(),
 		&invoiceadjustmentports.CreateDraftInvoiceAdjustmentRequest{
 			InvoiceID:  body.InvoiceID,
@@ -172,7 +179,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	resp, err := h.service.UpdateDraft(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	resp, err := h.drafts.UpdateDraft(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -187,7 +194,7 @@ func (h *Handler) previewDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.PreviewDraft(
+	resp, err := h.drafts.PreviewDraft(
 		c.Request.Context(),
 		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,
@@ -209,7 +216,7 @@ func (h *Handler) submitDraft(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	resp, err := h.service.SubmitDraft(
+	resp, err := h.drafts.SubmitDraft(
 		c.Request.Context(),
 		&invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest{
 			AdjustmentID: adjustmentID,

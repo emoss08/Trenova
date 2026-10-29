@@ -9,7 +9,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
@@ -40,30 +43,30 @@ var (
 // Program is one version of a partner's project, ready to run: its files encoded once with the
 // organisation's context, and the manifest its check produced.
 type Program struct {
-	Project  *edi.LadingProject
-	Version  *edi.LadingVersion
+	Project  *ladingproject.LadingProject
+	Version  *ladingproject.LadingVersion
 	Encoded  *lading.Encoded
 	Manifest *lading.Check
 }
 
 // Acknowledgment is the acknowledgment Trenova returns for a set the version receives.
-func (p *Program) Acknowledgment(set edi.TransactionSet) edi.AcknowledgmentType {
+func (p *Program) Acknowledgment(set edidocument.TransactionSet) edidocument.AcknowledgmentType {
 	_, clause := p.Manifest.Receiving(string(set))
 	if clause == nil {
-		return edi.AcknowledgmentTypeNone
+		return edidocument.AcknowledgmentTypeNone
 	}
 	switch clause.Acknowledge {
 	case "999":
-		return edi.AcknowledgmentType999
+		return edidocument.AcknowledgmentType999
 	case lading.AcknowledgeNone:
-		return edi.AcknowledgmentTypeNone
+		return edidocument.AcknowledgmentTypeNone
 	default:
-		return edi.AcknowledgmentType997
+		return edidocument.AcknowledgmentType997
 	}
 }
 
 type Programs struct {
-	Project *edi.LadingProject
+	Project *ladingproject.LadingProject
 	Active  *Program
 	Shadow  *Program
 }
@@ -72,8 +75,8 @@ type RuntimeParams struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Projects     ediports.LadingProjectRepository
-	Mappings     ediports.EDIMappingProfileRepository
+	Projects     ladingports.LadingProjectRepository
+	Mappings     edipartnerports.EDIMappingProfileRepository
 	Orgs         tenantports.OrganizationRepository
 	Locations    locationports.LocationRepository
 	CustomFields customfieldports.CustomFieldDefinitionRepository
@@ -82,8 +85,8 @@ type RuntimeParams struct {
 type Runtime struct {
 	l            *zap.Logger
 	client       *lading.Client
-	projects     ediports.LadingProjectRepository
-	mappings     ediports.EDIMappingProfileRepository
+	projects     ladingports.LadingProjectRepository
+	mappings     edipartnerports.EDIMappingProfileRepository
 	orgs         tenantports.OrganizationRepository
 	locations    locationports.LocationRepository
 	customFields customfieldports.CustomFieldDefinitionRepository
@@ -113,10 +116,13 @@ func (r *Runtime) Load(
 	tenantInfo pagination.TenantInfo,
 	partnerID pulid.ID,
 ) (*Programs, error) {
-	runnable, err := r.projects.GetRunnableVersions(ctx, ediports.GetRunnableLadingVersionRequest{
-		TenantInfo: tenantInfo,
-		PartnerID:  partnerID,
-	})
+	runnable, err := r.projects.GetRunnableVersions(
+		ctx,
+		ladingports.GetRunnableLadingVersionRequest{
+			TenantInfo: tenantInfo,
+			PartnerID:  partnerID,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, ErrNoProject
@@ -168,8 +174,8 @@ func (r *Runtime) Active(
 func (r *Runtime) Version(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	project *edi.LadingProject,
-	version *edi.LadingVersion,
+	project *ladingproject.LadingProject,
+	version *ladingproject.LadingVersion,
 ) (*Program, error) {
 	return r.program(ctx, tenantInfo, project, version)
 }
@@ -177,8 +183,8 @@ func (r *Runtime) Version(
 func (r *Runtime) program(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	project *edi.LadingProject,
-	version *edi.LadingVersion,
+	project *ladingproject.LadingProject,
+	version *ladingproject.LadingVersion,
 ) (*Program, error) {
 	key := programKey{versionID: version.ID, revision: version.Version}
 	if cached := r.cache.get(key); cached != nil {
@@ -358,7 +364,7 @@ func (r *Runtime) Lookup(
 		}
 		sources = append(sources, edi.MappingSourceID(need.Code))
 	}
-	items, err := r.mappings.GetMappingItems(ctx, ediports.GetMappingItemsRequest{
+	items, err := r.mappings.GetMappingItems(ctx, edipartnerports.GetMappingItemsRequest{
 		PartnerID:   partnerID,
 		TenantInfo:  tenantInfo,
 		EntityTypes: types,
@@ -440,7 +446,7 @@ func LookupEntity(kind string) (edi.MappingEntityType, bool) {
 }
 
 // Settings are a project's setting values that differ from its partner file's defaults.
-func Settings(project *edi.LadingProject) (map[string]jsonutils.RawJSON, error) {
+func Settings(project *ladingproject.LadingProject) (map[string]jsonutils.RawJSON, error) {
 	var values map[string]any
 	if project != nil {
 		values = project.Settings
@@ -463,8 +469,8 @@ func instant(at time.Time) string {
 	return at.UTC().Format(time.RFC3339)
 }
 
-func shadowing(version *edi.LadingVersion) bool {
-	return version.Status == edi.LadingVersionStatusShadow &&
+func shadowing(version *ladingproject.LadingVersion) bool {
+	return version.Status == ladingproject.LadingVersionStatusShadow &&
 		version.ShadowUntil != nil &&
 		*version.ShadowUntil > time.Now().Unix()
 }

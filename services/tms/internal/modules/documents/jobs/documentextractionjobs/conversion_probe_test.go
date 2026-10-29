@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,8 +18,8 @@ func probingHarness(t *testing.T, probeErr error) *doclingHarness {
 	t.Helper()
 
 	h := newDoclingHarness(t, true)
-	doc := h.docs.doc
-	_, err := h.activities.documentControlRepo.GetOrCreate(
+	doc := h.docs.Doc
+	_, err := h.controlRepo.GetOrCreate(
 		t.Context(),
 		doc.OrganizationID,
 		doc.BusinessUnitID,
@@ -34,7 +34,7 @@ func probingHarness(t *testing.T, probeErr error) *doclingHarness {
 		return nil, probeErr
 	}
 	h.activities.imaging = fake
-	h.activities.conversionCfg = &config.DocumentConversionConfig{
+	h.activities.conversionCfg = &documentconversionconfig.Config{
 		DoclingURL: "http://docling:5001",
 		MaxPages:   10,
 	}
@@ -44,7 +44,7 @@ func probingHarness(t *testing.T, probeErr error) *doclingHarness {
 func (h *doclingHarness) convert(t *testing.T) (*convertedFile, *conversionFailure, error) {
 	t.Helper()
 
-	doc := h.docs.doc
+	doc := h.docs.Doc
 	return h.activities.convertDocument(
 		t.Context(),
 		doc,

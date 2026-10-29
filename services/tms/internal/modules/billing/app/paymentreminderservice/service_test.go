@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -91,7 +92,10 @@ type fakeEmail struct {
 	sent []*emailports.SendEmailRequest
 }
 
-func (f *fakeEmail) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
+func (f *fakeEmail) Send(
+	_ context.Context,
+	req *emailports.SendEmailRequest,
+) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 	return &email.Message{}, nil
 }
@@ -108,8 +112,8 @@ type fixture struct {
 	repo        *fakeRepo
 	collections *fakeCollections
 	email       *fakeEmail
-	contexts    []*documenttemplate.PaymentReminderEmailContext
-	control     *tenant.BillingControl
+	contexts    []*invoicetemplate.PaymentReminderEmailContext
+	control     *billingcontrol.BillingControl
 	customers   map[pulid.ID]*customer.Customer
 }
 
@@ -120,7 +124,7 @@ func newFixture(t *testing.T) *fixture {
 		collections: &fakeCollections{awaiting: map[pulid.ID]bool{}},
 		email:       &fakeEmail{},
 		customers:   map[pulid.ID]*customer.Customer{},
-		control: &tenant.BillingControl{
+		control: &billingcontrol.BillingControl{
 			OrganizationID:          pulid.MustNew("org_"),
 			BusinessUnitID:          pulid.MustNew("bu_"),
 			PaymentRemindersEnabled: true,
@@ -139,7 +143,8 @@ func newFixture(t *testing.T) *fixture {
 				}
 			}
 			return out, nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
@@ -156,9 +161,13 @@ func newFixture(t *testing.T) *fixture {
 			_ context.Context,
 			req *documenttemplateports.RenderMessageRequest,
 		) (*documenttemplateports.RenderedMessage, error) {
-			data := req.Data.(*documenttemplate.PaymentReminderEmailContext)
+			data := req.Data.(*invoicetemplate.PaymentReminderEmailContext)
 			f.contexts = append(f.contexts, data)
-			return &documenttemplateports.RenderedMessage{Subject: "Reminder", HTML: "<p/>", Text: "text"}, nil
+			return &documenttemplateports.RenderedMessage{
+				Subject: "Reminder",
+				HTML:    "<p/>",
+				Text:    "text",
+			}, nil
 		}).Maybe()
 
 	f.svc = &Service{
@@ -187,7 +196,13 @@ func (f *fixture) customer(to string) *customer.Customer {
 	return cus
 }
 
-func overdue(cus *customer.Customer, number string, daysLate int64, openMinor int64, lastStep int) *paymentreminderports.OverdueInvoice {
+func overdue(
+	cus *customer.Customer,
+	number string,
+	daysLate int64,
+	openMinor int64,
+	lastStep int,
+) *paymentreminderports.OverdueInvoice {
 	return &paymentreminderports.OverdueInvoice{
 		InvoiceID:     pulid.MustNew("inv_"),
 		InvoiceNumber: number,
@@ -235,9 +250,11 @@ func TestSendDue_SendsOneReminderListingEveryOverdueInvoice(t *testing.T) {
 
 	require.Len(t, f.collections.activities, 1)
 	assert.Equal(t, collection.ActivityEmail, f.collections.activities[0].Kind)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"Payment reminder 2 sent to ap@halstead.test, controller@halstead.test for INV-2, INV-3 (750.00 USD past due)",
-		f.collections.activities[0].Summary)
+		f.collections.activities[0].Summary,
+	)
 }
 
 func TestSendDue_SendsNothingWhenNoInvoiceReachedANewStep(t *testing.T) {
@@ -378,6 +395,6 @@ func TestSendNow_RefusesAnOptedOutCustomerAndOneWithNothingOverdue(t *testing.T)
 	assert.Empty(t, f.email.sent)
 }
 
-func tenantOf(control *tenant.BillingControl) pagination.TenantInfo {
+func tenantOf(control *billingcontrol.BillingControl) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: control.OrganizationID, BuID: control.BusinessUnitID}
 }

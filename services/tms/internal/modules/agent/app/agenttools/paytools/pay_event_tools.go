@@ -5,14 +5,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -42,7 +49,7 @@ type payEventHolder interface {
 		eventID pulid.ID,
 		reason string,
 		hold bool,
-	) (*driversettlementservice.PayEventPlan, error)
+	) (*driversettlementtransferservice.PayEventPlan, error)
 	HoldPayEvent(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -63,11 +70,15 @@ type PayEventHoldTool struct {
 	hold   bool
 }
 
-func ProvideHoldDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideHoldDriverPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s, hold: true}
 }
 
-func ProvideReleaseDriverPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideReleaseDriverPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventHoldTool{events: s}
 }
 
@@ -97,12 +108,12 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 		paramPayEventID: agenttoolschema.KindID(
 			"The pay event, from "+payEventSources+
 				" or the lines settlement_get_driver lists. Never guess one.",
-			permission.KindPayEvent,
+			recordkind.PayEvent,
 		),
 	}
 	required := []string{paramPayEventID}
 	if t.hold {
-		properties[paramHoldReason] = common.StringProperty(
+		properties[paramHoldReason] = toolparams.StringProperty(
 			"Why the pay is held, in words for the "+
 				"driver.",
 			maxHoldReasonChars,
@@ -118,19 +129,19 @@ func (t *PayEventHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PayEventHoldTool) Policy() agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func (t *PayEventHoldTool) Policy() agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Returns held pay to the settlement pool inside Trenova; nothing is paid " +
 			"until a settlement is approved, and the pay is held again the same way.",
 	}
@@ -151,18 +162,18 @@ type payEventHoldRequest struct {
 }
 
 func (t *PayEventHoldTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*payEventHoldRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	eventID, err := common.RequirePulid(params.Params, paramPayEventID)
+	eventID, err := toolparams.RequirePulid(params.Params, paramPayEventID)
 	if err != nil {
 		return nil, err
 	}
-	req := &payEventHoldRequest{tenant: common.TenantFrom(*params), eventID: eventID}
+	req := &payEventHoldRequest{tenant: toolparams.TenantFrom(params), eventID: eventID}
 	if t.hold {
-		if req.reason, err = common.BoundedString(
+		if req.reason, err = toolparams.BoundedString(
 			params.Params,
 			paramHoldReason,
 			maxHoldReasonChars,
@@ -177,8 +188,8 @@ func (t *PayEventHoldTool) request(
 
 func (t *PayEventHoldTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*driversettlementservice.PayEventPlan, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*driversettlementtransferservice.PayEventPlan, error) {
 	req, err := t.request(params)
 	if err != nil {
 		return nil, err
@@ -189,9 +200,9 @@ func (t *PayEventHoldTool) plan(
 
 func (t *PayEventHoldTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -201,12 +212,12 @@ func (t *PayEventHoldTool) Validate(
 
 func (t *PayEventHoldTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -230,7 +241,7 @@ func payEventRecord(event *driversettlement.PayEvent) toolpreview.Record {
 		Resource: permission.ResourceDriverSettlement,
 		ID:       event.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(event.Version),
+		Version:  changepreview.PinnedVersion(event.Version),
 	}
 }
 
@@ -244,9 +255,9 @@ func payEventDriver(event *driversettlement.PayEvent) string {
 
 func (t *PayEventHoldTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	plan, err := t.plan(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +273,7 @@ func (t *PayEventHoldTool) Preview(
 		payEventRecord(plan.Before).Label,
 	)
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 	if !plan.Changed {
 		return toolpreview.Build(fmt.Sprintf(
@@ -282,11 +293,11 @@ func (t *PayEventHoldTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 	if t.hold {
 		changes = append(changes, toolpreview.Send(payEventRecord(plan.Before),
-			&agent.MessagePreview{
-				Channel: agent.MessageChannelDash,
+			&agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelDash,
 				To:      []string{payEventDriver(plan.Before)},
 				Body:    plan.After.HoldReason,
 			}))
@@ -303,7 +314,7 @@ func (t *PayEventHoldTool) Preview(
 type payEventTransferrer interface {
 	PlanEventTransfer(
 		ctx context.Context,
-		req *driversettlementservice.EventTransferRequest,
+		req *driversettlementtransferservice.EventTransferRequest,
 	) (*driversettlementservice.ActionPlan, error)
 	AttachPayEvents(
 		ctx context.Context,
@@ -325,11 +336,15 @@ type PayEventTransferTool struct {
 	detach bool
 }
 
-func ProvideAttachPayEventsTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideAttachPayEventsTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s}
 }
 
-func ProvideDetachPayEventTool(s *driversettlementservice.Service) agentports.AgentTool {
+func ProvideDetachPayEventTool(
+	s *driversettlementtransferservice.Service,
+) agenttoolports.AgentTool {
 	return &PayEventTransferTool{events: s, detach: true}
 }
 
@@ -355,18 +370,18 @@ func (t *PayEventTransferTool) Description() string {
 
 func (t *PayEventTransferTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		common.ParamSettlementID: agenttoolschema.RecordIDText(
+		settlementpreview.ParamSettlementID: agenttoolschema.RecordIDText(
 			permission.ResourceDriverSettlement,
-			"The draft driver settlement, from "+common.DriverSettlementReads+". Never guess one.",
+			"The draft driver settlement, from "+settlementpreview.DriverSettlementReads+". Never guess one.",
 		),
 	}
 	var required []string
 	if t.detach {
 		properties[paramPayEventID] = agenttoolschema.KindID(
 			"The pay event on it, from the lines settlement_get_driver lists.",
-			permission.KindPayEvent,
+			recordkind.PayEvent,
 		)
-		required = []string{common.ParamSettlementID, paramPayEventID}
+		required = []string{settlementpreview.ParamSettlementID, paramPayEventID}
 	} else {
 		properties[ParamPayEventIDs] = agenttoolschema.OfKinds(map[string]any{
 			toolschema.KeyType:     toolschema.TypeArray,
@@ -375,8 +390,8 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
 			toolschema.KeyDescription: "The driver's accrued pay events to add, from " +
 				payEventSources + " with status Accrued.",
-		}, permission.KindPayEvent)
-		required = []string{common.ParamSettlementID, ParamPayEventIDs}
+		}, recordkind.PayEvent)
+		required = []string{settlementpreview.ParamSettlementID, ParamPayEventIDs}
 	}
 
 	return map[string]any{
@@ -387,45 +402,49 @@ func (t *PayEventTransferTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *PayEventTransferTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *PayEventTransferTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverSettlement,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Moves pay a driver already earned between the pool and a draft " +
 			"settlement inside Trenova; nothing is paid until a person approves it.",
 	}
 }
 
-func (t *PayEventTransferTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamSettlementID, permission.ResourceDriverSettlement)
+func (t *PayEventTransferTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(
+		params,
+		settlementpreview.ParamSettlementID,
+		permission.ResourceDriverSettlement,
+	)
 }
 
 func (t *PayEventTransferTool) request(
-	params *agentports.ToolExecuteParams,
-) (*driversettlementservice.EventTransferRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*driversettlementtransferservice.EventTransferRequest, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	settlementID, err := common.RequirePulid(params.Params, common.ParamSettlementID)
+	settlementID, err := toolparams.RequirePulid(params.Params, settlementpreview.ParamSettlementID)
 	if err != nil {
 		return nil, err
 	}
-	req := &driversettlementservice.EventTransferRequest{
-		TenantInfo:   common.TenantFrom(*params),
+	req := &driversettlementtransferservice.EventTransferRequest{
+		TenantInfo:   toolparams.TenantFrom(params),
 		SettlementID: settlementID,
 		Detach:       t.detach,
 	}
 	if t.detach {
-		eventID, idErr := common.RequirePulid(params.Params, paramPayEventID)
+		eventID, idErr := toolparams.RequirePulid(params.Params, paramPayEventID)
 		if idErr != nil {
 			return nil, idErr
 		}
@@ -433,7 +452,7 @@ func (t *PayEventTransferTool) request(
 
 		return req, nil
 	}
-	if req.EventIDs, err = common.RequirePulidSlice(
+	if req.EventIDs, err = toolparams.RequirePulidSlice(
 		params.Params,
 		ParamPayEventIDs,
 		maxPayEventsPerAttach,
@@ -446,9 +465,9 @@ func (t *PayEventTransferTool) request(
 
 func (t *PayEventTransferTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -462,12 +481,12 @@ func (t *PayEventTransferTool) Validate(
 
 func (t *PayEventTransferTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -495,9 +514,9 @@ func (t *PayEventTransferTool) Execute(
 
 func (t *PayEventTransferTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -506,38 +525,41 @@ func (t *PayEventTransferTool) Preview(
 		return nil, err
 	}
 
-	before := common.DriverSettlementFacts(plan.Before)
+	before := settlementpreview.DriverSettlementFacts(plan.Before)
 	summary := fmt.Sprintf(
 		"Would add %s to driver settlement %s%s.",
-		common.CountOf(len(req.EventIDs), "pay event"),
+		changepreview.CountOf(len(req.EventIDs), "pay event"),
 		before.Number,
-		common.PayeeClause(before.Payee),
+		settlementpreview.PayeeClause(before.Payee),
 	)
 	if t.detach {
 		summary = fmt.Sprintf(
 			"Would take a pay event off driver settlement %s%s and return it to the "+
 				"unsettled pool.",
 			before.Number,
-			common.PayeeClause(before.Payee),
+			settlementpreview.PayeeClause(before.Payee),
 		)
 	}
 	if plan.Refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.Refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.Refusal)
 	}
 
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceDriverSettlement,
 		ID:       before.ID,
 		Label:    before.Number,
-		Version:  common.PinnedVersion(before.Version),
+		Version:  changepreview.PinnedVersion(before.Version),
 	}, plan.Before, plan.After, toolpreview.Only("shipmentCount"))
 	if err != nil {
 		return nil, err
 	}
 	toolpreview.AttachMoney(
 		change,
-		common.SettlementMoney(before, common.DriverSettlementFacts(plan.After)),
-		toolpreview.SensitiveAs(common.DriverSettlementLedger().Sensitive...),
+		settlementpreview.SettlementMoney(
+			before,
+			settlementpreview.DriverSettlementFacts(plan.After),
+		),
+		toolpreview.SensitiveAs(settlementpreview.DriverSettlementLedger().Sensitive...),
 	)
 
 	return toolpreview.Build(summary, change), nil

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -50,8 +51,8 @@ func TestFieldAccessGrantsTheGroupsTheActorCanRead(t *testing.T) {
 
 	visible := NewFieldAccess(engine).Visible(t.Context(), actor)
 
-	assert.True(t, visible.Has(permission.FieldGroupMargins))
-	assert.False(t, visible.Has(permission.FieldGroupPersonal))
+	assert.True(t, visible.Has(protectedfield.Margins))
+	assert.False(t, visible.Has(protectedfield.Personal))
 	assert.Len(t, engine.asked, 2)
 	for _, req := range engine.asked {
 		assert.Equal(t, permission.OpRead, req.Operation)
@@ -73,8 +74,8 @@ func TestFieldAccessWithholdsAGroupWhoseCheckFails(t *testing.T) {
 
 	visible := NewFieldAccess(engine).Visible(t.Context(), sessionActor())
 
-	assert.False(t, visible.Has(permission.FieldGroupPersonal))
-	assert.True(t, visible.Has(permission.FieldGroupMargins))
+	assert.False(t, visible.Has(protectedfield.Personal))
+	assert.True(t, visible.Has(protectedfield.Margins))
 }
 
 func TestFieldAccessShowsEverythingToTheSystem(t *testing.T) {
@@ -83,8 +84,8 @@ func TestFieldAccessShowsEverythingToTheSystem(t *testing.T) {
 	engine := &groupEngine{}
 	access := NewFieldAccess(engine)
 
-	assert.Equal(t, permission.AllFieldGroups(), access.Visible(t.Context(), nil))
-	assert.Equal(t, permission.AllFieldGroups(), access.Visible(t.Context(),
+	assert.Equal(t, protectedfield.AllGroups(), access.Visible(t.Context(), nil))
+	assert.Equal(t, protectedfield.AllGroups(), access.Visible(t.Context(),
 		&permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeSystem}))
 	assert.Empty(t, engine.asked)
 }
@@ -92,14 +93,14 @@ func TestFieldAccessShowsEverythingToTheSystem(t *testing.T) {
 func TestVisibleFieldGroupsWithoutAccessShowsEverything(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, permission.AllFieldGroups(),
+	assert.Equal(t, protectedfield.AllGroups(),
 		permissionports.VisibleFieldGroups(t.Context(), nil, sessionActor()))
 }
 
 func TestAgentVisibleGroupsHoldsAnAgentToItsDataAccess(t *testing.T) {
 	t.Parallel()
 
-	held := permission.AllFieldGroups()
+	held := protectedfield.AllGroups()
 	at := func(level permission.FieldSensitivity) func(
 		context.Context, permission.Resource,
 	) permission.FieldSensitivity {

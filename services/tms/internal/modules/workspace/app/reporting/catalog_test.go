@@ -19,9 +19,9 @@ func TestCatalog_DecidesEveryEntityForTheCaller(t *testing.T) {
 	catalog, err := svc.Catalog(t.Context(), &request)
 	require.NoError(t, err)
 
-	assert.Equal(t, engine.catalog.Version(), catalog.Version)
+	assert.Equal(t, engine.Catalog().Version(), catalog.Version)
 	assert.NotEmpty(t, catalog.Rules.Aggregations)
-	require.Len(t, catalog.Entities, len(engine.catalog.Entities()))
+	require.Len(t, catalog.Entities, len(engine.Catalog().Entities()))
 	byKey := make(map[string]*CatalogEntity, len(catalog.Entities))
 	for i := range catalog.Entities {
 		byKey[catalog.Entities[i].View.Key] = &catalog.Entities[i]

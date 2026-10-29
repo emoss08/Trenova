@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,49 +41,53 @@ func NewEvidenceRepository(p EvidenceParams) detentionports.DetentionEvidenceRep
 func (r *evidenceRepository) Append(
 	ctx context.Context,
 	req *detentionports.AppendEvidenceRequest,
-) (*detention.DetentionEvidence, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*detention.DetentionEvidence, error) {
-		entry := req.Entry
-		log := r.l.With(
-			zap.String("operation", "Append"),
-			zap.String("occurrenceId", entry.DetentionOccurrenceID.String()),
-		)
+) (*detentionevidence.DetentionEvidence, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*detentionevidence.DetentionEvidence, error) {
+			entry := req.Entry
+			log := r.l.With(
+				zap.String("operation", "Append"),
+				zap.String("occurrenceId", entry.DetentionOccurrenceID.String()),
+			)
 
-		db := r.db.Keel(ctx)
-		head, sequence, err := latestLink(
-			ctx,
-			db,
-			entry.DetentionOccurrenceID,
-			keel.ForUpdate,
-		)
-		if err != nil {
-			log.Error("failed to read detention evidence head", zap.Error(err))
-			return nil, err
-		}
+			db := r.db.Keel(ctx)
+			head, sequence, err := latestLink(
+				ctx,
+				db,
+				entry.DetentionOccurrenceID,
+				keel.ForUpdate,
+			)
+			if err != nil {
+				log.Error("failed to read detention evidence head", zap.Error(err))
+				return nil, err
+			}
 
-		entry.PrevHash = head
-		entry.Sequence = sequence
-		entry.Seal()
+			entry.PrevHash = head
+			entry.Sequence = sequence
+			entry.Seal()
 
-		if err = detentiondb.DetentionEvidences.Create(ctx, db, entry); err != nil {
-			log.Error("failed to append detention evidence", zap.Error(err))
-			return nil, evidenceErrors.Map(err, entry.ID.String())
-		}
+			if err = detentionevidencedb.DetentionEvidences.Create(ctx, db, entry); err != nil {
+				log.Error("failed to append detention evidence", zap.Error(err))
+				return nil, evidenceErrors.Map(err, entry.ID.String())
+			}
 
-		o := detentiondb.DetentionOccurrences
-		if _, err = o.Where(o.ID.Eq(entry.DetentionOccurrenceID)).Update(
-			ctx,
-			db,
-			o.EvidenceHead.To(entry.Hash),
-			o.Version.ToExpr(o.Version),
-			o.UpdatedAt.ToExpr(o.UpdatedAt),
-		); err != nil {
-			log.Error("failed to advance detention evidence head", zap.Error(err))
-			return nil, err
-		}
+			o := detentiondb.DetentionOccurrences
+			if _, err = o.Where(o.ID.Eq(entry.DetentionOccurrenceID)).Update(
+				ctx,
+				db,
+				o.EvidenceHead.To(entry.Hash),
+				o.Version.ToExpr(o.Version),
+				o.UpdatedAt.ToExpr(o.UpdatedAt),
+			); err != nil {
+				log.Error("failed to advance detention evidence head", zap.Error(err))
+				return nil, err
+			}
 
-		return entry, nil
-	})
+			return entry, nil
+		},
+	)
 }
 
 func latestLink(
@@ -91,7 +96,7 @@ func latestLink(
 	occurrenceID pulid.ID,
 	lock ...keel.LockStrength,
 ) (prevHash string, sequence int32, err error) {
-	e := detentiondb.DetentionEvidences
+	e := detentionevidencedb.DetentionEvidences
 	q := e.Pick(e.Hash, e.Sequence).
 		Where(e.DetentionOccurrenceID.Eq(occurrenceID)).
 		Order(e.Sequence.Desc())
@@ -102,7 +107,7 @@ func latestLink(
 	latest, err := q.First(ctx, db)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return detention.GenesisHash, 0, nil
+			return detentionevidence.GenesisHash, 0, nil
 		}
 		return "", 0, err
 	}
@@ -113,19 +118,23 @@ func latestLink(
 func (r *evidenceRepository) List(
 	ctx context.Context,
 	req *detentionports.ListEvidenceRequest,
-) ([]*detention.DetentionEvidence, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*detention.DetentionEvidence, error) {
-		e := detentiondb.DetentionEvidences
-		entities, err := e.Where(e.DetentionOccurrenceID.Eq(req.OccurrenceID)).
-			Order(e.Sequence.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list detention evidence", zap.Error(err))
-			return nil, err
-		}
+) ([]*detentionevidence.DetentionEvidence, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*detentionevidence.DetentionEvidence, error) {
+			e := detentionevidencedb.DetentionEvidences
+			entities, err := e.Where(e.DetentionOccurrenceID.Eq(req.OccurrenceID)).
+				Order(e.Sequence.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list detention evidence", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *evidenceRepository) Head(

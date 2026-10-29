@@ -4,7 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,22 +24,25 @@ type ShipmentOptions struct {
 	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
 	IncludeCommodities      bool   `form:"-"                       json:"-"                       query:"-"`
 
-	IDs              []pulid.ID                 `form:"-" json:"-" query:"-"`
-	Statuses         []shipment.Status          `form:"-" json:"-" query:"-"`
-	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
-	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
-	PartyGroups      []ShipmentPartyGroup       `form:"-" json:"-" query:"-"`
-	ActiveHold       *bool                      `form:"-" json:"-" query:"-"`
-	HoldReasonCodes  []string                   `form:"-" json:"-" query:"-"`
-	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
-	TractorIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	TrailerIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	CarrierIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
-	CommodityIDs     []pulid.ID                 `form:"-" json:"-" query:"-"`
-	ShipmentTypeIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
-	QuickFilters     []shipment.QuickFilterSpec `form:"-" json:"-" query:"-"`
-	Timezone         string                     `form:"-" json:"-" query:"-"`
-	QuickFilterBasis *ShipmentQuickFilterBasis  `form:"-" json:"-" query:"-"`
+	IDs              []pulid.ID                    `form:"-" json:"-" query:"-"`
+	Statuses         []shipmentvocab.Status        `form:"-" json:"-" query:"-"`
+	CustomerIDs      []pulid.ID                    `form:"-" json:"-" query:"-"`
+	StopLocationIDs  []pulid.ID                    `form:"-" json:"-" query:"-"`
+	PartyGroups      []ShipmentPartyGroup          `form:"-" json:"-" query:"-"`
+	ActiveHold       *bool                         `form:"-" json:"-" query:"-"`
+	HoldReasonCodes  []string                      `form:"-" json:"-" query:"-"`
+	WorkerIDs        []pulid.ID                    `form:"-" json:"-" query:"-"`
+	TractorIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	TrailerIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	CarrierIDs       []pulid.ID                    `form:"-" json:"-" query:"-"`
+	CommodityIDs     []pulid.ID                    `form:"-" json:"-" query:"-"`
+	ShipmentTypeIDs  []pulid.ID                    `form:"-" json:"-" query:"-"`
+	QuickFilters     []quickfilter.QuickFilterSpec `form:"-" json:"-" query:"-"`
+	Timezone         string                        `form:"-" json:"-" query:"-"`
+	QuickFilterBasis *ShipmentQuickFilterBasis     `form:"-" json:"-" query:"-"`
+	// LateAt, when set, keeps the shipments running late at that instant:
+	// a stop not yet reached whose window closed before it.
+	LateAt int64 `form:"-" json:"-" query:"-"`
 }
 
 func (o *ShipmentOptions) HasActivityWindow() bool {
@@ -136,19 +141,19 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 
 type MoveStatusRestore struct {
 	MoveID pulid.ID
-	Status shipment.MoveStatus
+	Status shipmentvocab.MoveStatus
 }
 
 type StopStatusRestore struct {
 	StopID pulid.ID
-	Status shipment.StopStatus
+	Status shipmentvocab.StopStatus
 }
 
 type UncancelShipmentRequest struct {
 	TenantInfo      pagination.TenantInfo `json:"-"`
 	ShipmentID      pulid.ID              `json:"shipmentId"`
 	ExpectedVersion int64                 `json:"-"`
-	RestoredStatus  shipment.Status       `json:"-"`
+	RestoredStatus  shipmentvocab.Status  `json:"-"`
 	MoveStatuses    []MoveStatusRestore   `json:"-"`
 	StopStatuses    []StopStatusRestore   `json:"-"`
 }
@@ -519,7 +524,7 @@ type PreviousRateSummary struct {
 
 type ListBillingTransferCandidateIDsQuery struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-	Status shipment.Status          `json:"status"`
+	Status shipmentvocab.Status     `json:"status"`
 	Limit  int                      `json:"limit"`
 	// RecentFirst orders by last change rather than age, so a scan bounded to
 	// a window reaches the shipments that just became billable before the ones
@@ -586,7 +591,7 @@ type ListRatedByFormulaTemplateRequest struct {
 type UpdateShipmentStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"shipmentId"`
-	Status     shipment.Status       `json:"status"`
+	Status     shipmentvocab.Status  `json:"status"`
 	Version    int64                 `json:"version"`
 }
 

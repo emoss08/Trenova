@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -45,7 +48,7 @@ func splitTenderOfferCandidates(candidates []string) (pulid.ID, []string) {
 // deliberately have no tender recipient row.
 func (s *Service) resolveAcceptedTenderOffer(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	offerID pulid.ID,
 	references []string,
@@ -69,7 +72,7 @@ func (s *Service) resolveAcceptedTenderOffer(
 
 func (s *Service) routeTenderedShipmentStatus(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	details *shipmentStatusDetails,
 	reference string,
@@ -113,15 +116,15 @@ func (s *Service) routeTenderedShipmentStatus(
 
 func (s *Service) recordTenderedStatusEvent(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	offer *tender.TenderOffer,
 	details *shipmentStatusDetails,
-	event *edi.ShipmentStatusEvent,
+	event *edipayload.ShipmentStatusEvent,
 ) ([]string, error) {
 	statusCode := statusEventCode(event)
-	warnings, err := s.ediService.RecordTenderedShipmentStatus(
+	warnings, err := s.inboundApply.RecordTenderedShipmentStatus(
 		ctx,
-		&ediservice.RecordTenderedShipmentStatusRequest{
+		&ediinboundapply.RecordTenderedShipmentStatusRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: file.OrganizationID,
 				BuID:  file.BusinessUnitID,
@@ -158,9 +161,9 @@ func (s *Service) recordTenderedStatusEvent(
 
 func (s *Service) resolveFreightInvoiceOffer(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
-	payload *edi.FreightInvoicePayload,
+	payload *edipayload.FreightInvoicePayload,
 ) (*tender.TenderOffer, []string, error) {
 	referenceCandidates := make([]string, 0, len(payload.ReferenceNumbers))
 	for _, value := range payload.ReferenceNumbers {
@@ -195,8 +198,8 @@ func (s *Service) resolveFreightInvoiceOffer(
 // routing never fails because reconciliation could not run.
 func (s *Service) autoMatchInboundFreightInvoice(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
-	invoice *edi.CarrierInvoice,
+	file *ediinboundfile.EDIInboundFile,
+	invoice *edicarrierinvoice.CarrierInvoice,
 ) []string {
 	if s.invoiceMatcher == nil || invoice == nil {
 		return nil

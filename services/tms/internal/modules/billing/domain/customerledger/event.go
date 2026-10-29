@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 )
 
 // EventPaymentApplied is the source event of a ledger row that applies cash
@@ -20,13 +20,13 @@ const SourceFactoringItem = "FactoringSubmissionItem"
 const CollectionWindowDays = 91
 
 var eventLabels = map[string]string{
-	tenant.JournalSourceEventInvoicePosted.String():         "Invoice",
-	tenant.JournalSourceEventCreditMemoPosted.String():      "Credit memo",
-	tenant.JournalSourceEventDebitMemoPosted.String():       "Debit memo",
-	tenant.JournalSourceEventCustomerPaymentPosted.String(): "Payment",
+	accountingcontrol.JournalSourceEventInvoicePosted.String():         "Invoice",
+	accountingcontrol.JournalSourceEventCreditMemoPosted.String():      "Credit memo",
+	accountingcontrol.JournalSourceEventDebitMemoPosted.String():       "Debit memo",
+	accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(): "Payment",
 	EventPaymentApplied: "Payment applied",
-	tenant.JournalSourceEventCustomerShortPayRecognized.String(): "Short payment written off",
-	tenant.JournalSourceEventCustomerPaymentReversed.String():    "Payment reversed",
+	accountingcontrol.JournalSourceEventCustomerShortPayRecognized.String(): "Short payment written off",
+	accountingcontrol.JournalSourceEventCustomerPaymentReversed.String():    "Payment reversed",
 }
 
 // EventLabel is how a statement names the event that moved the balance. An

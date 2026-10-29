@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,17 +15,17 @@ import (
 func validAction() Spec {
 	return Spec{
 		ToolName: "dispatch_assign_move",
-		Policy: agentports.ToolPolicy{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "dispatch_assign_move",
-			Kind:          agent.ToolKindAction,
+			Kind:          agenttooltrust.ToolKindAction,
 			Resource:      permission.ResourceShipmentMove,
 			Operation:     permission.OpUpdate,
-			Scope:         agent.ToolScopeTenant,
+			Scope:         agenttooltrust.ToolScopeTenant,
 			DefaultTier:   agent.TierActWithApproval,
 			MaxTier:       agent.TierAutoExecute,
 			Egress:        []agent.EgressClass{agent.EgressInternal},
-			Effect:        agent.ToolEffectChange,
-			ReadsExternal: agent.ExternalReadNever,
+			Effect:        agenttooltrust.ToolEffectChange,
+			ReadsExternal: agenttooltrust.ExternalReadNever,
 			Rationale:     "Assigns a driver and tractor inside Trenova.",
 		},
 	}
@@ -33,17 +34,17 @@ func validAction() Spec {
 func validQuery() Spec {
 	return Spec{
 		ToolName: "shipment_get",
-		Policy: agentports.ToolPolicy{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "shipment_get",
-			Kind:          agent.ToolKindQuery,
+			Kind:          agenttooltrust.ToolKindQuery,
 			Resource:      permission.ResourceShipment,
 			Operation:     permission.OpRead,
-			Scope:         agent.ToolScopeTenant,
+			Scope:         agenttooltrust.ToolScopeTenant,
 			DefaultTier:   agent.TierAutoExecute,
 			MaxTier:       agent.TierAutoExecute,
 			Egress:        []agent.EgressClass{agent.EgressNone},
-			Effect:        agent.ToolEffectLookup,
-			ReadsExternal: agent.ExternalReadNever,
+			Effect:        agenttooltrust.ToolEffectLookup,
+			ReadsExternal: agenttooltrust.ExternalReadNever,
 			Rationale:     "Reads a shipment.",
 		},
 	}
@@ -51,18 +52,18 @@ func validQuery() Spec {
 
 func boundedAt(
 	amountMinor int64,
-) func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-		return agentports.WithinMoneyBound(amountMinor, "USD")
+) func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+		return agenttoolports.WithinMoneyBound(amountMinor, "USD")
 	}
 }
 
-func holdToPropose(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+func holdToPropose(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
-func classifyAsInternal(agentports.ToolExecuteParams) agentports.CallPolicy {
-	return agentports.CallPolicy{Egress: agent.EgressInternal}
+func classifyAsInternal(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 }
 
 func TestValidate_AcceptsWellFormedSpecs(t *testing.T) {
@@ -76,7 +77,7 @@ func TestValidate_AcceptsABoundedMoneyWrite(t *testing.T) {
 
 	spec := validAction()
 	spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-	spec.Policy.Condition = &agentports.TierCondition{
+	spec.Policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within the organization's bounds.",
 		Bounds:      boundedAt(100),
 	}
@@ -266,7 +267,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a self-scoped write is personal",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Scope = agent.ToolScopeSelf
+				spec.Policy.Scope = agenttooltrust.ToolScopeSelf
 				return []Spec{spec}
 			},
 			reason: "acts only on the caller's own records",
@@ -284,7 +285,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "reading outside text names its source",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadAlways
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadAlways
 				return []Spec{spec}
 			},
 			reason: "names the taint source",
@@ -320,7 +321,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a further source is a real one",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadMarked
 				spec.Policy.Source = agent.TaintSourceInboundMessage
 				spec.Policy.Sources = []agent.TaintSource{"gossip"}
 				return []Spec{spec}
@@ -331,7 +332,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a further source is not named twice",
 			specs: func() []Spec {
 				spec := validQuery()
-				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.ReadsExternal = agenttooltrust.ExternalReadMarked
 				spec.Policy.Source = agent.TaintSourceInboundMessage
 				spec.Policy.Sources = []agent.TaintSource{
 					agent.TaintSourceWeather,
@@ -373,7 +374,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a condition says what it does and how",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{Limit: holdToPropose}
+				spec.Policy.Condition = &agenttoolports.TierCondition{Limit: holdToPropose}
 				return []Spec{spec}
 			},
 			reason: "condition needs a description and a limit or bounds",
@@ -382,7 +383,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a condition holds a limit or bounds",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{Description: "Holds a call."}
+				spec.Policy.Condition = &agenttoolports.TierCondition{Description: "Holds a call."}
 				return []Spec{spec}
 			},
 			reason: "condition needs a description and a limit or bounds",
@@ -401,7 +402,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			specs: func() []Spec {
 				spec := validAction()
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Holds a call.",
 					Limit:       holdToPropose,
 				}
@@ -413,7 +414,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "only a money write is bounded",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Within bounds.",
 					Bounds:      boundedAt(100),
 				}
@@ -425,7 +426,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "only bounds may vouch for outside content",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Holds a call.",
 					Limit:       holdToPropose,
 					Vouches:     []agent.TaintSource{agent.TaintSourceBankReceipt},
@@ -439,7 +440,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			specs: func() []Spec {
 				spec := validAction()
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
-				spec.Policy.Condition = &agentports.TierCondition{
+				spec.Policy.Condition = &agenttoolports.TierCondition{
 					Description: "Within bounds.",
 					Bounds:      boundedAt(100),
 					Vouches:     []agent.TaintSource{agent.TaintSourceWeb},
@@ -452,7 +453,7 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			name: "a runtime tool never leaves",
 			specs: func() []Spec {
 				spec := validAction()
-				spec.Policy.Kind = agent.ToolKindRuntime
+				spec.Policy.Kind = agenttooltrust.ToolKindRuntime
 				spec.Policy.Egress = []agent.EgressClass{agent.EgressMoney}
 				return []Spec{spec}
 			},

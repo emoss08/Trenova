@@ -7,6 +7,7 @@ import (
 	"html/template"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -16,8 +17,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -204,11 +205,11 @@ func recipients(sc *shipmentContext) []string {
 	if sc.customer == nil {
 		return nil
 	}
-	if list := stringutils.SplitEmailList(sc.customer.StatusUpdateRecipients); len(list) > 0 {
+	if list := mailtext.SplitEmailList(sc.customer.StatusUpdateRecipients); len(list) > 0 {
 		return list
 	}
 	if sc.customer.EmailProfile != nil {
-		return stringutils.SplitEmailList(sc.customer.EmailProfile.ToRecipients)
+		return mailtext.SplitEmailList(sc.customer.EmailProfile.ToRecipients)
 	}
 	return nil
 }
@@ -350,10 +351,10 @@ func (s *Service) statusEmailContext(
 	ctx context.Context,
 	sc *shipmentContext,
 	row *customertracking.Notification,
-) documenttemplate.CustomerStatusEmailContext {
+) trackingtemplate.CustomerStatusEmailContext {
 	sh := sc.shipment
 	origin, destination := originAndDestination(sc.stops)
-	data := documenttemplate.CustomerStatusEmailContext{
+	data := trackingtemplate.CustomerStatusEmailContext{
 		CompanyName:       s.companyName(ctx, sc.tenant),
 		Event:             string(row.Event),
 		IsPickedUp:        row.Event == customertracking.EventPickedUp,

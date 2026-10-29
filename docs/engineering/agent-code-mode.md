@@ -64,7 +64,7 @@ converges with GraphQL with no change to code mode.
 | Requirement | (A) Persisted GraphQL operations | (B) Query tools through `dispatch` |
 |---|---|---|
 | Review rule: "code mode must reach effects only through a broker that calls `dispatch`" (§3.5) | **Breaks it.** It is a second path, beside `dispatch`, with its own checks. | Meets it by construction. |
-| Permissions | Resolvers call `base.CheckPermission` from a `gqlctx.AuthContext`. That context has no agent principal: its types are `session_user`, `api_key` and `capture_device`, and the handler refuses API keys. An unattended run's actor (`PrincipalTypeAgent`, its role, `IsAgentAllowed`) would need a new principal type threaded through every resolver's checks. | `authorize(actor, resource, read)`: the same check, for a person or an agent principal. |
+| Permissions | Resolvers call `resolvercore.CheckPermission` from a `gqlctx.AuthContext`. That context has no agent principal: its types are `session_user`, `api_key` and `capture_device`, and the handler refuses API keys. An unattended run's actor (`PrincipalTypeAgent`, its role, `IsAgentAllowed`) would need a new principal type threaded through every resolver's checks. | `authorize(actor, resource, read)`: the same check, for a person or an agent principal. |
 | Data scope and RLS | The HTTP middleware binds `dbscope.WithTenant` and `readscope`. A broker would bind them by hand, which is the same as (B). | Already bound by `agentflow.runTool` (`dbscope.WithTenant`, `readscope.With`) for the activity the script runs in. |
 | Field gating | `FieldGuardExtension` knows only the `@protected` groups (personal details, margins). GraphQL has **no** data access ceiling, no Restricted/Confidential tiers and no `withheldByAccess`. The broker would need a post-filter mapping each `__typename` to a permission resource and its sensitivities: a second implementation of `fieldaccess.go` that must never drift from the first. | `fieldGate`, `nestedRedactor` and `gatedResult` run inside the tool, so the script sees exactly what the model would see. |
 | Taint | No operation declares what it reads. A comment written outside the organization, an inbound message or a bank memo would come back unmarked unless every operation were hand-annotated with `ReadsExternal`, `Sources` and per-row `TaintCarrier` logic. | `callTaint` over the tool's policy and its rows' `SourcedTaintCarrier`, unchanged. |
@@ -153,7 +153,7 @@ finds `trenova`, `inputs` and `help` as globals:
 
 `the_sdk_names_no_tool` (the crate's tests) asserts that the SDK names no tool.
 
-**The index** is built for each call by `agentruntime.scriptIndex` from the turn's agent: every
+**The index** is built for each call by `scriptbroker.scriptIndex` from the turn's agent: every
 tool the definition holds that the person may use and a script may call. A tool may be called
 from a script when `ToolPolicy.CallableFromScript()` holds:
 
@@ -164,8 +164,13 @@ from a script when `ToolPolicy.CallableFromScript()` holds:
 
 It must also not be an extension tool (web, portal or the script tool itself), and
 not one of the tools that read pasted partner text (`ReadsExternalContent`). Reads another
-desk's agents hold, which a conversation reaches through `find_tools`, are not in the index: a
-script calls only what its own agent holds. Each entry carries the tool's name, its
+desk's agents hold, which the turn reached through `find_tools`, are in the index too
+(`DispatchCall.ScriptReach`, the turn's reach, sent only with the call that runs a script), and the
+broker dispatches each on its tier as the model's own call of it would be: find_tools told the
+model `fuel_list_purchases` was callable here, the script left it out, and Haiku spent the turn's
+three scripts guessing its name. A script that names a read it may not call gets the reads it may
+call in its result's note (`missingReadNote`), nearest first, with how a tool's name becomes
+`trenova.<namespace>.<rest>`. Each entry carries the tool's name, its
 description and its parameter schema (`toolschema.ForModel`). Scripts therefore write against
 the same schemas the model reads for discrete calls, and anything that becomes a tool is in
 the SDK the moment it is registered. The cached prefix does not change, because the index is
@@ -179,7 +184,7 @@ The tool is named under [agent-tool-conventions.md](agent-tool-conventions.md):
 - the verb is `run`;
 - the object is `script`, so in reading order it is `run_agent_script`.
 
-`TestNamespacedToolsFollowTheConventions` covers it. It lives in `agentquerytoolservice`
+`TestNamespacedToolsFollowTheConventions` covers it. It lives in `querytools/scriptquerytools`
 (`script_tool.go`), so the catalog, `find_tools`, the safety doc and the contract tests treat it
 as any other read.
 
@@ -205,7 +210,7 @@ fans out inside itself. **Search terms:** "for each", "every one of", "reconcile
 **What was decided while building:**
 
 - **Who holds it.** No agent is configured with the tool. Every agent that holds a tool for its
-  work (anything beyond the core tools) holds it too (`agentruntime.heldTools`, `withScripts`),
+  work (anything beyond the core tools) holds it too (`toolaccess.Access.HeldTools`, `withScripts`),
   unless an administrator switched it off for that agent (`DisabledToolNames`). When the E2B
   extension ran scripts it granted the tool; moving scripts in-house first dropped that grant,
   and no agent was offered a script until this rule replaced it.
@@ -252,6 +257,15 @@ letters, digits and underscores, starting with a letter, and not one of the SDK'
   dates, and anything else as text. A text file is its text. An attached file taints the call
   (`scriptAnswer.TaintedRecords`), as `agent_read_attachment` would; a report run is the
   organization's own data and taints nothing.
+- **A report definition** (`definition`, the shape `report_preview` takes). The report
+  engine runs it now with the person's report access (`report:read`, and every field checked as
+  a preview checks it), grouping and totalling every record on the server, and the grouped rows
+  are typed as a run's are (`definitionDataset`, source `ReportDefinition`, no source id). It is
+  how a script answers a question about more records than it may read: 32,870 fuel purchases
+  are a few dozen rows by month and fuel type. The engine returns at most its preview bound
+  (`reporting.previewRowLimit`), and a definition it cut short is refused with a request to
+  group it, never read as though it were every record. A script stopped at its rows, reads or
+  bytes is told the same in its note (`scriptTooManyRowsNote`).
 
 Another person's run, and a file from another conversation, are refused as though they did not
 exist; a run with no person behind it reads no datasets. A dataset is at most 20 MB, 200,000
@@ -330,7 +344,7 @@ told to fix and send again rather than to put the text in its reply. The
 
 The tool answers with the analysis id and what was shown, tables cut to their first 25 rows.
 A kept analysis that ran to the end becomes the Desk's `analysis` artifact
-(`assistantservice/analysis_artifact.go`), titled by the script's title, so running it again
+(`assistantservice/toolartifacts/analysis_artifact.go`), titled by the script's title, so running it again
 under the same title is the next version of one card. The card draws the figures as a strip,
 then each chart and table in the order shown, and folds what it printed and the code beneath; a
 table longer than the agent was shown is read whole from `GET /agent-analysis/runs/:runID/`.
@@ -417,11 +431,14 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Result | 64 KB | the runner | dropped and refused, `result` |
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
 | Host calls | the read limit for reads; 20,000 for paging datasets in and showing | the module | `Stopped`, `calls` |
-| Scripts per turn | 3, not counting a continuation that shows what a script left unshown (§4.3) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
+| Scripts per turn | 3, not counting a continuation that shows what a script left unshown (§4.3), nor, up to three of them, a script that stopped on an error before its first read (`codemode.Unread`) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
 | Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
-One script spends one call of the turn's tool budget, and its reads are counted against its own
-limits. The per-turn ceiling is therefore 3 × 60 reads, run at most 8 at a time.
+Every limit is a constant in `domain/codemode/limits.go`; `scriptrunner` applies
+`codemode.DefaultLimits()` to every run, and no organization or agent setting changes them. A list
+read from a script pages at the list's own bound, which for the GraphQL lists is the server's (100,
+`pagination.MaxLimit`), so sixty reads reach the 5,000-row limit. One script spends one call of the
+turn's tool budget, and its reads are counted against its own limits. The per-turn ceiling is therefore 3 × 60 reads, run at most 8 at a time.
 `TestBrokerSemaphoreBoundsConcurrentDispatches` holds the bound.
 
 **Latency** is recorded for the bench to judge: `brokerMs` is how long the broker's dispatch
@@ -452,7 +469,7 @@ The gate has two parts.
    reply, while the tools are sent with the first request and must not change mid-turn.
    - **Offering.** The gate is checked twice. When the turn opens, the script tool is offered
      only while some provider that may answer the tenant's assistant chat has Scripts on
-     (`Gate.Offered`, from `agentports.ScriptProviders.ScriptsOffered`, which `completionrouter`
+     (`Gate.Offered`, from `llmports.ScriptProviders.ScriptsOffered`, which `completionrouter`
      implements in `scripts.go`); otherwise `OpenTurn` takes it out of the turn's tools
      (`withoutScripts`). Turning Scripts on mid-turn does not add the tool to a turn already
      open.
@@ -676,20 +693,20 @@ decides from its own use whether to keep it.
 |---|---|
 | Gate, limits, call and reply types | `internal/modules/agent/domain/codemode/` (`gate.go`, `limits.go`, `script.go`) |
 | Provider settings (Scripts, Scripts may propose writes) | `aiprovider` (`agentsettings.go`, `ScriptSettings`); migrations `20261231010200_ai_provider_agent_settings` and `20261231010530_code_mode_scripts_on` |
-| Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`agentports.ScriptProviders`) |
-| Broker, index, gate check, per-turn count | `agentruntime/scriptbroker.go`, `scripttool.go` |
-| `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agentports/toolpolicy.go`, `agentquerytool.go` |
-| The tool | `agentquerytoolservice/script_tool.go` |
+| Which providers offer scripts, and the answering provider's settings at dispatch | `completionrouter/scripts.go` (`llmports.ScriptProviders`) |
+| Broker, index, gate check, per-turn count | `agentruntime/scriptbroker/scriptbroker.go`, `scripttool.go` |
+| `ToolPolicy.Script`, `CallableFromScript`, `QueryToolParams.Broker` | `agenttoolports/toolpolicy.go`, `agentquerytool.go` |
+| The tool | `querytools/scriptquerytools/script_tool.go` |
 | The runner: limits, host functions, outcome | `app/scriptrunner`; port `ports/scriptports` |
 | The WebAssembly host | `pkg/scriptvm` (embeds `scripts.wasm`); the compilation cache, shared with the rules engine, `pkg/wasmcache` |
 | The interpreter, the SDK and the module's ABI | `services/crates/scripts` (`trenova-scripts`), built by `task rust:wasm-scripts`; Monty vendored in `services/vendor/monty` |
 | Permission resource | `permission.ResourceCodeMode`, granted by the `platform.assistant` bundle |
-| Datasets (resolving, typing) | `agentquerytoolservice/script_datasets.go` |
+| Datasets (resolving, typing) | `querytools/scriptquerytools/script_datasets.go` |
 | Paging datasets in, what a script shows | `scriptrunner/display.go`; `domain/analysis` (`run.go`, `display.go`) |
 | Kept analyses and who reads them | `analysisrunservice`, `analysisrunrepository`, `api/handlers/agentanalysishandler`; table `agent_analysis_runs` |
-| The Desk card and the history | `assistantservice/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
+| The Desk card and the history | `assistantservice/toolartifacts/analysis_artifact.go`; client `routes/desk/_components/artifacts/kinds/analysis/`, `components/assistant/analysis-result.tsx` and `analysis-chart.tsx`, `routes/agent-control/_components/activity/analysis-runs.tsx` |
 | Red-team cases and harness | `agentredteam/testdata/cases/16_*`–`27_*`, `scripts.go` (`providerScripts`) |
-| Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench` |
+| Scenarios | `deskbench/scenarios/codemode.yaml`; `mode` and `pair` in `internal/deskbench/benchscenario` |
 
 Everything Go stays inside the agent module apart from `pkg/scriptvm`, `pkg/wasmcache`, the trace
 attributes and the registry entries.
@@ -703,7 +720,7 @@ attributes and the registry entries.
   **intent** (tool, arguments, and the record and version it read) instead of dispatching it,
   and the index gains action tools under the same filter.
 - **One batch proposal.** When the script ends, the outbox becomes one proposal of
-  `common.RecordBatch` items, each previewed through its own tool's `Preview` at filing, as a
+  `recordbatch.RecordBatch` items, each previewed through its own tool's `Preview` at filing, as a
   batch tool is ([proposal-previews.md](proposal-previews.md)).
 - **Re-previewed at commit.** When the person decides, every item is previewed again, and the
   stale-version refusal applies. An item whose world moved is refused, not committed on stale

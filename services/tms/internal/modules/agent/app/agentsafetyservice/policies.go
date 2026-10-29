@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/memtable"
 )
 
@@ -18,7 +19,7 @@ const (
 )
 
 type policyEntry struct {
-	view     agentports.AgentToolPolicyView
+	view     agenttoolports.AgentToolPolicyView
 	resource string
 }
 
@@ -27,8 +28,8 @@ type toolRuleRow struct {
 	alone bool
 }
 
-func (s *Service) indexPolicies(views []agentports.AgentToolPolicyView) {
-	slices.SortStableFunc(views, func(a, b agentports.AgentToolPolicyView) int {
+func (s *Service) indexPolicies(views []agenttoolports.AgentToolPolicyView) {
+	slices.SortStableFunc(views, func(a, b agenttoolports.AgentToolPolicyView) int {
 		return cmp.Compare(a.Policy.Name, b.Policy.Name)
 	})
 
@@ -66,10 +67,10 @@ func (s *Service) indexPolicies(views []agentports.AgentToolPolicyView) {
 
 func (s *Service) ListToolPolicies(
 	ctx context.Context,
-	req *agentports.ListAgentToolPoliciesRequest,
-) (*agentports.AgentToolPolicyPage, error) {
+	req *agenttoolports.ListAgentToolPoliciesRequest,
+) (*agenttoolports.AgentToolPolicyPage, error) {
 	if req == nil {
-		req = &agentports.ListAgentToolPoliciesRequest{}
+		req = &agenttoolports.ListAgentToolPoliciesRequest{}
 	}
 
 	rules, err := s.overridesFor(ctx, req.TenantInfo)
@@ -82,7 +83,7 @@ func (s *Service) ListToolPolicies(
 		rows[idx].entry = &s.entries[idx]
 		if override, ok := rules[s.entries[idx].view.Policy.Name]; ok {
 			overridden := s.entries[idx]
-			overridden.view = OverriddenView(overridden.view.Policy, override)
+			overridden.view = OverriddenView(&overridden.view.Policy, override)
 			rows[idx].entry = &overridden
 		}
 	}
@@ -103,14 +104,14 @@ func (s *Service) ListToolPolicies(
 		return nil, err
 	}
 
-	out := &agentports.AgentToolPolicyPage{
-		Edges:           make([]agentports.AgentToolPolicyEdge, 0, len(page.Items)),
+	out := &agenttoolports.AgentToolPolicyPage{
+		Edges:           make([]agenttoolports.AgentToolPolicyEdge, 0, len(page.Items)),
 		HasNextPage:     page.HasNextPage,
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, row := range page.Items {
-		edge := agentports.AgentToolPolicyEdge{
+		edge := agenttoolports.AgentToolPolicyEdge{
 			View:   row.entry.view,
 			Cursor: page.Cursors[idx],
 		}
@@ -125,7 +126,7 @@ func (s *Service) ListToolPolicies(
 }
 
 func newToolRuleTable(resources []string) *memtable.Table[toolRuleRow] {
-	view := func(row *toolRuleRow) *agentports.AgentToolPolicyView { return &row.entry.view }
+	view := func(row *toolRuleRow) *agenttoolports.AgentToolPolicyView { return &row.entry.view }
 
 	return memtable.New(memtable.Config[toolRuleRow]{
 		CursorScope: toolRuleCursorScope,
@@ -181,7 +182,7 @@ func newToolRuleTable(resources []string) *memtable.Table[toolRuleRow] {
 }
 
 func policyEgressField[T any](
-	view func(*T) *agentports.AgentToolPolicyView,
+	view func(*T) *agenttoolports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name:       "egress",
@@ -199,7 +200,7 @@ func policyEgressField[T any](
 }
 
 func policyTierField[T any](
-	view func(*T) *agentports.AgentToolPolicyView,
+	view func(*T) *agenttoolports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "maxTier",
@@ -219,15 +220,15 @@ func policyTierField[T any](
 }
 
 func policyKindField[T any](
-	view func(*T) *agentports.AgentToolPolicyView,
+	view func(*T) *agenttoolports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "kind",
 		Kind: memtable.KindEnum,
 		Values: []string{
-			agent.ToolKindQuery.String(),
-			agent.ToolKindAction.String(),
-			agent.ToolKindRuntime.String(),
+			agenttooltrust.ToolKindQuery.String(),
+			agenttooltrust.ToolKindAction.String(),
+			agenttooltrust.ToolKindRuntime.String(),
 		},
 		Filterable: true,
 		Sortable:   true,
@@ -236,22 +237,22 @@ func policyKindField[T any](
 }
 
 func policyExternalReadField[T any](
-	view func(*T) *agentports.AgentToolPolicyView,
+	view func(*T) *agenttoolports.AgentToolPolicyView,
 ) memtable.Field[T] {
 	return memtable.Field[T]{
 		Name: "readsExternal",
 		Kind: memtable.KindEnum,
 		Values: []string{
-			agent.ExternalReadNever.String(),
-			agent.ExternalReadAlways.String(),
-			agent.ExternalReadMarked.String(),
+			agenttooltrust.ExternalReadNever.String(),
+			agenttooltrust.ExternalReadAlways.String(),
+			agenttooltrust.ExternalReadMarked.String(),
 		},
 		Filterable: true,
 		Sortable:   true,
 		Text: func(row *T) string {
 			read := view(row).Policy.ReadsExternal
 			if !read.IsValid() {
-				return agent.ExternalReadNever.String()
+				return agenttooltrust.ExternalReadNever.String()
 			}
 
 			return read.String()
@@ -265,11 +266,11 @@ func policyExternalReadField[T any](
 	}
 }
 
-func externalReadRank(read agent.ExternalRead) int {
+func externalReadRank(read agenttooltrust.ExternalRead) int {
 	switch read {
-	case agent.ExternalReadMarked:
+	case agenttooltrust.ExternalReadMarked:
 		return 1
-	case agent.ExternalReadAlways:
+	case agenttooltrust.ExternalReadAlways:
 		return 2
 	default:
 		return 0

@@ -3,9 +3,13 @@ package assistantservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactrecorder"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,21 +19,21 @@ import (
 
 func documentRecorder(
 	t *testing.T,
-	repo *stubArtifactRepo,
-) (*artifactRecorder, *conversation.Thread) {
+	repo *assistanttest.StubArtifactRepo,
+) (*artifactrecorder.Recorder, *conversation.Thread) {
 	t.Helper()
 
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 
-	return svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), nil), thread
+	return svc.newArtifactRecorder(t.Context(), thread, tenant, assistanttest.Actor(), nil), thread
 }
 
-func published(title, body string, revises pulid.ID) agentports.ToolObservation {
-	return agentports.ToolObservation{
-		Call: agentports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
-		Data: agentports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
+func published(title, body string, revises pulid.ID) agentruntimeports.ToolObservation {
+	return agentruntimeports.ToolObservation{
+		Call: llmports.ToolCall{ID: "call_publish", Name: "publish_artifact"},
+		Data: agentruntimeports.PublishedDocument{Title: title, Body: body, ArtifactID: revises},
 	}
 }
 
@@ -38,15 +42,15 @@ func published(title, body string, revises pulid.ID) agentports.ToolObservation 
 func TestArtifactRecorder_KeepsAPublishedDocument(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubArtifactRepo{}
+	repo := &assistanttest.StubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 
-	shown, err := recorder.observe(published("SEED-SHP-007 brief", "# SEED-SHP-007", pulid.Nil))
+	shown, err := recorder.Observe(published("SEED-SHP-007 brief", "# SEED-SHP-007", pulid.Nil))
 	require.NoError(t, err)
 	require.NotNil(t, shown)
 
-	require.Len(t, repo.upserts, 1)
-	kept := repo.upserts[0]
+	require.Len(t, repo.Upserts, 1)
+	kept := repo.Upserts[0]
 	assert.Equal(t, assistantartifact.KindDocument, kept.Kind)
 	assert.Equal(t, thread.ID, kept.ThreadID)
 	assert.Equal(t, "SEED-SHP-007 brief", kept.Title)
@@ -62,7 +66,7 @@ func TestArtifactRecorder_KeepsAPublishedDocument(t *testing.T) {
 func TestArtifactRecorder_RevisesADocumentAsItsNextVersion(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubArtifactRepo{}
+	repo := &assistanttest.StubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 	existing := &assistantartifact.Artifact{
 		ID:               pulid.MustNew("art_"),
@@ -75,13 +79,13 @@ func TestArtifactRecorder_RevisesADocumentAsItsNextVersion(t *testing.T) {
 		LineageSeq:       1,
 		Pinned:           true,
 	}
-	repo.stored = map[pulid.ID]*assistantartifact.Artifact{existing.ID: existing}
+	repo.Stored = map[pulid.ID]*assistantartifact.Artifact{existing.ID: existing}
 
-	shown, err := recorder.observe(published("Brief, revised", "# Revised", existing.ID))
+	shown, err := recorder.Observe(published("Brief, revised", "# Revised", existing.ID))
 	require.NoError(t, err)
 
-	require.Len(t, repo.upserts, 1)
-	kept := repo.upserts[0]
+	require.Len(t, repo.Upserts, 1)
+	kept := repo.Upserts[0]
 	assert.NotEqual(t, existing.ID, kept.ID, "the first draft stays as it was")
 	assert.Equal(t, existing.ID, kept.LineageID)
 	assert.Equal(t, 2, kept.LineageSeq)
@@ -99,7 +103,7 @@ func TestArtifactRecorder_RevisesADocumentAsItsNextVersion(t *testing.T) {
 func TestArtifactRecorder_RefusesARevisionOfSomethingElse(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubArtifactRepo{}
+	repo := &assistanttest.StubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 	elsewhere := &assistantartifact.Artifact{
 		ID: pulid.MustNew(
@@ -109,14 +113,14 @@ func TestArtifactRecorder_RefusesARevisionOfSomethingElse(t *testing.T) {
 	table := &assistantartifact.Artifact{
 		ID: pulid.MustNew("art_"), ThreadID: thread.ID, Kind: assistantartifact.KindTableView,
 	}
-	repo.stored = map[pulid.ID]*assistantartifact.Artifact{elsewhere.ID: elsewhere, table.ID: table}
+	repo.Stored = map[pulid.ID]*assistantartifact.Artifact{elsewhere.ID: elsewhere, table.ID: table}
 
 	for _, target := range []pulid.ID{elsewhere.ID, table.ID, pulid.MustNew("art_")} {
-		shown, err := recorder.observe(published("Brief", "# Brief", target))
-		require.ErrorIs(t, err, errUnknownDocument)
+		shown, err := recorder.Observe(published("Brief", "# Brief", target))
+		require.ErrorIs(t, err, toolartifacts.ErrUnknownDocument)
 		assert.Nil(t, shown)
 	}
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }
 
 // Asked to publish an analysis, a model retyped its figures into the text. A
@@ -125,7 +129,7 @@ func TestArtifactRecorder_RefusesARevisionOfSomethingElse(t *testing.T) {
 func TestArtifactRecorder_PublishesTheAnalysesADocumentNames(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubArtifactRepo{}
+	repo := &assistanttest.StubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 	kept := &assistantartifact.Artifact{
 		ID:       pulid.MustNew("art_"),
@@ -138,19 +142,19 @@ func TestArtifactRecorder_PublishesTheAnalysesADocumentNames(t *testing.T) {
 			}},
 		},
 	}
-	repo.stored = map[pulid.ID]*assistantartifact.Artifact{kept.ID: kept}
+	repo.Stored = map[pulid.ID]*assistantartifact.Artifact{kept.ID: kept}
 	document := published("Lane brief", "Revenue is spread thin.", pulid.Nil)
-	brief, ok := document.Data.(agentports.PublishedDocument)
+	brief, ok := document.Data.(agentruntimeports.PublishedDocument)
 	require.True(t, ok)
 	brief.Analyses = []pulid.ID{kept.ID}
 	document.Data = brief
 
-	_, err := recorder.observe(document)
+	_, err := recorder.Observe(document)
 	require.NoError(t, err)
 
-	require.Len(t, repo.upserts, 1)
+	require.Len(t, repo.Upserts, 1)
 	assert.Equal(t, "Revenue is spread thin.\n\n## Lane performance, 90 days\n\n"+
-		"- **Revenue:** $12,517,479.24\n", repo.upserts[0].Payload["body"])
+		"- **Revenue:** $12,517,479.24\n", repo.Upserts[0].Payload["body"])
 }
 
 // Only an analysis of this conversation is added: another thread's, or an
@@ -158,7 +162,7 @@ func TestArtifactRecorder_PublishesTheAnalysesADocumentNames(t *testing.T) {
 func TestArtifactRecorder_RefusesAnAnalysisFromElsewhere(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubArtifactRepo{}
+	repo := &assistanttest.StubArtifactRepo{}
 	recorder, thread := documentRecorder(t, repo)
 	elsewhere := &assistantartifact.Artifact{
 		ID: pulid.MustNew("art_"), ThreadID: pulid.MustNew("athr_"),
@@ -167,18 +171,18 @@ func TestArtifactRecorder_RefusesAnAnalysisFromElsewhere(t *testing.T) {
 	table := &assistantartifact.Artifact{
 		ID: pulid.MustNew("art_"), ThreadID: thread.ID, Kind: assistantartifact.KindTableView,
 	}
-	repo.stored = map[pulid.ID]*assistantartifact.Artifact{elsewhere.ID: elsewhere, table.ID: table}
+	repo.Stored = map[pulid.ID]*assistantartifact.Artifact{elsewhere.ID: elsewhere, table.ID: table}
 
 	for _, target := range []pulid.ID{elsewhere.ID, table.ID, pulid.MustNew("art_")} {
 		document := published("Brief", "# Brief", pulid.Nil)
-		brief, ok := document.Data.(agentports.PublishedDocument)
+		brief, ok := document.Data.(agentruntimeports.PublishedDocument)
 		require.True(t, ok)
 		brief.Analyses = []pulid.ID{target}
 		document.Data = brief
 
-		shown, err := recorder.observe(document)
-		require.ErrorIs(t, err, errUnknownAnalysis)
+		shown, err := recorder.Observe(document)
+		require.ErrorIs(t, err, toolartifacts.ErrUnknownAnalysis)
 		assert.Nil(t, shown)
 	}
-	assert.Empty(t, repo.upserts)
+	assert.Empty(t, repo.Upserts)
 }

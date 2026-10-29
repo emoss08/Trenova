@@ -5,9 +5,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -16,13 +18,13 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Completion agentports.CompletionService
+	Completion llmports.CompletionService
 	// Verdicts is the store every replica shares. Optional: without it each
 	// replica remembers only its own classifications, which is what this
 	// service did before and what a test wants.
-	Verdicts agentports.ScopeVerdictCacheRepository `optional:"true"`
-	Config   *config.Config                         `optional:"true"`
-	Metrics  *metrics.Registry                      `optional:"true"`
+	Verdicts agenttoolports.ScopeVerdictCacheRepository `optional:"true"`
+	AIConfig *aiconfig.Config                           `optional:"true"`
+	Metrics  *metrics.Registry                          `optional:"true"`
 }
 
 /*
@@ -50,8 +52,8 @@ const DefaultClassifierTimeout = 3 * time.Second
 
 type Service struct {
 	logger     *zap.Logger
-	completion agentports.CompletionService
-	metrics    *metrics.Assistant
+	completion llmports.CompletionService
+	metrics    *aimetrics.Assistant
 
 	// ClassifierTimeout is how long the scope check may take before the
 	// request proceeds on the deterministic verdict alone.
@@ -71,16 +73,12 @@ type Service struct {
 
 func New(p Params) *Service {
 	logger := p.Logger.Named("service.agent-guard")
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
 
 	return &Service{
 		logger:            logger,
 		completion:        p.Completion,
 		metrics:           metrics.AssistantFrom(p.Metrics),
-		verdicts:          newVerdictCache(p.Verdicts, ai.GetVerdictCacheTTL(), logger),
+		verdicts:          newVerdictCache(p.Verdicts, p.AIConfig.GetVerdictCacheTTL(), logger),
 		ClassifierTimeout: DefaultClassifierTimeout,
 	}
 }
@@ -187,7 +185,7 @@ func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
 			return allowed(StageUnavailable, CategoryOther)
 		}
 
-		if errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			s.logger.Debug("no scope classifier configured; deterministic rules only")
 
 			return allowed(StageUnavailable, CategoryOther)
@@ -245,7 +243,7 @@ func reasonForCategory(category Category) Reason {
 // literal. The field is unexported because nothing outside this package has
 // any business swapping the classifier at runtime; a test that needs a slow
 // or failing one does.
-func SetCompletionForTest(s *Service, completion agentports.CompletionService) {
+func SetCompletionForTest(s *Service, completion llmports.CompletionService) {
 	s.completion = completion
 	if s.logger == nil {
 		s.logger = zap.NewNop()

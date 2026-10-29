@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,26 +27,32 @@ func (definitions) GetByID(
 
 type prompts struct {
 	count   int
-	created []*agentdefinition.TestPrompt
+	created []*agenttestprompt.TestPrompt
 }
 
 func (p *prompts) List(
 	context.Context,
 	*agentdefinitionports.ListAgentTestPromptsRequest,
-) ([]*agentdefinition.TestPrompt, error) {
+) ([]*agenttestprompt.TestPrompt, error) {
 	return p.created, nil
 }
 
-func (p *prompts) Count(context.Context, *agentdefinitionports.ListAgentTestPromptsRequest) (int, error) {
+func (p *prompts) Count(
+	context.Context,
+	*agentdefinitionports.ListAgentTestPromptsRequest,
+) (int, error) {
 	return p.count, nil
 }
 
-func (p *prompts) Create(_ context.Context, prompt *agentdefinition.TestPrompt) error {
+func (p *prompts) Create(_ context.Context, prompt *agenttestprompt.TestPrompt) error {
 	p.created = append(p.created, prompt)
 	return nil
 }
 
-func (p *prompts) Delete(context.Context, *agentdefinitionports.DeleteAgentTestPromptRequest) error {
+func (p *prompts) Delete(
+	context.Context,
+	*agentdefinitionports.DeleteAgentTestPromptRequest,
+) error {
 	return nil
 }
 
@@ -72,8 +79,11 @@ func TestKeepRefusesAnEmptyOrLongPrompt(t *testing.T) {
 	t.Parallel()
 
 	svc := New(Params{Definitions: definitions{}, Prompts: &prompts{}})
-	for _, text := range []string{"   ", strings.Repeat("a", agentdefinition.MaxTestPromptRunes+1)} {
-		_, err := svc.Keep(t.Context(), &agentdefinitionports.KeepAgentTestPromptRequest{Prompt: text})
+	for _, text := range []string{"   ", strings.Repeat("a", agenttestprompt.MaxTestPromptRunes+1)} {
+		_, err := svc.Keep(
+			t.Context(),
+			&agentdefinitionports.KeepAgentTestPromptRequest{Prompt: text},
+		)
 
 		var multiErr *errortypes.MultiError
 		require.ErrorAs(t, err, &multiErr)
@@ -83,10 +93,13 @@ func TestKeepRefusesAnEmptyOrLongPrompt(t *testing.T) {
 func TestKeepRefusesPastTheLimit(t *testing.T) {
 	t.Parallel()
 
-	store := &prompts{count: agentdefinition.MaxTestPrompts}
+	store := &prompts{count: agenttestprompt.MaxTestPrompts}
 	svc := New(Params{Definitions: definitions{}, Prompts: store})
 
-	_, err := svc.Keep(t.Context(), &agentdefinitionports.KeepAgentTestPromptRequest{Prompt: "One more"})
+	_, err := svc.Keep(
+		t.Context(),
+		&agentdefinitionports.KeepAgentTestPromptRequest{Prompt: "One more"},
+	)
 
 	require.Error(t, err)
 	assert.Empty(t, store.created)

@@ -7,15 +7,22 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recurringshipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -64,57 +71,63 @@ type ReportAdministrator interface {
 		ctx context.Context,
 		req *reporting.GetDefinitionRequest,
 	) (*report.ReportDefinition, error)
+}
+
+type DashboardAdministrator interface {
 	PlanDeleteDashboard(
 		ctx context.Context,
-		req *reporting.GetDashboardRequest,
+		req *reportdashboardservice.GetDashboardRequest,
 	) (*report.Dashboard, error)
-	DeleteDashboard(ctx context.Context, req *reporting.GetDashboardRequest) error
+	DeleteDashboard(ctx context.Context, req *reportdashboardservice.GetDashboardRequest) error
+}
+
+type ScheduleAdministrator interface {
 	GetSchedule(
 		ctx context.Context,
-		req *reporting.GetScheduleRequest,
+		req *reportscheduleservice.GetScheduleRequest,
 	) (*report.ReportSchedule, error)
 	PlanUpdateSchedule(
 		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
-	) (*reporting.ScheduleChange, error)
+		req *reportscheduleservice.SaveScheduleRequest,
+	) (*reportscheduleservice.ScheduleChange, error)
 	UpdateSchedule(
 		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
+		req *reportscheduleservice.SaveScheduleRequest,
 	) (*report.ReportSchedule, error)
 	PlanDeleteSchedule(
 		ctx context.Context,
-		req *reporting.GetScheduleRequest,
+		req *reportscheduleservice.GetScheduleRequest,
 	) (*report.ReportSchedule, error)
-	DeleteSchedule(ctx context.Context, req *reporting.GetScheduleRequest) error
+	DeleteSchedule(ctx context.Context, req *reportscheduleservice.GetScheduleRequest) error
 }
 
-func reportTarget(key string) func(map[string]any) (agentports.ToolTarget, bool) {
-	return func(params map[string]any) (agentports.ToolTarget, bool) {
-		return common.TargetOf(params, key, permission.ResourceReport)
+func reportTarget(key string) func(map[string]any) (agenttoolports.ToolTarget, bool) {
+	return func(params map[string]any) (agenttoolports.ToolTarget, bool) {
+		return toolparams.TargetOf(params, key, permission.ResourceReport)
 	}
 }
 
-func reportInternalSpec(spec *common.ReceivableSpec) *common.ReceivableSpec {
+func reportInternalSpec(spec *toolspec.ReceivableSpec) *toolspec.ReceivableSpec {
 	spec.Resource = permission.ResourceReport
 
-	return common.FuelInternalSpec(spec)
+	return toolspec.FuelInternalSpec(spec)
 }
 
 type reportRunView struct {
 	Status string `json:"status"`
 }
 
-func NewCancelReportRunTool(reports ReportAdministrator) agentports.AgentTool {
-	request := func(params *agentports.ToolExecuteParams) (*reporting.GetRunRequest, error) {
-		id, err := common.RequirePulid(params.Params, paramReportRunID)
+func NewCancelReportRunTool(reports ReportAdministrator) agenttoolports.AgentTool {
+	request := func(params *agenttoolports.ToolExecuteParams) (*reporting.GetRunRequest, error) {
+		id, err := toolparams.RequirePulid(params.Params, paramReportRunID)
 		if err != nil {
 			return nil, err
 		}
 
-		return &reporting.GetRunRequest{Request: reportingRequestFrom(*params), RunID: id}, nil
+		return &reporting.GetRunRequest{Request: reportingRequestFrom(params), RunID: id}, nil
 	}
 
-	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
+	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
 		Name: "report_cancel_run",
 		Description: "Cancel a report run the person started that is still queued or " +
 			"running, such as one asked for with the wrong parameters. A finished run is " +
@@ -125,29 +138,29 @@ func NewCancelReportRunTool(reports ReportAdministrator) agentports.AgentTool {
 		Rationale: "Stops a report the person asked for from running; nothing is changed or " +
 			"sent, and running the report again gives the same rows.",
 		Properties: map[string]any{
-			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, permission.KindReportRun),
+			paramReportRunID: agenttoolschema.KindID(reportRunSupplier, recordkind.ReportRun),
 		},
 		Required: []string{paramReportRunID},
 		Target:   reportTarget(paramReportRunID),
-	}), common.ReceivablePlan[*reporting.GetRunRequest, *reporting.RunChange]{
+	}), toolspec.ReceivablePlan[*reporting.GetRunRequest, *reporting.RunChange]{
 		Request: request,
 		Plan: func(
 			ctx context.Context,
 			req *reporting.GetRunRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*reporting.RunChange, error) {
 			return reports.PlanCancelRun(ctx, req)
 		},
 		Refused: func(*reporting.GetRunRequest) string {
 			return "Would cancel a report run."
 		},
-		Render: func(_ *reporting.GetRunRequest, plan *reporting.RunChange) (*agent.ToolPreview, error) {
+		Render: func(_ *reporting.GetRunRequest, plan *reporting.RunChange) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				toolpreview.Record{
 					Resource: permission.ResourceReport,
 					ID:       plan.Before.ID,
 					Label:    "Report run",
-					Version:  common.PinnedVersion(plan.Before.Version),
+					Version:  changepreview.PinnedVersion(plan.Before.Version),
 				},
 				&reportRunView{Status: string(plan.Before.Status)},
 				&reportRunView{Status: string(plan.After.Status)},
@@ -163,8 +176,8 @@ func NewCancelReportRunTool(reports ReportAdministrator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *reporting.GetRunRequest,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+			_ *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reports.CancelRun(ctx, req)
 
 			return nil, err
@@ -173,21 +186,21 @@ func NewCancelReportRunTool(reports ReportAdministrator) agentports.AgentTool {
 }
 
 func definitionRequestFrom(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.GetDefinitionRequest, error) {
-	id, err := common.RequirePulid(params.Params, paramDefinitionID)
+	id, err := toolparams.RequirePulid(params.Params, paramDefinitionID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &reporting.GetDefinitionRequest{
-		Request:      reportingRequestFrom(*params),
+		Request:      reportingRequestFrom(params),
 		DefinitionID: id,
 	}, nil
 }
 
-func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
-	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
+func NewDeleteReportTool(reports ReportAdministrator) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
 		Name: "report_delete",
 		Description: "Propose deleting a saved report the person owns. Its schedules stop " +
 			"with it. Built-in reports cannot be deleted; a copy of one made with report_fork " +
@@ -204,12 +217,12 @@ func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
 		},
 		Required: []string{paramDefinitionID},
 		Target:   reportTarget(paramDefinitionID),
-	}), common.ReceivablePlan[*reporting.GetDefinitionRequest, *report.ReportDefinition]{
+	}), toolspec.ReceivablePlan[*reporting.GetDefinitionRequest, *report.ReportDefinition]{
 		Request: definitionRequestFrom,
 		Plan: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*report.ReportDefinition, error) {
 			return reports.PlanDeleteDefinition(ctx, req)
 		},
@@ -219,7 +232,7 @@ func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
 		Render: func(
 			_ *reporting.GetDefinitionRequest,
 			existing *report.ReportDefinition,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				reportRecord(existing),
 				reportViewOf(existing),
@@ -237,15 +250,15 @@ func NewDeleteReportTool(reports ReportAdministrator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+			_ *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
 			return nil, reports.DeleteDefinition(ctx, req)
 		},
 	})
 }
 
-func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
-	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
+func NewResetReportForkTool(reports ReportAdministrator) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
 		Name: "report_reset_fork",
 		Description: "Put a report copied from a built-in one with report_fork back to the " +
 			"built-in's current definition, dropping the person's changes. Its columns, " +
@@ -262,12 +275,12 @@ func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 		},
 		Required: []string{paramDefinitionID},
 		Target:   reportTarget(paramDefinitionID),
-	}), common.ReceivablePlan[*reporting.GetDefinitionRequest, *reporting.DefinitionChange]{
+	}), toolspec.ReceivablePlan[*reporting.GetDefinitionRequest, *reporting.DefinitionChange]{
 		Request: definitionRequestFrom,
 		Plan: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *agentports.ToolExecuteParams,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*reporting.DefinitionChange, error) {
 			return reports.PlanResetCannedFork(ctx, req)
 		},
@@ -277,7 +290,7 @@ func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 		Render: func(
 			_ *reporting.GetDefinitionRequest,
 			plan *reporting.DefinitionChange,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Changed(
 				reportRecord(plan.Before),
 				reportViewOf(plan.Before),
@@ -297,8 +310,8 @@ func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *reporting.GetDefinitionRequest,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+			_ *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := reports.ResetCannedFork(ctx, req)
 
 			return nil, err
@@ -306,8 +319,8 @@ func NewResetReportForkTool(reports ReportAdministrator) agentports.AgentTool {
 	})
 }
 
-func NewDeleteDashboardTool(reports ReportAdministrator) agentports.AgentTool {
-	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
+func NewDeleteDashboardTool(dashboards DashboardAdministrator) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
 		Name:        "report_delete_dashboard",
 		SearchTerms: []string{"remove dashboard", "delete dashboard and its tiles"},
 		Description: "Propose deleting a dashboard the person owns. The reports its tiles " +
@@ -323,40 +336,40 @@ func NewDeleteDashboardTool(reports ReportAdministrator) agentports.AgentTool {
 			),
 		},
 		Required: []string{paramDashboardID},
-		Target: func(params map[string]any) (agentports.ToolTarget, bool) {
-			return common.TargetOf(params, paramDashboardID, permission.ResourceDashboard)
+		Target: func(params map[string]any) (agenttoolports.ToolTarget, bool) {
+			return toolparams.TargetOf(params, paramDashboardID, permission.ResourceDashboard)
 		},
-	}), common.ReceivablePlan[*reporting.GetDashboardRequest, *report.Dashboard]{
-		Request: func(params *agentports.ToolExecuteParams) (*reporting.GetDashboardRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramDashboardID)
+	}), toolspec.ReceivablePlan[*reportdashboardservice.GetDashboardRequest, *report.Dashboard]{
+		Request: func(params *agenttoolports.ToolExecuteParams) (*reportdashboardservice.GetDashboardRequest, error) {
+			id, err := toolparams.RequirePulid(params.Params, paramDashboardID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &reporting.GetDashboardRequest{
-				Request:     reportingRequestFrom(*params),
+			return &reportdashboardservice.GetDashboardRequest{
+				Request:     reportingRequestFrom(params),
 				DashboardID: id,
 			}, nil
 		},
 		Plan: func(
 			ctx context.Context,
-			req *reporting.GetDashboardRequest,
-			_ *agentports.ToolExecuteParams,
+			req *reportdashboardservice.GetDashboardRequest,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*report.Dashboard, error) {
-			return reports.PlanDeleteDashboard(ctx, req)
+			return dashboards.PlanDeleteDashboard(ctx, req)
 		},
-		Refused: func(*reporting.GetDashboardRequest) string {
+		Refused: func(*reportdashboardservice.GetDashboardRequest) string {
 			return "Would delete a dashboard."
 		},
-		Render: func(_ *reporting.GetDashboardRequest, existing *report.Dashboard) (*agent.ToolPreview, error) {
+		Render: func(_ *reportdashboardservice.GetDashboardRequest, existing *report.Dashboard) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				toolpreview.Record{
 					Resource: permission.ResourceDashboard,
 					ID:       existing.ID,
 					Label:    existing.Name,
-					Version:  common.PinnedVersion(existing.Version),
+					Version:  changepreview.PinnedVersion(existing.Version),
 				},
-				masterdatatools.DashboardViewOf(existing),
+				dashboardtools.DashboardViewOf(existing),
 			)
 			if err != nil {
 				return nil, err
@@ -368,10 +381,10 @@ func NewDeleteDashboardTool(reports ReportAdministrator) agentports.AgentTool {
 		},
 		Run: func(
 			ctx context.Context,
-			req *reporting.GetDashboardRequest,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, reports.DeleteDashboard(ctx, req)
+			req *reportdashboardservice.GetDashboardRequest,
+			_ *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			return nil, dashboards.DeleteDashboard(ctx, req)
 		},
 	})
 }
@@ -409,7 +422,7 @@ func reportScheduleRecord(schedule *report.ReportSchedule) toolpreview.Record {
 		Resource: permission.ResourceReport,
 		ID:       schedule.ID,
 		Label:    "Report schedule " + schedule.CronExpression,
-		Version:  common.PinnedVersion(schedule.Version),
+		Version:  changepreview.PinnedVersion(schedule.Version),
 	}
 }
 
@@ -420,11 +433,11 @@ type scheduleEdit struct {
 
 func (e scheduleEdit) request(
 	ctx context.Context,
-	reports ReportAdministrator,
-	params *agentports.ToolExecuteParams,
-) (*reporting.SaveScheduleRequest, error) {
-	base := reporting.Request{TenantInfo: common.TenantFrom(*params)}
-	stored, err := reports.GetSchedule(ctx, &reporting.GetScheduleRequest{
+	schedules ScheduleAdministrator,
+	params *agenttoolports.ToolExecuteParams,
+) (*reportscheduleservice.SaveScheduleRequest, error) {
+	base := reporting.Request{TenantInfo: toolparams.TenantFrom(params)}
+	stored, err := schedules.GetSchedule(ctx, &reportscheduleservice.GetScheduleRequest{
 		Request:    base,
 		ScheduleID: e.id,
 	})
@@ -432,7 +445,7 @@ func (e scheduleEdit) request(
 		return nil, err
 	}
 
-	req := &reporting.SaveScheduleRequest{
+	req := &reportscheduleservice.SaveScheduleRequest{
 		Request:        base,
 		ScheduleID:     stored.ID,
 		DefinitionID:   stored.DefinitionID,
@@ -453,20 +466,20 @@ func (e scheduleEdit) request(
 	return req, e.apply(req)
 }
 
-func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
+func (e scheduleEdit) apply(req *reportscheduleservice.SaveScheduleRequest) error {
 	if _, given := e.values[paramDefinitionID]; given {
-		id, err := common.RequirePulid(e.values, paramDefinitionID)
+		id, err := toolparams.RequirePulid(e.values, paramDefinitionID)
 		if err != nil {
 			return err
 		}
 		req.DefinitionID = id
 	}
 	for key, target := range map[string]*string{
-		receivabletools.ParamCronExpression: &req.CronExpression,
-		receivabletools.ParamTimezone:       &req.Timezone,
+		recurringshipmenttools.ParamCronExpression: &req.CronExpression,
+		recurringshipmenttools.ParamTimezone:       &req.Timezone,
 	} {
 		if _, given := e.values[key]; given {
-			text, err := common.RequireString(e.values, key)
+			text, err := toolparams.RequireString(e.values, key)
 			if err != nil {
 				return err
 			}
@@ -474,7 +487,7 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 		}
 	}
 	if _, given := e.values[paramFormats]; given {
-		req.Formats = common.ScheduleFormats(e.values)
+		req.Formats = toolparams.ScheduleFormats(e.values)
 		for idx, format := range req.Formats {
 			if !report.Format(format).IsValid() {
 				return fmt.Errorf("%s[%d]: %q is not a report format", paramFormats, idx, format)
@@ -482,7 +495,7 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 		}
 	}
 	if _, given := e.values[paramEmailRecipients]; given {
-		recipients := common.StringSliceParam(e.values, paramEmailRecipients)
+		recipients := toolparams.StringSliceParam(e.values, paramEmailRecipients)
 		if len(recipients) > maxScheduleRecipients {
 			return fmt.Errorf("%s holds %d addresses; a schedule takes at most %d",
 				paramEmailRecipients, len(recipients), maxScheduleRecipients)
@@ -494,7 +507,7 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 		paramEmailInline:          &req.EmailInline,
 		carriertools.ParamEnabled: &req.Enabled,
 	} {
-		flag, err := common.OptionalBoolPointer(e.values, key)
+		flag, err := toolparams.OptionalBoolPointer(e.values, key)
 		if err != nil {
 			return err
 		}
@@ -506,8 +519,8 @@ func (e scheduleEdit) apply(req *reporting.SaveScheduleRequest) error {
 	return nil
 }
 
-func scheduleIDFrom(params *agentports.ToolExecuteParams) (scheduleEdit, error) {
-	id, err := common.RequirePulid(params.Params, paramReportScheduleID)
+func scheduleIDFrom(params *agenttoolports.ToolExecuteParams) (scheduleEdit, error) {
+	id, err := toolparams.RequirePulid(params.Params, paramReportScheduleID)
 	if err != nil {
 		return scheduleEdit{}, err
 	}
@@ -521,8 +534,8 @@ func scheduleIDFrom(params *agentports.ToolExecuteParams) (scheduleEdit, error) 
 	return scheduleEdit{id: id, values: values}, nil
 }
 
-func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+func NewUpdateReportScheduleTool(schedules ScheduleAdministrator) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name: "report_update_schedule",
 		Description: "Change a report schedule the person set up: when it runs, its zone, " +
 			"the formats, who it is emailed to, or switch it on or off. Fields left out keep " +
@@ -537,18 +550,18 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 			"outside the organization.",
 		Properties: map[string]any{
 			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
-				permission.KindReportSchedule),
+				recordkind.ReportSchedule),
 			paramDefinitionID: agenttoolschema.RecordIDText(
 				permission.ResourceReport,
 				"The saved report it runs, from report_list. "+
 					"Leave it out to keep it.",
 			),
-			receivabletools.ParamCronExpression: common.StringProperty(
+			recurringshipmenttools.ParamCronExpression: toolparams.StringProperty(
 				"When it runs, as five cron fields, such as "+
 					"\"0 7 * * 1\" for 07:00 every Monday.",
 				0,
 			),
-			receivabletools.ParamTimezone: common.StringProperty(
+			recurringshipmenttools.ParamTimezone: toolparams.StringProperty(
 				"The zone the schedule is read in, as an IANA name "+
 					"such as America/New_York.",
 				0,
@@ -556,7 +569,7 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 			paramFormats: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
 				toolschema.KeyDescription: "Which formats to attach.",
-				toolschema.KeyItems:       agenttoolschema.Enum("", common.ReportFormats),
+				toolschema.KeyItems:       agenttoolschema.Enum("", toolparams.ReportFormats),
 			},
 			paramEmailRecipients: map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
@@ -566,28 +579,30 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 					toolschema.KeyType: toolschema.TypeString,
 				},
 			},
-			paramEmailAttach: common.BooleanProperty(
+			paramEmailAttach: toolparams.BooleanProperty(
 				"Attach the file rather than only linking to it.",
 			),
-			paramEmailInline:          common.BooleanProperty("Put the rows in the email body."),
-			carriertools.ParamEnabled: common.BooleanProperty("Whether the schedule runs."),
+			paramEmailInline: toolparams.BooleanProperty(
+				"Put the rows in the email body.",
+			),
+			carriertools.ParamEnabled: toolparams.BooleanProperty("Whether the schedule runs."),
 		},
 		Required:    []string{paramReportScheduleID},
 		Target:      reportTarget(paramReportScheduleID),
 		SearchTerms: []string{"scheduled", "recipients", "emailed", "subscription"},
-	}, common.ReceivablePlan[scheduleEdit, *reporting.ScheduleChange]{
+	}, toolspec.ReceivablePlan[scheduleEdit, *reportscheduleservice.ScheduleChange]{
 		Request: scheduleIDFrom,
 		Plan: func(
 			ctx context.Context,
 			edit scheduleEdit,
-			params *agentports.ToolExecuteParams,
-		) (*reporting.ScheduleChange, error) {
-			req, err := edit.request(ctx, reports, params)
+			params *agenttoolports.ToolExecuteParams,
+		) (*reportscheduleservice.ScheduleChange, error) {
+			req, err := edit.request(ctx, schedules, params)
 			if err != nil {
 				return nil, err
 			}
 
-			return reports.PlanUpdateSchedule(ctx, req)
+			return schedules.PlanUpdateSchedule(ctx, req)
 		},
 		Refused: func(scheduleEdit) string {
 			return "Would change a report schedule."
@@ -596,13 +611,13 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 		Run: func(
 			ctx context.Context,
 			edit scheduleEdit,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			req, err := edit.request(ctx, reports, params)
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			req, err := edit.request(ctx, schedules, params)
 			if err != nil {
 				return nil, err
 			}
-			_, err = reports.UpdateSchedule(ctx, req)
+			_, err = schedules.UpdateSchedule(ctx, req)
 
 			return nil, err
 		},
@@ -611,8 +626,8 @@ func NewUpdateReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 
 func renderReportScheduleUpdate(
 	_ scheduleEdit,
-	plan *reporting.ScheduleChange,
-) (*agent.ToolPreview, error) {
+	plan *reportscheduleservice.ScheduleChange,
+) (*agentpreview.ToolPreview, error) {
 	change, err := toolpreview.Changed(
 		reportScheduleRecord(plan.Before),
 		reportScheduleViewOf(plan.Before),
@@ -630,12 +645,12 @@ func renderReportScheduleUpdate(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would change the schedule of the report %q to run %s (%s) and email it to %s.",
 		plan.Definition.Name, plan.After.CronExpression, plan.After.Timezone,
-		common.CountOf(recipients, "recipient"),
+		changepreview.CountOf(recipients, "recipient"),
 	), change), nil
 }
 
-func NewDeleteReportScheduleTool(reports ReportAdministrator) agentports.AgentTool {
-	return common.NewReceivableTool(reportInternalSpec(&common.ReceivableSpec{
+func NewDeleteReportScheduleTool(schedules ScheduleAdministrator) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(reportInternalSpec(&toolspec.ReceivableSpec{
 		Name: "report_delete_schedule",
 		Description: "Propose removing a report schedule the person set up, so the report " +
 			"stops being emailed. The report itself is kept.",
@@ -645,37 +660,37 @@ func NewDeleteReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 			"the schedule back but setting it up again, so a person always decides.",
 		Properties: map[string]any{
 			paramReportScheduleID: agenttoolschema.KindID(reportScheduleSupplier,
-				permission.KindReportSchedule),
+				recordkind.ReportSchedule),
 		},
 		Required:    []string{paramReportScheduleID},
 		Target:      reportTarget(paramReportScheduleID),
 		SearchTerms: []string{"scheduled", "unsubscribe", "emailing"},
-	}), common.ReceivablePlan[*reporting.GetScheduleRequest, *report.ReportSchedule]{
-		Request: func(params *agentports.ToolExecuteParams) (*reporting.GetScheduleRequest, error) {
-			id, err := common.RequirePulid(params.Params, paramReportScheduleID)
+	}), toolspec.ReceivablePlan[*reportscheduleservice.GetScheduleRequest, *report.ReportSchedule]{
+		Request: func(params *agenttoolports.ToolExecuteParams) (*reportscheduleservice.GetScheduleRequest, error) {
+			id, err := toolparams.RequirePulid(params.Params, paramReportScheduleID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &reporting.GetScheduleRequest{
-				Request:    reporting.Request{TenantInfo: common.TenantFrom(*params)},
+			return &reportscheduleservice.GetScheduleRequest{
+				Request:    reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 				ScheduleID: id,
 			}, nil
 		},
 		Plan: func(
 			ctx context.Context,
-			req *reporting.GetScheduleRequest,
-			_ *agentports.ToolExecuteParams,
+			req *reportscheduleservice.GetScheduleRequest,
+			_ *agenttoolports.ToolExecuteParams,
 		) (*report.ReportSchedule, error) {
-			return reports.PlanDeleteSchedule(ctx, req)
+			return schedules.PlanDeleteSchedule(ctx, req)
 		},
-		Refused: func(*reporting.GetScheduleRequest) string {
+		Refused: func(*reportscheduleservice.GetScheduleRequest) string {
 			return "Would remove a report schedule."
 		},
 		Render: func(
-			_ *reporting.GetScheduleRequest,
+			_ *reportscheduleservice.GetScheduleRequest,
 			existing *report.ReportSchedule,
-		) (*agent.ToolPreview, error) {
+		) (*agentpreview.ToolPreview, error) {
 			change, err := toolpreview.Delete(
 				reportScheduleRecord(existing),
 				reportScheduleViewOf(existing),
@@ -691,10 +706,10 @@ func NewDeleteReportScheduleTool(reports ReportAdministrator) agentports.AgentTo
 		},
 		Run: func(
 			ctx context.Context,
-			req *reporting.GetScheduleRequest,
-			_ *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			return nil, reports.DeleteSchedule(ctx, req)
+			req *reportscheduleservice.GetScheduleRequest,
+			_ *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			return nil, schedules.DeleteSchedule(ctx, req)
 		},
 	})
 }

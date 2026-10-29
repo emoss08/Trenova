@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -16,7 +17,7 @@ func previousRateOrigins(originLocationID pulid.ID) *keel.Query[*shipment.Shipme
 		Where(
 			firstMove.Sequence.Eq(0),
 			originStop.Sequence.Eq(0),
-			originStop.Type.In(shipment.StopTypePickup, shipment.StopTypeSplitPickup),
+			originStop.Type.In(shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup),
 			originStop.LocationID.Eq(originLocationID),
 		)
 }
@@ -38,7 +39,7 @@ func previousRateDestinations(destinationLocationID pulid.ID) *keel.Query[*shipm
 				otherStop.Pick(otherStop.Sequence.Max()).
 					Where(otherStop.ShipmentMoveID.EqCol(lastMove.ID)),
 			)),
-			deliveryStop.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+			deliveryStop.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
 			deliveryStop.LocationID.Eq(destinationLocationID),
 		)
 }

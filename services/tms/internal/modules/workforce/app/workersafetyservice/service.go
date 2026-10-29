@@ -8,15 +8,19 @@ package workersafetyservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -54,23 +58,23 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerSafetyRepository
+	Repo         workersafetyports.WorkerSafetyRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	Employment   *workeremploymentservice.Service
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService         `optional:"true"`
+	Realtime     realtimeports.RealtimeService      `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerSafetyRepository
+	repo         workersafetyports.WorkerSafetyRepository
 	workerRepo   workerports.WorkerRepository
 	documentRepo documentports.DocumentRepository
 	employment   EmploymentRecorder
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 
@@ -93,7 +97,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerSafetyRepository
+	Repo         workersafetyports.WorkerSafetyRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	Employment   EmploymentRecorder
@@ -183,7 +187,7 @@ func (s *Service) notifyDriver(
 	workerID pulid.ID,
 	eventType string,
 	priority notification.Priority,
-	context documenttemplate.DriverNotificationContext,
+	notice *notificationtemplate.DriverNotificationContext,
 	correlation string,
 ) {
 	if s.driverNotify == nil {
@@ -194,7 +198,7 @@ func (s *Service) notifyDriver(
 		WorkerID:   workerID,
 		EventType:  eventType,
 		Priority:   priority,
-		Context:    context,
+		Context:    *notice,
 		Link:       dashProfileLink,
 	}, correlation)
 }
@@ -220,7 +224,7 @@ func (s *Service) RefreshRollup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.SafetyScorecard, error) {
+) (*safetyscorecard.SafetyScorecard, error) {
 	card, err := s.Scorecard(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -243,32 +247,35 @@ func (s *Service) Scorecard(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.SafetyScorecard, error) {
+) (*safetyscorecard.SafetyScorecard, error) {
 	if _, err := s.loadWorker(ctx, tenantInfo, workerID); err != nil {
 		return nil, err
 	}
-	events, err := s.repo.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
+	events, err := s.repo.ListEvents(ctx, &workersafetyports.ListWorkerSafetyEventsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	actions, err := s.repo.ListActions(ctx, &workerports.ListWorkerDisciplinaryActionsRequest{
+	actions, err := s.repo.ListActions(ctx, &workersafetyports.ListWorkerDisciplinaryActionsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	recognitions, err := s.repo.ListRecognitions(ctx, &workerports.ListWorkerRecognitionsRequest{
-		TenantInfo: tenantInfo,
-		WorkerID:   workerID,
-	})
+	recognitions, err := s.repo.ListRecognitions(
+		ctx,
+		&workersafetyports.ListWorkerRecognitionsRequest{
+			TenantInfo: tenantInfo,
+			WorkerID:   workerID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildSafetyScorecard(
+	return safetyscorecard.BuildSafetyScorecard(
 		workerID,
 		events,
 		actions,
@@ -277,15 +284,11 @@ func (s *Service) Scorecard(
 	), nil
 }
 
-func eventTenant(entity *worker.WorkerSafetyEvent) pagination.TenantInfo {
+func eventTenant(entity *workersafety.WorkerSafetyEvent) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func actionTenant(entity *worker.WorkerDisciplinaryAction) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
-func recognitionTenant(entity *worker.WorkerRecognition) pagination.TenantInfo {
+func recognitionTenant(entity *workerdiscipline.WorkerRecognition) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 

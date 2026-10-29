@@ -5,18 +5,20 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,8 +95,8 @@ type PortalPeriodSummary struct {
 }
 
 type PortalEscrowSummary struct {
-	Account      *driverpay.EscrowAccount       `json:"account"`
-	Transactions []*driverpay.EscrowTransaction `json:"transactions"`
+	Account      *payescrow.EscrowAccount       `json:"account"`
+	Transactions []*payescrow.EscrowTransaction `json:"transactions"`
 }
 
 func (s *Service) ResolveWorker(
@@ -151,19 +153,19 @@ func (s *Service) MyLoads(
 		return nil, err
 	}
 
-	statuses := []shipment.MoveStatus{
-		shipment.MoveStatusNew,
-		shipment.MoveStatusAssigned,
-		shipment.MoveStatusInTransit,
+	statuses := []shipmentvocab.MoveStatus{
+		shipmentvocab.MoveStatusNew,
+		shipmentvocab.MoveStatusAssigned,
+		shipmentvocab.MoveStatusInTransit,
 	}
 	if scope == LoadScopeHistory {
-		statuses = []shipment.MoveStatus{
-			shipment.MoveStatusCompleted,
-			shipment.MoveStatusCanceled,
+		statuses = []shipmentvocab.MoveStatus{
+			shipmentvocab.MoveStatusCompleted,
+			shipmentvocab.MoveStatusCanceled,
 		}
 	}
 
-	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &workerports.ListWorkerLoadsRequest{
+	assignments, err := s.portalRepo.ListWorkerLoads(ctx, &portalaccessports.ListWorkerLoadsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   wrk.ID,
 		Statuses:   statuses,
@@ -182,7 +184,7 @@ func (s *Service) MyLoads(
 			moveIDs = append(moveIDs, load.MoveID)
 		}
 	}
-	control, err := s.dashControl(ctx, tenantInfo)
+	control, err := s.DashControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +342,7 @@ func (s *Service) MyLoadComments(
 		switch {
 		case comment.User != nil:
 			view.AuthorName = comment.User.Name
-		case comment.Source == shipment.CommentSourceSystem:
+		case comment.Source == shipmentvocab.CommentSourceSystem:
 			view.AuthorName = "System"
 		default:
 			view.AuthorName = "Dispatch"
@@ -354,7 +356,7 @@ type MyStopActionRequest struct {
 	TenantInfo    pagination.TenantInfo
 	MoveID        pulid.ID
 	StopID        pulid.ID
-	Action        shipmentports.StopActualAction
+	Action        shipmentmoveports.StopActualAction
 	OccurredAt    *int64
 	ClientEventID string
 }
@@ -372,8 +374,8 @@ func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) er
 	if err != nil {
 		return err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowStopActions },
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowStopActions },
 		"Your carrier records arrivals and departures from dispatch — call in your status instead.",
 	); err != nil {
 		return err
@@ -391,7 +393,7 @@ func (s *Service) MyStopAction(ctx context.Context, req *MyStopActionRequest) er
 		TenantInfo:    tenantInfo,
 		MoveID:        req.MoveID,
 		StopID:        req.StopID,
-		Departure:     req.Action == shipmentports.StopActualActionDepart,
+		Departure:     req.Action == shipmentmoveports.StopActualActionDepart,
 		OccurredAt:    req.OccurredAt,
 		ClientEventID: req.ClientEventID,
 		ReportedByID:  tenantInfo.UserID,
@@ -409,8 +411,8 @@ func (s *Service) CreateMyLoadComment(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowLoadComments },
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowLoadComments },
 		"Your carrier has turned off load messaging in Dash — call your dispatcher instead.",
 	); err != nil {
 		return nil, err
@@ -429,10 +431,10 @@ func (s *Service) CreateMyLoadComment(
 		OrganizationID: tenantInfo.OrgID,
 		ShipmentID:     shipmentID,
 		Comment:        strings.TrimSpace(body),
-		Type:           shipment.CommentTypeDriverUpdate,
-		Visibility:     shipment.CommentVisibilityDriver,
-		Priority:       shipment.CommentPriorityNormal,
-		Source:         shipment.CommentSourceUser,
+		Type:           shipmentvocab.CommentTypeDriverUpdate,
+		Visibility:     shipmentvocab.CommentVisibilityDriver,
+		Priority:       shipmentvocab.CommentPriorityNormal,
+		Source:         shipmentvocab.CommentSourceUser,
 		Metadata: map[string]any{
 			shipment.CommentMetadataOrigin: shipment.CommentOriginDash,
 		},
@@ -500,7 +502,7 @@ func (s *Service) MyRecentPayEvents(
 	if limit <= 0 || limit > 100 {
 		limit = 25
 	}
-	control, err := s.dashControl(ctx, tenantInfo)
+	control, err := s.DashControl(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -622,7 +624,7 @@ func (s *Service) MyEscrow(
 func (s *Service) MyAdvances(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*driverpay.PayAdvance, error) {
+) ([]*payadvance.PayAdvance, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err

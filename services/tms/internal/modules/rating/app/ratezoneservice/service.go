@@ -68,6 +68,13 @@ func (s *Service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req *ratezoneports.GetRateZonesByIDsRequest,
+) ([]*ratezone.RateZone, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *ratezone.RateZone,

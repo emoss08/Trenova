@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -93,10 +93,10 @@ type User struct {
 	PasswordChangedAt     *int64                 `json:"passwordChangedAt"     keel:"password_changed_at"`
 	AssistantHidden       bool                   `json:"assistantHidden"       keel:"assistant_hidden"`
 
-	BusinessUnit        *BusinessUnit                    `json:"-"`
-	CurrentOrganization *Organization                    `json:"-"                     keel:"belongs:current_organization_id"`
-	Memberships         []*OrganizationMembership        `json:"memberships,omitempty" keel:"many:user_id"`
-	Assignments         []*permission.UserRoleAssignment `json:"assignments,omitempty" keel:"many:user_id"`
+	BusinessUnit        *BusinessUnit              `json:"-"`
+	CurrentOrganization *Organization              `json:"-"                     keel:"belongs:current_organization_id"`
+	Memberships         []*OrganizationMembership  `json:"memberships,omitempty" keel:"many:user_id"`
+	Assignments         []*rbac.UserRoleAssignment `json:"assignments,omitempty" keel:"many:user_id"`
 }
 
 func (u *User) BeforeCreate(_ context.Context) error {
@@ -336,3 +336,7 @@ func (m *OrganizationMembership) Validate(multiErr *errortypes.MultiError) {
 		),
 	))
 }
+
+const (
+	defaultUserLocale = "en"
+)

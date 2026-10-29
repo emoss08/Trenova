@@ -3,14 +3,14 @@
 package agentsafetyresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agenttoolports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 type Deps struct {
-	*base.Core
-	AgentSafetyService   agentports.AgentSafetyService
-	AgentToolRuleService agentports.AgentToolRuleService
+	*resolvercore.Core
+	AgentSafetyService   agenttoolports.AgentSafetyService
+	AgentToolRuleService agenttoolports.AgentToolRuleService
 }
 
 type AgentSafetyResolver struct{ *Deps }

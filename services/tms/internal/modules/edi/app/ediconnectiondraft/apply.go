@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,8 +24,8 @@ const (
 
 func (s *Service) ApplyConnectionDraft(
 	ctx context.Context,
-	req *ediports.ApplyConnectionDraftRequest,
-) (*ediports.AppliedConnectionDraft, error) {
+	req *ediconnectiondraftports.ApplyConnectionDraftRequest,
+) (*ediconnectiondraftports.AppliedConnectionDraft, error) {
 	if req == nil || req.Draft == nil {
 		return nil, errortypes.NewValidationError("", errortypes.ErrRequired, "A draft is required")
 	}
@@ -43,7 +45,7 @@ func (s *Service) ApplyConnectionDraft(
 		)
 	}
 
-	applied := &ediports.AppliedConnectionDraft{}
+	applied := &ediconnectiondraftports.AppliedConnectionDraft{}
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
 		p, err := s.plan(ctx, req.Draft)
 		if err != nil {
@@ -79,15 +81,15 @@ type writer struct {
 	p       *planner
 	actor   *permissionports.RequestActor
 	tenant  pagination.TenantInfo
-	applied *ediports.AppliedConnectionDraft
+	applied *ediconnectiondraftports.AppliedConnectionDraft
 	partner *edi.EDIPartner
 }
 
 func (s *Service) write(
 	ctx context.Context,
 	p *planner,
-	req *ediports.ApplyConnectionDraftRequest,
-	applied *ediports.AppliedConnectionDraft,
+	req *ediconnectiondraftports.ApplyConnectionDraftRequest,
+	applied *ediconnectiondraftports.AppliedConnectionDraft,
 ) error {
 	w := &writer{
 		s:       s,
@@ -110,7 +112,7 @@ func (s *Service) write(
 		}
 	}
 	if applied.Writes == nil {
-		applied.Writes = []ediports.DraftWrite{}
+		applied.Writes = []ediconnectiondraftports.DraftWrite{}
 	}
 	return nil
 }
@@ -121,7 +123,7 @@ func (w *writer) note(kind string, id pulid.ID, action, label string) {
 
 func (w *writer) writePartner(ctx context.Context) error {
 	switch w.p.draft.Partner.Change {
-	case ediports.ChangeKindAdd:
+	case ediconnectiondraftports.ChangeKindAdd:
 		created, err := w.s.setup.CreatePartner(ctx, w.partner, w.actor)
 		if err != nil {
 			return err
@@ -129,14 +131,14 @@ func (w *writer) writePartner(ctx context.Context) error {
 		w.partner = created
 		w.applied.Created = true
 		w.note(draftPartnerLabel, created.ID, writeCreated, created.Name)
-	case ediports.ChangeKindChange:
+	case ediconnectiondraftports.ChangeKindChange:
 		updated, err := w.s.setup.UpdatePartner(ctx, w.partner, w.actor)
 		if err != nil {
 			return err
 		}
 		w.partner = updated
 		w.note(draftPartnerLabel, updated.ID, writeUpdated, updated.Name)
-	case ediports.ChangeKindSame, ediports.ChangeKindNone:
+	case ediconnectiondraftports.ChangeKindSame, ediconnectiondraftports.ChangeKindNone:
 	}
 	w.applied.PartnerID = w.partner.ID
 	return nil
@@ -181,7 +183,7 @@ func (w *writer) writeProject(ctx context.Context) error {
 		return err
 	}
 	action := writeUpdated
-	if project.change == ediports.ChangeKindAdd {
+	if project.change == ediconnectiondraftports.ChangeKindAdd {
 		action = writeCreated
 	}
 	w.note(projectRecord, version.ProjectID, action, fmt.Sprintf("Draft %d", version.Number))
@@ -190,13 +192,17 @@ func (w *writer) writeProject(ctx context.Context) error {
 
 func (w *writer) writeControlNumbers(ctx context.Context) error {
 	for _, control := range w.p.writes.controls {
-		sequence, err := w.s.setup.StartControlNumber(ctx, &ediports.ResetEDIControlNumberRequest{
-			TenantInfo:     w.tenant,
-			PartnerID:      w.partner.ID,
-			DocumentTypeID: w.p.docTypes[setKey(control.set, control.direction)],
-			Kind:           control.kind,
-			NextValue:      control.next,
-		}, w.actor)
+		sequence, err := w.s.setup.StartControlNumber(
+			ctx,
+			&edipartnerports.ResetEDIControlNumberRequest{
+				TenantInfo:     w.tenant,
+				PartnerID:      w.partner.ID,
+				DocumentTypeID: w.p.docTypes[ediconnectionfield.SetKey(control.set, control.direction)],
+				Kind:           control.kind,
+				NextValue:      control.next,
+			},
+			w.actor,
+		)
 		if err != nil {
 			return err
 		}
@@ -215,7 +221,7 @@ func (w *writer) writeMappings(ctx context.Context) error {
 	if len(w.p.writes.mappings) == 0 {
 		return nil
 	}
-	items, err := w.s.setup.SaveMappingProfile(ctx, &ediports.SaveMappingItemsRequest{
+	items, err := w.s.setup.SaveMappingProfile(ctx, &edipartnerports.SaveMappingItemsRequest{
 		PartnerID:  w.partner.ID,
 		TenantInfo: w.tenant,
 		ActorID:    w.actor.UserID,
@@ -235,6 +241,6 @@ func (w *writer) writeMappings(ctx context.Context) error {
 	return nil
 }
 
-func record(kind string, id pulid.ID, action, label string) ediports.DraftWrite {
-	return ediports.DraftWrite{Record: kind, ID: id, Action: action, Label: label}
+func record(kind string, id pulid.ID, action, label string) ediconnectiondraftports.DraftWrite {
+	return ediconnectiondraftports.DraftWrite{Record: kind, ID: id, Action: action, Label: label}
 }

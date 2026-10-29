@@ -25,10 +25,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -78,20 +81,23 @@ type turns interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 	Active(
 		ctx context.Context,
-		req agentports.ActiveAssistantTurnRequest,
-	) (*conversation.AssistantTurn, error)
+		req *assistantturnports.ActiveAssistantTurnRequest,
+	) (*conversationturn.AssistantTurn, error)
 }
 
 // threads is the part of the conversation repository a schedule needs.
 type threads interface {
-	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(
+		ctx context.Context,
+		req *conversationports.GetThreadRequest,
+	) (*conversation.Thread, error)
 	GetThreadOwned(
 		ctx context.Context,
-		req agentports.GetThreadOwnedRequest,
+		req conversationports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 }
 
@@ -107,7 +113,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Schedules     conversationscheduleports.ConversationScheduleRepository
-	Conversations agentports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Users         tenantports.UserRepository
 	Organizations tenantports.OrganizationRepository
@@ -115,7 +121,7 @@ type Params struct {
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
 	Syncer        conversationscheduleports.ConversationScheduleSyncer
-	Realtime      agentports.RealtimeService    `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 	Plans         platformplanports.PlanService `optional:"true"`
 }
 
@@ -128,7 +134,7 @@ type Service struct {
 	turns       turns
 	workflows   kernelports.WorkflowStarter
 	syncer      conversationscheduleports.ConversationScheduleSyncer
-	realtime    agentports.RealtimeService
+	realtime    realtimeports.RealtimeService
 	clocks      clocks
 	plans       platformplanports.PlanService
 	now         func() int64
@@ -211,7 +217,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateResult,
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -300,7 +306,7 @@ func (s *Service) Plan(
 		return nil, err
 	}
 
-	thread, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: tenant,
@@ -502,7 +508,7 @@ func (s *Service) List(
 	tenant := tenantOf(req.Actor)
 	if req.ThreadID.IsNotNil() {
 		// Reading a conversation's schedules is reading the conversation.
-		if _, err := s.threads.GetThread(ctx, agentports.GetThreadRequest{
+		if _, err := s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 			ID:         req.ThreadID,
 			UserID:     req.Actor.UserID,
 			TenantInfo: tenant,
@@ -634,13 +640,16 @@ func (s *Service) OfThread(
 ) ([]*conversationschedule.Schedule, error) {
 	schedules := make([]*conversationschedule.Schedule, 0, conversationschedule.MaxPerThread)
 	for {
-		page, err := s.schedules.List(ctx, conversationscheduleports.ListConversationSchedulesRequest{
-			UserID:     req.UserID,
-			ThreadID:   req.ThreadID,
-			TenantInfo: req.TenantInfo,
-			Limit:      threadPageSize,
-			Offset:     len(schedules),
-		})
+		page, err := s.schedules.List(
+			ctx,
+			conversationscheduleports.ListConversationSchedulesRequest{
+				UserID:     req.UserID,
+				ThreadID:   req.ThreadID,
+				TenantInfo: req.TenantInfo,
+				Limit:      threadPageSize,
+				Offset:     len(schedules),
+			},
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -670,7 +679,7 @@ func (s *Service) Forget(ctx context.Context, schedules []*conversationschedule.
 func (s *Service) RunNow(
 	ctx context.Context,
 	req ScheduleRequest,
-) (*conversation.AssistantTurn, error) {
+) (*conversationturn.AssistantTurn, error) {
 	schedule, err := s.schedules.Get(ctx, req.get())
 	if err != nil {
 		return nil, err
@@ -745,13 +754,13 @@ func (s *Service) Fire(
 func (s *Service) run(
 	ctx context.Context,
 	schedule *conversationschedule.Schedule,
-) (*conversation.AssistantTurn, string, error) {
+) (*conversationturn.AssistantTurn, string, error) {
 	tenant := pagination.TenantInfo{
 		OrgID:  schedule.OrganizationID,
 		BuID:   schedule.BusinessUnitID,
 		UserID: schedule.UserID,
 	}
-	thread, err := s.threads.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.threads.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         schedule.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -781,7 +790,7 @@ func (s *Service) run(
 		return nil, SkipNoAccess, nil
 	}
 
-	active, err := s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -797,9 +806,9 @@ func (s *Service) run(
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
-		Origin:     conversation.AssistantTurnOriginScheduled,
+		Origin:     conversationturn.AssistantTurnOriginScheduled,
 		Input:      schedule.Prompt,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		started, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
 			assistantcontract.TurnStart{
 				Actor:   owner,
@@ -883,7 +892,7 @@ func (s *Service) announce(
 
 	err := s.realtime.PublishResourceInvalidation(
 		publishCtx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: schedule.OrganizationID,
 			BusinessUnitID: schedule.BusinessUnitID,
 			AudienceUserID: schedule.UserID,

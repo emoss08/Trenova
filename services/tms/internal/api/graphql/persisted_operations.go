@@ -14,7 +14,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,8 +33,9 @@ const (
 type PersistedOperationManifestParams struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	AppConfig      *appconfig.Config
+	SecurityConfig *securityconfig.Config
+	Logger         *zap.Logger
 }
 
 type PersistedOperationManifest struct {
@@ -83,7 +85,7 @@ func NewPersistedOperationManifest(
 		return nil, fmt.Errorf("loading GraphQL persisted operation manifest: %w", err)
 	}
 
-	if path := developmentManifestSource(p.Config); path != "" {
+	if path := developmentManifestSource(p.AppConfig, p.SecurityConfig); path != "" {
 		logger := p.Logger
 		if logger == nil {
 			logger = zap.NewNop()
@@ -239,12 +241,15 @@ func (m *PersistedOperationManifest) reloadIfChanged() bool {
 	return true
 }
 
-func developmentManifestSource(cfg *config.Config) string {
-	if cfg == nil || enforcePersistedOperations(cfg) {
+func developmentManifestSource(
+	app *appconfig.Config,
+	security *securityconfig.Config,
+) string {
+	if app == nil || security == nil || enforcePersistedOperations(app) {
 		return ""
 	}
 
-	path := cfg.Security.GraphQL.PersistedDocumentsPath
+	path := security.GraphQL.PersistedDocumentsPath
 	if path == "" {
 		path = filepath.FromSlash(defaultDevelopmentManifestSource)
 	}
@@ -330,11 +335,11 @@ func rewritePersistedOperationRequest(
 	return nil
 }
 
-func enforcePersistedOperations(cfg *config.Config) bool {
+func enforcePersistedOperations(cfg *appconfig.Config) bool {
 	if cfg == nil {
 		return false
 	}
-	return cfg.App.IsProduction() || cfg.App.IsStaging()
+	return cfg.IsProduction() || cfg.IsStaging()
 }
 
 func (r *persistedGraphQLRequest) persistedHash() string {

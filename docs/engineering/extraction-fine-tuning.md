@@ -58,7 +58,7 @@ to say; that is the recipe's job.
 - The system and user messages come from the same code production calls:
   `aidocumentservice.Contract.CompletionRequest` builds the extraction request, with its
   2,500-byte page limit.
-- `completionrouter.PromptRenderer` renders it through the router's own `structuredRun` and
+- `completionrouter.PromptRenderer` renders it through the router's own `completionengine.StructuredRun` and
   `structuredSystem`. That includes the untrusted-data fencing, and the schema instruction a
   `Prompted` or `JSONMode` provider is given.
 - `TestRenderedPromptMatchesWhatTheRouterSends` holds the two paths together.
@@ -271,7 +271,7 @@ runs and `trenova ai fine-tune score` alike:
 | stop `sequence` | Position in the reply, from 1 | Ordering and scoring use array order, never the model's number |
 | field `conflict` | The field's key appears in `conflicts` | The UI already treated either signal as a conflict |
 | field `alternativeValues` | Not produced | It was dropped before storage; the UI's alternatives come from `conflicts[].values` |
-| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentextractionjobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
+| field `evidenceExcerpt`, and `pageNumber` when the model left it out | Found in the page text by `documentaiextractionjobs.withFieldEvidence` when a finished extraction is applied (see below) | Reviewers see a quote of the document itself rather than the model's retelling of it |
 
 Conflict keys are also run through `aicorrection.CanonicalFieldKey`, so a conflict on
 `pickupwindow` now lines up with the `pickupWindow` field it is about.
@@ -590,7 +590,7 @@ GPU timer          trenova ai retraining run
 - **Policy.** The `aiRetraining` section of the configuration, off until `enabled: true`. Each
   cycle copies the policy it was planned under (`ai_retraining_cycles`), so a later change to the
   gate never rewrites an old verdict.
-- **The decision.** `aitraining.PlanRetraining`, a pure function. In order:
+- **The decision.** `airetraining.PlanRetraining`, a pure function. In order:
   - an open cycle (exporting, ready or training) or a running training export skips it;
   - fewer than `minIntervalDays` since the last cycle that exported skips it (`TooSoon`), unless a
     provider is drifting and `retrainOnDrift` is on;

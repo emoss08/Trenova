@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,9 +37,9 @@ func TestApplicationLedgerEntriesNameEachInvoice(t *testing.T) {
 			name:     "applying credits each invoice",
 			reversal: false,
 			wantEvents: []string{
-				tenant.JournalSourceEventCustomerPaymentPosted.String(),
-				tenant.JournalSourceEventCustomerShortPayRecognized.String(),
-				tenant.JournalSourceEventCustomerPaymentPosted.String(),
+				accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
+				accountingcontrol.JournalSourceEventCustomerShortPayRecognized.String(),
+				accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 			},
 			wantSign: -1,
 		},
@@ -47,9 +47,9 @@ func TestApplicationLedgerEntriesNameEachInvoice(t *testing.T) {
 			name:     "reversing debits each invoice back",
 			reversal: true,
 			wantEvents: []string{
-				tenant.JournalSourceEventCustomerPaymentReversed.String(),
-				tenant.JournalSourceEventCustomerPaymentReversed.String(),
-				tenant.JournalSourceEventCustomerPaymentReversed.String(),
+				accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
+				accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
+				accountingcontrol.JournalSourceEventCustomerPaymentReversed.String(),
 			},
 			wantSign: 1,
 		},
@@ -61,7 +61,7 @@ func TestApplicationLedgerEntriesNameEachInvoice(t *testing.T) {
 			entries := applicationLedgerEntries(&applicationLedgerParams{
 				payment:         payment,
 				applications:    applications,
-				appliedEvent:    tenant.JournalSourceEventCustomerPaymentPosted.String(),
+				appliedEvent:    accountingcontrol.JournalSourceEventCustomerPaymentPosted.String(),
 				transactionDate: 100,
 				actorID:         pulid.MustNew("usr_"),
 				reversal:        tt.reversal,

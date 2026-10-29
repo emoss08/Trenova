@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/usstateportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/usstatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/testutil/mocks/usstateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -23,7 +23,10 @@ import (
 
 var errNotFound = errors.New("us state not found")
 
-func setupUsStateHandler(t *testing.T, repo *usstateportsmock.MockUsStateRepository) *usstatehandler.Handler {
+func setupUsStateHandler(
+	t *testing.T,
+	repo *usstateportsmock.MockUsStateRepository,
+) *usstatehandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
@@ -34,14 +37,14 @@ func setupUsStateHandler(t *testing.T, repo *usstateportsmock.MockUsStateReposit
 	})
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	return usstatehandler.New(usstatehandler.Params{

@@ -7,7 +7,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -46,16 +48,16 @@ func applyOrderInput(entity *order.Order, input gqlmodel.OrderInput) error {
 	}
 	entity.CustomerID = customerID
 
-	ownerID, err := base.OptionalID(input.OwnerID)
+	ownerID, err := gqlid.OptionalID(input.OwnerID)
 	if err != nil {
 		return err
 	}
 	entity.OwnerID = ownerID
 
-	entity.PONumber = base.StringValue(input.PoNumber)
-	entity.BOL = base.StringValue(input.BOL)
+	entity.PONumber = gqlscalar.StringValue(input.PoNumber)
+	entity.BOL = gqlscalar.StringValue(input.BOL)
 
-	entity.CurrencyCode = base.StringValue(input.CurrencyCode)
+	entity.CurrencyCode = gqlscalar.StringValue(input.CurrencyCode)
 	if entity.CurrencyCode == "" {
 		entity.CurrencyCode = "USD"
 	}
@@ -90,7 +92,7 @@ func orderColumns(ctx context.Context, nodePathPrefix string) []string {
 func orderConnectionToModel(
 	result *pagination.CursorListResult[*order.Order],
 ) (*gqlmodel.OrderConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *order.Order, cursor string) *gqlmodel.OrderEdge {
 			return &gqlmodel.OrderEdge{

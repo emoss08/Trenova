@@ -61,9 +61,9 @@ type TargetFields struct {
 	ID   string
 }
 
-// targetFields is where every entity that carries a target reports its
+// DefaultTargetFields is where every entity that carries a target reports its
 // errors, since they all name the fields the same way.
-var targetFields = TargetFields{Type: "targetType", ID: "targetId"}
+var DefaultTargetFields = TargetFields{Type: "targetType", ID: "targetId"}
 
 // Validate checks the target is somewhere a document can be filed. A target
 // with a document type but no record is refused: a type says what the pages

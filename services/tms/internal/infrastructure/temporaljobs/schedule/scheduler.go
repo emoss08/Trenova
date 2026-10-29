@@ -3,7 +3,7 @@ package schedule
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -12,17 +12,17 @@ import (
 type SchedulerParams struct {
 	fx.In
 
-	Client    client.Client
-	Config    *config.Config
-	Logger    *zap.Logger
-	LC        fx.Lifecycle
-	Providers []Provider `group:"schedule_providers"`
+	Client         client.Client
+	TemporalConfig *temporalconfig.Config
+	Logger         *zap.Logger
+	LC             fx.Lifecycle
+	Providers      []Provider `group:"schedule_providers"`
 }
 
 type Scheduler struct {
 	reconciler *Reconciler
 	registry   *Registry
-	config     *config.Config
+	config     *temporalconfig.Config
 	logger     *zap.Logger
 }
 
@@ -38,7 +38,7 @@ func NewScheduler(p SchedulerParams) *Scheduler {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     p.Config,
+		config:     p.TemporalConfig,
 		logger:     p.Logger.Named("scheduler"),
 	}
 
@@ -78,7 +78,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 }
 
 func (s *Scheduler) Stop(_ context.Context) error {
-	if s.config.Temporal.Schedule.PersistOnStop {
+	if s.config.Schedule.PersistOnStop {
 		s.logger.Info("schedules will persist (persistOnStop=true)")
 		return nil
 	}

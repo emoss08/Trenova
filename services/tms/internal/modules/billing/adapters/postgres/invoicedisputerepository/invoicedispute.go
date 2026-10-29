@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,11 +37,11 @@ func New(p Params) invoiceports.InvoiceDisputeRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *invoice.InvoiceDispute,
-) (*invoice.InvoiceDispute, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
+	entity *invoicedispute.InvoiceDispute,
+) (*invoicedispute.InvoiceDispute, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if err := invoicedb.InvoiceDisputes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := invoicedisputedb.InvoiceDisputes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
@@ -51,11 +51,11 @@ func (r *repository) Create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *invoice.InvoiceDispute,
-) (*invoice.InvoiceDispute, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
+	entity *invoicedispute.InvoiceDispute,
+) (*invoicedispute.InvoiceDispute, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
 		entity.SyncMinor()
-		if err := invoicedb.InvoiceDisputes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+		if err := invoicedisputedb.InvoiceDisputes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, disputeErrors.Map(err, entity.ID.String())
 		}
 
@@ -66,9 +66,9 @@ func (r *repository) Update(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req invoiceports.GetInvoiceDisputeByIDRequest,
-) (*invoice.InvoiceDispute, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		entity, err := invoicedb.InvoiceDisputes.Get(ctx, r.db.Keel(ctx), req.ID)
+) (*invoicedispute.InvoiceDispute, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
+		entity, err := invoicedisputedb.InvoiceDisputes.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, disputeErrors.Map(err, req.ID.String())
 		}
@@ -80,12 +80,12 @@ func (r *repository) GetByID(
 func (r *repository) GetOpenByInvoiceID(
 	ctx context.Context,
 	req invoiceports.GetOpenInvoiceDisputeRequest,
-) (*invoice.InvoiceDispute, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoice.InvoiceDispute, error) {
-		d := invoicedb.InvoiceDisputes
+) (*invoicedispute.InvoiceDispute, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*invoicedispute.InvoiceDispute, error) {
+		d := invoicedisputedb.InvoiceDisputes
 		entity, err := d.Where(
 			d.InvoiceID.Eq(req.InvoiceID),
-			d.Status.Eq(invoice.DisputeCaseStatusOpen),
+			d.Status.Eq(invoicedispute.DisputeCaseStatusOpen),
 		).First(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, disputeErrors.Map(err, req.InvoiceID.String())
@@ -98,17 +98,17 @@ func (r *repository) GetOpenByInvoiceID(
 func (r *repository) ListByInvoiceIDs(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
-) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
+) (map[pulid.ID][]*invoicedispute.InvoiceDispute, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
-			result := make(map[pulid.ID][]*invoice.InvoiceDispute, len(req.InvoiceIDs))
+		func(ctx context.Context) (map[pulid.ID][]*invoicedispute.InvoiceDispute, error) {
+			result := make(map[pulid.ID][]*invoicedispute.InvoiceDispute, len(req.InvoiceIDs))
 			if len(req.InvoiceIDs) == 0 {
 				return result, nil
 			}
 
-			d := invoicedb.InvoiceDisputes
+			d := invoicedisputedb.InvoiceDisputes
 			rows, err := d.Where(d.InvoiceID.In(req.InvoiceIDs...)).
 				Order(d.OpenedAt.Desc(), d.ID.Desc()).
 				All(ctx, r.db.Keel(ctx))

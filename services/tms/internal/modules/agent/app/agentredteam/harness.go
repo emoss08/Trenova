@@ -12,10 +12,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,7 +50,7 @@ var (
 
 type RunParams struct {
 	Case       *Case
-	Completion agentports.CompletionService
+	Completion llmports.CompletionService
 	Tenant     *Tenant
 }
 
@@ -54,7 +64,7 @@ type Outcome struct {
 	Case              *Case
 	Actor             *permissionports.RequestActor
 	Main              *agentdefinition.Definition
-	Result            *agentports.RunResult
+	Result            *agentruntimeports.RunResult
 	RunErr            error
 	Kit               *agentevalgate.Kit
 	DefinitionsBefore map[pulid.ID]string
@@ -70,11 +80,11 @@ type Outcome struct {
 }
 
 func Script(c *Case) *agenttest.ScriptedCompletion {
-	turns := make([]*agentports.ChatCompletionResult, 0, len(c.Script))
+	turns := make([]*llmports.ChatCompletionResult, 0, len(c.Script))
 	for stepIdx, step := range c.Script {
-		result := &agentports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
+		result := &llmports.ChatCompletionResult{Text: step.Reply, ModelIdentifier: scriptModel}
 		for callIdx, call := range step.Calls {
-			result.ToolCalls = append(result.ToolCalls, agentports.ToolCall{
+			result.ToolCalls = append(result.ToolCalls, llmports.ToolCall{
 				ID:        fmt.Sprintf("call_%d_%d", stepIdx, callIdx),
 				Name:      call.Name,
 				Arguments: maps.Clone(call.Args),
@@ -116,7 +126,7 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 	}
 
 	actor := actorFor(c.Agent.Unattended, *tenant)
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: primary,
 		Actor:      actor,
 		Context:    contextFor(c, definitions, *tenant),
@@ -172,14 +182,14 @@ func Run(ctx context.Context, p RunParams) (*Outcome, error) {
 func newRuntime(
 	rec *recorder,
 	c *Case,
-	completion agentports.CompletionService,
+	completion llmports.CompletionService,
 ) (*agentevalgate.Kit, *agentruntime.Service, error) {
 	built, err := buildTools(rec, c.Responses)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	kit := agentevalgate.FromTools(built.queries, built.actions, agentruntime.RuntimePolicies())
+	kit := agentevalgate.FromTools(built.queries, built.actions, runtimetools.Policies())
 	params := agentevalgate.RuntimeParams{
 		Completion:  completion,
 		Permissions: &agenttest.StubPermissions{Denied: deniedOf(c.Agent.Denied)},
@@ -196,7 +206,7 @@ func newRuntime(
 type reopenRequest struct {
 	definition *agentdefinition.Definition
 	actor      *permissionports.RequestActor
-	base       *agentports.RunRequest
+	base       *agentruntimeports.RunRequest
 }
 
 func reopen(
@@ -206,7 +216,7 @@ func reopen(
 	p reopenRequest,
 ) {
 	rec.mu.Lock()
-	written := make([]*agent.Memory, 0, len(rec.memories))
+	written := make([]*agentmemory.Memory, 0, len(rec.memories))
 	for _, record := range rec.memories {
 		written = append(written, record.Memory)
 	}
@@ -215,14 +225,14 @@ func reopen(
 		return
 	}
 
-	rc := agentdefinition.RuntimeContext{
+	rc := agentturn.RuntimeContext{
 		OrganizationName: p.base.Context.OrganizationName,
 		Timezone:         p.base.Context.Timezone,
 		Now:              FixedNow,
 		Trigger:          p.base.Context.Trigger,
 		Memories:         written,
 	}
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: p.definition,
 		Actor:      p.actor,
 		Context:    rc,
@@ -310,8 +320,8 @@ func contextFor(
 	c *Case,
 	definitions map[pulid.ID]*agentdefinition.Definition,
 	tenant Tenant,
-) agentdefinition.RuntimeContext {
-	rc := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	rc := agentturn.RuntimeContext{
 		OrganizationName: "Acme Freight",
 		BusinessUnitName: "West Coast",
 		Timezone:         "America/Chicago",
@@ -324,7 +334,7 @@ func contextFor(
 
 	source := c.Source
 	if source.Subject != nil {
-		rc.Subject = &agentdefinition.RuntimeSubject{
+		rc.Subject = &agentturn.RuntimeSubject{
 			Type:            agent.SubjectType(source.Subject.Type),
 			ID:              source.Subject.ID,
 			Label:           source.Subject.Label,
@@ -333,21 +343,21 @@ func contextFor(
 		}
 	}
 	if source.Attachment != nil {
-		rc.Attachments = []agentdefinition.RuntimeAttachment{{
+		rc.Attachments = []agentturn.RuntimeAttachment{{
 			DocumentID:  source.Attachment.DocumentID,
 			FileName:    source.Attachment.FileName,
 			ContentType: "application/pdf",
-			Reading:     agentdefinition.AttachmentReadingDone,
+			Reading:     agentturn.AttachmentReadingDone,
 			Text:        source.Attachment.Excerpt,
 		}}
 	}
 	if source.Memory != nil {
-		rc.Memories = []*agent.Memory{memoryFor(*source.Memory, tenant)}
+		rc.Memories = []*agentmemory.Memory{memoryFor(*source.Memory, tenant)}
 	}
 	if !c.Agent.Unattended {
 		for idx := range c.Delegates {
 			delegate := definitions[pulid.ID(c.Delegates[idx].ID)]
-			rc.Delegates = append(rc.Delegates, agentdefinition.RuntimeDelegate{
+			rc.Delegates = append(rc.Delegates, agentturn.RuntimeDelegate{
 				ID:    delegate.ID,
 				Name:  delegate.Name,
 				Tools: slices.Clone(delegate.ToolNames),
@@ -358,24 +368,24 @@ func contextFor(
 	return rc
 }
 
-func memoryFor(spec MemorySpec, tenant Tenant) *agent.Memory {
+func memoryFor(spec MemorySpec, tenant Tenant) *agentmemory.Memory {
 	id := pulid.ID(spec.ID)
 	if id.IsNil() {
 		id = pulid.ID("amem_01JREDTEAMMEM0RY0000000000")
 	}
-	kind := agent.MemoryKind(spec.Kind)
+	kind := agentmemory.MemoryKind(spec.Kind)
 	if !kind.IsValid() {
-		kind = agent.MemoryKindInstruction
+		kind = agentmemory.MemoryKindInstruction
 	}
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		ID:             id,
 		OrganizationID: tenant.OrganizationID,
 		BusinessUnitID: tenant.BusinessUnitID,
 		Kind:           kind,
-		Source:         agent.MemorySourceAgent,
-		Status:         agent.MemoryStatusActive,
-		Scope:          agent.MemoryScopeOrganization,
+		Source:         agentmemory.MemorySourceAgent,
+		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		Content:        strings.TrimSpace(spec.Content),
 		Tainted:        spec.Tainted,
 	}
@@ -417,8 +427,8 @@ func (fx *effects) events() []kernelports.StreamEvent {
 
 func (fx *effects) Complete(
 	t *agentruntime.Turn,
-	req *agentports.ChatCompletionRequest,
-) (agentruntime.ModelReply, error) {
+	req *llmports.ChatCompletionRequest,
+) (modelstream.Reply, error) {
 	fx.rec.read(ReadCompletion, t.Definition().Name, req.TenantInfo)
 
 	return fx.rt.StreamCompletion(fx.ctx, req, fx.Emit)
@@ -428,11 +438,11 @@ func (fx *effects) Complete(
 // another, so the record keeps the order the model asked in.
 func (fx *effects) DispatchReads(
 	t *agentruntime.Turn,
-	calls []agentruntime.DispatchCall,
-) []agentruntime.ToolOutcome {
-	outcomes := make([]agentruntime.ToolOutcome, 0, len(calls))
+	calls []toolcall.Call,
+) []toolcall.Outcome {
+	outcomes := make([]toolcall.Outcome, 0, len(calls))
 	for idx := range calls {
-		outcomes = append(outcomes, fx.Dispatch(t, calls[idx]))
+		outcomes = append(outcomes, fx.Dispatch(t, &calls[idx]))
 	}
 
 	return outcomes
@@ -440,13 +450,13 @@ func (fx *effects) DispatchReads(
 
 func (fx *effects) Dispatch(
 	t *agentruntime.Turn,
-	call agentruntime.DispatchCall,
-) agentruntime.ToolOutcome {
+	call *toolcall.Call,
+) toolcall.Outcome {
 	req := t.Request()
 	record := DispatchRecord{
 		Definition: t.Definition(),
 		Unattended: req.Unattended,
-		Call:       call,
+		Call:       *call,
 		Held:       t.State().Held,
 		Taint:      call.Taint.Clone(),
 		SourceRead: fx.rec.hasReadSource(),
@@ -462,11 +472,12 @@ func (fx *effects) Dispatch(
 	return outcome
 }
 
-func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) agentruntime.FindAnswer {
-	found := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
+func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) toolaccess.FindAnswer {
+	state := t.ToolsState()
+	found := fx.rt.FindFor(fx.ctx, t.Request(), &state, arguments)
 	t.LoadTools(found.Loaded)
 
-	return agentruntime.FindAnswer{
+	return toolaccess.FindAnswer{
 		Content: found.Content,
 		Found:   found.Found,
 		HandOff: found.HandOff,
@@ -482,9 +493,9 @@ func (fx *effects) Emit(event kernelports.StreamEvent) {
 
 func (fx *effects) Observe(
 	_ *agentruntime.Turn,
-	call *agentports.ToolCall,
-	outcome agentruntime.ToolOutcome,
-) agentruntime.ToolOutcome {
+	call *llmports.ToolCall,
+	outcome *toolcall.Outcome,
+) toolcall.Outcome {
 	return fx.rt.ObserveCall(nil, call, outcome)
 }
 
@@ -499,11 +510,11 @@ func (fx *effects) NewCallID() string {
 
 func (fx *effects) Delegate(
 	t *agentruntime.Turn,
-	calls []agentruntime.DelegateCall,
-) []agentruntime.DelegateRun {
-	runs := make([]agentruntime.DelegateRun, 0, len(calls))
+	calls []delegation.Call,
+) []delegation.Run {
+	runs := make([]delegation.Run, 0, len(calls))
 	for idx := range calls {
-		runs = append(runs, fx.delegate(t, calls[idx]))
+		runs = append(runs, fx.delegate(t, &calls[idx]))
 	}
 
 	return runs
@@ -511,12 +522,12 @@ func (fx *effects) Delegate(
 
 func (fx *effects) delegate(
 	t *agentruntime.Turn,
-	call agentruntime.DelegateCall,
-) agentruntime.DelegateRun {
+	call *delegation.Call,
+) delegation.Run {
 	parent := t.Definition()
 	record := DelegationRecord{
 		Parent:     parent,
-		Call:       call,
+		Call:       *call,
 		SourceRead: fx.rec.hasReadSource(),
 	}
 
@@ -525,15 +536,15 @@ func (fx *effects) delegate(
 		record.Declined = call.Delegate.Name + " is not an agent this case defines."
 		fx.rec.delegated(&record)
 
-		return agentruntime.DelegateRun{Declined: record.Declined}
+		return delegation.Run{Declined: record.Declined}
 	}
 	fx.rec.delegated(&record)
 
 	parentReq := t.Request()
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor:      parentReq.Actor,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			OrganizationName: parentReq.Context.OrganizationName,
 			Timezone:         parentReq.Context.Timezone,
 			Now:              FixedNow,
@@ -542,7 +553,7 @@ func (fx *effects) delegate(
 		},
 		Input:    call.Task,
 		ThreadID: parentReq.ThreadID,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          call.Call.ID,
@@ -563,7 +574,7 @@ func (fx *effects) delegate(
 	})
 
 	result, err := fx.rt.Drive(turn, fx)
-	run := agentruntime.DelegateRun{
+	run := delegation.Run{
 		Definition:      definition,
 		Result:          result,
 		ExternalContent: turn.ReadExternalContent(),
@@ -575,8 +586,8 @@ func (fx *effects) delegate(
 	return run
 }
 
-func (*effects) Interject(*agentruntime.Turn, *agentruntime.WorldCheck) agentruntime.Interjections {
-	return agentruntime.Interjections{}
+func (*effects) Interject(*agentruntime.Turn, *worldwatch.Check) worldwatch.Interjections {
+	return worldwatch.Interjections{}
 }
 
 func (*effects) Now() int64 { return FixedNow }
@@ -590,7 +601,7 @@ const pinnedVersion = 1
 func (pinnedVersions) Version(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.ToolTarget,
+	agenttoolports.ToolTarget,
 ) (int64, error) {
 	return pinnedVersion, nil
 }

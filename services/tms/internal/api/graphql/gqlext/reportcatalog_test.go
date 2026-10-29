@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,21 +16,21 @@ import (
 // The REST routes withhold them through the entity
 // (TestEveryMarginFieldARESTResponseCarriesIsWithheld in responseguard), and
 // the report catalog gates them like any other.
-var restOnlyProtected = map[permission.Resource]map[string]permission.FieldGroup{
+var restOnlyProtected = map[permission.Resource]map[string]protectedfield.Group{
 	permission.ResourceRateQuote: {
-		"costAmount":    permission.FieldGroupMargins,
-		"marginAmount":  permission.FieldGroupMargins,
-		"marginPercent": permission.FieldGroupMargins,
+		"costAmount":    protectedfield.Margins,
+		"marginAmount":  protectedfield.Margins,
+		"marginPercent": protectedfield.Margins,
 	},
 	permission.ResourceDispatchControl: {
-		"tenderCounterMarginFloorPercent": permission.FieldGroupMargins,
+		"tenderCounterMarginFloorPercent": protectedfield.Margins,
 	},
 }
 
 func TestEveryRESTOnlyProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for resource, fields := range restOnlyProtected {
 		for field := range fields {
 			assert.Equalf(t, permission.SensitivityConfidential,
@@ -39,12 +41,12 @@ func TestEveryRESTOnlyProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
 	}
 }
 
-func schemaProtected(t *testing.T) map[permission.Resource]map[string]permission.FieldGroup {
+func schemaProtected(t *testing.T) map[permission.Resource]map[string]protectedfield.Group {
 	t.Helper()
 
-	protected := make(map[permission.Resource]map[string]permission.FieldGroup, 8)
+	protected := make(map[permission.Resource]map[string]protectedfield.Group, 8)
 	for resource, fields := range restOnlyProtected {
-		protected[resource] = make(map[string]permission.FieldGroup, len(fields))
+		protected[resource] = make(map[string]protectedfield.Group, len(fields))
 		for field, group := range fields {
 			protected[resource][field] = group
 		}
@@ -56,7 +58,7 @@ func schemaProtected(t *testing.T) map[permission.Resource]map[string]permission
 			continue
 		}
 		if protected[resource] == nil {
-			protected[resource] = make(map[string]permission.FieldGroup, len(fields))
+			protected[resource] = make(map[string]protectedfield.Group, len(fields))
 		}
 		for field, group := range fields {
 			protected[resource][field] = group

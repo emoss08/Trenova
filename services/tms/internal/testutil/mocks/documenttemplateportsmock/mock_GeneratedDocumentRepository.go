@@ -5,9 +5,9 @@
 package documenttemplateportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -41,23 +41,23 @@ func (_m *MockGeneratedDocumentRepository) EXPECT() *MockGeneratedDocumentReposi
 }
 
 // List provides a mock function for the type MockGeneratedDocumentRepository
-func (_mock *MockGeneratedDocumentRepository) List(context1 context.Context, listGeneratedDocumentsRequest *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error) {
+func (_mock *MockGeneratedDocumentRepository) List(context1 context.Context, listGeneratedDocumentsRequest *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*generateddocument.GeneratedDocument], error) {
 	ret := _mock.Called(context1, listGeneratedDocumentsRequest)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*documenttemplate.GeneratedDocument]
+	var r0 *pagination.ListResult[*generateddocument.GeneratedDocument]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*generateddocument.GeneratedDocument], error)); ok {
 		return returnFunc(context1, listGeneratedDocumentsRequest)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.ListGeneratedDocumentsRequest) *pagination.ListResult[*documenttemplate.GeneratedDocument]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.ListGeneratedDocumentsRequest) *pagination.ListResult[*generateddocument.GeneratedDocument]); ok {
 		r0 = returnFunc(context1, listGeneratedDocumentsRequest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*documenttemplate.GeneratedDocument])
+			r0 = ret.Get(0).(*pagination.ListResult[*generateddocument.GeneratedDocument])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttemplateports.ListGeneratedDocumentsRequest) error); ok {
@@ -97,36 +97,36 @@ func (_c *MockGeneratedDocumentRepository_List_Call) Run(
 	return _c
 }
 
-func (_c *MockGeneratedDocumentRepository_List_Call) Return(listResult *pagination.ListResult[*documenttemplate.GeneratedDocument], err error) *MockGeneratedDocumentRepository_List_Call {
+func (_c *MockGeneratedDocumentRepository_List_Call) Return(listResult *pagination.ListResult[*generateddocument.GeneratedDocument], err error) *MockGeneratedDocumentRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
 func (_c *MockGeneratedDocumentRepository_List_Call) RunAndReturn(
-	run func(context1 context.Context, listGeneratedDocumentsRequest *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*documenttemplate.GeneratedDocument], error),
+	run func(context1 context.Context, listGeneratedDocumentsRequest *documenttemplateports.ListGeneratedDocumentsRequest) (*pagination.ListResult[*generateddocument.GeneratedDocument], error),
 ) *MockGeneratedDocumentRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockGeneratedDocumentRepository
-func (_mock *MockGeneratedDocumentRepository) GetByID(context1 context.Context, getGeneratedDocumentByIDRequest *documenttemplateports.GetGeneratedDocumentByIDRequest) (*documenttemplate.GeneratedDocument, error) {
+func (_mock *MockGeneratedDocumentRepository) GetByID(context1 context.Context, getGeneratedDocumentByIDRequest *documenttemplateports.GetGeneratedDocumentByIDRequest) (*generateddocument.GeneratedDocument, error) {
 	ret := _mock.Called(context1, getGeneratedDocumentByIDRequest)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *documenttemplate.GeneratedDocument
+	var r0 *generateddocument.GeneratedDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.GetGeneratedDocumentByIDRequest) (*documenttemplate.GeneratedDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.GetGeneratedDocumentByIDRequest) (*generateddocument.GeneratedDocument, error)); ok {
 		return returnFunc(context1, getGeneratedDocumentByIDRequest)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.GetGeneratedDocumentByIDRequest) *documenttemplate.GeneratedDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.GetGeneratedDocumentByIDRequest) *generateddocument.GeneratedDocument); ok {
 		r0 = returnFunc(context1, getGeneratedDocumentByIDRequest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documenttemplate.GeneratedDocument)
+			r0 = ret.Get(0).(*generateddocument.GeneratedDocument)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttemplateports.GetGeneratedDocumentByIDRequest) error); ok {
@@ -166,39 +166,39 @@ func (_c *MockGeneratedDocumentRepository_GetByID_Call) Run(
 	return _c
 }
 
-func (_c *MockGeneratedDocumentRepository_GetByID_Call) Return(generatedDocument *documenttemplate.GeneratedDocument, err error) *MockGeneratedDocumentRepository_GetByID_Call {
+func (_c *MockGeneratedDocumentRepository_GetByID_Call) Return(generatedDocument *generateddocument.GeneratedDocument, err error) *MockGeneratedDocumentRepository_GetByID_Call {
 	_c.Call.Return(generatedDocument, err)
 	return _c
 }
 
 func (_c *MockGeneratedDocumentRepository_GetByID_Call) RunAndReturn(
-	run func(context1 context.Context, getGeneratedDocumentByIDRequest *documenttemplateports.GetGeneratedDocumentByIDRequest) (*documenttemplate.GeneratedDocument, error),
+	run func(context1 context.Context, getGeneratedDocumentByIDRequest *documenttemplateports.GetGeneratedDocumentByIDRequest) (*generateddocument.GeneratedDocument, error),
 ) *MockGeneratedDocumentRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Create provides a mock function for the type MockGeneratedDocumentRepository
-func (_mock *MockGeneratedDocumentRepository) Create(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error) {
+func (_mock *MockGeneratedDocumentRepository) Create(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error) {
 	ret := _mock.Called(context1, generatedDocument)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *documenttemplate.GeneratedDocument
+	var r0 *generateddocument.GeneratedDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error)); ok {
 		return returnFunc(context1, generatedDocument)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplate.GeneratedDocument) *documenttemplate.GeneratedDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *generateddocument.GeneratedDocument) *generateddocument.GeneratedDocument); ok {
 		r0 = returnFunc(context1, generatedDocument)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documenttemplate.GeneratedDocument)
+			r0 = ret.Get(0).(*generateddocument.GeneratedDocument)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttemplate.GeneratedDocument) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *generateddocument.GeneratedDocument) error); ok {
 		r1 = returnFunc(context1, generatedDocument)
 	} else {
 		r1 = ret.Error(1)
@@ -213,61 +213,61 @@ type MockGeneratedDocumentRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - context1 context.Context
-//   - generatedDocument *documenttemplate.GeneratedDocument
+//   - generatedDocument *generateddocument.GeneratedDocument
 func (_e *MockGeneratedDocumentRepository_Expecter) Create(context1 any, generatedDocument any) *MockGeneratedDocumentRepository_Create_Call {
 	return &MockGeneratedDocumentRepository_Create_Call{Call: _e.mock.On("Create", context1, generatedDocument)}
 }
 
 func (_c *MockGeneratedDocumentRepository_Create_Call) Run(
-	run func(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument),
+	run func(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument),
 ) *MockGeneratedDocumentRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documenttemplate.GeneratedDocument
+		var arg1 *generateddocument.GeneratedDocument
 		if args[1] != nil {
-			arg1 = args[1].(*documenttemplate.GeneratedDocument)
+			arg1 = args[1].(*generateddocument.GeneratedDocument)
 		}
 		run(arg0, arg1)
 	})
 	return _c
 }
 
-func (_c *MockGeneratedDocumentRepository_Create_Call) Return(generatedDocument *documenttemplate.GeneratedDocument, err error) *MockGeneratedDocumentRepository_Create_Call {
+func (_c *MockGeneratedDocumentRepository_Create_Call) Return(generatedDocument *generateddocument.GeneratedDocument, err error) *MockGeneratedDocumentRepository_Create_Call {
 	_c.Call.Return(generatedDocument, err)
 	return _c
 }
 
 func (_c *MockGeneratedDocumentRepository_Create_Call) RunAndReturn(
-	run func(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error),
+	run func(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error),
 ) *MockGeneratedDocumentRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockGeneratedDocumentRepository
-func (_mock *MockGeneratedDocumentRepository) Update(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error) {
+func (_mock *MockGeneratedDocumentRepository) Update(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error) {
 	ret := _mock.Called(context1, generatedDocument)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *documenttemplate.GeneratedDocument
+	var r0 *generateddocument.GeneratedDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error)); ok {
 		return returnFunc(context1, generatedDocument)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplate.GeneratedDocument) *documenttemplate.GeneratedDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *generateddocument.GeneratedDocument) *generateddocument.GeneratedDocument); ok {
 		r0 = returnFunc(context1, generatedDocument)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documenttemplate.GeneratedDocument)
+			r0 = ret.Get(0).(*generateddocument.GeneratedDocument)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttemplate.GeneratedDocument) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *generateddocument.GeneratedDocument) error); ok {
 		r1 = returnFunc(context1, generatedDocument)
 	} else {
 		r1 = ret.Error(1)
@@ -282,35 +282,35 @@ type MockGeneratedDocumentRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - context1 context.Context
-//   - generatedDocument *documenttemplate.GeneratedDocument
+//   - generatedDocument *generateddocument.GeneratedDocument
 func (_e *MockGeneratedDocumentRepository_Expecter) Update(context1 any, generatedDocument any) *MockGeneratedDocumentRepository_Update_Call {
 	return &MockGeneratedDocumentRepository_Update_Call{Call: _e.mock.On("Update", context1, generatedDocument)}
 }
 
 func (_c *MockGeneratedDocumentRepository_Update_Call) Run(
-	run func(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument),
+	run func(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument),
 ) *MockGeneratedDocumentRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documenttemplate.GeneratedDocument
+		var arg1 *generateddocument.GeneratedDocument
 		if args[1] != nil {
-			arg1 = args[1].(*documenttemplate.GeneratedDocument)
+			arg1 = args[1].(*generateddocument.GeneratedDocument)
 		}
 		run(arg0, arg1)
 	})
 	return _c
 }
 
-func (_c *MockGeneratedDocumentRepository_Update_Call) Return(generatedDocument *documenttemplate.GeneratedDocument, err error) *MockGeneratedDocumentRepository_Update_Call {
+func (_c *MockGeneratedDocumentRepository_Update_Call) Return(generatedDocument *generateddocument.GeneratedDocument, err error) *MockGeneratedDocumentRepository_Update_Call {
 	_c.Call.Return(generatedDocument, err)
 	return _c
 }
 
 func (_c *MockGeneratedDocumentRepository_Update_Call) RunAndReturn(
-	run func(context1 context.Context, generatedDocument *documenttemplate.GeneratedDocument) (*documenttemplate.GeneratedDocument, error),
+	run func(context1 context.Context, generatedDocument *generateddocument.GeneratedDocument) (*generateddocument.GeneratedDocument, error),
 ) *MockGeneratedDocumentRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c

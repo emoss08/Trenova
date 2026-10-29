@@ -7,13 +7,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/carrierintelrepository"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/telematicsrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workercredentialrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerdrugalcoholrepository"
@@ -21,9 +21,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -95,9 +97,9 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	events := carrierintelrepository.NewEventRepository(carrierintelrepository.Params{
 		DB: conn, Logger: logger,
 	})
-	services.CarrierIntelService = carrierintelservice.New(carrierintelservice.Params{
-		Logger: logger, Config: &config.Config{}, EventRepo: events,
-	})
+	services.CarrierIntelReviewService = carrierintelreviewservice.New(
+		carrierintelreviewservice.Params{Logger: logger, EventRepo: events},
+	)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
 	credentials := workercredentialrepository.New(
 		workercredentialrepository.Params{DB: conn, Logger: logger})
@@ -106,9 +108,11 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 	})
 	draws := workerdrugalcoholrepository.New(
 		workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
-	services.WorkerDrugAlcoholService = workerdrugalcoholservice.New(workerdrugalcoholservice.Params{
-		Logger: logger, Repo: draws, WorkerRepo: workers,
-	})
+	services.WorkerDrugAlcoholService = workerdrugalcoholservice.New(
+		workerdrugalcoholservice.Params{
+			Logger: logger, Repo: draws, WorkerRepo: workers,
+		},
+	)
 	hours := telematicsrepository.New(telematicsrepository.Params{DB: conn, Logger: logger})
 	services.TelematicsService = telematicsservice.New(telematicsservice.Params{
 		Repo: hours, Logger: logger,
@@ -133,15 +137,15 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 		tool: "carrier_get_intelligence_event",
 		write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, _ bool) (pulid.ID, error) {
 			bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
-			rows, err := events.InsertIgnoreDuplicates(ctx, []*carrierintel.CarrierIntelEvent{{
+			rows, err := events.InsertIgnoreDuplicates(ctx, []*carrierintelevent.CarrierIntelEvent{{
 				ID: pulid.MustNew("cievt_"), BusinessUnitID: bu, OrganizationID: org,
 				SubjectType: carrierintel.SubjectTypeCarrier, SubjectID: "DOT" + label,
 				DOTNumber: "100" + label[1:], SubjectName: "Carrier " + label,
-				Provider: integration.TypeCarrierOK, Source: carrierintel.EventSourceSnapshotDiff,
+				Provider: integration.TypeCarrierOK, Source: carrierintelevent.EventSourceSnapshotDiff,
 				Category: carrierintel.SectionInsurance, Severity: carrierintel.SeverityHigh,
 				PriorValue: "Active", CurrentValue: "Lapsed", Summary: "Insurance lapsed",
 				DetectedAt: timeutils.NowUnix(), Fingerprint: "fp" + label,
-				Status: carrierintel.EventStatusOpen,
+				Status: carrierintelevent.EventStatusOpen,
 			}})
 			if err != nil {
 				return pulid.Nil, err
@@ -170,14 +174,17 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 					return pulid.Nil, err
 				}
 				expires := timeutils.NowUnix() + 86400*90
-				row, err := credentials.Create(ctx, &workerports.CreateWorkerCredentialRequest{
-					Entity: &worker.WorkerCredential{
-						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-						CredentialTypeID: kind.ID, Status: worker.CredentialStatusActive,
-						Number: "N-" + label, IssuingAuthority: "TX", ExpiresAt: &expires,
-						Notes: "Renewal booked " + label,
+				row, err := credentials.Create(
+					ctx,
+					&workercredentialports.CreateWorkerCredentialRequest{
+						Entity: &workercredential.WorkerCredential{
+							BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+							CredentialTypeID: kind.ID, Status: workercredential.CredentialStatusActive,
+							Number: "N-" + label, IssuingAuthority: "TX", ExpiresAt: &expires,
+							Notes: "Renewal booked " + label,
+						},
 					},
-				})
+				)
 				return created(row, err)
 			},
 		},
@@ -192,26 +199,26 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 				if err != nil {
 					return pulid.Nil, err
 				}
-				pool, err := draws.CreatePool(ctx, &worker.DOTRandomPool{
+				pool, err := draws.CreatePool(ctx, &dotrandom.DOTRandomPool{
 					BusinessUnitID: bu, OrganizationID: org, Code: "P" + label,
 					Name: "Pool " + label, Status: domaintypes.StatusActive,
-					Period: worker.RandomPeriodQuarterly, DrugRatePercent: 50,
+					Period: dotrandom.RandomPeriodQuarterly, DrugRatePercent: 50,
 					AlcoholRatePercent: 10, IncludedDriverTypes: []string{},
 				})
 				if err != nil {
 					return pulid.Nil, err
 				}
 				now := timeutils.NowUnix()
-				row, err := draws.CreateDrawWithEntries(ctx, &worker.DOTRandomDraw{
+				row, err := draws.CreateDrawWithEntries(ctx, &dotrandom.DOTRandomDraw{
 					ID: pulid.MustNew("drdraw_"), BusinessUnitID: bu, OrganizationID: org,
 					PoolID: pool.ID, PeriodKey: "2026-Q" + label, PeriodStart: now - 86400*30,
-					PeriodEnd: now + 86400*60, Status: worker.RandomDrawStatusFinal,
+					PeriodEnd: now + 86400*60, Status: dotrandom.RandomDrawStatusFinal,
 					PoolSize: 1, DrugTarget: 1, DrugSelected: 1, Seed: "seed" + label,
 					Method: "sha256-rank", DrawnAt: now, FinalizedAt: &now,
-				}, []*worker.DOTRandomDrawEntry{{
+				}, []*dotrandom.DOTRandomDrawEntry{{
 					ID: pulid.MustNew("drde_"), BusinessUnitID: bu, OrganizationID: org,
-					WorkerID: workerID, Substance: worker.DOTSubstanceDrug, Rank: 1,
-					Status: worker.RandomEntrySelected,
+					WorkerID: workerID, Substance: workerdot.DOTSubstanceDrug, Rank: 1,
+					Status: dotrandom.RandomEntrySelected,
 				}})
 				return created(row, err)
 			},
@@ -253,7 +260,10 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 
 	env := &convertedListEnv{
 		engine: engine,
@@ -272,7 +282,7 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			actor := env.mine.Actor
 			param := get.ParamSchema()["required"].([]string)[0]
 			atInternal := func(id string) map[string]any {
-				data, queryErr := get.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID:    actor.OrganizationID,
 					BusinessUnitID:    actor.BusinessUnitID,
 					Actor:             actor,
@@ -292,22 +302,25 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 				}
 			})
 
-			t.Run("at the default agent data access only what stays Restricted is withheld", func(t *testing.T) {
-				record := atInternal(ours.rows[0])
-				withheld, _ := record["withheldByAccess"].([]any)
-				names := make([]string, 0, len(withheld))
-				for _, field := range withheld {
-					names = append(names, field.(string))
-				}
-				assert.Subset(t, c.internal, names, "nothing Internal is withheld")
-				assert.Subset(t, names, c.newly, "what stays Restricted is withheld")
-				for _, field := range names {
-					assert.NotContains(t, record, field)
-				}
-			})
+			t.Run(
+				"at the default agent data access only what stays Restricted is withheld",
+				func(t *testing.T) {
+					record := atInternal(ours.rows[0])
+					withheld, _ := record["withheldByAccess"].([]any)
+					names := make([]string, 0, len(withheld))
+					for _, field := range withheld {
+						names = append(names, field.(string))
+					}
+					assert.Subset(t, c.internal, names, "nothing Internal is withheld")
+					assert.Subset(t, names, c.newly, "what stays Restricted is withheld")
+					for _, field := range names {
+						assert.NotContains(t, record, field)
+					}
+				},
+			)
 
 			t.Run("another tenant's record is not ours to read", func(t *testing.T) {
-				data, queryErr := get.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID: actor.OrganizationID,
 					BusinessUnitID: actor.BusinessUnitID,
 					Actor:          actor,
@@ -327,7 +340,11 @@ func TestConvertedGets_ReadOneRecordOfTheTenantUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, hiddenErr := agentquerytoolservice.ConvertedGetTool(name, env.public, &publicRole{})
+				hidden, hiddenErr := agentquerytoolservice.ConvertedGetTool(
+					name,
+					env.public,
+					&publicRole{},
+				)
 				require.NoError(t, hiddenErr)
 				record := callTool(t, ours.ctx, hidden, actor, map[string]any{param: ours.rows[0]})
 				withheld, _ := record["withheldByAccess"].([]any)
@@ -406,22 +423,25 @@ func checkConvertedGet(
 		}
 	})
 
-	t.Run("only what is gated past Internal is withheld at the default agent data access", func(t *testing.T) {
-		data, err := get.Query(ours.ctx, &agentports.QueryToolParams{
-			OrganizationID:    actor.OrganizationID,
-			BusinessUnitID:    actor.BusinessUnitID,
-			Actor:             actor,
-			Timezone:          "America/Chicago",
-			Params:            call(ours.rows[0]),
-			DataAccessCeiling: permission.SensitivityInternal,
-			RunID:             pulid.MustNew("ar_"),
-		})
-		require.NoError(t, err)
-		assertWithheldAtInternal(t, asMap(t, data), c.withheldAtInternal)
-	})
+	t.Run(
+		"only what is gated past Internal is withheld at the default agent data access",
+		func(t *testing.T) {
+			data, err := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
+				OrganizationID:    actor.OrganizationID,
+				BusinessUnitID:    actor.BusinessUnitID,
+				Actor:             actor,
+				Timezone:          "America/Chicago",
+				Params:            call(ours.rows[0]),
+				DataAccessCeiling: permission.SensitivityInternal,
+				RunID:             pulid.MustNew("ar_"),
+			})
+			require.NoError(t, err)
+			assertWithheldAtInternal(t, asMap(t, data), c.withheldAtInternal)
+		},
+	)
 
 	t.Run("another tenant's record is not found", func(t *testing.T) {
-		_, err := get.Query(ours.ctx, &agentports.QueryToolParams{
+		_, err := get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,

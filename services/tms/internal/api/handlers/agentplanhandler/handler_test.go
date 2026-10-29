@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentplanhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,17 +25,17 @@ import (
 )
 
 type recordingPlans struct {
-	agentports.AgentPlanService
+	agentplanports.AgentPlanService
 
-	plan *agent.AgentPlan
-	sent *agentports.DecideAgentPlanRequest
+	plan *agentplan.AgentPlan
+	sent *agentplanports.DecideAgentPlanRequest
 }
 
 func (p *recordingPlans) Decide(
 	_ context.Context,
-	req *agentports.DecideAgentPlanRequest,
+	req *agentplanports.DecideAgentPlanRequest,
 	_ *permissionports.RequestActor,
-) (*agent.AgentPlan, error) {
+) (*agentplan.AgentPlan, error) {
 	p.sent = req
 
 	return p.plan, nil
@@ -40,26 +43,26 @@ func (p *recordingPlans) Decide(
 
 func (p *recordingPlans) GetByID(
 	context.Context,
-	agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+	agentplanports.GetAgentPlanByIDRequest,
+) (*agentplan.AgentPlan, error) {
 	return p.plan, nil
 }
 
 type planPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 }
 
 func (planPreviews) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
-	return &agent.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
+	req *agentruntimeports.PlanPreviewRequest,
+) (*agentpreview.PlanPreview, error) {
+	return &agentpreview.PlanPreview{PlanID: req.Plan.ID, Digest: strings.Repeat("c", 64)}, nil
 }
 
-func newHandler(plans agentports.AgentPlanService) *agentplanhandler.Handler {
+func newHandler(plans agentplanports.AgentPlanService) *agentplanhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 
 	return agentplanhandler.New(agentplanhandler.Params{
@@ -78,13 +81,13 @@ func newHandler(plans agentports.AgentPlanService) *agentplanhandler.Handler {
 func TestResolve_EchoesThePlanPreviewDigest(t *testing.T) {
 	t.Parallel()
 
-	plans := &recordingPlans{plan: &agent.AgentPlan{ID: pulid.MustNew("apl_")}}
+	plans := &recordingPlans{plan: &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}}
 	digest := strings.Repeat("d", 64)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-plans/" + plans.plan.ID.String() + "/resolve/").
 		WithJSONBody(map[string]any{
-			"decision":      agent.DecisionAccepted,
+			"decision":      agentdecision.DecisionAccepted,
 			"reasonCode":    "looks_right",
 			"note":          "All three are right",
 			"previewDigest": digest,
@@ -102,7 +105,7 @@ func TestResolve_EchoesThePlanPreviewDigest(t *testing.T) {
 func TestPreview_ReturnsThePlanDigestToEcho(t *testing.T) {
 	t.Parallel()
 
-	plans := &recordingPlans{plan: &agent.AgentPlan{ID: pulid.MustNew("apl_")}}
+	plans := &recordingPlans{plan: &agentplan.AgentPlan{ID: pulid.MustNew("apl_")}}
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/agent-plans/" + plans.plan.ID.String() + "/preview/").

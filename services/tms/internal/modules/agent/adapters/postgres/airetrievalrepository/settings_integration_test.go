@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestListIndexedTenants_ListsOnlyOrganizationsWithAnActiveModel(t *testing.T) {
 	h := newHarness(t)
-	list := func(req agentports.ListIndexedRetrievalTenantsRequest) int {
+	list := func(req retrievalports.ListIndexedRetrievalTenantsRequest) int {
 		t.Helper()
 		tenants, err := h.repo.ListIndexedTenants(h.ctx, req)
 		require.NoError(t, err)
@@ -23,7 +23,7 @@ func TestListIndexedTenants_ListsOnlyOrganizationsWithAnActiveModel(t *testing.T
 		return len(tenants)
 	}
 
-	assert.Zero(t, list(agentports.ListIndexedRetrievalTenantsRequest{Limit: 10}),
+	assert.Zero(t, list(retrievalports.ListIndexedRetrievalTenantsRequest{Limit: 10}),
 		"an organization that never chose a model is not swept")
 
 	settings := airetrieval.DefaultSettings(h.tenant.OrgID, h.tenant.BuID)
@@ -32,8 +32,8 @@ func TestListIndexedTenants_ListsOnlyOrganizationsWithAnActiveModel(t *testing.T
 	saved, err := h.repo.UpdateSettings(h.ctx, settings)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, list(agentports.ListIndexedRetrievalTenantsRequest{Limit: 10}))
-	assert.Zero(t, list(agentports.ListIndexedRetrievalTenantsRequest{
+	assert.Equal(t, 1, list(retrievalports.ListIndexedRetrievalTenantsRequest{Limit: 10}))
+	assert.Zero(t, list(retrievalports.ListIndexedRetrievalTenantsRequest{
 		After: &h.tenant,
 		Limit: 10,
 	}), "the cursor is exclusive")
@@ -43,6 +43,6 @@ func TestListIndexedTenants_ListsOnlyOrganizationsWithAnActiveModel(t *testing.T
 	_, err = h.repo.UpdateSettings(h.ctx, saved)
 	require.NoError(t, err)
 
-	assert.Zero(t, list(agentports.ListIndexedRetrievalTenantsRequest{Limit: 10}),
+	assert.Zero(t, list(retrievalports.ListIndexedRetrievalTenantsRequest{Limit: 10}),
 		"turning retrieval off takes the organization out of the sweep")
 }

@@ -7,10 +7,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,32 +28,41 @@ var testTenant = pagination.TenantInfo{
 }
 
 type fakeLookup struct {
-	shipmentports.TriageLookupRepository
+	triagelookupports.TriageLookupRepository
 
-	customers    []shipmentports.TriageRecordMatch
-	locations    map[string][]shipmentports.TriageLocationMatch
-	trailers     []shipmentports.TriageRecordMatch
-	commodities  []shipmentports.TriageRecordMatch
-	defaults     *shipmentports.TriageShipmentDefaults
+	customers    []triagelookupports.TriageRecordMatch
+	locations    map[string][]triagelookupports.TriageLocationMatch
+	trailers     []triagelookupports.TriageRecordMatch
+	commodities  []triagelookupports.TriageRecordMatch
+	defaults     *triagelookupports.TriageShipmentDefaults
 	serviceTypes []pulid.ID
 }
 
-func (f *fakeLookup) FindCustomers(context.Context, *shipmentports.TriageLookupQuery) ([]shipmentports.TriageRecordMatch, error) {
+func (f *fakeLookup) FindCustomers(
+	context.Context,
+	*triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	return f.customers, nil
 }
 
 func (f *fakeLookup) FindLocations(
 	_ context.Context,
-	req *shipmentports.TriageLocationQuery,
-) ([]shipmentports.TriageLocationMatch, error) {
+	req *triagelookupports.TriageLocationQuery,
+) ([]triagelookupports.TriageLocationMatch, error) {
 	return f.locations[req.City], nil
 }
 
-func (f *fakeLookup) FindTrailerTypes(context.Context, *shipmentports.TriageLookupQuery) ([]shipmentports.TriageRecordMatch, error) {
+func (f *fakeLookup) FindTrailerTypes(
+	context.Context,
+	*triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	return f.trailers, nil
 }
 
-func (f *fakeLookup) FindCommodities(context.Context, *shipmentports.TriageLookupQuery) ([]shipmentports.TriageRecordMatch, error) {
+func (f *fakeLookup) FindCommodities(
+	context.Context,
+	*triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	return f.commodities, nil
 }
 
@@ -59,11 +70,15 @@ func (f *fakeLookup) CustomerDefaults(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*shipmentports.TriageShipmentDefaults, error) {
+) (*triagelookupports.TriageShipmentDefaults, error) {
 	return f.defaults, nil
 }
 
-func (f *fakeLookup) ActiveServiceTypes(context.Context, pagination.TenantInfo, int) ([]pulid.ID, error) {
+func (f *fakeLookup) ActiveServiceTypes(
+	context.Context,
+	pagination.TenantInfo,
+	int,
+) ([]pulid.ID, error) {
 	return f.serviceTypes, nil
 }
 
@@ -84,13 +99,13 @@ func (f *fakeCreator) Create(
 }
 
 type fakeComments struct {
-	comments []*shipmentports.CreateSystemShipmentCommentRequest
+	comments []*shipmentcommentports.CreateSystemShipmentCommentRequest
 	err      error
 }
 
 func (f *fakeComments) CreateSystem(
 	_ context.Context,
-	req *shipmentports.CreateSystemShipmentCommentRequest,
+	req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.comments = append(f.comments, req)
 
@@ -100,12 +115,27 @@ func (f *fakeComments) CreateSystem(
 func newLoadService() (*Service, *fakeLookup, *fakeCreator, *fakeComments) {
 	customerID := pulid.MustNew("cus_")
 	lookup := &fakeLookup{
-		customers: []shipmentports.TriageRecordMatch{{ID: customerID, Label: "Crestline Retail", Exact: true}},
-		locations: map[string][]shipmentports.TriageLocationMatch{
-			"Columbus":   {{ID: pulid.MustNew("loc_"), Label: "Columbus DC", Timezone: "America/New_York", Exact: true}},
-			"Louisville": {{ID: pulid.MustNew("loc_"), Label: "Louisville Store", Timezone: "America/New_York"}},
+		customers: []triagelookupports.TriageRecordMatch{
+			{ID: customerID, Label: "Crestline Retail", Exact: true},
 		},
-		defaults: &shipmentports.TriageShipmentDefaults{
+		locations: map[string][]triagelookupports.TriageLocationMatch{
+			"Columbus": {
+				{
+					ID:       pulid.MustNew("loc_"),
+					Label:    "Columbus DC",
+					Timezone: "America/New_York",
+					Exact:    true,
+				},
+			},
+			"Louisville": {
+				{
+					ID:       pulid.MustNew("loc_"),
+					Label:    "Louisville Store",
+					Timezone: "America/New_York",
+				},
+			},
+		},
+		defaults: &triagelookupports.TriageShipmentDefaults{
 			ServiceTypeID:  pulid.MustNew("st_"),
 			ShipmentTypeID: pulid.MustNew("sht_"),
 		},
@@ -122,12 +152,14 @@ func newLoadService() (*Service, *fakeLookup, *fakeCreator, *fakeComments) {
 	}, lookup, creator, comments
 }
 
-func loadRequest(fields ...inboundmessageports.TriageLoadFieldValue) *inboundmessageports.CreateTriageLoadRequest {
+func loadRequest(
+	fields ...triageworkports.TriageLoadFieldValue,
+) *triageworkports.CreateTriageLoadRequest {
 	for i := range fields {
 		fields[i].Index = i
 	}
 
-	return &inboundmessageports.CreateTriageLoadRequest{
+	return &triageworkports.CreateTriageLoadRequest{
 		TenantInfo:     testTenant,
 		Actor:          permissionports.UserActor(testTenant),
 		Fields:         fields,
@@ -135,8 +167,8 @@ func loadRequest(fields ...inboundmessageports.TriageLoadFieldValue) *inboundmes
 	}
 }
 
-func field(key inboundmessage.LoadFieldKey, value string) inboundmessageports.TriageLoadFieldValue {
-	return inboundmessageports.TriageLoadFieldValue{Key: key, Value: value}
+func field(key inboundmessage.LoadFieldKey, value string) triageworkports.TriageLoadFieldValue {
+	return triageworkports.TriageLoadFieldValue{Key: key, Value: value}
 }
 
 func multiFields(err error) []string {
@@ -184,7 +216,7 @@ func TestCreateLoadBuildsShipment(t *testing.T) {
 	require.Len(t, entity.Moves, 1)
 	stops := entity.Moves[0].Stops
 	require.Len(t, stops, 2)
-	assert.Equal(t, shipment.StopTypePickup, stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypePickup, stops[0].Type)
 	require.NotNil(t, stops[0].ScheduledWindowEnd)
 	assert.Equal(t, int64(6*60*60), *stops[0].ScheduledWindowEnd-stops[0].ScheduledWindowStart)
 	assert.Nil(t, stops[1].ScheduledWindowEnd)
@@ -197,7 +229,7 @@ func TestCreateLoadReportsEachField(t *testing.T) {
 
 	service, lookup, creator, _ := newLoadService()
 	lookup.customers = nil
-	lookup.trailers = []shipmentports.TriageRecordMatch{
+	lookup.trailers = []triagelookupports.TriageRecordMatch{
 		{ID: pulid.MustNew("tt_"), Label: "53' Dry Van"},
 		{ID: pulid.MustNew("tt_"), Label: "53' Reefer"},
 	}
@@ -257,21 +289,21 @@ func TestCreateLoadUsesMatchedCustomerAndSoleServiceType(t *testing.T) {
 func TestPickRecord(t *testing.T) {
 	t.Parallel()
 
-	a := shipmentports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "A", Exact: true}
-	b := shipmentports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "B"}
-	c := shipmentports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "C", Exact: true}
+	a := triagelookupports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "A", Exact: true}
+	b := triagelookupports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "B"}
+	c := triagelookupports.TriageRecordMatch{ID: pulid.MustNew("cus_"), Label: "C", Exact: true}
 
 	_, ok := pickRecord(nil)
 	assert.False(t, ok)
-	got, ok := pickRecord([]shipmentports.TriageRecordMatch{a, b})
+	got, ok := pickRecord([]triagelookupports.TriageRecordMatch{a, b})
 	assert.True(t, ok)
 	assert.Equal(t, a.ID, got.ID)
-	got, ok = pickRecord([]shipmentports.TriageRecordMatch{b})
+	got, ok = pickRecord([]triagelookupports.TriageRecordMatch{b})
 	assert.True(t, ok)
 	assert.Equal(t, b.ID, got.ID)
-	_, ok = pickRecord([]shipmentports.TriageRecordMatch{a, c})
+	_, ok = pickRecord([]triagelookupports.TriageRecordMatch{a, c})
 	assert.False(t, ok)
-	_, ok = pickRecord([]shipmentports.TriageRecordMatch{b, b})
+	_, ok = pickRecord([]triagelookupports.TriageRecordMatch{b, b})
 	assert.False(t, ok)
 }
 

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal/extensionportaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,12 +44,12 @@ func NewPortalSiteRepository(p Params) agentextensionports.PortalSiteRepository 
 func (r *portalSiteRepository) List(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]*agentextension.PortalSite, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.PortalSite, error) {
-		s := agentextensiondb.PortalSites
+) ([]*extensionportal.PortalSite, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extensionportal.PortalSite, error) {
+		s := extensionportaldb.PortalSites
 		sites, err := s.Query().
 			Order(s.Name.Asc()).
-			Limit(agentextension.MaxPortalSitesPerTenant).
+			Limit(extensionportal.MaxPortalSitesPerTenant).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list portal sites", zap.Error(err))
@@ -64,9 +64,9 @@ func (r *portalSiteRepository) Get(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.PortalSite, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		site, err := agentextensiondb.PortalSites.Get(ctx, r.db.Keel(ctx), id)
+) (*extensionportal.PortalSite, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalSite, error) {
+		site, err := extensionportaldb.PortalSites.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
 			return nil, portalSiteErrors.Map(err, id.String())
 		}
@@ -77,10 +77,10 @@ func (r *portalSiteRepository) Get(
 
 func (r *portalSiteRepository) Create(
 	ctx context.Context,
-	site *agentextension.PortalSite,
-) (*agentextension.PortalSite, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		if err := agentextensiondb.PortalSites.Create(ctx, r.db.Keel(ctx), site); err != nil {
+	site *extensionportal.PortalSite,
+) (*extensionportal.PortalSite, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalSite, error) {
+		if err := extensionportaldb.PortalSites.Create(ctx, r.db.Keel(ctx), site); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateSiteName()
 			}
@@ -94,10 +94,10 @@ func (r *portalSiteRepository) Create(
 
 func (r *portalSiteRepository) Update(
 	ctx context.Context,
-	site *agentextension.PortalSite,
-) (*agentextension.PortalSite, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		if err := agentextensiondb.PortalSites.Save(ctx, r.db.Keel(ctx), site); err != nil {
+	site *extensionportal.PortalSite,
+) (*extensionportal.PortalSite, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalSite, error) {
+		if err := extensionportaldb.PortalSites.Save(ctx, r.db.Keel(ctx), site); err != nil {
 			switch {
 			case dberror.IsUniqueConstraintViolation(err):
 				return nil, duplicateSiteName()
@@ -118,7 +118,7 @@ func (r *portalSiteRepository) Delete(
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		s := agentextensiondb.PortalSites
+		s := extensionportaldb.PortalSites
 		n, err := s.Where(s.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsForeignKeyConstraintViolation(err) {
@@ -155,10 +155,10 @@ func NewPortalRunRepository(p Params) agentextensionports.PortalRunRepository {
 
 func (r *portalRunRepository) Create(
 	ctx context.Context,
-	run *agentextension.PortalRun,
-) (*agentextension.PortalRun, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		if err := agentextensiondb.PortalRuns.Create(ctx, r.db.Keel(ctx), run); err != nil {
+	run *extensionportal.PortalRun,
+) (*extensionportal.PortalRun, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalRun, error) {
+		if err := extensionportaldb.PortalRuns.Create(ctx, r.db.Keel(ctx), run); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, agentextensionports.ErrPortalRunExists
 			}
@@ -174,24 +174,24 @@ func (r *portalRunRepository) Get(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.PortalRun, error) {
-	return r.getWhere(ctx, agentextensiondb.PortalRuns.ID.Eq(id))
+) (*extensionportal.PortalRun, error) {
+	return r.getWhere(ctx, extensionportaldb.PortalRuns.ID.Eq(id))
 }
 
 func (r *portalRunRepository) GetByIdempotencyKey(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	key string,
-) (*agentextension.PortalRun, error) {
-	return r.getWhere(ctx, agentextensiondb.PortalRuns.IdempotencyKey.Eq(key))
+) (*extensionportal.PortalRun, error) {
+	return r.getWhere(ctx, extensionportaldb.PortalRuns.IdempotencyKey.Eq(key))
 }
 
 func (r *portalRunRepository) getWhere(
 	ctx context.Context,
 	where keel.Pred,
-) (*agentextension.PortalRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		run, err := agentextensiondb.PortalRuns.Where(where).One(ctx, r.db.Keel(ctx))
+) (*extensionportal.PortalRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalRun, error) {
+		run, err := extensionportaldb.PortalRuns.Where(where).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, portalRunErrors.Map(err, "")
 		}
@@ -202,10 +202,10 @@ func (r *portalRunRepository) getWhere(
 
 func (r *portalRunRepository) Update(
 	ctx context.Context,
-	run *agentextension.PortalRun,
-) (*agentextension.PortalRun, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		if err := agentextensiondb.PortalRuns.Save(ctx, r.db.Keel(ctx), run); err != nil {
+	run *extensionportal.PortalRun,
+) (*extensionportal.PortalRun, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionportal.PortalRun, error) {
+		if err := extensionportaldb.PortalRuns.Save(ctx, r.db.Keel(ctx), run); err != nil {
 			if dberror.IsVersionConflict(err) {
 				return nil, portalRunErrors.Map(err, run.ID.String())
 			}
@@ -220,15 +220,15 @@ func (r *portalRunRepository) Update(
 func (r *portalRunRepository) List(
 	ctx context.Context,
 	req *agentextensionports.ListPortalRunsRequest,
-) ([]*agentextension.PortalRun, error) {
+) ([]*extensionportal.PortalRun, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultPortalRuns
 	}
 	limit = min(limit, maxPortalRuns)
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.PortalRun, error) {
-		p := agentextensiondb.PortalRuns
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extensionportal.PortalRun, error) {
+		p := extensionportaldb.PortalRuns
 		runs, err := p.Where(
 			keel.When(req.SiteID.IsNotNil(), p.SiteID.Eq(req.SiteID)),
 			keel.When(req.Before > 0, p.StartedAt.Lt(req.Before)),

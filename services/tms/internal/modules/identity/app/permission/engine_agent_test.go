@@ -3,7 +3,9 @@ package permission
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -60,7 +62,7 @@ func TestCheck_AnUnattendedActorWithTheSystemUserIsJudgedByTheAgentTable(t *test
 			result, err := eng.Check(t.Context(), actor.PermissionCheck(tt.resource, tt.operation))
 			require.NoError(t, err)
 
-			assert.Equal(t, permission.IsAgentAllowed(tt.resource, tt.operation), result.Allowed)
+			assert.Equal(t, agentceiling.Allows(tt.resource, tt.operation), result.Allowed)
 			assert.Equal(t, permission.DataScopeOrganization, result.DataScope)
 			roleRepo.AssertNotCalled(t, "GetUserRoleAssignments")
 			cacheRepo.AssertNotCalled(t, "Get")
@@ -120,7 +122,7 @@ func TestAgentsUsable_AnUnattendedActorIsNotReadAsItsSystemUser(t *testing.T) {
 
 	assert.Equal(
 		t,
-		permission.IsAgentAllowed(permission.ResourceAssistant, permission.OpCreate),
+		agentceiling.Allows(permission.ResourceAssistant, permission.OpCreate),
 		usable.Assistant,
 	)
 	assert.Empty(t, usable.GrantedIDs)
@@ -129,7 +131,7 @@ func TestAgentsUsable_AnUnattendedActorIsNotReadAsItsSystemUser(t *testing.T) {
 }
 
 func registeredResources() map[permission.Resource]struct{} {
-	all := permission.NewRegistry().All()
+	all := permissioncatalog.NewRegistry().All()
 	resources := make(map[permission.Resource]struct{}, len(all))
 	for _, resource := range all {
 		resources[permission.Resource(resource.Resource)] = struct{}{}

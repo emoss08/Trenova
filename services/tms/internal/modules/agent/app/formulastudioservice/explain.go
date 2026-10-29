@@ -7,9 +7,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -72,15 +73,15 @@ func (e *traceEvent) describe() string {
 
 func (s *Service) ExplainFormula(
 	ctx context.Context,
-	req *agentports.ExplainFormulaRequest,
+	req *formulastudioports.ExplainFormulaRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.ExplainFormulaResponse, error) {
+) (*formulastudioports.ExplainFormulaResponse, error) {
 	definition, err := s.assistant(ctx, req.TenantInfo, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	previewReq := &formulatemplateservice.PreviewRequest{
+	previewReq := &formulatemplatestudioservice.PreviewRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 		Inputs:     req.Inputs,
@@ -89,7 +90,7 @@ func (s *Service) ExplainFormula(
 		shipmentID := req.ShipmentID
 		previewReq.ShipmentID = &shipmentID
 	}
-	preview, err := s.engine.Preview(ctx, previewReq)
+	preview, err := s.studio.Preview(ctx, previewReq)
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +105,9 @@ func (s *Service) ExplainFormula(
 	}
 
 	events := decodeTrace(preview.Trace)
-	resp := &agentports.ExplainFormulaResponse{
+	resp := &formulastudioports.ExplainFormulaResponse{
 		Preview: preview,
-		Items:   []agentports.FormulaTraceNote{},
+		Items:   []formulastudioports.FormulaTraceNote{},
 	}
 	if len(events) == 0 {
 		return resp, nil
@@ -118,7 +119,7 @@ func (s *Service) ExplainFormula(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaExplain,
 		system:     explainSystem,
-		sections: append(draftSections(&req.Draft, preview.Inputs), agentports.ContextSection{
+		sections: append(draftSections(&req.Draft, preview.Inputs), llmports.ContextSection{
 			Title:   "Engine trace",
 			Content: traceText(locale, events, preview),
 		}),
@@ -179,7 +180,10 @@ func traceText(
 	return builder.String()
 }
 
-func boundExplainItems(items []explainItem, events []traceEvent) []agentports.FormulaTraceNote {
+func boundExplainItems(
+	items []explainItem,
+	events []traceEvent,
+) []formulastudioports.FormulaTraceNote {
 	says := make(map[int]string, len(events))
 	for _, item := range items {
 		if item.Index < 0 || item.Index >= len(events) {
@@ -193,13 +197,13 @@ func boundExplainItems(items []explainItem, events []traceEvent) []agentports.Fo
 		}
 	}
 
-	notes := make([]agentports.FormulaTraceNote, 0, len(events))
+	notes := make([]formulastudioports.FormulaTraceNote, 0, len(events))
 	for index := range events {
 		text, ok := says[index]
 		if !ok {
 			text = fallbackSays(&events[index])
 		}
-		notes = append(notes, agentports.FormulaTraceNote{
+		notes = append(notes, formulastudioports.FormulaTraceNote{
 			Index: index,
 			Range: events[index].Range,
 			Says:  text,

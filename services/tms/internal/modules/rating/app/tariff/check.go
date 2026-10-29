@@ -6,12 +6,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/wasmmodule"
-
+	"github.com/emoss08/trenova/internal/modules/rating/app/tarifftables"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
 	"go.uber.org/fx"
 )
 
@@ -123,7 +123,7 @@ func TablePins(check *rules.TariffCheck, tariffCtx *rules.TariffContext) []tarif
 	}
 	pins := make([]tarifftypes.TablePin, 0, len(check.Tables))
 	for _, read := range check.Tables {
-		at := tableAt(tariffCtx, read.Code)
+		at := tarifftables.TableAt(tariffCtx, read.Code)
 		if at < 0 {
 			continue
 		}

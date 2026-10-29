@@ -3,11 +3,10 @@ package iftajobs
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/settlement/jobs/iftajobs/iftacontract"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentdistanceportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -43,8 +42,16 @@ func TestChunkMoveIDs(t *testing.T) {
 func TestBackfillInputEffectiveMaxMoves(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, iftacontract.DefaultBackfillMaxMoves, iftacontract.BackfillInput{}.EffectiveMaxMoves())
-	assert.Equal(t, iftacontract.DefaultBackfillMaxMoves, iftacontract.BackfillInput{MaxMoves: -1}.EffectiveMaxMoves())
+	assert.Equal(
+		t,
+		iftacontract.DefaultBackfillMaxMoves,
+		iftacontract.BackfillInput{}.EffectiveMaxMoves(),
+	)
+	assert.Equal(
+		t,
+		iftacontract.DefaultBackfillMaxMoves,
+		iftacontract.BackfillInput{MaxMoves: -1}.EffectiveMaxMoves(),
+	)
 	assert.Equal(t, 30, iftacontract.BackfillInput{MaxMoves: 30}.EffectiveMaxMoves())
 }
 
@@ -59,9 +66,9 @@ func TestAttributeMovesActivityCountsResults(t *testing.T) {
 	}
 	ids := moveIDs(3)
 
-	distanceCalc := shipmentportsmock.NewMockDistanceCalculationService(t)
+	distanceCalc := shipmentdistanceportsmock.NewMockDistanceCalculationService(t)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[0],
 			UserID:         tenantInfo.UserID,
@@ -71,14 +78,14 @@ func TestAttributeMovesActivityCountsResults(t *testing.T) {
 			{JurisdictionCode: "OK", Distance: 160.9344, DistanceUnits: "Kilometers"},
 		}, nil)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[1],
 			UserID:         tenantInfo.UserID,
 		}).
 		Return(nil, assert.AnError)
 	distanceCalc.EXPECT().
-		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentports.RecalculateMoveJurisdictionMilesRequest{
+		RecalculateMoveJurisdictionMiles(mock.Anything, shipmentdistanceports.RecalculateMoveJurisdictionMilesRequest{
 			TenantInfo:     tenantInfo,
 			ShipmentMoveID: ids[2],
 			UserID:         tenantInfo.UserID,
@@ -112,16 +119,16 @@ func TestListMovesMissingBreakdownActivityMapsPage(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	ids := moveIDs(2)
-	repo := shipmentportsmock.NewMockShipmentMoveJurisdictionMileRepository(t)
+	repo := shipmentdistanceportsmock.NewMockShipmentMoveJurisdictionMileRepository(t)
 	repo.EXPECT().
-		ListUnattributedMoves(mock.Anything, shipmentports.UnattributedMovesRequest{
+		ListUnattributedMoves(mock.Anything, &shipmentdistanceports.UnattributedMovesRequest{
 			TenantInfo: tenantInfo,
 			Start:      100,
 			End:        200,
 			Limit:      ListMovesPageSize,
 			Offset:     3,
 		}).
-		Return(&shipmentports.UnattributedMovesPage{
+		Return(&shipmentdistanceports.UnattributedMovesPage{
 			MoveIDs:    ids,
 			TotalMoves: 5,
 			TotalMiles: decimal.NewFromFloat(812.5),

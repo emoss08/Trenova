@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,10 +34,10 @@ func newIAMHandlerWithBriefing(
 ) *iamhandler.Handler {
 	t.Helper()
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 
 	return iamhandler.New(iamhandler.Params{
@@ -64,7 +65,11 @@ func TestIAMRoutes_RefuseAnOrganizationOtherThanTheSessions(t *testing.T) {
 		{method: http.MethodGet, path: "identity-providers"},
 		{method: http.MethodGet, path: "security-briefing"},
 		{method: http.MethodPost, path: "identity-providers", body: map[string]any{"name": "Okta"}},
-		{method: http.MethodPost, path: "scim-directories", body: map[string]any{"name": "Directory"}},
+		{
+			method: http.MethodPost,
+			path:   "scim-directories",
+			body:   map[string]any{"name": "Directory"},
+		},
 		{method: http.MethodPost, path: "access-policies", body: map[string]any{"name": "Policy"}},
 	}
 

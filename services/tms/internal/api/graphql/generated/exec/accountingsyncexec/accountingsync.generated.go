@@ -9,7 +9,18 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -73,7 +84,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -83,7 +94,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.IntegrationType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType),
@@ -93,17 +104,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.Environment, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment),
 			},
 			{
 				Name:     "clientId",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.ClientID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -115,7 +126,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return gqlexec.Resolver[resolverAccountingAppCredential](ec, "AccountingAppCredential").HasWebhookVerifier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -125,7 +136,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -135,7 +146,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingAppCredential)
+					obj := o.(*accountingconnection.AccountingAppCredential)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -148,17 +159,17 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return gqlexec.Resolver[resolverAccountingAppSettings](ec, "AccountingAppSettings").ActiveSource(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppSource),
+				Marshal: gqlexec.Marshal(marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAppSource),
 			},
 			{
 				Name:     "instanceAppAvailable",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return obj.InstanceAppAvailable, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -169,17 +180,17 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return gqlexec.Resolver[resolverAccountingAppSettings](ec, "AccountingAppSettings").InstanceEnvironment(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment),
+				Marshal: gqlexec.Marshal(marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment),
 			},
 			{
 				Name:     "redirectUrl",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return obj.RedirectURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -189,7 +200,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return obj.WebhookPath, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -199,10 +210,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingAppCredential",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAppSettings)
+					obj := o.(*accountingconnectionports.AccountingAppSettings)
 					return obj.TenantApp, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingAppCredential),
+				Marshal: gqlexec.Marshal(marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingAppCredential),
 			},
 		}},
 		{Object: "AccountingAppliedObject", Fields: []*gqlexec.Field{
@@ -211,17 +222,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AppliedObject)
+					obj := o.(*accountinginbound.AppliedObject)
 					return obj.Type, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObjectType),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObjectType),
 			},
 			{
 				Name:     "id",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AppliedObject)
+					obj := o.(*accountinginbound.AppliedObject)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -233,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationStart)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationStart)
 					return obj.AuthorizeURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -243,7 +254,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationStart)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationStart)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -255,7 +266,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -265,7 +276,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.RangeStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -275,7 +286,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.RangeEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -285,7 +296,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.ObjectTypes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSyncObjectType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncObjectTypeᚄ),
@@ -295,17 +306,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingBackfillStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐBackfillStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingBackfillStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐBackfillStatus),
 			},
 			{
 				Name:     "enqueuedCount",
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.EnqueuedCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -315,7 +326,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.AlreadyQueuedCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -324,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "startedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.StartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -333,7 +344,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "completedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.CompletedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -343,7 +354,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.LastError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -353,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -363,7 +374,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -373,7 +384,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingBackfill)
+					obj := o.(*accountingbackfill.AccountingBackfill)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -385,7 +396,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingCompany)
+					obj := o.(*accountingconnectorports.AccountingCompany)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
@@ -395,7 +406,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingCompany)
+					obj := o.(*accountingconnectorports.AccountingCompany)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -407,7 +418,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -417,7 +428,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.IntegrationType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType),
@@ -427,20 +438,20 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐConnectionStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐConnectionStatus),
 			},
 			{
 				Name:     "appSource",
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.AppSource, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppSource),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAppSource),
 			},
 			{
 				Name:       "appEnvironment",
@@ -448,17 +459,17 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return gqlexec.Resolver[resolverAccountingConnection](ec, "AccountingConnection").AppEnvironment(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment),
+				Marshal: gqlexec.Marshal(marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment),
 			},
 			{
 				Name:     "externalCompanyName",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalCompanyName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -468,7 +479,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalLegalName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -478,7 +489,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalCountry, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -488,7 +499,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalHomeCurrency, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -498,7 +509,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalMultiCurrencyEnabled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -507,7 +518,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "externalBooksClosedThrough",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalBooksClosedThrough, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -516,7 +527,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastCheckedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LastCheckedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -525,7 +536,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastSuccessAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LastSuccessAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -534,7 +545,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastFailureAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LastFailureAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -544,7 +555,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ConsecutiveFailures, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -555,7 +566,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return gqlexec.Resolver[resolverAccountingConnection](ec, "AccountingConnection").LastErrorCategory(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountingErrorCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐErrorCategory),
@@ -565,7 +576,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LastErrorMessage, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -574,7 +585,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastWebhookAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LastWebhookAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -584,7 +595,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.RefreshTokenAbsoluteExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -594,16 +605,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.AuthMethod, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAuthMethod),
+				Marshal: gqlexec.Marshal(marshalNAccountingAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAuthMethod),
 			},
 			{
 				Name:     "certificateId",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ClientCertificateID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -612,7 +623,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "certificateExpiresAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ClientCertificateExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -622,7 +633,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ConnectedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -631,7 +642,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "disconnectedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.DisconnectedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -641,20 +652,20 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.SetupStep, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingSetupStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSetupStep),
+				Marshal: gqlexec.Marshal(marshalNAccountingSetupStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐSetupStep),
 			},
 			{
 				Name:     "syncMode",
 				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.SyncMode, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncMode),
+				Marshal: gqlexec.Marshal(marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐSyncMode),
 			},
 			{
 				Name:       "ledgerGranularity",
@@ -662,16 +673,16 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return gqlexec.Resolver[resolverAccountingConnection](ec, "AccountingConnection").LedgerGranularity(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐLedgerGranularity),
+				Marshal: gqlexec.Marshal(marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐLedgerGranularity),
 			},
 			{
 				Name:     "ledgerOpeningBalancesSentAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.LedgerOpeningBalancesSentAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -681,7 +692,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ExternalFiscalYearStartMonth, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -690,7 +701,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "syncStartDate",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.SyncStartDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -699,7 +710,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "syncEnabledAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.SyncEnabledAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -709,7 +720,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.AutoSync, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -718,7 +729,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "driverSettlementsEnabledAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.DriverSettlementsEnabledAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -729,7 +740,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.SyncsDriverSettlements(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -739,16 +750,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.InboundPaymentPolicy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐInboundPaymentPolicy),
 			},
 			{
 				Name:     "changesReadAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ChangesReadAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -758,7 +769,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ChangesErrorMessage, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -767,7 +778,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "pausedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.PausedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -779,7 +790,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return gqlexec.Resolver[resolverAccountingConnection](ec, "AccountingConnection").PausedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -789,7 +800,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.PausedReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -798,7 +809,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "referenceRefreshStartedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ReferenceRefreshStartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -807,7 +818,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "referenceRefreshedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ReferenceRefreshedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -817,7 +828,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.ReferenceRefreshError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -827,7 +838,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -837,7 +848,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingConnection)
+					obj := o.(*accountingconnection.AccountingConnection)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -849,7 +860,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -859,7 +870,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ConnectionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -869,7 +880,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ObjectType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSyncObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncObjectType),
@@ -879,7 +890,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ObjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -889,7 +900,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ObjectNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -900,7 +911,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").PartyID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -910,7 +921,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.PartyName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -920,7 +931,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -930,7 +941,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ExternalURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -940,17 +951,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftKind),
 			},
 			{
 				Name:     "currencyCode",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -961,7 +972,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").TrenovaMinor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -972,7 +983,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").ProviderMinor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -983,7 +994,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").DifferenceMinor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -993,7 +1004,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.TrenovaState, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1003,7 +1014,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ProviderState, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1014,16 +1025,16 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingDriftLine",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.Detail, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftLineᚄ),
 			},
 			{
 				Name:     "providerModifiedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ProviderModifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1033,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ProviderModifiedBy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1043,10 +1054,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftStatus),
 			},
 			{
 				Name:       "resolution",
@@ -1054,17 +1065,17 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild20,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").Resolution(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingDriftResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftResolution),
+				Marshal: gqlexec.Marshal(marshalOAccountingDriftResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftResolution),
 			},
 			{
 				Name:     "resolutionNote",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ResolutionNote, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1075,10 +1086,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").FixObjectType(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftFixObject),
+				Marshal: gqlexec.Marshal(marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftFixObject),
 			},
 			{
 				Name:       "fixObjectId",
@@ -1086,7 +1097,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").FixObjectID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1098,10 +1109,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").Directions(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftDirection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirectionᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftDirection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirectionᚄ),
 			},
 			{
 				Name:       "pushed",
@@ -1110,7 +1121,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").Pushed(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1122,7 +1133,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return gqlexec.Resolver[resolverAccountingDriftFinding](ec, "AccountingDriftFinding").ResolvedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1131,7 +1142,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "resolvedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.ResolvedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1141,7 +1152,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.DetectedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1151,7 +1162,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.LastSeenAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1161,7 +1172,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1171,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingDriftFinding)
+					obj := o.(*accountingdrift.AccountingDriftFinding)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1230,7 +1241,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountingDriftFindingEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding),
 			},
 			{
 				Name:     "cursor",
@@ -1250,10 +1261,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingDriftFinding",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.Finding, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding),
 			},
 			{
 				Name:       "direction",
@@ -1261,10 +1272,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return gqlexec.Resolver[resolverAccountingDriftFixPreview](ec, "AccountingDriftFixPreview").Direction(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingDriftDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection),
+				Marshal: gqlexec.Marshal(marshalOAccountingDriftDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection),
 			},
 			{
 				Name:       "fixObject",
@@ -1272,10 +1283,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild21,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return gqlexec.Resolver[resolverAccountingDriftFixPreview](ec, "AccountingDriftFixPreview").FixObject(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftFixObject),
+				Marshal: gqlexec.Marshal(marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftFixObject),
 			},
 			{
 				Name:       "operation",
@@ -1283,7 +1294,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild23,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return gqlexec.Resolver[resolverAccountingDriftFixPreview](ec, "AccountingDriftFixPreview").Operation(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountingSyncOperation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncOperation),
@@ -1293,7 +1304,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1303,7 +1314,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1313,7 +1324,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.ToleranceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1323,7 +1334,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.WithinTolerance, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1333,7 +1344,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftFixPreview)
+					obj := o.(*accountingdriftports.AccountingDriftFixPreview)
 					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1345,7 +1356,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.DriftLine)
+					obj := o.(*accountingdrift.DriftLine)
 					return obj.ObjectType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSyncObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncObjectType),
@@ -1355,7 +1366,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.DriftLine)
+					obj := o.(*accountingdrift.DriftLine)
 					return obj.ObjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1365,7 +1376,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.DriftLine)
+					obj := o.(*accountingdrift.DriftLine)
 					return obj.ObjectNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1375,7 +1386,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.DriftLine)
+					obj := o.(*accountingdrift.DriftLine)
 					return obj.TrenovaMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1385,7 +1396,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.DriftLine)
+					obj := o.(*accountingdrift.DriftLine)
 					return obj.ProviderMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1397,7 +1408,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.ConnectionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1407,7 +1418,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1416,7 +1427,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "checkedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.CheckedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1426,7 +1437,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.CheckError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1436,7 +1447,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.ToleranceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1446,7 +1457,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1457,10 +1468,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingDriftSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftOverview)
+					obj := o.(*accountingdriftports.AccountingDriftOverview)
 					return obj.Summary, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftSummary),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftSummary),
 			},
 		}},
 		{Object: "AccountingDriftSummary", Fields: []*gqlexec.Field{
@@ -1469,7 +1480,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.Open, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1479,7 +1490,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.AmountOpen, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1489,7 +1500,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.GoneOpen, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1499,7 +1510,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.StatusOpen, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1509,7 +1520,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.BalanceOpen, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1519,7 +1530,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingDriftSummary)
+					obj := o.(*accountingdriftports.AccountingDriftSummary)
 					return obj.ResolvedSince, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1532,17 +1543,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingInboundChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.Change, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange),
 			},
 			{
 				Name:     "canApply",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.CanApply, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1552,7 +1563,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.Blocker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1562,7 +1573,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.PaidAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1572,7 +1583,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.CashMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1582,7 +1593,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.UnappliedMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1593,10 +1604,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingInboundPostingLine",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundApplyPreview)
+					obj := o.(*accountinginboundports.AccountingInboundApplyPreview)
 					return obj.Lines, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundPostingLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundPostingLineᚄ),
 			},
 		}},
 		{Object: "AccountingInboundChange", Fields: []*gqlexec.Field{
@@ -1605,7 +1616,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1615,20 +1626,20 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild24,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeKind),
 			},
 			{
 				Name:     "status",
 				NonNull:  true,
 				ChildErr: errNoChild25,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeStatus),
 			},
 			{
 				Name:       "reason",
@@ -1636,17 +1647,17 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild26,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").Reason(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeReason),
+				Marshal: gqlexec.Marshal(marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeReason),
 			},
 			{
 				Name:     "resolution",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.Resolution, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1656,7 +1667,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1666,7 +1677,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ExternalNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1676,7 +1687,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ExternalURL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1685,7 +1696,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "providerModifiedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ProviderModifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1695,7 +1706,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.ProviderModifiedBy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1705,7 +1716,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.TxnDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1715,7 +1726,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1725,7 +1736,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1735,7 +1746,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.PartyName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1746,7 +1757,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").PartyObjectID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1758,7 +1769,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").ReferenceNumber(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1770,7 +1781,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").MethodName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1782,7 +1793,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").UnappliedMinor(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1795,10 +1806,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AccountingInboundLine",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").Lines(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundLineᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundLineᚄ),
 			},
 			{
 				Name:      "appliedObjects",
@@ -1806,10 +1817,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingAppliedObject",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.AppliedObjects, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObjectᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObjectᚄ),
 			},
 			{
 				Name:       "decidedBy",
@@ -1818,7 +1829,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return gqlexec.Resolver[resolverAccountingInboundChange](ec, "AccountingInboundChange").DecidedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -1827,7 +1838,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decidedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.DecidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1837,7 +1848,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1847,7 +1858,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.DetectedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1857,7 +1868,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1867,7 +1878,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingInboundChange)
+					obj := o.(*accountinginbound.AccountingInboundChange)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1926,7 +1937,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountingInboundChangeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange),
 			},
 			{
 				Name:     "cursor",
@@ -1945,17 +1956,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild27,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return obj.DocumentKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundDocumentKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundDocumentKind),
 			},
 			{
 				Name:     "documentExternalId",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return obj.DocumentExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1965,7 +1976,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1976,7 +1987,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return gqlexec.Resolver[resolverAccountingInboundLine](ec, "AccountingInboundLine").ObjectType(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAccountingSyncObjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncObjectType),
@@ -1987,7 +1998,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return gqlexec.Resolver[resolverAccountingInboundLine](ec, "AccountingInboundLine").ObjectID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -1997,7 +2008,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return obj.ObjectNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2007,7 +2018,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.InboundLine)
+					obj := o.(*accountinginbound.InboundLine)
 					return obj.OpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2019,7 +2030,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundOverview)
+					obj := o.(*accountinginboundports.AccountingInboundOverview)
 					return obj.ConnectionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2029,16 +2040,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundOverview)
+					obj := o.(*accountinginboundports.AccountingInboundOverview)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐInboundPaymentPolicy),
 			},
 			{
 				Name:     "changesReadAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundOverview)
+					obj := o.(*accountinginboundports.AccountingInboundOverview)
 					return obj.ChangesReadAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2048,7 +2059,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundOverview)
+					obj := o.(*accountinginboundports.AccountingInboundOverview)
 					return obj.ChangesError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2059,10 +2070,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingInboundSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundOverview)
+					obj := o.(*accountinginboundports.AccountingInboundOverview)
 					return obj.Summary, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundSummary),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundSummary),
 			},
 		}},
 		{Object: "AccountingInboundPostingLine", Fields: []*gqlexec.Field{
@@ -2071,7 +2082,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundPostingLine)
+					obj := o.(*accountinginboundports.AccountingInboundPostingLine)
 					return obj.ObjectType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSyncObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncObjectType),
@@ -2081,7 +2092,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundPostingLine)
+					obj := o.(*accountinginboundports.AccountingInboundPostingLine)
 					return obj.ObjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2091,7 +2102,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundPostingLine)
+					obj := o.(*accountinginboundports.AccountingInboundPostingLine)
 					return obj.ObjectNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2101,7 +2112,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundPostingLine)
+					obj := o.(*accountinginboundports.AccountingInboundPostingLine)
 					return obj.AmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2111,7 +2122,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundPostingLine)
+					obj := o.(*accountinginboundports.AccountingInboundPostingLine)
 					return obj.OpenMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2123,7 +2134,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundSummary)
+					obj := o.(*accountinginboundports.AccountingInboundSummary)
 					return obj.Detected, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2133,7 +2144,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundSummary)
+					obj := o.(*accountinginboundports.AccountingInboundSummary)
 					return obj.Proposed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2143,7 +2154,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundSummary)
+					obj := o.(*accountinginboundports.AccountingInboundSummary)
 					return obj.AppliedSince, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2153,7 +2164,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingInboundSummary)
+					obj := o.(*accountinginboundports.AccountingInboundSummary)
 					return obj.IgnoredSince, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2165,7 +2176,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2175,7 +2186,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.TargetType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingMappingTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetType),
@@ -2186,7 +2197,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").TrenovaObjectID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -2196,7 +2207,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.TrenovaKey, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2206,7 +2217,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.TargetLabel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2216,17 +2227,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.ProviderKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind),
 			},
 			{
 				Name:     "externalId",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2236,7 +2247,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.ExternalName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2246,10 +2257,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild30,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.State, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingState),
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingState),
 			},
 			{
 				Name:       "source",
@@ -2257,16 +2268,16 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild31,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").Source(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingMappingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingSource),
+				Marshal: gqlexec.Marshal(marshalOAccountingMappingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingSource),
 			},
 			{
 				Name:     "confidence",
 				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.Confidence, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
@@ -2276,7 +2287,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2288,7 +2299,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").Required(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2300,7 +2311,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").Prechecked(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2313,10 +2324,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AccountingMappingCandidate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").Candidates(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMappingCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingCandidateᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingCandidateᚄ),
 			},
 			{
 				Name:       "matchers",
@@ -2326,10 +2337,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AccountingMappingMatcher",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").Matchers(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMappingMatcher2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMatcherSignalᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingMatcher2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMatcherSignalᚄ),
 			},
 			{
 				Name:       "confirmedBy",
@@ -2338,7 +2349,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return gqlexec.Resolver[resolverAccountingMapping](ec, "AccountingMapping").ConfirmedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -2347,7 +2358,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "confirmedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.ConfirmedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2357,7 +2368,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2367,7 +2378,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2377,7 +2388,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingMapping)
+					obj := o.(*accountingmapping.AccountingMapping)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2389,7 +2400,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MappingCandidate)
+					obj := o.(*accountingmapping.MappingCandidate)
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2399,7 +2410,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MappingCandidate)
+					obj := o.(*accountingmapping.MappingCandidate)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2409,7 +2420,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MappingCandidate)
+					obj := o.(*accountingmapping.MappingCandidate)
 					return obj.Score, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -2419,7 +2430,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MappingCandidate)
+					obj := o.(*accountingmapping.MappingCandidate)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2478,7 +2489,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountingMappingDetail)
 					return obj.Mapping, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:      "options",
@@ -2489,7 +2500,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountingMappingDetail)
 					return obj.Options, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObjectᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingReferenceObjectᚄ),
 			},
 		}},
 		{Object: "AccountingMappingEdge", Fields: []*gqlexec.Field{
@@ -2502,7 +2513,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.AccountingMappingEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:     "cursor",
@@ -2521,7 +2532,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild28,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingGroup)
+					obj := o.(*accountingmappingports.AccountingMappingGroup)
 					return obj.TargetType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingMappingTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetType),
@@ -2531,7 +2542,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingGroup)
+					obj := o.(*accountingmappingports.AccountingMappingGroup)
 					return obj.Unmatched, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2541,7 +2552,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingGroup)
+					obj := o.(*accountingmappingports.AccountingMappingGroup)
 					return obj.Proposed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2551,7 +2562,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingGroup)
+					obj := o.(*accountingmappingports.AccountingMappingGroup)
 					return obj.Confirmed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2563,7 +2574,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MatcherSignal)
+					obj := o.(*accountingmapping.MatcherSignal)
 					return obj.Matcher, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2573,7 +2584,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.MatcherSignal)
+					obj := o.(*accountingmapping.MatcherSignal)
 					return obj.Score, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
@@ -2585,7 +2596,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.IntegrationType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType),
@@ -2595,7 +2606,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2605,10 +2616,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingConnection",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.Connection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:      "groups",
@@ -2616,17 +2627,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingMappingGroup",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.Groups, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMappingGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingGroupᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingGroupᚄ),
 			},
 			{
 				Name:     "requiredTotal",
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.RequiredTotal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2636,7 +2647,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.RequiredConfirmed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2646,7 +2657,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingMappingSummary)
+					obj := o.(*accountingmappingports.AccountingMappingSummary)
 					return obj.CanCompleteSetup, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2658,7 +2669,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingPreparedCertificate)
+					obj := o.(*accountingconnectionports.AccountingPreparedCertificate)
 					return obj.IntegrationType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType),
@@ -2668,7 +2679,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingPreparedCertificate)
+					obj := o.(*accountingconnectionports.AccountingPreparedCertificate)
 					return obj.CertificatePEM, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2678,7 +2689,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingPreparedCertificate)
+					obj := o.(*accountingconnectionports.AccountingPreparedCertificate)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2688,7 +2699,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingPreparedCertificate)
+					obj := o.(*accountingconnectionports.AccountingPreparedCertificate)
 					return obj.PreparedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2700,7 +2711,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.AppName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2710,7 +2721,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.WebhookKeyLabel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2720,17 +2731,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.Environments, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppEnvironment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironmentᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppEnvironment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironmentᚄ),
 			},
 			{
 				Name:     "ledgerAvailable",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.Ledger, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2739,7 +2750,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "ledgerUnavailableReason",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.LedgerUnavailableReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2749,7 +2760,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.CallbackCarriesCompany, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2759,7 +2770,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.CallbackPath, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2769,27 +2780,27 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.LineKind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind),
 			},
 			{
 				Name:     "referenceKinds",
 				NonNull:  true,
 				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.ReferenceKinds, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKindᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKindᚄ),
 			},
 			{
 				Name:     "inboundPaymentsAvailable",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.InboundPayments, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2798,7 +2809,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "inboundUnavailableReason",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.InboundUnavailableReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2808,7 +2819,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.WebhookSubscriptions, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2818,7 +2829,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.RevokesTokens, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2828,7 +2839,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.PKCE, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2838,7 +2849,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.ClientCredentials, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2849,7 +2860,7 @@ var Shard = &gqlexec.Shard{
 				IsMethod: true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.ProviderProfile)
+					obj := o.(*accountingprovider.ProviderProfile)
 					return obj.ReconnectWarningSeconds(), nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2861,7 +2872,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2871,17 +2882,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild29,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind),
 			},
 			{
 				Name:     "externalId",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.ExternalID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2891,7 +2902,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2901,7 +2912,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.FullyQualifiedName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2913,7 +2924,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return gqlexec.Resolver[resolverAccountingReferenceObject](ec, "AccountingReferenceObject").Label(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2923,7 +2934,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Number, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2933,7 +2944,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2943,7 +2954,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.AccountType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2953,7 +2964,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.AccountSubType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2963,7 +2974,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.ItemType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2973,7 +2984,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.CompanyName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2983,7 +2994,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Email, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2993,7 +3004,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.City, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3003,7 +3014,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.State, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3013,7 +3024,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.PostalCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3023,7 +3034,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3032,7 +3043,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "dueDays",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.DueDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -3042,7 +3053,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.Active, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3051,7 +3062,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "removedAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return obj.RemovedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -3063,7 +3074,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsync.AccountingReferenceObject)
+					obj := o.(*accountingmapping.AccountingReferenceObject)
 					return gqlexec.Resolver[resolverAccountingReferenceObject](ec, "AccountingReferenceObject").Usable(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3623,7 +3634,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.IntegrationType, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType),
@@ -3633,7 +3644,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.ProviderName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -3644,17 +3655,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingProviderProfile",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.Profile, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingProviderProfile2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐProviderProfile),
+				Marshal: gqlexec.Marshal(marshalNAccountingProviderProfile2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐProviderProfile),
 			},
 			{
 				Name:     "available",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.Available, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3665,40 +3676,40 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingAppSettings",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.App, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAppSettings),
+				Marshal: gqlexec.Marshal(marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAppSettings),
 			},
 			{
 				Name:      "connection",
 				HasChild:  true,
 				ChildType: "AccountingConnection",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.Connection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:      "webhookSubscriptions",
 				HasChild:  true,
 				ChildType: "AccountingWebhookSubscriptionSummary",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.WebhookSubscriptions, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary),
+				Marshal: gqlexec.Marshal(marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingWebhookSubscriptionSummary),
 			},
 			{
 				Name:      "pendingCertificate",
 				HasChild:  true,
 				ChildType: "AccountingPreparedCertificate",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingSyncStatus)
+					obj := o.(*accountingconnectionports.AccountingSyncStatus)
 					return obj.PendingCertificate, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingPreparedCertificate),
+				Marshal: gqlexec.Marshal(marshalOAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingPreparedCertificate),
 			},
 		}},
 		{Object: "AccountingSyncStatusCount", Fields: []*gqlexec.Field{
@@ -3752,7 +3763,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*accountingsyncports.AccountingSyncSummary)
 					return obj.Connection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:      "counts",
@@ -3784,7 +3795,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*accountingsyncports.AccountingSyncSummary)
 					return obj.ActiveBackfill, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill),
+				Marshal: gqlexec.Marshal(marshalOAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill),
 			},
 		}},
 		{Object: "AccountingWebhookSubscriptionSummary", Fields: []*gqlexec.Field{
@@ -3793,7 +3804,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.Configured, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -3803,7 +3814,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.Active, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3813,7 +3824,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.Pending, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3823,7 +3834,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -3832,7 +3843,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "nextExpiryAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.NextExpiryAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -3841,7 +3852,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "lastError",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingWebhookSubscriptionSummary)
+					obj := o.(*accountingconnectionports.AccountingWebhookSubscriptionSummary)
 					return obj.LastError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -3853,10 +3864,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingConnection",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationCompletion)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationCompletion)
 					return obj.Connection, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:      "companies",
@@ -3864,16 +3875,16 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "AccountingCompany",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationCompletion)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationCompletion)
 					return obj.Companies, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingCompany2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingCompanyᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingCompany2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectorportsᚐAccountingCompanyᚄ),
 			},
 			{
 				Name:     "choiceToken",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationCompletion)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationCompletion)
 					return obj.ChoiceToken, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -3882,7 +3893,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "choiceExpiresAt",
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*accountingsyncports.AccountingAuthorizationCompletion)
+					obj := o.(*accountingconnectionports.AccountingAuthorizationCompletion)
 					return obj.ChoiceExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2int64),
@@ -3900,7 +3911,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveAccountingApp(ctx, fc.Args["input"].(gqlmodel.SaveAccountingAppInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingSyncStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingSyncStatus),
 			},
 			{
 				Name:       "removeAccountingApp",
@@ -3913,7 +3924,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RemoveAccountingApp(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingSyncStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingSyncStatus),
 			},
 			{
 				Name:       "startAccountingAuthorization",
@@ -3926,7 +3937,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").StartAccountingAuthorization(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAuthorizationStart),
+				Marshal: gqlexec.Marshal(marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAuthorizationStart),
 			},
 			{
 				Name:       "finishAccountingAuthorization",
@@ -3939,7 +3950,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").FinishAccountingAuthorization(ctx, fc.Args["input"].(gqlmodel.CompleteAccountingAuthorizationInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAuthorizationCompletion),
+				Marshal: gqlexec.Marshal(marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAuthorizationCompletion),
 			},
 			{
 				Name:       "chooseAccountingCompany",
@@ -3952,7 +3963,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ChooseAccountingCompany(ctx, fc.Args["input"].(gqlmodel.ChooseAccountingCompanyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "prepareAccountingCertificate",
@@ -3965,7 +3976,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PrepareAccountingCertificate(ctx, fc.Args["input"].(gqlmodel.PrepareAccountingCertificateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingPreparedCertificate),
+				Marshal: gqlexec.Marshal(marshalNAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingPreparedCertificate),
 			},
 			{
 				Name:       "connectAccountingWithCertificate",
@@ -3978,7 +3989,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ConnectAccountingWithCertificate(ctx, fc.Args["input"].(gqlmodel.ConnectAccountingWithCertificateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAuthorizationCompletion),
+				Marshal: gqlexec.Marshal(marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAuthorizationCompletion),
 			},
 			{
 				Name:       "renewAccountingCertificate",
@@ -3991,7 +4002,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RenewAccountingCertificate(ctx, fc.Args["input"].(gqlmodel.RenewAccountingCertificateInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "disconnectAccountingSystem",
@@ -4004,7 +4015,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DisconnectAccountingSystem(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "checkAccountingConnection",
@@ -4017,7 +4028,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CheckAccountingConnection(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "confirmAccountingMappings",
@@ -4030,7 +4041,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ConfirmAccountingMappings(ctx, fc.Args["input"].([]*gqlmodel.ConfirmAccountingMappingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMappingᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMappingᚄ),
 			},
 			{
 				Name:       "rejectAccountingMapping",
@@ -4043,7 +4054,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RejectAccountingMapping(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:       "setAccountingMapping",
@@ -4056,7 +4067,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SetAccountingMapping(ctx, fc.Args["input"].(gqlmodel.SetAccountingMappingInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:       "clearAccountingMapping",
@@ -4069,7 +4080,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ClearAccountingMapping(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:       "createAccountingReferenceRecord",
@@ -4082,7 +4093,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateAccountingReferenceRecord(ctx, fc.Args["input"].(gqlmodel.CreateAccountingReferenceRecordInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping),
 			},
 			{
 				Name:       "refreshAccountingReferenceData",
@@ -4095,7 +4106,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RefreshAccountingReferenceData(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "completeAccountingSetup",
@@ -4108,7 +4119,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CompleteAccountingSetup(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "chooseAccountingSyncMode",
@@ -4121,7 +4132,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ChooseAccountingSyncMode(ctx, fc.Args["input"].(gqlmodel.ChooseAccountingSyncModeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "enableAccountingSync",
@@ -4134,7 +4145,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").EnableAccountingSync(ctx, fc.Args["input"].(gqlmodel.EnableAccountingSyncInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "updateAccountingSyncSettings",
@@ -4147,7 +4158,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateAccountingSyncSettings(ctx, fc.Args["input"].(gqlmodel.UpdateAccountingSyncSettingsInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "pauseAccountingSync",
@@ -4160,7 +4171,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").PauseAccountingSync(ctx, fc.Args["input"].(gqlmodel.PauseAccountingSyncInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "resumeAccountingSync",
@@ -4173,7 +4184,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResumeAccountingSync(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection),
+				Marshal: gqlexec.Marshal(marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection),
 			},
 			{
 				Name:       "retryAccountingSync",
@@ -4238,7 +4249,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RequestAccountingBackfill(ctx, fc.Args["input"].(gqlmodel.RequestAccountingBackfillInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill),
+				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill),
 			},
 			{
 				Name:       "changeAccountingBackfill",
@@ -4251,7 +4262,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ChangeAccountingBackfill(ctx, fc.Args["input"].(gqlmodel.ChangeAccountingBackfillInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill),
+				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill),
 			},
 			{
 				Name:       "applyAccountingInboundChange",
@@ -4264,7 +4275,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApplyAccountingInboundChange(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange),
 			},
 			{
 				Name:       "ignoreAccountingInboundChange",
@@ -4277,7 +4288,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").IgnoreAccountingInboundChange(ctx, fc.Args["input"].(gqlmodel.IgnoreAccountingInboundChangeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange),
 			},
 			{
 				Name:       "resolveAccountingDrift",
@@ -4290,7 +4301,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ResolveAccountingDrift(ctx, fc.Args["input"].(gqlmodel.ResolveAccountingDriftInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding),
 			},
 			{
 				Name:       "dismissAccountingDrift",
@@ -4303,7 +4314,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DismissAccountingDrift(ctx, fc.Args["input"].(gqlmodel.DismissAccountingDriftInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding),
 			},
 			{
 				Name:       "checkAccountingDrift",
@@ -4316,7 +4327,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CheckAccountingDrift(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftOverview),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftOverview),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -4332,7 +4343,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingSyncStatus(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingSyncStatus),
+				Marshal: gqlexec.Marshal(marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingSyncStatus),
 			},
 			{
 				Name:       "accountingMappingSummary",
@@ -4346,7 +4357,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingMappingSummary(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingMappingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingSummary),
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingSummary),
 			},
 			{
 				Name:       "accountingMappingDetail",
@@ -4472,7 +4483,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingBackfills(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfillᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingBackfill2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfillᚄ),
 			},
 			{
 				Name:       "accountingInboundOverview",
@@ -4486,7 +4497,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingInboundOverview(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundOverview),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundOverview),
 			},
 			{
 				Name:       "accountingInboundChangeTable",
@@ -4514,7 +4525,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingInboundChange(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange),
 			},
 			{
 				Name:       "accountingInboundApplyPreview",
@@ -4528,7 +4539,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingInboundApplyPreview(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundApplyPreview),
+				Marshal: gqlexec.Marshal(marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundApplyPreview),
 			},
 			{
 				Name:       "accountingDriftOverview",
@@ -4542,7 +4553,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingDriftOverview(ctx, fc.Args["integrationType"].(integration.Type))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftOverview),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftOverview),
 			},
 			{
 				Name:       "accountingDriftFindingTable",
@@ -4570,7 +4581,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingDriftFinding(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding),
 			},
 			{
 				Name:       "accountingDriftFixPreview",
@@ -4584,7 +4595,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingDriftFixPreview(ctx, fc.Args["input"].(gqlmodel.ResolveAccountingDriftInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingDriftFixPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftFixPreview),
+				Marshal: gqlexec.Marshal(marshalNAccountingDriftFixPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftFixPreview),
 			},
 			{
 				Name:       "accountingReferenceObjects",
@@ -4596,9 +4607,9 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accountingReferenceObjects_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingReferenceObjects(ctx, fc.Args["integrationType"].(integration.Type), fc.Args["kind"].(accountingsync.ReferenceKind), fc.Args["query"].(*string), fc.Args["usableOnly"].(*bool), fc.Args["limit"].(*int))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingReferenceObjects(ctx, fc.Args["integrationType"].(integration.Type), fc.Args["kind"].(accountingprovider.ReferenceKind), fc.Args["query"].(*string), fc.Args["usableOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObjectᚄ),
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingReferenceObjectᚄ),
 			},
 		}},
 	},
@@ -4646,68 +4657,68 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAccountingAppCredential interface {
-	HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error)
+	HasWebhookVerifier(ctx context.Context, obj *accountingconnection.AccountingAppCredential) (bool, error)
 }
 
 type resolverAccountingAppSettings interface {
-	ActiveSource(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppSource, error)
-	InstanceEnvironment(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+	ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingconnection.AppSource, error)
+	InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingprovider.AppEnvironment, error)
 }
 
 type resolverAccountingConnection interface {
-	AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error)
-	LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error)
-	LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error)
-	PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error)
+	AppEnvironment(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingprovider.AppEnvironment, error)
+	LastErrorCategory(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingsync.ErrorCategory, error)
+	LedgerGranularity(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingconnection.LedgerGranularity, error)
+	PausedBy(ctx context.Context, obj *accountingconnection.AccountingConnection) (*tenant.User, error)
 }
 
 type resolverAccountingDriftFinding interface {
-	PartyID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	TrenovaMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	ProviderMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	DifferenceMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	Resolution(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftResolution, error)
-	FixObjectType(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftFixObject, error)
-	FixObjectID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	Directions(ctx context.Context, obj *accountingsync.AccountingDriftFinding) ([]accountingsync.DriftDirection, error)
-	Pushed(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (bool, error)
-	ResolvedBy(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*tenant.User, error)
+	PartyID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	TrenovaMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	ProviderMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	DifferenceMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	Resolution(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftResolution, error)
+	FixObjectType(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftFixObject, error)
+	FixObjectID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	Directions(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) ([]accountingdrift.DriftDirection, error)
+	Pushed(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (bool, error)
+	ResolvedBy(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*tenant.User, error)
 }
 
 type resolverAccountingDriftFixPreview interface {
-	Direction(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
-	FixObject(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
-	Operation(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
+	Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftDirection, error)
+	FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftFixObject, error)
+	Operation(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
 }
 
 type resolverAccountingInboundChange interface {
-	Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error)
-	PartyObjectID(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*string, error)
-	ReferenceNumber(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	MethodName(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	UnappliedMinor(ctx context.Context, obj *accountingsync.AccountingInboundChange) (int, error)
-	Lines(ctx context.Context, obj *accountingsync.AccountingInboundChange) ([]*accountingsync.InboundLine, error)
-	DecidedBy(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*tenant.User, error)
+	Reason(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*accountinginbound.InboundChangeReason, error)
+	PartyObjectID(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*string, error)
+	ReferenceNumber(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	MethodName(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	UnappliedMinor(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (int, error)
+	Lines(ctx context.Context, obj *accountinginbound.AccountingInboundChange) ([]*accountinginbound.InboundLine, error)
+	DecidedBy(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*tenant.User, error)
 }
 
 type resolverAccountingInboundLine interface {
-	ObjectType(ctx context.Context, obj *accountingsync.InboundLine) (*accountingsync.SyncObjectType, error)
-	ObjectID(ctx context.Context, obj *accountingsync.InboundLine) (*string, error)
+	ObjectType(ctx context.Context, obj *accountinginbound.InboundLine) (*accountingsync.SyncObjectType, error)
+	ObjectID(ctx context.Context, obj *accountinginbound.InboundLine) (*string, error)
 }
 
 type resolverAccountingMapping interface {
-	TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error)
-	Source(ctx context.Context, obj *accountingsync.AccountingMapping) (*accountingsync.MappingSource, error)
-	Required(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Prechecked(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Candidates(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MappingCandidate, error)
-	Matchers(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MatcherSignal, error)
-	ConfirmedBy(ctx context.Context, obj *accountingsync.AccountingMapping) (*tenant.User, error)
+	TrenovaObjectID(ctx context.Context, obj *accountingmapping.AccountingMapping) (*string, error)
+	Source(ctx context.Context, obj *accountingmapping.AccountingMapping) (*accountingmapping.MappingSource, error)
+	Required(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Prechecked(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Candidates(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MappingCandidate, error)
+	Matchers(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MatcherSignal, error)
+	ConfirmedBy(ctx context.Context, obj *accountingmapping.AccountingMapping) (*tenant.User, error)
 }
 
 type resolverAccountingReferenceObject interface {
-	Label(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (string, error)
-	Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error)
+	Label(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (string, error)
+	Usable(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (bool, error)
 }
 
 type resolverAccountingSyncAttempt interface {
@@ -4725,44 +4736,44 @@ type resolverAccountingSyncRecord interface {
 }
 
 type resolverMutation interface {
-	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error)
-	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
-	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error)
-	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
-	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
-	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingsyncports.AccountingPreparedCertificate, error)
-	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
-	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error)
-	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
-	RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error)
-	ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingsync.AccountingMapping, error)
-	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingsync.AccountingConnection, error)
-	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingsync.AccountingConnection, error)
-	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
+	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingconnectionports.AccountingSyncStatus, error)
+	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
+	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingAuthorizationStart, error)
+	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
+	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingconnection.AccountingConnection, error)
+	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingconnectionports.AccountingPreparedCertificate, error)
+	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
+	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingconnection.AccountingConnection, error)
+	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingmapping.AccountingMapping, error)
+	RejectAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingmapping.AccountingMapping, error)
+	ClearAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingmapping.AccountingMapping, error)
+	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingconnection.AccountingConnection, error)
+	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingconnection.AccountingConnection, error)
+	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
 	RetryAccountingSync(ctx context.Context, input gqlmodel.RetryAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	ReleaseAccountingSync(ctx context.Context, input gqlmodel.ReleaseAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	SkipAccountingSync(ctx context.Context, input gqlmodel.SkipAccountingSyncInput) (*accountingsync.AccountingSyncRecord, error)
 	RedateAccountingSync(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
-	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error)
-	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
+	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
+	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountinginbound.AccountingInboundChange, error)
+	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
+	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
+	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 }
 
 type resolverQuery interface {
-	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
-	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error)
+	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
+	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingmappingports.AccountingMappingSummary, error)
 	AccountingMappingDetail(ctx context.Context, integrationType integration.Type, id *string, targetType *accountingsync.MappingTargetType, recordID *string, key *string, optionsQuery *string) (*gqlmodel.AccountingMappingDetail, error)
 	AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error)
 	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error)
@@ -4771,16 +4782,16 @@ type resolverQuery interface {
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
 	AccountingSyncObjectStates(ctx context.Context, objectIds []string, integrationType *integration.Type) ([]*accountingsyncports.AccountingSyncObjectState, error)
-	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
-	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error)
+	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingbackfill.AccountingBackfill, error)
+	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountinginboundports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
-	AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountingsyncports.AccountingInboundApplyPreview, error)
-	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
+	AccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
+	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountinginboundports.AccountingInboundApplyPreview, error)
+	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 	AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error)
-	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
-	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error)
-	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
+	AccountingDriftFinding(ctx context.Context, id string) (*accountingdrift.AccountingDriftFinding, error)
+	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdriftports.AccountingDriftFixPreview, error)
+	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingprovider.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingmapping.AccountingReferenceObject, error)
 }
 
 var (
@@ -5630,8 +5641,8 @@ func field_Query_accountingReferenceObjects_args(ctx context.Context, ec *gqlexe
 	}
 	args["integrationType"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "kind",
-		func(ctx context.Context, v any) (accountingsync.ReferenceKind, error) {
-			return unmarshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind(ctx, ec, v)
+		func(ctx context.Context, v any) (accountingprovider.ReferenceKind, error) {
+			return unmarshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5691,7 +5702,7 @@ func unmarshalInputAccountingMappingFilterInput(ctx context.Context, ec *gqlexec
 			it.TargetTypes = data
 		case "states":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("states"))
-			data, err := unmarshalOAccountingMappingState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingStateᚄ(ctx, ec, v)
+			data, err := unmarshalOAccountingMappingState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingStateᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -5881,14 +5892,14 @@ func unmarshalInputChooseAccountingSyncModeInput(ctx context.Context, ec *gqlexe
 			it.IntegrationType = data
 		case "mode":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mode"))
-			data, err := unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncMode(ctx, ec, v)
+			data, err := unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐSyncMode(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Mode = data
 		case "granularity":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("granularity"))
-			data, err := unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx, ec, v)
+			data, err := unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐLedgerGranularity(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6431,7 +6442,7 @@ func unmarshalInputResolveAccountingDriftInput(ctx context.Context, ec *gqlexec.
 			it.ID = data
 		case "direction":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := unmarshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection(ctx, ec, v)
+			data, err := unmarshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6512,7 +6523,7 @@ func unmarshalInputSaveAccountingAppInput(ctx context.Context, ec *gqlexec.Exec,
 			it.IntegrationType = data
 		case "environment":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environment"))
-			data, err := unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx, ec, v)
+			data, err := unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6672,7 +6683,7 @@ func unmarshalInputUpdateAccountingSyncSettingsInput(ctx context.Context, ec *gq
 			it.DriverSettlements = data
 		case "inboundPayments":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inboundPayments"))
-			data, err := unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx, ec, v)
+			data, err := unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐInboundPaymentPolicy(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -6686,9 +6697,9 @@ func unmarshalInputDataTableConnectionInput(ctx context.Context, ec *gqlexec.Exe
 	return gqlexec.UnmarshalInput[gqlmodel.DataTableConnectionInput](ctx, ec, "DataTableConnectionInput", obj)
 }
 
-func unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, v any) (accountingsync.AppEnvironment, error) {
+func unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, v any) (accountingprovider.AppEnvironment, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.AppEnvironment(tmp)
+	res := accountingprovider.AppEnvironment(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6698,15 +6709,15 @@ func unmarshalNAccountingBackfillAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, v any) (accountingsync.DriftDirection, error) {
+func unmarshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, v any) (accountingdrift.DriftDirection, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.DriftDirection(tmp)
+	res := accountingdrift.DriftDirection(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingState(ctx context.Context, ec *gqlexec.Exec, v any) (accountingsync.MappingState, error) {
+func unmarshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingState(ctx context.Context, ec *gqlexec.Exec, v any) (accountingmapping.MappingState, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.MappingState(tmp)
+	res := accountingmapping.MappingState(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6716,9 +6727,9 @@ func unmarshalNAccountingMappingTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind(ctx context.Context, ec *gqlexec.Exec, v any) (accountingsync.ReferenceKind, error) {
+func unmarshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind(ctx context.Context, ec *gqlexec.Exec, v any) (accountingprovider.ReferenceKind, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.ReferenceKind(tmp)
+	res := accountingprovider.ReferenceKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6728,9 +6739,9 @@ func unmarshalNAccountingSyncErrorCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncMode(ctx context.Context, ec *gqlexec.Exec, v any) (accountingsync.SyncMode, error) {
+func unmarshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐSyncMode(ctx context.Context, ec *gqlexec.Exec, v any) (accountingprovider.SyncMode, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.SyncMode(tmp)
+	res := accountingprovider.SyncMode(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6890,21 +6901,21 @@ func unmarshalNUpdateAccountingSyncSettingsInput2githubᚗcomᚋemoss08ᚋtrenov
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*accountingsync.InboundPaymentPolicy, error) {
+func unmarshalOAccountingInboundPaymentPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐInboundPaymentPolicy(ctx context.Context, ec *gqlexec.Exec, v any) (*accountingconnection.InboundPaymentPolicy, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.InboundPaymentPolicy(tmp)
+	res := accountingconnection.InboundPaymentPolicy(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx context.Context, ec *gqlexec.Exec, v any) (*accountingsync.LedgerGranularity, error) {
+func unmarshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐLedgerGranularity(ctx context.Context, ec *gqlexec.Exec, v any) (*accountingconnection.LedgerGranularity, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := accountingsync.LedgerGranularity(tmp)
+	res := accountingconnection.LedgerGranularity(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -6916,11 +6927,11 @@ func unmarshalOAccountingMappingFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOAccountingMappingState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingStateᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]accountingsync.MappingState, error) {
+func unmarshalOAccountingMappingState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingStateᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]accountingmapping.MappingState, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingState)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingState)
 }
 
 func unmarshalOAccountingMappingTargetType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetTypeᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]accountingsync.MappingTargetType, error) {
@@ -7024,7 +7035,7 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.AppEnvironment) graphql.Marshaler {
+func marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingprovider.AppEnvironment) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7032,15 +7043,15 @@ func marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNAccountingAppEnvironment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsync.AppEnvironment) graphql.Marshaler {
-	return gqlexec.List[accountingsync.AppEnvironment]{
-		Elem:        marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment,
+func marshalNAccountingAppEnvironment2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingprovider.AppEnvironment) graphql.Marshaler {
+	return gqlexec.List[accountingprovider.AppEnvironment]{
+		Elem:        marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAppSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingAppSettings) graphql.Marshaler {
+func marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAppSettings(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingAppSettings) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7048,7 +7059,7 @@ func marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AccountingAppSettings", v)
 }
 
-func marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.AppSource) graphql.Marshaler {
+func marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAppSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnection.AppSource) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7056,19 +7067,19 @@ func marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.AppliedObject) graphql.Marshaler {
+func marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginbound.AppliedObject) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingAppliedObject", &v)
 }
 
-func marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObjectᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsync.AppliedObject) graphql.Marshaler {
-	return gqlexec.List[accountingsync.AppliedObject]{
-		Elem:        marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObject,
+func marshalNAccountingAppliedObject2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObjectᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountinginbound.AppliedObject) graphql.Marshaler {
+	return gqlexec.List[accountinginbound.AppliedObject]{
+		Elem:        marshalNAccountingAppliedObject2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObject,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppliedObjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.AppliedObjectType) graphql.Marshaler {
+func marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAppliedObjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginbound.AppliedObjectType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7076,7 +7087,7 @@ func marshalNAccountingAppliedObjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNAccountingAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAuthMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.AuthMethod) graphql.Marshaler {
+func marshalNAccountingAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAuthMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnection.AuthMethod) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7084,7 +7095,7 @@ func marshalNAccountingAuthMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAuthorizationStart(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingAuthorizationStart) graphql.Marshaler {
+func marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAuthorizationStart(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingAuthorizationStart) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7092,15 +7103,15 @@ func marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	return ec.MarshalType(ctx, sel, "AccountingAuthorizationStart", v)
 }
 
-func marshalNAccountingBackfill2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfillᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.AccountingBackfill) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.AccountingBackfill]{
-		Elem:        marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill,
+func marshalNAccountingBackfill2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfillᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingbackfill.AccountingBackfill) graphql.Marshaler {
+	return gqlexec.List[*accountingbackfill.AccountingBackfill]{
+		Elem:        marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingBackfill) graphql.Marshaler {
+func marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingbackfill.AccountingBackfill) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7108,7 +7119,7 @@ func marshalNAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AccountingBackfill", v)
 }
 
-func marshalNAccountingBackfillStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐBackfillStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.BackfillStatus) graphql.Marshaler {
+func marshalNAccountingBackfillStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐBackfillStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingbackfill.BackfillStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7116,19 +7127,19 @@ func marshalNAccountingBackfillStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNAccountingCompany2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingCompany(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsyncports.AccountingCompany) graphql.Marshaler {
+func marshalNAccountingCompany2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectorportsᚐAccountingCompany(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnectorports.AccountingCompany) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingCompany", &v)
 }
 
-func marshalNAccountingCompany2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingCompanyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsyncports.AccountingCompany) graphql.Marshaler {
-	return gqlexec.List[accountingsyncports.AccountingCompany]{
-		Elem:        marshalNAccountingCompany2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingCompany,
+func marshalNAccountingCompany2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectorportsᚐAccountingCompanyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingconnectorports.AccountingCompany) graphql.Marshaler {
+	return gqlexec.List[accountingconnectorports.AccountingCompany]{
+		Elem:        marshalNAccountingCompany2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectorportsᚐAccountingCompany,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingConnection) graphql.Marshaler {
+func marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnection.AccountingConnection) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7136,7 +7147,7 @@ func marshalNAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AccountingConnection", v)
 }
 
-func marshalNAccountingConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐConnectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.ConnectionStatus) graphql.Marshaler {
+func marshalNAccountingConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐConnectionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnection.ConnectionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7144,7 +7155,7 @@ func marshalNAccountingConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.DriftDirection) graphql.Marshaler {
+func marshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingdrift.DriftDirection) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7152,15 +7163,15 @@ func marshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNAccountingDriftDirection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirectionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsync.DriftDirection) graphql.Marshaler {
-	return gqlexec.List[accountingsync.DriftDirection]{
-		Elem:        marshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection,
+func marshalNAccountingDriftDirection2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirectionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingdrift.DriftDirection) graphql.Marshaler {
+	return gqlexec.List[accountingdrift.DriftDirection]{
+		Elem:        marshalNAccountingDriftDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingDriftFinding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingDriftFinding) graphql.Marshaler {
+func marshalNAccountingDriftFinding2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐAccountingDriftFinding(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdrift.AccountingDriftFinding) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7192,7 +7203,7 @@ func marshalNAccountingDriftFindingEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "AccountingDriftFindingEdge", v)
 }
 
-func marshalNAccountingDriftFixPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftFixPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingDriftFixPreview) graphql.Marshaler {
+func marshalNAccountingDriftFixPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftFixPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdriftports.AccountingDriftFixPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7200,7 +7211,7 @@ func marshalNAccountingDriftFixPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "AccountingDriftFixPreview", v)
 }
 
-func marshalNAccountingDriftKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.DriftKind) graphql.Marshaler {
+func marshalNAccountingDriftKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingdrift.DriftKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7208,19 +7219,19 @@ func marshalNAccountingDriftKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNAccountingDriftLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.DriftLine) graphql.Marshaler {
+func marshalNAccountingDriftLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingdrift.DriftLine) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingDriftLine", &v)
 }
 
-func marshalNAccountingDriftLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsync.DriftLine) graphql.Marshaler {
-	return gqlexec.List[accountingsync.DriftLine]{
-		Elem:        marshalNAccountingDriftLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftLine,
+func marshalNAccountingDriftLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingdrift.DriftLine) graphql.Marshaler {
+	return gqlexec.List[accountingdrift.DriftLine]{
+		Elem:        marshalNAccountingDriftLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingDriftOverview) graphql.Marshaler {
+func marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdriftports.AccountingDriftOverview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7228,7 +7239,7 @@ func marshalNAccountingDriftOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "AccountingDriftOverview", v)
 }
 
-func marshalNAccountingDriftStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.DriftStatus) graphql.Marshaler {
+func marshalNAccountingDriftStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingdrift.DriftStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7236,7 +7247,7 @@ func marshalNAccountingDriftStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAccountingDriftSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingDriftSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingDriftSummary) graphql.Marshaler {
+func marshalNAccountingDriftSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingdriftportsᚐAccountingDriftSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdriftports.AccountingDriftSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7244,7 +7255,7 @@ func marshalNAccountingDriftSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "AccountingDriftSummary", v)
 }
 
-func marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundApplyPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingInboundApplyPreview) graphql.Marshaler {
+func marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundApplyPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginboundports.AccountingInboundApplyPreview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7252,7 +7263,7 @@ func marshalNAccountingInboundApplyPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "AccountingInboundApplyPreview", v)
 }
 
-func marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingInboundChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingInboundChange) graphql.Marshaler {
+func marshalNAccountingInboundChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐAccountingInboundChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginbound.AccountingInboundChange) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7284,7 +7295,7 @@ func marshalNAccountingInboundChangeEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "AccountingInboundChangeEdge", v)
 }
 
-func marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.InboundChangeKind) graphql.Marshaler {
+func marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginbound.InboundChangeKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7292,7 +7303,7 @@ func marshalNAccountingInboundChangeKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.InboundChangeStatus) graphql.Marshaler {
+func marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginbound.InboundChangeStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7300,7 +7311,7 @@ func marshalNAccountingInboundChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res
 }
 
-func marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundDocumentKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.InboundDocumentKind) graphql.Marshaler {
+func marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundDocumentKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginbound.InboundDocumentKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7308,15 +7319,15 @@ func marshalNAccountingInboundDocumentKind2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res
 }
 
-func marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.InboundLine) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.InboundLine]{
-		Elem:        marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundLine,
+func marshalNAccountingInboundLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountinginbound.InboundLine) graphql.Marshaler {
+	return gqlexec.List[*accountinginbound.InboundLine]{
+		Elem:        marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.InboundLine) graphql.Marshaler {
+func marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginbound.InboundLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7324,7 +7335,7 @@ func marshalNAccountingInboundLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AccountingInboundLine", v)
 }
 
-func marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingInboundOverview) graphql.Marshaler {
+func marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginboundports.AccountingInboundOverview) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7332,7 +7343,7 @@ func marshalNAccountingInboundOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "AccountingInboundOverview", v)
 }
 
-func marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundPaymentPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.InboundPaymentPolicy) graphql.Marshaler {
+func marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐInboundPaymentPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnection.InboundPaymentPolicy) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7340,19 +7351,19 @@ func marshalNAccountingInboundPaymentPolicy2githubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res
 }
 
-func marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundPostingLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsyncports.AccountingInboundPostingLine) graphql.Marshaler {
+func marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundPostingLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountinginboundports.AccountingInboundPostingLine) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingInboundPostingLine", &v)
 }
 
-func marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundPostingLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsyncports.AccountingInboundPostingLine) graphql.Marshaler {
-	return gqlexec.List[accountingsyncports.AccountingInboundPostingLine]{
-		Elem:        marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundPostingLine,
+func marshalNAccountingInboundPostingLine2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundPostingLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountinginboundports.AccountingInboundPostingLine) graphql.Marshaler {
+	return gqlexec.List[accountinginboundports.AccountingInboundPostingLine]{
+		Elem:        marshalNAccountingInboundPostingLine2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundPostingLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingInboundSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingInboundSummary) graphql.Marshaler {
+func marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountinginboundportsᚐAccountingInboundSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginboundports.AccountingInboundSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7360,15 +7371,15 @@ func marshalNAccountingInboundSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "AccountingInboundSummary", v)
 }
 
-func marshalNAccountingMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMappingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.AccountingMapping) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.AccountingMapping]{
-		Elem:        marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping,
+func marshalNAccountingMapping2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMappingᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingmapping.AccountingMapping) graphql.Marshaler {
+	return gqlexec.List[*accountingmapping.AccountingMapping]{
+		Elem:        marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingMapping) graphql.Marshaler {
+func marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingMapping(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmapping.AccountingMapping) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7376,15 +7387,15 @@ func marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "AccountingMapping", v)
 }
 
-func marshalNAccountingMappingCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.MappingCandidate) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.MappingCandidate]{
-		Elem:        marshalNAccountingMappingCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingCandidate,
+func marshalNAccountingMappingCandidate2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingCandidateᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingmapping.MappingCandidate) graphql.Marshaler {
+	return gqlexec.List[*accountingmapping.MappingCandidate]{
+		Elem:        marshalNAccountingMappingCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingCandidate,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingMappingCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.MappingCandidate) graphql.Marshaler {
+func marshalNAccountingMappingCandidate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingCandidate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmapping.MappingCandidate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7424,27 +7435,27 @@ func marshalNAccountingMappingEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "AccountingMappingEdge", v)
 }
 
-func marshalNAccountingMappingGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsyncports.AccountingMappingGroup) graphql.Marshaler {
+func marshalNAccountingMappingGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingmappingports.AccountingMappingGroup) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingMappingGroup", &v)
 }
 
-func marshalNAccountingMappingGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsyncports.AccountingMappingGroup) graphql.Marshaler {
-	return gqlexec.List[accountingsyncports.AccountingMappingGroup]{
-		Elem:        marshalNAccountingMappingGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingGroup,
+func marshalNAccountingMappingGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingGroupᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingmappingports.AccountingMappingGroup) graphql.Marshaler {
+	return gqlexec.List[accountingmappingports.AccountingMappingGroup]{
+		Elem:        marshalNAccountingMappingGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingGroup,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingMappingMatcher2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMatcherSignalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.MatcherSignal) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.MatcherSignal]{
-		Elem:        marshalNAccountingMappingMatcher2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMatcherSignal,
+func marshalNAccountingMappingMatcher2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMatcherSignalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingmapping.MatcherSignal) graphql.Marshaler {
+	return gqlexec.List[*accountingmapping.MatcherSignal]{
+		Elem:        marshalNAccountingMappingMatcher2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMatcherSignal,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingMappingMatcher2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMatcherSignal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.MatcherSignal) graphql.Marshaler {
+func marshalNAccountingMappingMatcher2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMatcherSignal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmapping.MatcherSignal) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7452,7 +7463,7 @@ func marshalNAccountingMappingMatcher2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "AccountingMappingMatcher", v)
 }
 
-func marshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.MappingState) graphql.Marshaler {
+func marshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingState(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingmapping.MappingState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7460,7 +7471,7 @@ func marshalNAccountingMappingState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNAccountingMappingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingMappingSummary) graphql.Marshaler {
+func marshalNAccountingMappingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingmappingportsᚐAccountingMappingSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmappingports.AccountingMappingSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7476,7 +7487,7 @@ func marshalNAccountingMappingTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalNAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingPreparedCertificate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingPreparedCertificate) graphql.Marshaler {
+func marshalNAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingPreparedCertificate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingPreparedCertificate) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7484,11 +7495,11 @@ func marshalNAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "AccountingPreparedCertificate", v)
 }
 
-func marshalNAccountingProviderProfile2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐProviderProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.ProviderProfile) graphql.Marshaler {
+func marshalNAccountingProviderProfile2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐProviderProfile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingprovider.ProviderProfile) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AccountingProviderProfile", &v)
 }
 
-func marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.ReferenceKind) graphql.Marshaler {
+func marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingprovider.ReferenceKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7496,23 +7507,23 @@ func marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNAccountingReferenceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKindᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingsync.ReferenceKind) graphql.Marshaler {
-	return gqlexec.List[accountingsync.ReferenceKind]{
-		Elem:        marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐReferenceKind,
+func marshalNAccountingReferenceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKindᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []accountingprovider.ReferenceKind) graphql.Marshaler {
+	return gqlexec.List[accountingprovider.ReferenceKind]{
+		Elem:        marshalNAccountingReferenceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐReferenceKind,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObjectᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingsync.AccountingReferenceObject) graphql.Marshaler {
-	return gqlexec.List[*accountingsync.AccountingReferenceObject]{
-		Elem:        marshalNAccountingReferenceObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObject,
+func marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingReferenceObjectᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*accountingmapping.AccountingReferenceObject) graphql.Marshaler {
+	return gqlexec.List[*accountingmapping.AccountingReferenceObject]{
+		Elem:        marshalNAccountingReferenceObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingReferenceObject,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingReferenceObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingReferenceObject) graphql.Marshaler {
+func marshalNAccountingReferenceObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐAccountingReferenceObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmapping.AccountingReferenceObject) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7520,7 +7531,7 @@ func marshalNAccountingReferenceObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return ec.MarshalType(ctx, sel, "AccountingReferenceObject", v)
 }
 
-func marshalNAccountingSetupStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSetupStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.SetupStep) graphql.Marshaler {
+func marshalNAccountingSetupStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐSetupStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingconnection.SetupStep) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7572,7 +7583,7 @@ func marshalNAccountingSyncAttentionGroup2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingsync.SyncMode) graphql.Marshaler {
+func marshalNAccountingSyncMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐSyncMode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accountingprovider.SyncMode) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -7668,7 +7679,7 @@ func marshalNAccountingSyncSourceEvent2githubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return res
 }
 
-func marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingSyncStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingSyncStatus) graphql.Marshaler {
+func marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingSyncStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingSyncStatus) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7712,7 +7723,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingAuthorizationCompletion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingAuthorizationCompletion) graphql.Marshaler {
+func marshalNCompleteAccountingAuthorizationPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingAuthorizationCompletion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingAuthorizationCompletion) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -7784,14 +7795,14 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingAppCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingAppCredential) graphql.Marshaler {
+func marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingAppCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnection.AccountingAppCredential) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AccountingAppCredential", v)
 }
 
-func marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AppEnvironment) graphql.Marshaler {
+func marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingproviderᚐAppEnvironment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingprovider.AppEnvironment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7799,7 +7810,7 @@ func marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AppSource) graphql.Marshaler {
+func marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAppSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnection.AppSource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7807,21 +7818,21 @@ func marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalOAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingBackfill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingBackfill) graphql.Marshaler {
+func marshalOAccountingBackfill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingbackfillᚐAccountingBackfill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingbackfill.AccountingBackfill) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AccountingBackfill", v)
 }
 
-func marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.AccountingConnection) graphql.Marshaler {
+func marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐAccountingConnection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnection.AccountingConnection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AccountingConnection", v)
 }
 
-func marshalOAccountingDriftDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.DriftDirection) graphql.Marshaler {
+func marshalOAccountingDriftDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdrift.DriftDirection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7829,7 +7840,7 @@ func marshalOAccountingDriftDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftFixObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.DriftFixObject) graphql.Marshaler {
+func marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftFixObject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdrift.DriftFixObject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7837,7 +7848,7 @@ func marshalOAccountingDriftFixObject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalOAccountingDriftResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐDriftResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.DriftResolution) graphql.Marshaler {
+func marshalOAccountingDriftResolution2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingdriftᚐDriftResolution(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingdrift.DriftResolution) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7853,7 +7864,7 @@ func marshalOAccountingErrorCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐInboundChangeReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.InboundChangeReason) graphql.Marshaler {
+func marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountinginboundᚐInboundChangeReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountinginbound.InboundChangeReason) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7861,7 +7872,7 @@ func marshalOAccountingInboundChangeReason2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
-func marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐLedgerGranularity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.LedgerGranularity) graphql.Marshaler {
+func marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingconnectionᚐLedgerGranularity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnection.LedgerGranularity) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7869,7 +7880,7 @@ func marshalOAccountingLedgerGranularity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return res
 }
 
-func marshalOAccountingMappingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsync.MappingSource) graphql.Marshaler {
+func marshalOAccountingMappingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingmappingᚐMappingSource(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingmapping.MappingSource) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7877,7 +7888,7 @@ func marshalOAccountingMappingSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalOAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingPreparedCertificate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingPreparedCertificate) graphql.Marshaler {
+func marshalOAccountingPreparedCertificate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingPreparedCertificate(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingPreparedCertificate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7908,7 +7919,7 @@ func marshalOAccountingSyncOperation2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res
 }
 
-func marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingWebhookSubscriptionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingsyncports.AccountingWebhookSubscriptionSummary) graphql.Marshaler {
+func marshalOAccountingWebhookSubscriptionSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingconnectionportsᚐAccountingWebhookSubscriptionSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *accountingconnectionports.AccountingWebhookSubscriptionSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -3,13 +3,13 @@ package shipmentboardcache
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
 
 type Request struct {
-	Section    shipmentports.ShipmentBoardSection
+	Section    shipmentboardports.ShipmentBoardSection
 	TenantInfo pagination.TenantInfo
 	Timezone   string
 	Variant    string
@@ -17,7 +17,7 @@ type Request struct {
 
 func GetOrCompute[T any](
 	ctx context.Context,
-	cache shipmentports.ShipmentBoardCache,
+	cache shipmentboardports.ShipmentBoardCache,
 	logger *zap.Logger,
 	req *Request,
 	compute func(ctx context.Context) (*T, error),
@@ -32,7 +32,7 @@ func GetOrCompute[T any](
 		return compute(ctx)
 	}
 
-	key := &shipmentports.ShipmentBoardCacheKey{
+	key := &shipmentboardports.ShipmentBoardCacheKey{
 		Section:    req.Section,
 		TenantInfo: req.TenantInfo,
 		Timezone:   req.Timezone,

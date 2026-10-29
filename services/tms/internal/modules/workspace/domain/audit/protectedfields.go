@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 )
 
 const (
@@ -17,17 +18,17 @@ const (
 // record as it stood, and shows no more of it than the record would.
 // Nothing is changed in place: each withheld map is a copy, so a reader with
 // the group, or a cached entry, still has the whole diff.
-func (e *Entry) WithholdFields(visible permission.FieldGroupSet) {
+func (e *Entry) WithholdFields(visible protectedfield.GroupSet) {
 	if e == nil || visible.HasAll() {
 		return
 	}
-	e.PreviousState = permission.WithholdProtectedJSON(e.Resource, e.PreviousState, visible)
-	e.CurrentState = permission.WithholdProtectedJSON(e.Resource, e.CurrentState, visible)
+	e.PreviousState = protectedfield.WithholdJSON(e.Resource, e.PreviousState, visible)
+	e.CurrentState = protectedfield.WithholdJSON(e.Resource, e.CurrentState, visible)
 	e.Changes = WithholdChanges(e.Resource, e.Changes, visible)
 }
 
 // WithheldCopy is the entry as a reader holding only these groups may see it.
-func (e *Entry) WithheldCopy(visible permission.FieldGroupSet) *Entry {
+func (e *Entry) WithheldCopy(visible protectedfield.GroupSet) *Entry {
 	if e == nil || visible.HasAll() {
 		return e
 	}
@@ -43,7 +44,7 @@ func (e *Entry) WithheldCopy(visible permission.FieldGroupSet) *Entry {
 func WithholdChanges(
 	resource permission.Resource,
 	changes map[string]any,
-	visible permission.FieldGroupSet,
+	visible protectedfield.GroupSet,
 ) map[string]any {
 	if changes == nil || visible.HasAll() {
 		return changes
@@ -57,7 +58,7 @@ func WithholdChanges(
 		}
 		steps := strings.Split(path, ".")
 		withheld := maps.Clone(change)
-		if group, protected := permission.ProtectedGroupAt(resource, steps, nil); protected &&
+		if group, protected := protectedfield.GroupAt(resource, steps, nil); protected &&
 			!visible.Has(group) {
 			withheld[changeFrom] = nil
 			withheld[changeTo] = nil
@@ -66,7 +67,7 @@ func WithholdChanges(
 		}
 		for _, side := range []string{changeFrom, changeTo} {
 			if value, has := change[side]; has {
-				withheld[side] = permission.WithholdProtectedValue(resource, steps, value, visible)
+				withheld[side] = protectedfield.WithholdValue(resource, steps, value, visible)
 			}
 		}
 		out[path] = withheld

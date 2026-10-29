@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -66,7 +66,7 @@ func (f *turnFixture) open(delegateCallID string) *OpenRunRequest {
 	return open
 }
 
-func calledAction(tool, callID string) agentports.PendingAction {
+func calledAction(tool, callID string) agentruntimeports.PendingAction {
 	action := pendingAction(tool)
 	action.ToolCallID = callID
 
@@ -87,11 +87,11 @@ func TestRecord_FoldsADelegatesWritesIntoTheTurnsOnePlanInConversationOrder(t *t
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []agentports.PendingAction{calledAction("void_shipment", "call_void")},
+		Actions:    []agentruntimeports.PendingAction{calledAction("void_shipment", "call_void")},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []agentports.PendingAction{
+			Actions: []agentruntimeports.PendingAction{
 				calledAction("shipment_duplicate", "call_copy"),
 			},
 		}},
@@ -140,11 +140,11 @@ func TestRecord_NumbersTheStepsByWhereTheConversationAskedForThem(t *testing.T) 
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []agentports.PendingAction{calledAction("void_shipment", "call_void")},
+		Actions:    []agentruntimeports.PendingAction{calledAction("void_shipment", "call_void")},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []agentports.PendingAction{
+			Actions: []agentruntimeports.PendingAction{
 				calledAction("shipment_duplicate", "call_copy"),
 				calledAction("shipment_add_comment", "call_note"),
 			},
@@ -229,11 +229,11 @@ func TestRecord_ADelegatesOnlyPendingWriteStandsAlone(t *testing.T) {
 		Actor:      f.actor,
 		Definition: f.parent,
 		Open:       f.open(""),
-		Actions:    []agentports.PendingAction{executed},
+		Actions:    []agentruntimeports.PendingAction{executed},
 		Delegated: []DelegatedActions{{
 			Definition: f.delegate,
 			Open:       f.open("call_hand"),
-			Actions: []agentports.PendingAction{
+			Actions: []agentruntimeports.PendingAction{
 				calledAction("shipment_duplicate", "call_copy"),
 			},
 		}},

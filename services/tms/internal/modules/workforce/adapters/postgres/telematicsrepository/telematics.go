@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -516,8 +516,8 @@ func openStopReviewsQuery(
 	st := shipmentdb.Stops
 
 	missingStamp := keel.Or(
-		keel.And(e.StopVisit.Eq(shipment.VisitArrival), st.ActualArrival.IsNull()),
-		keel.And(e.StopVisit.Eq(shipment.VisitDeparture), st.ActualDeparture.IsNull()),
+		keel.And(e.StopVisit.Eq(shipmentvocab.VisitArrival), st.ActualArrival.IsNull()),
+		keel.And(e.StopVisit.Eq(shipmentvocab.VisitDeparture), st.ActualDeparture.IsNull()),
 	)
 
 	q := e.Join(m, m.ID.EqCol(e.ShipmentMoveID)).
@@ -525,11 +525,11 @@ func openStopReviewsQuery(
 		Compute(e.MoveShipmentID, m.ShipmentID).
 		Where(
 			e.StopOutcome.In(telematics.StopOutcomeUnmatched, telematics.StopOutcomeRefused),
-			m.Status.NotIn(shipment.MoveStatusCompleted, shipment.MoveStatusCanceled),
+			m.Status.NotIn(shipmentvocab.MoveStatusCompleted, shipmentvocab.MoveStatusCanceled),
 			keel.When(req.Since > 0, e.OccurredAt.Gt(req.Since)),
 			keel.Or(
 				e.StopID.IsNull(),
-				keel.And(st.Status.Ne(shipment.StopStatusCanceled), missingStamp),
+				keel.And(st.Status.Ne(shipmentvocab.StopStatusCanceled), missingStamp),
 			),
 		).
 		Order(e.OccurredAt.Desc())

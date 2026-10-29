@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -32,35 +33,35 @@ func TestSecurityHeadersMiddleware_AddsHeaders(t *testing.T) {
 			name:   "ok response without hsts outside staging and production",
 			method: http.MethodGet,
 			path:   "/ok",
-			env:    config.EnvDevelopment,
+			env:    appconfig.EnvDevelopment,
 			status: http.StatusOK,
 		},
 		{
 			name:   "not found response includes security headers",
 			method: http.MethodGet,
 			path:   "/missing",
-			env:    config.EnvDevelopment,
+			env:    appconfig.EnvDevelopment,
 			status: http.StatusNotFound,
 		},
 		{
 			name:   "error response includes security headers",
 			method: http.MethodGet,
 			path:   "/error",
-			env:    config.EnvDevelopment,
+			env:    appconfig.EnvDevelopment,
 			status: http.StatusInternalServerError,
 		},
 		{
 			name:   "production response includes hsts",
 			method: http.MethodGet,
 			path:   "/ok",
-			env:    config.EnvProduction,
+			env:    appconfig.EnvProduction,
 			status: http.StatusOK,
 		},
 		{
 			name:   "staging response includes hsts",
 			method: http.MethodGet,
 			path:   "/ok",
-			env:    config.EnvStaging,
+			env:    appconfig.EnvStaging,
 			status: http.StatusOK,
 		},
 	}
@@ -93,7 +94,9 @@ func TestSecurityHeadersMiddleware_PreservesCORSPreflightHeaders(t *testing.T) {
 		AllowCredentials: true,
 		MaxAge:           time.Hour,
 	}))
-	router.Use(NewSecurityHeadersMiddleware(newSecurityHeadersTestConfig(config.EnvProduction)))
+	router.Use(
+		NewSecurityHeadersMiddleware(&newSecurityHeadersTestConfig(appconfig.EnvProduction).App),
+	)
 	router.GET("/ok", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
@@ -115,7 +118,7 @@ func TestSecurityHeadersMiddleware_PreservesCORSPreflightHeaders(t *testing.T) {
 
 func newSecurityHeadersTestRouter(env string) *gin.Engine {
 	router := gin.New()
-	router.Use(NewSecurityHeadersMiddleware(newSecurityHeadersTestConfig(env)))
+	router.Use(NewSecurityHeadersMiddleware(&newSecurityHeadersTestConfig(env).App))
 	router.GET("/ok", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
@@ -128,7 +131,7 @@ func newSecurityHeadersTestRouter(env string) *gin.Engine {
 
 func newSecurityHeadersTestConfig(env string) *config.Config {
 	return &config.Config{
-		App: config.AppConfig{Env: env},
+		App: appconfig.Config{Env: env},
 	}
 }
 
@@ -138,10 +141,14 @@ func assertSecurityHeaders(t *testing.T, headers http.Header, env string) {
 	assert.Equal(t, "nosniff", headers.Get("X-Content-Type-Options"))
 	assert.Equal(t, "DENY", headers.Get("X-Frame-Options"))
 	assert.Equal(t, "no-referrer", headers.Get("Referrer-Policy"))
-	assert.Equal(t, "camera=(), microphone=(self), geolocation=()", headers.Get("Permissions-Policy"))
+	assert.Equal(
+		t,
+		"camera=(), microphone=(self), geolocation=()",
+		headers.Get("Permissions-Policy"),
+	)
 	assert.Equal(t, expectedAPIContentSecurityPolicy, headers.Get("Content-Security-Policy"))
 
-	if env == config.EnvProduction || env == config.EnvStaging {
+	if env == appconfig.EnvProduction || env == appconfig.EnvStaging {
 		assert.Equal(t, expectedHSTSHeaderValue, headers.Get("Strict-Transport-Security"))
 		return
 	}

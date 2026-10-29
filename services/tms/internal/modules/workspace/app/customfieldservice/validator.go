@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield/customfielddb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,27 +19,26 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*customfield.CustomFieldDefinition]
+	validator tenantedvalidation.EntityValidator[*customfield.CustomFieldDefinition]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*customfield.CustomFieldDefinition]().
+		validator: tenantedvalidation.NewBuilder[*customfield.CustomFieldDefinition]().
 			WithModelName("Custom Field Definition").
 			WithUniquenessChecker(
-				validationframework.NewKeelChecker(p.DB, customfielddb.CustomFieldDefinitionsSchema()),
+				keelcheck.NewChecker(p.DB, customfielddb.CustomFieldDefinitionsSchema()),
 			).
 			WithCompositeUniqueFields(
 				"resource_type_name",
 				"Custom field with this name already exists for this resource type",
-				validationframework.CompositeField[*customfield.CustomFieldDefinition]{
+				tenantedvalidation.CompositeField[*customfield.CustomFieldDefinition]{
 					FieldName:     "resourceType",
 					Column:        "resource_type",
 					CaseSensitive: true,
 					GetValue:      func(e *customfield.CustomFieldDefinition) any { return e.ResourceType },
 				},
-				validationframework.CompositeField[*customfield.CustomFieldDefinition]{
+				tenantedvalidation.CompositeField[*customfield.CustomFieldDefinition]{
 					FieldName:     "name",
 					Column:        "name",
 					CaseSensitive: true,

@@ -67,6 +67,11 @@ type DatasetSource string
 const (
 	DatasetReportRun  = DatasetSource("ReportRun")
 	DatasetAttachment = DatasetSource("Attachment")
+	// DatasetReportDefinition is a report the script asked for by its
+	// definition, grouped and totalled by the report engine over every record:
+	// what a script could never read row by row, such as spend by month across
+	// thirty thousand fuel purchases.
+	DatasetReportDefinition = DatasetSource("ReportDefinition")
 )
 
 func (s DatasetSource) String() string { return string(s) }

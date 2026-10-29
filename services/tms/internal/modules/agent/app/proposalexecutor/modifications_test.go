@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,27 +38,27 @@ func (t *schemaTool) ParamSchema() map[string]any {
 		"additionalProperties": false,
 	}
 }
-func (t *schemaTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *schemaTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverMessage,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A schema stub.",
 	}
 }
-func (t *schemaTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *schemaTool) Execute(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.ran = params.Params
 
 	return nil
 }
-func (t *schemaTool) Validate(context.Context, agentports.ToolExecuteParams) error {
+func (t *schemaTool) Validate(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return t.validateErr
 }
 
@@ -223,11 +224,11 @@ func TestCoerceParams_LeavesTheOwnerAsStored(t *testing.T) {
 
 	owner := pulid.MustNew("usr_").String()
 	params := CoerceParams(&schemaTool{}, map[string]any{
-		"workerId":                     "wrk_1",
-		"repeat":                       "4",
-		agentports.SelfScopeOwnerParam: owner,
+		"workerId":                         "wrk_1",
+		"repeat":                           "4",
+		agenttoolports.SelfScopeOwnerParam: owner,
 	})
 
-	assert.Equal(t, owner, params[agentports.SelfScopeOwnerParam])
+	assert.Equal(t, owner, params[agenttoolports.SelfScopeOwnerParam])
 	assert.InDelta(t, 4, params["repeat"], 0)
 }

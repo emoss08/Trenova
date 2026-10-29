@@ -7,9 +7,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -28,16 +31,16 @@ const (
 )
 
 type controlWrite struct {
-	set       edi.TransactionSet
-	direction edi.DocumentDirection
-	kind      edi.ControlNumberKind
+	set       edidocument.TransactionSet
+	direction edidocument.DocumentDirection
+	kind      edidocument.ControlNumberKind
 	next      int64
 }
 
 type writePlan struct {
 	partner         *edi.EDIPartner
-	transport       *ediservice.UpsertEDICommunicationProfileRequest
-	transportChange ediports.ChangeKind
+	transport       *edisetup.UpsertEDICommunicationProfileRequest
+	transportChange ediconnectiondraftports.ChangeKind
 	project         *projectWrite
 	mappings        []*edi.EDIMappingProfileItem
 	controls        []controlWrite
@@ -45,16 +48,16 @@ type writePlan struct {
 
 type planner struct {
 	s          *Service
-	req        *ediports.ConnectionDraftRequest
-	pages      *pageIndex
-	evidence   *evidence
-	samples    []*specSample
+	req        *ediconnectiondraftports.ConnectionDraftRequest
+	pages      *ediconnectionfield.Pages
+	evidence   *ediconnectionfield.Evidence
+	samples    []*ediconnectionfield.Sample
 	match      *partnerMatch
-	current    *currentSetup
-	identity   *ediports.InterchangeIdentity
-	values     map[string]ediports.DraftValue
+	current    *ediconnectionfield.Current
+	identity   *ediconnectiondraftports.InterchangeIdentity
+	values     map[string]ediconnectiondraftports.DraftValue
 	method     edi.ConnectionMethod
-	draft      *ediports.ConnectionDraft
+	draft      *ediconnectiondraftports.ConnectionDraft
 	writes     *writePlan
 	encoded    *lading.Encoded
 	manifest   *lading.Check
@@ -64,8 +67,8 @@ type planner struct {
 
 func (s *Service) PlanConnectionDraft(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
-) (*ediports.ConnectionDraft, error) {
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+) (*ediconnectiondraftports.ConnectionDraft, error) {
 	p, err := s.plan(ctx, req)
 	if err != nil {
 		return nil, err
@@ -75,47 +78,47 @@ func (s *Service) PlanConnectionDraft(
 
 func (s *Service) plan(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
+	req *ediconnectiondraftports.ConnectionDraftRequest,
 ) (*planner, error) {
-	if err := validateRequest(req); err != nil {
+	if err := ediconnectionfield.ValidateRequest(req); err != nil {
 		return nil, err
 	}
-	req = withRedactedQuotes(req)
+	req = ediconnectionfield.WithRedactedQuotes(req)
 
 	p := &planner{
 		s:        s,
 		req:      req,
-		pages:    newPageIndex(req.Document.Pages),
-		evidence: newEvidence(),
-		values:   map[string]ediports.DraftValue{},
+		pages:    ediconnectionfield.NewPages(req.Document.Pages),
+		evidence: ediconnectionfield.NewEvidence(),
+		values:   map[string]ediconnectiondraftports.DraftValue{},
 		writes:   &writePlan{},
 		docTypes: map[string]pulid.ID{},
-		draft: &ediports.ConnectionDraft{
+		draft: &ediconnectiondraftports.ConnectionDraft{
 			DocumentID:     req.Document.ID,
 			FileName:       req.Document.FileName,
 			PageCount:      len(req.Document.Pages),
-			DocumentDigest: DocumentDigest(req.Document.Pages),
+			DocumentDigest: ediconnectionfield.DocumentDigest(req.Document.Pages),
 		},
 	}
 	p.gatherEvidence(ctx)
 
 	var err error
-	if p.match, err = s.matchPartner(ctx, req, p.evidence.hints()); err != nil {
+	if p.match, err = s.matchPartner(ctx, req, p.evidence.Hints()); err != nil {
 		return nil, err
 	}
 	p.validateID = p.match.partnerID()
 	if p.validateID.IsNil() {
 		p.validateID = pulid.MustNew("edip_")
 	}
-	p.current = readCurrent(
+	p.current = ediconnectionfield.ReadCurrent(
 		p.match.setup,
-		edi.ConnectionMethod(p.evidence.hint(fieldTransportMethod)),
+		edi.ConnectionMethod(p.evidence.Hint(ediconnectionfield.TransportMethod)),
 	)
 	if p.identity, err = s.repo.GetInterchangeIdentity(ctx, req.TenantInfo); err != nil {
 		return nil, err
 	}
 	if p.identity == nil {
-		p.identity = &ediports.InterchangeIdentity{}
+		p.identity = &ediconnectiondraftports.InterchangeIdentity{}
 	}
 
 	p.resolveValues()
@@ -145,37 +148,51 @@ func (s *Service) plan(
 func (p *planner) gatherEvidence(ctx context.Context) {
 	for inputIndex := range p.req.Values {
 		input := &p.req.Values[inputIndex]
-		spec := fieldCatalog[input.Field]
-		p.evidence.add(input.Field, readValue(p.pages, spec, input))
+		spec := ediconnectionfield.Catalog[input.Field]
+		p.evidence.Add(input.Field, ediconnectionfield.ReadValue(p.pages, spec, input))
 	}
 	for _, resolution := range p.req.Resolutions {
-		p.evidence.resolutions[resolution.Field] = resolution
+		p.evidence.Resolutions[resolution.Field] = resolution
 	}
 
 	partnerIDs := make([]string, 0, 2)
-	for _, c := range p.evidence.byField[fieldPartnerID] {
-		if c.status == ediports.ValueStatusAccepted || c.status == ediports.ValueStatusHeld {
-			partnerIDs = append(partnerIDs, c.value)
+	for _, c := range p.evidence.ByField[ediconnectionfield.PartnerID] {
+		if c.Status == ediconnectiondraftports.ValueStatusAccepted ||
+			c.Status == ediconnectiondraftports.ValueStatusHeld {
+			partnerIDs = append(partnerIDs, c.Value)
 		}
 	}
-	p.samples = findSamples(p.pages)
+	p.samples = ediconnectionfield.FindSamples(p.pages)
 	for _, sample := range p.samples {
-		sample.parse(ctx)
-		sample.orient(partnerIDs)
-		sample.contribute(p.evidence)
+		sample.Parse(ctx)
+		sample.Orient(partnerIDs)
+		sample.Contribute(p.evidence)
 	}
 }
 
-func (p *planner) resolve(key string, alternative *fallback, required bool) ediports.DraftValue {
-	spec := fieldCatalog[key]
-	if alternative == nil && spec.fallback != "" {
-		alternative = &fallback{
-			value:  spec.fallback,
-			status: ediports.ValueStatusDefaulted,
-			source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: defaultNote},
+func (p *planner) resolve(
+	key string,
+	alternative *ediconnectionfield.Fallback,
+	required bool,
+) ediconnectiondraftports.DraftValue {
+	spec := ediconnectionfield.Catalog[key]
+	if alternative == nil && spec.Fallback != "" {
+		alternative = &ediconnectionfield.Fallback{
+			Value:  spec.Fallback,
+			Status: ediconnectiondraftports.ValueStatusDefaulted,
+			Source: ediconnectiondraftports.DraftSource{
+				Kind: ediconnectiondraftports.SourceKindDefault,
+				Note: defaultNote,
+			},
 		}
 	}
-	value := resolveField(spec, p.evidence, p.current.values[key], alternative, required)
+	value := ediconnectionfield.Resolve(
+		spec,
+		p.evidence,
+		p.current.Values[key],
+		alternative,
+		required,
+	)
 	p.values[key] = value
 	return value
 }
@@ -189,109 +206,119 @@ func (p *planner) usable(key string) (string, bool) {
 }
 
 func (p *planner) resolveValues() {
-	method := p.resolve(fieldTransportMethod, nil, true)
+	method := p.resolve(ediconnectionfield.TransportMethod, nil, true)
 	if method.Status.Usable() {
 		p.method = edi.ConnectionMethod(method.Value)
 	}
 
-	for _, key := range sortedKeys(scopePartner, scopeInterchange) {
-		spec := fieldCatalog[key]
-		p.resolve(key, p.interchangeFallback(key), spec.required)
+	for _, key := range sortedKeys(ediconnectionfield.ScopePartner, ediconnectionfield.ScopeInterchange) {
+		spec := ediconnectionfield.Catalog[key]
+		p.resolve(key, p.interchangeFallback(key), spec.Required)
 	}
-	for _, key := range []string{fieldPartnerGSID, fieldOurGSID} {
+	for _, key := range []string{ediconnectionfield.PartnerGSID, ediconnectionfield.OurGSID} {
 		p.resolve(key, p.interchangeFallback(key), false)
 	}
 
 	if p.method != "" {
-		for _, key := range sortedKeys(scopeTransport) {
-			spec := fieldCatalog[key]
-			if key == fieldTransportMethod || !spec.usedBy(p.method) {
+		for _, key := range sortedKeys(ediconnectionfield.ScopeTransport) {
+			spec := ediconnectionfield.Catalog[key]
+			if key == ediconnectionfield.TransportMethod || !spec.UsedBy(p.method) {
 				continue
 			}
-			p.resolve(key, nil, spec.required)
+			p.resolve(key, nil, spec.Required)
 		}
 	}
 
-	for _, set := range supportedSets {
-		for _, direction := range directions {
-			supported := setField(set, direction, setAttrSupported)
-			if len(p.evidence.byField[supported]) == 0 &&
-				p.current.values[supported] == "" &&
+	for _, set := range ediconnectionfield.SupportedSets {
+		for _, direction := range ediconnectionfield.Directions {
+			supported := ediconnectionfield.SetField(
+				set,
+				direction,
+				ediconnectionfield.SetAttrSupported,
+			)
+			if len(p.evidence.ByField[supported]) == 0 &&
+				p.current.Values[supported] == "" &&
 				!p.hasResolution(supported) {
 				continue
 			}
 			p.resolve(supported, nil, false)
 		}
 	}
-	for _, kind := range controlNumberKinds {
-		key := controlNumberField(kind)
-		if len(p.evidence.byField[key]) > 0 || p.hasResolution(key) {
+	for _, kind := range ediconnectionfield.ControlNumberKinds {
+		key := ediconnectionfield.ControlNumberField(kind)
+		if len(p.evidence.ByField[key]) > 0 || p.hasResolution(key) {
 			p.resolve(key, nil, false)
 		}
 	}
 }
 
 func (p *planner) hasResolution(key string) bool {
-	_, ok := p.evidence.resolutions[key]
+	_, ok := p.evidence.Resolutions[key]
 	return ok
 }
 
-func (p *planner) interchangeFallback(key string) *fallback {
+func (p *planner) interchangeFallback(key string) *ediconnectionfield.Fallback {
 	identity := p.identity
 	switch key {
-	case fieldOurQualifier:
+	case ediconnectionfield.OurQualifier:
 		return identityFallback(identity, identity.Qualifier)
-	case fieldOurID:
+	case ediconnectionfield.OurID:
 		return identityFallback(identity, identity.ID)
-	case fieldOurGSID:
-		ours, ok := p.values[fieldOurID]
-		if ok && ours.Source.Kind == ediports.SourceKindConfiguration {
+	case ediconnectionfield.OurGSID:
+		ours, ok := p.values[ediconnectionfield.OurID]
+		if ok && ours.Source.Kind == ediconnectiondraftports.SourceKindConfiguration {
 			if configured := identityFallback(identity, identity.ApplicationID); configured != nil {
 				return configured
 			}
 		}
-		return p.gsFallback(fieldOurID)
-	case fieldPartnerGSID:
-		return p.gsFallback(fieldPartnerID)
+		return p.gsFallback(ediconnectionfield.OurID)
+	case ediconnectionfield.PartnerGSID:
+		return p.gsFallback(ediconnectionfield.PartnerID)
 	default:
 		return nil
 	}
 }
 
-func identityFallback(identity *ediports.InterchangeIdentity, value string) *fallback {
+func identityFallback(
+	identity *ediconnectiondraftports.InterchangeIdentity,
+	value string,
+) *ediconnectionfield.Fallback {
 	if identity == nil || identity.Partners == 0 || value == "" {
 		return nil
 	}
 	return configurationFallback(value, identity.Partners)
 }
 
-func (p *planner) gsFallback(isaKey string) *fallback {
+func (p *planner) gsFallback(isaKey string) *ediconnectionfield.Fallback {
 	value, ok := p.usable(isaKey)
 	if !ok {
 		return nil
 	}
-	return &fallback{
-		value:  value,
-		status: ediports.ValueStatusDefaulted,
-		source: ediports.DraftSource{Kind: ediports.SourceKindDefault, Note: gsFromISANote},
+	return &ediconnectionfield.Fallback{
+		Value:  value,
+		Status: ediconnectiondraftports.ValueStatusDefaulted,
+		Source: ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindDefault,
+			Note: gsFromISANote,
+		},
 	}
 }
 
-func configurationFallback(value string, partners int) *fallback {
-	return &fallback{
-		value:  value,
-		status: ediports.ValueStatusDefaulted,
-		source: ediports.DraftSource{
-			Kind: ediports.SourceKindConfiguration,
+func configurationFallback(value string, partners int) *ediconnectionfield.Fallback {
+	return &ediconnectionfield.Fallback{
+		Value:  value,
+		Status: ediconnectiondraftports.ValueStatusDefaulted,
+		Source: ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindConfiguration,
 			Note: fmt.Sprintf(configurationNote, partners),
 		},
 	}
 }
 
-func sortedKeys(scopes ...fieldScope) []string {
-	keys := make([]string, 0, len(fieldCatalog))
-	for key, spec := range fieldCatalog {
-		if slices.Contains(scopes, spec.scope) {
+func sortedKeys(scopes ...ediconnectionfield.Scope) []string {
+	keys := make([]string, 0, len(ediconnectionfield.Catalog))
+	for key, spec := range ediconnectionfield.Catalog {
+		if slices.Contains(scopes, spec.Scope) {
 			keys = append(keys, key)
 		}
 	}
@@ -303,18 +330,46 @@ func sortedKeys(scopes ...fieldScope) []string {
 
 var catalogPositions = func() map[string]int {
 	order := []string{
-		fieldPartnerName, fieldPartnerCode, fieldPartnerContactName, fieldPartnerContactEmail,
-		fieldPartnerContactPhone, fieldPartnerTimezone, fieldPartnerCountry,
-		fieldTransportMethod, fieldTransportEnvironment,
-		"as2.localAs2Id", "as2.partnerAs2Id", "as2.endpointUrl", "as2.mdnMode", "as2.mdnUrl",
-		"as2.signingAlgorithm", "as2.encryptionAlgorithm", "as2.compressionAlgorithm",
-		"as2.basicAuthUsername", "transport.host", "transport.port", "transport.username",
-		"transport.authMode", "transport.inboundDirectory", "transport.outboundDirectory",
-		"transport.archiveDirectory", "transport.fileNamingPattern", "van.providerName",
+		ediconnectionfield.PartnerName,
+		ediconnectionfield.PartnerCode,
+		ediconnectionfield.PartnerContactName,
+		ediconnectionfield.PartnerContactEmail,
+		ediconnectionfield.PartnerContactPhone,
+		ediconnectionfield.PartnerTimezone,
+		ediconnectionfield.PartnerCountry,
+		ediconnectionfield.TransportMethod,
+		ediconnectionfield.TransportEnvironment,
+		"as2.localAs2Id",
+		"as2.partnerAs2Id",
+		"as2.endpointUrl",
+		"as2.mdnMode",
+		"as2.mdnUrl",
+		"as2.signingAlgorithm",
+		"as2.encryptionAlgorithm",
+		"as2.compressionAlgorithm",
+		"as2.basicAuthUsername",
+		"transport.host",
+		"transport.port",
+		"transport.username",
+		"transport.authMode",
+		"transport.inboundDirectory",
+		"transport.outboundDirectory",
+		"transport.archiveDirectory",
+		"transport.fileNamingPattern",
+		"van.providerName",
 		"van.mailboxId",
-		fieldPartnerQualifier, fieldPartnerID, fieldPartnerGSID, fieldOurQualifier, fieldOurID,
-		fieldOurGSID, fieldX12Version, fieldUsageIndicator, fieldElementSep, fieldSegmentSep,
-		fieldComponentSep, fieldRepetitionSep,
+		ediconnectionfield.PartnerQualifier,
+		ediconnectionfield.PartnerID,
+		ediconnectionfield.PartnerGSID,
+		ediconnectionfield.OurQualifier,
+		ediconnectionfield.OurID,
+		ediconnectionfield.OurGSID,
+		ediconnectionfield.X12Version,
+		ediconnectionfield.UsageIndicator,
+		ediconnectionfield.ElementSep,
+		ediconnectionfield.SegmentSep,
+		ediconnectionfield.ComponentSep,
+		ediconnectionfield.RepetitionSep,
 	}
 	positions := make(map[string]int, len(order))
 	for index, key := range order {
@@ -330,8 +385,8 @@ func catalogOrder(key string) int {
 	return len(catalogPositions)
 }
 
-func (p *planner) fields(keys ...string) []ediports.DraftValue {
-	out := make([]ediports.DraftValue, 0, len(keys))
+func (p *planner) fields(keys ...string) []ediconnectiondraftports.DraftValue {
+	out := make([]ediconnectiondraftports.DraftValue, 0, len(keys))
 	for _, key := range keys {
 		if value, ok := p.values[key]; ok {
 			out = append(out, value)
@@ -342,14 +397,14 @@ func (p *planner) fields(keys ...string) []ediports.DraftValue {
 
 func (p *planner) buildPartner(ctx context.Context) error {
 	draft := p.match.draft
-	draft.Fields = p.fields(sortedKeys(scopePartner)...)
+	draft.Fields = p.fields(sortedKeys(ediconnectionfield.ScopePartner)...)
 
 	if p.req.CustomerID.IsNotNil() {
 		customer, err := p.customerValue(ctx)
 		if err != nil {
 			return err
 		}
-		if customer.Status == ediports.ValueStatusAccepted {
+		if customer.Status == ediconnectiondraftports.ValueStatusAccepted {
 			draft.CustomerID = p.req.CustomerID
 		}
 		p.values[customer.Field] = *customer
@@ -364,13 +419,13 @@ func (p *planner) buildPartner(ctx context.Context) error {
 		}
 	}
 
-	draft.Change = ediports.ChangeKindAdd
+	draft.Change = ediconnectiondraftports.ChangeKindAdd
 	if p.match.setup != nil {
-		draft.Change = ediports.ChangeKindSame
-		if slices.ContainsFunc(draft.Fields, func(value ediports.DraftValue) bool {
+		draft.Change = ediconnectiondraftports.ChangeKindSame
+		if slices.ContainsFunc(draft.Fields, func(value ediconnectiondraftports.DraftValue) bool {
 			return value.Change.Writes()
 		}) {
-			draft.Change = ediports.ChangeKindChange
+			draft.Change = ediconnectiondraftports.ChangeKindChange
 		}
 	}
 	if multiErr := p.s.validator.ValidatePartner(partner); multiErr != nil {
@@ -382,25 +437,31 @@ func (p *planner) buildPartner(ctx context.Context) error {
 	return nil
 }
 
-func (p *planner) customerValue(ctx context.Context) (*ediports.DraftValue, error) {
-	labels, err := p.s.repo.ResolveMappingTargets(ctx, &ediports.ResolveEDIMappingTargetsRequest{
-		TenantInfo: p.req.TenantInfo,
-		Targets:    customerTarget(p.req.CustomerID),
-	})
+func (p *planner) customerValue(ctx context.Context) (*ediconnectiondraftports.DraftValue, error) {
+	labels, err := p.s.repo.ResolveMappingTargets(
+		ctx,
+		&ediconnectiondraftports.ResolveEDIMappingTargetsRequest{
+			TenantInfo: p.req.TenantInfo,
+			Targets:    customerTarget(p.req.CustomerID),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	customer := &ediports.DraftValue{
+	customer := &ediconnectiondraftports.DraftValue{
 		Field:  fieldPartnerCustomer,
 		Label:  "Customer",
-		Status: ediports.ValueStatusAccepted,
-		Source: ediports.DraftSource{Kind: ediports.SourceKindAgent, Note: agentCustomerNote},
+		Status: ediconnectiondraftports.ValueStatusAccepted,
+		Source: ediconnectiondraftports.DraftSource{
+			Kind: ediconnectiondraftports.SourceKindAgent,
+			Note: agentCustomerNote,
+		},
 	}
 	name, found := labels[edi.MappingEntityTypeCustomer][p.req.CustomerID]
 	if !found {
-		customer.Status = ediports.ValueStatusInvalid
+		customer.Status = ediconnectiondraftports.ValueStatusInvalid
 		customer.Reason = "No customer with that ID exists in this organization"
-		customer.Change = ediports.ChangeKindNone
+		customer.Change = ediconnectiondraftports.ChangeKindNone
 		return customer, nil
 	}
 	customer.Value = name
@@ -410,7 +471,7 @@ func (p *planner) customerValue(ctx context.Context) (*ediports.DraftValue, erro
 			customer.Current = name
 		}
 	}
-	withChange(customer)
+	ediconnectionfield.WithChange(customer)
 	return customer, nil
 }
 
@@ -429,21 +490,25 @@ func (p *planner) partnerEntity() *edi.EDIPartner {
 	return &existing
 }
 
-func applyPartnerField(partner *edi.EDIPartner, value *ediports.DraftValue, customerID pulid.ID) {
+func applyPartnerField(
+	partner *edi.EDIPartner,
+	value *ediconnectiondraftports.DraftValue,
+	customerID pulid.ID,
+) {
 	switch value.Field {
-	case fieldPartnerCode:
+	case ediconnectionfield.PartnerCode:
 		partner.Code = value.Value
-	case fieldPartnerName:
+	case ediconnectionfield.PartnerName:
 		partner.Name = value.Value
-	case fieldPartnerContactName:
+	case ediconnectionfield.PartnerContactName:
 		partner.ContactName = value.Value
-	case fieldPartnerContactEmail:
+	case ediconnectionfield.PartnerContactEmail:
 		partner.ContactEmail = value.Value
-	case fieldPartnerContactPhone:
+	case ediconnectionfield.PartnerContactPhone:
 		partner.ContactPhone = value.Value
-	case fieldPartnerTimezone:
+	case ediconnectionfield.PartnerTimezone:
 		partner.Timezone = value.Value
-	case fieldPartnerCountry:
+	case ediconnectionfield.PartnerCountry:
 		partner.Country = value.Value
 	case fieldPartnerCustomer:
 		partner.CustomerID = customerID
@@ -451,7 +516,7 @@ func applyPartnerField(partner *edi.EDIPartner, value *ediports.DraftValue, cust
 }
 
 func (p *planner) buildInterchange() {
-	keys := sortedKeys(scopeInterchange)
+	keys := sortedKeys(ediconnectionfield.ScopeInterchange)
 	p.draft.Interchange = p.fields(keys...)
 }
 
@@ -459,7 +524,7 @@ func (p *planner) buildTransport() {
 	if p.method == "" {
 		return
 	}
-	existing := p.current.transport
+	existing := p.current.Transport
 	if existing != nil && existing.Method != p.method {
 		existing = nil
 	}
@@ -479,14 +544,14 @@ func (p *planner) buildTransport() {
 		EncryptedSecrets: secrets,
 	}
 
-	change := ediports.ChangeKindAdd
+	change := ediconnectiondraftports.ChangeKindAdd
 	if existing != nil {
-		change = ediports.ChangeKindSame
+		change = ediconnectiondraftports.ChangeKindSame
 		if changed {
-			change = ediports.ChangeKindChange
+			change = ediconnectiondraftports.ChangeKindChange
 		}
 	}
-	p.draft.Transport = &ediports.DraftTransport{
+	p.draft.Transport = &ediconnectiondraftports.DraftTransport{
 		ProfileID:   request.ProfileID,
 		Version:     request.Version,
 		Name:        request.Name,
@@ -494,7 +559,7 @@ func (p *planner) buildTransport() {
 		Status:      entity.Status,
 		Change:      change,
 		Fields:      fields,
-		Credentials: ediservice.CredentialRequirements(entity),
+		Credentials: edivalidation.CredentialRequirements(entity),
 	}
 	if multiErr := p.s.validator.ValidateCommunicationProfile(entity); multiErr != nil {
 		p.addFailures(transportLabel, multiErr.Errors)
@@ -503,10 +568,11 @@ func (p *planner) buildTransport() {
 	p.writes.transportChange = change
 }
 
-func (p *planner) transportFields(isNew bool) []ediports.DraftValue {
-	keys := []string{fieldTransportMethod}
-	for _, key := range sortedKeys(scopeTransport) {
-		if key != fieldTransportMethod && fieldCatalog[key].usedBy(p.method) {
+func (p *planner) transportFields(isNew bool) []ediconnectiondraftports.DraftValue {
+	keys := []string{ediconnectionfield.TransportMethod}
+	for _, key := range sortedKeys(ediconnectionfield.ScopeTransport) {
+		if key != ediconnectionfield.TransportMethod &&
+			ediconnectionfield.Catalog[key].UsedBy(p.method) {
 			keys = append(keys, key)
 		}
 	}
@@ -517,7 +583,7 @@ func (p *planner) transportFields(isNew bool) []ediports.DraftValue {
 	for index := range fields {
 		fields[index].Current = ""
 		if fields[index].Value != "" && fields[index].Status.Usable() {
-			fields[index].Change = ediports.ChangeKindAdd
+			fields[index].Change = ediconnectiondraftports.ChangeKindAdd
 		}
 	}
 	return fields
@@ -525,8 +591,8 @@ func (p *planner) transportFields(isNew bool) []ediports.DraftValue {
 
 func (p *planner) transportRequest(
 	existing *edi.EDICommunicationProfile,
-) (request *ediservice.UpsertEDICommunicationProfileRequest, secrets map[string]string) {
-	request = &ediservice.UpsertEDICommunicationProfileRequest{
+) (request *edisetup.UpsertEDICommunicationProfileRequest, secrets map[string]string) {
+	request = &edisetup.UpsertEDICommunicationProfileRequest{
 		TenantInfo:   p.req.TenantInfo,
 		EDIPartnerID: p.match.partnerID(),
 		Method:       p.method,
@@ -550,7 +616,10 @@ func (p *planner) transportRequest(
 	return request, existing.EncryptedSecrets
 }
 
-func (p *planner) fillTransportConfig(config map[string]any, fields []ediports.DraftValue) bool {
+func (p *planner) fillTransportConfig(
+	config map[string]any,
+	fields []ediconnectiondraftports.DraftValue,
+) bool {
 	changed := false
 	set := func(key, value string) {
 		if value == "" {
@@ -563,9 +632,9 @@ func (p *planner) fillTransportConfig(config map[string]any, fields []ediports.D
 	}
 	for index := range fields {
 		field := &fields[index]
-		spec := fieldCatalog[field.Field]
-		if spec.configKey != "" && field.Status.Usable() {
-			set(spec.configKey, field.Value)
+		spec := ediconnectionfield.Catalog[field.Field]
+		if spec.ConfigKey != "" && field.Status.Usable() {
+			set(spec.ConfigKey, field.Value)
 		}
 	}
 	return changed
@@ -582,22 +651,22 @@ func (p *planner) partnerName() string {
 	if p.writes.partner != nil && p.writes.partner.Name != "" {
 		return p.writes.partner.Name
 	}
-	value, _ := p.usable(fieldPartnerName)
+	value, _ := p.usable(ediconnectionfield.PartnerName)
 	return value
 }
 
 func (p *planner) buildConnection() {
-	connection := ediports.DraftConnection{Method: p.method}
+	connection := ediconnectiondraftports.DraftConnection{Method: p.method}
 	for setIndex := range p.draft.Sets {
 		set := &p.draft.Sets[setIndex]
-		connection.Sets = append(connection.Sets, ediports.DraftSetDirection{
+		connection.Sets = append(connection.Sets, ediconnectiondraftports.DraftSetDirection{
 			TransactionSet: set.TransactionSet,
 			Direction:      set.Direction,
 		})
 		switch set.Direction {
-		case edi.DocumentDirectionInbound:
+		case edidocument.DocumentDirectionInbound:
 			connection.Inbound = true
-		case edi.DocumentDirectionOutbound:
+		case edidocument.DocumentDirectionOutbound:
 			connection.Outbound = true
 		}
 	}
@@ -615,15 +684,15 @@ func (p *planner) buildConnection() {
 }
 
 func (p *planner) markPartnerChange() {
-	if p.draft.Partner.Change == ediports.ChangeKindAdd {
+	if p.draft.Partner.Change == ediconnectiondraftports.ChangeKindAdd {
 		return
 	}
-	p.draft.Partner.Change = ediports.ChangeKindChange
+	p.draft.Partner.Change = ediconnectiondraftports.ChangeKindChange
 }
 
 func (p *planner) addFailures(record string, errs []*errortypes.Error) {
 	for _, err := range errs {
-		p.draft.Failures = append(p.draft.Failures, ediports.DraftFailure{
+		p.draft.Failures = append(p.draft.Failures, ediconnectiondraftports.DraftFailure{
 			Record:  record,
 			Field:   err.Field,
 			Message: err.Message,
@@ -631,7 +700,7 @@ func (p *planner) addFailures(record string, errs []*errortypes.Error) {
 	}
 }
 
-func titleSet(set edi.TransactionSet, direction edi.DocumentDirection) string {
+func titleSet(set edidocument.TransactionSet, direction edidocument.DocumentDirection) string {
 	return fmt.Sprintf("%s %s", set, strings.ToLower(string(direction)))
 }
 

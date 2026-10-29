@@ -3,7 +3,7 @@ package organizationservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
@@ -25,7 +25,7 @@ func TestUploadLogo_RefusesAnInfectedFileBeforeItIsStored(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        tenantportsmock.NewMockOrganizationRepository(t),
 		storage:     kernelportsmock.NewMockClient(t),
-		storageCfg:  &config.StorageConfig{MaxFileSize: 1 << 20},
+		storageCfg:  &storageconfig.Config{MaxFileSize: 1 << 20},
 		contentGate: gate,
 	}
 	content := []byte("\x89PNG\r\n\x1a\ninfected")

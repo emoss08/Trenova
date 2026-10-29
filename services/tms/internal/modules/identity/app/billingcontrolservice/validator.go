@@ -4,9 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -19,15 +22,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*tenant.BillingControl]
+	validator tenantedvalidation.EntityValidator[*billingcontrol.BillingControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, tenantdb.BillingControlsSchema())
+	checker := keelcheck.NewChecker(p.DB, billingcontroldb.BillingControlsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.BillingControl]().
+		validator: tenantedvalidation.NewBuilder[*billingcontrol.BillingControl]().
 			WithModelName("BillingControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -39,18 +41,20 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func createTransferAutomationRule() validationframework.TenantedRule[*tenant.BillingControl] {
-	return validationframework.NewTenantedRule[*tenant.BillingControl]("transfer_automation").
+func createTransferAutomationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
+	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+		"transfer_automation",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(
 			_ context.Context,
-			entity *tenant.BillingControl,
+			entity *billingcontrol.BillingControl,
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady {
+			if entity.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady {
 				return nil
 			}
 
@@ -73,18 +77,20 @@ func createTransferAutomationRule() validationframework.TenantedRule[*tenant.Bil
 		})
 }
 
-func createInvoiceAutomationRule() validationframework.TenantedRule[*tenant.BillingControl] {
-	return validationframework.NewTenantedRule[*tenant.BillingControl]("invoice_automation").
+func createInvoiceAutomationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
+	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+		"invoice_automation",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(
 			_ context.Context,
-			entity *tenant.BillingControl,
+			entity *billingcontrol.BillingControl,
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeManualOnly {
+			if entity.InvoiceDraftCreationMode == billingcontrol.InvoiceDraftCreationModeManualOnly {
 				if entity.AutoInvoiceBatchSize != 0 {
 					multiErr.Add(
 						"autoInvoiceBatchSize",
@@ -107,8 +113,8 @@ func createInvoiceAutomationRule() validationframework.TenantedRule[*tenant.Bill
 				)
 			}
 
-			if entity.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions &&
-				entity.InvoiceDraftCreationMode != tenant.InvoiceDraftCreationModeAutomaticWhenTransferred {
+			if entity.InvoicePostingMode == billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions &&
+				entity.InvoiceDraftCreationMode != billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred {
 				multiErr.Add(
 					"invoicePostingMode",
 					errortypes.ErrInvalidOperation,
@@ -120,14 +126,16 @@ func createInvoiceAutomationRule() validationframework.TenantedRule[*tenant.Bill
 		})
 }
 
-func createRequirementEnforcementRule() validationframework.TenantedRule[*tenant.BillingControl] {
-	return validationframework.NewTenantedRule[*tenant.BillingControl]("requirement_enforcement").
+func createRequirementEnforcementRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
+	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+		"requirement_enforcement",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(
 			_ context.Context,
-			entity *tenant.BillingControl,
+			entity *billingcontrol.BillingControl,
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
@@ -149,14 +157,14 @@ func createRequirementEnforcementRule() validationframework.TenantedRule[*tenant
 		})
 }
 
-func createRateValidationRule() validationframework.TenantedRule[*tenant.BillingControl] {
-	return validationframework.NewTenantedRule[*tenant.BillingControl]("rate_validation").
+func createRateValidationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
+	return validationframework.NewTenantedRule[*billingcontrol.BillingControl]("rate_validation").
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(
 			_ context.Context,
-			entity *tenant.BillingControl,
+			entity *billingcontrol.BillingControl,
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
@@ -168,7 +176,7 @@ func createRateValidationRule() validationframework.TenantedRule[*tenant.Billing
 						"Rate variance tolerance percent must be zero when rate validation enforcement is Ignore",
 					)
 				}
-				if entity.RateVarianceAutoResolutionMode != tenant.RateVarianceAutoResolutionModeDisabled {
+				if entity.RateVarianceAutoResolutionMode != billingcontrol.RateVarianceAutoResolutionModeDisabled {
 					multiErr.Add(
 						"rateVarianceAutoResolutionMode",
 						errortypes.ErrInvalidOperation,
@@ -186,7 +194,7 @@ func createRateValidationRule() validationframework.TenantedRule[*tenant.Billing
 				)
 			}
 
-			if entity.RateVarianceAutoResolutionMode == tenant.RateVarianceAutoResolutionModeBypassReviewWithinTolerance {
+			if entity.RateVarianceAutoResolutionMode == billingcontrol.RateVarianceAutoResolutionModeBypassReviewWithinTolerance {
 				if entity.RateValidationEnforcement != tenant.EnforcementLevelRequireReview {
 					multiErr.Add(
 						"rateVarianceAutoResolutionMode",
@@ -209,7 +217,7 @@ func createRateValidationRule() validationframework.TenantedRule[*tenant.Billing
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
-	entity *tenant.BillingControl,
+	entity *billingcontrol.BillingControl,
 ) *errortypes.MultiError {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

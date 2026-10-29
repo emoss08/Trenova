@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,15 +23,15 @@ func TestAssignRoleInsideATransactionAuditsOnlyAfterCommit(t *testing.T) {
 	roleID := pulid.MustNew("rol_")
 
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(&permission.Role{ID: roleID}, nil)
+		Return(&rbac.Role{ID: roleID}, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", mock.Anything, targetUserID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", mock.Anything, mock.Anything).Return(nil)
 
 	err := deps.svc.AssignRole(txCtx, AssignRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
-		Assignment:     &permission.UserRoleAssignment{UserID: targetUserID, RoleID: roleID},
+		Assignment:     &rbac.UserRoleAssignment{UserID: targetUserID, RoleID: roleID},
 	})
 
 	require.NoError(t, err)
@@ -56,15 +57,18 @@ func TestAssignRoleRolledBackLeavesNoAuditEntry(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).
-		Return(&permission.Role{ID: pulid.MustNew("rol_")}, nil)
+		Return(&rbac.Role{ID: pulid.MustNew("rol_")}, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", mock.Anything, targetUserID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
+		Return([]*rbac.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", mock.Anything, mock.Anything).Return(nil)
 
 	require.NoError(t, deps.svc.AssignRole(txCtx, AssignRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
-		Assignment:     &permission.UserRoleAssignment{UserID: targetUserID, RoleID: pulid.MustNew("rol_")},
+		Assignment: &rbac.UserRoleAssignment{
+			UserID: targetUserID,
+			RoleID: pulid.MustNew("rol_"),
+		},
 	}))
 
 	assert.Empty(t, deps.audit.Changes())

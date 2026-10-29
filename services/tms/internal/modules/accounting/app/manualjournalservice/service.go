@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/manualjournalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -58,7 +58,7 @@ type Service struct {
 
 type postingPlan struct {
 	change      *manualjournalports.ManualJournalChange
-	control     *tenant.AccountingControl
+	control     *accountingcontrol.AccountingControl
 	period      *fiscalperiod.FiscalPeriod
 	postingDate int64
 	entryType   string
@@ -654,7 +654,7 @@ func (s *Service) loadRequestWithAccountingControl(
 	ctx context.Context,
 	requestID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*manualjournal.Request, *tenant.AccountingControl, error) {
+) (*manualjournal.Request, *accountingcontrol.AccountingControl, error) {
 	entity, err := s.repo.GetByID(
 		ctx,
 		manualjournalports.GetManualJournalByIDRequest{ID: requestID, TenantInfo: tenantInfo},
@@ -746,7 +746,7 @@ func requireManualJournalUser(actor *permissionports.RequestActor) (pulid.ID, er
 func (s *Service) resolvePostingPeriod(
 	ctx context.Context,
 	entity *manualjournal.Request,
-	accountingControl *tenant.AccountingControl,
+	accountingControl *accountingcontrol.AccountingControl,
 ) (*fiscalperiod.FiscalPeriod, int64, error) {
 	resolved, err := journalposting.ResolvePeriod(
 		ctx,

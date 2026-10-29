@@ -92,3 +92,48 @@ func (ShipmentCommodity) Constraints() []keel.Constraint {
 		},
 	}
 }
+
+func (sc *ShipmentCommodity) ResolvedLengthFeet() float64 {
+	if sc == nil {
+		return 0
+	}
+	if sc.LengthFeet != nil {
+		return *sc.LengthFeet
+	}
+	if sc.Commodity != nil && sc.Commodity.LengthPerUnit != nil {
+		return *sc.Commodity.LengthPerUnit
+	}
+	return 0
+}
+
+func (sc *ShipmentCommodity) ResolvedWidthFeet() float64 {
+	if sc == nil {
+		return 0
+	}
+	if sc.WidthFeet != nil {
+		return *sc.WidthFeet
+	}
+	if sc.Commodity != nil && sc.Commodity.WidthPerUnit != nil {
+		return *sc.Commodity.WidthPerUnit
+	}
+	return 0
+}
+
+func (sc *ShipmentCommodity) ResolvedHeightFeet() float64 {
+	if sc == nil {
+		return 0
+	}
+	if sc.HeightFeet != nil {
+		return *sc.HeightFeet
+	}
+	if sc.Commodity != nil && sc.Commodity.HeightPerUnit != nil {
+		return *sc.Commodity.HeightPerUnit
+	}
+	return 0
+}
+
+func (sc *ShipmentCommodity) HasDimensions() bool {
+	return sc.ResolvedLengthFeet() > 0 &&
+		sc.ResolvedWidthFeet() > 0 &&
+		sc.ResolvedHeightFeet() > 0
+}

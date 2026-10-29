@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -188,14 +189,14 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 		summary string
 		comment string
 	)
-	kind := detention.EvidenceKindStatusChange
+	kind := detentionevidence.EvidenceKindStatusChange
 	waiver, waiving := p.req.WaiverFor(occurrence.ID)
 	switch {
 	case !p.billed && waiving && occurrence.Status != detention.OccurrenceStatusWaived:
 		if err := waiveCredited(occurrence, waiver, p.now); err != nil {
 			return err
 		}
-		kind = detention.EvidenceKindWaiver
+		kind = detentionevidence.EvidenceKindWaiver
 		summary = waivedSummary(occurrence, waiver, p.req.InvoiceNumber)
 		comment = "Detention charge waived and credited on invoice " +
 			invoiceLabel(p.req.InvoiceNumber)
@@ -226,12 +227,12 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 
 	if s.evidenceRepo != nil {
 		if _, err = s.evidenceRepo.Append(ctx, &detentionports.AppendEvidenceRequest{
-			Entry: &detention.DetentionEvidence{
+			Entry: &detentionevidence.DetentionEvidence{
 				OrganizationID:        saved.OrganizationID,
 				BusinessUnitID:        saved.BusinessUnitID,
 				DetentionOccurrenceID: saved.ID,
 				Kind:                  kind,
-				Source:                detention.EvidenceSourceSystem,
+				Source:                detentionevidence.EvidenceSourceSystem,
 				Summary:               summary,
 				ObservedAt:            p.now,
 				RecordedAt:            p.now,

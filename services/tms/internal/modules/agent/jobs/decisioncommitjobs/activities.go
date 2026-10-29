@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -12,12 +12,12 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Committer agentports.ApprovalCommitter
+	Committer agentapprovalports.ApprovalCommitter
 	Logger    *zap.Logger
 }
 
 type Activities struct {
-	committer agentports.ApprovalCommitter
+	committer agentapprovalports.ApprovalCommitter
 	l         *zap.Logger
 }
 
@@ -33,7 +33,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 // and what it claimed but did not finish is finished on the next attempt.
 func (a *Activities) CommitApprovalActivity(
 	ctx context.Context,
-	req *agentports.CommitApprovalRequest,
+	req *agentapprovalports.CommitApprovalRequest,
 ) error {
 	if err := a.committer.CommitApproval(ctx, req); err != nil {
 		return fmt.Errorf("commit approval %s: %w", req.WorkflowID, err)

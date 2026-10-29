@@ -3,13 +3,25 @@
 package carrierintelligenceresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	carrierintelenrollmentservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	carrierintelmonitorservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
+	carrierintelreviewservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	carrierintelsourcingservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	carrierintelverifyservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	carrierintelvetservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 )
 
 type Deps struct {
-	*base.Core
-	CarrierIntelService *carrierintelservice.Service
+	*resolvercore.Core
+	CarrierIntelService           *carrierintelservice.Service
+	CarrierIntelEnrollmentService *carrierintelenrollmentservice.Service
+	CarrierIntelMonitorService    *carrierintelmonitorservice.Service
+	CarrierIntelReviewService     *carrierintelreviewservice.Service
+	CarrierIntelVetService        *carrierintelvetservice.Service
+	CarrierIntelSourcingService   *carrierintelsourcingservice.Service
+	CarrierIntelVerifyService     *carrierintelverifyservice.Service
 }
 
 type CarrierEquipmentVerificationResolver struct{ *Deps }

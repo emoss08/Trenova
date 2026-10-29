@@ -6,7 +6,7 @@ was built, where the design and the server's rules disagreed, and how the queue 
 ## Shape
 
 ```
-provider webhook ──▶ inboundhandler ──▶ inboundmessageservice.ReceiveWebhook
+provider webhook ──▶ inboundhandler ──▶ inboundintake.ReceiveWebhook
                                          │  thread key from Message-ID / In-Reply-To / References
                                          ▼
                               InboundMessageWorkflow (Temporal)
@@ -28,7 +28,7 @@ provider webhook ──▶ inboundhandler ──▶ inboundmessageservice.Receiv
 | Message-level types (snooze, parking, facts, conflicts, action state, load draft) | `internal/modules/documents/domain/inboundmessage` (`triage.go`, `queue.go`) |
 | Rules and the one evaluator, actions, replies, templates, targets, settings, views, activity, sender hints | `internal/modules/documents/domain/triage` |
 | Ports shared across the triage services, and the types GraphQL aggregates bind to | `internal/modules/documents/ports/inboundmessageports/triage.go` |
-| Queue core: lanes, due, owner, snooze and wake, waiting on them, threads, views, targets, settings, source health and test, hand-off | `inboundmessageservice`, `jobs/triagewakejobs` |
+| Queue core: lanes, due, owner, snooze and wake, waiting on them, threads, views, targets, settings, source health and test, hand-off | `inboundqueue`, `inboundviews`, `inboundreads`, `inboundmailbox`, `jobs/triagewakejobs` |
 | Rules, preview, suggestions, corrections, sender hints, facts, conflicts, briefing | `triageruleservice`, `triagebriefingservice`, `triagecorrectionservice` |
 | Replies and templates, Nova drafts, loads, filing and splitting, exceptions, blocking, stops, peeks, presence | `inboundreplyservice`, `triageworkservice`, `triagepeekservice`, `inboxpresencehandler` |
 | GraphQL | `schema/inboundmessage.graphqls` (queue core), `schema/triage.graphqls` (rules, briefing, corrections), `schema/inboundreply.graphqls` (replies, work, peeks, actions) |
@@ -140,7 +140,7 @@ _Filled in as each area lands._
   - Nothing billed (the charge was never invoiced, or every invoice that billed it was voided
     or credited): the occurrence is waived as before. One still marked `Billed` with no invoice
     behind it (older data, the dev seed's `SEED-DET-008`) is released and waived in one write
-    (`detentionservice.WaiveUninvoiced`), with both steps on its evidence chain.
+    (`detentionreview.WaiveUninvoiced`), with both steps on its evidence chain.
   - Billed: the person needs `invoice:update` (the permission the invoice adjustment routes
     check), otherwise the mutation is refused with an authorization error. For every posted,
     non-credit-memo invoice with a line for the charge, billing submits a `CreditOnly`

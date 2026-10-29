@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/shopspring/decimal"
 	"go.temporal.io/sdk/temporal"
@@ -164,12 +164,12 @@ func (r *indexRun) waitForSignal() bool {
 	return received
 }
 
-func (r *indexRun) plan() (*agentports.RetrievalIndexPlan, error) {
+func (r *indexRun) plan() (*retrievalports.RetrievalIndexPlan, error) {
 	r.steps++
 	actx := withOptions(r.ctx, &quickOptions, r.item)
 
 	var a *Activities
-	var plan agentports.RetrievalIndexPlan
+	var plan retrievalports.RetrievalIndexPlan
 	err := workflow.ExecuteActivity(actx, a.PlanRetrievalIndexActivity, &PlanInput{
 		TenantWorkItem: r.item,
 	}).Get(actx, &plan)
@@ -178,7 +178,7 @@ func (r *indexRun) plan() (*agentports.RetrievalIndexPlan, error) {
 }
 
 func (r *indexRun) cycle(
-	plan *agentports.RetrievalIndexPlan,
+	plan *retrievalports.RetrievalIndexPlan,
 ) (more, stopped bool, cycleErr error) {
 	for _, key := range plan.RetiredKeys {
 		if err := r.purge(key); err != nil {
@@ -220,14 +220,14 @@ func (r *indexRun) cycle(
 func (r *indexRun) indexBatch(
 	modelKey string,
 	sourceTypes []airetrieval.SourceType,
-) (*agentports.RetrievalIndexBatchResult, error) {
+) (*retrievalports.RetrievalIndexBatchResult, error) {
 	r.steps++
 	actx := withOptions(r.ctx, &longOptions, r.item)
 
 	var a *Activities
-	var batch agentports.RetrievalIndexBatchResult
+	var batch retrievalports.RetrievalIndexBatchResult
 	if err := workflow.ExecuteActivity(actx, a.IndexRetrievalBatchActivity,
-		&agentports.RetrievalIndexBatchRequest{
+		&retrievalports.RetrievalIndexBatchRequest{
 			TenantInfo:  r.item.TenantInfo(),
 			ModelKey:    modelKey,
 			SourceTypes: sourceTypes,
@@ -247,7 +247,7 @@ func (r *indexRun) completeModelChange(pendingModelKey string) (bool, error) {
 	actx := withOptions(r.ctx, &quickOptions, r.item)
 
 	var a *Activities
-	var change agentports.RetrievalModelChangeResult
+	var change retrievalports.RetrievalModelChangeResult
 	if err := workflow.ExecuteActivity(actx, a.CompleteRetrievalModelChangeActivity,
 		&ModelChangeInput{TenantWorkItem: r.item, PendingModelKey: pendingModelKey}).
 		Get(actx, &change); err != nil {
@@ -273,7 +273,7 @@ func (r *indexRun) purge(modelKey string) error {
 		r.steps++
 		actx := withOptions(r.ctx, &longOptions, r.item)
 
-		var purged agentports.RetrievalPurgeResult
+		var purged retrievalports.RetrievalPurgeResult
 		if err := workflow.ExecuteActivity(actx, a.PurgeRetrievalModelActivity,
 			&PurgeInput{TenantWorkItem: r.item, ModelKey: modelKey}).
 			Get(actx, &purged); err != nil {
@@ -288,12 +288,12 @@ func (r *indexRun) purge(modelKey string) error {
 	return nil
 }
 
-func (r *indexRun) sweep() (*agentports.RetrievalSweepResult, error) {
+func (r *indexRun) sweep() (*retrievalports.RetrievalSweepResult, error) {
 	r.steps++
 	actx := withOptions(r.ctx, &longOptions, r.item)
 
 	var a *Activities
-	var sweep agentports.RetrievalSweepResult
+	var sweep retrievalports.RetrievalSweepResult
 	err := workflow.ExecuteActivity(actx, a.SweepRetrievalSourcesActivity,
 		&OrganizationSweepInput{TenantWorkItem: r.item}).Get(actx, &sweep)
 
@@ -314,9 +314,9 @@ func ReindexRetrievalSourceWorkflow(
 	var a *Activities
 	after := input.AfterID
 	for range ReindexPagesPerRun {
-		var page agentports.RetrievalReindexPage
+		var page retrievalports.RetrievalReindexPage
 		if err := workflow.ExecuteActivity(actx, a.ReindexRetrievalPageActivity,
-			&agentports.RetrievalReindexPageRequest{
+			&retrievalports.RetrievalReindexPageRequest{
 				TenantInfo: item.TenantInfo(),
 				SourceType: input.SourceType,
 				AfterID:    after,
@@ -371,7 +371,7 @@ func RetrievalIndexSweepWorkflow(ctx workflow.Context, input *SweepInput) (*Swee
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
 			actx := withOptions(wctx, &longOptions, tenant)
-			var swept agentports.RetrievalSweepResult
+			var swept retrievalports.RetrievalSweepResult
 			if err := workflow.ExecuteActivity(actx, a.SweepRetrievalSourcesActivity,
 				&OrganizationSweepInput{TenantWorkItem: tenant, Wake: true}).
 				Get(actx, &swept); err != nil {

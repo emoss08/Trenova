@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDerive(t *testing.T) {
 	tests := []struct {
 		name string
-		legs []shipment.Status
+		legs []shipmentvocab.Status
 		want order.Status
 	}{
 		{
@@ -21,56 +21,74 @@ func TestDerive(t *testing.T) {
 		},
 		{
 			name: "all new is confirmed",
-			legs: []shipment.Status{shipment.StatusNew, shipment.StatusNew},
+			legs: []shipmentvocab.Status{shipmentvocab.StatusNew, shipmentvocab.StatusNew},
 			want: order.StatusConfirmed,
 		},
 		{
 			name: "any in transit is in progress",
-			legs: []shipment.Status{shipment.StatusNew, shipment.StatusInTransit},
+			legs: []shipmentvocab.Status{shipmentvocab.StatusNew, shipmentvocab.StatusInTransit},
 			want: order.StatusInProgress,
 		},
 		{
 			name: "mixed completed and in transit is in progress",
-			legs: []shipment.Status{shipment.StatusCompleted, shipment.StatusInTransit},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusCompleted,
+				shipmentvocab.StatusInTransit,
+			},
 			want: order.StatusInProgress,
 		},
 		{
 			name: "all delivered variants is completed",
-			legs: []shipment.Status{
-				shipment.StatusReadyToInvoice,
-				shipment.StatusCompleted,
-				shipment.StatusInvoiced,
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusReadyToInvoice,
+				shipmentvocab.StatusCompleted,
+				shipmentvocab.StatusInvoiced,
 			},
 			want: order.StatusCompleted,
 		},
 		{
 			name: "all invoiced is billed",
-			legs: []shipment.Status{shipment.StatusInvoiced, shipment.StatusInvoiced},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusInvoiced,
+				shipmentvocab.StatusInvoiced,
+			},
 			want: order.StatusBilled,
 		},
 		{
 			name: "partial invoiced stays completed",
-			legs: []shipment.Status{shipment.StatusInvoiced, shipment.StatusReadyToInvoice},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusInvoiced,
+				shipmentvocab.StatusReadyToInvoice,
+			},
 			want: order.StatusCompleted,
 		},
 		{
 			name: "all canceled is canceled",
-			legs: []shipment.Status{shipment.StatusCanceled, shipment.StatusCanceled},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusCanceled,
+				shipmentvocab.StatusCanceled,
+			},
 			want: order.StatusCanceled,
 		},
 		{
 			name: "canceled leg is excluded from active progress",
-			legs: []shipment.Status{shipment.StatusCanceled, shipment.StatusInvoiced},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusCanceled,
+				shipmentvocab.StatusInvoiced,
+			},
 			want: order.StatusBilled,
 		},
 		{
 			name: "one canceled among moving legs stays in progress",
-			legs: []shipment.Status{shipment.StatusCanceled, shipment.StatusInTransit},
+			legs: []shipmentvocab.Status{
+				shipmentvocab.StatusCanceled,
+				shipmentvocab.StatusInTransit,
+			},
 			want: order.StatusInProgress,
 		},
 		{
 			name: "assigned legs are in progress",
-			legs: []shipment.Status{shipment.StatusAssigned, shipment.StatusNew},
+			legs: []shipmentvocab.Status{shipmentvocab.StatusAssigned, shipmentvocab.StatusNew},
 			want: order.StatusInProgress,
 		},
 	}

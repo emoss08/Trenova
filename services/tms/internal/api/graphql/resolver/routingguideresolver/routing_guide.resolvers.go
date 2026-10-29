@@ -10,7 +10,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -23,7 +26,7 @@ func (r *QueryResolver) RoutingGuides(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +62,7 @@ func (r *QueryResolver) RoutingGuide(ctx context.Context, id string) (*tender.Ro
 
 	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         guideID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
@@ -72,24 +75,24 @@ func (r *QueryResolver) MatchRoutingGuide(ctx context.Context, input gqlmodel.Ma
 		return nil, err
 	}
 
-	originLocationID, err := base.OptionalID(input.OriginLocationID)
+	originLocationID, err := gqlid.OptionalID(input.OriginLocationID)
 	if err != nil {
 		return nil, err
 	}
 
-	destinationLocationID, err := base.OptionalID(input.DestinationLocationID)
+	destinationLocationID, err := gqlid.OptionalID(input.DestinationLocationID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.RoutingGuideService.MatchLane(ctx, &tenderports.MatchLaneRequest{
-		TenantInfo:            base.TenantInfo(authCtx),
+		TenantInfo:            resolvercore.TenantInfo(authCtx),
 		OriginLocationID:      originLocationID,
 		DestinationLocationID: destinationLocationID,
-		OriginCity:            base.StringValue(input.OriginCity),
-		OriginState:           base.StringValue(input.OriginState),
-		DestinationCity:       base.StringValue(input.DestinationCity),
-		DestinationState:      base.StringValue(input.DestinationState),
+		OriginCity:            gqlscalar.StringValue(input.OriginCity),
+		OriginState:           gqlscalar.StringValue(input.OriginState),
+		DestinationCity:       gqlscalar.StringValue(input.DestinationCity),
+		DestinationState:      gqlscalar.StringValue(input.DestinationState),
 	})
 }
 

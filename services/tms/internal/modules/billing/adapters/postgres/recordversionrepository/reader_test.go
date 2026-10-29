@@ -9,8 +9,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer/editransferdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport/rateimportdb"
@@ -99,8 +103,8 @@ func resourceNames(t *testing.T) map[string]permission.Resource {
 		out[match[1]] = permission.Resource(match[2])
 	}
 	require.NotEmpty(t, out)
-	out["RecordInvoiceAdjustment"] = agentports.RecordInvoiceAdjustment
-	out["RecordCreditMemoApplication"] = agentports.RecordCreditMemoApplication
+	out["RecordInvoiceAdjustment"] = agenttoolports.RecordInvoiceAdjustment
+	out["RecordCreditMemoApplication"] = agenttoolports.RecordCreditMemoApplication
 
 	return out
 }
@@ -117,11 +121,11 @@ func TestEDIRecordsAToolTargetsAreToldApartByTheirIDs(t *testing.T) {
 
 	kinds := lookups[permission.ResourceEDI].kinds
 	for name, id := range map[string]pulid.ID{
-		"transfer":        newID(t, edidb.EDITransfersSchema()),
-		"tender change":   newID(t, edidb.TenderChangesSchema()),
-		"transfer change": newID(t, edidb.TransferChangesSchema()),
-		"message":         newID(t, edidb.EDIMessagesSchema()),
-		"inbound file":    newID(t, edidb.EDIInboundFilesSchema()),
+		"transfer":        newID(t, editransferdb.EDITransfersSchema()),
+		"tender change":   newID(t, editenderchangedb.TenderChangesSchema()),
+		"transfer change": newID(t, edisyncdb.TransferChangesSchema()),
+		"message":         newID(t, edimessagedb.EDIMessagesSchema()),
+		"inbound file":    newID(t, ediinboundfiledb.EDIInboundFilesSchema()),
 	} {
 		entry, ok := kinds[id.Prefix()]
 		require.Truef(t, ok, "the %s id %s has no version lookup", name, id)
@@ -133,7 +137,7 @@ func TestRecordsSharingAResourceAreToldApartByTheirIDs(t *testing.T) {
 	t.Parallel()
 
 	fuelBatch := newID(t, fuelpurchasedb.ImportBatchesSchema())
-	for name, target := range map[string]agentports.ToolTarget{
+	for name, target := range map[string]agenttoolports.ToolTarget{
 		"fuel purchase": {
 			Resource: permission.ResourceFuelPurchase,
 			ID:       newID(t, fuelpurchasedb.FuelPurchasesSchema()),

@@ -10,10 +10,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,19 +30,19 @@ import (
 )
 
 func (r *AIProviderResolver) InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	return base.DecimalPtrToStringPtr(obj.InputCostPerMillion), nil
+	return gqldecimal.DecimalPtrToStringPtr(obj.InputCostPerMillion), nil
 }
 
 func (r *AIProviderResolver) OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	return base.DecimalPtrToStringPtr(obj.OutputCostPerMillion), nil
+	return gqldecimal.DecimalPtrToStringPtr(obj.OutputCostPerMillion), nil
 }
 
 func (r *AIProviderResolver) CacheReadCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	return base.DecimalPtrToStringPtr(obj.CacheReadCostPerMillion), nil
+	return gqldecimal.DecimalPtrToStringPtr(obj.CacheReadCostPerMillion), nil
 }
 
 func (r *AIProviderResolver) CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	return base.DecimalPtrToStringPtr(obj.CacheWriteCostPerMillion), nil
+	return gqldecimal.DecimalPtrToStringPtr(obj.CacheWriteCostPerMillion), nil
 }
 
 func (r *QueryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error) {
@@ -43,14 +51,14 @@ func (r *QueryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.AiProviderService.ListConnection(
 		ctx,
-		&agentports.ListAIProviderConnectionRequest{
+		&aiproviderports.ListAIProviderConnectionRequest{
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: aiProviderColumns(ctx, "edges.node"),
@@ -74,30 +82,30 @@ func (r *QueryResolver) AiProvider(ctx context.Context, id string) (*aiprovider.
 		return nil, err
 	}
 
-	return r.AiProviderService.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	return r.AiProviderService.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
-func (r *AIRouteChoiceResolver) ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error) {
-	return base.IDPtr(obj.ProviderID), nil
+func (r *AIRouteChoiceResolver) ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error) {
+	return gqlid.IDPtr(obj.ProviderID), nil
 }
 
-func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error) {
+func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	providerID, err := base.OptionalID(draft.ID)
+	providerID, err := gqlid.OptionalID(draft.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	routes, err := r.AiProviderService.RoutePreview(ctx, &agentports.AIProviderRoutePreviewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Draft: agentports.AIProviderRoutingDraft{
+	routes, err := r.AiProviderService.RoutePreview(ctx, &aiproviderports.AIProviderRoutePreviewRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Draft: aiproviderports.AIProviderRoutingDraft{
 			ID:                  providerID,
 			Name:                draft.Name,
 			Kind:                draft.Kind,
@@ -112,7 +120,7 @@ func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIPro
 		return nil, err
 	}
 
-	out := make([]*aiprovider.TaskRoute, len(routes))
+	out := make([]*airouting.TaskRoute, len(routes))
 	for idx := range routes {
 		out[idx] = &routes[idx]
 	}
@@ -120,15 +128,15 @@ func (r *QueryResolver) AiRoutePreview(ctx context.Context, draft gqlmodel.AIPro
 }
 
 func (r *AIProviderResolver) MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	return base.DecimalPtrToStringPtr(obj.MonthlyCapUSD), nil
+	return gqldecimal.DecimalPtrToStringPtr(obj.MonthlyCapUSD), nil
 }
 
 func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return decimal.Zero.String(), nil
 	}
 
-	spend, err := loaders.AIProviderMonthSpend(ctx, obj.ID.String())
+	spend, err := agentloaders.AIProviderMonthSpend(ctx, obj.ID.String())
 	if err != nil {
 		return "", err
 	}
@@ -136,11 +144,11 @@ func (r *AIProviderResolver) MonthSpendUsd(ctx context.Context, obj *aiprovider.
 	return spend.String(), nil
 }
 
-func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error) {
-	return obj.KeyInfo(timeutils.NowUnix()), nil
+func (r *AIProviderResolver) APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error) {
+	return aiproviderkey.Describe(obj, timeutils.NowUnix()), nil
 }
 
-func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error) {
+func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -151,8 +159,8 @@ func (r *MutationResolver) TestAIProviderDraft(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	req := &agentports.TestAIProviderDraftRequest{
-		TenantInfo:          base.TenantInfo(authCtx),
+	req := &aiproviderports.TestAIProviderDraftRequest{
+		TenantInfo:          resolvercore.TenantInfo(authCtx),
 		Endpoint:            endpoint,
 		Model:               input.Model,
 		Tasks:               input.Tasks,
@@ -175,13 +183,13 @@ func (r *MutationResolver) ReorderAIProviders(ctx context.Context, ids []string)
 		return nil, err
 	}
 
-	providerIDs, err := base.ParseIDs(ids)
+	providerIDs, err := gqlid.ParseIDs(ids)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AiProviderService.Reorder(ctx, &agentports.ReorderAIProvidersRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+	return r.AiProviderService.Reorder(ctx, &aiproviderports.ReorderAIProvidersRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		ProviderIDs: providerIDs,
 	}, actorutil.FromAuthContext(authCtx))
 }
@@ -203,7 +211,7 @@ func (r *MutationResolver) PatchAIProvider(ctx context.Context, id string, versi
 	}
 	req.ID = providerID
 	req.Version = int64(version)
-	req.TenantInfo = base.TenantInfo(authCtx)
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
 
 	return r.AiProviderService.Patch(ctx, req, actorutil.FromAuthContext(authCtx))
 }
@@ -219,8 +227,8 @@ func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIP
 		return nil, err
 	}
 
-	models, err := r.AiProviderService.ListModels(ctx, &agentports.ListAIProviderModelsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	models, err := r.AiProviderService.ListModels(ctx, &aiproviderports.ListAIProviderModelsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Endpoint:   endpoint,
 	})
 	if err != nil {
@@ -230,11 +238,11 @@ func (r *QueryResolver) AiProviderModels(ctx context.Context, input gqlmodel.AIP
 	return modelOptionsToModel(models), nil
 }
 
-func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.AddedByID)
+func (r *AIProviderKeyInfoResolver) AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.AddedByID)
 }
 
-func (r *MutationResolver) RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error) {
+func (r *MutationResolver) RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAIProvider, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -245,8 +253,8 @@ func (r *MutationResolver) RouteAITask(ctx context.Context, task aiprovider.Task
 		return nil, err
 	}
 
-	return r.AiProviderService.RouteTask(ctx, &agentports.RouteAIProviderTaskRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.AiProviderService.RouteTask(ctx, &aiproviderports.RouteAIProviderTaskRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ProviderID: id,
 		Task:       task,
 	}, actorutil.FromAuthContext(authCtx))

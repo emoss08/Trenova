@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -90,7 +91,7 @@ type DelegateWrite struct {
 	// Summary names what the write is about, from its arguments.
 	Summary string `json:"summary,omitempty"`
 	// Result is what an executed write made, when its tool says.
-	Result *agent.ToolExecutionResult `json:"result,omitempty"`
+	Result *agentrecord.ToolExecutionResult `json:"result,omitempty"`
 	// Error is why an executed write failed.
 	Error string `json:"error,omitempty"`
 	// Simulated says the agent was in simulation, so the write was

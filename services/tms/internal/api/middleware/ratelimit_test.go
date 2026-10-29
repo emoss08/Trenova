@@ -10,6 +10,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -38,22 +40,22 @@ func (s *recordingStore) Check(
 }
 
 func newTestRateLimiter(
-	rateLimitCfg config.RateLimitConfig,
+	rateLimitCfg securityconfig.RateLimitConfig,
 	store kernelports.RateLimitStore,
 ) *RateLimiter {
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
 			RateLimit: rateLimitCfg,
 		},
 	}
 
 	return NewRateLimiter(RateLimiterParams{
-		Config: cfg,
-		Store:  store,
+		SecurityConfig: &cfg.Security,
+		Store:          store,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		Logger: zap.NewNop(),
 	})
@@ -90,9 +92,9 @@ func TestRateLimiter_AllowsRequestsWhenDisabled(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   false,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 1, BurstSize: 1},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 1, BurstSize: 1},
 	}, newMemoryStore())
 
 	router := gin.New()
@@ -114,9 +116,9 @@ func TestRateLimiter_ByClientIP_ThrottlesAfterBurst(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   true,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
 	}, newMemoryStore())
 
 	router := gin.New()
@@ -147,10 +149,10 @@ func TestRateLimiter_ByAPIKey_KeysAPIKeysSeparately(t *testing.T) {
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled: true,
-		APIKey:  config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
-		Tenant:  config.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
+		APIKey:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Tenant:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
 	}, store)
 
 	orgID := pulid.MustNew("org_")
@@ -185,11 +187,11 @@ func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) 
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   true,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
-		APIKey:    config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
-		Tenant:    config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		APIKey:    securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Tenant:    securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 	}, store)
 
 	orgID := pulid.MustNew("org_")
@@ -220,10 +222,10 @@ func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) 
 func TestRateLimiter_ByAPIKey_TenantCeilingSpansKeys(t *testing.T) {
 	t.Parallel()
 
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled: true,
-		APIKey:  config.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
-		Tenant:  config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
+		APIKey:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
+		Tenant:  securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
 	}, newMemoryStore())
 
 	orgID := pulid.MustNew("org_")
@@ -255,9 +257,9 @@ func TestRateLimiter_ByPublicToken_HashesTokenAndIsolatesBuckets(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	store := &recordingStore{inner: newMemoryStore()}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:     true,
-		PublicToken: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		PublicToken: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 	}, store)
 
 	router := gin.New()
@@ -290,9 +292,12 @@ func TestRateLimiter_ExemptPathPrefixesSkipTheStore(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	store := &recordingStore{inner: newMemoryStore()}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:            true,
-		Anonymous:          config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
+		Enabled: true,
+		Anonymous: securityconfig.RateLimitScopeConfig{
+			RequestsPerMinute: 60,
+			BurstSize:         1,
+		},
 		ExemptPathPrefixes: []string{"/api/v1/webhooks/"},
 	}, store)
 
@@ -313,9 +318,9 @@ func TestRateLimiter_StoreDeniedRespondsTooManyRequests(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	store := &recordingStore{inner: newMemoryStore(), err: ratelimit.ErrStoreDenied}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   true,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 10},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 10},
 	}, store)
 
 	router := gin.New()
@@ -333,9 +338,9 @@ func TestRateLimiter_UnexpectedStoreErrorAllowsRequest(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	store := &recordingStore{inner: newMemoryStore(), err: errors.New("boom")}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   true,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 	}, store)
 
 	router := gin.New()
@@ -356,9 +361,9 @@ func TestRateLimiter_RetryAfterRoundsUpToWholeSeconds(t *testing.T) {
 	store := ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{
 		Now: func() time.Time { return current },
 	})
-	limiter := newTestRateLimiter(config.RateLimitConfig{
+	limiter := newTestRateLimiter(securityconfig.RateLimitConfig{
 		Enabled:   true,
-		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 4, BurstSize: 1},
+		Anonymous: securityconfig.RateLimitScopeConfig{RequestsPerMinute: 4, BurstSize: 1},
 	}, store)
 
 	router := gin.New()

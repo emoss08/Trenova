@@ -7,7 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/customerrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/factoringcompanyrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
@@ -40,8 +46,18 @@ func SharedOptions() fx.Option {
 			carrierservice.New,
 			carrierintelservice.New,
 			func(s *carrierintelservice.Service) carrierintelports.CarrierIntelGate { return s },
-			func(s *carrierintelservice.Service) carrierintelports.CarrierLifecycleObserver { return s },
-			func(s *carrierintelservice.Service) carrierintelports.CarrierIntelEventReader { return s },
+			carrierintelenrollmentservice.New,
+			func(s *carrierintelenrollmentservice.Service) carrierintelports.CarrierLifecycleObserver {
+				return s
+			},
+			carrierintelmonitorservice.New,
+			carrierintelreviewservice.New,
+			func(s *carrierintelreviewservice.Service) carrierintelports.CarrierIntelEventReader {
+				return s
+			},
+			carrierintelsourcingservice.New,
+			carrierintelverifyservice.New,
+			carrierintelvetservice.New,
 			customerservice.New,
 			carriercapacityservice.New,
 		),

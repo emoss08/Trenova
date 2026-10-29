@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -15,7 +15,7 @@ func analyticsRequest(
 	tenant pagination.TenantInfo,
 	input gqlmodel.AIAnalyticsInput,
 ) (*aianalyticsports.AnalyticsRequest, error) {
-	agentID, err := base.OptionalID(input.AgentDefinitionID)
+	agentID, err := gqlid.OptionalID(input.AgentDefinitionID)
 	if err != nil {
 		return nil, err
 	}

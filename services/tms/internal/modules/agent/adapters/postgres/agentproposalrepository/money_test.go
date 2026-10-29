@@ -3,7 +3,7 @@ package agentproposalrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,12 +14,19 @@ import (
 func TestSumAutomaticMoney_CountsOnlyWritesThatRanInTheFunctionalCurrency(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, automaticMoneyQuery(&agentports.SumAutomaticMoneyRequest{
-		Currency: "USD",
-		Since:    100,
-	}, "USD"))
+	sql, args := keeltest.Render(
+		t,
+		automaticMoneyQuery(&agentproposalports.SumAutomaticMoneyRequest{
+			Currency: "USD",
+			Since:    100,
+		}, "USD"),
+	)
 
-	assert.Regexp(t, `^SELECT count\(\*\), coalesce\(sum\(abs\(ap\."money_minor"\)\), \$\d+\) FROM "agent_proposals" ap `, sql)
+	assert.Regexp(
+		t,
+		`^SELECT count\(\*\), coalesce\(sum\(abs\(ap\."money_minor"\)\), \$\d+\) FROM "agent_proposals" ap `,
+		sql,
+	)
 	assert.Contains(t, sql, `ap."autonomy_tier" = 'AutoExecute'`)
 	assert.Contains(t, sql, `ap."status" = 'Executed'`)
 	assert.Contains(t, sql, `ap."money_minor" IS NOT NULL`)
@@ -36,11 +43,14 @@ func TestSumAutomaticMoney_ASimulatedRunCountsItsSimulatedWrites(t *testing.T) {
 	t.Parallel()
 
 	runID := pulid.MustNew("arun_")
-	sql, args := keeltest.Render(t, automaticMoneyQuery(&agentports.SumAutomaticMoneyRequest{
-		Currency:  "CAD",
-		RunID:     runID,
-		Simulated: true,
-	}, "CAD"))
+	sql, args := keeltest.Render(
+		t,
+		automaticMoneyQuery(&agentproposalports.SumAutomaticMoneyRequest{
+			Currency:  "CAD",
+			RunID:     runID,
+			Simulated: true,
+		}, "CAD"),
+	)
 
 	assert.Contains(t, sql, `ap."status" = 'Simulated'`)
 	assert.Contains(t, sql, `ap."simulated_at" IS NOT NULL`)
@@ -55,7 +65,7 @@ func TestSumAutomaticMoney_RefusesToCountWithoutACurrency(t *testing.T) {
 
 	repo := &repository{l: zap.NewNop()}
 
-	_, err := repo.SumAutomaticMoney(t.Context(), &agentports.SumAutomaticMoneyRequest{
+	_, err := repo.SumAutomaticMoney(t.Context(), &agentproposalports.SumAutomaticMoneyRequest{
 		Currency: " ",
 	})
 	require.ErrorIs(t, err, errMoneyCurrencyRequired)

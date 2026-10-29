@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,17 +38,17 @@ type ActivitiesParams struct {
 	fx.In
 
 	Readiness   factoringports.ReadinessService
-	Submissions factoringports.SubmissionService
+	Submissions factoringsubmissionports.SubmissionService
 	States      factoringports.InvoiceStateRepository
-	Remittances factoringports.RemittanceService
+	Remittances factoringremittanceports.RemittanceService
 	Logger      *zap.Logger
 }
 
 type Activities struct {
 	readiness   factoringports.ReadinessService
-	submissions factoringports.SubmissionService
+	submissions factoringsubmissionports.SubmissionService
 	states      factoringports.InvoiceStateRepository
-	remittances factoringports.RemittanceService
+	remittances factoringremittanceports.RemittanceService
 	l           *zap.Logger
 }
 

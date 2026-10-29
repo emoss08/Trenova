@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/inflect"
 )
 
 const (
@@ -194,7 +194,7 @@ func describeBlockers(blockers []capabilityBlocker) string {
 		}
 
 		parts = append(parts, strconv.Itoa(blocker.count)+" "+
-			stringutils.Pluralize(blocker.singular, blocker.plural, blocker.count))
+			inflect.Pluralize(blocker.singular, blocker.plural, blocker.count))
 	}
 
 	return strings.Join(parts, ", ")

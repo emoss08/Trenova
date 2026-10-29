@@ -7,20 +7,30 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/factoringrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
-	"github.com/emoss08/trenova/internal/modules/billing/app/factoringservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringagreementservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringledgerservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringnoaservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringreadinessservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -53,9 +63,9 @@ type factoringRepos struct {
 	agreements  factoringports.AgreementRepository
 	noas        factoringports.NoaRepository
 	states      factoringports.InvoiceStateRepository
-	submissions factoringports.SubmissionRepository
-	remittances factoringports.RemittanceRepository
-	entries     factoringports.ReserveEntryRepository
+	submissions factoringsubmissionports.SubmissionRepository
+	remittances factoringremittanceports.RemittanceRepository
+	entries     factoringledgerports.ReserveEntryRepository
 	invoices    invoiceports.InvoiceRepository
 }
 
@@ -85,15 +95,15 @@ func (r *factoringRepos) resolvers(conn *postgres.Connection) agentread.Resolver
 	logger := zap.NewNop()
 
 	return agentread.ResolverParams{
-		FactoringAgreementService: factoringservice.NewAgreementService(
-			factoringservice.AgreementParams{
+		FactoringAgreementService: factoringagreementservice.NewAgreementService(
+			factoringagreementservice.AgreementParams{
 				DB: conn, Repo: r.agreements, Factors: r.factors, Logger: logger,
 			}),
-		FactoringNoaService: factoringservice.NewNoaService(factoringservice.NoaParams{
+		FactoringNoaService: factoringnoaservice.NewNoaService(factoringnoaservice.NoaParams{
 			Repo: r.noas, Customers: r.customers, Factors: r.factors, Logger: logger,
 		}),
-		FactoringReadinessService: factoringservice.NewReadinessService(
-			factoringservice.ReadinessParams{
+		FactoringReadinessService: factoringreadinessservice.NewReadinessService(
+			factoringreadinessservice.ReadinessParams{
 				States: r.states, Agreements: r.agreements, Noas: r.noas,
 				Submissions: r.submissions, Invoices: r.invoices, Customers: r.customers,
 				Documents: documentrepository.New(documentrepository.Params{
@@ -101,18 +111,20 @@ func (r *factoringRepos) resolvers(conn *postgres.Connection) agentread.Resolver
 				}),
 				Logger: logger,
 			}),
-		FactoringSubmissionService: factoringservice.NewSubmissionService(
-			factoringservice.SubmissionParams{
+		FactoringSubmissionService: factoringsubmissionservice.NewSubmissionService(
+			factoringsubmissionservice.SubmissionParams{
 				Repo: r.submissions, States: r.states, Agreements: r.agreements,
 				Invoices: r.invoices, Factors: r.factors, Customers: r.customers,
 				Logger: logger,
 			}),
-		FactoringLedgerService: factoringservice.NewLedgerService(factoringservice.LedgerParams{
-			DB: conn, Submissions: r.submissions, Entries: r.entries,
-			Agreements: r.agreements, Invoices: r.invoices, Logger: logger,
-		}),
-		FactoringRemittanceService: factoringservice.NewRemittanceService(
-			factoringservice.RemittanceParams{
+		FactoringLedgerService: factoringledgerservice.NewLedgerService(
+			factoringledgerservice.LedgerParams{
+				DB: conn, Submissions: r.submissions, Entries: r.entries,
+				Agreements: r.agreements, Invoices: r.invoices, Logger: logger,
+			},
+		),
+		FactoringRemittanceService: factoringremittanceservice.NewRemittanceService(
+			factoringremittanceservice.RemittanceParams{
 				DB: conn, Remittances: r.remittances, Submissions: r.submissions,
 				Factors: r.factors, Logger: logger,
 			}),
@@ -182,38 +194,43 @@ func writeFactoringRows(
 		out.noas = append(out.noas, noa.ID.String())
 
 		inv := postFactoredInvoice(t, ctx, admin, repos, tenant, cust.ID, factor.ID, suffix)
-		state := &factoring.InvoiceState{
+		state := &factoringreadiness.InvoiceState{
 			InvoiceID: inv.ID, OrganizationID: org, BusinessUnitID: bu,
 			FactoringCompanyID: &factor.ID, CustomerID: cust.ID,
 			OpenBalanceMinor: inv.TotalAmountMinor,
 		}
-		factoring.NextState(nil, state, &factoring.Readiness{Verdict: factoring.VerdictReady}, now)
+		factoringreadiness.NextState(
+			nil,
+			state,
+			&factoringreadiness.Readiness{Verdict: factoringreadiness.VerdictReady},
+			now,
+		)
 		require.NoError(t, repos.states.Upsert(ctx, state))
 		out.invoices = append(out.invoices, inv.ID.String())
 
-		sub, subErr := repos.submissions.Create(ctx, &factoring.Submission{
+		sub, subErr := repos.submissions.Create(ctx, &factoringsubmission.Submission{
 			OrganizationID: org, BusinessUnitID: bu, Number: "SCH-" + suffix,
 			FactoringCompanyID: factor.ID, AgreementID: agreement.ID,
-			Status: factoring.SubmissionStatusSent, InvoiceCount: 1, FaceMinor: 100_00,
-			ExpectedAdvanceMinor: 90_00, TransportMethod: factoring.TransportMethodEmail,
+			Status: factoringsubmission.SubmissionStatusSent, InvoiceCount: 1, FaceMinor: 100_00,
+			ExpectedAdvanceMinor: 90_00, TransportMethod: factoringsubmission.TransportMethodEmail,
 			TransportTarget: "funding@" + label + ".example.com",
 			IdempotencyKey:  "key-" + suffix, SentAt: &now,
 		})
 		require.NoError(t, subErr)
 		out.submissions = append(out.submissions, sub.ID.String())
 
-		remittance, remErr := repos.remittances.Create(ctx, &factoring.Remittance{
+		remittance, remErr := repos.remittances.Create(ctx, &factoringremittance.Remittance{
 			OrganizationID: org, BusinessUnitID: bu, FactoringCompanyID: factor.ID,
-			FileName: "funding-" + suffix + ".csv", Status: factoring.RemittanceStatusPending,
+			FileName: "funding-" + suffix + ".csv", Status: factoringremittance.RemittanceStatusPending,
 			LineCount: 2, TotalCashMinor: 50_00,
 		})
 		require.NoError(t, remErr)
 		cash := int64(25_00)
-		remittance.Lines = []*factoring.RemittanceLine{
+		remittance.Lines = []*factoringremittance.RemittanceLine{
 			{RowNumber: 1, Cells: []string{"INV-1", "25.00"}, InvoiceNumber: "INV-1",
-				CashMinor: &cash, MatchStatus: factoring.RemittanceLineUnmatched},
+				CashMinor: &cash, MatchStatus: factoringremittance.RemittanceLineUnmatched},
 			{RowNumber: 2, Cells: []string{"???", "x"}, Error: "no amount",
-				MatchStatus: factoring.RemittanceLineError},
+				MatchStatus: factoringremittance.RemittanceLineError},
 		}
 		require.NoError(t, repos.remittances.ReplaceLines(ctx, remittance))
 		out.remittances = append(out.remittances, remittance.ID.String())
@@ -248,7 +265,10 @@ func postFactoredInvoice(
 		BillToCustomerID: customerID, Number: number, Status: billingqueue.StatusPosted,
 		BillType: billingqueue.BillTypeInvoice,
 	}
-	require.NoError(t, billingqueuedb.BillingQueueItems.Create(tenant.Ctx(t.Context()), admin, queue))
+	require.NoError(
+		t,
+		billingqueuedb.BillingQueueItems.Create(tenant.Ctx(t.Context()), admin, queue),
+	)
 
 	amount := decimal.New(100_00, -2)
 	posted := timeutils.NowUnix()
@@ -277,7 +297,7 @@ func postFactoredInvoice(
 func walkByKey(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 	key string,
@@ -378,7 +398,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 			assert.ElementsMatch(t, c.narrowed, narrowed)
 
 			if c.money != "" {
-				data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
+				data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
 					OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 					Actor: actor, Timezone: "America/Chicago", Params: map[string]any{},
 					DataAccessCeiling: permission.SensitivityInternal,
@@ -456,7 +476,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 			record := callTool(t, ours.ctx, get, actor, g.call(g.ours))
 			assert.Equal(t, g.ours, record["id"])
 
-			_, err = get.Query(ours.ctx, &agentports.QueryToolParams{
+			_, err = get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 				OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 				Actor: actor, Timezone: "America/Chicago", Params: g.call(g.other),
 				RunID: pulid.MustNew("ar_"),
@@ -490,7 +510,7 @@ func TestConvertedLists_FactoringReadsUnderRowLevelSecurity(t *testing.T) {
 		assert.Equal(t, ours.invoices[0], record["invoiceId"])
 		assert.NotEmpty(t, record["verdict"])
 
-		_, err = get.Query(ours.ctx, &agentports.QueryToolParams{
+		_, err = get.Query(ours.ctx, &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 			Actor: actor, Timezone: "America/Chicago",
 			Params: map[string]any{"invoiceId": other.invoices[0]},

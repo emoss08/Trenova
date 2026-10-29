@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -309,7 +309,7 @@ func laneStop(
 	sp *shipmentdb.ShipmentsTable,
 	alias string,
 	locationID pulid.ID,
-	types ...shipment.StopType,
+	types ...shipmentvocab.StopType,
 ) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(alias + "_sm")
 	st := shipmentdb.Stops.As(alias + "_stp")
@@ -346,12 +346,12 @@ func (r *repository) DetectLanePattern(
 					keel.Int64Of(sp.CreatedAt.Max()).Coalesce(0),
 				).Where(
 					sp.CustomerID.Eq(req.CustomerID),
-					sp.Status.Ne(shipment.StatusCanceled),
+					sp.Status.Ne(shipmentvocab.StatusCanceled),
 					sp.CreatedAt.Gte(timeutils.DaysAgoUnix(lookbackDays)),
 					laneStop(sp, "pick", req.OriginLocationID,
-						shipment.StopTypePickup, shipment.StopTypeSplitPickup),
+						shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup),
 					laneStop(sp, "drop", req.DestinationLocationID,
-						shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+						shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
 				),
 			)
 			if err != nil {

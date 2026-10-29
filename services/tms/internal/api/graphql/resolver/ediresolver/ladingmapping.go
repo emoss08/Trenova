@@ -5,7 +5,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/lading"
 )
 
@@ -44,9 +44,9 @@ func ladingExchangesToModel(manifest *lading.Check) []*gqlmodel.EDILadingExchang
 		if item.Set == "" {
 			continue
 		}
-		direction := edi.DocumentDirectionOutbound
+		direction := edidocument.DocumentDirectionOutbound
 		if item.Direction == lading.DirectionInbound {
-			direction = edi.DocumentDirectionInbound
+			direction = edidocument.DocumentDirectionInbound
 		}
 		ack, within := acknowledgmentOf(manifest, item)
 		exchange := &gqlmodel.EDILadingExchange{

@@ -5,12 +5,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -120,7 +123,7 @@ func (*policyStarter) SignalWorkflow(context.Context, string, string, string, an
 func (h *doclingHarness) runWorkflow(
 	t *testing.T,
 	payload *documentextractioncontract.ProcessDocumentExtractionPayload,
-) (*ProcessDocumentIntelligenceResult, error) {
+) (*documentanalysis.ProcessDocumentIntelligenceResult, error) {
 	t.Helper()
 
 	var suite testsuite.WorkflowTestSuite
@@ -133,7 +136,7 @@ func (h *doclingHarness) runWorkflow(
 		return nil, err
 	}
 
-	var result *ProcessDocumentIntelligenceResult
+	var result *documentanalysis.ProcessDocumentIntelligenceResult
 	require.NoError(t, env.GetWorkflowResult(&result))
 
 	return result, nil
@@ -170,16 +173,16 @@ func (h *doclingHarness) contentService(
 	t.Helper()
 
 	return documentextractionservice.New(documentextractionservice.Params{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &documentconversionconfig.Config{},
+		SearchConfig:             &searchconfig.Config{},
 		Metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
-		DocumentControlRepo: h.activities.documentControlRepo,
+		DocumentControlRepo: h.controlRepo,
 		DocumentRepo:        h.docs,
 		ContentRepo:         h.contents,
 		DraftRepo:           h.drafts,
-		SearchProjection:    noopDocumentSearchProjectionService{},
 		WorkflowStarter:     starter,
 	})
 }
@@ -203,7 +206,7 @@ func TestReextractAfterAStoppedRunStartsANewConversion(t *testing.T) {
 	}
 	workflowID := documentextractioncontract.WorkflowID(h.payload.DocumentID)
 
-	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.doc, h.payload.UserID))
+	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.Doc, h.payload.UserID))
 	first := starter.last()
 	require.NotNil(t, first)
 
@@ -213,7 +216,7 @@ func TestReextractAfterAStoppedRunStartsANewConversion(t *testing.T) {
 	assert.Equal(
 		t,
 		documentupload.FailureExtractionUnavailable.String(),
-		h.contents.content.FailureCode,
+		h.contents.Content.FailureCode,
 	)
 	starter.finish(workflowID, executionCompleted)
 
@@ -231,10 +234,10 @@ func TestReextractAfterAStoppedRunStartsANewConversion(t *testing.T) {
 	converted, err := h.runWorkflow(t, starter.last())
 	require.NoError(t, err)
 	assert.Equal(t, string(document.ContentStatusIndexed), converted.Status)
-	assert.Equal(t, documentcontent.StatusIndexed, h.contents.content.Status)
-	assert.Empty(t, h.contents.content.FailureCode)
-	assert.Len(t, h.contents.pages, len(golden))
-	assert.True(t, h.docs.last().HasExtractedText)
+	assert.Equal(t, documentcontent.StatusIndexed, h.contents.Content.Status)
+	assert.Empty(t, h.contents.Content.FailureCode)
+	assert.Len(t, h.contents.Pages, len(golden))
+	assert.True(t, h.docs.Last().HasExtractedText)
 }
 
 /*
@@ -248,8 +251,8 @@ func TestEnqueueExtractionDoesNotDuplicateARunningConversion(t *testing.T) {
 	starter := newPolicyStarter()
 	service := h.contentService(t, starter)
 
-	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.doc, h.payload.UserID))
-	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.doc, h.payload.UserID))
+	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.Doc, h.payload.UserID))
+	require.NoError(t, service.EnqueueExtraction(t.Context(), h.docs.Doc, h.payload.UserID))
 	assert.Len(t, starter.started, 1)
 }
 
@@ -272,12 +275,12 @@ func TestProcessDocumentExtractionWorkflow_ExhaustedConversionEndsFailed(t *test
 	_, err := h.runWorkflow(t, h.payload)
 	require.Error(t, err)
 
-	content := h.contents.content
+	content := h.contents.Content
 	require.NotNil(t, content)
 	assert.Equal(t, documentcontent.StatusFailed, content.Status)
 	assert.Equal(t, documentupload.FailureConverterUnavailable.String(), content.FailureCode)
 	assert.Equal(t, converterUnreachableMessage, content.FailureMessage)
-	last := h.docs.last()
+	last := h.docs.Last()
 	assert.Equal(t, document.ContentStatusFailed, last.ContentStatus)
 	assert.Equal(t, document.ShipmentDraftStatusFailed, last.ShipmentDraftStatus)
 }
@@ -303,10 +306,10 @@ func TestProcessDocumentExtractionWorkflow_RefusedAPIKeyFailsAtOnceWithTheConfig
 	require.NoError(t, err)
 	assert.Equal(t, string(documentcontent.StatusFailed), result.Status)
 
-	content := h.contents.content
+	content := h.contents.Content
 	require.NotNil(t, content)
 	assert.Equal(t, documentcontent.StatusFailed, content.Status)
 	assert.Equal(t, documentupload.FailureConverterMisconfigured.String(), content.FailureCode)
 	assert.Equal(t, converterMisconfiguredMessage, content.FailureMessage)
-	assert.Equal(t, document.ContentStatusFailed, h.docs.last().ContentStatus)
+	assert.Equal(t, document.ContentStatusFailed, h.docs.Last().ContentStatus)
 }

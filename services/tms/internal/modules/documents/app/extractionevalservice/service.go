@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractioneval"
@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -46,7 +47,7 @@ type Params struct {
 	Corrections   aicorrectionports.AICorrectionRepository
 	Documents     documentports.DocumentRepository
 	Contents      documentcontentports.DocumentContentRepository
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Audit         auditports.AuditService
 	Retention     tenantports.DataRetentionRepository
 	Budget        agentqualityports.EvaluationBudget           `optional:"true"`
@@ -66,7 +67,7 @@ type Service struct {
 	corrections aicorrectionports.AICorrectionRepository
 	documents   documentports.DocumentRepository
 	contents    documentcontentports.DocumentContentRepository
-	providers   agentports.AIProviderRepository
+	providers   aiproviderports.AIProviderRepository
 	audit       auditports.AuditService
 	retention   tenantports.DataRetentionRepository
 	budget      agentqualityports.EvaluationBudget
@@ -312,7 +313,7 @@ func caseTitle(
 	title := strings.TrimSpace(requested)
 	if title == "" {
 		parts := stringutils.NonEmptyStrings(
-			stringutils.HumanizeCamelCase(correction.DocumentKind),
+			textcase.HumanizeCamelCase(correction.DocumentKind),
 			strings.TrimSpace(doc.OriginalName),
 		)
 		title = strings.Join(parts, " · ")

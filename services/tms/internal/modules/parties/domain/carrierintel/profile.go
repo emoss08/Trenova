@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/shopspring/decimal"
 )
 
@@ -178,16 +178,16 @@ type Safety struct {
 }
 
 type BasicMeasure struct {
-	Basic         worker.CSABasic `json:"basic"`
-	Measure       *float64        `json:"measure,omitempty"`
-	Percentile    *float64        `json:"percentile,omitempty"`
-	Threshold     *float64        `json:"threshold,omitempty"`
-	Alert         bool            `json:"alert"`
-	RoadsideAlert bool            `json:"roadsideAlert"`
-	ACIndicator   bool            `json:"acIndicator"`
-	Violations    *int            `json:"violations,omitempty"`
-	OOSViolations *int            `json:"oosViolations,omitempty"`
-	MeasuredAt    *int64          `json:"measuredAt,omitempty"`
+	Basic         fleetsafety.CSABasic `json:"basic"`
+	Measure       *float64             `json:"measure,omitempty"`
+	Percentile    *float64             `json:"percentile,omitempty"`
+	Threshold     *float64             `json:"threshold,omitempty"`
+	Alert         bool                 `json:"alert"`
+	RoadsideAlert bool                 `json:"roadsideAlert"`
+	ACIndicator   bool                 `json:"acIndicator"`
+	Violations    *int                 `json:"violations,omitempty"`
+	OOSViolations *int                 `json:"oosViolations,omitempty"`
+	MeasuredAt    *int64               `json:"measuredAt,omitempty"`
 }
 
 type Inspections struct {
@@ -389,7 +389,7 @@ func (p *Profile) DOTNumber() string {
 	return p.Identity.DOTNumber
 }
 
-func (p *Profile) Basic(basic worker.CSABasic) *BasicMeasure {
+func (p *Profile) Basic(basic fleetsafety.CSABasic) *BasicMeasure {
 	if p == nil {
 		return nil
 	}
@@ -438,45 +438,4 @@ func (p *Profile) ContentHash() (string, error) {
 	}
 	sum := sha256.Sum256(raw)
 	return hex.EncodeToString(sum[:]), nil
-}
-
-func (p *Profile) DeriveRiskLevel(findings []Finding) RiskLevel {
-	if p == nil {
-		return RiskLevelUnknown
-	}
-	level := RiskLevelUnknown
-	if p.Safety != nil && p.Safety.RiskScore.IsValid() && p.Safety.RiskScore != RiskLevelUnknown {
-		level = p.Safety.RiskScore
-	}
-
-	blocking, warnings := 0, 0
-	for idx := range findings {
-		finding := &findings[idx]
-		if finding.Unverifiable || finding.Overridden {
-			continue
-		}
-		switch finding.Action {
-		case RuleActionBlock:
-			blocking++
-		case RuleActionWarn:
-			warnings++
-		}
-	}
-
-	derived := RiskLevelLow
-	switch {
-	case blocking > 0:
-		derived = RiskLevelVeryHigh
-	case warnings >= 3:
-		derived = RiskLevelHigh
-	case warnings == 2:
-		derived = RiskLevelElevated
-	case warnings == 1:
-		derived = RiskLevelModerate
-	}
-
-	if derived.Rank() > level.Rank() {
-		return derived
-	}
-	return level
 }

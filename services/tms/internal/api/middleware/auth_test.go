@@ -6,13 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,9 +25,9 @@ import (
 
 func newTestAuthConfig() *config.Config {
 	return &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
-			Session: config.SessionConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				Name:     "trenova_session",
 				Path:     "/",
 				Domain:   "",
@@ -39,11 +40,11 @@ func newTestAuthConfig() *config.Config {
 
 func newAuthMiddleware(cfg *config.Config, svc *tenantportsmock.MockAuthService) *AuthMiddleware {
 	return NewAuthMiddleware(AuthMiddlewareParams{
-		Config:  cfg,
-		Service: svc,
+		SecurityConfig: &cfg.Security,
+		Service:        svc,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 	})
 }

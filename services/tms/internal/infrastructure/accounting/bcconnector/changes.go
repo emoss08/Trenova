@@ -8,12 +8,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 )
 
-var _ accountingsyncports.AccountingChangeReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingChangeReader = (*Connector)(nil)
 
 type changeTarget string
 
@@ -36,11 +42,11 @@ const (
 
 var errChangeCursor = errors.New("businesscentral: the change cursor is not one this adapter wrote")
 
-var documentTargets = map[changeTarget]businesscentral.DocumentKind{ //nolint:exhaustive // only document targets have a document kind
-	targetSalesInvoices:    businesscentral.DocumentSalesInvoice,
-	targetSalesCreditMemos: businesscentral.DocumentSalesCreditMemo,
-	targetPurchaseInvoices: businesscentral.DocumentPurchaseInvoice,
-	targetPurchaseCredits:  businesscentral.DocumentPurchaseCreditMemo,
+var documentTargets = map[changeTarget]businesscentraldocs.DocumentKind{ //nolint:exhaustive // only document targets have a document kind
+	targetSalesInvoices:    businesscentraldocs.DocumentSalesInvoice,
+	targetSalesCreditMemos: businesscentraldocs.DocumentSalesCreditMemo,
+	targetPurchaseInvoices: businesscentraldocs.DocumentPurchaseInvoice,
+	targetPurchaseCredits:  businesscentraldocs.DocumentPurchaseCreditMemo,
 }
 
 func (t changeTarget) valid() bool {
@@ -155,8 +161,8 @@ func nextSince(since, latest, started time.Time) time.Time {
 	return next
 }
 
-func (c *Connector) ChangeFeedLimits() accountingsyncports.AccountingChangeFeedLimits {
-	return accountingsyncports.AccountingChangeFeedLimits{
+func (c *Connector) ChangeFeedLimits() accountingconnectorports.AccountingChangeFeedLimits {
+	return accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: false,
 		MaxPerRead:     businesscentral.MaxPageSize,
@@ -167,7 +173,7 @@ func (c *Connector) ChangeCursorAt(at time.Time) string {
 	return formatInstant(at)
 }
 
-func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []changeTarget {
+func changeTargets(req *accountingconnectorports.ReadAccountingChangesRequest) []changeTarget {
 	targets := make([]changeTarget, 0, maxChangeTargets)
 	if req.Documents {
 		targets = append(
@@ -181,15 +187,15 @@ func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []chan
 	for _, kind := range req.ReferenceKinds {
 		var target changeTarget
 		switch kind {
-		case accountingsync.ReferenceKindAccount:
+		case accountingprovider.ReferenceKindAccount:
 			target = targetAccounts
-		case accountingsync.ReferenceKindItem:
+		case accountingprovider.ReferenceKindItem:
 			target = targetItems
-		case accountingsync.ReferenceKindCustomer:
+		case accountingprovider.ReferenceKindCustomer:
 			target = targetCustomers
-		case accountingsync.ReferenceKindVendor:
+		case accountingprovider.ReferenceKindVendor:
 			target = targetVendors
-		case accountingsync.ReferenceKindTerm, accountingsync.ReferenceKindPaymentMethod:
+		case accountingprovider.ReferenceKindTerm, accountingprovider.ReferenceKindPaymentMethod:
 			continue
 		default:
 			continue
@@ -203,11 +209,11 @@ func changeTargets(req *accountingsyncports.ReadAccountingChangesRequest) []chan
 
 func (c *Connector) ReadChanges(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingChangesRequest,
-) (*accountingsyncports.AccountingChangePage, error) {
+	req *accountingconnectorports.ReadAccountingChangesRequest,
+) (*accountingconnectorports.AccountingChangePage, error) {
 	now := req.Now.UTC()
 	if req.Now.IsZero() {
-		now = c.now().UTC()
+		now = c.Clock().UTC()
 	}
 	cursor, err := parseChangeCursor(req.Cursor, now)
 	if err != nil {
@@ -218,14 +224,14 @@ func (c *Connector) ReadChanges(
 		cursor.started = now
 	}
 	if len(cursor.targets) == 0 {
-		return &accountingsyncports.AccountingChangePage{
-			Payments:   []accountingsyncports.AccountingInboundPayment{},
-			Documents:  []accountingsyncports.AccountingChangedDocument{},
-			References: []accountingsyncports.AccountingChangedReference{},
+		return &accountingconnectorports.AccountingChangePage{
+			Payments:   []accountingconnectorports.AccountingInboundPayment{},
+			Documents:  []accountingconnectorports.AccountingChangedDocument{},
+			References: []accountingconnectorports.AccountingChangedReference{},
 			NextCursor: cursor.String(),
 		}, nil
 	}
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +241,7 @@ func (c *Connector) ReadChanges(
 
 type changeCollector struct {
 	client *businesscentral.Client
-	page   *accountingsyncports.AccountingChangePage
+	page   *accountingconnectorports.AccountingChangePage
 	latest time.Time
 	read   int
 }
@@ -243,10 +249,10 @@ type changeCollector struct {
 func newChangeCollector(client *businesscentral.Client) *changeCollector {
 	return &changeCollector{
 		client: client,
-		page: &accountingsyncports.AccountingChangePage{
-			Payments:   []accountingsyncports.AccountingInboundPayment{},
-			Documents:  []accountingsyncports.AccountingChangedDocument{},
-			References: []accountingsyncports.AccountingChangedReference{},
+		page: &accountingconnectorports.AccountingChangePage{
+			Payments:   []accountingconnectorports.AccountingInboundPayment{},
+			Documents:  []accountingconnectorports.AccountingChangedDocument{},
+			References: []accountingconnectorports.AccountingChangedReference{},
 		},
 	}
 }
@@ -254,7 +260,7 @@ func newChangeCollector(client *businesscentral.Client) *changeCollector {
 func (c *changeCollector) run(
 	ctx context.Context,
 	cursor *changeCursor,
-) (*accountingsyncports.AccountingChangePage, error) {
+) (*accountingconnectorports.AccountingChangePage, error) {
 	since := cursor.since
 	for idx := cursor.index; idx < len(cursor.targets); idx++ {
 		if err := c.readTarget(ctx, cursor.targets[idx], &since); err != nil {
@@ -301,23 +307,23 @@ func (c *changeCollector) readTarget(
 	case targetSalesInvoices, targetSalesCreditMemos, targetPurchaseInvoices, targetPurchaseCredits:
 		return c.readDocuments(ctx, documentTargets[target], since)
 	case targetAccounts:
-		accounts, err := c.client.Accounts(ctx, since)
+		accounts, err := businesscentralref.Accounts(ctx, c.client, since)
 		for idx := range accounts {
 			c.seen(accounts[idx].LastModified)
-			c.reference(accountObjectOf(&accounts[idx]))
+			c.reference(bcrefsync.AccountObjectOf(&accounts[idx]))
 		}
 		return err
 	case targetItems:
-		items, err := c.client.Items(ctx, since)
+		items, err := businesscentralref.Items(ctx, c.client, since)
 		for idx := range items {
 			c.seen(items[idx].LastModified)
-			c.reference(itemObjectOf(&items[idx]))
+			c.reference(bcrefsync.ItemObjectOf(&items[idx]))
 		}
 		return err
 	case targetCustomers:
-		return c.readParties(ctx, businesscentral.PartyCustomer, since)
+		return c.readParties(ctx, businesscentralref.PartyCustomer, since)
 	case targetVendors:
-		return c.readParties(ctx, businesscentral.PartyVendor, since)
+		return c.readParties(ctx, businesscentralref.PartyVendor, since)
 	default:
 		return errChangeCursor
 	}
@@ -325,33 +331,36 @@ func (c *changeCollector) readTarget(
 
 func (c *changeCollector) readParties(
 	ctx context.Context,
-	kind businesscentral.PartyKind,
+	kind businesscentralref.PartyKind,
 	since *time.Time,
 ) error {
-	parties, err := c.client.Parties(ctx, kind, since)
+	parties, err := businesscentralref.Parties(ctx, c.client, kind, since)
 	if err != nil {
 		return err
 	}
 	referenceKind := referenceKindOf(kind)
 	for idx := range parties {
 		c.seen(parties[idx].LastModified)
-		c.reference(partyObjectOf(referenceKind, &parties[idx]))
+		c.reference(bcrefsync.PartyObjectOf(referenceKind, &parties[idx]))
 	}
 	return nil
 }
 
-func (c *changeCollector) reference(obj *accountingsync.AccountingReferenceObject) {
-	c.page.References = append(c.page.References, accountingsyncports.AccountingChangedReference{
-		Object: obj,
-	})
+func (c *changeCollector) reference(obj *accountingmapping.AccountingReferenceObject) {
+	c.page.References = append(
+		c.page.References,
+		accountingconnectorports.AccountingChangedReference{
+			Object: obj,
+		},
+	)
 }
 
 func (c *changeCollector) readDocuments(
 	ctx context.Context,
-	kind businesscentral.DocumentKind,
+	kind businesscentraldocs.DocumentKind,
 	since *time.Time,
 ) error {
-	docs, err := c.client.Documents(ctx, kind, since)
+	docs, err := businesscentraldocs.Documents(ctx, c.client, kind, since)
 	if err != nil {
 		return err
 	}
@@ -362,30 +371,34 @@ func (c *changeCollector) readDocuments(
 		if doc.ID == "" {
 			continue
 		}
-		operation := accountingsyncports.AccountingChangeUpsert
-		if retired(doc.Status) {
-			operation = accountingsyncports.AccountingChangeVoid
+		operation := accountingconnectorports.AccountingChangeUpsert
+		if bcdocsync.Retired(doc.Status) {
+			operation = accountingconnectorports.AccountingChangeVoid
 		}
-		c.page.Documents = append(c.page.Documents, accountingsyncports.AccountingChangedDocument{
-			ObjectTypes: types,
-			ExternalID:  doc.ID,
-			Operation:   operation,
-			ModifiedAt:  unixOrZero(doc.LastModified),
-		})
+		c.page.Documents = append(
+			c.page.Documents,
+			accountingconnectorports.AccountingChangedDocument{
+				ObjectTypes: types,
+				ExternalID:  doc.ID,
+				Operation:   operation,
+				ModifiedAt:  unixOrZero(doc.LastModified),
+			},
+		)
 	}
 	return nil
 }
 
-func documentObjectTypes(kind businesscentral.DocumentKind) []accountingsync.SyncObjectType {
+func documentObjectTypes(kind businesscentraldocs.DocumentKind) []accountingsync.SyncObjectType {
 	switch kind {
-	case businesscentral.DocumentSalesInvoice:
+	case businesscentraldocs.DocumentSalesInvoice:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectInvoice,
 			accountingsync.SyncObjectDebitMemo,
 		}
-	case businesscentral.DocumentSalesCreditMemo:
+	case businesscentraldocs.DocumentSalesCreditMemo:
 		return []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}
-	case businesscentral.DocumentPurchaseInvoice, businesscentral.DocumentPurchaseCreditMemo:
+	case businesscentraldocs.DocumentPurchaseInvoice,
+		businesscentraldocs.DocumentPurchaseCreditMemo:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectCarrierBill,
 			accountingsync.SyncObjectDriverBill,

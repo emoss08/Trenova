@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/gin-gonic/gin"
 )
 
@@ -13,21 +13,21 @@ const (
 	permissionsPolicyValue   = "camera=(), microphone=(self), geolocation=()"
 )
 
-func NewSecurityHeadersMiddleware(cfg *config.Config) gin.HandlerFunc {
+func NewSecurityHeadersMiddleware(cfg *appconfig.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ApplySecurityHeaders(c.Writer.Header(), cfg)
 		c.Next()
 	}
 }
 
-func ApplySecurityHeaders(header http.Header, cfg *config.Config) {
+func ApplySecurityHeaders(header http.Header, cfg *appconfig.Config) {
 	header.Set("X-Content-Type-Options", "nosniff")
 	header.Set("X-Frame-Options", "DENY")
 	header.Set("Referrer-Policy", "no-referrer")
 	header.Set("Permissions-Policy", permissionsPolicyValue)
 	header.Set("Content-Security-Policy", apiContentSecurityPolicy)
 
-	if cfg.App.IsProduction() || cfg.App.IsStaging() {
+	if cfg.IsProduction() || cfg.IsStaging() {
 		header.Set("Strict-Transport-Security", hstsHeaderValue)
 	}
 }

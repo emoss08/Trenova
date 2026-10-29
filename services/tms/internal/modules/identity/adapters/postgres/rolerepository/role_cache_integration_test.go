@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,14 +29,14 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 	require.NoError(t, repo.Create(tctx, parent))
 	child := newTestRole("Cached Child", []pulid.ID{parent.ID}, "customer")
 	require.NoError(t, repo.Create(tctx, child))
-	require.NoError(t, repo.CreateAssignment(tctx, &permission.UserRoleAssignment{
+	require.NoError(t, repo.CreateAssignment(tctx, &rbac.UserRoleAssignment{
 		UserID:         data.User.ID,
 		OrganizationID: data.Organization.ID,
 		RoleID:         child.ID,
 		AssignedBy:     data.User.ID,
 	}))
 
-	var assignments []*permission.UserRoleAssignment
+	var assignments []*rbac.UserRoleAssignment
 	readAssignments := func() error {
 		var readErr error
 		assignments, readErr = repo.GetUserRoleAssignments(
@@ -45,7 +46,7 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 		)
 		return readErr
 	}
-	var roles []*permission.Role
+	var roles []*rbac.Role
 	readRoles := func() error {
 		var readErr error
 		roles, readErr = repo.GetRolesWithInheritance(tctx, []pulid.ID{child.ID})
@@ -68,7 +69,7 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 	})
 
 	t.Run("a new assignment invalidates the user's assignments", func(t *testing.T) {
-		require.NoError(t, repo.CreateAssignment(tctx, &permission.UserRoleAssignment{
+		require.NoError(t, repo.CreateAssignment(tctx, &rbac.UserRoleAssignment{
 			UserID:         data.User.ID,
 			OrganizationID: data.Organization.ID,
 			RoleID:         parent.ID,
@@ -82,7 +83,7 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 	})
 
 	t.Run("changing a parent role's permissions invalidates the closure", func(t *testing.T) {
-		parent.Permissions = []*permission.ResourcePermission{
+		parent.Permissions = []*rbac.ResourcePermission{
 			{
 				Resource:   "shipment",
 				Operations: []permission.Operation{permission.OpRead},
@@ -97,7 +98,7 @@ func TestRoleResolutionIsServedFromTheResultCacheUntilARoleChanges(t *testing.T)
 		require.NoError(t, repo.Update(tctx, parent))
 
 		cachetest.RequireMiss(t, cached, readRoles)
-		byName := make(map[string]*permission.Role, len(roles))
+		byName := make(map[string]*rbac.Role, len(roles))
 		for _, role := range roles {
 			byName[role.Name] = role
 		}

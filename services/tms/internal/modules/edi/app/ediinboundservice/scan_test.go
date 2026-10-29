@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,7 +26,7 @@ func TestProcessInboundFile_QuarantinesAnInfectedFileBeforeParsing(t *testing.T)
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.InboundFileStatusQuarantined, file.Status)
+	assert.Equal(t, ediinboundfile.InboundFileStatusQuarantined, file.Status)
 	assert.Contains(t, file.FailureReason, "Win.Test.EICAR_HDB-1")
 	assert.Empty(t, file.InterchangeControlNumber)
 	require.Len(t, gate.Requests(), 1)
@@ -42,7 +42,7 @@ func TestProcessInboundFile_HoldsTheFileWhenTheScannerCannotCheckIt(t *testing.T
 		contentscanports.ErrScannerUnavailable,
 	)
 	fixture.inboundFileRepo.EXPECT().
-		GetInboundFileByID(mock.Anything, ediports.GetEDIInboundFileByIDRequest{
+		GetInboundFileByID(mock.Anything, edimessageports.GetEDIInboundFileByIDRequest{
 			ID:         fixture.file.ID,
 			TenantInfo: fixture.tenantInfo(),
 		}).
@@ -55,7 +55,7 @@ func TestProcessInboundFile_HoldsTheFileWhenTheScannerCannotCheckIt(t *testing.T
 	})
 
 	require.ErrorIs(t, err, contentscanports.ErrScannerUnavailable)
-	assert.Equal(t, edi.InboundFileStatusReceived, fixture.file.Status)
+	assert.Equal(t, ediinboundfile.InboundFileStatusReceived, fixture.file.Status)
 }
 
 func TestProcessInboundFile_QuarantinesAFileTooLargeToScanInsteadOfRetryingIt(t *testing.T) {
@@ -73,6 +73,6 @@ func TestProcessInboundFile_QuarantinesAFileTooLargeToScanInsteadOfRetryingIt(t 
 	})
 
 	require.NoError(t, err)
-	assert.Equal(t, edi.InboundFileStatusQuarantined, file.Status)
+	assert.Equal(t, ediinboundfile.InboundFileStatusQuarantined, file.Status)
 	assert.Contains(t, file.FailureReason, "larger than the content scanner can check")
 }

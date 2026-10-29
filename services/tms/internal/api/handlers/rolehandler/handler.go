@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	_ "github.com/emoss08/trenova/internal/modules/identity/domain/tenant" // import for documentation generation
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -102,7 +103,7 @@ func (h *Handler) requireUserPermission(operation permission.Operation) gin.Hand
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]permission.Role]
+// @Success 200 {object} pagination.Response[[]rbac.Role]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -116,7 +117,7 @@ func (h *Handler) list(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*permission.Role], error) {
+		func() (*pagination.ListResult[*rbac.Role], error) {
 			return h.service.ListRoles(
 				c.Request.Context(),
 				&permissionports.ListRolesRequest{
@@ -132,7 +133,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Tags Roles
 // @Produce json
 // @Param roleID path string true "Role ID"
-// @Success 200 {object} permission.Role
+// @Success 200 {object} rbac.Role
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -167,7 +168,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Roles
 // @Produce json
 // @Param roleID path string true "Role ID"
-// @Success 200 {object} permission.Role
+// @Success 200 {object} rbac.Role
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -184,7 +185,7 @@ func (h *Handler) getOption(c *gin.Context) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]permission.Role]
+// @Success 200 {object} pagination.Response[[]rbac.Role]
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
@@ -197,7 +198,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*permission.Role], error) {
+		func() (*pagination.ListResult[*rbac.Role], error) {
 			return h.service.SelectRoleOptions(c.Request.Context(), req)
 		},
 	)
@@ -208,8 +209,8 @@ func (h *Handler) selectOptions(c *gin.Context) {
 // @Tags Roles
 // @Accept json
 // @Produce json
-// @Param request body permission.Role true "Role payload"
-// @Success 201 {object} permission.Role
+// @Param request body rbac.Role true "Role payload"
+// @Success 201 {object} rbac.Role
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -218,7 +219,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	role := new(permission.Role)
+	role := new(rbac.Role)
 	if err := authctx.BindJSON(c, authCtx, role); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -244,8 +245,8 @@ func (h *Handler) create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param roleID path string true "Role ID"
-// @Param request body permission.Role true "Role payload"
-// @Success 200 {object} permission.Role
+// @Param request body rbac.Role true "Role payload"
+// @Success 200 {object} rbac.Role
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -260,7 +261,7 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
-	role := new(permission.Role)
+	role := new(rbac.Role)
 	if err = authctx.BindJSON(c, authCtx, role); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -405,7 +406,7 @@ func (h *Handler) deleteHierarchy(c *gin.Context) {
 
 func (h *Handler) listConstraints(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	constraintType := permission.RoleConstraintType(c.Query("type"))
+	constraintType := rbac.RoleConstraintType(c.Query("type"))
 	constraints, err := h.service.ListRoleConstraints(
 		c.Request.Context(),
 		permissionports.ListRoleConstraintsRequest{
@@ -443,7 +444,7 @@ func (h *Handler) saveConstraint(c *gin.Context) {
 		enabled = *req.Enabled
 	}
 
-	constraint := &permission.RoleConstraint{
+	constraint := &rbac.RoleConstraint{
 		ID:          req.ID,
 		Name:        req.Name,
 		Description: req.Description,
@@ -511,7 +512,7 @@ func (h *Handler) preflight(c *gin.Context) {
 // @Produce json
 // @Param roleID path string true "Role ID"
 // @Param request body AddPermissionRequest true "Permission payload"
-// @Success 201 {object} permission.ResourcePermission
+// @Success 201 {object} rbac.ResourcePermission
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -532,7 +533,7 @@ func (h *Handler) addPermission(c *gin.Context) {
 		return
 	}
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     roleID,
 		Resource:   req.Resource,
 		Operations: req.Operations,
@@ -561,7 +562,7 @@ func (h *Handler) addPermission(c *gin.Context) {
 // @Param roleID path string true "Role ID"
 // @Param permID path string true "Permission ID"
 // @Param request body AddPermissionRequest true "Permission payload"
-// @Success 200 {object} permission.ResourcePermission
+// @Success 200 {object} rbac.ResourcePermission
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -588,7 +589,7 @@ func (h *Handler) updatePermission(c *gin.Context) {
 		return
 	}
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		ID:         permID,
 		RoleID:     roleID,
 		Resource:   req.Resource,
@@ -661,7 +662,7 @@ func (h *Handler) deletePermission(c *gin.Context) {
 // @Produce json
 // @Param roleID path string true "Role ID"
 // @Param request body AssignRoleRequest true "Role assignment payload"
-// @Success 201 {object} permission.UserRoleAssignment
+// @Success 201 {object} rbac.UserRoleAssignment
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -682,7 +683,7 @@ func (h *Handler) assignRole(c *gin.Context) {
 		return
 	}
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID:    req.UserID,
 		RoleID:    roleID,
 		ExpiresAt: req.ExpiresAt,

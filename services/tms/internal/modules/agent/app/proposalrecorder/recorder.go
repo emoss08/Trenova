@@ -10,8 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -41,19 +48,19 @@ type Params struct {
 
 	Logger    *zap.Logger
 	DB        kernelports.Transactor
-	Runs      agentports.AgentRunRepository
-	Proposals agentports.AgentProposalRepository
+	Runs      agentruntimeports.AgentRunRepository
+	Proposals agentproposalports.AgentProposalRepository
 	// Trust learns from a tool that ran on its own and failed. Optional, so
 	// the recorder still stores proposals where no ledger is wired.
-	Trust agentports.AgentTrustService `optional:"true"`
+	Trust agenttrustports.AgentTrustService `optional:"true"`
 	// Notifier tells the people who can decide that a background run left
 	// something waiting. Optional for the same reason.
-	Notifier agentports.AgentProposalNotifier `optional:"true"`
+	Notifier agentproposalports.AgentProposalNotifier `optional:"true"`
 	// Plans groups a run's pending proposals into one decision. Without it
 	// every proposal stands on its own, which is how things worked before.
 	Plans PlanStore `optional:"true"`
 	// Activity tells connected clients a proposal or plan is waiting.
-	Activity agentports.AgentActivityPublisher `optional:"true"`
+	Activity agentactivityports.AgentActivityPublisher `optional:"true"`
 	// Watchtower puts what is waiting on a person onto the one feed they
 	// read; without it the decision still stands, unannounced.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
@@ -65,12 +72,15 @@ type Params struct {
 
 // ScriptStepReader is the one read the recorder makes on the step ledger.
 type ScriptStepReader interface {
-	Get(ctx context.Context, req *agentports.GetAgentRunStepRequest) (*agent.AgentRunStep, error)
+	Get(
+		ctx context.Context,
+		req *agentruntimeports.GetAgentRunStepRequest,
+	) (*agentrunstep.AgentRunStep, error)
 }
 
 // PlanStore is the one write the recorder makes on plans.
 type PlanStore interface {
-	Create(ctx context.Context, entity *agent.AgentPlan) (*agent.AgentPlan, error)
+	Create(ctx context.Context, entity *agentplan.AgentPlan) (*agentplan.AgentPlan, error)
 }
 
 type Service struct {
@@ -79,9 +89,9 @@ type Service struct {
 	runs       RunOpener
 	proposals  ProposalStore
 	plans      PlanStore
-	trust      agentports.AgentTrustService
-	notifier   agentports.AgentProposalNotifier
-	activity   agentports.AgentActivityPublisher
+	trust      agenttrustports.AgentTrustService
+	notifier   agentproposalports.AgentProposalNotifier
+	activity   agentactivityports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
 	scripts    ScriptStepReader
 }
@@ -144,7 +154,7 @@ type OpenRunRequest struct {
 	PromptVersion    string
 	InputContextHash string
 	Summary          string
-	Fingerprint      *agent.Fingerprint
+	Fingerprint      *agentfingerprint.Fingerprint
 	TraceID          string
 	TurnID           pulid.ID
 	ParentOwnerKind  agent.RunOwnerKind
@@ -152,7 +162,7 @@ type OpenRunRequest struct {
 	DelegateCallID   string
 }
 
-type EvidenceFunc func(action agentports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
+type EvidenceFunc func(action agentruntimeports.PendingAction, sourceMessageID pulid.ID) []agentevidence.EvidenceRef
 
 type RecordRequest struct {
 	Actor      *permissionports.RequestActor
@@ -160,7 +170,7 @@ type RecordRequest struct {
 	// Run is the run the proposals belong to. When nil, one is opened from Open.
 	Run              *agent.AgentRun
 	Open             *OpenRunRequest
-	Actions          []agentports.PendingAction
+	Actions          []agentruntimeports.PendingAction
 	PlanTitle        string
 	SourceMessageIDs map[string]pulid.ID
 	Evidence         EvidenceFunc
@@ -175,7 +185,7 @@ type RecordRequest struct {
 type DelegatedActions struct {
 	Definition *agentdefinition.Definition
 	Open       *OpenRunRequest
-	Actions    []agentports.PendingAction
+	Actions    []agentruntimeports.PendingAction
 	Taint      *agent.RunTaint
 }
 
@@ -183,10 +193,10 @@ type RecordResult struct {
 	Run       *agent.AgentRun
 	Proposals []*agent.AgentProposal
 	// Plan is set when the run's pending proposals were grouped into one.
-	Plan *agent.AgentPlan
+	Plan *agentplan.AgentPlan
 	// Batches are the plans of a script's intents, one per script that
 	// prepared two or more; a script's single intent is a proposal.
-	Batches   []*agent.AgentPlan
+	Batches   []*agentplan.AgentPlan
 	Delegated []DelegatedRecord
 }
 
@@ -200,7 +210,7 @@ type runGroup struct {
 	definition *agentdefinition.Definition
 	run        *agent.AgentRun
 	open       *OpenRunRequest
-	actions    []agentports.PendingAction
+	actions    []agentruntimeports.PendingAction
 	taint      *agent.RunTaint
 	delegated  bool
 	proposals  []*agent.AgentProposal
@@ -290,12 +300,12 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 // filedPlans are the decisions a record opened: the turn's own plan of the
 // model's calls, and one batch for each script that prepared several writes.
 type filedPlans struct {
-	turn    *agent.AgentPlan
-	batches []*agent.AgentPlan
+	turn    *agentplan.AgentPlan
+	batches []*agentplan.AgentPlan
 }
 
-func (p filedPlans) all() []*agent.AgentPlan {
-	all := make([]*agent.AgentPlan, 0, len(p.batches)+1)
+func (p filedPlans) all() []*agentplan.AgentPlan {
+	all := make([]*agentplan.AgentPlan, 0, len(p.batches)+1)
 	if p.turn != nil {
 		all = append(all, p.turn)
 	}
@@ -328,7 +338,7 @@ func recordResult(groups []*runGroup, plans filedPlans) *RecordResult {
 	return result
 }
 
-func planDefinition(groups []*runGroup, plan *agent.AgentPlan) *agentdefinition.Definition {
+func planDefinition(groups []*runGroup, plan *agentplan.AgentPlan) *agentdefinition.Definition {
 	if plan == nil {
 		return nil
 	}
@@ -459,12 +469,15 @@ type planOpening struct {
 	groups        []*runGroup
 	steps         []planStep
 	scriptStepKey string
-	script        *agent.ScriptOrigin
+	script        *agentplan.ScriptOrigin
 	title         string
 	now           int64
 }
 
-func (s *Service) planSteps(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+func (s *Service) planSteps(
+	ctx context.Context,
+	opening *planOpening,
+) (*agentplan.AgentPlan, error) {
 	plan, err := s.openPlan(ctx, opening)
 	if err != nil || plan == nil {
 		return nil, err
@@ -482,7 +495,7 @@ func (s *Service) planSteps(ctx context.Context, opening *planOpening) (*agent.A
 func (s *Service) proposalFor(
 	req *RecordRequest,
 	group *runGroup,
-	action *agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	now int64,
 ) *agent.AgentProposal {
 	sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
@@ -511,8 +524,8 @@ func (s *Service) proposalFor(
 		proposal.TargetID = action.Target.ID
 		proposal.TargetVersion = action.Target.Version
 	}
-	applyTaint(proposal, *action, group.taint)
-	applyExecution(proposal, *action, now)
+	applyTaint(proposal, action, group.taint)
+	applyExecution(proposal, action, now)
 	applyExecutor(proposal, action, req.Actor)
 
 	return proposal
@@ -546,7 +559,10 @@ func (s planStep) at(callOrder map[string]int) int {
 // at least two of them, whichever agent filed each. One pending action is a
 // proposal, as before; two or more are a sequence, run in the order the
 // conversation asked for them.
-func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.AgentPlan, error) {
+func (s *Service) openPlan(
+	ctx context.Context,
+	opening *planOpening,
+) (*agentplan.AgentPlan, error) {
 	actor, groups, steps := opening.actor, opening.groups, opening.steps
 	scriptStepKey, now := opening.scriptStepKey, opening.now
 	if s.plans == nil || len(steps) < 2 {
@@ -569,13 +585,13 @@ func (s *Service) openPlan(ctx context.Context, opening *planOpening) (*agent.Ag
 		}
 	}
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          owner.run.ID,
 		Title:          planTitle(opening.title, owner.definition, len(steps), scriptStepKey != ""),
 		Summary:        planSummary(owner.run, rationale),
-		Status:         agent.PlanStatusPending,
+		Status:         agentplan.PlanStatusPending,
 		StepCount:      len(steps),
 		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
 		ScriptStepKey:  scriptStepKey,
@@ -597,7 +613,7 @@ func planTitle(
 	steps int,
 	fromScript bool,
 ) string {
-	if title, err := agent.NamedPlanTitle(named); err == nil {
+	if title, err := agentplan.NamedPlanTitle(named); err == nil {
 		return title
 	}
 
@@ -632,7 +648,7 @@ func (s *Service) notifyPending(
 		return
 	}
 
-	if err := s.notifier.NotifyPending(ctx, agentports.PendingProposalsNotice{
+	if err := s.notifier.NotifyPending(ctx, agentproposalports.PendingProposalsNotice{
 		Definition: definition,
 		Run:        run,
 		Proposals:  proposals,
@@ -703,7 +719,7 @@ func (s *Service) openRun(
 // the run read any is clean, though the run it belongs to is not.
 func applyTaint(
 	proposal *agent.AgentProposal,
-	action agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	taint *agent.RunTaint,
 ) {
 	proposal.EgressClass = action.Egress
@@ -722,7 +738,11 @@ func applyTaint(
 	proposal.Taint = taint.Clone()
 }
 
-func applyExecution(proposal *agent.AgentProposal, action agentports.PendingAction, now int64) {
+func applyExecution(
+	proposal *agent.AgentProposal,
+	action *agentruntimeports.PendingAction,
+	now int64,
+) {
 	if action.Withdrawn {
 		proposal.Status = agent.ProposalStatusSuperseded
 
@@ -759,7 +779,7 @@ func applyExecution(proposal *agent.AgentProposal, action agentports.PendingActi
 
 func applyExecutor(
 	proposal *agent.AgentProposal,
-	action *agentports.PendingAction,
+	action *agentruntimeports.PendingAction,
 	actor *permissionports.RequestActor,
 ) {
 	if !action.Executed && !action.Simulated {
@@ -811,7 +831,7 @@ func (s *Service) announce(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	proposals []*agent.AgentProposal,
-	plans []*agent.AgentPlan,
+	plans []*agentplan.AgentPlan,
 ) {
 	if s.activity == nil {
 		return
@@ -819,17 +839,17 @@ func (s *Service) announce(
 
 	auditActor := actor.AuditActorOrSystem()
 	for _, proposal := range proposals {
-		s.activity.ProposalChanged(ctx, proposal, auditActor, agentports.ActivityCreated)
+		s.activity.ProposalChanged(ctx, proposal, auditActor, agentactivityports.ActivityCreated)
 	}
 	for _, plan := range plans {
-		s.activity.PlanChanged(ctx, plan, auditActor, agentports.ActivityCreated)
+		s.activity.PlanChanged(ctx, plan, auditActor, agentactivityports.ActivityCreated)
 	}
 }
 
 func (s *Service) projectPlan(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 ) {
 	if s.watchtower == nil || plan == nil {
 		return
@@ -875,7 +895,7 @@ func (s *Service) scriptOrigin(
 	ctx context.Context,
 	req *RecordRequest,
 	scriptStepKey string,
-) *agent.ScriptOrigin {
+) *agentplan.ScriptOrigin {
 	if s.scripts == nil || scriptStepKey == "" {
 		return nil
 	}
@@ -890,7 +910,7 @@ func (s *Service) scriptOrigin(
 		return nil
 	}
 
-	step, err := s.scripts.Get(ctx, &agentports.GetAgentRunStepRequest{
+	step, err := s.scripts.Get(ctx, &agentruntimeports.GetAgentRunStepRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: req.Actor.OrganizationID,
 			BuID:  req.Actor.BusinessUnitID,
@@ -907,7 +927,7 @@ func (s *Service) scriptOrigin(
 	return scriptOriginOf(step.Arguments)
 }
 
-func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
+func scriptOriginOf(arguments map[string]any) *agentplan.ScriptOrigin {
 	title, _ := arguments[codemode.ParamScriptTitle].(string)
 	purpose, _ := arguments[codemode.ParamScriptPurpose].(string)
 	code, _ := arguments[codemode.ParamScriptCode].(string)
@@ -915,5 +935,5 @@ func scriptOriginOf(arguments map[string]any) *agent.ScriptOrigin {
 		return nil
 	}
 
-	return &agent.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
+	return &agentplan.ScriptOrigin{Title: title, Purpose: purpose, Code: code}
 }

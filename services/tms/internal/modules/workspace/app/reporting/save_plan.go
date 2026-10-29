@@ -33,7 +33,7 @@ func NewDefinition(req *SaveDefinitionRequest, catalogVersion string) *report.Re
 		Tags:           req.Tags,
 		Kind:           report.DefinitionKindCustom,
 		OwnerID:        req.TenantInfo.UserID,
-		Visibility:     defaultVisibility(req.Visibility),
+		Visibility:     DefaultVisibility(req.Visibility),
 		Status:         defaultStatus(req.Status),
 		CatalogVersion: catalogVersion,
 		Definition:     req.Definition,
@@ -50,7 +50,7 @@ func ApplyDefinitionSave(
 	existing.Description = req.Description
 	existing.Category = req.Category
 	existing.Tags = req.Tags
-	existing.Visibility = defaultVisibility(req.Visibility)
+	existing.Visibility = DefaultVisibility(req.Visibility)
 	existing.Status = defaultStatus(req.Status)
 	existing.Definition = req.Definition
 	existing.CatalogVersion = catalogVersion
@@ -86,28 +86,4 @@ func NewCannedFork(
 		Definition:     entry.Definition,
 		DefaultFormat:  entry.DefaultFormat,
 	}
-}
-
-func NewDashboard(req *SaveDashboardRequest) *report.Dashboard {
-	return &report.Dashboard{
-		BusinessUnitID: req.TenantInfo.BuID,
-		OrganizationID: req.TenantInfo.OrgID,
-		Name:           req.Name,
-		Description:    req.Description,
-		Category:       req.Category,
-		Tags:           req.Tags,
-		OwnerID:        req.TenantInfo.UserID,
-		Visibility:     defaultVisibility(req.Visibility),
-		Layout:         defaultLayout(req.Layout),
-	}
-}
-
-func ApplyDashboardSave(existing *report.Dashboard, req *SaveDashboardRequest) {
-	existing.Name = req.Name
-	existing.Description = req.Description
-	existing.Category = req.Category
-	existing.Tags = req.Tags
-	existing.Visibility = defaultVisibility(req.Visibility)
-	existing.Layout = defaultLayout(req.Layout)
-	existing.Version = req.Version
 }

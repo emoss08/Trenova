@@ -4,48 +4,81 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func answer(text string) *agentports.StructuredCompletionResult {
-	return &agentports.StructuredCompletionResult{Text: text, ModelIdentifier: "test-model"}
+func answer(text string) *llmports.StructuredCompletionResult {
+	return &llmports.StructuredCompletionResult{Text: text, ModelIdentifier: "test-model"}
 }
 
-func (f *fixture) openingPlan(t *testing.T, question string) *agentports.ChapterPlan {
+func (f *fixture) openingPlan(t *testing.T, question string) *assistantchapterports.ChapterPlan {
 	t.Helper()
 
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, question)
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusRunning,
+		question,
+	)
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 	require.True(t, plan.Opens)
 
 	return plan
 }
 
-func (f *fixture) scheduledPlan(t *testing.T, prompt string) *agentports.ChapterPlan {
+func (f *fixture) scheduledPlan(t *testing.T, prompt string) *assistantchapterports.ChapterPlan {
 	t.Helper()
 
-	turn := f.turn(conversation.AssistantTurnOriginScheduled, conversation.AssistantTurnStatusRunning, prompt)
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginScheduled,
+		conversation.AssistantTurnStatusRunning,
+		prompt,
+	)
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 	require.True(t, plan.Opens)
 
 	return plan
 }
 
-func (f *fixture) decidingPlan(t *testing.T, question string) *agentports.ChapterPlan {
+func (f *fixture) decidingPlan(t *testing.T, question string) *assistantchapterports.ChapterPlan {
 	t.Helper()
 
-	earlier := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
-	f.chapter(earlier.ID, "Late loads on the Dallas lane", conversation.ChapterTitleModel, sequence(0))
+	earlier := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusCompleted,
+		"Late loads",
+	)
+	f.chapter(
+		earlier.ID,
+		"Late loads on the Dallas lane",
+		conversationchapter.ChapterTitleModel,
+		sequence(0),
+	)
 	f.conversations.recent = []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Which loads are late on the Dallas lane?"},
 		{Role: conversation.RoleAssistant, Content: "Three loads are late."},
 	}
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, question)
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusRunning,
+		question,
+	)
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 	require.True(t, plan.Decides)
 
@@ -57,7 +90,7 @@ func (f *fixture) assertAnnounced(t *testing.T, times int) {
 
 	require.Len(t, f.realtime.published, times)
 	for _, published := range f.realtime.published {
-		assert.Equal(t, agentports.ChaptersResource, published.Resource)
+		assert.Equal(t, assistantchapterports.ChaptersResource, published.Resource)
 		assert.Equal(t, "updated", published.Action)
 		assert.Equal(t, f.thread.ID, published.RecordID)
 		assert.Equal(t, f.tenant.OrgID, published.OrganizationID)
@@ -80,12 +113,16 @@ func TestApply_ANewSubjectOpensAChapterWithTheModelsCleanTitle(t *testing.T) {
 	require.Len(t, f.chapters.created, 1)
 	created := f.chapters.created[0]
 	assert.Equal(t, "Acme invoice dispute", created.Title)
-	assert.Equal(t, conversation.ChapterTitleModel, created.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleModel, created.TitleSource)
 	assert.Equal(t, plan.Turn.TurnID, created.TurnID)
 	assert.Equal(t, f.thread.ID, created.ThreadID)
 	assert.Equal(t, f.tenant.OrgID, created.OrganizationID)
 	assert.Equal(t, f.tenant.BuID, created.BusinessUnitID)
-	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: created.ID, Opened: true}, outcome)
+	assert.Equal(
+		t,
+		&assistantchapterports.ChapterOutcome{ChapterID: created.ID, Opened: true},
+		outcome,
+	)
 	f.assertAnnounced(t, 1)
 }
 
@@ -99,7 +136,7 @@ func TestApply_AFollowUpStaysInItsChapter(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Empty(t, f.chapters.created)
-	assert.Equal(t, &agentports.ChapterOutcome{}, outcome)
+	assert.Equal(t, &assistantchapterports.ChapterOutcome{}, outcome)
 	f.assertAnnounced(t, 0)
 }
 
@@ -127,8 +164,12 @@ func TestApply_TheFirstQuestionOpensItsQuietChapterInItsOwnWords(t *testing.T) {
 	require.Len(t, f.chapters.created, 1)
 	created := f.chapters.created[0]
 	assert.Equal(t, "Why is load 1200 late?", created.Title)
-	assert.Equal(t, conversation.ChapterTitleQuestion, created.TitleSource)
-	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: created.ID, Opened: true}, outcome)
+	assert.Equal(t, conversationchapter.ChapterTitleQuestion, created.TitleSource)
+	assert.Equal(
+		t,
+		&assistantchapterports.ChapterOutcome{ChapterID: created.ID, Opened: true},
+		outcome,
+	)
 	assert.Empty(t, f.scheduler.cues)
 	f.assertAnnounced(t, 1)
 }
@@ -139,12 +180,16 @@ func TestApply_AScheduledRunTakesTheModelsTitle(t *testing.T) {
 	f := newFixture(t)
 	plan := f.scheduledPlan(t, "list the loads still late on the Dallas lane")
 
-	outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"Late loads on the Dallas lane"}`))
+	outcome, err := f.svc.Apply(
+		t.Context(),
+		plan,
+		answer(`{"title":"Late loads on the Dallas lane"}`),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.chapters.created, 1)
 	assert.Equal(t, "Late loads on the Dallas lane", f.chapters.created[0].Title)
-	assert.Equal(t, conversation.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
 	assert.False(t, outcome.Fallback)
 	assert.True(t, outcome.Opened)
 }
@@ -153,24 +198,50 @@ func TestApply_OpeningASecondChapterNamesTheQuietFirstOne(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	first := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
-	f.chapter(first.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "Now the Acme invoice")
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseOpened))
+	first := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusCompleted,
+		"Late loads",
+	)
+	f.chapter(first.ID, "Late loads", conversationchapter.ChapterTitleQuestion, sequence(0))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusRunning,
+		"Now the Acme invoice",
+	)
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
-	_, err = f.svc.Apply(t.Context(), plan, answer(`{"newChapter":true,"title":"Acme invoice dispute"}`))
+	_, err = f.svc.Apply(
+		t.Context(),
+		plan,
+		answer(`{"newChapter":true,"title":"Acme invoice dispute"}`),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, f.scheduler.cues, 1)
 	assert.Equal(t, first.ID, f.scheduler.cues[0].TurnID)
-	assert.Equal(t, agentports.ChapterPhaseRequested, f.scheduler.cues[0].Phase)
+	assert.Equal(t, assistantchapterports.ChapterPhaseRequested, f.scheduler.cues[0].Phase)
 
 	stays := newFixture(t)
-	earlier := stays.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "Late loads")
-	stays.chapter(earlier.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
-	next := stays.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusRunning, "And the third one?")
-	same, err := stays.svc.Plan(t.Context(), stays.request(next.ID, agentports.ChapterPhaseOpened))
+	earlier := stays.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusCompleted,
+		"Late loads",
+	)
+	stays.chapter(earlier.ID, "Late loads", conversationchapter.ChapterTitleQuestion, sequence(0))
+	next := stays.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusRunning,
+		"And the third one?",
+	)
+	same, err := stays.svc.Plan(
+		t.Context(),
+		stays.request(next.ID, assistantchapterports.ChapterPhaseOpened),
+	)
 	require.NoError(t, err)
 
 	_, err = stays.svc.Apply(t.Context(), same, answer(`{"newChapter":false,"title":""}`))
@@ -198,7 +269,7 @@ func TestApply_ATitleNamingANumberTheConversationLacksIsRefused(t *testing.T) {
 
 		require.Len(t, f.chapters.created, 1)
 		assert.Equal(t, "Why is load 1200 late", f.chapters.created[0].Title)
-		assert.Equal(t, conversation.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
+		assert.Equal(t, conversationchapter.ChapterTitleSchedule, f.chapters.created[0].TitleSource)
 		assert.True(t, outcome.Fallback)
 	})
 
@@ -245,7 +316,7 @@ func TestApply_AnAnswerThatCannotBeReadCountsAsNone(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Empty(t, f.chapters.created)
-		assert.Equal(t, &agentports.ChapterOutcome{}, outcome)
+		assert.Equal(t, &assistantchapterports.ChapterOutcome{}, outcome)
 	})
 }
 
@@ -253,12 +324,15 @@ func TestApply_ASkippedPlanChangesNothing(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	plan := &agentports.ChapterPlan{Turn: *f.request("atrn_a", agentports.ChapterPhaseOpened), Skip: skipNoTurn}
+	plan := &assistantchapterports.ChapterPlan{
+		Turn: *f.request("atrn_a", assistantchapterports.ChapterPhaseOpened),
+		Skip: skipNoTurn,
+	}
 
 	outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"Late loads"}`))
 	require.NoError(t, err)
 
-	assert.Equal(t, &agentports.ChapterOutcome{}, outcome)
+	assert.Equal(t, &assistantchapterports.ChapterOutcome{}, outcome)
 	assert.Empty(t, f.chapters.created)
 	f.assertAnnounced(t, 0)
 }
@@ -267,15 +341,26 @@ func TestApply_RemovesAnEmptyChapterButNeverOneThePersonNamed(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusStopped, "Late loads")
-	chapter := f.chapter(turn.ID, "Late loads", conversation.ChapterTitleQuestion, nil)
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseAnswered))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusStopped,
+		"Late loads",
+	)
+	chapter := f.chapter(turn.ID, "Late loads", conversationchapter.ChapterTitleQuestion, nil)
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	outcome, err := f.svc.Apply(t.Context(), plan, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: chapter.ID, Removed: true}, outcome)
+	assert.Equal(
+		t,
+		&assistantchapterports.ChapterOutcome{ChapterID: chapter.ID, Removed: true},
+		outcome,
+	)
 	require.Len(t, f.chapters.deleted, 1)
 	assert.Equal(t, chapter.ID, f.chapters.deleted[0].ID)
 	assert.Equal(t, f.thread.ID, f.chapters.deleted[0].ThreadID)
@@ -288,8 +373,8 @@ func TestApply_ARemovalThatFindsNothingIsNotAnnounced(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	plan := &agentports.ChapterPlan{
-		Turn:      *f.request("atrn_a", agentports.ChapterPhaseAnswered),
+	plan := &assistantchapterports.ChapterPlan{
+		Turn:      *f.request("atrn_a", assistantchapterports.ChapterPhaseAnswered),
 		ChapterID: "achp_gone",
 		Remove:    true,
 	}
@@ -306,25 +391,45 @@ func TestApply_RenamesAnAnsweredChapterWithTheModelsTitle(t *testing.T) {
 
 	f := newFixture(t)
 	question := "which loads are late on the Dallas lane?"
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, question)
-	chapter := f.chapter(turn.ID, "Which loads are late on the Dallas lane?", conversation.ChapterTitleQuestion, sequence(0))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusCompleted,
+		question,
+	)
+	chapter := f.chapter(
+		turn.ID,
+		"Which loads are late on the Dallas lane?",
+		conversationchapter.ChapterTitleQuestion,
+		sequence(0),
+	)
 	f.conversations.byTurn[turn.ID] = []conversation.Message{
 		{Role: conversation.RoleUser, Content: question},
 		{Role: conversation.RoleAssistant, Content: "Three loads are late."},
 	}
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseRequested),
+	)
 	require.NoError(t, err)
 
-	outcome, err := f.svc.Apply(t.Context(), plan, answer(`{"title":"late loads on the Dallas lane"}`))
+	outcome, err := f.svc.Apply(
+		t.Context(),
+		plan,
+		answer(`{"title":"late loads on the Dallas lane"}`),
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: chapter.ID, Retitled: true}, outcome)
+	assert.Equal(
+		t,
+		&assistantchapterports.ChapterOutcome{ChapterID: chapter.ID, Retitled: true},
+		outcome,
+	)
 	require.Len(t, f.chapters.retitled, 1)
 	retitled := f.chapters.retitled[0]
 	assert.Equal(t, chapter.ID, retitled.ID)
 	assert.Equal(t, f.thread.ID, retitled.ThreadID)
 	assert.Equal(t, "Late loads on the Dallas lane", retitled.Title)
-	assert.Equal(t, conversation.ChapterTitleModel, retitled.TitleSource)
+	assert.Equal(t, conversationchapter.ChapterTitleModel, retitled.TitleSource)
 	assert.Nil(t, retitled.Version, "a model's rename never carries a person's version")
 	f.assertAnnounced(t, 1)
 }
@@ -333,18 +438,30 @@ func TestApply_ARenameWithoutAnAnswerKeepsTheTitle(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	turn := f.turn(conversation.AssistantTurnOriginPerson, conversation.AssistantTurnStatusCompleted, "late loads")
-	chapter := f.chapter(turn.ID, "Late loads", conversation.ChapterTitleQuestion, sequence(0))
+	turn := f.turn(
+		conversationturn.AssistantTurnOriginPerson,
+		conversation.AssistantTurnStatusCompleted,
+		"late loads",
+	)
+	chapter := f.chapter(
+		turn.ID,
+		"Late loads",
+		conversationchapter.ChapterTitleQuestion,
+		sequence(0),
+	)
 	f.conversations.byTurn[turn.ID] = []conversation.Message{
 		{Role: conversation.RoleUser, Content: "late loads"},
 	}
-	plan, err := f.svc.Plan(t.Context(), f.request(turn.ID, agentports.ChapterPhaseAnswered))
+	plan, err := f.svc.Plan(
+		t.Context(),
+		f.request(turn.ID, assistantchapterports.ChapterPhaseAnswered),
+	)
 	require.NoError(t, err)
 
 	outcome, err := f.svc.Apply(t.Context(), plan, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, &agentports.ChapterOutcome{ChapterID: chapter.ID}, outcome)
+	assert.Equal(t, &assistantchapterports.ChapterOutcome{ChapterID: chapter.ID}, outcome)
 	assert.Empty(t, f.chapters.retitled)
 	f.assertAnnounced(t, 0)
 }
@@ -353,10 +470,10 @@ func TestApply_ARenameOfAChapterSinceRemovedIsQuiet(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
-	plan := &agentports.ChapterPlan{
-		Turn:        *f.request("atrn_a", agentports.ChapterPhaseAnswered),
+	plan := &assistantchapterports.ChapterPlan{
+		Turn:        *f.request("atrn_a", assistantchapterports.ChapterPhaseAnswered),
 		ChapterID:   "achp_gone",
-		ModelSource: conversation.ChapterTitleModel,
+		ModelSource: conversationchapter.ChapterTitleModel,
 		Evidence:    []string{"late loads"},
 	}
 

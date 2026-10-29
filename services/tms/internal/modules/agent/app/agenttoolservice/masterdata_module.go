@@ -2,16 +2,21 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/commoditytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/equipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/insighttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/locationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/partytools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
@@ -25,33 +30,33 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 )
 
-var _ masterdatatools.CarrierKeeper = (*carrierservice.Service)(nil)
+var _ partytools.CarrierKeeper = (*carrierservice.Service)(nil)
 
-var _ masterdatatools.CustomerKeeper = (*customerservice.Service)(nil)
+var _ partytools.CustomerKeeper = (*customerservice.Service)(nil)
 
-var _ masterdatatools.CommodityKeeper = (*commodityservice.Service)(nil)
+var _ commoditytools.CommodityKeeper = (*commodityservice.Service)(nil)
 
-var _ masterdatatools.CapacityKeeper = (*carriercapacityservice.Service)(nil)
+var _ partytools.CapacityKeeper = (*carriercapacityservice.Service)(nil)
 
-var _ masterdatatools.HazmatKeeper = (*hazardousmaterialservice.Service)(nil)
+var _ commoditytools.HazmatKeeper = (*hazardousmaterialservice.Service)(nil)
 
-var _ masterdatatools.LocationKeeper = (*locationservice.Service)(nil)
+var _ locationtools.LocationKeeper = (*locationservice.Service)(nil)
 
-var _ masterdatatools.TractorKeeper = (*tractorservice.Service)(nil)
+var _ equipmenttools.TractorKeeper = (*tractorservice.Service)(nil)
 
-var _ masterdatatools.TrailerKeeper = (*trailerservice.Service)(nil)
+var _ equipmenttools.TrailerKeeper = (*trailerservice.Service)(nil)
 
-var _ receivabletools.DocumentKeeper = (*documentservice.Service)(nil)
+var _ documenttools.DocumentKeeper = (*documentservice.Service)(nil)
 
 var _ insighttools.InsightRestorer = (*insightservice.Service)(nil)
 
 var _ alerttools.AlertKeeper = (*tablechangealertservice.Service)(nil)
 
-var _ receivabletools.WatchtowerDismisser = (*watchtowerservice.Dismisser)(nil)
+var _ exceptiontools.WatchtowerDismisser = (*watchtowerservice.Dismisser)(nil)
 
-var _ receivabletools.CaptureKeeper = (*captureservice.Service)(nil)
+var _ documenttools.CaptureKeeper = (*capturefiling.Service)(nil)
 
-var _ masterdatatools.StateLookup = usstateports.UsStateRepository(nil)
+var _ masterdatakit.StateLookup = usstateports.UsStateRepository(nil)
 
 func masterDataToolProviders() []any {
 	return []any{
@@ -100,226 +105,236 @@ func masterDataToolProviders() []any {
 func provideCreateCarrierTool(
 	carriers *carrierservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateCarrierTool(carriers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewCreateCarrierTool(carriers, states)
 }
 
 func provideUpdateCarrierTool(
 	carriers *carrierservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCarrierTool(carriers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewUpdateCarrierTool(carriers, states)
 }
 
 func provideUpdateCarrierStatusTool(
 	carriers *carrierservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCarrierStatusTool(carriers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewUpdateCarrierStatusTool(carriers, states)
 }
 
 func provideCorrectChargeCodeTool(
 	billing billingqueueports.BillingQueueService,
 	customers *customerservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return invoicetools.NewCorrectChargeCodeTool(billing, customers)
 }
 
 func provideCreateCustomerTool(
 	customers *customerservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateCustomerTool(customers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewCreateCustomerTool(customers, states)
 }
 
 func provideUpdateCustomerTool(
 	customers *customerservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCustomerTool(customers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewUpdateCustomerTool(customers, states)
 }
 
 func provideUpdateCustomerStatusTool(
 	customers *customerservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCustomerStatusTool(customers, states)
+) agenttoolports.AgentTool {
+	return partytools.NewUpdateCustomerStatusTool(customers, states)
 }
 
-func provideCreateCommodityTool(commodities *commodityservice.Service) agentports.AgentTool {
-	return masterdatatools.NewCreateCommodityTool(commodities)
+func provideCreateCommodityTool(commodities *commodityservice.Service) agenttoolports.AgentTool {
+	return commoditytools.NewCreateCommodityTool(commodities)
 }
 
-func provideUpdateCommodityTool(commodities *commodityservice.Service) agentports.AgentTool {
-	return masterdatatools.NewUpdateCommodityTool(commodities)
+func provideUpdateCommodityTool(commodities *commodityservice.Service) agenttoolports.AgentTool {
+	return commoditytools.NewUpdateCommodityTool(commodities)
 }
 
 func provideUpdateCommodityStatusTool(
 	commodities *commodityservice.Service,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCommodityStatusTool(commodities)
+) agenttoolports.AgentTool {
+	return commoditytools.NewUpdateCommodityStatusTool(commodities)
 }
 
 func provideCreateHazardousMaterialTool(
 	materials *hazardousmaterialservice.Service,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateHazardousMaterialTool(materials)
+) agenttoolports.AgentTool {
+	return commoditytools.NewCreateHazardousMaterialTool(materials)
 }
 
 func provideUpdateHazardousMaterialTool(
 	materials *hazardousmaterialservice.Service,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateHazardousMaterialTool(materials)
+) agenttoolports.AgentTool {
+	return commoditytools.NewUpdateHazardousMaterialTool(materials)
 }
 
 func provideUpdateHazardousMaterialStatusTool(
 	materials *hazardousmaterialservice.Service,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateHazardousMaterialStatusTool(materials)
+) agenttoolports.AgentTool {
+	return commoditytools.NewUpdateHazardousMaterialStatusTool(materials)
 }
 
 func provideUpdateLocationTool(
 	locations *locationservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateLocationTool(locations, states)
+) agenttoolports.AgentTool {
+	return locationtools.NewUpdateLocationTool(locations, states)
 }
 
 func provideUpdateLocationStatusTool(
 	locations *locationservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateLocationStatusTool(locations, states)
+) agenttoolports.AgentTool {
+	return locationtools.NewUpdateLocationStatusTool(locations, states)
 }
 
 func provideCreateTractorTool(
 	tractors *tractorservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateTractorTool(tractors, states)
+) agenttoolports.AgentTool {
+	return equipmenttools.NewCreateTractorTool(tractors, states)
 }
 
 func provideUpdateTractorTool(
 	tractors *tractorservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateTractorTool(tractors, states)
+) agenttoolports.AgentTool {
+	return equipmenttools.NewUpdateTractorTool(tractors, states)
 }
 
-func provideLocateTractorTool(tractors *tractorservice.Service) agentports.AgentTool {
-	return masterdatatools.NewLocateTractorTool(tractors)
+func provideLocateTractorTool(tractors *tractorservice.Service) agenttoolports.AgentTool {
+	return equipmenttools.NewLocateTractorTool(tractors)
 }
 
 func provideCreateTrailerTool(
 	trailers *trailerservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateTrailerTool(trailers, states)
+) agenttoolports.AgentTool {
+	return equipmenttools.NewCreateTrailerTool(trailers, states)
 }
 
 func provideUpdateTrailerTool(
 	trailers *trailerservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateTrailerTool(trailers, states)
+) agenttoolports.AgentTool {
+	return equipmenttools.NewUpdateTrailerTool(trailers, states)
 }
 
-func provideLocateTrailerTool(trailers *trailerservice.Service) agentports.AgentTool {
-	return masterdatatools.NewLocateTrailerTool(trailers)
+func provideLocateTrailerTool(trailers *trailerservice.Service) agenttoolports.AgentTool {
+	return equipmenttools.NewLocateTrailerTool(trailers)
 }
 
-func provideDeleteDocumentsTool(documents *documentservice.Service) agentports.AgentTool {
-	return receivabletools.NewDeleteDocumentsTool(documents)
+func provideDeleteDocumentsTool(documents *documentservice.Service) agenttoolports.AgentTool {
+	return documenttools.NewDeleteDocumentsTool(documents)
 }
 
 func provideRestoreDocumentVersionTool(
 	documents *documentservice.Service,
-) agentports.AgentTool {
-	return receivabletools.NewRestoreDocumentVersionTool(documents)
+) agenttoolports.AgentTool {
+	return documenttools.NewRestoreDocumentVersionTool(documents)
 }
 
-func provideRestoreInsightTool(insights *insightservice.Service) agentports.AgentTool {
+func provideRestoreInsightTool(insights *insightservice.Service) agenttoolports.AgentTool {
 	return insighttools.NewRestoreInsightTool(insights)
 }
 
 func provideUpdateTableChangeAlertTool(
 	alerts *tablechangealertservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return alerttools.NewUpdateTableChangeAlertTool(alerts)
 }
 
 func provideSetTableChangeAlertStatusTool(
 	alerts *tablechangealertservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return alerttools.NewSetTableChangeAlertStatusTool(alerts)
 }
 
 func provideDeleteTableChangeAlertTool(
 	alerts *tablechangealertservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return alerttools.NewDeleteTableChangeAlertTool(alerts)
 }
 
-func provideAssignExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
-	return receivabletools.NewAssignExceptionTool(exceptions)
+func provideAssignExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
+	return exceptiontools.NewAssignExceptionTool(exceptions)
 }
 
-func provideSnoozeExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
-	return receivabletools.NewSnoozeExceptionTool(exceptions)
+func provideSnoozeExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
+	return exceptiontools.NewSnoozeExceptionTool(exceptions)
 }
 
-func provideSetExceptionDueTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
-	return receivabletools.NewSetExceptionDueTool(exceptions)
+func provideSetExceptionDueTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
+	return exceptiontools.NewSetExceptionDueTool(exceptions)
 }
 
-func provideResolveExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
-	return receivabletools.NewResolveExceptionTool(exceptions)
+func provideResolveExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
+	return exceptiontools.NewResolveExceptionTool(exceptions)
 }
 
-func provideReopenExceptionTool(exceptions watchtowerports.ExceptionService) agentports.AgentTool {
-	return receivabletools.NewReopenExceptionTool(exceptions)
+func provideReopenExceptionTool(
+	exceptions watchtowerports.ExceptionService,
+) agenttoolports.AgentTool {
+	return exceptiontools.NewReopenExceptionTool(exceptions)
 }
 
 func provideCommentOnExceptionTool(
 	exceptions watchtowerports.ExceptionService,
-) agentports.AgentTool {
-	return receivabletools.NewCommentOnExceptionTool(exceptions)
+) agenttoolports.AgentTool {
+	return exceptiontools.NewCommentOnExceptionTool(exceptions)
 }
 
 func provideDismissWatchtowerItemTool(
 	items *watchtowerservice.Dismisser,
-) agentports.AgentTool {
-	return receivabletools.NewDismissWatchtowerItemTool(items)
+) agenttoolports.AgentTool {
+	return exceptiontools.NewDismissWatchtowerItemTool(items)
 }
 
-func provideFileCaptureItemsTool(captures *captureservice.Service) agentports.AgentTool {
-	return receivabletools.NewFileCaptureItemsTool(captures)
+func provideFileCaptureItemsTool(captures *capturefiling.Service) agenttoolports.AgentTool {
+	return documenttools.NewFileCaptureItemsTool(captures)
 }
 
-func provideDiscardCaptureItemTool(captures *captureservice.Service) agentports.AgentTool {
-	return receivabletools.NewDiscardCaptureItemTool(captures)
+func provideDiscardCaptureItemTool(captures *capturefiling.Service) agenttoolports.AgentTool {
+	return documenttools.NewDiscardCaptureItemTool(captures)
 }
 
-func provideDiscardCaptureBatchTool(captures *captureservice.Service) agentports.AgentTool {
-	return receivabletools.NewDiscardCaptureBatchTool(captures)
+func provideDiscardCaptureBatchTool(captures *capturefiling.Service) agenttoolports.AgentTool {
+	return documenttools.NewDiscardCaptureBatchTool(captures)
 }
 
 func provideCreateCarrierCapacityPostingTool(
 	postings *carriercapacityservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewCreateCarrierCapacityPostingTool(postings, states)
+) agenttoolports.AgentTool {
+	return partytools.NewCreateCarrierCapacityPostingTool(postings, states)
 }
 
 func provideUpdateCarrierCapacityPostingTool(
 	postings *carriercapacityservice.Service,
 	states usstateports.UsStateRepository,
-) agentports.AgentTool {
-	return masterdatatools.NewUpdateCarrierCapacityPostingTool(postings, states)
+) agenttoolports.AgentTool {
+	return partytools.NewUpdateCarrierCapacityPostingTool(postings, states)
 }
 
 func provideDeleteCarrierCapacityPostingTool(
 	postings *carriercapacityservice.Service,
-) agentports.AgentTool {
-	return masterdatatools.NewDeleteCarrierCapacityPostingTool(postings)
+) agenttoolports.AgentTool {
+	return partytools.NewDeleteCarrierCapacityPostingTool(postings)
 }

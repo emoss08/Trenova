@@ -58,6 +58,13 @@ Keywords: CDL, medical card, TWIC, hazmat endorsement, licence, certificate
    **Expires**, and attach a scan of the document.
 5. Select **Add credential** (or **Renew credential** when renewing).
 
+### Find workers missing a credential
+Keywords: no road test, missing medical card, credential gap, who lacks, not on file
+1. Open [Workers](/hr/workers).
+2. Select **Missing credential** in the toolbar and pick the credential type.
+3. The table shows every worker with no valid credential of that type: none on file, archived
+   or expired. The filter shows as a chip; remove the chip to see every worker again.
+
 ### Assign training
 Keywords: training course, required training, refresher, orientation
 1. Open [Workers](/hr/workers).

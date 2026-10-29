@@ -3,10 +3,12 @@ package selfserviceservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,22 +20,22 @@ const eventProfileChangeReviewed = "dash.profile_change_reviewed"
 
 func (s *Service) ListChangeRequests(
 	ctx context.Context,
-	req *workerports.ListProfileChangeRequestsRequest,
-) ([]*worker.WorkerProfileChangeRequest, error) {
+	req *selfserviceports.ListProfileChangeRequestsRequest,
+) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	return s.repo.ListChangeRequests(ctx, req)
 }
 
 func (s *Service) GetChangeRequest(
 	ctx context.Context,
-	req *workerports.GetProfileChangeRequestByIDRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	req *selfserviceports.GetProfileChangeRequestByIDRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	return s.repo.GetChangeRequestByID(ctx, req)
 }
 
 // SubmitChangeRequest is a driver asking for their record to change.
 type SubmitChangeRequest struct {
 	Worker     *worker.Worker
-	Wanted     worker.ContactSnapshot
+	Wanted     profilechange.ContactSnapshot
 	Note       string
 	TenantInfo pagination.TenantInfo
 }
@@ -46,8 +48,8 @@ type SubmitChangeRequest struct {
 func (s *Service) SubmitChange(
 	ctx context.Context,
 	req *SubmitChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
-	changes := worker.DiffContact(worker.ContactSnapshotOf(req.Worker), req.Wanted)
+) (*profilechange.WorkerProfileChangeRequest, error) {
+	changes := profilechange.DiffContact(profilechange.ContactSnapshotOf(req.Worker), req.Wanted)
 	if len(changes) == 0 {
 		return nil, errortypes.NewValidationError(
 			"changes",
@@ -56,12 +58,15 @@ func (s *Service) SubmitChange(
 		)
 	}
 
-	pending, err := s.repo.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   req.Worker.ID,
-		Statuses:   []worker.ProfileChangeStatus{worker.ProfileChangePending},
-		Limit:      1,
-	})
+	pending, err := s.repo.ListChangeRequests(
+		ctx,
+		&selfserviceports.ListProfileChangeRequestsRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   req.Worker.ID,
+			Statuses:   []profilechange.ProfileChangeStatus{profilechange.ProfileChangePending},
+			Limit:      1,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +78,11 @@ func (s *Service) SubmitChange(
 		)
 	}
 
-	entity := &worker.WorkerProfileChangeRequest{
+	entity := &profilechange.WorkerProfileChangeRequest{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.Worker.ID,
-		Status:         worker.ProfileChangePending,
+		Status:         profilechange.ProfileChangePending,
 		Changes:        changes,
 		Note:           req.Note,
 		SubmittedAt:    timeutils.NowUnix(),
@@ -102,10 +107,13 @@ type WithdrawChangeRequest struct {
 func (s *Service) WithdrawChange(
 	ctx context.Context,
 	req *WithdrawChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -117,7 +125,7 @@ func (s *Service) WithdrawChange(
 			"That is not your request",
 		)
 	}
-	if !entity.Status.CanTransitionTo(worker.ProfileChangeWithdrawn) {
+	if !entity.Status.CanTransitionTo(profilechange.ProfileChangeWithdrawn) {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -126,7 +134,7 @@ func (s *Service) WithdrawChange(
 	}
 
 	now := timeutils.NowUnix()
-	entity.Status = worker.ProfileChangeWithdrawn
+	entity.Status = profilechange.ProfileChangeWithdrawn
 	entity.DecidedAt = &now
 
 	return s.repo.UpdateChangeRequest(ctx, entity)
@@ -151,18 +159,21 @@ type DecideChangeRequest struct {
 func (s *Service) DecideChange(
 	ctx context.Context,
 	req *DecideChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	entity, err := s.repo.GetChangeRequestByID(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	next := worker.ProfileChangeRejected
+	next := profilechange.ProfileChangeRejected
 	if req.Approve {
-		next = worker.ProfileChangeApproved
+		next = profilechange.ProfileChangeApproved
 	}
 	if !entity.Status.CanTransitionTo(next) {
 		return nil, errortypes.NewValidationError(
@@ -224,7 +235,7 @@ func (s *Service) DecideChange(
 		req.TenantInfo,
 		updated.WorkerID,
 		eventProfileChangeReviewed,
-		documenttemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
+		&notificationtemplate.DriverNotificationContext{Approved: req.Approve, Reason: req.Note},
 		map[string]any{"changeRequestId": updated.ID.String()},
 	)
 

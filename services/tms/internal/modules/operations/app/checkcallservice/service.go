@@ -1,12 +1,15 @@
 package checkcallservice
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -22,12 +25,13 @@ type Params struct {
 
 	DB                  kernelports.Transactor
 	Logger              *zap.Logger
-	Config              *config.Config
+	AppConfig           *appconfig.Config
+	TenderingConfig     *tenderingconfig.Config
 	Repo                checkcallports.CheckCallRepository
 	Links               checkcallports.TrackingLinkRepository
-	MoveRepo            shipmentports.ShipmentMoveRepository
+	MoveRepo            shipmentmoveports.ShipmentMoveRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
-	CarrierAssignments  shipmentports.CarrierAssignmentRepository
+	CarrierAssignments  carrierassignmentports.CarrierAssignmentRepository
 	CarrierRepo         carrierports.CarrierRepository
 	OrgRepo             tenantports.OrganizationRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
@@ -41,12 +45,13 @@ type Params struct {
 type Service struct {
 	db                  kernelports.Transactor
 	l                   *zap.Logger
-	cfg                 *config.Config
+	appConfig           *appconfig.Config
+	tenderingConfig     *tenderingconfig.Config
 	repo                checkcallports.CheckCallRepository
 	links               checkcallports.TrackingLinkRepository
-	moveRepo            shipmentports.ShipmentMoveRepository
+	moveRepo            shipmentmoveports.ShipmentMoveRepository
 	shipmentRepo        shipmentports.ShipmentRepository
-	carrierAssignments  shipmentports.CarrierAssignmentRepository
+	carrierAssignments  carrierassignmentports.CarrierAssignmentRepository
 	carrierRepo         carrierports.CarrierRepository
 	orgRepo             tenantports.OrganizationRepository
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
@@ -62,7 +67,8 @@ func New(p Params) *Service { //nolint:gocritic // dependency injection
 	return &Service{
 		db:                  p.DB,
 		l:                   p.Logger.Named("service.check-call"),
-		cfg:                 p.Config,
+		appConfig:           p.AppConfig,
+		tenderingConfig:     p.TenderingConfig,
 		repo:                p.Repo,
 		links:               p.Links,
 		moveRepo:            p.MoveRepo,

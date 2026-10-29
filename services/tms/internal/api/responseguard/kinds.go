@@ -9,20 +9,40 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const domainPackagePrefix = "github.com/emoss08/trenova/internal/modules/"
@@ -33,66 +53,66 @@ const domainPackagePrefix = "github.com/emoss08/trenova/internal/modules/"
 // with no entry here; a type named for none is part of the record that carries
 // it. The relation test fails on a relation whose type is neither.
 var namedKinds = map[reflect.Type]permission.Resource{
-	reflect.TypeFor[shipment.Stop]():                       permission.ResourceShipmentStop,
-	reflect.TypeFor[customerpayment.Payment]():             permission.ResourceCustomerPayment,
-	reflect.TypeFor[billingqueue.BillingQueueItem]():       permission.ResourceBillingQueue,
-	reflect.TypeFor[factoring.Agreement]():                 permission.ResourceFactoringAgreement,
-	reflect.TypeFor[factoring.Noa]():                       permission.ResourceFactoringNoa,
-	reflect.TypeFor[factoring.Submission]():                permission.ResourceFactoringSubmission,
-	reflect.TypeFor[factoring.ReserveEntry]():              permission.ResourceFactoringReserve,
-	reflect.TypeFor[factoring.Remittance]():                permission.ResourceFactoringRemittance,
-	reflect.TypeFor[rateagreement.RateAgreementVersion]():  permission.ResourceRateAgreement,
-	reflect.TypeFor[report.ReportDefinition]():             permission.ResourceReport,
-	reflect.TypeFor[servicefailure.ReasonCode]():           permission.ResourceServiceFailureReasonCode,
-	reflect.TypeFor[edi.EDIPartner]():                      permission.ResourceEDI,
-	reflect.TypeFor[edi.EDIMessage]():                      permission.ResourceEDI,
-	reflect.TypeFor[edi.EDICommunicationProfile]():         permission.ResourceEDI,
-	reflect.TypeFor[edi.EDITransfer]():                     permission.ResourceEDI,
-	reflect.TypeFor[edi.EDIInboundFile]():                  permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingProject]():                   permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingVersion]():                   permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingSample]():                    permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingReplay]():                    permission.ResourceEDI,
-	reflect.TypeFor[edi.LadingShadowResult]():              permission.ResourceEDI,
-	reflect.TypeFor[edi.FlowInstance]():                    permission.ResourceEDI,
-	reflect.TypeFor[edi.FlowEvent]():                       permission.ResourceEDI,
-	reflect.TypeFor[edi.CarrierInvoice]():                  permission.ResourceCarrierInvoiceMatch,
-	reflect.TypeFor[email.Profile]():                       permission.ResourceEmailProfile,
-	reflect.TypeFor[email.Message]():                       permission.ResourceEmailLog,
-	reflect.TypeFor[glaccount.GLAccount]():                 permission.ResourceGeneralLedgerAccount,
-	reflect.TypeFor[worker.WorkerLeaveCase]():              permission.ResourceWorkerLeave,
-	reflect.TypeFor[worker.WorkerLeaveEntry]():             permission.ResourceWorkerLeave,
-	reflect.TypeFor[worker.WorkerDOTViolation]():           permission.ResourceWorkerDOTTest,
-	reflect.TypeFor[worker.WorkerClearinghouseQuery]():     permission.ResourceWorkerDOTTest,
-	reflect.TypeFor[worker.OSHAAnnualSummary]():            permission.ResourceWorkerInjury,
-	reflect.TypeFor[worker.TimeClockEntry]():               permission.ResourceTimesheet,
-	reflect.TypeFor[worker.PayrollExport]():                permission.ResourceTimesheet,
-	reflect.TypeFor[worker.WorkerProfileChangeRequest]():   permission.ResourceProfileChangeRequest,
-	reflect.TypeFor[driverpay.WorkerBenefitEnrollment]():   permission.ResourceBenefitPlan,
-	reflect.TypeFor[worker.WorkerEmploymentVerification](): permission.ResourceQualification,
-	reflect.TypeFor[worker.WorkerSafetyViolation]():        permission.ResourceWorkerSafetyEvent,
-	reflect.TypeFor[carrierintel.CarrierIntelEvent]():      permission.ResourceCarrierIntelligence,
-	reflect.TypeFor[driverpay.PayProfile]():                permission.ResourceDriverPayProfile,
-	reflect.TypeFor[driverpay.WorkerPayAssignment]():       permission.ResourceDriverPayProfile,
-	reflect.TypeFor[driversettlement.PayEvent]():           permission.ResourceDriverSettlement,
-	reflect.TypeFor[fuelsurcharge.FuelIndexPrice]():        permission.ResourceFuelSurchargeProgram,
-	reflect.TypeFor[worker.DOTRandomDraw]():                permission.ResourceDOTRandomPool,
-	reflect.TypeFor[worker.DOTRandomDrawEntry]():           permission.ResourceDOTRandomPool,
-	reflect.TypeFor[worker.WorkerShiftAssignment]():        permission.ResourceWorkerSchedule,
-	reflect.TypeFor[worker.WorkerAvailabilityPreference](): permission.ResourceWorkerSchedule,
-	reflect.TypeFor[worker.ShiftSwapRequest]():             permission.ResourceShiftSwap,
-	reflect.TypeFor[fuelpurchase.ImportBatch]():            permission.ResourceFuelPurchaseImport,
+	reflect.TypeFor[shipment.Stop]():                               permission.ResourceShipmentStop,
+	reflect.TypeFor[customerpayment.Payment]():                     permission.ResourceCustomerPayment,
+	reflect.TypeFor[billingqueue.BillingQueueItem]():               permission.ResourceBillingQueue,
+	reflect.TypeFor[factoring.Agreement]():                         permission.ResourceFactoringAgreement,
+	reflect.TypeFor[factoring.Noa]():                               permission.ResourceFactoringNoa,
+	reflect.TypeFor[factoringsubmission.Submission]():              permission.ResourceFactoringSubmission,
+	reflect.TypeFor[factoringledger.ReserveEntry]():                permission.ResourceFactoringReserve,
+	reflect.TypeFor[factoringremittance.Remittance]():              permission.ResourceFactoringRemittance,
+	reflect.TypeFor[rateagreement.RateAgreementVersion]():          permission.ResourceRateAgreement,
+	reflect.TypeFor[report.ReportDefinition]():                     permission.ResourceReport,
+	reflect.TypeFor[servicefailure.ReasonCode]():                   permission.ResourceServiceFailureReasonCode,
+	reflect.TypeFor[edi.EDIPartner]():                              permission.ResourceEDI,
+	reflect.TypeFor[edimessage.EDIMessage]():                       permission.ResourceEDI,
+	reflect.TypeFor[edi.EDICommunicationProfile]():                 permission.ResourceEDI,
+	reflect.TypeFor[editransfer.EDITransfer]():                     permission.ResourceEDI,
+	reflect.TypeFor[ediinboundfile.EDIInboundFile]():               permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingProject]():                 permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingVersion]():                 permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingSample]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingReplay]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.LadingShadowResult]():            permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.FlowInstance]():                  permission.ResourceEDI,
+	reflect.TypeFor[ladingproject.FlowEvent]():                     permission.ResourceEDI,
+	reflect.TypeFor[edicarrierinvoice.CarrierInvoice]():            permission.ResourceCarrierInvoiceMatch,
+	reflect.TypeFor[email.Profile]():                               permission.ResourceEmailProfile,
+	reflect.TypeFor[email.Message]():                               permission.ResourceEmailLog,
+	reflect.TypeFor[glaccount.GLAccount]():                         permission.ResourceGeneralLedgerAccount,
+	reflect.TypeFor[workerleave.WorkerLeaveCase]():                 permission.ResourceWorkerLeave,
+	reflect.TypeFor[workerleave.WorkerLeaveEntry]():                permission.ResourceWorkerLeave,
+	reflect.TypeFor[workerdot.WorkerDOTViolation]():                permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[dotclearinghouse.WorkerClearinghouseQuery]():   permission.ResourceWorkerDOTTest,
+	reflect.TypeFor[workerinjury.OSHAAnnualSummary]():              permission.ResourceWorkerInjury,
+	reflect.TypeFor[timesheet.TimeClockEntry]():                    permission.ResourceTimesheet,
+	reflect.TypeFor[timesheet.PayrollExport]():                     permission.ResourceTimesheet,
+	reflect.TypeFor[profilechange.WorkerProfileChangeRequest]():    permission.ResourceProfileChangeRequest,
+	reflect.TypeFor[paybenefit.WorkerBenefitEnrollment]():          permission.ResourceBenefitPlan,
+	reflect.TypeFor[employment.WorkerEmploymentVerification]():     permission.ResourceQualification,
+	reflect.TypeFor[fleetsafety.WorkerSafetyViolation]():           permission.ResourceWorkerSafetyEvent,
+	reflect.TypeFor[carrierintelevent.CarrierIntelEvent]():         permission.ResourceCarrierIntelligence,
+	reflect.TypeFor[driverpay.PayProfile]():                        permission.ResourceDriverPayProfile,
+	reflect.TypeFor[payassignment.WorkerPayAssignment]():           permission.ResourceDriverPayProfile,
+	reflect.TypeFor[driversettlement.PayEvent]():                   permission.ResourceDriverSettlement,
+	reflect.TypeFor[fuelsurcharge.FuelIndexPrice]():                permission.ResourceFuelSurchargeProgram,
+	reflect.TypeFor[dotrandom.DOTRandomDraw]():                     permission.ResourceDOTRandomPool,
+	reflect.TypeFor[dotrandom.DOTRandomDrawEntry]():                permission.ResourceDOTRandomPool,
+	reflect.TypeFor[workerschedule.WorkerShiftAssignment]():        permission.ResourceWorkerSchedule,
+	reflect.TypeFor[workerschedule.WorkerAvailabilityPreference](): permission.ResourceWorkerSchedule,
+	reflect.TypeFor[workerschedule.ShiftSwapRequest]():             permission.ResourceShiftSwap,
+	reflect.TypeFor[fuelpurchase.ImportBatch]():                    permission.ResourceFuelPurchaseImport,
 }
 
 // kindTable maps a Go type to the kind of record it holds.
 type kindTable struct {
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 
 	mu    sync.RWMutex
 	kinds map[reflect.Type]permission.Resource
 }
 
-func newKindTable(registry *permission.Registry) *kindTable {
+func newKindTable(registry *permissioncatalog.Registry) *kindTable {
 	return &kindTable{
 		registry: registry,
 		kinds:    make(map[reflect.Type]permission.Resource, len(namedKinds)+32),
@@ -127,20 +147,20 @@ var namedKindsByName = func() map[string]permission.Resource {
 	return out
 }()
 
-func resolveKind(registry *permission.Registry, t reflect.Type) permission.Resource {
+func resolveKind(registry *permissioncatalog.Registry, t reflect.Type) permission.Resource {
 	return kindOfName(registry, t.PkgPath(), t.Name())
 }
 
 // kindOfName is the kind of the domain type a package path and type name
 // name, so a tool reading source agrees with what a response is gated as.
-func kindOfName(registry *permission.Registry, pkgPath, name string) permission.Resource {
+func kindOfName(registry *permissioncatalog.Registry, pkgPath, name string) permission.Resource {
 	if kind, ok := namedKindsByName[pkgPath+"."+name]; ok {
 		return kind
 	}
 	if name == "" || !isDomainPackage(pkgPath) {
 		return ""
 	}
-	if resource := stringutils.ConvertCamelToSnake(name); registry.HasResource(resource) {
+	if resource := textcase.ConvertCamelToSnake(name); registry.HasResource(resource) {
 		return permission.Resource(resource)
 	}
 

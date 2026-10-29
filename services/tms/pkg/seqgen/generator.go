@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -42,7 +42,7 @@ func (g *generator) GenerateShipmentProNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeProNumber,
+		Type:             sequenceconfig.SequenceTypeProNumber,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -56,7 +56,7 @@ func (g *generator) GenerateConsolidationNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeConsolidation,
+		Type:             sequenceconfig.SequenceTypeConsolidation,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -70,7 +70,7 @@ func (g *generator) GenerateOrderNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeOrder,
+		Type:             sequenceconfig.SequenceTypeOrder,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -84,7 +84,7 @@ func (g *generator) GenerateInvoiceNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeInvoice,
+		Type:             sequenceconfig.SequenceTypeInvoice,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -98,7 +98,7 @@ func (g *generator) GenerateCreditMemoNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeCreditMemo,
+		Type:             sequenceconfig.SequenceTypeCreditMemo,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -112,7 +112,7 @@ func (g *generator) GenerateDebitMemoNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeDebitMemo,
+		Type:             sequenceconfig.SequenceTypeDebitMemo,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -126,7 +126,7 @@ func (g *generator) GenerateWorkOrderNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeWorkOrder,
+		Type:             sequenceconfig.SequenceTypeWorkOrder,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -140,7 +140,7 @@ func (g *generator) GenerateJournalBatchNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeJournalBatch,
+		Type:             sequenceconfig.SequenceTypeJournalBatch,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -154,7 +154,7 @@ func (g *generator) GenerateJournalEntryNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeJournalEntry,
+		Type:             sequenceconfig.SequenceTypeJournalEntry,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -168,7 +168,7 @@ func (g *generator) GenerateManualJournalRequestNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeManualJournalRequest,
+		Type:             sequenceconfig.SequenceTypeManualJournalRequest,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -182,7 +182,7 @@ func (g *generator) GenerateDriverSettlementNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeDriverSettlement,
+		Type:             sequenceconfig.SequenceTypeDriverSettlement,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -196,7 +196,7 @@ func (g *generator) GenerateCarrierSettlementNumber(
 	locationCode, businessUnitCode string,
 ) (string, error) {
 	return g.Generate(ctx, &GenerateRequest{
-		Type:             tenant.SequenceTypeCarrierSettlement,
+		Type:             sequenceconfig.SequenceTypeCarrierSettlement,
 		OrgID:            orgID,
 		BuID:             buID,
 		LocationCode:     locationCode,
@@ -308,8 +308,8 @@ func (g *generator) GenerateBatch(ctx context.Context, req *GenerateRequest) ([]
 func (g *generator) resolveFormat(
 	ctx context.Context,
 	req *GenerateRequest,
-) (*tenant.SequenceFormat, error) {
-	var format *tenant.SequenceFormat
+) (*sequenceconfig.SequenceFormat, error) {
+	var format *sequenceconfig.SequenceFormat
 
 	if req.Format != nil {
 		format = req.Format
@@ -332,7 +332,7 @@ func (g *generator) resolveFormat(
 }
 
 func (g *generator) generateSequenceNumber(
-	format *tenant.SequenceFormat,
+	format *sequenceconfig.SequenceFormat,
 	sequenceNumber int64,
 	currentTime time.Time,
 ) (string, error) {
@@ -348,7 +348,7 @@ func (g *generator) generateSequenceNumber(
 }
 
 func generateStandardFormat(
-	format *tenant.SequenceFormat,
+	format *sequenceconfig.SequenceFormat,
 	sequenceNumber int64,
 	currentTime time.Time,
 ) (string, error) {
@@ -409,7 +409,7 @@ func generateStandardFormat(
 }
 
 func generateCustomFormat(
-	format *tenant.SequenceFormat,
+	format *sequenceconfig.SequenceFormat,
 	sequenceNumber int64,
 	currentTime time.Time,
 ) (string, error) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
@@ -25,11 +25,11 @@ func TestBuiltInLayoutsReferenceRealCannedReports(t *testing.T) {
 	registry, err := canned.Default()
 	require.NoError(t, err)
 
-	responsibilities := []permission.CoreResponsibility{
-		permission.CoreResponsibilityOperations,
-		permission.CoreResponsibilityBilling,
-		permission.CoreResponsibilityFinance,
-		permission.CoreResponsibilityLeadership,
+	responsibilities := []rbac.CoreResponsibility{
+		rbac.CoreResponsibilityOperations,
+		rbac.CoreResponsibilityBilling,
+		rbac.CoreResponsibilityFinance,
+		rbac.CoreResponsibilityLeadership,
 		"",
 	}
 
@@ -74,7 +74,7 @@ func TestCreatePreset_ClaimsOrgDefault(t *testing.T) {
 
 	h.roles.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		Return(&permission.Role{ID: roleID}, nil)
+		Return(&rbac.Role{ID: roleID}, nil)
 	h.repo.EXPECT().
 		CreatePreset(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *homelayout.Preset) (*homelayout.Preset, error) {
@@ -247,7 +247,7 @@ func TestListPresets_ReportsReachPerPreset(t *testing.T) {
 			{
 				ID:                 pulid.MustNew("hlp_"),
 				Name:               "Ops",
-				CoreResponsibility: permission.CoreResponsibilityOperations,
+				CoreResponsibility: rbac.CoreResponsibilityOperations,
 			},
 			{ID: pulid.MustNew("hlp_"), Name: "Everyone", IsOrgDefault: true},
 		}, nil)
@@ -260,7 +260,7 @@ func TestListPresets_ReportsReachPerPreset(t *testing.T) {
 			{
 				RoleID:             opsRole,
 				UserID:             sharedUser,
-				CoreResponsibility: permission.CoreResponsibilityOperations,
+				CoreResponsibility: rbac.CoreResponsibilityOperations,
 			},
 		}, nil).
 		Once()
@@ -326,9 +326,9 @@ func TestPreviewPreset_FallsBackToShippedLayoutForRole(t *testing.T) {
 	h.repo.EXPECT().ListPresets(mock.Anything, mock.Anything).Return(nil, nil)
 	h.roles.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
-		Return(&permission.Role{
+		Return(&rbac.Role{
 			ID:                 roleID,
-			CoreResponsibility: permission.CoreResponsibilityLeadership,
+			CoreResponsibility: rbac.CoreResponsibilityLeadership,
 		}, nil)
 	allowBatch(h.engine)
 

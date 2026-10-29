@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,7 +69,7 @@ func (a *Activities) dispatchSchedule(
 	if err != nil {
 		schedule.Enabled = false
 		result.Disabled++
-		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+		a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 			Reason:   "The schedule's cron expression is invalid.",
 			Disabled: true,
 		})
@@ -196,14 +198,14 @@ func (a *Activities) recordScheduleFailure(
 ) {
 	schedule.ConsecutiveFailures++
 	if schedule.ConsecutiveFailures < maxConsecutiveFailures {
-		a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+		a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 			Reason: reason,
 		})
 		return
 	}
 
 	schedule.Enabled = false
-	a.notifyScheduleOwner(ctx, schedule, &documenttemplate.ReportNotificationContext{
+	a.notifyScheduleOwner(ctx, schedule, &notificationtemplate.ReportNotificationContext{
 		Reason:              reason,
 		Disabled:            true,
 		ConsecutiveFailures: schedule.ConsecutiveFailures,
@@ -213,7 +215,7 @@ func (a *Activities) recordScheduleFailure(
 func (a *Activities) notifyScheduleOwner(
 	ctx context.Context,
 	schedule *report.ReportSchedule,
-	data *documenttemplate.ReportNotificationContext,
+	data *notificationtemplate.ReportNotificationContext,
 ) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  schedule.OrganizationID,
@@ -223,17 +225,17 @@ func (a *Activities) notifyScheduleOwner(
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 
 	payload := map[string]any{
-		dataKeyScheduleID: schedule.ID.String(),
+		reportnotify.DataKeyScheduleID: schedule.ID.String(),
 	}
 	if def, err := a.defRepo.GetByID(tenantCtx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   tenantInfo,
 		DefinitionID: schedule.DefinitionID,
 	}); err == nil {
-		payload[dataKeyReportName] = def.Name
+		payload[reportnotify.DataKeyReportName] = def.Name
 		data.ReportName = def.Name
 	}
 
-	wording, ok := a.renderNotification(
+	wording, ok := a.notices().Render(
 		tenantCtx,
 		tenantInfo,
 		documenttemplate.KindNotificationReportScheduleSkipped,

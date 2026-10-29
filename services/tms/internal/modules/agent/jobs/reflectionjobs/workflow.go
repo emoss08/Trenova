@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -84,7 +85,7 @@ func ThreadReflectionWorkflow(
 		waitForQuiet(ctx, signals)
 
 		var a *Activities
-		var plan agentports.ReflectionPlan
+		var plan agentreflectionports.ReflectionPlan
 		err := workflow.ExecuteActivity(
 			withPriority(ctx, prepareOptions, input.TenantInfo),
 			a.PrepareThreadReflectionActivity, input.request(),
@@ -120,10 +121,10 @@ func RunReflectionWorkflow(
 	result := &ReflectionResult{Rounds: 1}
 
 	var a *Activities
-	var plan agentports.ReflectionPlan
+	var plan agentreflectionports.ReflectionPlan
 	err := workflow.ExecuteActivity(
 		withPriority(ctx, prepareOptions, input.TenantInfo),
-		a.PrepareRunReflectionActivity, &agentports.ReflectOnRunRequest{
+		a.PrepareRunReflectionActivity, &agentreflectionports.ReflectOnRunRequest{
 			TenantInfo: input.TenantInfo,
 			RunID:      input.RunID,
 		},
@@ -136,7 +137,11 @@ func RunReflectionWorkflow(
 	return result, nil
 }
 
-func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *ReflectionResult) {
+func lookBack(
+	ctx workflow.Context,
+	plan *agentreflectionports.ReflectionPlan,
+	result *ReflectionResult,
+) {
 	if !plan.Ready() {
 		result.Skipped++
 
@@ -144,7 +149,7 @@ func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *Ref
 	}
 
 	var a *Activities
-	var completion agentports.StructuredCompletionResult
+	var completion llmports.StructuredCompletionResult
 	err := workflow.ExecuteActivity(
 		withPriority(ctx, modelOptions, plan.TenantInfo),
 		a.ReflectionModelActivity, plan,
@@ -153,7 +158,7 @@ func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *Ref
 		result.Failed++
 		failure := workflow.ExecuteActivity(
 			withPriority(ctx, failOptions, plan.TenantInfo),
-			a.FailReflectionActivity, &agentports.FailReflectionRequest{
+			a.FailReflectionActivity, &agentreflectionports.FailReflectionRequest{
 				Plan:    plan,
 				Message: err.Error(),
 			},
@@ -168,7 +173,7 @@ func lookBack(ctx workflow.Context, plan *agentports.ReflectionPlan, result *Ref
 		return
 	}
 
-	var outcome agentports.ReflectionOutcome
+	var outcome agentreflectionports.ReflectionOutcome
 	err = workflow.ExecuteActivity(
 		withPriority(ctx, finishOptions, plan.TenantInfo),
 		a.FinishReflectionActivity, &FinishReflectionInput{Plan: plan, Result: &completion},

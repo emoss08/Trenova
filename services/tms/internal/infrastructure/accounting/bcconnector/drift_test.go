@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,17 +32,20 @@ func TestReadDocumentsReportsTotalsBalancesAndVoids(t *testing.T) {
 	conn := testConnector(t, fake)
 	assert.Equal(t, 50, conn.DocumentReadLimits().MaxPerRead)
 
-	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(),
-		Kind: accountingsync.SyncObjectInvoice,
-		Targets: []accountingsyncports.AccountingDocumentTarget{
-			{ExternalID: strings.ToUpper(testInvoice)},
-			{ExternalID: testNewInvoice},
-			{ExternalID: testCreditMemo},
-			{ExternalID: "not-a-guid"},
-			{ExternalID: ""},
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectInvoice,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{ExternalID: strings.ToUpper(testInvoice)},
+				{ExternalID: testNewInvoice},
+				{ExternalID: testCreditMemo},
+				{ExternalID: "not-a-guid"},
+				{ExternalID: ""},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 4)
 
@@ -80,34 +84,45 @@ func TestReadDocumentsSplitsBillsByCreditAndSkipsPayments(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(),
-		Kind: accountingsync.SyncObjectCarrierBill,
-		Targets: []accountingsyncports.AccountingDocumentTarget{
-			{ExternalID: testBill},
-			{
-				ExternalID: testVendorCredit,
-				Refs:       map[string]string{accountingsync.ExternalRefCreditDocument: "true"},
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectCarrierBill,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{ExternalID: testBill},
+				{
+					ExternalID: testVendorCredit,
+					Refs:       map[string]string{accountingsync.ExternalRefCreditDocument: "true"},
+				},
 			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 	assert.False(t, states[0].Voided)
 	assert.True(t, states[1].Voided)
 
-	payments, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth:    testAuth(),
-		Kind:    accountingsync.SyncObjectCustomerPayment,
-		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: "T123"}},
-	})
+	payments, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth:    testAuth(),
+			Kind:    accountingsync.SyncObjectCustomerPayment,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{{ExternalID: "T123"}},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, payments)
 
-	_, err = conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth:    testAuth(),
-		Kind:    accountingsync.SyncObjectCustomer,
-		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: testCustomer}},
-	})
-	require.ErrorIs(t, err, errDocumentKind)
+	_, err = conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectCustomer,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{ExternalID: testCustomer},
+			},
+		},
+	)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 }

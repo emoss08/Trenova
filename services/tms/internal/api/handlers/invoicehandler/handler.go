@@ -19,14 +19,28 @@ import (
 type Params struct {
 	fx.In
 
-	Service              invoiceports.InvoiceService
+	Queries              invoiceports.InvoiceQueryService
+	Creation             invoiceports.InvoiceCreationService
+	Posting              invoiceports.InvoicePostingService
+	PDF                  invoiceports.InvoicePDFService
+	Sending              invoiceports.InvoiceSendService
+	Memos                invoiceports.InvoiceMemoService
+	Voids                invoiceports.InvoiceVoidService
+	Drafts               invoiceports.InvoiceDraftService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	RateLimiter          *middleware.RateLimiter
 }
 
 type Handler struct {
-	service     invoiceports.InvoiceService
+	queries     invoiceports.InvoiceQueryService
+	creation    invoiceports.InvoiceCreationService
+	posting     invoiceports.InvoicePostingService
+	pdf         invoiceports.InvoicePDFService
+	sending     invoiceports.InvoiceSendService
+	memos       invoiceports.InvoiceMemoService
+	voids       invoiceports.InvoiceVoidService
+	drafts      invoiceports.InvoiceDraftService
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 	rateLimiter *middleware.RateLimiter
@@ -34,7 +48,14 @@ type Handler struct {
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:     p.Service,
+		queries:     p.Queries,
+		creation:    p.Creation,
+		posting:     p.Posting,
+		pdf:         p.PDF,
+		sending:     p.Sending,
+		memos:       p.Memos,
+		voids:       p.Voids,
+		drafts:      p.Drafts,
 		eh:          p.ErrorHandler,
 		pm:          p.PermissionMiddleware,
 		rateLimiter: p.RateLimiter,
@@ -174,7 +195,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*invoice.Invoice], error) {
-			return h.service.List(
+			return h.queries.List(
 				c.Request.Context(),
 				&invoiceports.ListInvoicesRequest{
 					Filter: req,
@@ -205,7 +226,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.GetByID(c.Request.Context(), invoiceports.GetInvoiceByIDRequest{
+	entity, err := h.queries.GetByID(c.Request.Context(), invoiceports.GetInvoiceByIDRequest{
 		ID:         invoiceID,
 		TenantInfo: pagination.FromAuth(authCtx),
 	})
@@ -225,7 +246,7 @@ func (h *Handler) createFromShipments(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.CreateFromShipments(
+	entity, err := h.creation.CreateFromShipments(
 		c.Request.Context(),
 		&invoiceports.CreateInvoiceFromShipmentsRequest{
 			ShipmentIDs:    req.ShipmentIDs,
@@ -250,7 +271,7 @@ func (h *Handler) createFromOrder(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.CreateFromOrder(
+	entity, err := h.creation.CreateFromOrder(
 		c.Request.Context(),
 		&invoiceports.CreateInvoiceFromOrderRequest{
 			OrderID:        req.OrderID,
@@ -280,7 +301,7 @@ func (h *Handler) updateDraft(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.service.UpdateDraft(
+	updated, err := h.drafts.UpdateDraft(
 		c.Request.Context(),
 		&invoiceports.UpdateInvoiceDraftRequest{
 			InvoiceID:              invoiceID,
@@ -310,7 +331,7 @@ func (h *Handler) preview(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.RenderPreview(
+	result, err := h.pdf.RenderPreview(
 		c.Request.Context(),
 		&invoiceports.InvoicePreviewRequest{InvoiceID: invoiceID, TenantInfo: tenantInfo(authCtx)},
 	)
@@ -329,7 +350,7 @@ func (h *Handler) generatePDF(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.GeneratePDF(
+	result, err := h.pdf.GeneratePDF(
 		c.Request.Context(),
 		&invoiceports.InvoicePreviewRequest{
 			InvoiceID:  invoiceID,
@@ -352,7 +373,7 @@ func (h *Handler) sendPlan(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	plan, err := h.service.PlanSend(
+	plan, err := h.sending.PlanSend(
 		c.Request.Context(),
 		&invoiceports.InvoiceSendPlanRequest{
 			InvoiceID:  invoiceID,
@@ -374,7 +395,7 @@ func (h *Handler) send(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.Send(
+	result, err := h.sending.Send(
 		c.Request.Context(),
 		&invoiceports.InvoiceSendRequest{
 			InvoiceID:  invoiceID,
@@ -404,7 +425,7 @@ func (h *Handler) emailAttempts(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*invoice.EmailAttempt], error) {
-			return h.service.ListEmailAttempts(
+			return h.queries.ListEmailAttempts(
 				c.Request.Context(),
 				invoiceports.ListInvoiceEmailAttemptsRequest{
 					InvoiceID:  invoiceID,
@@ -417,7 +438,7 @@ func (h *Handler) emailAttempts(c *gin.Context) {
 }
 
 func (h *Handler) downloadSharedDocument(c *gin.Context) {
-	result, err := h.service.DownloadSharedDocument(
+	result, err := h.sending.DownloadSharedDocument(
 		c.Request.Context(),
 		&invoiceports.DownloadInvoiceDocumentRequest{Token: c.Param("token")},
 	)
@@ -452,7 +473,7 @@ func (h *Handler) post(c *gin.Context) {
 		return
 	}
 
-	updated, err := h.service.Post(
+	updated, err := h.posting.Post(
 		c.Request.Context(),
 		&invoiceports.PostInvoiceRequest{
 			InvoiceID:   invoiceID,
@@ -477,7 +498,7 @@ func (h *Handler) postPreview(c *gin.Context) {
 		return
 	}
 
-	preview, err := h.service.PreviewPostSummary(
+	preview, err := h.posting.PreviewPostSummary(
 		c.Request.Context(),
 		&invoiceports.PostInvoiceRequest{
 			InvoiceID:   invoiceID,
@@ -534,7 +555,7 @@ func (h *Handler) void(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.VoidInvoice(
+	result, err := h.voids.VoidInvoice(
 		c.Request.Context(),
 		&invoiceports.VoidInvoiceRequest{
 			InvoiceID:   invoiceID,
@@ -563,7 +584,7 @@ func (h *Handler) createMemo(c *gin.Context) {
 	req.ID = pulid.Nil
 	req.TenantInfo = tenantInfo(authCtx)
 
-	entity, err := h.service.CreateMemo(
+	entity, err := h.memos.CreateMemo(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),

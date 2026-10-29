@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edipayloadbuild"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const tenderResponseAccept = "A"
@@ -26,18 +26,18 @@ const transferFieldReason = "rejectionReason"
 const tradingPartnerFallback = "The trading partner"
 
 var transferPreviewLabels = map[string]string{
-	common.FieldStatus:  "Tender status",
-	transferFieldReason: "Reason given to the partner",
+	changepreview.FieldStatus: "Tender status",
+	transferFieldReason:       "Reason given to the partner",
 }
 
 func (t *EdiTransferDecisionTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	call, outcome, err := t.outcome(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	call, outcome, err := t.outcome(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(t.decision.description), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(t.decision.description), err), nil
 		}
 
 		return nil, err
@@ -53,29 +53,34 @@ func (t *EdiTransferDecisionTool) Preview(
 		preview = toolpreview.Build(summary, changes...)
 	}
 
-	return common.WarnWouldFail(preview, outcome.refusal), nil
+	return changepreview.WarnWouldFail(preview, outcome.refusal), nil
 }
 
-func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.RecordChange, error) {
+func tenderDecisionChanges(
+	outcome *tenderOutcome,
+	orgID pulid.ID,
+) ([]*agentpreview.RecordChange, error) {
 	record := toolpreview.Record{
 		Resource: permission.ResourceEDI,
 		ID:       outcome.before.ID,
 		Label:    transferLabel(outcome.before, orgID),
-		Version:  common.PinnedVersion(outcome.before.Version),
+		Version:  changepreview.PinnedVersion(outcome.before.Version),
 	}
 	status, err := toolpreview.Changed(record, outcome.before, outcome.after,
-		toolpreview.Only(common.FieldStatus, transferFieldReason),
+		toolpreview.Only(changepreview.FieldStatus, transferFieldReason),
 		toolpreview.Labels(transferPreviewLabels),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	changes := []*agent.RecordChange{status}
+	changes := []*agentpreview.RecordChange{status}
 	if outcome.approval != nil && outcome.approval.Shipment != nil {
-		created, cErr := operationstools.EnteredShipmentChanges(&shipmentports.ShipmentCreatePlan{
-			Shipment: outcome.approval.Shipment,
-		})
+		created, cErr := intaketools.EnteredShipmentChanges(
+			&shipmentserviceports.ShipmentCreatePlan{
+				Shipment: outcome.approval.Shipment,
+			},
+		)
 		if cErr != nil {
 			return nil, cErr
 		}
@@ -88,13 +93,13 @@ func tenderDecisionChanges(outcome *tenderOutcome, orgID pulid.ID) ([]*agent.Rec
 	return changes, nil
 }
 
-func tenderResponseChange(after *edi.EDITransfer) *agent.RecordChange {
+func tenderResponseChange(after *editransfer.EDITransfer) *agentpreview.RecordChange {
 	if after == nil || after.InboundMessageID.IsNil() ||
-		(after.Status != edi.TransferStatusRejected && after.Status != edi.TransferStatusProcessing) {
+		(after.Status != editransfer.TransferStatusRejected && after.Status != editransfer.TransferStatusProcessing) {
 		return nil
 	}
 
-	response := ediservice.TenderResponseFor(after)
+	response := edipayloadbuild.TenderResponseFor(after)
 	if response == nil {
 		return nil
 	}
@@ -121,8 +126,8 @@ func tenderResponseChange(after *edi.EDITransfer) *agent.RecordChange {
 		Resource: permission.ResourceEDI,
 		ID:       after.TargetPartnerID,
 		Label:    partner,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{partner},
 		Subject: "990 response to load tender " + strings.TrimSpace(response.BOL),
 		Body:    strings.Join(lines, "\n"),
@@ -137,7 +142,7 @@ func tenderResponseWord(code string) string {
 	return "Declined (D)"
 }
 
-func tenderStops(transfer *edi.EDITransfer) int {
+func tenderStops(transfer *editransfer.EDITransfer) int {
 	stops := 0
 	for _, move := range transfer.TenderPayload.Moves {
 		stops += len(move.Stops)
@@ -150,7 +155,7 @@ func tenderSubject(outcome *tenderOutcome, call *tenderCall) string {
 	return "load tender" + transferIdentity(outcome.before, call.tenant.OrgID)
 }
 
-func tellsPartner(transfer *edi.EDITransfer) string {
+func tellsPartner(transfer *editransfer.EDITransfer) string {
 	if transfer.InboundMessageID.IsNotNil() {
 		return "The partner is sent a 990"
 	}
@@ -164,7 +169,7 @@ func summarizeAcceptTender(outcome *tenderOutcome, call *tenderCall) string {
 		tenderSubject(outcome, call),
 		outcome.before.TenderPayload.CustomerLabel,
 		tenderStops(outcome.before),
-		stringutils.Pluralize("stop", "stops", tenderStops(outcome.before)),
+		inflect.Pluralize("stop", "stops", tenderStops(outcome.before)),
 	)
 	if outcome.refusal == nil {
 		summary += " " + tellsPartner(outcome.before) + " accepted."

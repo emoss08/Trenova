@@ -5,9 +5,9 @@ package agentmemoryrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func memoryIDs(memories []*agent.Memory) []pulid.ID {
+func memoryIDs(memories []*agentmemory.Memory) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(memories))
 	for _, memory := range memories {
 		ids = append(ids, memory.ID)
@@ -37,29 +37,29 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	rateDesk, dispatch := pulid.MustNew("agdef_"), pulid.MustNew("agdef_")
 	now := timeutils.NowUnix()
 
-	organization, err := repo.Create(ctx, &agent.Memory{
+	organization, err := repo.Create(ctx, &agentmemory.Memory{
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		Kind:           agent.MemoryKindInstruction,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindInstruction,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        "Quote in the customer's currency",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, organization.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, organization.Scope)
 
-	approved := suggestedMemory(tenant, rateDesk, agent.MemoryStatusActive,
+	approved := suggestedMemory(tenant, rateDesk, agentmemory.MemoryStatusActive,
 		"State only rates a tool returned")
-	approved.Scope = agent.MemoryScopeAgent
+	approved.Scope = agentmemory.MemoryScopeAgent
 	forRateDesk, err := repo.Create(ctx, approved)
 	require.NoError(t, err)
 
-	written, err := repo.Create(ctx, &agent.Memory{
+	written, err := repo.Create(ctx, &agentmemory.Memory{
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
-		Kind:              agent.MemoryKindFact,
-		Source:            agent.MemorySourceAgent,
-		Status:            agent.MemoryStatusActive,
+		Kind:              agentmemory.MemoryKindFact,
+		Source:            agentmemory.MemorySourceAgent,
+		Status:            agentmemory.MemoryStatusActive,
 		Content:           "Acme closes at four on Fridays",
 		AgentDefinitionID: &dispatch,
 		Tainted:           true,
@@ -67,7 +67,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	read := func(agentID pulid.ID) []pulid.ID {
-		listed, listErr := repo.ListActive(ctx, agentports.ListActiveAgentMemoriesRequest{
+		listed, listErr := repo.ListActive(ctx, &agentmemoryports.ListActiveAgentMemoriesRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: agentID,
 			Now:               now,
@@ -86,7 +86,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, read(pulid.Nil),
 		"a prompt for no agent in particular reads only the organization's")
 
-	recalled, err := repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	recalled, err := repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo:        tenant,
 		AgentDefinitionID: dispatch,
 		Now:               now,
@@ -94,7 +94,7 @@ func TestMemoryReaders_ScopeAMemoryKeptForOneAgentToThatAgent(t *testing.T) {
 	require.NoError(t, err)
 	assert.ElementsMatch(t, []pulid.ID{organization.ID, written.ID}, memoryIDs(recalled))
 
-	stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	stored, err := repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         written.ID,
 		TenantInfo: tenant,
 	})
@@ -112,16 +112,20 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	agentID := pulid.MustNew("agdef_")
 
-	for _, scope := range []agent.MemoryScope{"", agent.MemoryScopeOrganization} {
-		created, err := repo.Create(ctx, suggestedMemory(tenant, agentID,
-			agent.MemoryStatusSuggested, "Say which rate table a quote came from "+string(scope)))
+	for _, scope := range []agentmemory.MemoryScope{"", agentmemory.MemoryScopeOrganization} {
+		created, err := repo.Create(ctx, suggestedMemory(
+			tenant,
+			agentID,
+			agentmemory.MemoryStatusSuggested,
+			"Say which rate table a quote came from "+string(scope),
+		))
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentports.ResolveAgentMemorySuggestionRequest{
+			&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
-				Status:     agent.MemoryStatusActive,
+				Status:     agentmemory.MemoryStatusActive,
 				Kind:       created.Kind,
 				Content:    created.Content,
 				Scope:      scope,
@@ -132,7 +136,7 @@ func TestResolveSuggestion_ApprovesForTheScopeAsked(t *testing.T) {
 
 		want := scope
 		if want == "" {
-			want = agent.MemoryScopeAgent
+			want = agentmemory.MemoryScopeAgent
 		}
 		assert.Equal(t, want, resolved.Scope)
 	}
@@ -149,18 +153,18 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 	agentID := pulid.MustNew("agdef_")
 	at := timeutils.NowUnix()
 
-	approve := func(content string, by pulid.ID) *agent.Memory {
+	approve := func(content string, by pulid.ID) *agentmemory.Memory {
 		t.Helper()
 
 		created, err := repo.Create(ctx, suggestedMemory(tenant, agentID,
-			agent.MemoryStatusSuggested, content))
+			agentmemory.MemoryStatusSuggested, content))
 		require.NoError(t, err)
 
 		resolved, err := repo.ResolveSuggestion(ctx,
-			agentports.ResolveAgentMemorySuggestionRequest{
+			&agentmemoryports.ResolveAgentMemorySuggestionRequest{
 				ID:         created.ID,
 				TenantInfo: tenant,
-				Status:     agent.MemoryStatusActive,
+				Status:     agentmemory.MemoryStatusActive,
 				Kind:       created.Kind,
 				Content:    created.Content,
 				ByUserID:   by,
@@ -169,7 +173,7 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 			})
 		require.NoError(t, err)
 
-		stored, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+		stored, err := repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 			ID:         resolved.ID,
 			TenantInfo: tenant,
 		})
@@ -187,5 +191,5 @@ func TestResolveSuggestion_RecordsAReviewOnlyWhenAPersonApproves(t *testing.T) {
 	byNoOne := approve("Quote detention after two free hours", pulid.Nil)
 	assert.Nil(t, byNoOne.ReviewedByUserID)
 	assert.Nil(t, byNoOne.ReviewedAt)
-	assert.Equal(t, agent.MemoryStatusActive, byNoOne.Status)
+	assert.Equal(t, agentmemory.MemoryStatusActive, byNoOne.Status)
 }

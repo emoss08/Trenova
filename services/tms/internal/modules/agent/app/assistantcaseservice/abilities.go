@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/usableagents"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
@@ -79,7 +79,7 @@ func (s *Service) otherHolders(
 	req *deskcaseports.CaseThreadRequest,
 	own *agentdefinition.Definition,
 ) ([]*deskcase.Holder, error) {
-	others, err := agentruntime.OtherUsableAgents(ctx, &agentruntime.OtherUsableAgentsRequest{
+	others, err := usableagents.Others(ctx, &usableagents.OthersRequest{
 		Permissions: s.permissions,
 		Definitions: s.definitions,
 		Actor:       req.Actor,

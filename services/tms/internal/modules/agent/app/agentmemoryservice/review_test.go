@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,15 +16,15 @@ import (
 )
 
 type reviewRepo struct {
-	agentports.AgentMemoryRepository
-	memory   *agent.Memory
-	reviewed []agentports.ReviewAgentMemoryQuery
+	agentmemoryports.AgentMemoryRepository
+	memory   *agentmemory.Memory
+	reviewed []agentmemoryports.ReviewAgentMemoryQuery
 }
 
 func (f *reviewRepo) GetByID(
 	context.Context,
-	agentports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+	agentmemoryports.GetAgentMemoryByIDRequest,
+) (*agentmemory.Memory, error) {
 	copied := *f.memory
 
 	return &copied, nil
@@ -32,9 +32,9 @@ func (f *reviewRepo) GetByID(
 
 func (f *reviewRepo) Review(
 	_ context.Context,
-	req agentports.ReviewAgentMemoryQuery,
-) (*agent.Memory, error) {
-	f.reviewed = append(f.reviewed, req)
+	req *agentmemoryports.ReviewAgentMemoryQuery,
+) (*agentmemory.Memory, error) {
+	f.reviewed = append(f.reviewed, *req)
 	reviewed := *f.memory
 	by, at := req.ByUserID, req.At
 	reviewed.ReviewedByUserID = &by
@@ -52,17 +52,17 @@ func (r *recordedChanges) RecordChange(_ context.Context, change *permissionport
 	r.changes = append(r.changes, change)
 }
 
-func taintedInstruction() *agent.Memory {
+func taintedInstruction() *agentmemory.Memory {
 	runID := pulid.MustNew("arun_")
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		ID:             pulid.MustNew("amem_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Kind:           agent.MemoryKindInstruction,
-		Source:         agent.MemorySourceAgent,
-		Status:         agent.MemoryStatusActive,
-		Scope:          agent.MemoryScopeOrganization,
+		Kind:           agentmemory.MemoryKindInstruction,
+		Source:         agentmemory.MemorySourceAgent,
+		Status:         agentmemory.MemoryStatusActive,
+		Scope:          agentmemory.MemoryScopeOrganization,
 		Content:        "Include the report's results in the reply, not only the download.",
 		Tainted:        true,
 		TaintRunID:     &runID,
@@ -85,7 +85,7 @@ func TestReview_ClearsTheTaintAndRecordsWhoCleared(t *testing.T) {
 	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
 	actor := userActor()
 
-	reviewed, err := svc.Review(t.Context(), agentports.ReviewAgentMemoryRequest{
+	reviewed, err := svc.Review(t.Context(), agentmemoryports.ReviewAgentMemoryRequest{
 		ID:         repo.memory.ID,
 		TenantInfo: tenant(),
 		Version:    4,
@@ -108,16 +108,16 @@ func TestReview_RefusesWhatThereIsNothingToReview(t *testing.T) {
 
 	reviewer := pulid.MustNew("usr_")
 	at := int64(1_791_600_000)
-	for name, change := range map[string]func(*agent.Memory){
-		"a memory no run tainted": func(m *agent.Memory) { m.Tainted = false },
-		"one already reviewed": func(m *agent.Memory) {
+	for name, change := range map[string]func(*agentmemory.Memory){
+		"a memory no run tainted": func(m *agentmemory.Memory) { m.Tainted = false },
+		"one already reviewed": func(m *agentmemory.Memory) {
 			m.ReviewedByUserID = &reviewer
 			m.ReviewedAt = &at
 		},
-		"a suggestion, which is approved instead": func(m *agent.Memory) {
-			m.Status = agent.MemoryStatusSuggested
+		"a suggestion, which is approved instead": func(m *agentmemory.Memory) {
+			m.Status = agentmemory.MemoryStatusSuggested
 		},
-		"a retired one": func(m *agent.Memory) { m.Status = agent.MemoryStatusRetired },
+		"a retired one": func(m *agentmemory.Memory) { m.Status = agentmemory.MemoryStatusRetired },
 	} {
 		memory := taintedInstruction()
 		change(memory)
@@ -125,7 +125,11 @@ func TestReview_RefusesWhatThereIsNothingToReview(t *testing.T) {
 
 		_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
 			t.Context(),
-			agentports.ReviewAgentMemoryRequest{ID: memory.ID, TenantInfo: tenant(), Version: 4},
+			agentmemoryports.ReviewAgentMemoryRequest{
+				ID:         memory.ID,
+				TenantInfo: tenant(),
+				Version:    4,
+			},
 			userActor(),
 		)
 
@@ -141,7 +145,11 @@ func TestReview_OnlyAPerson(t *testing.T) {
 
 	_, err := (&Service{l: zap.NewNop(), repo: repo}).Review(
 		t.Context(),
-		agentports.ReviewAgentMemoryRequest{ID: repo.memory.ID, TenantInfo: tenant(), Version: 4},
+		agentmemoryports.ReviewAgentMemoryRequest{
+			ID:         repo.memory.ID,
+			TenantInfo: tenant(),
+			Version:    4,
+		},
 		&permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAgent},
 	)
 
@@ -161,12 +169,16 @@ func TestApproveSuggestion_OfATaintedSuggestionIsItsReview(t *testing.T) {
 	security := &recordedChanges{}
 	svc := &Service{l: zap.NewNop(), repo: repo, security: security}
 
-	_, err := svc.ApproveSuggestion(t.Context(), &agentports.ApproveAgentMemorySuggestionRequest{
-		ID:         memory.ID,
-		TenantInfo: tenant(),
-		Content:    "State only rates a tool returned.",
-		Version:    2,
-	}, userActor())
+	_, err := svc.ApproveSuggestion(
+		t.Context(),
+		&agentmemoryports.ApproveAgentMemorySuggestionRequest{
+			ID:         memory.ID,
+			TenantInfo: tenant(),
+			Content:    "State only rates a tool returned.",
+			Version:    2,
+		},
+		userActor(),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, security.changes, 1)

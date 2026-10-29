@@ -6,12 +6,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,128 +25,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// The transcript shows another agent's steps nested under the call that
-// handed it the task, headed by that agent's name, and the conversation's
-// own steps as they always were.
-func TestRenderTranscript_NestsADelegatesStepsUnderItsCall(t *testing.T) {
-	t.Parallel()
-
-	delegate := pulid.MustNew("agdef_")
-	messages := []conversation.Message{
-		{Role: conversation.RoleUser, Content: "Build a dashboard of on-time delivery.",
-			CreatedAt: 1_790_000_000},
-		{
-			Role:      conversation.RoleAssistant,
-			CreatedAt: 1_790_000_001,
-			ToolCalls: []conversation.ToolCallRecord{{
-				ID:        "call_1",
-				Name:      "delegate_task",
-				Arguments: map[string]any{"agentId": delegate.String(), "task": "Make the report."},
-			}},
-		},
-		{Role: conversation.RoleUser, Kind: conversation.MessageKindDelegated,
-			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			Content: "Make the report.", CreatedAt: 1_790_000_002},
-		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated,
-			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			ToolCalls: []conversation.ToolCallRecord{{ID: "call_d1", Name: "report_create"}},
-			CreatedAt: 1_790_000_003},
-		{Role: conversation.RoleTool, Kind: conversation.MessageKindDelegated,
-			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			ToolCallID: "call_d1", ToolName: "report_create",
-			Content: "Tool \"report_create\" ran successfully.", CreatedAt: 1_790_000_004},
-		{Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated,
-			AgentDefinitionID: delegate, DelegateCallID: "call_1",
-			Content: "Saved the report rd_1.", CreatedAt: 1_790_000_005},
-		{Role: conversation.RoleTool, ToolCallID: "call_1", ToolName: "delegate_task",
-			Content: "the account", CreatedAt: 1_790_000_006},
-		{Role: conversation.RoleAssistant, Content: "The tile is ready.", CreatedAt: 1_790_000_007},
-	}
-
-	body := renderTranscript(&transcriptInput{
-		Thread:     transcriptThread(),
-		AgentName:  "Homepage Widget Builder",
-		Delegates:  map[pulid.ID]string{delegate: "Report Builder"},
-		Messages:   messages,
-		ExportedAt: 1_790_000_100,
-	})
-
-	assert.Equal(t, 1, strings.Count(body, "## Handed to Report Builder"),
-		"the delegate's steps are one section")
-	assert.Contains(t, body, "> ### Task · ")
-	assert.Contains(t, body, "> Make the report.")
-	assert.Contains(t, body, "> ## Report Builder · ")
-	assert.Contains(t, body, "> **Called `report_create`**")
-	assert.Contains(t, body, "> Saved the report rd_1.")
-	assert.Equal(t, 1, strings.Count(body, "## You · "),
-		"the task is not shown as something the person typed")
-	assert.Less(t, strings.Index(body, "**Called `delegate_task`**"),
-		strings.Index(body, "## Handed to Report Builder"))
-	assert.Less(t, strings.Index(body, "## Handed to Report Builder"),
-		strings.Index(body, "### Result from `delegate_task`"))
-	assert.Contains(t, body, "## Homepage Widget Builder · ")
-}
-
-// A delegate deleted since is named plainly rather than left blank.
-func TestRenderTranscript_NamesADeletedDelegatePlainly(t *testing.T) {
-	t.Parallel()
-
-	body := renderTranscript(&transcriptInput{
-		Thread:    transcriptThread(),
-		AgentName: "Homepage Widget Builder",
-		Messages: []conversation.Message{{
-			Role: conversation.RoleAssistant, Kind: conversation.MessageKindDelegated,
-			AgentDefinitionID: pulid.MustNew("agdef_"), DelegateCallID: "call_1",
-			Content: "Done.",
-		}},
-	})
-
-	assert.Contains(t, body, "## Handed to Another agent")
-}
-
-type delegateDefinitions struct {
-	agentdefinitionports.AgentDefinitionRepository
-
-	byID   map[pulid.ID]*agentdefinition.Definition
-	listed int
-}
-
-func (s *delegateDefinitions) ListByIDs(
-	_ context.Context,
-	req agentdefinitionports.ListAgentDefinitionsByIDsRequest,
-) ([]*agentdefinition.Definition, error) {
-	s.listed++
-	found := make([]*agentdefinition.Definition, 0, len(req.IDs))
-	for _, id := range req.IDs {
-		if definition, ok := s.byID[id]; ok {
-			found = append(found, definition)
-		}
-	}
-
-	return found, nil
-}
-
-func (s *delegateDefinitions) GetByID(
-	_ context.Context,
-	req agentdefinitionports.GetAgentDefinitionByIDRequest,
-) (*agentdefinition.Definition, error) {
-	if definition, ok := s.byID[req.ID]; ok {
-		return definition, nil
-	}
-
-	return nil, errortypes.NewNotFoundError("AgentDefinition not found")
-}
-
 type delegateFixture struct {
 	svc      *Service
 	parent   *agentdefinition.Definition
 	delegate *agentdefinition.Definition
-	perms    *subjectPermissions
+	perms    *assistanttest.SubjectPermissions
 	request  *OpenDelegateRequest
 }
 
 func newDelegateFixture() *delegateFixture {
-	svc := newService(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{})
+	svc := newService(
+		&assistanttest.ScriptedCompletion{},
+		&assistanttest.StubQueryRegistry{},
+		&assistanttest.StubActionRegistry{},
+	)
 	delegate := &agentdefinition.Definition{
 		ID:              pulid.MustNew("agdef_"),
 		Name:            "Report Builder",
@@ -156,12 +54,14 @@ func newDelegateFixture() *delegateFixture {
 		DelegateIDs:     []pulid.ID{delegate.ID},
 	}
 	parent.ApplyDefaults()
-	perms := &subjectPermissions{allowed: map[string]bool{"assistant:create": true}}
+	perms := &assistanttest.SubjectPermissions{Allowed: map[string]bool{"assistant:create": true}}
 	svc.permissions = perms
-	svc.definitions = &delegateDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
-		parent.ID:   parent,
-		delegate.ID: delegate,
-	}}
+	svc.definitions = &assistanttest.DelegateDefinitions{
+		ByID: map[pulid.ID]*agentdefinition.Definition{
+			parent.ID:   parent,
+			delegate.ID: delegate,
+		},
+	}
 
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -180,13 +80,13 @@ func newDelegateFixture() *delegateFixture {
 			Parent:   parent,
 			Actor:    actor,
 			ThreadID: pulid.MustNew("athr_"),
-			StepOwner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
-			Call: agentruntime.DelegateCall{
-				Call:      agentports.ToolCall{ID: "call_1", Name: "delegate_task"},
-				Delegate:  agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
+			Call: delegation.Call{
+				Call:      llmports.ToolCall{ID: "call_1", Name: "delegate_task"},
+				Delegate:  agentturn.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 				Task:      "Create the on-time report and return its id.",
 				StepScope: "scope-1",
 			},
@@ -230,7 +130,7 @@ func TestOpenDelegate_OpensTheDelegatesOwnTurnForTheSamePerson(t *testing.T) {
 	asked := opened.Turn.Messages[len(opened.Turn.Messages)-1].Content
 	assert.Regexp(t, clockLinePrefix, asked, "the delegate reads the time like any turn")
 	assert.Equal(t, f.request.Call.Task, clockLinePrefix.ReplaceAllString(asked, ""))
-	assert.Contains(t, f.perms.asked, "assistant:create", "the person must be allowed to use it")
+	assert.Contains(t, f.perms.Asked, "assistant:create", "the person must be allowed to use it")
 }
 
 // A task handed over from a palette question is answered inline too: what the
@@ -275,12 +175,12 @@ func TestOpenDelegate_DeclinesWhatThePersonOrTheAllowlistNoLongerAllows(t *testi
 		},
 		"deleted": {
 			change: func(f *delegateFixture) {
-				delete(f.svc.definitions.(*delegateDefinitions).byID, f.delegate.ID)
+				delete(f.svc.definitions.(*assistanttest.DelegateDefinitions).ByID, f.delegate.ID)
 			},
 			reason: "no longer exists",
 		},
 		"the person may not use the assistant": {
-			change: func(f *delegateFixture) { f.perms.allowed = map[string]bool{} },
+			change: func(f *delegateFixture) { f.perms.Allowed = map[string]bool{} },
 			reason: "not allowed to use other agents",
 		},
 	}
@@ -330,7 +230,7 @@ func TestOpenDelegate_ADirectedTaskNeedsNoPlaceOnTheAllowlist(t *testing.T) {
 		"the person may not use the assistant": {
 			change: func(f *delegateFixture) {
 				f.parent.DelegateIDs = nil
-				f.perms.allowed = map[string]bool{}
+				f.perms.Allowed = map[string]bool{}
 			},
 			reason: "not allowed to use other agents",
 		},
@@ -367,13 +267,13 @@ func TestOpenDelegate_ADirectedTaskNeedsNoPlaceOnTheAllowlist(t *testing.T) {
 func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
 	t.Parallel()
 
-	send := func(f *delegateFixture, agentID pulid.ID) (*agentports.DirectedTask, error) {
+	send := func(f *delegateFixture, agentID pulid.ID) (*agentruntimeports.DirectedTask, error) {
 		thread := &conversation.Thread{
 			ID:                f.request.ThreadID,
 			AgentDefinitionID: f.parent.ID,
 		}
 		return f.svc.directedTask(t.Context(), thread, f.request.Actor,
-			&agentports.SendMessageRequest{
+			&assistantports.SendMessageRequest{
 				ThreadID:        thread.ID,
 				Content:         "  Mark shipment SEED-PAY-001 ready to invoice.  ",
 				TenantInfo:      f.request.Actor.TenantInfo(),
@@ -401,7 +301,7 @@ func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
 		assert.Equal(t, f.delegate.ID, task.Delegate.ID)
 		assert.Equal(t, "Report Builder", task.Delegate.Name)
 		assert.Equal(t, "Mark shipment SEED-PAY-001 ready to invoice.", task.Task)
-		assert.Contains(t, f.perms.agentChecks, f.delegate.ID)
+		assert.Contains(t, f.perms.AgentChecks, f.delegate.ID)
 	})
 
 	t.Run("the conversation's own agent", func(t *testing.T) {
@@ -438,7 +338,7 @@ func TestDirectedTask_ChecksTheChosenAgentAsThePersonsOwn(t *testing.T) {
 		t.Parallel()
 
 		f := newDelegateFixture()
-		f.perms.allowed = map[string]bool{}
+		f.perms.Allowed = map[string]bool{}
 		_, err := send(f, f.delegate.ID)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsAuthorizationError(err), "refused for access: %v", err)
@@ -462,12 +362,12 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 	t.Parallel()
 
 	f := newDelegateFixture()
-	f.delegate.Icon = agentdefinition.IconReceipt
-	f.delegate.Accent = agentdefinition.AccentTeal
+	f.delegate.Icon = agentmark.IconReceipt
+	f.delegate.Accent = agentmark.AccentTeal
 	plain := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Plain Agent"}
 	deleted := pulid.MustNew("agdef_")
-	definitions := f.svc.definitions.(*delegateDefinitions)
-	definitions.byID[plain.ID] = plain
+	definitions := f.svc.definitions.(*assistanttest.DelegateDefinitions)
+	definitions.ByID[plain.ID] = plain
 
 	messages := []conversation.Message{
 		{Role: conversation.RoleUser, Content: "Build it."},
@@ -502,45 +402,45 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 				DelegateCallID: "call_3",
 				AgentID:        deleted,
 				AgentName:      "Gone Agent",
-				Icon:           agentdefinition.IconTruck,
-				Accent:         agentdefinition.AccentRose,
+				Icon:           agentmark.IconTruck,
+				Accent:         agentmark.AccentRose,
 				Status:         conversation.DelegateStatusCompleted,
 			},
 		},
 	}
 
-	f.svc.nameDelegatedSteps(t.Context(), f.request.Actor.TenantInfo(), messages)
+	f.svc.attribution().NameDelegatedSteps(t.Context(), f.request.Actor.TenantInfo(), messages)
 
-	assert.Equal(t, 1, definitions.listed, "one query for the whole page")
+	assert.Equal(t, 1, definitions.Listed, "one query for the whole page")
 
 	assert.Empty(t, messages[0].AgentName, "the conversation's own messages are left alone")
 	assert.Equal(t, "Report Builder", messages[1].AgentName)
-	assert.Equal(t, agentdefinition.IconReceipt, messages[1].AgentIcon)
-	assert.Equal(t, agentdefinition.AccentTeal, messages[1].AgentAccent)
+	assert.Equal(t, agentmark.IconReceipt, messages[1].AgentIcon)
+	assert.Equal(t, agentmark.AccentTeal, messages[1].AgentAccent)
 
 	assert.Equal(t, "Plain Agent", messages[2].AgentName)
 	assert.Empty(t, messages[2].AgentIcon, "no icon of its own: the reader draws its initials")
 	assert.Equal(t, plain.ResolvedAccent(), messages[2].AgentAccent)
 
-	assert.Equal(t, agentdefinition.IconReceipt, messages[3].DelegateReport.Icon)
-	assert.Equal(t, agentdefinition.AccentTeal, messages[3].DelegateReport.Accent)
+	assert.Equal(t, agentmark.IconReceipt, messages[3].DelegateReport.Icon)
+	assert.Equal(t, agentmark.AccentTeal, messages[3].DelegateReport.Accent)
 
-	assert.Equal(t, agentdefinition.IconTruck, messages[4].DelegateReport.Icon,
+	assert.Equal(t, agentmark.IconTruck, messages[4].DelegateReport.Icon,
 		"a deleted agent keeps the mark the turn recorded")
-	assert.Equal(t, agentdefinition.AccentRose, messages[4].DelegateReport.Accent)
+	assert.Equal(t, agentmark.AccentRose, messages[4].DelegateReport.Accent)
 }
 
 type capturingContexts struct {
-	asked *agentports.RuntimeContextRequest
+	asked *agentruntimeports.RuntimeContextRequest
 }
 
 func (c *capturingContexts) Build(
 	_ context.Context,
-	req *agentports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+	req *agentruntimeports.RuntimeContextRequest,
+) (agentturn.RuntimeContext, error) {
 	c.asked = req
 
-	return agentdefinition.RuntimeContext{
+	return agentturn.RuntimeContext{
 		Trigger:          req.Trigger,
 		DelegatedBy:      req.DelegatedBy,
 		DelegatorRecords: req.DelegatorRecords,
@@ -555,7 +455,7 @@ func TestOpenDelegate_HandsTheDelegateTheRecordsTheTurnIsAbout(t *testing.T) {
 	f := newDelegateFixture()
 	contexts := &capturingContexts{}
 	f.svc.contexts = contexts
-	f.request.Records = []agent.EntityRef{
+	f.request.Records = []agentpagecontext.EntityRef{
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
@@ -575,9 +475,9 @@ func TestOpenDelegate_PutsWhatWasHandedOverAfterTheTask(t *testing.T) {
 	t.Parallel()
 
 	f := newDelegateFixture()
-	f.request.Call.Context = &agentruntime.DelegateContext{
-		Records: []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
-		Results: []agentruntime.SharedResult{{
+	f.request.Call.Context = &delegation.Context{
+		Records: []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+		Results: []delegation.SharedResult{{
 			CallID:   "call_read",
 			ToolName: "shipment_get",
 			Content:  `{"proNumber":"PRO-1001"}`,

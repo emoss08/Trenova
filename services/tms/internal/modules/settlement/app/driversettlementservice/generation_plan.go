@@ -3,7 +3,7 @@ package driversettlementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -13,7 +13,7 @@ import (
 )
 
 func ResolveBatchBounds(
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 	periodStart, periodEnd, now int64,
 ) (PeriodBounds, error) {
 	return settlementshared.ResolveRequestedPeriod(settlementshared.PeriodSchedule{

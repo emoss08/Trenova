@@ -9,8 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -37,9 +38,9 @@ type Params struct {
 	Control          tenantports.AgentControlRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
-	Providers        agentports.AIProviderRepository
-	ProviderService  agentports.AIProviderService
-	Trust            agentports.AgentTrustService
+	Providers        aiproviderports.AIProviderRepository
+	ProviderService  aiproviderports.AIProviderService
+	Trust            agenttrustports.AgentTrustService
 	Shadow           agentshadowports.AgentShadowService
 	Usage            aiusageports.AIUsageRepository
 }
@@ -51,9 +52,9 @@ type Service struct {
 	control          tenantports.AgentControlRepository
 	definitions      agentdefinitionports.AgentDefinitionRepository
 	agentDefinitions agentdefinitionports.AgentDefinitionService
-	providers        agentports.AIProviderRepository
-	providerService  agentports.AIProviderService
-	trust            agentports.AgentTrustService
+	providers        aiproviderports.AIProviderRepository
+	providerService  aiproviderports.AIProviderService
+	trust            agenttrustports.AgentTrustService
 	shadow           agentshadowports.AgentShadowService
 	usage            aiusageports.AIUsageRepository
 	computing        singleflight.Group
@@ -214,7 +215,7 @@ func (s *Service) inputs(
 	}
 
 	if !control.EarnedAutonomy {
-		ready, readyErr := s.trust.PromotionCandidates(ctx, &agentports.PromoteReadyRequest{
+		ready, readyErr := s.trust.PromotionCandidates(ctx, &agenttrustports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 		})
@@ -282,7 +283,7 @@ func usageRows(rows []aiusageports.AIUsageProviderTaskTotals) []aituneup.Provide
 	return out
 }
 
-func readyTools(promotions []agentports.ToolPromotion) []aituneup.ReadyTool {
+func readyTools(promotions []agenttrustports.ToolPromotion) []aituneup.ReadyTool {
 	out := make([]aituneup.ReadyTool, 0, len(promotions))
 	for idx := range promotions {
 		promotion := &promotions[idx]

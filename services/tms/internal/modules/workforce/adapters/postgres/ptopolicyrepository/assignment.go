@@ -5,9 +5,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto/ptodb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -26,7 +26,7 @@ type tenantRow struct {
 }
 
 func policyWithRules() keel.Loader {
-	rl := workerdb.WorkerPTOPolicyAssignments.Policy().Rules()
+	rl := ptodb.WorkerPTOPolicyAssignments.Policy().Rules()
 	return rl.Order(rl.SortOrder.Asc(), rl.PTOType.Asc())
 }
 
@@ -36,13 +36,13 @@ func policyLoads(include bool) []keel.Loader {
 
 func (r *repository) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListPTOAssignmentsRequest,
-) ([]*worker.WorkerPTOPolicyAssignment, error) {
+	req *ptopolicyports.ListPTOAssignmentsRequest,
+) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
-			a := workerdb.WorkerPTOPolicyAssignments
+		func(ctx context.Context) ([]*pto.WorkerPTOPolicyAssignment, error) {
+			a := ptodb.WorkerPTOPolicyAssignments
 			entities, err := a.Where(a.WorkerID.Eq(req.WorkerID)).
 				Load(policyLoads(req.IncludePolicy)...).
 				Order(a.EffectiveFrom.Desc()).
@@ -59,13 +59,13 @@ func (r *repository) ListAssignments(
 
 func (r *repository) GetAssignmentByID(
 	ctx context.Context,
-	req *workerports.GetPTOAssignmentByIDRequest,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	req *ptopolicyports.GetPTOAssignmentByIDRequest,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			a := workerdb.WorkerPTOPolicyAssignments
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
+			a := ptodb.WorkerPTOPolicyAssignments
 			entity, err := a.Where(a.ID.Eq(req.ID)).
 				Load(policyWithRules()).
 				One(ctx, r.db.Keel(ctx))
@@ -79,9 +79,9 @@ func (r *repository) GetAssignmentByID(
 }
 
 func activeAssignmentQuery(
-	req *workerports.GetPTOAssignmentRequest,
-) *keel.Query[*worker.WorkerPTOPolicyAssignment] {
-	a := workerdb.WorkerPTOPolicyAssignments
+	req *ptopolicyports.GetPTOAssignmentRequest,
+) *keel.Query[*pto.WorkerPTOPolicyAssignment] {
+	a := ptodb.WorkerPTOPolicyAssignments
 	active := a.EffectiveTo.IsNull()
 	if req.AsOf > 0 {
 		active = keel.And(
@@ -97,12 +97,12 @@ func activeAssignmentQuery(
 
 func (r *repository) GetActiveAssignment(
 	ctx context.Context,
-	req *workerports.GetPTOAssignmentRequest,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	req *ptopolicyports.GetPTOAssignmentRequest,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
 			entity, err := activeAssignmentQuery(req).First(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, assignmentErrors.Map(err, "")
@@ -115,13 +115,13 @@ func (r *repository) GetActiveAssignment(
 
 func (r *repository) CreateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerPTOPolicyAssignment,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	entity *pto.WorkerPTOPolicyAssignment,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			err := workerdb.WorkerPTOPolicyAssignments.Create(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
+			err := ptodb.WorkerPTOPolicyAssignments.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to create PTO assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
@@ -134,13 +134,13 @@ func (r *repository) CreateAssignment(
 
 func (r *repository) UpdateAssignment(
 	ctx context.Context,
-	entity *worker.WorkerPTOPolicyAssignment,
-) (*worker.WorkerPTOPolicyAssignment, error) {
+	entity *pto.WorkerPTOPolicyAssignment,
+) (*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*worker.WorkerPTOPolicyAssignment, error) {
-			err := workerdb.WorkerPTOPolicyAssignments.Save(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*pto.WorkerPTOPolicyAssignment, error) {
+			err := ptodb.WorkerPTOPolicyAssignments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update PTO assignment", zap.Error(err))
 				return nil, assignmentErrors.Map(err, entity.ID.String())
@@ -153,18 +153,18 @@ func (r *repository) UpdateAssignment(
 
 func (r *repository) ListOpenAssignments(
 	ctx context.Context,
-	req *workerports.ListOpenPTOAssignmentsRequest,
-) ([]*worker.WorkerPTOPolicyAssignment, error) {
+	req *ptopolicyports.ListOpenPTOAssignmentsRequest,
+) ([]*pto.WorkerPTOPolicyAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*worker.WorkerPTOPolicyAssignment, error) {
+		func(ctx context.Context) ([]*pto.WorkerPTOPolicyAssignment, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultOpenAssignmentPageSize
 			}
 
-			a := workerdb.WorkerPTOPolicyAssignments
+			a := ptodb.WorkerPTOPolicyAssignments
 			entities, err := a.Where(
 				a.EffectiveTo.IsNull(),
 				keel.When(req.PolicyID.IsNotNil(), a.PTOPolicyID.Eq(req.PolicyID)),
@@ -190,7 +190,7 @@ func (r *repository) ListTenantsWithOpenAssignments(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with open PTO assignments to accrue")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		a := workerdb.WorkerPTOPolicyAssignments
+		a := ptodb.WorkerPTOPolicyAssignments
 		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), a.
 			AllTenants().
 			Group(a.OrganizationID, a.BusinessUnitID).

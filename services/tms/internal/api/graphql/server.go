@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/vektah/gqlparser/v2/ast"
 	"go.uber.org/fx"
 )
@@ -25,8 +25,8 @@ type ServerParams struct {
 	fx.In
 	gqlext.Params
 
-	Config   *config.Config
-	Resolver *resolver.Resolver
+	AppConfig *appconfig.Config
+	Resolver  *resolver.Resolver
 }
 
 func AsExtension(constructor any) any {
@@ -50,18 +50,18 @@ func NewServer(p ServerParams) *gqlhandler.Server {
 		srv.Use(ext)
 	}
 
-	if devToolingEnabled(p.Config) {
+	if devToolingEnabled(p.AppConfig) {
 		srv.Use(extension.Introspection{})
 	} else {
 		srv.SetDisableSuggestion(true)
 	}
 
-	srv.SetErrorPresenter(gqlext.ErrorPresenter(p.Config))
+	srv.SetErrorPresenter(gqlext.ErrorPresenter(p.AppConfig))
 	srv.SetRecoverFunc(gqlext.Recover)
 
 	return srv
 }
 
-func devToolingEnabled(cfg *config.Config) bool {
-	return cfg.App.Debug || cfg.App.IsDevelopment() || cfg.App.IsTest()
+func devToolingEnabled(cfg *appconfig.Config) bool {
+	return cfg.Debug || cfg.IsDevelopment() || cfg.IsTest()
 }

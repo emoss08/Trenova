@@ -5,9 +5,10 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -51,7 +52,7 @@ func definitionColumns(
 func agentDefinitionConnectionToModel(
 	result *pagination.CursorListResult[*agentdefinition.Definition],
 ) (*gqlmodel.AgentDefinitionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agentdefinition.Definition, cursor string) *gqlmodel.AgentDefinitionEdge {
 			return &gqlmodel.AgentDefinitionEdge{Node: node, Cursor: cursor}
@@ -74,13 +75,13 @@ func agentDefinitionStats(
 	ctx context.Context,
 	obj *agentdefinition.Definition,
 ) (agentdefinitionports.AgentDefinitionStats, error) {
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return agentdefinitionports.AgentDefinitionStats{}, errortypes.NewDatabaseError(
 			"Agent definition stats loader is not configured",
 		)
 	}
 
-	return loaders.AgentDefinitionStatsByID(ctx, obj.ID.String())
+	return agentloaders.AgentDefinitionStatsByID(ctx, obj.ID.String())
 }
 
 // agentDefinitionDelegates reads the agents a definition may hand work to
@@ -94,11 +95,11 @@ func agentDefinitionDelegates(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent definition loader is not configured")
 	}
 
-	return loadDelegates(ctx, loaders.AgentDefinitionByIDThunk, obj, nil)
+	return loadDelegates(ctx, agentloaders.AgentDefinitionByIDThunk, obj, nil)
 }
 
 // myAgentDelegates reads the agents a definition may hand work to that the
@@ -114,13 +115,13 @@ func myAgentDelegates(
 		return []*agentdefinition.Definition{}, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, errortypes.NewDatabaseError("Agent loader is not configured")
 	}
 
 	return loadDelegates(
 		ctx,
-		loaders.UsableAgentByIDThunk,
+		agentloaders.UsableAgentByIDThunk,
 		obj,
 		func(delegate *agentdefinition.Definition) bool {
 			return obj.DelegateRefusal(delegate) == ""

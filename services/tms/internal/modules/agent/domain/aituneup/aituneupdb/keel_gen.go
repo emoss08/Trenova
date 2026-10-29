@@ -8,7 +8,6 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,7 +31,7 @@ var tuneUpsTable = schema.Table{
 		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Provider ID`, JSON: `providerId`},
 		{Name: "other_provider_id", Quoted: `"other_provider_id"`, Field: "OtherProviderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Other Provider ID`, JSON: `otherProviderId`},
 		{Name: "tool_name", Quoted: `"tool_name"`, Field: "ToolName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Tool Name`, JSON: `toolName`},
-		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Task`, JSON: `task`, Enum: enumAiproviderTask[:]},
+		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Task`, JSON: `task`, Enum: enumAitaskTask[:]},
 		{Name: "evidence", Quoted: `"evidence"`, Field: "Evidence", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Evidence`, JSON: `evidence`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:]},
 		{Name: "dismissed_until", Quoted: `"dismissed_until"`, Field: "DismissedUntil", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Dismissed Until`, JSON: `dismissedUntil`},
@@ -75,7 +74,7 @@ type TuneUpsTable struct {
 	ProviderID        keelkinds.PulidIDCol
 	OtherProviderID   keelkinds.PulidIDCol
 	ToolName          keel.StringCol
-	Task              aiproviderdb.TaskCol
+	Task              keelkinds.AitaskTaskCol
 	Evidence          keel.JSONBCol
 	Status            StatusCol
 	DismissedUntil    keel.Int64Col
@@ -99,7 +98,7 @@ var TuneUps = &TuneUpsTable{
 	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 6}}},
 	OtherProviderID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 7}}},
 	ToolName:          keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 8}},
-	Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 9}}},
+	Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 9}}},
 	Evidence:          keel.JSONBCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 10}},
 	Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tuneUpsRef, Index: 11}}},
 	DismissedUntil:    keel.Int64Col{Col: keel.Col{Ref: &tuneUpsRef, Index: 12}},
@@ -124,7 +123,7 @@ func BuildTuneUps(r *keel.Ref) *TuneUpsTable {
 		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		OtherProviderID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Evidence:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		Status:            StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		DismissedUntil:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -268,7 +267,7 @@ func valueTuneUp(p unsafe.Pointer, c int32) any {
 	return nil
 }
 
-var enumAiproviderTask = [...]schema.EnumValue{
+var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `DocumentClassification`, Label: `Document Classification`},
 	{Value: `DocumentExtraction`, Label: `Document Extraction`},
 	{Value: `BillingDiagnosis`, Label: `Billing Diagnosis`},

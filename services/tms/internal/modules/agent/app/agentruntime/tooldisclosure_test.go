@@ -5,7 +5,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,17 +18,17 @@ import (
 
 type recordedDisclosures struct {
 	mu          sync.Mutex
-	preselected []agentports.ToolDisclosure
-	found       []agentports.ToolDisclosure
+	preselected []agenttoolports.ToolDisclosure
+	found       []agenttoolports.ToolDisclosure
 }
 
-func (r *recordedDisclosures) Preselected(_ context.Context, d *agentports.ToolDisclosure) {
+func (r *recordedDisclosures) Preselected(_ context.Context, d *agenttoolports.ToolDisclosure) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.preselected = append(r.preselected, *d)
 }
 
-func (r *recordedDisclosures) Found(_ context.Context, d *agentports.ToolDisclosure) {
+func (r *recordedDisclosures) Found(_ context.Context, d *agenttoolports.ToolDisclosure) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.found = append(r.found, *d)
@@ -32,18 +37,22 @@ func (r *recordedDisclosures) Found(_ context.Context, d *agentports.ToolDisclos
 func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	t.Parallel()
 
-	service, completion, names := wideRun(t,
-		toolTurn(findToolsName, map[string]any{"need": "trailers due inspection"}),
-		toolTurn("equipment_list_trailers", map[string]any{}),
-		textTurn("Two trailers are due."),
+	service, completion, names := wideRun(
+		t,
+		runtimetest.ToolTurn(
+			runtimetools.FindToolsName,
+			map[string]any{"need": "trailers due inspection"},
+		),
+		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
+		runtimetest.TextTurn("Two trailers are due."),
 	)
 	observed := &recordedDisclosures{}
-	service.disclosures = observed
+	rewire(service, func(p *Params) { p.Disclosures = observed })
 	threadID := pulid.MustNew("athr_")
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 		ThreadID:   threadID,
 	})
@@ -53,7 +62,7 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 	opening := observed.preselected[0]
 	assert.True(t, opening.Disclosed)
 	assert.Equal(t, threadID, opening.Attribution.ThreadID)
-	assert.Len(t, opening.Ranked, preselectedTools)
+	assert.Len(t, opening.Ranked, toolaccess.PreselectedTools)
 	assert.Positive(t, opening.Held)
 	for _, name := range opening.Ranked {
 		assert.Contains(t, requestTools(completion.Requests[0]), name)
@@ -69,20 +78,22 @@ func TestRun_ReportsTheOpeningRankingAndEachSearch(t *testing.T) {
 func TestRun_SendsEveryHeldToolBelowTheConfiguredThreshold(t *testing.T) {
 	t.Parallel()
 
-	service, completion, names := wideRun(t, textTurn("Hello."))
+	service, completion, names := wideRun(t, runtimetest.TextTurn("Hello."))
 	everything := len(names) + 1
-	service.threshold = &everything
+	retune(service, func(a *toolaccess.AccessParams, _ *tooldispatch.DispatcherParams) {
+		a.Threshold = &everything
+	})
 	observed := &recordedDisclosures{}
-	service.disclosures = observed
+	rewire(service, func(p *Params) { p.Disclosures = observed })
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 	require.NoError(t, err)
 
 	assert.Empty(t, observed.preselected, "nothing was ranked: every tool was sent")
-	assert.NotContains(t, requestTools(completion.Requests[0]), findToolsName)
+	assert.NotContains(t, requestTools(completion.Requests[0]), runtimetools.FindToolsName)
 	assert.Contains(t, requestTools(completion.Requests[0]), "equipment_list_trailers")
 }

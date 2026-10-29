@@ -1,7 +1,6 @@
 package organizationhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"net/http"
@@ -11,13 +10,16 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/organizationservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -213,28 +215,29 @@ func setupOrganizationHandler(
 	logger := zap.NewNop()
 
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			MaxFileSize:        5 * 1024 * 1024,
 			PresignedURLExpiry: 15 * time.Minute,
 		},
 	}
 
 	service := organizationservice.New(organizationservice.Params{
-		Logger:       logger,
-		DB:           dbtest.NopConnection{},
-		Repo:         repo,
-		Storage:      storageClient,
-		Config:       cfg,
-		Validator:    organizationservice.NewValidator(organizationservice.ValidatorParams{}),
-		AuditService: &mocks.NoopAuditService{},
+		Logger:         logger,
+		DB:             dbtest.NopConnection{},
+		Repo:           repo,
+		Storage:        storageClient,
+		SecurityConfig: &cfg.Security,
+		StorageConfig:  &cfg.Storage,
+		Validator:      organizationservice.NewValidator(organizationservice.ValidatorParams{}),
+		AuditService:   &mocks.NoopAuditService{},
 	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{

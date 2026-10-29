@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/lrucache"
@@ -24,23 +25,23 @@ const (
 	queryCacheTTL  = 15 * time.Minute
 )
 
-var _ agentports.QueryVectorizer = (*Service)(nil)
+var _ retrievalports.QueryVectorizer = (*Service)(nil)
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repository agentports.AIRetrievalRepository
-	Embeddings aiusageports.EmbeddingService `optional:"true"`
-	Shared     agentports.QueryVectorCache   `optional:"true"`
+	Repository retrievalports.AIRetrievalRepository
+	Embeddings aiusageports.EmbeddingService   `optional:"true"`
+	Shared     retrievalports.QueryVectorCache `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
-	repo       agentports.AIRetrievalRepository
+	repo       retrievalports.AIRetrievalRepository
 	embeddings aiusageports.EmbeddingService
-	shared     agentports.QueryVectorCache
-	vectors    lrucache.Cache[queryKey, agentports.QueryVector]
+	shared     retrievalports.QueryVectorCache
+	vectors    lrucache.Cache[queryKey, retrievalports.QueryVector]
 }
 
 type queryKey struct {
@@ -56,7 +57,7 @@ func New(p Params) *Service {
 		repo:       p.Repository,
 		embeddings: p.Embeddings,
 		shared:     p.Shared,
-		vectors: lrucache.NewExpirable[queryKey, agentports.QueryVector](
+		vectors: lrucache.NewExpirable[queryKey, retrievalports.QueryVector](
 			queryCacheSize,
 			queryCacheTTL,
 		),
@@ -65,26 +66,26 @@ func New(p Params) *Service {
 
 func (s *Service) Vectorize(
 	ctx context.Context,
-	req *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	req *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	if req == nil {
-		return agentports.QueryVector{}, agentports.ErrQueryTextRequired
+		return retrievalports.QueryVector{}, retrievalports.ErrQueryTextRequired
 	}
 
 	text := QueryText(req.Text)
 	if text == "" {
-		return agentports.QueryVector{}, agentports.ErrQueryTextRequired
+		return retrievalports.QueryVector{}, retrievalports.ErrQueryTextRequired
 	}
 	if err := validateTenant(req.TenantInfo); err != nil {
-		return agentports.QueryVector{}, err
+		return retrievalports.QueryVector{}, err
 	}
 
 	settings, reason, err := s.searchable(ctx, req.TenantInfo)
 	if err != nil {
-		return agentports.QueryVector{}, err
+		return retrievalports.QueryVector{}, err
 	}
 	if reason != "" {
-		return agentports.UnavailableQueryVector(reason), nil
+		return retrievalports.UnavailableQueryVector(reason), nil
 	}
 
 	key := queryKey{
@@ -122,7 +123,9 @@ func (s *Service) Vectorize(
 			zap.Error(err),
 		)
 
-		return agentports.UnavailableQueryVector(airetrieval.UnavailableReasonProviderFailed), nil
+		return retrievalports.UnavailableQueryVector(
+			airetrieval.UnavailableReasonProviderFailed,
+		), nil
 	}
 
 	s.vectors.Add(key, vector)
@@ -136,9 +139,9 @@ func (s *Service) sharedVector(
 	tenant pagination.TenantInfo,
 	key queryKey,
 	dimensions int,
-) (agentports.QueryVector, bool) {
+) (retrievalports.QueryVector, bool) {
 	if s.shared == nil {
-		return agentports.QueryVector{}, false
+		return retrievalports.QueryVector{}, false
 	}
 
 	vector, ok, err := s.shared.Get(ctx, sharedKey(tenant, key))
@@ -150,10 +153,10 @@ func (s *Service) sharedVector(
 			)
 		}
 
-		return agentports.QueryVector{}, false
+		return retrievalports.QueryVector{}, false
 	}
 	if !ok || vector.Dimensions != dimensions || !vector.Usable() {
-		return agentports.QueryVector{}, false
+		return retrievalports.QueryVector{}, false
 	}
 
 	return vector, true
@@ -163,7 +166,7 @@ func (s *Service) storeShared(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	key queryKey,
-	vector agentports.QueryVector,
+	vector retrievalports.QueryVector,
 ) {
 	if s.shared == nil {
 		return
@@ -178,8 +181,8 @@ func (s *Service) storeShared(
 	}
 }
 
-func sharedKey(tenant pagination.TenantInfo, key queryKey) *agentports.QueryVectorCacheKey {
-	return &agentports.QueryVectorCacheKey{
+func sharedKey(tenant pagination.TenantInfo, key queryKey) *retrievalports.QueryVectorCacheKey {
+	return &retrievalports.QueryVectorCacheKey{
 		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
 		ModelKey:   key.modelKey,
 		TextHash:   key.textHash,
@@ -278,7 +281,7 @@ func (s *Service) hasProvider(ctx context.Context, tenant pagination.TenantInfo)
 	switch {
 	case err == nil:
 		return true, nil
-	case errors.Is(err, agentports.ErrNoProviderConfigured):
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return false, nil
 	default:
 		return false, fmt.Errorf("read the embedding provider: %w", err)
@@ -290,9 +293,9 @@ func (s *Service) embedFailed(
 	tenant pagination.TenantInfo,
 	modelKey string,
 	err error,
-) (agentports.QueryVector, error) {
+) (retrievalports.QueryVector, error) {
 	if ctxErr := ctx.Err(); ctxErr != nil {
-		return agentports.QueryVector{}, ctxErr
+		return retrievalports.QueryVector{}, ctxErr
 	}
 
 	reason := EmbedFailureReason(err)
@@ -318,12 +321,12 @@ func (s *Service) embedFailed(
 		s.l.Warn("embedding a search query failed; searching by keyword", fields...)
 	}
 
-	return agentports.UnavailableQueryVector(reason), nil
+	return retrievalports.UnavailableQueryVector(reason), nil
 }
 
 func EmbedFailureReason(err error) airetrieval.UnavailableReason {
 	switch {
-	case errors.Is(err, agentports.ErrNoProviderConfigured):
+	case errors.Is(err, llmports.ErrNoProviderConfigured):
 		return airetrieval.UnavailableReasonNoProvider
 	case errors.Is(err, context.DeadlineExceeded):
 		return airetrieval.UnavailableReasonQueryTimeout
@@ -335,14 +338,14 @@ func EmbedFailureReason(err error) airetrieval.UnavailableReason {
 func queryVectorFrom(
 	result *aiusageports.EmbedResult,
 	settings *airetrieval.Settings,
-) (agentports.QueryVector, error) {
+) (retrievalports.QueryVector, error) {
 	if len(result.Vectors) != 1 {
-		return agentports.QueryVector{}, fmt.Errorf(
+		return retrievalports.QueryVector{}, fmt.Errorf(
 			"expected one vector, got %d", len(result.Vectors),
 		)
 	}
 	if result.ModelKey != "" && result.ModelKey != settings.ActiveModelKey {
-		return agentports.QueryVector{}, fmt.Errorf(
+		return retrievalports.QueryVector{}, fmt.Errorf(
 			"embedded with %q, the index is built with %q",
 			result.ModelKey, settings.ActiveModelKey,
 		)
@@ -350,12 +353,12 @@ func queryVectorFrom(
 
 	vector := result.Vectors[0]
 	if len(vector) != settings.Dimensions {
-		return agentports.QueryVector{}, fmt.Errorf(
+		return retrievalports.QueryVector{}, fmt.Errorf(
 			"expected %d dimensions, got %d", settings.Dimensions, len(vector),
 		)
 	}
 
-	return agentports.QueryVector{
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     vector,
 		ModelKey:   settings.ActiveModelKey,
@@ -376,13 +379,13 @@ func pausedReason(settings *airetrieval.Settings) airetrieval.UnavailableReason 
 
 func QueryText(text string) string {
 	return strings.TrimSpace(
-		stringutils.TruncateRunes(strings.TrimSpace(text), agentports.MaxQueryTextRunes),
+		stringutils.TruncateRunes(strings.TrimSpace(text), retrievalports.MaxQueryTextRunes),
 	)
 }
 
 func validateTenant(tenant pagination.TenantInfo) error {
 	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() {
-		return agentports.ErrQueryTenantRequired
+		return retrievalports.ErrQueryTenantRequired
 	}
 
 	return nil

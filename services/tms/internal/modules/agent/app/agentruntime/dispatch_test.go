@@ -6,28 +6,33 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type echoPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
-	preview *agent.ToolPreview
+	preview *agentpreview.ToolPreview
 }
 
 func (p echoPreviews) Baseline(
 	context.Context,
-	*agentports.ProposalBaselineRequest,
-) *agentports.ProposalBaselineResult {
-	return &agentports.ProposalBaselineResult{Preview: p.preview}
+	*agentruntimeports.ProposalBaselineRequest,
+) *agentruntimeports.ProposalBaselineResult {
+	return &agentruntimeports.ProposalBaselineResult{Preview: p.preview}
 }
 
 func filedContent(
 	t *testing.T,
-	previews agentports.ProposalPreviewService,
+	previews agentruntimeports.ProposalPreviewService,
 	schema map[string]any,
 	args map[string]any,
 ) string {
@@ -38,20 +43,20 @@ func filedContent(
 		Tier:     agent.TierPropose,
 		Schema:   schema,
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("shipment_create", args),
-		textTurn("I have proposed the shipment."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("shipment_create", args),
+		runtimetest.TextTurn("I have proposed the shipment."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
 	if previews != nil {
-		rt.previews = previews
+		rewire(rt, func(p *Params) { p.Previews = previews })
 	}
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_create"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "copy PRO-100 for Tuesday",
 	})
 	require.NoError(t, err)
@@ -85,10 +90,10 @@ func shipmentSchema() map[string]any {
 func TestDispatch_FilingEchoesThePreviewTheCardShows(t *testing.T) {
 	t.Parallel()
 
-	content := filedContent(t, echoPreviews{preview: &agent.ToolPreview{
+	content := filedContent(t, echoPreviews{preview: &agentpreview.ToolPreview{
 		Summary: "Creates a shipment for Acme from Dallas to Tulsa, rated at $1,250.00.",
-		Warnings: []agent.PreviewWarning{{
-			Code:    agent.PreviewWarningCode("rate_coverage"),
+		Warnings: []agentpreview.PreviewWarning{{
+			Code:    agentpreview.PreviewWarningCode("rate_coverage"),
 			Message: "No rate agreement covers this lane; the formula template rates it.",
 		}},
 	}}, shipmentSchema(), map[string]any{"customerId": "cus_1"})
@@ -133,12 +138,16 @@ func TestDispatch_FilingEchoIsBoundedToTwoKiB(t *testing.T) {
 		"commodities": commodities,
 	})
 
-	_, echo, found := strings.Cut(content, filedArgumentsLead)
+	_, echo, found := strings.Cut(content, toolsummary.FiledArgumentsLead)
 	require.True(t, found, content)
-	assert.LessOrEqual(t, len(echo), maxFilingEchoBytes+len(filingEchoCutNote)+16)
+	assert.LessOrEqual(
+		t,
+		len(echo),
+		toolsummary.MaxFilingEchoBytes+len(toolsummary.FilingEchoCutNote)+16,
+	)
 	assert.Contains(t, echo, `customerId: "cus_1"`)
 	assert.Contains(t, echo, "commodities: 60 items")
-	assert.Contains(t, echo, filingEchoCutNote)
+	assert.Contains(t, echo, toolsummary.FilingEchoCutNote)
 }
 
 func TestDispatch_FilingSaysWhichArgumentsWereRenamed(t *testing.T) {

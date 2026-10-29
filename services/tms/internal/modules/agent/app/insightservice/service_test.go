@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -173,24 +173,24 @@ type failingCompletion struct{}
 
 func (failingCompletion) CompleteStructured(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
-	return nil, agentports.ErrNoProviderConfigured
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
+	return nil, llmports.ErrNoProviderConfigured
 }
 
 func (failingCompletion) CompleteChat(
 	context.Context,
-	*agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
-	return nil, agentports.ErrNoProviderConfigured
+	*llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
+	return nil, llmports.ErrNoProviderConfigured
 }
 
 func (failingCompletion) StreamChat(
 	context.Context,
-	*agentports.ChatCompletionRequest,
-	agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
-	return nil, agentports.ErrNoProviderConfigured
+	*llmports.ChatCompletionRequest,
+	llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
+	return nil, llmports.ErrNoProviderConfigured
 }
 
 func newService(repo *stubRepo, perms *stubPermissions, ds ...detector.Detector) *Service {
@@ -356,7 +356,10 @@ func TestRefresh_DropsAFindingNamingAKindItsDetectorDoesNotDeclare(t *testing.T)
 
 	repo := &stubRepo{}
 	namesCustomer := testFinding("names:cus_1")
-	namesCustomer.Names = []permission.Resource{permission.ResourceShipment, permission.ResourceCustomer}
+	namesCustomer.Names = []permission.Resource{
+		permission.ResourceShipment,
+		permission.ResourceCustomer,
+	}
 
 	svc := newService(repo, &stubPermissions{}, &stubDetector{
 		key:      "undeclared",
@@ -406,7 +409,11 @@ func TestListActive_RequiresReadOnEveryKindADetectorNames(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, insightports.AllowedDetectorKeys{"detention"}, repo.lastList.AllowedDetectorKeys)
+	assert.Equal(
+		t,
+		insightports.AllowedDetectorKeys{"detention"},
+		repo.lastList.AllowedDetectorKeys,
+	)
 	assert.Equal(t, 3, perms.checks)
 }
 
@@ -479,8 +486,13 @@ func TestListActive_AsksOnlyForDetectorsTheReaderMaySee(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 		&stubDetector{key: "workers", resources: []permission.Resource{permission.ResourceWorker}},
 	)
 
@@ -551,8 +563,13 @@ func TestListActive_AsksForNothingOnASurfaceNoDetectorClaims(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -573,8 +590,13 @@ func TestListActive_AsksForNothingWhenTheReaderMaySeeNothing(t *testing.T) {
 	t.Parallel()
 
 	repo := &stubRepo{}
-	svc := newService(repo, &stubPermissions{},
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		&stubPermissions{},
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -597,8 +619,13 @@ func TestListActive_NeverAllowsADetectorThatNoLongerExists(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -618,8 +645,13 @@ func TestListActive_AllowsNothingWhenThePermissionCheckFails(t *testing.T) {
 	repo := &stubRepo{}
 	perms := &stubPermissions{err: errors.New("permission service down")}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	)
 
 	_, err := svc.ListActive(t.Context(), insightports.ListInsightsRequest{
@@ -649,8 +681,13 @@ func TestListActive_ResolvesEachDetectorsPermissionOnce(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	_, err := newService(&stubRepo{active: active}, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	_, err := newService(
+		&stubRepo{active: active},
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	).ListActive(
 		t.Context(),
 		insightports.ListInsightsRequest{
@@ -674,8 +711,13 @@ func TestList_CarriesTheSameDetectorRestrictionAsTheWidget(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 		&stubDetector{key: "workers", resources: []permission.Resource{permission.ResourceWorker}},
 	)
 
@@ -702,8 +744,13 @@ func TestList_PassesTheRequestedFiltersThrough(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	svc := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	svc := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	)
 
 	_, err := svc.List(t.Context(), insightports.BrowseInsightsRequest{
@@ -739,8 +786,13 @@ func TestGetDetail_ReturnsTheFindingItsTrendAndTheRuleBehindIt(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	detail, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	detail, err := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -769,8 +821,13 @@ func TestGetDetail_KeepsTheFindingOutOfItsOwnHistory(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	_, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	_, err := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -848,8 +905,13 @@ func TestGetDetail_StillReturnsTheFindingWhenItsHistoryCannotBeRead(t *testing.T
 		permission.ResourceShipment: true,
 	}}
 
-	detail, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	detail, err := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	).GetDetail(t.Context(), insightports.GetInsightDetailRequest{
 		ID:         found.ID,
 		UserID:     pulid.MustNew("usr_"),
@@ -886,7 +948,9 @@ func TestRestore_ReturnsADismissedFindingToActive(t *testing.T) {
 func TestPlanRestore_RefusesAFindingThatIsNotDismissed(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubRepo{byID: &insight.Insight{ID: pulid.MustNew("inst_"), Status: insight.StatusActive}}
+	repo := &stubRepo{
+		byID: &insight.Insight{ID: pulid.MustNew("inst_"), Status: insight.StatusActive},
+	}
 
 	_, err := newService(repo, &stubPermissions{}).Restore(
 		t.Context(),
@@ -927,8 +991,13 @@ func TestListActive_AppliesADefaultLimit(t *testing.T) {
 		permission.ResourceShipment: true,
 	}}
 
-	_, err := newService(repo, perms,
-		&stubDetector{key: "shipments", resources: []permission.Resource{permission.ResourceShipment}},
+	_, err := newService(
+		repo,
+		perms,
+		&stubDetector{
+			key:       "shipments",
+			resources: []permission.Resource{permission.ResourceShipment},
+		},
 	).ListActive(
 		t.Context(),
 		insightports.ListInsightsRequest{TenantInfo: tenant(), UserID: pulid.MustNew("usr_")},
@@ -971,19 +1040,19 @@ func svc(repo *stubRepo, ds ...detector.Detector) *Service {
 // to poll.
 func (f failingCompletion) SubmitBackground(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	result, err := f.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentports.BackgroundSubmission{Result: result}, nil
+	return &llmports.BackgroundSubmission{Result: result}, nil
 }
 
 func (f failingCompletion) PollBackground(
 	context.Context,
-	*agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	*llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }

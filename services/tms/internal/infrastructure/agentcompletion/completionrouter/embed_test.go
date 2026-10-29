@@ -14,10 +14,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionembed"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -153,13 +155,13 @@ func embeddingRouterProvider(
 		Model:               model,
 		AllowPrivateNetwork: true,
 		Priority:            priority,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 		Enabled:             true,
 	}
 	if apiKey != "" {
-		encrypted, err := svc.encryption.EncryptString(apiKey)
+		encrypted, err := svc.Encryption.EncryptString(apiKey)
 		require.NoError(t, err)
 		provider.APIKey = encrypted
 	}
@@ -171,13 +173,13 @@ func newEmbeddingService(t *testing.T) *Service {
 	t.Helper()
 
 	svc := newTestService(t)
-	svc.pause = func(context.Context, time.Duration) error { return nil }
+	svc.Pause = func(context.Context, time.Duration) error { return nil }
 
 	return svc
 }
 
 func withProviders(svc *Service, providers ...*aiprovider.Provider) {
-	svc.repo = &fakeRepo{providers: providers}
+	svc.Repo = &fakeRepo{providers: providers}
 }
 
 func embedTenant() pagination.TenantInfo {
@@ -193,71 +195,15 @@ func numberedInputs(n int) []string {
 	return inputs
 }
 
-func TestBatchEmbeddingInputs(t *testing.T) {
-	t.Parallel()
-
-	limits := embeddingBatchLimits{inputs: 3, tokens: 10}
-
-	tests := []struct {
-		name   string
-		inputs []string
-		want   []int
-	}{
-		{name: "one input", inputs: []string{"abcd"}, want: []int{1}},
-		{
-			name:   "splits on the input count",
-			inputs: []string{"a", "b", "c", "d", "e", "f", "g"},
-			want:   []int{3, 3, 1},
-		},
-		{
-			name:   "splits on the token budget",
-			inputs: []string{strings.Repeat("x", 24), strings.Repeat("x", 24), "y"},
-			want:   []int{1, 2},
-		},
-		{
-			name:   "an input over the budget travels alone",
-			inputs: []string{"a", strings.Repeat("x", 400), "b"},
-			want:   []int{1, 1, 1},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			batches := batchEmbeddingInputs(tt.inputs, limits)
-			sizes := make([]int, 0, len(batches))
-			total := 0
-			for _, batch := range batches {
-				sizes = append(sizes, len(batch.inputs))
-				total += len(batch.inputs)
-			}
-			assert.Equal(t, tt.want, sizes)
-			assert.Equal(t, len(tt.inputs), total, "every input is sent exactly once")
-		})
-	}
-}
-
-func TestEmbeddingLimitsFor(t *testing.T) {
-	t.Parallel()
-
-	openAI := &aiprovider.Provider{Kind: aiprovider.KindOpenAIResponses}
-	gemini := &aiprovider.Provider{
-		Kind:    aiprovider.KindOpenAIChat,
-		BaseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
-	}
-
-	assert.Equal(t, EmbeddingBatchMaxInputs, embeddingLimitsFor(openAI).inputs)
-	assert.Equal(t, EmbeddingBatchMaxTokens, embeddingLimitsFor(openAI).tokens)
-	assert.Equal(t, GeminiEmbeddingBatchMaxInputs, embeddingLimitsFor(gemini).inputs)
-}
-
 func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 	t.Parallel()
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	inputs := numberedInputs(200)
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
@@ -269,14 +215,21 @@ func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 
 	batches := endpoint.batches()
 	require.Len(t, batches, 3)
-	assert.Len(t, batches[0], EmbeddingBatchMaxInputs)
-	assert.Len(t, batches[1], EmbeddingBatchMaxInputs)
-	assert.Len(t, batches[2], 200-2*EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[0], completionembed.EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[1], completionembed.EmbeddingBatchMaxInputs)
+	assert.Len(t, batches[2], 200-2*completionembed.EmbeddingBatchMaxInputs)
 
 	require.Len(t, result.Vectors, len(inputs))
 	for idx, vector := range result.Vectors {
 		require.Len(t, vector, testEmbeddingDimensions)
-		assert.InDelta(t, float64(idx), float64(vector[0]), 0.0001, "vector %d is out of order", idx)
+		assert.InDelta(
+			t,
+			float64(idx),
+			float64(vector[0]),
+			0.0001,
+			"vector %d is out of order",
+			idx,
+		)
 	}
 	assert.Equal(t, testEmbeddingDimensions, result.Dimensions)
 	assert.Equal(t, 2000, result.InputTokens)
@@ -374,7 +327,7 @@ func TestEmbed_PinnedModelKeyWithNoProviderIsNotConfigured(t *testing.T) {
 		ModelKey:   "retired.example/old@1536",
 	})
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 	assert.Zero(t, endpoint.calls.Load())
 }
 
@@ -388,7 +341,7 @@ func TestEmbed_NeverRoutesToAProtocolWithoutEmbeddings(t *testing.T) {
 		Name:                "anthropic",
 		Kind:                aiprovider.KindAnthropicMessages,
 		Model:               "claude-opus-5",
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		Enabled:             true,
 	})
@@ -399,7 +352,7 @@ func TestEmbed_NeverRoutesToAProtocolWithoutEmbeddings(t *testing.T) {
 		Inputs:     []string{"text"},
 	})
 	require.Error(t, err)
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }
 
 func TestEmbed_WrongDimensionIsNotRetried(t *testing.T) {
@@ -408,7 +361,10 @@ func TestEmbed_WrongDimensionIsNotRetried(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	endpoint.dims = 1024
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -427,7 +383,10 @@ func TestEmbed_ScrubsDocumentsButNotQueries(t *testing.T) {
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -456,7 +415,10 @@ func TestEmbed_QueryGivesUpAtItsDeadline(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	endpoint.delay = 2 * time.Second
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	started := time.Now()
 	_, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
@@ -483,7 +445,10 @@ func TestEmbed_RefusesAnEmptyOrBlankRequest(t *testing.T) {
 
 	endpoint := newEmbeddingEndpoint(t)
 	svc := newEmbeddingService(t)
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	for name, req := range map[string]*aiusageports.EmbedRequest{
 		"no inputs": {Purpose: aiusageports.EmbeddingPurposeDocument},
@@ -514,7 +479,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	usage := &fakeUsage{}
 	svc := newEmbeddingService(t)
-	svc.usage = usage
+	svc.Usage = usage
 
 	provider := embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10)
 	inputCost := decimal.RequireFromString("0.02")
@@ -530,7 +495,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo:  embedTenant(),
 		Purpose:     aiusageports.EmbeddingPurposeQuery,
-		Inputs:      numberedInputs(EmbeddingBatchMaxInputs + 4),
+		Inputs:      numberedInputs(completionembed.EmbeddingBatchMaxInputs + 4),
 		Attribution: attribution,
 	})
 	require.NoError(t, err)
@@ -538,7 +503,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 	rows := usage.recorded(t, 2)
 	require.Len(t, rows, 2)
 	for _, row := range rows {
-		assert.Equal(t, aiprovider.TaskEmbedding, row.Task)
+		assert.Equal(t, aitask.TaskEmbedding, row.Task)
 		assert.Equal(t, aiusage.SurfaceRetrieval, row.Surface)
 		assert.True(t, row.Succeeded)
 		assert.Zero(t, row.OutputTokens)
@@ -555,7 +520,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 		total = total.Add(*row.CostUSD)
 		tokens += row.InputTokens
 	}
-	assert.Equal(t, 10*(EmbeddingBatchMaxInputs+4), tokens)
+	assert.Equal(t, 10*(completionembed.EmbeddingBatchMaxInputs+4), tokens)
 	require.NotNil(t, result.CostUSD)
 	assert.True(t, result.CostUSD.Equal(total), result.CostUSD.String())
 	assert.True(
@@ -571,8 +536,11 @@ func TestEmbed_DocumentUsageIsIndexingAndUnpricedStaysUnknown(t *testing.T) {
 	endpoint := newEmbeddingEndpoint(t)
 	usage := &fakeUsage{}
 	svc := newEmbeddingService(t)
-	svc.usage = usage
-	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
+	svc.Usage = usage
+	withProviders(
+		svc,
+		embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10),
+	)
 
 	result, err := svc.Embed(t.Context(), &aiusageports.EmbedRequest{
 		TenantInfo: embedTenant(),
@@ -602,5 +570,5 @@ func TestConfiguredModelKey(t *testing.T) {
 
 	withProviders(svc)
 	_, err = svc.ConfiguredModelKey(t.Context(), embedTenant())
-	assert.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	assert.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }

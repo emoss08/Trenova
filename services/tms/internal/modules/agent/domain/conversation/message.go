@@ -5,7 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -84,13 +85,13 @@ type Message struct {
 	// shape rather than any one provider's wire format.
 	ToolCalls []ToolCallRecord `json:"toolCalls" keel:"tool_calls,jsonb,nullzero"`
 	// ToolCallID and ToolName tie a Tool-role message to the call it answers.
-	ToolCallID  string           `json:"toolCallId"            keel:"tool_call_id,nullzero"`
-	ToolName    string           `json:"toolName"              keel:"tool_name,nullzero"`
-	ToolFailed  bool             `json:"toolFailed"            keel:"tool_failed"`
-	ToolVerdict string           `json:"toolVerdict,omitempty" keel:"tool_verdict,nullzero"`
-	ToolEffect  agent.ToolEffect `json:"effect,omitempty"`
-	ToolSummary string           `json:"summary,omitempty"     keel:"tool_summary,nullzero"`
-	FoundTools  []string         `json:"foundTools,omitempty"  keel:"found_tools,jsonb,nullzero"`
+	ToolCallID  string                    `json:"toolCallId"            keel:"tool_call_id,nullzero"`
+	ToolName    string                    `json:"toolName"              keel:"tool_name,nullzero"`
+	ToolFailed  bool                      `json:"toolFailed"            keel:"tool_failed"`
+	ToolVerdict string                    `json:"toolVerdict,omitempty" keel:"tool_verdict,nullzero"`
+	ToolEffect  agenttooltrust.ToolEffect `json:"effect,omitempty"`
+	ToolSummary string                    `json:"summary,omitempty"     keel:"tool_summary,nullzero"`
+	FoundTools  []string                  `json:"foundTools,omitempty"  keel:"found_tools,jsonb,nullzero"`
 	// HandOffAgents are the person's other agents a find_tools answer named
 	// as holding what this agent could not call, set only on that call's
 	// result, so the Desk's hand-off menu offers them first.
@@ -105,13 +106,13 @@ type Message struct {
 
 	// PageContext is what the person was looking at when they sent a user
 	// turn, kept so an answer can be reviewed against the page it was about.
-	PageContext *agent.PageContext `json:"pageContext" keel:"page_context,jsonb"`
+	PageContext *agentpagecontext.PageContext `json:"pageContext" keel:"page_context,jsonb"`
 
 	// Attachments are the files the person handed over with a user turn, and
 	// Mentions the records they named. Both are kept on the turn so an
 	// answer can be read against what it was given.
-	Attachments []MessageAttachment `json:"attachments" keel:"attachments,jsonb,nullzero"`
-	Mentions    []agent.EntityRef   `json:"mentions"    keel:"mentions,jsonb,nullzero"`
+	Attachments []MessageAttachment          `json:"attachments" keel:"attachments,jsonb,nullzero"`
+	Mentions    []agentpagecontext.EntityRef `json:"mentions"    keel:"mentions,jsonb,nullzero"`
 
 	// Reasoning is what the model thought before it answered, as much as the
 	// provider lets through, plus whatever the provider needs handed back to
@@ -281,10 +282,10 @@ func (r *ReasoningTrace) Readable() bool {
 
 // ToolCallRecord is a persisted tool request.
 type ToolCallRecord struct {
-	ID        string           `json:"id"`
-	Name      string           `json:"name"`
-	Arguments map[string]any   `json:"arguments"`
-	Effect    agent.ToolEffect `json:"effect,omitempty"`
+	ID        string                    `json:"id"`
+	Name      string                    `json:"name"`
+	Arguments map[string]any            `json:"arguments"`
+	Effect    agenttooltrust.ToolEffect `json:"effect,omitempty"`
 	// ProviderData and ProviderID keep what the provider attached to the
 	// call and which provider that was, so a later turn on the same provider
 	// can send it back. Gemini refuses a replayed call without its thought

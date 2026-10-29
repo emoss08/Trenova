@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
@@ -33,21 +33,21 @@ func buildContext(
 	resource filtercatalog.Resource,
 	prompt string,
 	current CurrentView,
-) agentports.DelimitedContext {
-	sections := []agentports.ContextSection{
+) llmports.DelimitedContext {
+	sections := []llmports.ContextSection{
 		{Title: "entity", Trusted: true, Content: describeResource(resource)},
 		{Title: "question", Content: prompt},
 	}
 
 	if described := describeCurrent(current); described != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "current_view",
 			Trusted: true,
 			Content: described,
 		})
 	}
 
-	return agentports.DelimitedContext{Sections: sections}
+	return llmports.DelimitedContext{Sections: sections}
 }
 
 // describeResource is the catalogue as lines, which costs a fraction of the

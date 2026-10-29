@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const ConversationResourceType = "assistant_thread"
@@ -16,7 +16,7 @@ var ownerResourceAliases = map[string]permission.Resource{
 }
 
 func normalizedOwner(resourceType string) string {
-	return strings.ToLower(stringutils.ConvertCamelToSnake(strings.TrimSpace(resourceType)))
+	return strings.ToLower(textcase.ConvertCamelToSnake(strings.TrimSpace(resourceType)))
 }
 
 func OwnerResource(resourceType string) permission.Resource {

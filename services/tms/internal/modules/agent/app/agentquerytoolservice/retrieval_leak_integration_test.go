@@ -16,11 +16,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -97,7 +101,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	var vectorizer agentports.QueryVectorizer
+	var vectorizer retrievalports.QueryVectorizer
 	fixture, fixtureErr := agentevalgate.LoadEmbeddingFixture(retrievaltest.FixturePath)
 	availability, err := repo.VectorAvailability(ctx)
 	require.NoError(t, err)
@@ -135,7 +139,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		Logger:     zap.NewNop(),
 		Repo:       repo,
 		Sources:    sources,
-		Registry:   permission.NewRegistry(),
+		Registry:   permissioncatalog.NewRegistry(),
 		Vectorizer: vectorizer,
 	})
 	permissions := &readPermissions{readable: map[permission.Resource]bool{}}
@@ -153,8 +157,8 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	params := func(
 		principal kernelports.PrincipalType,
 		query string,
-	) *agentports.QueryToolParams {
-		return &agentports.QueryToolParams{
+	) *agenttoolports.QueryToolParams {
+		return &agenttoolports.QueryToolParams{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			Actor: &permissionports.RequestActor{
@@ -229,22 +233,22 @@ func merged(corpora ...*retrievaltest.Corpus) map[pulid.ID]string {
 
 func searchTools(
 	t *testing.T,
-	searcher agentports.RetrievalSearcher,
+	searcher retrievalports.RetrievalSearcher,
 	permissions permissionports.PermissionEngine,
-	threads agentports.ThreadOwnerRepository,
-) map[string]agentports.AgentQueryTool {
+	threads conversationports.ThreadOwnerRepository,
+) map[string]agenttoolports.AgentQueryTool {
 	t.Helper()
 
 	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[agentports.RetrievalSearcher]():     reflect.ValueOf(searcher),
-		reflect.TypeFor[permissionports.PermissionEngine](): reflect.ValueOf(permissions),
-		reflect.TypeFor[agentports.ThreadOwnerRepository](): reflect.ValueOf(threads),
+		reflect.TypeFor[retrievalports.RetrievalSearcher]():        reflect.ValueOf(searcher),
+		reflect.TypeFor[permissionports.PermissionEngine]():        reflect.ValueOf(permissions),
+		reflect.TypeFor[conversationports.ThreadOwnerRepository](): reflect.ValueOf(threads),
 	}
-	tools := make(map[string]agentports.AgentQueryTool, 2)
+	tools := make(map[string]agenttoolports.AgentQueryTool, 2)
 	for _, provider := range agentquerytoolservice.ToolProviders() {
 		built, err := reflectutils.Construct(provider, supplied)
 		require.NoError(t, err)
-		tool, ok := built.(agentports.AgentQueryTool)
+		tool, ok := built.(agenttoolports.AgentQueryTool)
 		if !ok {
 			continue
 		}
@@ -258,8 +262,8 @@ func searchTools(
 }
 
 type leakCheck struct {
-	tool      agentports.AgentQueryTool
-	params    *agentports.QueryToolParams
+	tool      agenttoolports.AgentQueryTool
+	params    *agenttoolports.QueryToolParams
 	idField   string
 	entity    string
 	own       *retrievaltest.Corpus
@@ -297,7 +301,7 @@ func assertNoLeak(t *testing.T, check leakCheck) {
 	}
 }
 
-func taintedIDs(refs []agent.RecordRef, entity string) map[string]struct{} {
+func taintedIDs(refs []agentrecord.RecordRef, entity string) map[string]struct{} {
 	ids := make(map[string]struct{}, len(refs))
 	for _, ref := range refs {
 		if ref.EntityType == entity {

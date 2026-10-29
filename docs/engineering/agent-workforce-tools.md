@@ -147,7 +147,9 @@ workers checked for a road test each came back with the whole catalog. Who lacks
 is `worker_list` with `withoutCredential` (the `workers` root's argument): a `NOT EXISTS` over
 the worker's active, unexpired credential of the type, through the unique index on a worker's
 active credential of each type, so one paged roster read answers "who has no road test on
-file" for the whole organization. An unknown code is refused, not read as everyone lacking it.
+file" for the whole organization. An unknown code is refused, not read as everyone lacking it,
+and the filter needs worker credential read as well as worker read, since it says who lacks one.
+The roster screen offers the same filter ("Missing credential", `MissingCredentialMenu`).
 
 A second active credential of a type is refused unless the call renews it, and the preview
 shows the one a renewal archives. Changing a fact a person verified clears the verification,
@@ -220,7 +222,7 @@ template. Each moves pay, which the workforce coordinator never touches, and the
 clerk, where they would belong, holds all 56 of its tools. An organization adds them to an
 agent it builds in AI control, as it adds the pay setup tools. A template test
 (`withheldFromEveryTemplate`) keeps all twelve off every template. No template is unattended,
-so the agent permission ceiling (`permission/agent.go`) is unchanged.
+so the agent permission ceiling (`agentceiling/agent.go`) is unchanged.
 
 ## Known limits
 

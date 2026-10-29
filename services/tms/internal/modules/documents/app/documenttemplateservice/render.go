@@ -6,8 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/zap"
@@ -93,12 +95,12 @@ type renderedDocument struct {
 
 func (s *Service) renderDocumentHTML(
 	ctx context.Context,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
 	title string,
 	opts compileOptions,
-) (*renderedDocument, templateengine.Diagnostics, error) {
+) (*renderedDocument, templatediag.Diagnostics, error) {
 	compiled := s.compile(def, &resolved.Content, opts)
 
 	if multiErr := diagnosticsToMultiError(compiled.diags); multiErr != nil {
@@ -160,7 +162,7 @@ func (s *Service) renderDocumentHTML(
 func (s *Service) renderRunningPart(
 	ctx context.Context,
 	source string,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	data any,
 	field string,
 ) (string, error) {
@@ -280,7 +282,7 @@ func (s *Service) resolveForMessage(
 
 func (s *Service) renderMessageWith(
 	ctx context.Context,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	resolved *documenttemplateports.ResolvedTemplate,
 	data any,
 	locale i18n.Locale,
@@ -421,7 +423,7 @@ func (s *Service) PreviewVersion(
 
 func (s *Service) fillPreviewChannels(
 	ctx context.Context,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	resolved *documenttemplateports.ResolvedTemplate,
 	compiled *compiledVersion,
 	data any,

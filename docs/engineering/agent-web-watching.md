@@ -124,13 +124,13 @@ lets its wait run out an hour later, and the work hears the watch ended.
 
 | Piece | Location |
 |---|---|
-| Watch, finding, cadence, bounds | `internal/modules/agent/domain/agentextension/webwatch.go` |
+| Watch, finding, cadence, bounds | `internal/modules/agent/domain/extensionwebwatch/webwatch.go` |
 | Ports | `ports/agentextensionports/webwatch.go` |
-| Service | `app/agentextensionservice/web_watches.go` |
+| Service | `app/extensionwebwatchservice/web_watches.go` |
 | Repositories | `adapters/postgres/agentextensionrepository/webwatch.go` |
 | Workflow and activity | `jobs/webwatchjobs/`, `webwatchcontract` |
 | Waits | `agentwait.KindWebWatch`, `app/agentwaitservice/webwatch.go` |
-| Tools | `app/agenttools/webwatchtools/` (`web_watch`, `web_stop_watch`), `app/agentquerytoolservice/web_watch_tools.go` (`web_list_watches`) |
+| Tools | `app/agenttools/webwatchtools/` (`web_watch`, `web_stop_watch`), `app/querytools/webquerytools/web_watch_tools.go` (`web_list_watches`) |
 | Vendor | `shared/exa/monitors.go`, `internal/infrastructure/agentextension/exaconnector/monitors.go` |
 | REST | `GET /agent-web-watches/`, `GET /agent-web-watches/:watchID/findings/`, `POST /agent-web-watches/:watchID/stop/`, the public webhook |
 | Client | `routes/agent-control/_components/extensions/web-watches.tsx`, `components/desk-chat/composer/desk-waits.tsx`, `lib/web-watch.ts` |

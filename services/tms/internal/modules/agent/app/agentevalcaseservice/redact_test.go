@@ -5,12 +5,14 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,41 +31,41 @@ func (t fakeQueryTool) Name() string              { return t.name }
 func (fakeQueryTool) Description() string         { return "" }
 func (fakeQueryTool) ParamSchema() map[string]any { return nil }
 
-func (t fakeQueryTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t fakeQueryTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindQuery,
+		Kind:          agenttooltrust.ToolKindQuery,
 		Resource:      t.resource,
 		Operation:     permission.OpRead,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 	}
 }
-func (fakeQueryTool) Query(context.Context, *agentports.QueryToolParams) (any, error) {
+func (fakeQueryTool) Query(context.Context, *agenttoolports.QueryToolParams) (any, error) {
 	return nil, nil
 }
 
 type fakeQueryRegistry struct {
-	tools map[string]agentports.AgentQueryTool
+	tools map[string]agenttoolports.AgentQueryTool
 }
 
-func (r fakeQueryRegistry) Get(name string) (agentports.AgentQueryTool, bool) {
+func (r fakeQueryRegistry) Get(name string) (agenttoolports.AgentQueryTool, bool) {
 	tool, ok := r.tools[name]
 	return tool, ok
 }
 
-func (r fakeQueryRegistry) All() []agentports.AgentQueryTool { return nil }
+func (r fakeQueryRegistry) All() []agenttoolports.AgentQueryTool { return nil }
 
-func (r fakeQueryRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (r fakeQueryRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
-func testRegistry(t *testing.T) *permission.Registry {
+func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
-	registry := permission.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceCustomer.String(),
 		DisplayName: "Customer",
 		Category:    "Test",
-		Operations:  []permission.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"name":                permission.SensitivityPublic,
 			"creditLimit":         permission.SensitivityRestricted,
@@ -75,11 +77,11 @@ func testRegistry(t *testing.T) *permission.Registry {
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
 	}))
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    resourceLedger.String(),
 		DisplayName: "Ledger",
 		Category:    "Test",
-		Operations:  []permission.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissionspec.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"id": permission.SensitivityPublic,
 		},
@@ -92,7 +94,7 @@ func testRegistry(t *testing.T) *permission.Registry {
 func testRedactor(t *testing.T) *Redactor {
 	t.Helper()
 
-	tools := fakeQueryRegistry{tools: map[string]agentports.AgentQueryTool{
+	tools := fakeQueryRegistry{tools: map[string]agenttoolports.AgentQueryTool{
 		"customer_get": fakeQueryTool{name: "customer_get", resource: resourceCustomer},
 		"get_ledger":   fakeQueryTool{name: "get_ledger", resource: resourceLedger},
 	}}
@@ -231,7 +233,7 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 			Role:       conversation.RoleTool,
 			ToolName:   "customer_get",
 			ToolCallID: "call_1",
-			Content:    agentruntime.FenceToolResult("customer_get", payload),
+			Content:    toolresult.Fence("customer_get", payload),
 		},
 		{
 			Role:       conversation.RoleTool,
@@ -247,7 +249,7 @@ func TestRedactor_HistoryToolResultsAndArguments(t *testing.T) {
 	assert.Equal(t, "[restricted:taxId]", history[1].ToolCalls[0].Arguments["taxId"])
 	assert.Equal(t, "Acme Foods", history[1].ToolCalls[0].Arguments["name"])
 
-	name, body, fenced := agentruntime.UnfenceToolResult(history[2].Content)
+	name, body, fenced := toolresult.Unfence(history[2].Content)
 	require.True(t, fenced)
 	assert.Equal(t, "customer_get", name)
 	assert.Contains(t, body, "[restricted:creditLimit]")
@@ -263,11 +265,11 @@ func TestRedactor_UnreadablePayloadIsRedactedWhole(t *testing.T) {
 	out := &redaction{}
 	content := testRedactor(t).toolContent(
 		"customer_get",
-		agentruntime.FenceToolResult("customer_get", `{"creditLimit": 50000, "name": "Ac`),
+		toolresult.Fence("customer_get", `{"creditLimit": 50000, "name": "Ac`),
 		out,
 	)
 
-	_, body, fenced := agentruntime.UnfenceToolResult(content)
+	_, body, fenced := toolresult.Unfence(content)
 	require.True(t, fenced)
 	assert.Equal(t, "[restricted:result]", body)
 }
@@ -282,7 +284,7 @@ func TestRedactor_DecodedFixtureResult(t *testing.T) {
 	out := &redaction{}
 	result, ok := redactor.decodedResult(
 		"customer_get",
-		agentruntime.FenceToolResult("customer_get", payload),
+		toolresult.Fence("customer_get", payload),
 		false,
 		out,
 	).(map[string]any)

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/shared/restx"
 )
@@ -29,7 +29,7 @@ func NewRecorder(record carrierintelports.CarrierIntelCallRecorder) Recorder {
 }
 
 type CallOutcome struct {
-	Endpoint  carrierintel.Endpoint
+	Endpoint  carrierintelusage.Endpoint
 	DOTNumber string
 	Status    int
 	Started   time.Time

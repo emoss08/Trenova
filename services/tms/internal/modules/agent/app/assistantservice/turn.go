@@ -7,12 +7,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/memorynotes"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/workingset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -42,18 +53,18 @@ type TurnPlan struct {
 	Decision agentguard.Decision `json:"decision"`
 	// Page, Attachments and Mentions are what the person handed over with
 	// the question. They are kept on the question when it is saved.
-	Page        *agent.PageContext               `json:"page,omitempty"`
+	Page        *agentpagecontext.PageContext    `json:"page,omitempty"`
 	Attachments []conversation.MessageAttachment `json:"attachments,omitempty"`
-	Mentions    []agent.EntityRef                `json:"mentions,omitempty"`
+	Mentions    []agentpagecontext.EntityRef     `json:"mentions,omitempty"`
 	// Timezone is the organization's, which is what a tool reads a bare date
 	// in.
 	Timezone string `json:"timezone,omitempty"`
 	// PreferredProviderID is the model the conversation asked for.
-	PreferredProviderID pulid.ID                     `json:"preferredProviderId,omitzero"`
-	Proposals           []agentports.ProposalOutcome `json:"proposals,omitempty"`
+	PreferredProviderID pulid.ID                            `json:"preferredProviderId,omitzero"`
+	Proposals           []agentruntimeports.ProposalOutcome `json:"proposals,omitempty"`
 	// Records are the records the question is about, so an agent the turn
 	// hands a task to reads their memories too.
-	Records []agent.EntityRef `json:"records,omitempty"`
+	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// Inline says the answer is read with nothing beside it, so the turn's
 	// activities keep no tool result as an artifact. A plan recorded before it
 	// existed reads false and keeps its artifacts.
@@ -81,8 +92,8 @@ func openingEvent(input string, decision agentguard.Decision) kernelports.Stream
 	}
 
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventAccepted,
-		Data: agentports.AssistantAcceptedEvent{
+		Event: assistantstreamports.AssistantEventAccepted,
+		Data: assistantstreamports.AssistantAcceptedEvent{
 			Content:       input,
 			ScopeStage:    string(decision.Stage),
 			ScopeCategory: string(decision.Category),
@@ -92,11 +103,11 @@ func openingEvent(input string, decision agentguard.Decision) kernelports.Stream
 
 // RunRequest is the plan as the runtime reads it, less the services a caller
 // supplies for itself.
-func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentports.RunRequest {
-	return &agentports.RunRequest{
+func (p *TurnPlan) RunRequest(actor *permissionports.RequestActor) *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition:          p.Definition,
 		Actor:               actor,
-		Context:             agentdefinition.RuntimeContext{Timezone: p.Timezone},
+		Context:             agentturn.RuntimeContext{Timezone: p.Timezone},
 		Input:               p.Input,
 		PreferredProviderID: p.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
@@ -122,7 +133,7 @@ func (p *TurnPlan) turnContext() turnContext {
 // answer never reaches the model.
 func (s *Service) PrepareTurn(
 	ctx context.Context,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
 ) (*TurnPlan, error) {
 	plan, _, err := s.prepareTurn(ctx, req, actor)
@@ -134,9 +145,9 @@ func (s *Service) PrepareTurn(
 // opened from, for a caller that drives the turn in process.
 func (s *Service) prepareTurn(
 	ctx context.Context,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
-) (*TurnPlan, *agentports.RunRequest, error) {
+) (*TurnPlan, *agentruntimeports.RunRequest, error) {
 	content := strings.TrimSpace(req.Content)
 	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	resumesWait := req.ResumeWaitID.IsNotNil()
@@ -159,10 +170,10 @@ func (s *Service) prepareTurn(
 		multiErr.Add("directedAgentId", errortypes.ErrInvalid,
 			"Only a message the person writes can be handed to another agent")
 	case req.DirectedAgentID.IsNotNil() &&
-		utf8.RuneCountInString(content) > agentruntime.MaxDelegateTaskRunes:
+		utf8.RuneCountInString(content) > delegation.MaxTaskRunes:
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A task for another agent can be at most {0} characters",
-			agentruntime.MaxDelegateTaskRunes)
+			delegation.MaxTaskRunes)
 	case commanded && req.DirectedAgentID.IsNotNil():
 		multiErr.Add("directedAgentId", errortypes.ErrInvalid, commandSpec.DirectedReason)
 	case commanded && commandTask == "":
@@ -178,7 +189,7 @@ func (s *Service) prepareTurn(
 		return nil, nil, multiErr
 	}
 
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -212,20 +223,20 @@ func (s *Service) prepareTurn(
 		content += s.showReading(ctx, thread, actor, req.TenantInfo, resumed.document)
 	}
 	if followUp {
-		followed, noteErr := s.decisionNote(ctx, &decisionNoteParams{
-			thread:     thread,
-			proposalID: req.FollowUpProposalID,
-			planID:     req.FollowUpPlanID,
-			history:    history,
-			tenant:     req.TenantInfo,
+		followed, noteErr := s.notes().DecisionNote(ctx, &decisionnotes.DecisionNoteParams{
+			Thread:     thread,
+			ProposalID: req.FollowUpProposalID,
+			PlanID:     req.FollowUpPlanID,
+			History:    history,
+			Tenant:     req.TenantInfo,
 		})
 		if noteErr != nil {
 			return nil, nil, noteErr
 		}
-		content = followed.note +
-			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.decided)
-		checks.anchors = s.anchorChanged(
-			ctx, checks.anchors, followed.changed, actor, req.TenantInfo,
+		content = followed.Note +
+			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.Decided)
+		checks.anchors = s.notes().AnchorChanged(
+			ctx, checks.anchors, followed.Changed, actor, req.TenantInfo,
 		)
 	}
 
@@ -295,14 +306,14 @@ func (s *Service) prepareTurn(
 func (s *Service) keepProviderChoice(
 	ctx context.Context,
 	thread *conversation.Thread,
-	req *agentports.SendMessageRequest,
+	req *assistantports.SendMessageRequest,
 	actor *permissionports.RequestActor,
 ) {
 	if !req.ProviderChosen {
 		return
 	}
 
-	chosen := s.resolvePreference(ctx, req.PreferredProviderID, *actor)
+	chosen := s.providerChoice().ResolvePreference(ctx, req.PreferredProviderID, actor)
 	if chosen == thread.PreferredProviderID {
 		return
 	}
@@ -324,7 +335,7 @@ type FinishTurnRequest struct {
 	TenantInfo pagination.TenantInfo
 	// Run is what the runtime did. It is nil for a refused question, and may
 	// be nil for a turn that failed before the runtime handed anything back.
-	Run *agentports.RunResult
+	Run *agentruntimeports.RunResult
 	// Failure is why the turn ended before it finished, nil when it did
 	// finish. A stop is context.Canceled.
 	Failure error
@@ -345,10 +356,10 @@ func (s *Service) FinishTurn(
 	ctx context.Context,
 	req *FinishTurnRequest,
 	emit kernelports.AssistantStreamEmitter,
-) (*agentports.SendMessageResult, error) {
+) (*assistantports.SendMessageResult, error) {
 	plan := req.Plan
 
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         plan.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -358,21 +369,21 @@ func (s *Service) FinishTurn(
 	}
 
 	artifacts := s.newArtifactRecorder(ctx, thread, req.TenantInfo, req.Actor, emit)
-	artifacts.adopt(req.Artifacts)
+	artifacts.Adopt(req.Artifacts)
 
 	turn := turnResultOf(plan.Input, plan.Decision, req.Run, req.Failure)
 	attachTurnContext(turn.Messages, plan.turnContext())
-	keepTurnMemories(turn.Messages, req.Run)
+	memorynotes.KeepTurnMemories(turn.Messages, req.Run)
 	switch {
 	case plan.FollowUp:
-		markDecisionNote(turn.Messages)
+		decisionnotes.MarkDecisionNote(turn.Messages)
 	case plan.WaitNote:
-		markInput(turn.Messages, conversation.MessageKindWaitNote)
+		decisionnotes.MarkInput(turn.Messages, conversation.MessageKindWaitNote)
 	}
 
-	artifacts.nameLinks(turn.Messages, &turn.Reply)
+	artifacts.NameLinks(turn.Messages, &turn.Reply)
 
-	saved, err := s.conversations.AppendTurn(ctx, agentports.AppendTurnRequest{
+	saved, err := s.conversations.AppendTurn(ctx, &conversationports.AppendTurnRequest{
 		ThreadID:   thread.ID,
 		TurnID:     req.TurnID,
 		TenantInfo: req.TenantInfo,
@@ -381,15 +392,15 @@ func (s *Service) FinishTurn(
 	if err != nil {
 		return nil, err
 	}
-	artifacts.attachMessages(sourceMessageIndex(saved))
+	artifacts.AttachMessages(sourceMessageIndex(saved))
 	if req.Failure == nil {
-		artifacts.keepLinked(linkedArtifacts(saved))
+		artifacts.KeepLinked(toolartifacts.LinkedArtifacts(saved))
 	}
 	s.showFinishedAttachments(ctx, thread, plan, req.Actor, req.TenantInfo, emit)
 	s.runtime.MarkToolEffects(saved)
-	s.nameDelegatedSteps(ctx, req.TenantInfo, saved)
+	s.attribution().NameDelegatedSteps(ctx, req.TenantInfo, saved)
 	s.measureAfterTurn(ctx, thread, plan, saved, runWindow(req.Run), req.TenantInfo, emit)
-	s.describeMemories(ctx, req.TenantInfo, req.Actor.UserID, saved)
+	s.memoryNotes().Describe(ctx, req.TenantInfo, req.Actor.UserID, saved)
 
 	if req.Failure == nil && !plan.FollowUp && !plan.WaitNote {
 		s.titleIfUnnamed(ctx, thread, plan.Input)
@@ -397,16 +408,18 @@ func (s *Service) FinishTurn(
 
 	taint := turnTaint(plan, req.Run)
 	s.keepThreadTaint(ctx, thread, taint, req.TenantInfo)
-	s.keepWorkingSet(ctx, &workingTurn{
-		thread:  thread,
-		plan:    plan,
-		saved:   saved,
-		actions: turn.Actions,
-		at:      timeutils.NowUnix(),
+	s.keepWorkingSet(ctx, &workingset.Turn{
+		Thread:    thread,
+		Page:      plan.Page,
+		Mentions:  plan.Mentions,
+		Proposals: plan.Proposals,
+		Saved:     saved,
+		Actions:   turn.Actions,
+		At:        timeutils.NowUnix(),
 	}, req.TenantInfo)
 
 	thread.MarkContinuable()
-	result := &agentports.SendMessageResult{
+	result := &assistantports.SendMessageResult{
 		Thread:   thread,
 		Messages: saved,
 		Reply:    turn.Reply,
@@ -441,14 +454,14 @@ func (s *Service) FinishTurn(
 
 	result.Proposals = proposals
 	result.ProposalsUnrecorded = err != nil
-	result.Artifacts = artifacts.artifacts()
+	result.Artifacts = artifacts.Artifacts()
 
 	return result, nil
 }
 
 // runWindow is the window the turn's answering provider is configured with,
 // zero for a turn the runtime handed nothing back from.
-func runWindow(run *agentports.RunResult) int {
+func runWindow(run *agentruntimeports.RunResult) int {
 	if run == nil {
 		return 0
 	}
@@ -459,7 +472,7 @@ func runWindow(run *agentports.RunResult) int {
 // turnTaint is the outside content the turn read: what the runtime handed
 // back, or, for a turn that failed before it handed anything back, what it
 // opened with.
-func turnTaint(plan *TurnPlan, run *agentports.RunResult) *agent.RunTaint {
+func turnTaint(plan *TurnPlan, run *agentruntimeports.RunResult) *agent.RunTaint {
 	if run != nil {
 		return run.Taint
 	}
@@ -467,7 +480,10 @@ func turnTaint(plan *TurnPlan, run *agentports.RunResult) *agent.RunTaint {
 	return plan.Turn.Result.Taint
 }
 
-func TurnFingerprint(plan *TurnPlan, run *agentports.RunResult) *agent.Fingerprint {
+func TurnFingerprint(
+	plan *TurnPlan,
+	run *agentruntimeports.RunResult,
+) *agentfingerprint.Fingerprint {
 	if run != nil && run.Fingerprint != nil {
 		return run.ServedFingerprint()
 	}
@@ -491,7 +507,7 @@ func (s *Service) keepThreadTaint(
 		return
 	}
 
-	if err := s.conversations.MarkThreadTainted(ctx, agentports.MarkThreadTaintedRequest{
+	if err := s.conversations.MarkThreadTainted(ctx, &conversationports.MarkThreadTaintedRequest{
 		ThreadID:   thread.ID,
 		TenantInfo: tenant,
 		Taint:      thread.Taint,
@@ -509,20 +525,22 @@ func (s *Service) keepThreadTaint(
 // the only place its raw result exists. It answers with what the person now
 // sees, for the model to be told, and with what it kept, so the turn can tie
 // each artifact to its message once the turn is saved.
+//
+//nolint:gocritic // the observation arrives by value from agentruntimeports.ToolObserver
 func (s *Service) ObserveTool(
 	ctx context.Context,
 	threadID pulid.ID,
 	actor *permissionports.RequestActor,
-	observation agentports.ToolObservation,
+	observation agentruntimeports.ToolObservation,
 	emit kernelports.AssistantStreamEmitter,
-) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
+) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	thread := &conversation.Thread{ID: threadID}
 	recorder := s.newArtifactRecorder(ctx, thread, actor.TenantInfo(), actor, emit)
 	if recorder == nil {
 		return nil, nil, nil
 	}
 
-	shown, err := recorder.observe(observation)
+	shown, err := recorder.Observe(observation)
 
-	return shown, recorder.recorded, err
+	return shown, recorder.Recorded, err
 }

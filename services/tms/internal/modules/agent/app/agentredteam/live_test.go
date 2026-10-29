@@ -14,11 +14,14 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -64,14 +67,14 @@ type liveReport struct {
 }
 
 type liveProviders struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
 	provider *aiprovider.Provider
 }
 
 func (p liveProviders) ListForTask(
 	context.Context,
-	agentports.ListAIProvidersForTaskRequest,
+	aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	return []*aiprovider.Provider{p.provider}, nil
 }
@@ -84,7 +87,7 @@ func envOr(key, fallback string) string {
 	return fallback
 }
 
-func liveCompletion(t *testing.T, key string) (agentports.CompletionService, string) {
+func liveCompletion(t *testing.T, key string) (llmports.CompletionService, string) {
 	t.Helper()
 
 	encryption := encryptionservice.NewWithKeyManager(
@@ -108,13 +111,13 @@ func liveCompletion(t *testing.T, key string) (agentports.CompletionService, str
 		Model:          model,
 		APIKey:         sealed,
 		MaxTokens:      defaultLiveMaxToken,
-		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:          []aitask.Task{aitask.TaskAssistantChat},
 		Enabled:        true,
 	}
 
-	return completionrouter.New(completionrouter.Params{
+	return completionrouter.New(completionengine.Params{
 		Logger:     zap.NewNop(),
-		Config:     &config.Config{},
+		AIConfig:   &aiconfig.Config{},
 		Repo:       liveProviders{provider: provider},
 		Encryption: encryption,
 	}), model
@@ -185,7 +188,7 @@ func TestLiveRedTeam(t *testing.T) {
 func runLive(
 	t *testing.T,
 	c *Case,
-	completion agentports.CompletionService,
+	completion llmports.CompletionService,
 ) liveCaseResult {
 	t.Helper()
 

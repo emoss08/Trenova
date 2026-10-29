@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -59,7 +62,7 @@ var (
 type shipmentRecordRow struct {
 	ID                pulid.ID
 	ProNumber         string
-	Status            shipment.Status
+	Status            shipmentvocab.Status
 	CustomerID        pulid.ID
 	BillToID          pulid.ID
 	NextStopID        pulid.ID
@@ -78,8 +81,8 @@ func shipmentRecordsQuery(ids []pulid.ID) *keel.Query[*shipment.Shipment] {
 		Pick(nxt.ID, nxt.ScheduledWindowStart).
 		Where(
 			nmv.ShipmentID.EqCol(sp.ID),
-			nmv.Status.Ne(shipment.MoveStatusCanceled),
-			nxt.Status.Ne(shipment.StopStatusCanceled),
+			nmv.Status.Ne(shipmentvocab.MoveStatusCanceled),
+			nxt.Status.Ne(shipmentvocab.StopStatusCanceled),
 			nxt.ActualArrival.IsNull(),
 		).
 		Order(nmv.Sequence.Asc(), nxt.Sequence.Asc()).
@@ -88,7 +91,7 @@ func shipmentRecordsQuery(ids []pulid.ID) *keel.Query[*shipment.Shipment] {
 		Pick(casn.CarrierID).
 		Where(
 			smv.ShipmentID.EqCol(sp.ID),
-			casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			casn.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 		).
 		Distinct())
 
@@ -166,17 +169,17 @@ func (r *repository) shipmentRecords(
 			record.CarrierIDs = append(record.CarrierIDs, pulid.ID(id))
 		}
 		switch row.Status {
-		case shipment.StatusInvoiced, shipment.StatusCanceled:
+		case shipmentvocab.StatusInvoiced, shipmentvocab.StatusCanceled:
 			record.Closed = true
 			record.ClosedAs = string(row.Status)
-		case shipment.StatusNew,
-			shipment.StatusPartiallyAssigned,
-			shipment.StatusAssigned,
-			shipment.StatusInTransit,
-			shipment.StatusDelayed,
-			shipment.StatusPartiallyCompleted,
-			shipment.StatusReadyToInvoice,
-			shipment.StatusCompleted:
+		case shipmentvocab.StatusNew,
+			shipmentvocab.StatusPartiallyAssigned,
+			shipmentvocab.StatusAssigned,
+			shipmentvocab.StatusInTransit,
+			shipmentvocab.StatusDelayed,
+			shipmentvocab.StatusPartiallyCompleted,
+			shipmentvocab.StatusReadyToInvoice,
+			shipmentvocab.StatusCompleted:
 		}
 		out[row.ID] = record
 	}
@@ -220,8 +223,8 @@ func (r *repository) invoiceRecords(
 
 type disputeRecordRow struct {
 	ID            pulid.ID
-	Status        invoice.DisputeCaseStatus
-	Resolution    invoice.DisputeResolution
+	Status        invoicedispute.DisputeCaseStatus
+	Resolution    invoicedispute.DisputeResolution
 	CustomerID    pulid.ID
 	InvoiceID     pulid.ID
 	InvoiceNumber string
@@ -249,13 +252,13 @@ func (r *repository) disputeRecords(
 			InvoiceID:  row.InvoiceID,
 		}
 		switch row.Status {
-		case invoice.DisputeCaseStatusResolved, invoice.DisputeCaseStatusWithdrawn:
+		case invoicedispute.DisputeCaseStatusResolved, invoicedispute.DisputeCaseStatusWithdrawn:
 			record.Closed = true
 			record.ClosedAs = string(row.Status)
 			if row.Resolution != "" {
 				record.ClosedAs = string(row.Resolution)
 			}
-		case invoice.DisputeCaseStatusOpen:
+		case invoicedispute.DisputeCaseStatusOpen:
 		}
 		out[row.ID] = record
 	}
@@ -264,7 +267,7 @@ func (r *repository) disputeRecords(
 }
 
 type shipmentFactsRow struct {
-	Status             shipment.Status
+	Status             shipmentvocab.Status
 	DeliveredAt        *int64
 	PODOnFile          bool
 	DocumentTypeIDs    []string
@@ -315,7 +318,7 @@ func shipmentFactsQuery(
 		Where(append(currentDocuments(), doc.DocumentTypeID.IsNotNull())...).
 		Distinct())
 	confirmed := keel.Or(
-		casn.Status.Eq(shipment.CarrierAssignmentStatusConfirmed),
+		casn.Status.Eq(shipmentvocab.CarrierAssignmentStatusConfirmed),
 		keel.Exists(rc.Pick(rc.ID).Where(
 			rc.CarrierAssignmentID.EqCol(casn.ID),
 			rc.Status.Eq(rateconfirmation.StatusConfirmed),
@@ -329,7 +332,7 @@ func shipmentFactsQuery(
 		)).OrderBy(smv.Sequence.Asc())).
 		Where(
 			smv.ShipmentID.EqCol(sp.ID),
-			casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			casn.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 		))).Coalesce(keel.JSONBuildArray())
 	openChargeIssues := keel.ArrayOf(bqis.Join(bqi, bqi.ID.EqCol(bqis.ItemID)).
 		Pick(bqis.Code).
@@ -349,7 +352,7 @@ func shipmentFactsQuery(
 	}
 	customerNotifiedAt := keel.Scalar(sc.Pick(sc.CreatedAt.Max()).Where(
 		sc.ShipmentID.EqCol(sp.ID),
-		sc.Type.Eq(shipment.CommentTypeCustomerUpdate),
+		sc.Type.Eq(shipmentvocab.CommentTypeCustomerUpdate),
 		sc.Metadata.Text(shipment.CommentMetadataTool).In(shipment.CustomerEmailTools()...),
 	))
 	inBillingQueue := keel.Exists(bqi.Pick(bqi.ID).Where(
@@ -483,8 +486,8 @@ func invoiceRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.Invoice] {
 		Where(inv.ID.In(ids...))
 }
 
-func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.InvoiceDispute] {
-	d := invoicedb.InvoiceDisputes
+func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoicedispute.InvoiceDispute] {
+	d := invoicedisputedb.InvoiceDisputes
 
 	return d.Pick(
 		d.ID,

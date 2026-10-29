@@ -9,10 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -34,9 +36,10 @@ type Params struct {
 	LC                    fx.Lifecycle
 	AuditRepository       auditports.AuditRepository
 	AuditBufferRepository auditports.AuditBufferRepository
-	Realtime              agentports.RealtimeService
+	Realtime              realtimeports.RealtimeService
 	Logger                *zap.Logger
-	Config                *config.Config
+	AppConfig             *appconfig.Config
+	SecurityConfig        *securityconfig.Config
 	Metrics               *metrics.Registry
 	AgentDefinitions      agentdefinitionports.AgentDefinitionRepository `optional:"true"`
 }
@@ -44,35 +47,34 @@ type Params struct {
 type service struct {
 	repo       auditports.AuditRepository
 	bufferRepo auditports.AuditBufferRepository
-	realtime   agentports.RealtimeService
+	realtime   realtimeports.RealtimeService
 	logger     *zap.Logger
-	config     *config.Config
 	sdm        *SensitiveDataManager
 	metrics    *metrics.Registry
 	agents     *agentCredits
 }
 
 var clientBitToOperation = map[int64]permission.Operation{
-	int64(permission.ClientOpRead):      permission.OpRead,
-	int64(permission.ClientOpCreate):    permission.OpCreate,
-	int64(permission.ClientOpUpdate):    permission.OpUpdate,
-	int64(permission.ClientOpDelete):    permission.OpDelete,
-	int64(permission.ClientOpExport):    permission.OpExport,
-	int64(permission.ClientOpImport):    permission.OpImport,
-	int64(permission.ClientOpApprove):   permission.OpApprove,
-	int64(permission.ClientOpReject):    permission.OpReject,
-	int64(permission.ClientOpAssign):    permission.OpAssign,
-	int64(permission.ClientOpUnassign):  permission.OpUnassign,
-	int64(permission.ClientOpArchive):   permission.OpArchive,
-	int64(permission.ClientOpRestore):   permission.OpRestore,
-	int64(permission.ClientOpSubmit):    permission.OpSubmit,
-	int64(permission.ClientOpCancel):    permission.OpCancel,
-	int64(permission.ClientOpDuplicate): permission.OpDuplicate,
-	int64(permission.ClientOpClose):     permission.OpClose,
-	int64(permission.ClientOpLock):      permission.OpLock,
-	int64(permission.ClientOpUnlock):    permission.OpUnlock,
-	int64(permission.ClientOpActivate):  permission.OpActivate,
-	int64(permission.ClientOpReopen):    permission.OpReopen,
+	int64(operationbits.Read):      permission.OpRead,
+	int64(operationbits.Create):    permission.OpCreate,
+	int64(operationbits.Update):    permission.OpUpdate,
+	int64(operationbits.Delete):    permission.OpDelete,
+	int64(operationbits.Export):    permission.OpExport,
+	int64(operationbits.Import):    permission.OpImport,
+	int64(operationbits.Approve):   permission.OpApprove,
+	int64(operationbits.Reject):    permission.OpReject,
+	int64(operationbits.Assign):    permission.OpAssign,
+	int64(operationbits.Unassign):  permission.OpUnassign,
+	int64(operationbits.Archive):   permission.OpArchive,
+	int64(operationbits.Restore):   permission.OpRestore,
+	int64(operationbits.Submit):    permission.OpSubmit,
+	int64(operationbits.Cancel):    permission.OpCancel,
+	int64(operationbits.Duplicate): permission.OpDuplicate,
+	int64(operationbits.Close):     permission.OpClose,
+	int64(operationbits.Lock):      permission.OpLock,
+	int64(operationbits.Unlock):    permission.OpUnlock,
+	int64(operationbits.Activate):  permission.OpActivate,
+	int64(operationbits.Reopen):    permission.OpReopen,
 }
 
 //nolint:gocritic // this is dependency injection
@@ -88,13 +90,12 @@ func New(p Params) auditports.AuditService {
 		bufferRepo: p.AuditBufferRepository,
 		realtime:   p.Realtime,
 		logger:     logger,
-		config:     p.Config,
-		sdm:        NewSensitiveDataManager(p.Config.Security.Encryption),
+		sdm:        NewSensitiveDataManager(&p.SecurityConfig.Encryption),
 		metrics:    p.Metrics,
 		agents:     newAgentCredits(definitions, logger),
 	}
 
-	srv.configureSensitiveDataManager(p.Config.App.Env)
+	srv.configureSensitiveDataManager(p.AppConfig.Env)
 	if err := srv.registerDefaultSensitiveFields(); err != nil {
 		p.Logger.Error("failed to register default sensitive fields", zap.Error(err))
 	}

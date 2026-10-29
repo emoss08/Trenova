@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -455,14 +456,14 @@ func (s *Service) PlanCancel(
 		if leg == nil {
 			continue
 		}
-		if leg.Status == shipment.StatusInvoiced {
+		if leg.Status == shipmentvocab.StatusInvoiced {
 			return nil, errortypes.NewValidationError(
 				"orderId",
 				errortypes.ErrInvalidOperation,
 				"The order has invoiced legs; adjust or credit the invoice before canceling",
 			)
 		}
-		if leg.Status != shipment.StatusCanceled {
+		if leg.Status != shipmentvocab.StatusCanceled {
 			legs = append(legs, leg)
 		}
 	}

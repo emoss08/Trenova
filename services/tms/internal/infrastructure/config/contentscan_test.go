@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +14,7 @@ func TestLoad_TakesTheClamAVAddressFromTheEnvironment(t *testing.T) {
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS", "clamav:3310")
 
-	cfg, err := NewLoader(WithConfigPath(dir), WithEnvironment(EnvDevelopment)).Load()
+	cfg, err := NewLoader(WithConfigPath(dir), WithEnvironment(appconfig.EnvDevelopment)).Load()
 
 	require.NoError(t, err)
 	assert.True(t, cfg.ContentScan.Enabled())
@@ -25,7 +26,7 @@ func TestLoad_ContentScanIsOffWhenNotConfigured(t *testing.T) {
 	dir := writeConfig(t, "")
 	t.Setenv("APP_ENV", "development")
 
-	cfg, err := NewLoader(WithConfigPath(dir), WithEnvironment(EnvDevelopment)).Load()
+	cfg, err := NewLoader(WithConfigPath(dir), WithEnvironment(appconfig.EnvDevelopment)).Load()
 
 	require.NoError(t, err)
 	assert.False(t, cfg.ContentScan.Enabled())

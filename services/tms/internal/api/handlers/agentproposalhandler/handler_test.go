@@ -10,9 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,55 +28,58 @@ import (
 )
 
 type recordingDecisions struct {
-	agentports.AgentDecisionService
+	agentdecisionports.AgentDecisionService
 
-	sent    *agentports.DecideAgentProposalRequest
+	sent    *agentdecisionports.DecideAgentProposalRequest
 	err     error
 	execErr error
 }
 
 func (d *recordingDecisions) DecideWithOutcome(
 	_ context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	d.sent = req
 	if d.err != nil {
 		return nil, d.err
 	}
 
-	return &agentports.DecisionOutcome{
-		Decision:       &agent.AgentDecision{ID: pulid.MustNew("adec_"), Decision: req.Decision},
+	return &agentdecisionports.DecisionOutcome{
+		Decision: &agentdecision.AgentDecision{
+			ID:       pulid.MustNew("adec_"),
+			Decision: req.Decision,
+		},
 		ExecutionError: d.execErr,
 	}, nil
 }
 
 type storedProposals struct {
-	agentports.AgentProposalService
+	agentproposalports.AgentProposalService
 
 	proposal *agent.AgentProposal
 }
 
 func (p *storedProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 type digestPreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
-	asked *agentports.ProposalPreviewRequest
+	asked *agentruntimeports.ProposalPreviewRequest
 }
 
 func (p *digestPreviews) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+	req *agentruntimeports.ProposalPreviewRequest,
+) (*agentpreview.ProposalPreview, error) {
 	p.asked = req
 
-	return &agent.ProposalPreview{
+	return &agentpreview.ProposalPreview{
 		ProposalID: req.Proposal.ID,
 		Tool:       req.Proposal.ToolName,
 		Digest:     strings.Repeat("a", 64),
@@ -79,13 +87,13 @@ func (p *digestPreviews) ForProposal(
 }
 
 func newHandler(
-	decisions agentports.AgentDecisionService,
-	proposals agentports.AgentProposalService,
-	previews agentports.ProposalPreviewService,
+	decisions agentdecisionports.AgentDecisionService,
+	proposals agentproposalports.AgentProposalService,
+	previews agentruntimeports.ProposalPreviewService,
 ) *agentproposalhandler.Handler {
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 
 	return agentproposalhandler.New(agentproposalhandler.Params{
@@ -113,7 +121,7 @@ func TestResolve_EchoesThePreviewDigestAndNote(t *testing.T) {
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + proposalID.String() + "/resolve/").
 		WithJSONBody(map[string]any{
-			"decision":      agent.DecisionAccepted,
+			"decision":      agentdecision.DecisionAccepted,
 			"reasonCode":    "looks_right",
 			"note":          "Matches the remittance",
 			"previewDigest": digest,
@@ -136,7 +144,7 @@ func TestResolve_AnApprovalThatRanSaysSo(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + proposalID.String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(&recordingDecisions{}, &storedProposals{}, nil).
 		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -151,7 +159,7 @@ func TestResolve_AnApprovalThatRanSaysSo(t *testing.T) {
 	assert.NotContains(t, body, "error")
 	decision, ok := body["decision"].(map[string]any)
 	require.True(t, ok, "the recorded decision is returned: %v", body["decision"])
-	assert.Equal(t, string(agent.DecisionAccepted), decision["decision"])
+	assert.Equal(t, string(agentdecision.DecisionAccepted), decision["decision"])
 }
 
 func TestResolve_AnApprovalRefusedOverAChangedRecordIsTheOutcomeNotAnError(t *testing.T) {
@@ -160,12 +168,12 @@ func TestResolve_AnApprovalRefusedOverAChangedRecordIsTheOutcomeNotAnError(t *te
 	refusal := fmt.Errorf(
 		"%w: the shipment S-1 was at version 3 when this was proposed and is at version 5 now, "+
 			"so nothing was changed",
-		agent.ErrTargetChanged,
+		agentplan.ErrTargetChanged,
 	)
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + pulid.MustNew("ap_").String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(&recordingDecisions{execErr: refusal}, &storedProposals{}, nil).
 		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -187,7 +195,7 @@ func TestResolve_AGatedApprovalWithoutADigestIsRefused(t *testing.T) {
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
 		WithPath("/api/v1/agent-proposals/" + pulid.MustNew("ap_").String() + "/resolve/").
-		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithJSONBody(map[string]any{"decision": agentdecision.DecisionAccepted, "reasonCode": "ok"}).
 		WithDefaultAuthContext()
 	newHandler(decisions, &storedProposals{}, nil).RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
@@ -221,7 +229,11 @@ func TestPreview_ReturnsTheDigestToEcho(t *testing.T) {
 	require.NotNil(t, previews.asked)
 	assert.Equal(t, map[string]any{"memo": "Short paid"}, previews.asked.Modifications)
 	require.NotNil(t, previews.asked.Viewer)
-	assert.NotNil(t, previews.asked.Viewer.Actor, "the preview is for the caller, as the decision is")
+	assert.NotNil(
+		t,
+		previews.asked.Viewer.Actor,
+		"the preview is for the caller, as the decision is",
+	)
 }
 
 func TestPreview_RefusesModificationsThatAreNotAnObject(t *testing.T) {

@@ -16,8 +16,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,16 +60,19 @@ type actionLogger interface {
 type proposalOutcomeRecorder interface {
 	RecordExecution(
 		ctx context.Context,
-		req agentports.RecordAgentProposalExecutionRequest,
+		req *agentproposalports.RecordAgentProposalExecutionRequest,
 	) (*agent.AgentProposal, error)
 	RecordSimulation(
 		ctx context.Context,
-		req agentports.RecordAgentProposalSimulationRequest,
+		req *agentproposalports.RecordAgentProposalSimulationRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type RunReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 // definitionResolver finds the agent behind a proposal, through its run,
@@ -80,33 +89,33 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Tools        agentports.AgentToolRegistry
-	ProposalRepo agentports.AgentProposalRepository
+	Tools        agenttoolports.AgentToolRegistry
+	ProposalRepo agentproposalports.AgentProposalRepository
 	Permissions  permissionports.PermissionEngine
 	AuditService auditports.AuditService
 	// Versions is optional; without it a pinned proposal executes unchecked.
-	Versions agentports.RecordVersionReader `optional:"true"`
+	Versions agenttoolports.RecordVersionReader `optional:"true"`
 	// Budgets is optional; without it a tool's daily cap is not enforced on
 	// approval.
-	Budgets     agentports.AgentBudgetService `optional:"true"`
-	Runs        agentports.AgentRunRepository
+	Budgets     agentbudgetports.AgentBudgetService `optional:"true"`
+	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	DB          kernelports.Transactor
-	Zones       agentports.TenantTimezoneReader `optional:"true"`
+	Zones       agenttoolports.TenantTimezoneReader `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	tools        agentports.AgentToolRegistry
+	tools        agenttoolports.AgentToolRegistry
 	proposalRepo proposalOutcomeRecorder
 	permissions  permissionChecker
-	versions     agentports.RecordVersionReader
+	versions     agenttoolports.RecordVersionReader
 	audit        actionLogger
-	budgets      agentports.AgentBudgetService
+	budgets      agentbudgetports.AgentBudgetService
 	definitions  definitionResolver
 	runs         RunReader
 	db           kernelports.Transactor
-	zones        agentports.TenantTimezoneReader
+	zones        agenttoolports.TenantTimezoneReader
 	// schemas holds each tool's compiled schema, against which an approver's
 	// changes are checked.
 	schemas *toolschema.Validator
@@ -133,7 +142,7 @@ func New(p Params) *Service {
 // an agent since deleted, resolves to nil: the proposal still executes, with
 // no switch and no caps to read.
 type runDefinitions struct {
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 }
 
@@ -148,7 +157,7 @@ func (r runDefinitions) ForRun(
 
 	run, err := r.runs.GetByID(
 		ctx,
-		agentports.GetAgentRunByIDRequest{ID: runID, TenantInfo: &tenant},
+		agentruntimeports.GetAgentRunByIDRequest{ID: runID, TenantInfo: &tenant},
 	)
 	if err != nil {
 		return nil, err
@@ -285,7 +294,7 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 		proposal: proposal,
 		actor:    actor,
 		policy:   &policy,
-		params:   &execParams,
+		params:   execParams,
 	}
 
 	// An agent in simulation gets a preview in place of the write, however
@@ -312,12 +321,12 @@ func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, er
 func (s *Service) admit(
 	ctx context.Context,
 	approval *Approval,
-) (agentports.AgentTool, agentports.ToolExecuteParams, error) {
+) (agenttoolports.AgentTool, *agenttoolports.ToolExecuteParams, error) {
 	proposal := approval.Proposal
 	modifications := approval.Modifications
 	tool, ok := s.tools.Get(proposal.ToolName)
 	if !ok {
-		return nil, agentports.ToolExecuteParams{}, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"%w: %s",
 			ErrToolMissing,
 			proposal.ToolName,
@@ -325,15 +334,15 @@ func (s *Service) admit(
 	}
 
 	if err := s.assertActorMayRun(ctx, tool, approval.Actor); err != nil {
-		return nil, agentports.ToolExecuteParams{}, err
+		return nil, nil, err
 	}
 
 	if err := s.assertTargetUnchanged(ctx, proposal, approval.ExpectedTargetVersion); err != nil {
-		return nil, agentports.ToolExecuteParams{}, err
+		return nil, nil, err
 	}
 
 	if err := refuseOwnerChange(modifications); err != nil {
-		return nil, agentports.ToolExecuteParams{}, err
+		return nil, nil, err
 	}
 
 	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
@@ -343,33 +352,33 @@ func (s *Service) admit(
 		// and the tool may have changed. It may not point the write at
 		// another record, and it must fit the tool's own schema.
 		if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
-			return nil, agentports.ToolExecuteParams{}, err
+			return nil, nil, err
 		}
 		if err := toolschema.CheckSubsets(
 			tool.ParamSchema(),
 			proposal.ToolParams,
 			modifications,
 		); err != nil {
-			return nil, agentports.ToolExecuteParams{}, err
+			return nil, nil, err
 		}
 		if err := s.validateParams(tool, params); err != nil {
-			return nil, agentports.ToolExecuteParams{}, err
+			return nil, nil, err
 		}
 	}
 
 	policy := tool.Policy()
 	execParams, err := s.executionParams(ctx, proposal, &policy, params, approval.Actor)
 	if err != nil {
-		return nil, agentports.ToolExecuteParams{}, err
+		return nil, nil, err
 	}
 
 	// A tool that can check its own arguments does so where they run, not
 	// only where they were proposed: the world may have moved since the
 	// proposal was filed, and a write that would fail is refused before the
 	// record of an execution is written.
-	if validator, checks := tool.(agentports.ToolValidator); checks {
+	if validator, checks := tool.(agenttoolports.ToolValidator); checks {
 		if err = validator.Validate(ctx, execParams); err != nil {
-			return nil, agentports.ToolExecuteParams{}, err
+			return nil, nil, err
 		}
 	}
 
@@ -380,14 +389,14 @@ func (s *Service) admit(
 // for an approver, and when it previews for one.
 func ExecutionParams(
 	proposal *agent.AgentProposal,
-	policy *agentports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 	params map[string]any,
 	actor *permissionports.RequestActor,
-) agentports.ToolExecuteParams {
+) *agenttoolports.ToolExecuteParams {
 	// The proposal id is the idempotency key. It is stable across retries of the
 	// same approval and distinct between proposals, which is exactly what a tool
 	// guarding against double execution needs.
-	execParams := agentports.ToolExecuteParams{
+	execParams := &agenttoolports.ToolExecuteParams{
 		OrganizationID: proposal.OrganizationID,
 		BusinessUnitID: proposal.BusinessUnitID,
 		Actor:          actor,
@@ -406,10 +415,10 @@ func ExecutionParams(
 func (s *Service) executionParams(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy *agentports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 	params map[string]any,
 	actor *permissionports.RequestActor,
-) (agentports.ToolExecuteParams, error) {
+) (*agenttoolports.ToolExecuteParams, error) {
 	execParams, err := WithTimezone(ctx, s.zones, ExecutionParams(proposal, policy, params, actor))
 	if err != nil {
 		return execParams, err
@@ -421,13 +430,13 @@ func (s *Service) executionParams(
 func WithConversation(
 	ctx context.Context,
 	runs RunReader,
-	params agentports.ToolExecuteParams, //nolint:gocritic // returned as the tool is handed it
-) (agentports.ToolExecuteParams, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agenttoolports.ToolExecuteParams, error) {
 	if runs == nil || params.RunID.IsNil() || params.ThreadID.IsNotNil() {
 		return params, nil
 	}
 
-	run, err := runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID: params.RunID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: params.OrganizationID,
@@ -446,9 +455,9 @@ func WithConversation(
 
 func WithTimezone(
 	ctx context.Context,
-	zones agentports.TenantTimezoneReader,
-	params agentports.ToolExecuteParams, //nolint:gocritic // returned as the tool is handed it
-) (agentports.ToolExecuteParams, error) {
+	zones agenttoolports.TenantTimezoneReader,
+	params *agenttoolports.ToolExecuteParams,
+) (*agenttoolports.ToolExecuteParams, error) {
 	if zones == nil || params.Timezone != "" {
 		return params, nil
 	}
@@ -467,11 +476,11 @@ func WithTimezone(
 }
 
 type approvedRun struct {
-	tool     agentports.AgentTool
+	tool     agenttoolports.AgentTool
 	proposal *agent.AgentProposal
 	actor    *permissionports.RequestActor
-	policy   *agentports.ToolPolicy
-	params   *agentports.ToolExecuteParams
+	policy   *agenttoolports.ToolPolicy
+	params   *agenttoolports.ToolExecuteParams
 }
 
 func (s *Service) run(ctx context.Context, r *approvedRun) (*int64, error) {
@@ -479,7 +488,7 @@ func (s *Service) run(ctx context.Context, r *approvedRun) (*int64, error) {
 	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	defer toolSpan.End()
 	writeCtx, write := startWrite(toolCtx, proposal, false)
-	result, err := agentports.ExecuteTool(writeCtx, r.tool, *r.params)
+	result, err := agenttoolports.ExecuteTool(writeCtx, r.tool, r.params)
 	if err != nil {
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
@@ -516,7 +525,7 @@ func (s *Service) versionAfter(ctx context.Context, proposal *agent.AgentProposa
 		return nil
 	}
 
-	version, err := s.versions.Version(ctx, tenantOf(proposal), agentports.ToolTarget{
+	version, err := s.versions.Version(ctx, tenantOf(proposal), agenttoolports.ToolTarget{
 		Resource: permission.Resource(proposal.TargetResource),
 		ID:       proposal.TargetID,
 	})
@@ -546,7 +555,9 @@ func (s *Service) CallEgress(
 
 	params := CoerceParams(tool, MergeParams(proposal.ToolParams, modifications))
 
-	return tool.Policy().Classified(agentports.ToolExecuteParams{
+	policy := tool.Policy()
+
+	return policy.Classified(&agenttoolports.ToolExecuteParams{
 		OrganizationID: proposal.OrganizationID,
 		BusinessUnitID: proposal.BusinessUnitID,
 		Params:         params,
@@ -617,8 +628,8 @@ func (s *Service) CheckModifications(
 		return nil, err
 	}
 
-	if validator, checks := tool.(agentports.ToolValidator); checks {
-		validateParams, err := WithTimezone(ctx, s.zones, agentports.ToolExecuteParams{
+	if validator, checks := tool.(agenttoolports.ToolValidator); checks {
+		validateParams, err := WithTimezone(ctx, s.zones, &agenttoolports.ToolExecuteParams{
 			OrganizationID: proposal.OrganizationID,
 			BusinessUnitID: proposal.BusinessUnitID,
 			Actor:          actor,
@@ -664,7 +675,7 @@ func (s *Service) assertWithinBudget(
 		return nil
 	}
 
-	refusal, err := s.budgets.CheckTool(ctx, agentports.CheckToolBudgetRequest{
+	refusal, err := s.budgets.CheckTool(ctx, agentbudgetports.CheckToolBudgetRequest{
 		Definition: definition,
 		ToolName:   toolName,
 	})
@@ -691,7 +702,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 
 	if _, err := s.proposalRepo.RecordSimulation(
 		ctx,
-		agentports.RecordAgentProposalSimulationRequest{
+		&agentproposalports.RecordAgentProposalSimulationRequest{
 			ID:               proposal.ID,
 			TenantInfo:       tenantOf(proposal),
 			SimulatedAt:      now,
@@ -750,14 +761,14 @@ func (s *Service) assertTargetUnchanged(
 	current, err := s.versions.Version(ctx, pagination.TenantInfo{
 		OrgID: proposal.OrganizationID,
 		BuID:  proposal.BusinessUnitID,
-	}, agentports.ToolTarget{
+	}, agenttoolports.ToolTarget{
 		Resource: permission.Resource(proposal.TargetResource),
 		ID:       proposal.TargetID,
 	})
 	if err != nil {
 		return fmt.Errorf(
 			"%w: the %s could not be read (%w)",
-			agent.ErrTargetChanged,
+			agentplan.ErrTargetChanged,
 			proposal.TargetResource,
 			err,
 		)
@@ -767,7 +778,7 @@ func (s *Service) assertTargetUnchanged(
 		return fmt.Errorf(
 			"%w: the %s is at version %d and was at %d when this was proposed. "+
 				"Review the current record and ask again",
-			agent.ErrTargetChanged, proposal.TargetResource, current, pinned,
+			agentplan.ErrTargetChanged, proposal.TargetResource, current, pinned,
 		)
 	}
 
@@ -782,13 +793,13 @@ func (s *Service) assertTargetUnchanged(
 // permission over moves.
 func (s *Service) assertActorMayRun(
 	ctx context.Context,
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	actor *permissionports.RequestActor,
 ) error {
 	// A self-scoped tool needs no grant: it runs only for the person it was
 	// proposed for, which the tool checks against the owner the runtime
 	// recorded, and only a person has records of that kind.
-	if agentports.IsSelfScoped(tool) {
+	if agenttoolports.IsSelfScoped(tool) {
 		if actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser {
 			return errortypes.NewValidationError("actor", errortypes.ErrForbidden,
 				"Only the person this change is for can approve it")
@@ -831,13 +842,13 @@ func (s *Service) assertActorMayRun(
 // a change that named someone else would let an approval land on another
 // person's records, so it is refused as a field error rather than merged.
 func refuseOwnerChange(modifications map[string]any) error {
-	if _, retargets := modifications[agentports.SelfScopeOwnerParam]; !retargets {
+	if _, retargets := modifications[agenttoolports.SelfScopeOwnerParam]; !retargets {
 		return nil
 	}
 
 	multiErr := errortypes.NewMultiError()
 	multiErr.Add(
-		agentports.SelfScopeOwnerParam,
+		agenttoolports.SelfScopeOwnerParam,
 		errortypes.ErrForbidden,
 		"Whose records this change is for is set when it is proposed and cannot be changed",
 	)
@@ -849,8 +860,8 @@ func refuseOwnerChange(modifications map[string]any) error {
 // proposed for. A change that pointed the write at another record would be a
 // different proposal, approved without anyone having proposed it, and would
 // escape the staleness check, which compares the record that was pinned.
-func refuseRetarget(tool agentports.AgentTool, proposed, merged map[string]any) error {
-	targeted, ok := tool.(agentports.TargetedTool)
+func refuseRetarget(tool agenttoolports.AgentTool, proposed, merged map[string]any) error {
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok {
 		return nil
 	}
@@ -862,7 +873,7 @@ func refuseRetarget(tool agentports.AgentTool, proposed, merged map[string]any) 
 	}
 
 	field := "modifications"
-	if names := agentports.TargetParameters(tool, proposed); len(names) > 0 {
+	if names := agenttoolports.TargetParameters(tool, proposed); len(names) > 0 {
 		field = names[0]
 	}
 
@@ -881,15 +892,15 @@ func refuseRetarget(tool agentports.AgentTool, proposed, merged map[string]any) 
 // schema. The owner the runtime records on a self-scoped call is not one of
 // the tool's declared parameters, so it is set aside for the check and the
 // schema judges only what the model and the approver supplied.
-func (s *Service) validateParams(tool agentports.AgentTool, params map[string]any) error {
-	if _, owned := params[agentports.SelfScopeOwnerParam]; !owned ||
-		!agentports.IsSelfScoped(tool) {
+func (s *Service) validateParams(tool agenttoolports.AgentTool, params map[string]any) error {
+	if _, owned := params[agenttoolports.SelfScopeOwnerParam]; !owned ||
+		!agenttoolports.IsSelfScoped(tool) {
 		return s.schemas.ValidateFor(tool.Name(), tool.ParamSchema(), params)
 	}
 
 	declared := make(map[string]any, len(params)-1)
 	for key, value := range params {
-		if key != agentports.SelfScopeOwnerParam {
+		if key != agenttoolports.SelfScopeOwnerParam {
 			declared[key] = value
 		}
 	}
@@ -899,25 +910,25 @@ func (s *Service) validateParams(tool agentports.AgentTool, params map[string]an
 
 // CoerceParams reads the parameters that are about to be checked and run the
 // way the tool declares them, wherever the reading is certain
-// (toolschema.Coerce): the same readings the runtime makes of a model's call.
+// (toolcoerce.Apply): the same readings the runtime makes of a model's call.
 // The approval editor sends what a person typed, "30" for a number or
 // "2026-10-01 08:00" for a local time, and a proposal filed before a
 // parameter's shape was asserted carries what the model sent; either used to
 // fail the schema with nothing reading it first. The owner of a self-scoped
 // call is set aside, so no reading can rename it, and put back as it was.
-func CoerceParams(tool agentports.AgentTool, params map[string]any) map[string]any {
-	owner, owned := params[agentports.SelfScopeOwnerParam]
+func CoerceParams(tool agenttoolports.AgentTool, params map[string]any) map[string]any {
+	owner, owned := params[agenttoolports.SelfScopeOwnerParam]
 	declared := params
 	if owned {
 		declared = make(map[string]any, len(params)-1)
 		for key, value := range params {
-			if key != agentports.SelfScopeOwnerParam {
+			if key != agenttoolports.SelfScopeOwnerParam {
 				declared[key] = value
 			}
 		}
 	}
 
-	coerced, _ := toolschema.Coerce(tool.ParamSchema(), declared)
+	coerced, _ := toolcoerce.Apply(tool.ParamSchema(), declared)
 	if !owned {
 		return coerced
 	}
@@ -926,7 +937,7 @@ func CoerceParams(tool agentports.AgentTool, params map[string]any) map[string]a
 	for key, value := range coerced {
 		out[key] = value
 	}
-	out[agentports.SelfScopeOwnerParam] = owner
+	out[agenttoolports.SelfScopeOwnerParam] = owner
 
 	return out
 }
@@ -944,10 +955,10 @@ func MergeParams(proposed, modifications map[string]any) map[string]any {
 		merged[key] = value
 	}
 
-	if owner, owned := proposed[agentports.SelfScopeOwnerParam]; owned {
-		merged[agentports.SelfScopeOwnerParam] = owner
+	if owner, owned := proposed[agenttoolports.SelfScopeOwnerParam]; owned {
+		merged[agenttoolports.SelfScopeOwnerParam] = owner
 	} else {
-		delete(merged, agentports.SelfScopeOwnerParam)
+		delete(merged, agenttoolports.SelfScopeOwnerParam)
 	}
 
 	return merged
@@ -959,7 +970,7 @@ type executionSuccess struct {
 	proposal      *agent.AgentProposal
 	actor         *permissionports.RequestActor
 	params        map[string]any
-	result        *agent.ToolExecutionResult
+	result        *agentrecord.ToolExecutionResult
 	targetVersion *int64
 }
 
@@ -968,7 +979,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	now := timeutils.NowUnix()
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentports.RecordAgentProposalExecutionRequest{
+		&agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:                    proposal.ID,
 			Status:                agent.ProposalStatusExecuted,
 			ExecutedAt:            &now,
@@ -1030,7 +1041,7 @@ func (s *Service) recordFailureAs(
 ) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
-		agentports.RecordAgentProposalExecutionRequest{
+		&agentproposalports.RecordAgentProposalExecutionRequest{
 			ID:               proposal.ID,
 			Status:           agent.ProposalStatusExecutionFailed,
 			ExecutionError:   cause.Error(),

@@ -3,13 +3,15 @@ package servicefailureservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,17 +28,17 @@ type Params struct {
 	ReasonCodeRepo  servicefailureports.ServiceFailureReasonCodeRepository
 	ShipmentRepo    shipmentports.ShipmentRepository
 	DispatchRepo    dispatchcontrolports.DispatchControlRepository
-	CommentService  shipmentports.ShipmentCommentService
+	CommentService  shipmentcommentports.ShipmentCommentService
 	AuditService    auditports.AuditService
-	Realtime        agentports.RealtimeService
-	OrderDerivation orderports.OrderDerivationService `optional:"true"`
-	Publisher       agentports.AgentEventPublisher    `optional:"true"`
+	Realtime        realtimeports.RealtimeService
+	OrderDerivation orderports.OrderDerivationService   `optional:"true"`
+	Publisher       agenteventports.AgentEventPublisher `optional:"true"`
 	// Watchtower puts an open failure on the feed a person reads.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 }
 
 type EDIServiceSetter interface {
-	SetEDIService(service ediports.EDIService)
+	SetEDIService(service ediports.ServiceFailure214Service)
 }
 
 type service struct {
@@ -45,12 +47,12 @@ type service struct {
 	reasonCodeRepo servicefailureports.ServiceFailureReasonCodeRepository
 	shipmentRepo   shipmentports.ShipmentRepository
 	dispatchRepo   dispatchcontrolports.DispatchControlRepository
-	commentService shipmentports.ShipmentCommentService
+	commentService shipmentcommentports.ShipmentCommentService
 	auditService   auditports.AuditService
-	realtime       agentports.RealtimeService
-	ediService     ediports.EDIService
+	realtime       realtimeports.RealtimeService
+	ediService     ediports.ServiceFailure214Service
 	delayedMarker  delayedShipmentMarker
-	publisher      agentports.AgentEventPublisher
+	publisher      agenteventports.AgentEventPublisher
 	watchtower     watchtowerports.WatchtowerProjector
 }
 
@@ -77,7 +79,7 @@ func New(p Params) *service {
 	return s
 }
 
-func (s *service) SetEDIService(service ediports.EDIService) {
+func (s *service) SetEDIService(service ediports.ServiceFailure214Service) {
 	s.ediService = service
 }
 

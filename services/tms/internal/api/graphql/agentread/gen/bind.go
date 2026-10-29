@@ -11,9 +11,11 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/shared/inflect"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	"gopkg.in/yaml.v3"
@@ -265,7 +267,7 @@ type rootRead struct {
 
 // rootReads are the Query root fields that read one kind of record, each with
 // the tool the rule names for it: a connection of X is list_<Xs>, an X by id
-// is get_<x>, in reading order, then namespaced (agentports.ToolNameFor).
+// is get_<x>, in reading order, then namespaced (agenttoolports.ToolNameFor).
 func rootReads(schema *ast.Schema) []rootRead {
 	if schema.Query == nil {
 		return nil
@@ -279,21 +281,21 @@ func rootReads(schema *ast.Schema) []rootRead {
 		if verb == verbList && field.Type.Elem != nil {
 			continue
 		}
-		resource := permission.Resource(stringutils.ConvertCamelToSnake(node))
-		kind, known := resource.Kind()
+		resource := permission.Resource(textcase.ConvertCamelToSnake(node))
+		kind, known := recordkind.OfResource(resource)
 		if !known {
 			continue
 		}
 		noun := string(kind)
 		if verb == verbList {
-			noun = stringutils.PluralNoun(noun)
+			noun = inflect.PluralNoun(noun)
 		}
 		out = append(out, rootRead{
 			field:    field,
 			verb:     verb,
 			node:     node,
 			resource: resource,
-			tool:     agentports.ToolNameFor(verb + readingSplit + noun),
+			tool:     agenttoolports.ToolNameFor(verb + readingSplit + noun),
 		})
 	}
 
@@ -807,7 +809,7 @@ func namedBinding(r read, chosen *operation) (b *binding, problem string) {
 		return nil, fmt.Sprintf("%s: %s is not a Query field", r.Tool, chosen.Roots[0])
 	}
 	verb, node, ok := readShape(boundSchema, field)
-	want, _, _ := strings.Cut(agentports.ReadingOrder(r.Tool), readingSplit)
+	want, _, _ := strings.Cut(agenttoolports.ReadingOrder(r.Tool), readingSplit)
 	if ok && want == verbGet && keyedWhole(field) {
 		want = verbList
 	}

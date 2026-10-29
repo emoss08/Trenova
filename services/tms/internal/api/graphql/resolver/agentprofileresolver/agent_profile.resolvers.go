@@ -10,7 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -32,7 +32,7 @@ func (r *MutationResolver) AddAgentOrganizationProfileGuidance(ctx context.Conte
 	}
 
 	return r.AgentProfileService.AddGuidance(ctx, &agentprofileports.AddGuidanceRequest{
-		Ref:     agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref:     agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 		Content: input.Content,
 		Source:  agentprofile.GuidanceSourcePerson,
 		Actor:   actorutil.FromAuthContext(authCtx),
@@ -51,7 +51,7 @@ func (r *MutationResolver) RetireAgentOrganizationProfileGuidance(ctx context.Co
 	}
 
 	return r.AgentProfileService.RetireGuidance(ctx, &agentprofileports.RetireGuidanceRequest{
-		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref:   agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 		ID:    guidanceID,
 		Actor: actorutil.FromAuthContext(authCtx),
 	})
@@ -68,7 +68,7 @@ func (r *MutationResolver) ApproveAgentOrganizationProfileGuidance(ctx context.C
 	}
 
 	return r.AgentProfileService.ApproveGuidance(ctx, &agentprofileports.DecideGuidanceRequest{
-		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref:   agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 		ID:    guidanceID,
 		Actor: actorutil.FromAuthContext(authCtx),
 	})
@@ -85,7 +85,7 @@ func (r *MutationResolver) DismissAgentOrganizationProfileGuidance(ctx context.C
 	}
 
 	return r.AgentProfileService.DismissGuidance(ctx, &agentprofileports.DecideGuidanceRequest{
-		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref:   agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 		ID:    guidanceID,
 		Actor: actorutil.FromAuthContext(authCtx),
 	})
@@ -98,7 +98,7 @@ func (r *MutationResolver) RegenerateAgentOrganizationProfile(ctx context.Contex
 	}
 
 	if err = r.AgentProfileService.Regenerate(ctx, &agentprofileports.RegenerateRequest{
-		Ref:   agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref:   agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 		Actor: actorutil.FromAuthContext(authCtx),
 	}); err != nil {
 		return false, err
@@ -116,7 +116,7 @@ func (r *MutationResolver) AddMyAgentProfileGuidance(ctx context.Context, input 
 	actor := actorutil.FromAuthContext(authCtx)
 
 	return r.AgentProfileService.AddGuidance(ctx, &agentprofileports.AddGuidanceRequest{
-		Ref:     agentprofileports.UserSubject(base.TenantInfo(authCtx), actor.UserID),
+		Ref:     agentprofileports.UserSubject(resolvercore.TenantInfo(authCtx), actor.UserID),
 		Content: input.Content,
 		Source:  agentprofile.GuidanceSourcePerson,
 		Actor:   actor,
@@ -136,7 +136,7 @@ func (r *MutationResolver) RetireMyAgentProfileGuidance(ctx context.Context, id 
 	actor := actorutil.FromAuthContext(authCtx)
 
 	return r.AgentProfileService.RetireGuidance(ctx, &agentprofileports.RetireGuidanceRequest{
-		Ref:   agentprofileports.UserSubject(base.TenantInfo(authCtx), actor.UserID),
+		Ref:   agentprofileports.UserSubject(resolvercore.TenantInfo(authCtx), actor.UserID),
 		ID:    guidanceID,
 		Actor: actor,
 	})
@@ -150,7 +150,7 @@ func (r *MutationResolver) RegenerateMyAgentProfile(ctx context.Context) (bool, 
 
 	actor := actorutil.FromAuthContext(authCtx)
 	if err = r.AgentProfileService.Regenerate(ctx, &agentprofileports.RegenerateRequest{
-		Ref:   agentprofileports.UserSubject(base.TenantInfo(authCtx), actor.UserID),
+		Ref:   agentprofileports.UserSubject(resolvercore.TenantInfo(authCtx), actor.UserID),
 		Actor: actor,
 	}); err != nil {
 		return false, err
@@ -167,7 +167,7 @@ func (r *QueryResolver) AgentOrganizationProfile(ctx context.Context) (*gqlmodel
 
 	view, err := r.AgentProfileService.View(
 		ctx,
-		agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 	)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (r *QueryResolver) AgentOrganizationProfileHistory(ctx context.Context, lim
 	}
 
 	req := agentprofileports.ListProfileHistoryRequest{
-		Ref: agentprofileports.OrganizationSubject(base.TenantInfo(authCtx)),
+		Ref: agentprofileports.OrganizationSubject(resolvercore.TenantInfo(authCtx)),
 	}
 	if limit != nil {
 		req.Limit = *limit
@@ -201,7 +201,7 @@ func (r *QueryResolver) MyAgentProfile(ctx context.Context) (*gqlmodel.AgentProf
 	actor := actorutil.FromAuthContext(authCtx)
 	view, err := r.AgentProfileService.View(
 		ctx,
-		agentprofileports.UserSubject(base.TenantInfo(authCtx), actor.UserID),
+		agentprofileports.UserSubject(resolvercore.TenantInfo(authCtx), actor.UserID),
 	)
 	if err != nil {
 		return nil, err

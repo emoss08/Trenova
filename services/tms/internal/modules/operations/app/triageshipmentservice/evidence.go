@@ -3,14 +3,14 @@ package triageshipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 )
 
 func (s *Service) DetentionEvidence(
 	ctx context.Context,
-	req *inboundmessageports.TriageDetentionEvidenceRequest,
-) (*inboundmessageports.TriageDetentionEvidence, error) {
+	req *triageworkports.TriageDetentionEvidenceRequest,
+) (*triageworkports.TriageDetentionEvidence, error) {
 	occurrence, err := s.disputedOccurrence(ctx, req.TenantInfo, req.ShipmentID, true)
 	if err != nil {
 		return nil, err
@@ -19,7 +19,7 @@ func (s *Service) DetentionEvidence(
 		return nil, nil //nolint:nilnil // the shipment has no detention to show
 	}
 
-	record, err := s.records.DisputeRecord(ctx, &detentionservice.DisputeRecordParams{
+	record, err := s.records.DisputeRecord(ctx, &detentionnoticeservice.DisputeRecordParams{
 		TenantInfo: req.TenantInfo,
 		Occurrence: occurrence,
 	})
@@ -30,7 +30,7 @@ func (s *Service) DetentionEvidence(
 		return nil, nil //nolint:nilnil // no record could be found or made
 	}
 
-	return &inboundmessageports.TriageDetentionEvidence{
+	return &triageworkports.TriageDetentionEvidence{
 		DocumentID: record.DocumentID,
 		FileName:   record.FileName,
 		Rendered:   record.Rendered,

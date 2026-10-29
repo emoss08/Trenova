@@ -8,7 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
@@ -23,7 +23,7 @@ import (
 func refusingDeps() (*Deps, *resolvertest.GrantingPermissionEngine) {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{}}
 
-	return &Deps{Core: &base.Core{PermissionEngine: engine}}, engine
+	return &Deps{Core: &resolvercore.Core{PermissionEngine: engine}}, engine
 }
 
 func authedContext(t *testing.T) context.Context {
@@ -90,15 +90,19 @@ func TestTriageRootResolvers_CheckTheInboxPermission(t *testing.T) {
 			_, err := (&MutationResolver{deps}).FlagInboundFact(ctx, id, "rate")
 			return err
 		}},
-		{"resolveInboundConflict", permission.OpUpdate, func(ctx context.Context, deps *Deps) error {
-			_, err := (&MutationResolver{deps}).ResolveInboundConflict(
-				ctx,
-				id,
-				"dup:x",
-				inboundmessage.ConflictKeepBoth,
-			)
-			return err
-		}},
+		{
+			"resolveInboundConflict",
+			permission.OpUpdate,
+			func(ctx context.Context, deps *Deps) error {
+				_, err := (&MutationResolver{deps}).ResolveInboundConflict(
+					ctx,
+					id,
+					"dup:x",
+					inboundmessage.ConflictKeepBoth,
+				)
+				return err
+			},
+		},
 		{"reopenInboundConflict", permission.OpUpdate, func(ctx context.Context, deps *Deps) error {
 			_, err := (&MutationResolver{deps}).ReopenInboundConflict(ctx, id, "dup:x")
 			return err

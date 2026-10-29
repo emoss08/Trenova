@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/sftp"
@@ -47,16 +48,15 @@ type sftpNetwork struct {
 	maxFileBytes int64
 }
 
-func sftpNetworkFromConfig(cfg *config.Config) sftpNetwork {
-	edi := cfg.GetEDIConfig()
-	return sftpNetwork{policy: edi.EgressPolicy(), maxFileBytes: edi.GetMaxInboundFileBytes()}
+func sftpNetworkFromConfig(cfg *ediconfig.Config) sftpNetwork {
+	return sftpNetwork{policy: cfg.EgressPolicy(), maxFileBytes: cfg.GetMaxInboundFileBytes()}
 }
 
 type SFTPTransport struct {
 	network sftpNetwork
 }
 
-func NewSFTPTransport(cfg *config.Config) *SFTPTransport {
+func NewSFTPTransport(cfg *ediconfig.Config) *SFTPTransport {
 	return &SFTPTransport{network: sftpNetworkFromConfig(cfg)}
 }
 
@@ -66,17 +66,17 @@ func (t *SFTPTransport) Method() edi.ConnectionMethod {
 
 func (t *SFTPTransport) Deliver(
 	ctx context.Context,
-	req *ediports.EDITransportRequest,
-) (*ediports.EDITransportResult, error) {
+	req *editransportports.EDITransportRequest,
+) (*editransportports.EDITransportResult, error) {
 	return deliverOverSFTP(ctx, t.network, req, defaultOutboundDirectory)
 }
 
 func deliverOverSFTP(
 	ctx context.Context,
 	network sftpNetwork,
-	req *ediports.EDITransportRequest,
+	req *editransportports.EDITransportRequest,
 	fallbackOutboundDirectory string,
-) (*ediports.EDITransportResult, error) {
+) (*editransportports.EDITransportResult, error) {
 	if req == nil || req.Profile == nil {
 		return nil, errors.New("EDI communication profile is required for delivery")
 	}
@@ -90,9 +90,9 @@ func deliverOverSFTP(
 	directory := stringutils.WithDefault(cfg.outboundDirectory, fallbackOutboundDirectory)
 	remotePath := path.Join(directory, req.FileName)
 	if err := uploadFile(ctx, cfg.Config, remotePath, req.Contents); err != nil {
-		return &ediports.EDITransportResult{RemotePath: remotePath}, err
+		return &editransportports.EDITransportResult{RemotePath: remotePath}, err
 	}
-	return &ediports.EDITransportResult{RemotePath: remotePath}, nil
+	return &editransportports.EDITransportResult{RemotePath: remotePath}, nil
 }
 
 func (n sftpNetwork) endpointConfig(
@@ -130,7 +130,7 @@ func uploadFile(
 	return client.WriteFile(remotePath, []byte(contents))
 }
 
-func OutboundFileName(profile *edi.EDICommunicationProfile, message *edi.EDIMessage) string {
+func OutboundFileName(profile *edi.EDICommunicationProfile, message *edimessage.EDIMessage) string {
 	pattern := defaultFileNamingPattern
 	if profile != nil {
 		pattern = stringutils.WithDefault(

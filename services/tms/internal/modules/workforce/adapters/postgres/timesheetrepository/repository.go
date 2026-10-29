@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet/timesheetdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,7 +45,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.TimesheetRepository {
+func New(p Params) timesheetports.TimesheetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.timesheet-repository"),
@@ -57,9 +60,9 @@ func limitOr(requested, fallback int) int {
 }
 
 func entriesQuery(
-	req *workerports.ListTimeClockEntriesRequest,
-) *keel.Query[*worker.TimeClockEntry] {
-	e := workerdb.TimeClockEntries
+	req *timesheetports.ListTimeClockEntriesRequest,
+) *keel.Query[*timesheet.TimeClockEntry] {
+	e := timesheetdb.TimeClockEntries
 	q := e.Where(
 		keel.When(req.WorkerID.IsNotNil(), e.WorkerID.Eq(req.WorkerID)),
 		keel.When(req.TimesheetID.IsNotNil(), e.TimesheetID.Eq(req.TimesheetID)),
@@ -79,9 +82,9 @@ func entriesQuery(
 
 func (r *repository) ListEntries(
 	ctx context.Context,
-	req *workerports.ListTimeClockEntriesRequest,
-) ([]*worker.TimeClockEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TimeClockEntry, error) {
+	req *timesheetports.ListTimeClockEntriesRequest,
+) ([]*timesheet.TimeClockEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.TimeClockEntry, error) {
 		entities, err := entriesQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list time clock entries", zap.Error(err))
@@ -94,10 +97,10 @@ func (r *repository) ListEntries(
 
 func (r *repository) GetEntryByID(
 	ctx context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
-) (*worker.TimeClockEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
-		entity, err := workerdb.TimeClockEntries.Get(ctx, r.db.Keel(ctx), req.ID)
+	req *timesheetports.GetTimeClockEntryByIDRequest,
+) (*timesheet.TimeClockEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.TimeClockEntry, error) {
+		entity, err := timesheetdb.TimeClockEntries.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, entryErrors.Map(err, req.ID.String())
 		}
@@ -112,9 +115,9 @@ func (r *repository) GetOpenEntry(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.TimeClockEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
-		e := workerdb.TimeClockEntries
+) (*timesheet.TimeClockEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.TimeClockEntry, error) {
+		e := timesheetdb.TimeClockEntries
 		entity, err := e.Where(e.WorkerID.Eq(workerID), e.ClockedOutAt.IsNull()).
 			Order(e.ClockedInAt.Desc()).
 			First(ctx, r.db.Keel(ctx))
@@ -132,10 +135,10 @@ func (r *repository) GetOpenEntry(
 
 func (r *repository) CreateEntry(
 	ctx context.Context,
-	entity *worker.TimeClockEntry,
-) (*worker.TimeClockEntry, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
-		if err := workerdb.TimeClockEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *timesheet.TimeClockEntry,
+) (*timesheet.TimeClockEntry, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*timesheet.TimeClockEntry, error) {
+		if err := timesheetdb.TimeClockEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create time clock entry", zap.Error(err))
 			return nil, entryErrors.Map(err, entity.ID.String())
 		}
@@ -146,10 +149,10 @@ func (r *repository) CreateEntry(
 
 func (r *repository) UpdateEntry(
 	ctx context.Context,
-	entity *worker.TimeClockEntry,
-) (*worker.TimeClockEntry, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TimeClockEntry, error) {
-		if err := workerdb.TimeClockEntries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *timesheet.TimeClockEntry,
+) (*timesheet.TimeClockEntry, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*timesheet.TimeClockEntry, error) {
+		if err := timesheetdb.TimeClockEntries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update time clock entry", zap.Error(err))
 			return nil, entryErrors.Map(err, entity.ID.String())
 		}
@@ -160,13 +163,13 @@ func (r *repository) UpdateEntry(
 
 func (r *repository) DeleteEntry(
 	ctx context.Context,
-	req *workerports.GetTimeClockEntryByIDRequest,
+	req *timesheetports.GetTimeClockEntryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := workerdb.TimeClockEntries.DeleteRow(
+		err := timesheetdb.TimeClockEntries.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
-			&worker.TimeClockEntry{ID: req.ID},
+			&timesheet.TimeClockEntry{ID: req.ID},
 		)
 		if err != nil {
 			r.l.Error("failed to delete time clock entry", zap.Error(err))
@@ -177,8 +180,8 @@ func (r *repository) DeleteEntry(
 	})
 }
 
-func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[*worker.Timesheet] {
-	t := workerdb.Timesheets
+func timesheetsQuery(req *timesheetports.ListTimesheetsRequest) *keel.Query[*timesheet.Timesheet] {
+	t := timesheetdb.Timesheets
 	q := t.Where(
 		keel.When(req.WorkerID.IsNotNil(), t.WorkerID.Eq(req.WorkerID)),
 		keel.When(len(req.Statuses) > 0, t.Status.In(req.Statuses...)),
@@ -200,9 +203,9 @@ func timesheetsQuery(req *workerports.ListTimesheetsRequest) *keel.Query[*worker
 
 func (r *repository) ListTimesheets(
 	ctx context.Context,
-	req *workerports.ListTimesheetsRequest,
-) ([]*worker.Timesheet, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Timesheet, error) {
+	req *timesheetports.ListTimesheetsRequest,
+) ([]*timesheet.Timesheet, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.Timesheet, error) {
 		entities, err := timesheetsQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list timesheets", zap.Error(err))
@@ -215,10 +218,10 @@ func (r *repository) ListTimesheets(
 
 func (r *repository) GetTimesheetByID(
 	ctx context.Context,
-	req *workerports.GetTimesheetByIDRequest,
-) (*worker.Timesheet, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Timesheet, error) {
-		t := workerdb.Timesheets
+	req *timesheetports.GetTimesheetByIDRequest,
+) (*timesheet.Timesheet, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.Timesheet, error) {
+		t := timesheetdb.Timesheets
 		q := t.Where(t.ID.Eq(req.ID))
 		if req.IncludeWorker {
 			q = q.Load(t.Worker())
@@ -230,12 +233,12 @@ func (r *repository) GetTimesheetByID(
 		}
 
 		if req.IncludeEntries {
-			entries, err := r.ListEntries(ctx, &workerports.ListTimeClockEntriesRequest{
+			entries, entriesErr := r.ListEntries(ctx, &timesheetports.ListTimeClockEntriesRequest{
 				TenantInfo:  req.TenantInfo,
 				TimesheetID: entity.ID,
 			})
-			if err != nil {
-				return nil, err
+			if entriesErr != nil {
+				return nil, entriesErr
 			}
 			entity.Entries = entries
 		}
@@ -249,12 +252,12 @@ func (r *repository) GetTimesheetByID(
 // find no sheet and both try to make one.
 func (r *repository) GetOrCreateTimesheet(
 	ctx context.Context,
-	entity *worker.Timesheet,
-) (*worker.Timesheet, error) {
-	t := workerdb.Timesheets
+	entity *timesheet.Timesheet,
+) (*timesheet.Timesheet, error) {
+	t := timesheetdb.Timesheets
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*worker.Timesheet]{
-		Find: func(ctx context.Context) (*worker.Timesheet, error) {
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*timesheet.Timesheet]{
+		Find: func(ctx context.Context) (*timesheet.Timesheet, error) {
 			return t.Where(t.WorkerID.Eq(entity.WorkerID), t.PeriodStart.Eq(entity.PeriodStart)).
 				One(ctx, r.db.Keel(ctx))
 		},
@@ -262,7 +265,7 @@ func (r *repository) GetOrCreateTimesheet(
 			_, err := t.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
-				[]*worker.Timesheet{entity},
+				[]*timesheet.Timesheet{entity},
 				t.OrganizationID,
 				t.BusinessUnitID,
 				t.WorkerID,
@@ -275,7 +278,7 @@ func (r *repository) GetOrCreateTimesheet(
 
 			return nil
 		},
-		Default: func() *worker.Timesheet { return entity },
+		Default: func() *timesheet.Timesheet { return entity },
 		MapError: func(err error) error {
 			return timesheetErrors.Map(err, entity.ID.String())
 		},
@@ -284,10 +287,10 @@ func (r *repository) GetOrCreateTimesheet(
 
 func (r *repository) UpdateTimesheet(
 	ctx context.Context,
-	entity *worker.Timesheet,
-) (*worker.Timesheet, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.Timesheet, error) {
-		if err := workerdb.Timesheets.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *timesheet.Timesheet,
+) (*timesheet.Timesheet, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*timesheet.Timesheet, error) {
+		if err := timesheetdb.Timesheets.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update timesheet", zap.Error(err))
 			return nil, timesheetErrors.Map(err, entity.ID.String())
 		}
@@ -307,7 +310,7 @@ func (r *repository) AttachEntries(
 	from, to int64,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		e := workerdb.TimeClockEntries
+		e := timesheetdb.TimeClockEntries
 		affected, err := e.Where(
 			e.WorkerID.Eq(workerID),
 			e.ClockedInAt.Gte(from),
@@ -326,10 +329,10 @@ func (r *repository) AttachEntries(
 
 func (r *repository) ListExports(
 	ctx context.Context,
-	req *workerports.ListPayrollExportsRequest,
-) ([]*worker.PayrollExport, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PayrollExport, error) {
-		p := workerdb.PayrollExports
+	req *timesheetports.ListPayrollExportsRequest,
+) ([]*timesheet.PayrollExport, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*timesheet.PayrollExport, error) {
+		p := timesheetdb.PayrollExports
 		entities, err := p.Query().
 			Order(p.PeriodStart.Desc()).
 			Limit(limitOr(req.Limit, defaultExportPageSize)).
@@ -345,10 +348,10 @@ func (r *repository) ListExports(
 
 func (r *repository) GetExportByID(
 	ctx context.Context,
-	req *workerports.GetPayrollExportByIDRequest,
-) (*worker.PayrollExport, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PayrollExport, error) {
-		entity, err := workerdb.PayrollExports.Get(ctx, r.db.Keel(ctx), req.ID)
+	req *timesheetports.GetPayrollExportByIDRequest,
+) (*timesheet.PayrollExport, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*timesheet.PayrollExport, error) {
+		entity, err := timesheetdb.PayrollExports.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, exportErrors.Map(err, req.ID.String())
 		}
@@ -359,10 +362,10 @@ func (r *repository) GetExportByID(
 
 func (r *repository) CreateExport(
 	ctx context.Context,
-	entity *worker.PayrollExport,
-) (*worker.PayrollExport, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PayrollExport, error) {
-		if err := workerdb.PayrollExports.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *timesheet.PayrollExport,
+) (*timesheet.PayrollExport, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*timesheet.PayrollExport, error) {
+		if err := timesheetdb.PayrollExports.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create payroll export", zap.Error(err))
 			return nil, exportErrors.Map(err, entity.ID.String())
 		}
@@ -373,10 +376,10 @@ func (r *repository) CreateExport(
 
 func (r *repository) UpdateExport(
 	ctx context.Context,
-	entity *worker.PayrollExport,
-) (*worker.PayrollExport, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PayrollExport, error) {
-		if err := workerdb.PayrollExports.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *timesheet.PayrollExport,
+) (*timesheet.PayrollExport, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*timesheet.PayrollExport, error) {
+		if err := timesheetdb.PayrollExports.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update payroll export", zap.Error(err))
 			return nil, exportErrors.Map(err, entity.ID.String())
 		}
@@ -392,17 +395,17 @@ func (r *repository) UpdateExport(
 // instead of being locked out from under them.
 func (r *repository) StampExport(
 	ctx context.Context,
-	req *workerports.StampExportRequest,
+	req *timesheetports.StampExportRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		if len(req.TimesheetIDs) == 0 {
 			return 0, nil
 		}
 
-		t := workerdb.Timesheets
+		t := timesheetdb.Timesheets
 		affected, err := t.Where(
 			t.ID.In(req.TimesheetIDs...),
-			t.Status.Eq(worker.TimesheetApproved),
+			t.Status.Eq(timesheet.TimesheetApproved),
 			t.PayrollExportID.IsNull(),
 		).Update(ctx, r.db.Keel(ctx), t.PayrollExportID.To(req.ExportID), t.Status.To(req.Status))
 		if err != nil {
@@ -422,24 +425,28 @@ func (r *repository) ApprovedLeaveRanges(
 	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	from, to int64,
-) ([]workerports.RotaRangeRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.RotaRangeRow, error) {
-		p := workerdb.WorkerPTOs
-		rows, err := keel.Into[workerports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
-			Pick(p.WorkerID, p.StartDate, p.EndDate).
-			Where(
-				p.WorkerID.Eq(workerID),
-				p.Status.Eq(worker.PTOStatusApproved),
-				p.StartDate.Lt(to),
-				p.EndDate.Gte(from),
-			))
-		if err != nil {
-			r.l.Error("failed to read approved leave", zap.Error(err))
-			return nil, fmt.Errorf("read approved leave: %w", err)
-		}
+) ([]workerscheduleports.RotaRangeRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]workerscheduleports.RotaRangeRow, error) {
+			p := workerdb.WorkerPTOs
+			rows, err := keel.Into[workerscheduleports.RotaRangeRow](ctx, r.db.Keel(ctx), p.
+				Pick(p.WorkerID, p.StartDate, p.EndDate).
+				Where(
+					p.WorkerID.Eq(workerID),
+					p.Status.Eq(worker.PTOStatusApproved),
+					p.StartDate.Lt(to),
+					p.EndDate.Gte(from),
+				))
+			if err != nil {
+				r.l.Error("failed to read approved leave", zap.Error(err))
+				return nil, fmt.Errorf("read approved leave: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 // ClearExport detaches every sheet from a voided run and puts them back to
@@ -450,9 +457,9 @@ func (r *repository) ClearExport(
 	exportID pulid.ID,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		t := workerdb.Timesheets
+		t := timesheetdb.Timesheets
 		affected, err := t.Where(t.PayrollExportID.Eq(exportID)).
-			Update(ctx, r.db.Keel(ctx), t.PayrollExportID.ToNull(), t.Status.To(worker.TimesheetApproved))
+			Update(ctx, r.db.Keel(ctx), t.PayrollExportID.ToNull(), t.Status.To(timesheet.TimesheetApproved))
 		if err != nil {
 			r.l.Error("failed to clear payroll export", zap.Error(err))
 			return 0, fmt.Errorf("clear payroll export: %w", err)

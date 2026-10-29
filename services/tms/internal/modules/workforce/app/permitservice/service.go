@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentenvelope"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
@@ -29,7 +31,7 @@ type ServiceParams struct {
 
 	PermitRepo       permitports.PermitRepository
 	JurisdictionRepo permitports.JurisdictionRuleRepository
-	HoldRepo         shipmentports.ShipmentHoldRepository
+	HoldRepo         shipmentholdports.ShipmentHoldRepository
 	ShipmentRepo     shipmentports.ShipmentRepository
 	AuditService     auditports.AuditService
 	Logger           *zap.Logger
@@ -38,7 +40,7 @@ type ServiceParams struct {
 type service struct {
 	permitRepo       permitports.PermitRepository
 	jurisdictionRepo permitports.JurisdictionRuleRepository
-	holdRepo         shipmentports.ShipmentHoldRepository
+	holdRepo         shipmentholdports.ShipmentHoldRepository
 	shipmentRepo     shipmentports.ShipmentRepository
 	auditService     auditports.AuditService
 	l                *zap.Logger
@@ -189,7 +191,7 @@ func (s *service) resolveRules(
 }
 
 func measurementsFor(entity *shipment.Shipment) jurisdictionrule.Measurements {
-	envelope := entity.CurrentEnvelope()
+	envelope := shipmentenvelope.Of(entity)
 
 	m := jurisdictionrule.Measurements{
 		WidthFeet:  envelope.WidthFeet,
@@ -295,7 +297,7 @@ func (s *service) Assess(
 		WeightPounds: measurements.WeightPounds,
 	}
 
-	if !entity.HasEnvelope() {
+	if !shipmentenvelope.Present(entity) {
 		return assessment, nil
 	}
 

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
@@ -81,7 +83,7 @@ func TestExtractionStatus(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+			metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 			require.NoError(t, err)
 
 			orgID := pulid.MustNew("org_")
@@ -99,18 +101,21 @@ func TestExtractionStatus(t *testing.T) {
 
 			cfg := &config.Config{}
 			if tc.converterAvailable {
-				cfg.DocumentConversion = config.DocumentConversionConfig{
+				cfg.DocumentConversion = documentconversionconfig.Config{
 					DoclingURL: "http://docling:5001",
 					APIKey:     "key",
 				}
 			}
 			service := documentextractionservice.New(documentextractionservice.Params{
-				Logger:              zap.NewNop(),
-				Config:              cfg,
-				Metrics:             metricRegistry,
-				DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
-				DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
-				ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
+				Logger:                   zap.NewNop(),
+				DocumentConversionConfig: &cfg.DocumentConversion,
+				SearchConfig:             &cfg.Search,
+				Metrics:                  metricRegistry,
+				DocumentControlRepo:      tenantportsmock.NewMockDocumentControlRepository(t),
+				DocumentRepo:             documentportsmock.NewMockDocumentRepository(t),
+				ContentRepo: documentcontentportsmock.NewMockDocumentContentRepository(
+					t,
+				),
 				DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
 					t,
 				),

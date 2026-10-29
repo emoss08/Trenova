@@ -17,20 +17,28 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -68,19 +76,19 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Waits         agentwaitports.AgentWaitRepository
-	Runs          agentports.AgentRunRepository
-	Moves         shipmentports.ShipmentMoveRepository
-	Assignments   shipmentports.AssignmentRepository
+	Runs          agentruntimeports.AgentRunRepository
+	Moves         shipmentmoveports.ShipmentMoveRepository
+	Assignments   assignmentports.AssignmentRepository
 	Occurrences   detentionports.DetentionOccurrenceRepository
 	Telematics    telematicsports.TelematicsRepository
 	Carriers      carrierports.CarrierRepository
 	Customers     customerports.CustomerRepository
-	Subjects      agentports.AgentSubjectRepository
-	Conversations agentports.ConversationRepository
+	Subjects      agentsubjectports.AgentSubjectRepository
+	Conversations conversationports.ConversationRepository
 	Turns         *assistantturnservice.Service
-	RunService    agentports.AgentRunService
+	RunService    agentruntimeports.AgentRunService
 	Workflows     kernelports.WorkflowStarter
-	Realtime      agentports.RealtimeService                     `optional:"true"`
+	Realtime      realtimeports.RealtimeService                  `optional:"true"`
 	PortalRuns    agentextensionports.PortalRunRepository        `optional:"true"`
 	WebWatches    agentextensionports.WebWatchRepository         `optional:"true"`
 	Documents     documentports.DocumentRepository               `optional:"true"`
@@ -90,19 +98,19 @@ type Params struct {
 type turnStarter interface {
 	Active(
 		ctx context.Context,
-		req agentports.ActiveAssistantTurnRequest,
-	) (*conversation.AssistantTurn, error)
+		req *assistantturnports.ActiveAssistantTurnRequest,
+	) (*conversationturn.AssistantTurn, error)
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
 type runStarter interface {
 	StartForDefinition(
 		ctx context.Context,
-		req *agentports.StartAgentRunForDefinitionRequest,
+		req *agentruntimeports.StartAgentRunForDefinitionRequest,
 		actor *permissionports.RequestActor,
 	) (*agent.AgentRun, error)
 }
@@ -110,13 +118,13 @@ type runStarter interface {
 type Service struct {
 	l             *zap.Logger
 	waits         agentwaitports.AgentWaitRepository
-	runs          agentports.AgentRunRepository
+	runs          agentruntimeports.AgentRunRepository
 	facts         *facts
-	conversations agentports.ConversationRepository
+	conversations conversationports.ConversationRepository
 	turns         turnStarter
 	runService    runStarter
 	workflows     kernelports.WorkflowStarter
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	now           func() int64
 }
 
@@ -243,7 +251,7 @@ func (s *Service) draft(
 		wait.UserID = req.Actor.UserID
 	case req.RunID.IsNotNil():
 		tenant := pagination.TenantInfo{OrgID: wait.OrganizationID, BuID: wait.BusinessUnitID}
-		run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 			ID:         req.RunID,
 			TenantInfo: &tenant,
 		})
@@ -377,7 +385,7 @@ func (s *Service) List(
 	ctx context.Context,
 	req *agentwaitports.ListThreadWaitsRequest,
 ) ([]*agentwait.Wait, error) {
-	if _, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.UserID,
 		TenantInfo: req.TenantInfo,
@@ -396,7 +404,7 @@ func (s *Service) List(
 }
 
 // NotifyEvent ends the waits watching for what the event says happened.
-func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent) {
+func (s *Service) NotifyEvent(ctx context.Context, event *agenteventports.AgentEvent) {
 	kinds, watched := eventWatch(event)
 	if len(kinds) == 0 || len(watched) == 0 {
 		return
@@ -417,7 +425,7 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 	detail := event.Detail
 	switch {
 	case detail != "":
-	case event.Kind == agent.EventDocumentExtracted:
+	case event.Kind == agenttrigger.EventDocumentExtracted:
 		detail = fmt.Sprintf("Its reading finished at %s.", stamp(s.now()))
 	default:
 		detail = fmt.Sprintf("Seen at %s.", stamp(s.now()))
@@ -429,15 +437,15 @@ func (s *Service) NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
 	}
 }
 
-func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
+func eventWatch(event *agenteventports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 	switch event.Kind { //nolint:exhaustive // only these events end a wait
-	case agent.EventShipmentMoveArrived:
+	case agenttrigger.EventShipmentMoveArrived:
 		return []agentwait.Kind{agentwait.KindStopArrival}, []pulid.ID{event.SubjectID}
-	case agent.EventShipmentMoveDeparted:
+	case agenttrigger.EventShipmentMoveDeparted:
 		return []agentwait.Kind{agentwait.KindStopDeparture}, []pulid.ID{event.SubjectID}
-	case agent.EventInboundMessageClassified:
+	case agenttrigger.EventInboundMessageClassified:
 		return []agentwait.Kind{agentwait.KindReply}, event.Related
-	case agent.EventDocumentExtracted:
+	case agenttrigger.EventDocumentExtracted:
 		return []agentwait.Kind{agentwait.KindDocumentRead}, []pulid.ID{event.SubjectID}
 	default:
 		return nil, nil
@@ -446,7 +454,7 @@ func eventWatch(event *agentports.AgentEvent) ([]agentwait.Kind, []pulid.ID) {
 
 // eventMeets reports whether the event is the one the wait is for. A wait on
 // one stop of a move ends only at that stop.
-func eventMeets(wait *agentwait.Wait, event *agentports.AgentEvent) bool {
+func eventMeets(wait *agentwait.Wait, event *agenteventports.AgentEvent) bool {
 	switch wait.Kind { //nolint:exhaustive // the kinds an event ends
 	case agentwait.KindStopArrival, agentwait.KindStopDeparture:
 		return wait.Condition.StopID.IsNil() ||
@@ -735,7 +743,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		BuID:   wait.BusinessUnitID,
 		UserID: wait.UserID,
 	}
-	thread, err := s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         wait.ThreadID,
 		TenantInfo: tenant,
 	})
@@ -746,7 +754,7 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		return err
 	}
 
-	active, err := s.turns.Active(ctx, agentports.ActiveAssistantTurnRequest{
+	active, err := s.turns.Active(ctx, &assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -769,8 +777,8 @@ func (s *Service) resumeConversation(ctx context.Context, wait *agentwait.Wait) 
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
-		Origin:     conversation.AssistantTurnOriginWaitResolved,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+		Origin:     conversationturn.AssistantTurnOriginWaitResolved,
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
 			assistantcontract.TurnStart{
 				Actor:   owner,
@@ -807,7 +815,7 @@ func (s *Service) wakeCase(
 	if !thread.Snooze().Set() {
 		return
 	}
-	if _, err := s.conversations.WakeThread(ctx, &agentports.WakeThreadRequest{
+	if _, err := s.conversations.WakeThread(ctx, &conversationports.WakeThreadRequest{
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: tenant,
@@ -821,7 +829,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 	tenant := tenantOf(wait)
 	run, err := s.runService.StartForDefinition(
 		ctx,
-		&agentports.StartAgentRunForDefinitionRequest{
+		&agentruntimeports.StartAgentRunForDefinitionRequest{
 			DefinitionID: wait.AgentDefinitionID,
 			SubjectType:  wait.SubjectType,
 			SubjectID:    wait.SubjectID,
@@ -831,7 +839,7 @@ func (s *Service) resumeRun(ctx context.Context, wait *agentwait.Wait) error {
 		},
 		nil,
 	)
-	if errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+	if errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) {
 		return agentwaitcontract.ErrConversationBusy
 	}
 	if errortypes.IsBusinessError(err) {
@@ -878,7 +886,7 @@ func (s *Service) announce(ctx context.Context, wait *agentwait.Wait) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: wait.OrganizationID,
 			BusinessUnitID: wait.BusinessUnitID,
 			AudienceUserID: wait.UserID,

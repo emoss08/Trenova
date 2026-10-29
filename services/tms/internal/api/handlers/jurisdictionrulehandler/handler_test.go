@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/jurisdictionrulehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
@@ -77,8 +77,8 @@ func setupHandler(
 
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 
 	return jurisdictionrulehandler.New(jurisdictionrulehandler.Params{

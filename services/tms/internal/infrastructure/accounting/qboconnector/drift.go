@@ -6,38 +6,41 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/shared/quickbookssync"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 )
 
-var _ accountingsyncports.AccountingDocumentReader = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentReader = (*Connector)(nil)
 
 var errExternalIDRequired = errors.New(
 	"quickbooks: updating a document needs the id QuickBooks gave it",
 )
 
-func (c *Connector) DocumentReadLimits() accountingsyncports.AccountingDocumentReadLimits {
-	return accountingsyncports.AccountingDocumentReadLimits{MaxPerRead: quickbooks.MaxQueryIDs}
+func (c *Connector) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+	return accountingconnectorports.AccountingDocumentReadLimits{
+		MaxPerRead: quickbookssync.MaxQueryIDs,
+	}
 }
 
 func readKindOf(
 	kind accountingsync.SyncObjectType,
-	target *accountingsyncports.AccountingDocumentTarget,
-) (quickbooks.TxnKind, error) {
+	target *accountingconnectorports.AccountingDocumentTarget,
+) (quickbookstxn.TxnKind, error) {
 	switch {
 	case kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo:
-		return quickbooks.TxnInvoice, nil
+		return quickbookstxn.TxnInvoice, nil
 	case kind == accountingsync.SyncObjectCreditMemo:
-		return quickbooks.TxnCreditMemo, nil
+		return quickbookstxn.TxnCreditMemo, nil
 	case kind == accountingsync.SyncObjectCustomerPayment ||
 		kind == accountingsync.SyncObjectCreditApplication:
-		return quickbooks.TxnPayment, nil
+		return quickbookstxn.TxnPayment, nil
 	case kind.IsBill():
 		return purchaseKindOf(target.Refs)
 	case kind.IsBillPayment():
-		return quickbooks.TxnBillPayment, nil
+		return quickbookstxn.TxnBillPayment, nil
 	case kind.IsLedger():
-		return quickbooks.TxnJournalEntry, nil
+		return quickbookstxn.TxnJournalEntry, nil
 	default:
 		return "", errDocumentKind
 	}
@@ -45,10 +48,10 @@ func readKindOf(
 
 func (c *Connector) ReadDocuments(
 	ctx context.Context,
-	req *accountingsyncports.ReadAccountingDocumentsRequest,
-) ([]*accountingsyncports.AccountingDocumentState, error) {
-	groups := make(map[quickbooks.TxnKind][]string, 2)
-	order := make([]quickbooks.TxnKind, 0, 2)
+	req *accountingconnectorports.ReadAccountingDocumentsRequest,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	groups := make(map[quickbookstxn.TxnKind][]string, 2)
+	order := make([]quickbookstxn.TxnKind, 0, 2)
 	for idx := range req.Targets {
 		kind, err := readKindOf(req.Kind, &req.Targets[idx])
 		if err != nil {
@@ -64,15 +67,16 @@ func (c *Connector) ReadDocuments(
 	if err != nil {
 		return nil, err
 	}
-	found := make(map[quickbooks.TxnKind]map[string]*quickbooks.DocumentState, len(order))
+	found := make(map[quickbookstxn.TxnKind]map[string]*quickbookssync.DocumentState, len(order))
 	for _, kind := range order {
-		byID := make(map[string]*quickbooks.DocumentState, len(groups[kind]))
+		byID := make(map[string]*quickbookssync.DocumentState, len(groups[kind]))
 		ids := groups[kind]
-		for start := 0; start < len(ids); start += quickbooks.MaxQueryIDs {
-			states, readErr := client.QueryByIDs(
+		for start := 0; start < len(ids); start += quickbookssync.MaxQueryIDs {
+			states, readErr := quickbookssync.QueryByIDs(
 				ctx,
+				client,
 				kind,
-				ids[start:min(start+quickbooks.MaxQueryIDs, len(ids))],
+				ids[start:min(start+quickbookssync.MaxQueryIDs, len(ids))],
 			)
 			if readErr != nil {
 				return nil, readErr
@@ -84,12 +88,12 @@ func (c *Connector) ReadDocuments(
 		found[kind] = byID
 	}
 
-	out := make([]*accountingsyncports.AccountingDocumentState, 0, len(req.Targets))
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(req.Targets))
 	for idx := range req.Targets {
 		target := &req.Targets[idx]
 		kind, _ := readKindOf(req.Kind, target)
 		id := strings.TrimSpace(target.ExternalID)
-		state := &accountingsyncports.AccountingDocumentState{ExternalID: id}
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
 		if provider, ok := found[kind][id]; ok {
 			state.Found = true
 			state.Voided = provider.Voided
@@ -107,22 +111,26 @@ func (c *Connector) ReadDocuments(
 
 func (c *Connector) UpdateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	id := strings.TrimSpace(doc.ExternalID)
 	if id == "" {
 		return nil, errExternalIDRequired
 	}
-	var update func(context.Context, string, string, *quickbooks.SalesTxn) (*quickbooks.TxnResult, error)
+	var update func(context.Context, string, string, *quickbookstxn.SalesTxn) (*quickbookstxn.TxnResult, error)
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	switch doc.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		update = client.UpdateInvoice
+		update = func(ctx context.Context, requestID, id string, txn *quickbookstxn.SalesTxn) (*quickbookstxn.TxnResult, error) {
+			return quickbookstxn.UpdateInvoice(ctx, client, requestID, id, txn)
+		}
 	case accountingsync.SyncObjectCreditMemo:
-		update = client.UpdateCreditMemo
+		update = func(ctx context.Context, requestID, id string, txn *quickbookstxn.SalesTxn) (*quickbookstxn.TxnResult, error) {
+			return quickbookstxn.UpdateCreditMemo(ctx, client, requestID, id, txn)
+		}
 	case accountingsync.SyncObjectCustomer,
 		accountingsync.SyncObjectCustomerPayment,
 		accountingsync.SyncObjectCreditApplication,
@@ -149,8 +157,8 @@ func (c *Connector) UpdateSalesDocument(
 
 func (c *Connector) UpdatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -164,18 +172,18 @@ func (c *Connector) UpdatePurchaseDocument(
 	}
 
 	txn := purchaseTxnOf(doc)
-	kind := quickbooks.TxnBill
-	var saved *quickbooks.TxnResult
+	kind := quickbookstxn.TxnBill
+	var saved *quickbookstxn.TxnResult
 	if doc.VendorCredit {
-		kind = quickbooks.TxnVendorCredit
-		saved, err = client.UpdateVendorCredit(ctx, doc.RequestID, id, txn)
+		kind = quickbookstxn.TxnVendorCredit
+		saved, err = quickbookstxn.UpdateVendorCredit(ctx, client, doc.RequestID, id, txn)
 	} else {
-		saved, err = client.UpdateBill(ctx, doc.RequestID, id, txn)
+		saved, err = quickbookstxn.UpdateBill(ctx, client, doc.RequestID, id, txn)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.DocNumber,
 		Refs: map[string]string{
@@ -188,8 +196,8 @@ func (c *Connector) UpdatePurchaseDocument(
 
 func (c *Connector) UpdateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -201,32 +209,38 @@ func (c *Connector) UpdateBillPayment(
 	if err != nil {
 		return nil, err
 	}
-	paid, err := client.UpdateBillPayment(ctx, doc.RequestID, id, billPaymentTxnOf(doc))
+	paid, err := quickbookstxn.UpdateBillPayment(
+		ctx,
+		client,
+		doc.RequestID,
+		id,
+		billPaymentTxnOf(doc),
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: paid.ID,
 		DocNumber:  paid.DocNumber,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: paid.ID},
 	}, nil
 }
 
-func changedDocumentTypes(kind quickbooks.TxnKind) []accountingsync.SyncObjectType {
+func changedDocumentTypes(kind quickbookstxn.TxnKind) []accountingsync.SyncObjectType {
 	switch kind {
-	case quickbooks.TxnInvoice:
+	case quickbookstxn.TxnInvoice:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectInvoice,
 			accountingsync.SyncObjectDebitMemo,
 		}
-	case quickbooks.TxnCreditMemo:
+	case quickbookstxn.TxnCreditMemo:
 		return []accountingsync.SyncObjectType{accountingsync.SyncObjectCreditMemo}
-	case quickbooks.TxnBill, quickbooks.TxnVendorCredit:
+	case quickbookstxn.TxnBill, quickbookstxn.TxnVendorCredit:
 		return []accountingsync.SyncObjectType{
 			accountingsync.SyncObjectCarrierBill,
 			accountingsync.SyncObjectDriverBill,
 		}
-	case quickbooks.TxnPayment, quickbooks.TxnBillPayment:
+	case quickbookstxn.TxnPayment, quickbookstxn.TxnBillPayment:
 		return nil
 	default:
 		return nil
@@ -234,9 +248,9 @@ func changedDocumentTypes(kind quickbooks.TxnKind) []accountingsync.SyncObjectTy
 }
 
 func changedDocumentOf(
-	doc *quickbooks.ChangedDocument,
-) accountingsyncports.AccountingChangedDocument {
-	return accountingsyncports.AccountingChangedDocument{
+	doc *quickbookssync.ChangedDocument,
+) accountingconnectorports.AccountingChangedDocument {
+	return accountingconnectorports.AccountingChangedDocument{
 		ObjectTypes: changedDocumentTypes(doc.Kind),
 		ExternalID:  doc.ID,
 		Operation:   changeOperation(&doc.ChangeMeta),
@@ -245,11 +259,11 @@ func changedDocumentOf(
 	}
 }
 
-func documentChangeEntities() []quickbooks.ChangeEntity {
-	return []quickbooks.ChangeEntity{
-		quickbooks.DocumentChangeEntity(quickbooks.TxnInvoice),
-		quickbooks.DocumentChangeEntity(quickbooks.TxnCreditMemo),
-		quickbooks.DocumentChangeEntity(quickbooks.TxnBill),
-		quickbooks.DocumentChangeEntity(quickbooks.TxnVendorCredit),
+func documentChangeEntities() []quickbookssync.ChangeEntity {
+	return []quickbookssync.ChangeEntity{
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnInvoice),
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnCreditMemo),
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnBill),
+		quickbookssync.DocumentChangeEntity(quickbookstxn.TxnVendorCredit),
 	}
 }

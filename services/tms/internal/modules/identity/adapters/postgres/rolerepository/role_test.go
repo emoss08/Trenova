@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -44,14 +45,14 @@ func newRoleFixture(t *testing.T) *roleFixture {
 	}
 }
 
-func newTestRole(name string, parents []pulid.ID, resources ...string) *permission.Role {
-	role := &permission.Role{
+func newTestRole(name string, parents []pulid.ID, resources ...string) *rbac.Role {
+	role := &rbac.Role{
 		Name:           name,
 		ParentRoleIDs:  parents,
 		MaxSensitivity: permission.SensitivityInternal,
 	}
 	for _, resource := range resources {
-		role.Permissions = append(role.Permissions, &permission.ResourcePermission{
+		role.Permissions = append(role.Permissions, &rbac.ResourcePermission{
 			Resource:   resource,
 			Operations: []permission.Operation{permission.OpRead},
 			DataScope:  permission.DataScopeOrganization,
@@ -61,7 +62,7 @@ func newTestRole(name string, parents []pulid.ID, resources ...string) *permissi
 	return role
 }
 
-func roleNameSet(roles []*permission.Role) map[string]bool {
+func roleNameSet(roles []*rbac.Role) map[string]bool {
 	names := make(map[string]bool, len(roles))
 	for _, role := range roles {
 		names[role.Name] = true
@@ -118,7 +119,7 @@ func TestRoleRepository_ListAndUpdate(t *testing.T) {
 
 	role := listed.Items[0]
 	role.Name = "Renamed"
-	role.Permissions = []*permission.ResourcePermission{{
+	role.Permissions = []*rbac.ResourcePermission{{
 		Resource:   "customer",
 		Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
 		DataScope:  permission.DataScopeOrganization,
@@ -141,7 +142,7 @@ func TestRoleRepository_RoleAssignments(t *testing.T) {
 	role := newTestRole("Assignment Role", nil, "shipment")
 	require.NoError(t, f.repo.Create(f.ctx, role))
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID:         f.data.User.ID,
 		OrganizationID: f.data.Organization.ID,
 		RoleID:         role.ID,
@@ -150,7 +151,7 @@ func TestRoleRepository_RoleAssignments(t *testing.T) {
 	require.NoError(t, f.repo.CreateAssignment(f.ctx, assignment))
 	require.True(t, assignment.ID.IsNotNil())
 
-	err := f.repo.CreateAssignment(f.ctx, &permission.UserRoleAssignment{
+	err := f.repo.CreateAssignment(f.ctx, &rbac.UserRoleAssignment{
 		UserID:         f.data.User.ID,
 		OrganizationID: f.data.Organization.ID,
 		RoleID:         role.ID,
@@ -259,8 +260,9 @@ func TestRoleRepository_GetRolesWithInheritanceStopsAtACycle(t *testing.T) {
 	second := newTestRole("Cycle Second", []pulid.ID{first.ID}, "driver")
 	require.NoError(t, f.repo.Create(f.ctx, second))
 
-	ro := permissiondb.Roles
-	_, err := ro.Where(ro.ID.Eq(first.ID)).Update(f.ctx, f.db, ro.ParentRoleIDs.To([]string{second.ID.String()}))
+	ro := rbacdb.Roles
+	_, err := ro.Where(ro.ID.Eq(first.ID)).
+		Update(f.ctx, f.db, ro.ParentRoleIDs.To([]string{second.ID.String()}))
 	require.NoError(t, err)
 
 	roles, err := f.repo.GetRolesWithInheritance(f.ctx, []pulid.ID{second.ID})
@@ -278,7 +280,7 @@ func TestRoleRepository_ResourcePermissions(t *testing.T) {
 	role := newTestRole("Permission Test Role", nil)
 	require.NoError(t, f.repo.Create(f.ctx, role))
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     role.ID,
 		Resource:   "customer",
 		Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},

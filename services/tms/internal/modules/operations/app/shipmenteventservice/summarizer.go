@@ -5,6 +5,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,7 +73,7 @@ func BuildShipmentCreated(
 func BuildStatusChanged(
 	tenant TenantRef,
 	sh *shipment.Shipment,
-	previous shipment.Status,
+	previous shipmentvocab.Status,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -160,7 +162,7 @@ func BuildOwnershipTransferred(
 func BuildMoveStatusChanged(
 	tenant TenantRef,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	eventType, severity, summary := classifyMoveStatus(move.Status)
@@ -302,7 +304,7 @@ func BuildCarrierUnassigned(
 // BuildHoldPlaced emits a hold creation event.
 func BuildHoldPlaced(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -325,7 +327,7 @@ func BuildHoldPlaced(
 // BuildHoldUpdated emits a hold update event.
 func BuildHoldUpdated(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -346,7 +348,7 @@ func BuildHoldUpdated(
 // BuildHoldReleased emits a hold release event.
 func BuildHoldReleased(
 	tenant TenantRef,
-	hold *shipment.ShipmentHold,
+	hold *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 ) *shipmenteventports.RecordShipmentEventParams {
 	return &shipmenteventports.RecordShipmentEventParams{
@@ -399,34 +401,34 @@ func BuildCommentPosted(
 // classifyMoveStatus translates a move status transition to a specific event
 // type, severity, and short subject summary.
 func classifyMoveStatus(
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 ) (shipmentevent.Type, shipmentevent.Severity, string) {
 	switch status {
-	case shipment.MoveStatusInTransit:
+	case shipmentvocab.MoveStatusInTransit:
 		return shipmentevent.TypeMoveDeparted, shipmentevent.SeverityBrand, "Move departed"
-	case shipment.MoveStatusCompleted:
+	case shipmentvocab.MoveStatusCompleted:
 		return shipmentevent.TypeMoveArrived, shipmentevent.SeveritySuccess, "Move completed"
-	case shipment.MoveStatusCanceled:
+	case shipmentvocab.MoveStatusCanceled:
 		return shipmentevent.TypeMoveStatusChanged, shipmentevent.SeverityDanger, "Move canceled"
-	case shipment.MoveStatusNew, shipment.MoveStatusAssigned:
+	case shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned:
 		return shipmentevent.TypeMoveStatusChanged, shipmentevent.SeverityMuted, "Move status updated"
 	}
 	return shipmentevent.TypeMoveStatusChanged, shipmentevent.SeverityMuted, "Move status updated"
 }
 
 // severityForShipmentStatus picks a feed severity for a shipment status value.
-func severityForShipmentStatus(status shipment.Status) shipmentevent.Severity {
+func severityForShipmentStatus(status shipmentvocab.Status) shipmentevent.Severity {
 	switch status {
-	case shipment.StatusCanceled, shipment.StatusDelayed:
+	case shipmentvocab.StatusCanceled, shipmentvocab.StatusDelayed:
 		return shipmentevent.SeverityDanger
-	case shipment.StatusInTransit, shipment.StatusReadyToInvoice:
+	case shipmentvocab.StatusInTransit, shipmentvocab.StatusReadyToInvoice:
 		return shipmentevent.SeverityBrand
-	case shipment.StatusCompleted, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted, shipmentvocab.StatusInvoiced:
 		return shipmentevent.SeveritySuccess
-	case shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusPartiallyCompleted:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusPartiallyCompleted:
 		return shipmentevent.SeverityMuted
 	}
 	return shipmentevent.SeverityMuted

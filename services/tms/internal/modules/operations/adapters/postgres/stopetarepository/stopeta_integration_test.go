@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -42,7 +43,7 @@ func newHarness(t *testing.T) *harness {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenant)
-	graph := createShipment(t, ctx, db, fixture, tenant, "ETA-1", shipment.StatusInTransit)
+	graph := createShipment(t, ctx, db, fixture, tenant, "ETA-1", shipmentvocab.StatusInTransit)
 
 	conn := postgres.NewTestConnection(db)
 	return &harness{
@@ -63,7 +64,7 @@ func createShipment(
 	fixture *testutil.ShipmentIntegrationFixture,
 	tenant pagination.TenantInfo,
 	code string,
-	status shipment.Status,
+	status shipmentvocab.Status,
 ) *testutil.ShipmentGraph {
 	t.Helper()
 
@@ -71,7 +72,7 @@ func createShipment(
 		BOL:          "BOL-" + code,
 		ProNumber:    "PRO-" + code,
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusInTransit},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusInTransit},
 	})
 	setStatus(t, dbscope.WithTenant(ctx, tenant.DBTenant()), db, graph.Shipment.ID, status)
 	return graph
@@ -82,7 +83,7 @@ func setStatus(
 	ctx context.Context,
 	db *keel.DB,
 	shipmentID pulid.ID,
-	status shipment.Status,
+	status shipmentvocab.Status,
 ) {
 	t.Helper()
 
@@ -207,11 +208,11 @@ func TestListAttention_ReturnsUnarrivedRiskOnTrackedShipmentsWithStopDetails(t *
 	require.Len(t, stops, 1)
 	assert.Equal(t, delivery.ID, stops[0].ETA.StopID)
 	assert.Equal(t, "PRO-ETA-1", stops[0].ProNumber)
-	assert.Equal(t, shipment.StopTypeDelivery, stops[0].StopType)
+	assert.Equal(t, shipmentvocab.StopTypeDelivery, stops[0].StopType)
 	assert.Equal(t, "Delivery", stops[0].LocationName)
 	assert.Equal(t, "Charlotte", stops[0].City)
 
-	setStatus(t, h.ctx, h.db, h.shipment.ID, shipment.StatusCompleted)
+	setStatus(t, h.ctx, h.db, h.shipment.ID, shipmentvocab.StatusCompleted)
 	stops, err = h.repo.ListAttention(h.ctx, &stopetaports.ListAttentionRequest{
 		TenantInfo: h.tenant,
 		Statuses:   stopeta.TrackedShipmentStatuses(),
@@ -230,7 +231,7 @@ func TestListTrackedShipmentIDs_IncludesActiveShipmentsAndLeftoverRows(t *testin
 		h.fixture,
 		h.tenant,
 		"ETA-2",
-		shipment.StatusInTransit,
+		shipmentvocab.StatusInTransit,
 	)
 
 	finishedRow := h.row(finished.Moves[0].Stops[1], stopeta.VerdictOnTime, 1_000)
@@ -241,8 +242,16 @@ func TestListTrackedShipmentIDs_IncludesActiveShipmentsAndLeftoverRows(t *testin
 		ShipmentIDs: []pulid.ID{finished.Shipment.ID},
 		Rows:        []*stopeta.StopETA{finishedRow},
 	}))
-	setStatus(t, h.ctx, h.db, finished.Shipment.ID, shipment.StatusCompleted)
-	newShipment := createShipment(t, h.ctx, h.db, h.fixture, h.tenant, "ETA-3", shipment.StatusNew)
+	setStatus(t, h.ctx, h.db, finished.Shipment.ID, shipmentvocab.StatusCompleted)
+	newShipment := createShipment(
+		t,
+		h.ctx,
+		h.db,
+		h.fixture,
+		h.tenant,
+		"ETA-3",
+		shipmentvocab.StatusNew,
+	)
 
 	ids, err := h.repo.ListTrackedShipmentIDs(h.ctx, &stopetaports.ListTrackedShipmentIDsRequest{
 		TenantInfo: h.tenant,

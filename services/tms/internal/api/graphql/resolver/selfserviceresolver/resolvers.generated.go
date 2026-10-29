@@ -3,12 +3,12 @@
 package selfserviceresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	selfserviceservice "github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	SelfServiceService *selfserviceservice.Service
 }
 

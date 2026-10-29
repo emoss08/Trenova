@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
@@ -92,17 +93,17 @@ func (f *relationFixture) shipmentFromInput(templateID pulid.ID) *shipment.Shipm
 		CustomerID:        f.customerID,
 		TractorTypeID:     f.tractorTypeID,
 		Moves: []*shipment.ShipmentMove{{
-			Status: shipment.MoveStatusNew,
+			Status: shipmentvocab.MoveStatusNew,
 			Stops: []*shipment.Stop{
 				{
-					Status:               shipment.StopStatusNew,
-					Type:                 shipment.StopTypePickup,
+					Status:               shipmentvocab.StopStatusNew,
+					Type:                 shipmentvocab.StopTypePickup,
 					LocationID:           f.fresnoID,
 					ScheduledWindowStart: f.pickupAt,
 				},
 				{
-					Status:               shipment.StopStatusNew,
-					Type:                 shipment.StopTypeDelivery,
+					Status:               shipmentvocab.StopStatusNew,
+					Type:                 shipmentvocab.StopTypeDelivery,
 					LocationID:           f.dallasID,
 					Sequence:             1,
 					ScheduledWindowStart: f.pickupAt + int64(48*time.Hour/time.Second),
@@ -186,7 +187,7 @@ func TestRating_ReadsRelatedRecordsTheSaveInputOnlyNamesByID(t *testing.T) {
 			template := relationTemplate(tt.expression)
 			calculator, stack := fixture.calculator(t, template)
 			userID := pulid.MustNew("usr_")
-			control := &tenant.ShipmentControl{}
+			control := &shipmentcontrol.ShipmentControl{}
 			want := decimal.NewFromInt(75)
 
 			created := fixture.shipmentFromInput(template.TemplateID)
@@ -229,10 +230,10 @@ func TestRating_AnAlreadyLoadedShipmentIsNotLoadedAgain(t *testing.T) {
 	entity := fixture.shipmentFromInput(template.TemplateID)
 
 	require.NoError(t, calculator.Recalculate(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	))
 	require.NoError(t, calculator.Recalculate(
-		t.Context(), entity, &tenant.ShipmentControl{}, pulid.MustNew("usr_"),
+		t.Context(), entity, &shipmentcontrol.ShipmentControl{}, pulid.MustNew("usr_"),
 	))
 
 	assert.Len(t, fixture.store.Fetches("serviceType"), 1)

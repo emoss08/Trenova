@@ -108,7 +108,7 @@ func (b *CaptureBatch) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&b.FailureMessage, validation.Length(0, maxFailureMessageLength)),
 	))
 
-	b.Target().Validate(multiErr, targetFields, false)
+	b.Target().Validate(multiErr, DefaultTargetFields, false)
 }
 
 // Target is where the batch was asked to go, if anywhere.
@@ -184,3 +184,8 @@ func (b *CaptureBatch) BeforeCreate(ctx context.Context) error {
 
 	return nil
 }
+
+const (
+	maxFailureMessageLength = 500
+	maxSourceNameLength     = 255
+)

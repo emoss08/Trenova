@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -40,11 +40,11 @@ func homePageOf(layout *homelayout.Layout) *homePageView {
 	return view
 }
 
-func (p *homePlan) change() (*agent.RecordChange, error) {
+func (p *homePlan) change() (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceHomeLayoutPreset,
 		Label:    homePageLabel,
-		Version:  common.PreviewVersion(p.current.Version),
+		Version:  changepreview.PreviewVersion(p.current.Version),
 	}, homePageOf(p.current.Layout), homePageOf(p.update.Document.Layout),
 		toolpreview.Labels(homePageLabels),
 	)
@@ -62,13 +62,16 @@ func (p *homePlan) summary() string {
 
 func (e homeEditor) PlanPreview(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	edit homeEdit,
-) (*agent.ToolPreview, error) {
-	plan, err := e.plan(ctx, *params, edit)
+) (*agentpreview.ToolPreview, error) {
+	plan, err := e.plan(ctx, params, edit)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build("Would change your home page."), err), nil
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
+				toolpreview.Build("Would change your home page."),
+				err,
+			), nil
 		}
 
 		return nil, err
@@ -84,21 +87,21 @@ func (e homeEditor) PlanPreview(
 
 func (t *AddHomeWidgetTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(params))
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }
 
 func (t *RemoveHomeWidgetTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(params))
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }
 
 func (t *ArrangeHomeLayoutTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.editor.PlanPreview(ctx, &params, t.edit(params))
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.editor.PlanPreview(ctx, params, t.edit(params))
 }

@@ -8,36 +8,44 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -45,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -60,33 +69,34 @@ type Params struct {
 
 	Logger            *zap.Logger
 	BillingQueue      billingqueueports.BillingQueueService
-	Shipments         shipmentports.ShipmentService
-	Console           shipmentports.DispatchConsoleRepository                `optional:"true"`
-	Content           documentports.DocumentContentService                   `optional:"true"`
-	Insights          insightports.InsightRepository                         `optional:"true"`
-	BankReceipts      bankreceiptports.BankReceiptService                    `optional:"true"`
-	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository `optional:"true"`
-	Occurrences       detentionports.DetentionOccurrenceRepository           `optional:"true"`
-	Workers           workerports.WorkerRepository                           `optional:"true"`
-	Credentials       workerports.WorkerCredentialRepository                 `optional:"true"`
-	CarrierIntel      carrierintelports.CarrierIntelEventRepository          `optional:"true"`
-	EDIFiles          ediports.EDIInboundFileRepository                      `optional:"true"`
-	Inbound           inboundmessageports.InboundMessageRepository           `optional:"true"`
-	Reports           reportports.ReportDefinitionRepository                 `optional:"true"`
-	Dashboards        reportports.ReportDashboardRepository                  `optional:"true"`
-	Accounting        accountingsyncports.AccountingConnectionRepository     `optional:"true"`
-	SyncRecords       accountingsyncports.AccountingSyncRecordRepository     `optional:"true"`
-	AccountingInbound accountingsyncports.AccountingInboundChangeRepository  `optional:"true"`
-	AccountingDrift   accountingsyncports.AccountingDriftFindingRepository   `optional:"true"`
-	Dispatch          dispatchcontrolports.DispatchControlRepository         `optional:"true"`
-	Formulas          formulatemplateports.FormulaTemplateRepository         `optional:"true"`
-	FormulaLibraries  formulalibraryports.FormulaLibraryRepository           `optional:"true"`
-	Invoices          invoiceports.InvoiceRepository                         `optional:"true"`
-	Disputes          invoiceports.InvoiceDisputeRepository                  `optional:"true"`
-	Noas              factoringports.NoaRepository                           `optional:"true"`
-	Submissions       factoringports.SubmissionRepository                    `optional:"true"`
-	Remittances       factoringports.RemittanceRepository                    `optional:"true"`
-	StopEtas          stopetaports.Repository                                `optional:"true"`
+	Shipments         shipmentserviceports.ShipmentReader
+	Readiness         shipmentserviceports.ShipmentBillingReadinessReader
+	Console           dispatchboardports.DispatchConsoleRepository             `optional:"true"`
+	Content           documentports.DocumentContentService                     `optional:"true"`
+	Insights          insightports.InsightRepository                           `optional:"true"`
+	BankReceipts      bankreceiptports.BankReceiptService                      `optional:"true"`
+	WorkItems         bankreceiptworkitemports.BankReceiptWorkItemRepository   `optional:"true"`
+	Occurrences       detentionports.DetentionOccurrenceRepository             `optional:"true"`
+	Workers           workerports.WorkerRepository                             `optional:"true"`
+	Credentials       workercredentialports.WorkerCredentialRepository         `optional:"true"`
+	CarrierIntel      carrierintelports.CarrierIntelEventRepository            `optional:"true"`
+	EDIFiles          edimessageports.EDIInboundFileRepository                 `optional:"true"`
+	Inbound           inboundmessageports.InboundMessageRepository             `optional:"true"`
+	Reports           reportports.ReportDefinitionRepository                   `optional:"true"`
+	Dashboards        reportports.ReportDashboardRepository                    `optional:"true"`
+	Accounting        accountingconnectionports.AccountingConnectionRepository `optional:"true"`
+	SyncRecords       accountingsyncports.AccountingSyncRecordRepository       `optional:"true"`
+	AccountingInbound accountinginboundports.AccountingInboundChangeRepository `optional:"true"`
+	AccountingDrift   accountingdriftports.AccountingDriftFindingRepository    `optional:"true"`
+	Dispatch          dispatchcontrolports.DispatchControlRepository           `optional:"true"`
+	Formulas          formulatemplateports.FormulaTemplateRepository           `optional:"true"`
+	FormulaLibraries  formulalibraryports.FormulaLibraryRepository             `optional:"true"`
+	Invoices          invoiceports.InvoiceRepository                           `optional:"true"`
+	Disputes          invoiceports.InvoiceDisputeRepository                    `optional:"true"`
+	Noas              factoringports.NoaRepository                             `optional:"true"`
+	Submissions       factoringsubmissionports.SubmissionRepository            `optional:"true"`
+	Remittances       factoringremittanceports.RemittanceRepository            `optional:"true"`
+	StopEtas          stopetaports.Repository                                  `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -95,40 +105,43 @@ type Params struct {
 type Service struct {
 	content           documentports.DocumentContentService
 	billingQueue      billingqueueports.BillingQueueService
-	shipments         shipmentports.ShipmentService
-	console           shipmentports.DispatchConsoleRepository
+	shipments         shipmentserviceports.ShipmentReader
+	readiness         shipmentserviceports.ShipmentBillingReadinessReader
+	console           dispatchboardports.DispatchConsoleRepository
 	insights          insightports.InsightRepository
 	receipts          bankreceiptports.BankReceiptService
 	workItems         bankreceiptworkitemports.BankReceiptWorkItemRepository
 	occurrences       detentionports.DetentionOccurrenceRepository
 	workers           workerports.WorkerRepository
-	credentials       workerports.WorkerCredentialRepository
+	credentials       workercredentialports.WorkerCredentialRepository
 	carrierIntel      carrierintelports.CarrierIntelEventRepository
-	ediFiles          ediports.EDIInboundFileRepository
+	ediFiles          edimessageports.EDIInboundFileRepository
 	inbound           inboundmessageports.InboundMessageRepository
 	reports           reportports.ReportDefinitionRepository
 	dashboards        reportports.ReportDashboardRepository
-	accounting        accountingsyncports.AccountingConnectionRepository
+	accounting        accountingconnectionports.AccountingConnectionRepository
 	syncRecords       accountingsyncports.AccountingSyncRecordRepository
-	accountingInbound accountingsyncports.AccountingInboundChangeRepository
-	accountingDrift   accountingsyncports.AccountingDriftFindingRepository
+	accountingInbound accountinginboundports.AccountingInboundChangeRepository
+	accountingDrift   accountingdriftports.AccountingDriftFindingRepository
 	dispatch          dispatchcontrolports.DispatchControlRepository
 	formulas          formulatemplateports.FormulaTemplateRepository
 	formulaLibraries  formulalibraryports.FormulaLibraryRepository
 	invoices          invoiceports.InvoiceRepository
 	disputes          invoiceports.InvoiceDisputeRepository
 	noas              factoringports.NoaRepository
-	submissions       factoringports.SubmissionRepository
-	remittances       factoringports.RemittanceRepository
+	submissions       factoringsubmissionports.SubmissionRepository
+	remittances       factoringremittanceports.RemittanceRepository
 	stopEtas          stopetaports.Repository
 	logger            *zap.Logger
 }
 
-func New(p Params) agentports.AgentSubjectDescriber {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentruntimeports.AgentSubjectDescriber {
 	return &Service{
 		content:           p.Content,
 		billingQueue:      p.BillingQueue,
 		shipments:         p.Shipments,
+		readiness:         p.Readiness,
 		console:           p.Console,
 		insights:          p.Insights,
 		receipts:          p.BankReceipts,
@@ -163,7 +176,7 @@ func (s *Service) Describe(
 	tenant pagination.TenantInfo,
 	subjectType agent.SubjectType,
 	subjectID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	switch subjectType {
 	case agent.SubjectBillingQueueItem:
 		return s.billingQueueItem(ctx, tenant, subjectID)
@@ -216,7 +229,7 @@ func (s *Service) Describe(
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
-		return &agentdefinition.RuntimeSubject{
+		return &agentturn.RuntimeSubject{
 			Type:  subjectType,
 			ID:    subjectID.String(),
 			Label: string(subjectType),
@@ -228,7 +241,7 @@ func (s *Service) billingQueueItem(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	itemID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	item, err := s.billingQueue.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
 		TenantInfo:            tenant,
 		ItemID:                itemID,
@@ -240,7 +253,7 @@ func (s *Service) billingQueueItem(
 
 	sections := map[string]any{"billingQueueItem": item}
 	if item.ShipmentID.IsNotNil() && s.shipments != nil {
-		readiness, rErr := s.shipments.GetBillingReadiness(ctx, item.ShipmentID, tenant)
+		readiness, rErr := s.readiness.GetBillingReadiness(ctx, item.ShipmentID, tenant)
 		if rErr != nil {
 			s.logger.Warn("agent subject: billing readiness unavailable", zap.Error(rErr))
 		} else {
@@ -264,7 +277,7 @@ func (s *Service) billingQueueItem(
 		label = "Billing queue item for shipment " + item.ShipmentID.String()
 	}
 
-	return &agentdefinition.RuntimeSubject{
+	return &agentturn.RuntimeSubject{
 		Type:  agent.SubjectBillingQueueItem,
 		ID:    itemID.String(),
 		Label: label,
@@ -276,9 +289,9 @@ func (s *Service) shipmentMove(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
+) (*agentturn.RuntimeSubject, error) {
 	if s.console == nil {
-		return &agentdefinition.RuntimeSubject{
+		return &agentturn.RuntimeSubject{
 			Type:  agent.SubjectShipmentMove,
 			ID:    moveID.String(),
 			Label: "Shipment move",
@@ -290,7 +303,7 @@ func (s *Service) shipmentMove(
 		return nil, fmt.Errorf("load shipment move: %w", err)
 	}
 
-	subject := &agentdefinition.RuntimeSubject{
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectShipmentMove,
 		ID:    moveID.String(),
 		Label: "Shipment move",
@@ -309,18 +322,18 @@ func (s *Service) shipmentMove(
 func everyMove(
 	tenant pagination.TenantInfo,
 	moveIDs []pulid.ID,
-) *shipmentports.DispatchBoardFilter {
-	return &shipmentports.DispatchBoardFilter{
+) *dispatchboardports.DispatchBoardFilter {
+	return &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	}
 }
 
 type moveNotes struct {
-	*shipmentports.BoardMove
+	*dispatchboardports.BoardMove
 
 	Coverage *moveCoverage `json:"coverage,omitempty"`
 }
@@ -334,7 +347,7 @@ type moveCoverage struct {
 func (s *Service) moveCoverage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 ) *moveCoverage {
 	if s.dispatch == nil || move == nil || move.OriginWindowStart <= 0 {
 		return nil
@@ -380,8 +393,8 @@ func (s *Service) shipment(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectShipment,
 		ID:    shipmentID.String(),
 		Label: "Shipment",
@@ -402,7 +415,7 @@ func (s *Service) shipment(
 		return nil, fmt.Errorf("load shipment: %w", err)
 	}
 
-	assignments := make(map[pulid.ID]*shipmentports.BoardMove, len(entity.Moves))
+	assignments := make(map[pulid.ID]*dispatchboardports.BoardMove, len(entity.Moves))
 	if s.console != nil && len(entity.Moves) > 0 {
 		moveIDs := make([]pulid.ID, 0, len(entity.Moves))
 		for _, move := range entity.Moves {
@@ -432,7 +445,7 @@ func (s *Service) shipment(
 	})
 	subject.Label = "Shipment PRO " + entity.ProNumber
 	subject.Notes = marshalNotes(snapshot)
-	if entity.EntryMethod == shipment.EntryMethodEDI {
+	if entity.EntryMethod == shipmentvocab.EntryMethodEDI {
 		subject.OutsideAuthored = agent.TaintSourceEDI
 	}
 
@@ -448,8 +461,8 @@ func (s *Service) document(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	documentID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDocument,
 		ID:    documentID.String(),
 		Label: "Document",
@@ -464,7 +477,7 @@ func (s *Service) document(
 	}
 
 	if draft.DocumentKind != "" {
-		subject.Label = "Document (" + stringutils.HumanizeSnakeCase(draft.DocumentKind) + ")"
+		subject.Label = "Document (" + textcase.HumanizeSnakeCase(draft.DocumentKind) + ")"
 	}
 	notes := map[string]any{
 		"status":     draft.Status,
@@ -491,8 +504,8 @@ func (s *Service) insight(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	insightID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInsight,
 		ID:    insightID.String(),
 		Label: "Insight",
@@ -542,8 +555,8 @@ func (s *Service) bankReceipt(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	receiptID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectBankReceipt,
 		ID:    receiptID.String(),
 		Label: "Bank receipt",
@@ -625,8 +638,8 @@ func (s *Service) detentionOccurrence(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	occurrenceID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDetentionOccurrence,
 		ID:    occurrenceID.String(),
 		Label: "Detention occurrence",
@@ -689,8 +702,8 @@ func (s *Service) worker(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectWorker,
 		ID:    workerID.String(),
 		Label: "Driver",
@@ -740,11 +753,14 @@ func (s *Service) workerCredentials(
 	tenant pagination.TenantInfo,
 	workerID pulid.ID,
 ) []map[string]any {
-	credentials, err := s.credentials.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
-		TenantInfo:  tenant,
-		WorkerIDs:   []pulid.ID{workerID},
-		IncludeType: true,
-	})
+	credentials, err := s.credentials.ListForWorker(
+		ctx,
+		&workercredentialports.ListWorkerCredentialsRequest{
+			TenantInfo:  tenant,
+			WorkerIDs:   []pulid.ID{workerID},
+			IncludeType: true,
+		},
+	)
 	if err != nil {
 		s.logger.Warn("worker subject: credentials unavailable", zap.Error(err))
 		return nil
@@ -767,7 +783,7 @@ func (s *Service) workerCredentials(
 		}
 		if credential.ExpiresAt != nil {
 			row["expiresAt"] = *credential.ExpiresAt
-			row["daysUntilExpiry"] = worker.DaysUntil(*credential.ExpiresAt, now)
+			row["daysUntilExpiry"] = workercredential.DaysUntil(*credential.ExpiresAt, now)
 		}
 		rows = append(rows, row)
 	}
@@ -797,8 +813,8 @@ func (s *Service) carrierIntelEvent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	eventID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectCarrierIntelEvent,
 		ID:    eventID.String(),
 		Label: "Carrier finding",
@@ -817,7 +833,7 @@ func (s *Service) carrierIntelEvent(
 
 	event := events[0]
 	name := stringutils.FirstNonEmpty(event.SubjectName, "DOT "+event.DOTNumber)
-	subject.Label = name + ": " + stringutils.HumanizeSnakeCase(string(event.Category))
+	subject.Label = name + ": " + textcase.HumanizeSnakeCase(string(event.Category))
 
 	notes := map[string]any{
 		"status":      event.Status,
@@ -831,7 +847,7 @@ func (s *Service) carrierIntelEvent(
 		"dotNumber":   event.DOTNumber,
 		"detectedAt":  event.DetectedAt,
 	}
-	if definition, ok := carrierintel.RuleByCode(event.RuleCode); ok {
+	if definition, ok := carrierintelrule.RuleByCode(event.RuleCode); ok {
 		notes["gateRelevant"] = definition.GateRelevant
 	}
 	if event.CarrierID.IsNotNil() {
@@ -852,8 +868,8 @@ func (s *Service) ediInboundFile(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	fileID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectEDIInboundFile,
 		ID:    fileID.String(),
 		Label: "EDI inbound file",
@@ -862,7 +878,7 @@ func (s *Service) ediInboundFile(
 		return subject, nil
 	}
 
-	file, err := s.ediFiles.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
+	file, err := s.ediFiles.GetInboundFileByID(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:              fileID,
 		TenantInfo:      tenant,
 		IncludeMessages: true,
@@ -883,7 +899,7 @@ func (s *Service) ediInboundFile(
 	if file.EDIPartnerID.IsNotNil() {
 		notes["ediPartnerId"] = file.EDIPartnerID.String()
 	}
-	if file.Status != edi.InboundFileStatusQuarantined {
+	if file.Status != ediinboundfile.InboundFileStatusQuarantined {
 		notes["warning"] = "This file is not held back in quarantine; do not act as if it " +
 			"were. Any load tenders it carried are listed by edi_list_transfers for this file."
 	}
@@ -904,8 +920,8 @@ func (s *Service) inboundMessage(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	messageID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInboundMessage,
 		ID:    messageID.String(),
 		Label: "Inbound message",
@@ -961,8 +977,8 @@ func (s *Service) report(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	definitionID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectReport,
 		ID:    definitionID.String(),
 		Label: "Report",
@@ -1001,8 +1017,8 @@ func (s *Service) dashboard(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	dashboardID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectDashboard,
 		ID:    dashboardID.String(),
 		Label: "Dashboard",
@@ -1041,8 +1057,8 @@ func (s *Service) formulaTemplate(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	templateID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFormulaTemplate,
 		ID:    templateID.String(),
 		Label: "Formula template",
@@ -1078,8 +1094,8 @@ func (s *Service) formulaLibrary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	libraryID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFormulaLibrary,
 		ID:    libraryID.String(),
 		Label: "Formula library",
@@ -1139,8 +1155,8 @@ func (s *Service) accountingConnection(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	connectionID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingConnection,
 		ID:    connectionID.String(),
 		Label: "Accounting connection",
@@ -1149,10 +1165,13 @@ func (s *Service) accountingConnection(
 		return subject, nil
 	}
 
-	found, err := s.accounting.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: tenant,
-		ID:         connectionID,
-	})
+	found, err := s.accounting.GetByID(
+		ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: tenant,
+			ID:         connectionID,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load accounting connection: %w", err)
 	}
@@ -1177,8 +1196,8 @@ func (s *Service) accountingSyncRecord(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	recordID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingSyncRecord,
 		ID:    recordID.String(),
 		Label: "Accounting sync record",
@@ -1217,8 +1236,8 @@ func (s *Service) accountingInboundChange(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	changeID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingInbound,
 		ID:    changeID.String(),
 		Label: "Payment recorded in the books",
@@ -1229,7 +1248,7 @@ func (s *Service) accountingInboundChange(
 
 	found, err := s.accountingInbound.GetByID(
 		ctx,
-		accountingsyncports.GetAccountingInboundChangeQuery{
+		accountinginboundports.GetAccountingInboundChangeQuery{
 			TenantInfo: tenant,
 			ID:         changeID,
 		},
@@ -1258,8 +1277,8 @@ func (s *Service) accountingDriftFinding(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	findingID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectAccountingDrift,
 		ID:    findingID.String(),
 		Label: "Books differ from Trenova",
@@ -1268,10 +1287,13 @@ func (s *Service) accountingDriftFinding(
 		return subject, nil
 	}
 
-	found, err := s.accountingDrift.GetByID(ctx, accountingsyncports.GetAccountingDriftFindingQuery{
-		TenantInfo: tenant,
-		ID:         findingID,
-	})
+	found, err := s.accountingDrift.GetByID(
+		ctx,
+		accountingdriftports.GetAccountingDriftFindingQuery{
+			TenantInfo: tenant,
+			ID:         findingID,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("load accounting drift finding: %w", err)
 	}

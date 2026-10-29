@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 
 const scriptStep = "script-step-1"
 
-func scriptIntent(tool string, key string) agentports.PendingAction {
+func scriptIntent(tool string, key string) agentruntimeports.PendingAction {
 	action := pendingAction(tool)
 	action.ScriptStepKey = key
 
@@ -26,7 +27,7 @@ func TestRecord_FilesAScriptsIntentsAsOneBatch(t *testing.T) {
 	t.Parallel()
 
 	const intents = 7
-	actions := make([]agentports.PendingAction, 0, intents)
+	actions := make([]agentruntimeports.PendingAction, 0, intents)
 	for range intents {
 		actions = append(actions, scriptIntent("invoice_post", scriptStep))
 	}
@@ -103,19 +104,27 @@ func TestRecord_LeavesAScriptsSingleIntentAProposal(t *testing.T) {
 	assert.Empty(t, result.Batches)
 	require.Len(t, result.Proposals, 2)
 	assert.Equal(t, scriptStep, result.Proposals[1].ScriptStepKey)
-	assert.True(t, result.Proposals[1].ApprovalNeedsReview(), "an internal intent still needs its preview")
-	assert.False(t, result.Proposals[0].ApprovalNeedsReview(), "the same write called by the model does not")
+	assert.True(
+		t,
+		result.Proposals[1].ApprovalNeedsReview(),
+		"an internal intent still needs its preview",
+	)
+	assert.False(
+		t,
+		result.Proposals[0].ApprovalNeedsReview(),
+		"the same write called by the model does not",
+	)
 }
 
 type scriptLedger struct {
-	asked []agentports.GetAgentRunStepRequest
-	step  *agent.AgentRunStep
+	asked []agentruntimeports.GetAgentRunStepRequest
+	step  *agentrunstep.AgentRunStep
 }
 
 func (l *scriptLedger) Get(
 	_ context.Context,
-	req *agentports.GetAgentRunStepRequest,
-) (*agent.AgentRunStep, error) {
+	req *agentruntimeports.GetAgentRunStepRequest,
+) (*agentrunstep.AgentRunStep, error) {
 	l.asked = append(l.asked, *req)
 	if l.step == nil {
 		return nil, errors.New("not found")
@@ -129,7 +138,7 @@ func TestRecord_KeepsTheScriptABatchCameFromOnItsPlan(t *testing.T) {
 
 	orgID, buID := pulid.MustNew("org_"), pulid.MustNew("bu_")
 	runID := pulid.MustNew("arun_")
-	ledger := &scriptLedger{step: &agent.AgentRunStep{
+	ledger := &scriptLedger{step: &agentrunstep.AgentRunStep{
 		StepKey: scriptStep,
 		Arguments: map[string]any{
 			"title":   "Hold Range's uncovered loads",
@@ -144,7 +153,7 @@ func TestRecord_KeepsTheScriptABatchCameFromOnItsPlan(t *testing.T) {
 		Record(t.Context(), &RecordRequest{
 			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
 			Run:   &agent.AgentRun{ID: runID, OrganizationID: orgID, BusinessUnitID: buID},
-			Actions: []agentports.PendingAction{
+			Actions: []agentruntimeports.PendingAction{
 				scriptIntent("shipment_place_hold", scriptStep),
 				scriptIntent("shipment_place_hold", scriptStep),
 			},
@@ -171,8 +180,12 @@ func TestRecord_FilesABatchWhoseScriptCannotBeRead(t *testing.T) {
 		WithScriptSteps(&scriptLedger{}).
 		Record(t.Context(), &RecordRequest{
 			Actor: &permissionports.RequestActor{OrganizationID: orgID, BusinessUnitID: buID},
-			Run:   &agent.AgentRun{ID: pulid.MustNew("arun_"), OrganizationID: orgID, BusinessUnitID: buID},
-			Actions: []agentports.PendingAction{
+			Run: &agent.AgentRun{
+				ID:             pulid.MustNew("arun_"),
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+			},
+			Actions: []agentruntimeports.PendingAction{
 				scriptIntent("shipment_place_hold", scriptStep),
 				scriptIntent("shipment_place_hold", scriptStep),
 			},

@@ -20,37 +20,37 @@ const (
 	eventSpendHardCap             = "carrier_intel_spend_cap"
 
 	notificationSource     = "carrier_intelligence"
-	monitoringLink         = "/dispatch/carrier-monitoring"
-	carrierLinkPrefix      = "/dispatch/carriers?panelType=edit&panelEntityId="
+	MonitoringLink         = "/dispatch/carrier-monitoring"
+	CarrierLinkPrefix      = "/dispatch/carriers?panelType=edit&panelEntityId="
 	notificationDedupeDays = 7
 )
 
-type notificationRequest struct {
-	tenant      pagination.TenantInfo
-	eventType   string
-	correlation string
-	priority    notification.Priority
-	title       string
-	message     string
-	link        string
-	related     map[string]any
-	data        map[string]any
+type NotificationRequest struct {
+	Tenant      pagination.TenantInfo
+	EventType   string
+	Correlation string
+	Priority    notification.Priority
+	Title       string
+	Message     string
+	Link        string
+	Related     map[string]any
+	Data        map[string]any
 }
 
-func (s *Service) sendNotification(ctx context.Context, req *notificationRequest) bool {
+func (s *Service) SendNotification(ctx context.Context, req *NotificationRequest) bool {
 	if s.notifications == nil {
 		return false
 	}
 	ctx = context.WithoutCancel(ctx)
 
-	if req.correlation != "" {
+	if req.Correlation != "" {
 		exists, err := s.notifications.ExistsRecent(
 			ctx,
 			notificationports.ExistsRecentNotificationRequest{
-				OrganizationID: req.tenant.OrgID,
-				BusinessUnitID: req.tenant.BuID,
-				EventType:      req.eventType,
-				CorrelationID:  req.correlation,
+				OrganizationID: req.Tenant.OrgID,
+				BusinessUnitID: req.Tenant.BuID,
+				EventType:      req.EventType,
+				CorrelationID:  req.Correlation,
 				Since:          timeutils.NowUnix() - notificationDedupeDays*timeutils.SecondsPerDay,
 			},
 		)
@@ -63,32 +63,32 @@ func (s *Service) sendNotification(ctx context.Context, req *notificationRequest
 		}
 	}
 
-	data := map[string]any{"link": req.link}
-	for key, value := range req.data {
+	data := map[string]any{"link": req.Link}
+	for key, value := range req.Data {
 		data[key] = value
 	}
 
-	buID := req.tenant.BuID
+	buID := req.Tenant.BuID
 	entity := &notification.Notification{
-		OrganizationID:  req.tenant.OrgID,
+		OrganizationID:  req.Tenant.OrgID,
 		BusinessUnitID:  &buID,
-		EventType:       req.eventType,
+		EventType:       req.EventType,
 		Channel:         notification.ChannelGlobal,
-		Priority:        req.priority,
-		Title:           req.title,
-		Message:         req.message,
+		Priority:        req.Priority,
+		Title:           req.Title,
+		Message:         req.Message,
 		Data:            data,
-		RelatedEntities: req.related,
+		RelatedEntities: req.Related,
 		Source:          notificationSource,
 	}
-	if req.correlation != "" {
-		correlation := req.correlation
+	if req.Correlation != "" {
+		correlation := req.Correlation
 		entity.CorrelationID = &correlation
 	}
 
 	if _, err := s.notifications.Create(ctx, entity); err != nil {
 		s.l.Warn("failed to create carrier intelligence notification",
-			zap.String("eventType", req.eventType), zap.Error(err))
+			zap.String("eventType", req.EventType), zap.Error(err))
 		return false
 	}
 	return true

@@ -3,8 +3,9 @@ package invoiceshareservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -26,7 +27,7 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	Config              *config.Config
+	AppConfig           *appconfig.Config
 	Repo                invoiceports.InvoiceShareRepository
 	InvoiceRepo         invoiceports.InvoiceRepository
 	UserRepo            tenantports.UserRepository
@@ -40,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	l                   *zap.Logger
-	cfg                 *config.Config
+	cfg                 *appconfig.Config
 	repo                invoiceports.InvoiceShareRepository
 	invoiceRepo         invoiceports.InvoiceRepository
 	userRepo            tenantports.UserRepository
@@ -55,7 +56,7 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.invoice-share"),
-		cfg:                 p.Config,
+		cfg:                 p.AppConfig,
 		repo:                p.Repo,
 		invoiceRepo:         p.InvoiceRepo,
 		userRepo:            p.UserRepo,
@@ -71,7 +72,7 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *invoiceports.ListInvoiceSharesRequest,
-) ([]*invoice.InvoiceShare, error) {
+) ([]*invoiceshare.InvoiceShare, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -137,13 +138,13 @@ func buildShares(
 	sharerID pulid.ID,
 	recipients []*tenant.User,
 	input *shareInput,
-) ([]*invoice.InvoiceShare, error) {
+) ([]*invoiceshare.InvoiceShare, error) {
 	now := timeutils.NowUnix()
-	shares := make([]*invoice.InvoiceShare, 0, len(recipients))
+	shares := make([]*invoiceshare.InvoiceShare, 0, len(recipients))
 	multiErr := errortypes.NewMultiError()
 
 	for _, recipient := range recipients {
-		share := &invoice.InvoiceShare{
+		share := &invoiceshare.InvoiceShare{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 			InvoiceID:      entity.ID,

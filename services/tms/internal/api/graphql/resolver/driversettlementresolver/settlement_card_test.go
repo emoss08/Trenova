@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -39,13 +40,13 @@ func (d *disputesBySettlement) ListBySettlementIDs(
 type advancesByID struct {
 	driverpayports.PayAdvanceRepository
 
-	advances []*driverpay.PayAdvance
+	advances []*payadvance.PayAdvance
 }
 
 func (a *advancesByID) GetByIDs(
 	_ context.Context,
 	_ driverpayports.GetPayAdvancesByIDsRequest,
-) ([]*driverpay.PayAdvance, error) {
+) ([]*payadvance.PayAdvance, error) {
 	return a.advances, nil
 }
 
@@ -65,12 +66,14 @@ func signedIn(ctx context.Context) context.Context {
 	})
 }
 
-func coreGranting(resources ...permission.Resource) *base.Core {
+func coreGranting(resources ...permission.Resource) *resolvercore.Core {
 	granted := make(map[string]bool, len(resources))
 	for _, resource := range resources {
 		granted[resource.String()+"|"+string(permission.OpRead)] = true
 	}
-	return &base.Core{PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted}}
+	return &resolvercore.Core{
+		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
+	}
 }
 
 func TestLineSummaryIsNullWhenTheLinesWereNotReadAndSumsThemWhenTheyWere(t *testing.T) {
@@ -143,8 +146,10 @@ func TestDisputesAreReadOnlyForSomeoneWhoMayReadSettlementDisputes(t *testing.T)
 	repo := &disputesBySettlement{disputes: map[pulid.ID][]*driversettlement.Dispute{
 		settlementID: {dispute},
 	}}
-	factory := loaders.NewSettlementDisputesBySettlementIDLoaderFactory(
-		loaders.SettlementDisputesBySettlementIDLoaderFactoryParams{SettlementDisputeRepo: repo},
+	factory := settlementloaders.NewSettlementDisputesBySettlementIDLoaderFactory(
+		settlementloaders.SettlementDisputesBySettlementIDLoaderFactoryParams{
+			SettlementDisputeRepo: repo,
+		},
 	)
 	ctx := factory.Attach(signedIn(t.Context()), cardTenant)
 	obj := &driversettlement.Settlement{ID: settlementID}
@@ -169,10 +174,12 @@ func TestAnAdvanceIsReadOnlyForSomeoneWhoMayReadPayAdvances(t *testing.T) {
 	t.Parallel()
 
 	advanceID := pulid.MustNew("padv_")
-	advance := &driverpay.PayAdvance{ID: advanceID, AmountMinor: 30000, RecoveredMinor: 20000}
-	factory := loaders.NewPayAdvanceByIDLoaderFactory(loaders.PayAdvanceByIDLoaderFactoryParams{
-		PayAdvanceRepo: &advancesByID{advances: []*driverpay.PayAdvance{advance}},
-	})
+	advance := &payadvance.PayAdvance{ID: advanceID, AmountMinor: 30000, RecoveredMinor: 20000}
+	factory := settlementloaders.NewPayAdvanceByIDLoaderFactory(
+		settlementloaders.PayAdvanceByIDLoaderFactoryParams{
+			PayAdvanceRepo: &advancesByID{advances: []*payadvance.PayAdvance{advance}},
+		},
+	)
 	ctx := factory.Attach(signedIn(t.Context()), cardTenant)
 	group := &driversettlement.LineGroup{AdvanceID: &advanceID}
 

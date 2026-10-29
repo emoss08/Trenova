@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,14 +22,14 @@ import (
 type recordingTurns struct {
 	stubTurns
 
-	completed []agentports.CompleteAssistantTurnRequest
+	completed []assistantturnports.CompleteAssistantTurnRequest
 	marked    string
 	startErr  error
 }
 
 func (r *recordingTurns) Start(
-	_ context.Context, turn *conversation.AssistantTurn,
-) (*conversation.AssistantTurn, error) {
+	_ context.Context, turn *conversationturn.AssistantTurn,
+) (*conversationturn.AssistantTurn, error) {
 	if r.startErr != nil {
 		return nil, r.startErr
 	}
@@ -41,9 +42,9 @@ func (r *recordingTurns) Start(
 }
 
 func (r *recordingTurns) Complete(
-	_ context.Context, req agentports.CompleteAssistantTurnRequest,
+	_ context.Context, req *assistantturnports.CompleteAssistantTurnRequest,
 ) error {
-	r.completed = append(r.completed, req)
+	r.completed = append(r.completed, *req)
 
 	return nil
 }
@@ -64,10 +65,10 @@ func newDurable(turns *recordingTurns) *Service {
 func stopWith(
 	ctx context.Context,
 	svc *Service,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	cancel func(workflowID string) error,
 ) error {
-	svc.canceller = agentports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(_ context.Context, workflowID string) error {
 			return cancel(workflowID)
 		},
@@ -96,7 +97,7 @@ func TestStartTurn_RecordsTheWorkflowCarryingTheTurn(t *testing.T) {
 	turn, err := svc.StartTurn(
 		t.Context(),
 		startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "assistant-turn:atrn_1", nil
 		},
 	)
@@ -119,7 +120,7 @@ func TestStartTurn_ClosesTheRecordWhenNothingPickedTheTurnUp(t *testing.T) {
 	_, err := svc.StartTurn(
 		t.Context(),
 		startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "", errors.New("temporal is unreachable")
 		},
 	)
@@ -133,7 +134,7 @@ func TestStop_CancelsTheExecutionCarryingTheTurn(t *testing.T) {
 	t.Parallel()
 
 	svc := newDurable(&recordingTurns{})
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:         pulid.MustNew("atrn_"),
 		Status:     conversation.AssistantTurnStatusRunning,
 		WorkflowID: "assistant-turn:atrn_1",
@@ -155,7 +156,7 @@ func TestStop_IsQuietAboutATurnThatHasAlreadyEnded(t *testing.T) {
 	t.Parallel()
 
 	svc := newDurable(&recordingTurns{})
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		Status:     conversation.AssistantTurnStatusCompleted,
 		WorkflowID: "assistant-turn:atrn_1",
 	}
@@ -177,7 +178,7 @@ func TestStop_ClosesTheRecordOfATurnNothingPickedUp(t *testing.T) {
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:     pulid.MustNew("atrn_"),
 		Status: conversation.AssistantTurnStatusRunning,
 	}
@@ -202,7 +203,7 @@ func TestStop_CancelsATurnWhoseStartWasNotRecorded(t *testing.T) {
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:     pulid.MustNew("atrn_"),
 		Status: conversation.AssistantTurnStatusRunning,
 	}
@@ -214,7 +215,7 @@ func TestStop_CancelsATurnWhoseStartWasNotRecorded(t *testing.T) {
 		return nil
 	}))
 
-	assert.Equal(t, conversation.AssistantTurnWorkflowID(turn.ID), cancelled)
+	assert.Equal(t, conversationturn.AssistantTurnWorkflowID(turn.ID), cancelled)
 	assert.Empty(t, turns.completed, "the execution closes the record as it stops")
 }
 
@@ -225,7 +226,7 @@ func TestStop_ClosesTheRecordWhenTheExecutionIsGone(t *testing.T) {
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:         pulid.MustNew("atrn_"),
 		Status:     conversation.AssistantTurnStatusRunning,
 		WorkflowID: "assistant-turn:atrn_1",
@@ -244,7 +245,7 @@ func TestStop_ReportsACancelThatFailed(t *testing.T) {
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		ID:         pulid.MustNew("atrn_"),
 		Status:     conversation.AssistantTurnStatusRunning,
 		WorkflowID: "assistant-turn:atrn_1",
@@ -260,7 +261,7 @@ func TestStop_ReportsACancelThatFailed(t *testing.T) {
 
 func (r *recordingTurns) RecordFingerprint(
 	context.Context,
-	agentports.RecordAssistantTurnFingerprintRequest,
+	assistantturnports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
 }

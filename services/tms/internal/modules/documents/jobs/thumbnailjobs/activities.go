@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/storedobject"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -32,7 +32,7 @@ type ActivitiesParams struct {
 	ThumbnailGenerator *thumbnailservice.Generator
 	PageRenders        *pagerender.Store
 	Encryption         *encryptionservice.Service
-	Config             *config.Config
+	ImagingConfig      *imagingconfig.Config
 }
 
 type Activities struct {
@@ -46,9 +46,9 @@ type Activities struct {
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
-	imagingConfig := &config.ImagingConfig{}
-	if p.Config != nil {
-		imagingConfig = &p.Config.Imaging
+	imagingConfig := &imagingconfig.Config{}
+	if p.ImagingConfig != nil {
+		imagingConfig = p.ImagingConfig
 	}
 	return &Activities{
 		docRepo:            p.DocumentRepository,

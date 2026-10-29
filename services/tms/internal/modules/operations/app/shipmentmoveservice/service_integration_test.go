@@ -6,14 +6,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/shopspring/decimal"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
@@ -21,15 +17,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -47,7 +49,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
 		}, nil)
@@ -61,18 +63,18 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 			BOL:          "BOL-UPD-001",
 			ProNumber:    "PRO-UPD-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	)
 
-	updated, err := svc.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
+	updated, err := svc.UpdateStatus(ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     graph.Moves[0].ID,
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.MoveStatusAssigned, updated.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, updated.Status)
 
 	persisted, err := shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         graph.Shipment.ID,
@@ -82,9 +84,9 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, shipment.StatusAssigned, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusAssigned, persisted.Status)
 	require.Len(t, persisted.Moves, 1)
-	assert.Equal(t, shipment.MoveStatusAssigned, persisted.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, persisted.Moves[0].Status)
 }
 
 func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
@@ -104,17 +106,17 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 			BOL:        "BOL-BULK-001",
 			ProNumber:  "PRO-BULK-001",
 			ShipmentID: pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{
-				shipment.MoveStatusNew,
-				shipment.MoveStatusCompleted,
+			MoveStatuses: []shipmentvocab.MoveStatus{
+				shipmentvocab.MoveStatusNew,
+				shipmentvocab.MoveStatusCompleted,
 			},
 		},
 	)
 
-	updated, err := svc.BulkUpdateStatus(ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	updated, err := svc.BulkUpdateStatus(ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: tenantInfo,
 		MoveIDs:    []pulid.ID{graph.Moves[0].ID, graph.Moves[1].ID},
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 	require.Nil(t, updated)
 	require.Error(t, err)
@@ -122,7 +124,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&shipmentports.GetMovesByShipmentIDRequest{
+		&shipmentmoveports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -130,8 +132,8 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Len(t, persistedMoves, 2)
-	assert.Equal(t, shipment.MoveStatusNew, persistedMoves[0].Status)
-	assert.Equal(t, shipment.MoveStatusCompleted, persistedMoves[1].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, persistedMoves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, persistedMoves[1].Status)
 }
 
 func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
@@ -145,7 +147,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          true,
 			AutoDelayShipmentsThreshold: int16Ptr(30),
 		}, nil)
@@ -159,7 +161,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 			BOL:          "BOL-SPLIT-001",
 			ProNumber:    "PRO-SPLIT-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		},
 	)
 	newDestination := testutil.MustCreateLocation(
@@ -173,17 +175,17 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	)
 
 	originalDelivery := graph.Moves[0].Stops[1]
-	response, err := svc.SplitMove(ctx, &shipmentports.SplitMoveRequest{
+	response, err := svc.SplitMove(ctx, &shipmentmoveports.SplitMoveRequest{
 		TenantInfo:            tenantInfo,
 		MoveID:                graph.Moves[0].ID,
 		NewDeliveryLocationID: newDestination.ID,
-		SplitPickupTimes: shipmentports.SplitStopTimes{
+		SplitPickupTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 3_600,
 			),
 		},
-		NewDeliveryTimes: shipmentports.SplitStopTimes{
+		NewDeliveryTimes: shipmentmoveports.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
 			ScheduledWindowEnd: integrationInt64Ptr(
 				originalDelivery.EffectiveScheduledWindowEnd() + 9_000,
@@ -202,7 +204,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, persisted.Moves, 2)
-	assert.Equal(t, shipment.StatusNew, persisted.Status)
+	assert.Equal(t, shipmentvocab.StatusNew, persisted.Status)
 
 	originalMove := persisted.Moves[0]
 	newMove := persisted.Moves[1]
@@ -210,17 +212,17 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	assert.Equal(t, graph.Moves[0].ID, originalMove.ID)
 	assert.Equal(t, int64(0), originalMove.Sequence)
 	require.Len(t, originalMove.Stops, 2)
-	assert.Equal(t, shipment.StopTypePickup, originalMove.Stops[0].Type)
-	assert.Equal(t, shipment.StopTypeSplitDelivery, originalMove.Stops[1].Type)
+	assert.Equal(t, shipmentvocab.StopTypePickup, originalMove.Stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypeSplitDelivery, originalMove.Stops[1].Type)
 	assert.Equal(t, originalDelivery.LocationID, originalMove.Stops[1].LocationID)
 
 	assert.NotEqual(t, graph.Moves[0].ID, newMove.ID)
 	assert.Equal(t, int64(1), newMove.Sequence)
 	assert.Nil(t, newMove.Assignment)
 	require.Len(t, newMove.Stops, 2)
-	assert.Equal(t, shipment.StopTypeSplitPickup, newMove.Stops[0].Type)
+	assert.Equal(t, shipmentvocab.StopTypeSplitPickup, newMove.Stops[0].Type)
 	assert.Equal(t, originalDelivery.LocationID, newMove.Stops[0].LocationID)
-	assert.Equal(t, shipment.StopTypeDelivery, newMove.Stops[1].Type)
+	assert.Equal(t, shipmentvocab.StopTypeDelivery, newMove.Stops[1].Type)
 	assert.Equal(t, newDestination.ID, newMove.Stops[1].LocationID)
 }
 
@@ -233,7 +235,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	ctx, svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
-		Return(&tenant.ShipmentControl{}, nil)
+		Return(&shipmentcontrol.ShipmentControl{}, nil)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -244,30 +246,30 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 			BOL:          "BOL-ACT-001",
 			ProNumber:    "PRO-ACT-001",
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusAssigned},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusAssigned},
 		},
 	)
 	moveID := graph.Moves[0].ID
 	stopID := graph.Moves[0].Stops[0].ID
 
 	arrivedAt := timeutils.NowUnix() - 7_200
-	updated, err := svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+	updated, err := svc.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     shipmentports.StopActualActionArrive,
+		Action:     shipmentmoveports.StopActualActionArrive,
 		OccurredAt: &arrivedAt,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, shipment.MoveStatusInTransit, updated.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, updated.Status)
 
 	departedAt := arrivedAt + 1_800
-	updated, err = svc.RecordStopActual(ctx, &shipmentports.RecordStopActualRequest{
+	updated, err = svc.RecordStopActual(ctx, &shipmentmoveports.RecordStopActualRequest{
 		TenantInfo: tenantInfo,
 		MoveID:     moveID,
 		StopID:     stopID,
-		Action:     shipmentports.StopActualActionDepart,
+		Action:     shipmentmoveports.StopActualActionDepart,
 		OccurredAt: &departedAt,
 	})
 	require.NoError(t, err)
@@ -275,7 +277,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 
 	persistedMoves, err := moveRepo.GetMovesByShipmentID(
 		ctx,
-		&shipmentports.GetMovesByShipmentIDRequest{
+		&shipmentmoveports.GetMovesByShipmentIDRequest{
 			ShipmentID:        graph.Shipment.ID,
 			TenantInfo:        tenantInfo,
 			ExpandMoveDetails: true,
@@ -295,7 +297,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	require.NotNil(t, persistedStop.ActualDeparture)
 	assert.Equal(t, arrivedAt, *persistedStop.ActualArrival)
 	assert.Equal(t, departedAt, *persistedStop.ActualDeparture)
-	assert.Equal(t, shipment.StopStatusCompleted, persistedStop.Status)
+	assert.Equal(t, shipmentvocab.StopStatusCompleted, persistedStop.Status)
 }
 
 func newIntegrationService(
@@ -304,9 +306,9 @@ func newIntegrationService(
 	db *keel.DB,
 ) (
 	context.Context,
-	shipmentports.ShipmentMoveService,
+	shipmentmoveports.ShipmentMoveService,
 	shipmentports.ShipmentRepository,
-	shipmentports.ShipmentMoveRepository,
+	shipmentmoveports.ShipmentMoveRepository,
 	pagination.TenantInfo,
 	*testutil.ShipmentIntegrationFixture,
 	*tenantportsmock.MockShipmentControlRepository,
@@ -344,12 +346,12 @@ func newIntegrationService(
 		),
 	})
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		GetByMoveID(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil).
 		Maybe()
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
 		HasActiveDeliveryHold(mock.Anything, mock.Anything).
 		Return(false, nil).

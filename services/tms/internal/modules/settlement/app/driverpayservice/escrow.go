@@ -6,7 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -22,30 +23,30 @@ import (
 func (s *Service) ListEscrowAccounts(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountsRequest,
-) (*pagination.ListResult[*driverpay.EscrowAccount], error) {
+) (*pagination.ListResult[*payescrow.EscrowAccount], error) {
 	return s.escrowRepo.List(ctx, req)
 }
 
 func (s *Service) ListEscrowAccountsConnection(
 	ctx context.Context,
 	req *driverpayports.ListEscrowAccountConnectionRequest,
-) (*pagination.CursorListResult[*driverpay.EscrowAccount], error) {
+) (*pagination.CursorListResult[*payescrow.EscrowAccount], error) {
 	return s.escrowRepo.ListConnection(ctx, req)
 }
 
 func (s *Service) GetEscrowAccount(
 	ctx context.Context,
 	req driverpayports.GetEscrowAccountByIDRequest,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	return s.escrowRepo.GetByID(ctx, req)
 }
 
 func (s *Service) OpenEscrowAccount(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	actor *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account opening"); err != nil {
+) (*payescrow.EscrowAccount, error) {
+	if err := settlementshared.RequireActor(actor, "Escrow account opening"); err != nil {
 		return nil, err
 	}
 	if err := s.PlanOpenEscrowAccount(ctx, entity, timeutils.NowUnix()); err != nil {
@@ -62,10 +63,10 @@ func (s *Service) OpenEscrowAccount(
 
 func (s *Service) UpdateEscrowAccount(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	actor *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account update"); err != nil {
+) (*payescrow.EscrowAccount, error) {
+	if err := settlementshared.RequireActor(actor, "Escrow account update"); err != nil {
 		return nil, err
 	}
 	previous, err := s.PlanUpdateEscrowAccount(ctx, entity)
@@ -94,8 +95,8 @@ func (s *Service) AdjustEscrowAccount(
 	ctx context.Context,
 	req *EscrowAdjustmentRequest,
 	actor *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow adjustment"); err != nil {
+) (*payescrow.EscrowAccount, error) {
+	if err := settlementshared.RequireActor(actor, "Escrow adjustment"); err != nil {
 		return nil, err
 	}
 	if err := CheckEscrowAdjustment(req); err != nil {
@@ -105,7 +106,7 @@ func (s *Service) AdjustEscrowAccount(
 		req.OccurredDate = timeutils.NowUnix()
 	}
 
-	var updated *driverpay.EscrowAccount
+	var updated *payescrow.EscrowAccount
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         req.AccountID,
@@ -134,11 +135,11 @@ func (s *Service) CloseEscrowAccount(
 	tenantInfo pagination.TenantInfo,
 	accountID pulid.ID,
 	actor *permissionports.RequestActor,
-) (*driverpay.EscrowAccount, error) {
-	if err := requireActor(actor, "Escrow account closure"); err != nil {
+) (*payescrow.EscrowAccount, error) {
+	if err := settlementshared.RequireActor(actor, "Escrow account closure"); err != nil {
 		return nil, err
 	}
-	var updated *driverpay.EscrowAccount
+	var updated *payescrow.EscrowAccount
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
@@ -175,8 +176,8 @@ func (s *Service) AccrueEscrowInterest(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	accountID pulid.ID,
-) (*driverpay.EscrowAccount, error) {
-	var updated *driverpay.EscrowAccount
+) (*payescrow.EscrowAccount, error) {
+	var updated *payescrow.EscrowAccount
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		account, txErr := s.escrowRepo.GetByID(txCtx, driverpayports.GetEscrowAccountByIDRequest{
 			ID:         accountID,
@@ -185,7 +186,7 @@ func (s *Service) AccrueEscrowInterest(
 		if txErr != nil {
 			return txErr
 		}
-		if account.Status != driverpay.EscrowAccountStatusActive ||
+		if account.Status != payescrow.EscrowAccountStatusActive ||
 			account.BalanceMinor <= 0 ||
 			account.AnnualInterestRate.IsZero() {
 			updated = account
@@ -217,8 +218,8 @@ func (s *Service) AccrueEscrowInterest(
 			return txErr
 		}
 
-		account, txErr = s.applyEscrowTransaction(txCtx, account, &driverpay.EscrowTransaction{
-			Type:         driverpay.EscrowTransactionTypeInterestAccrual,
+		account, txErr = s.applyEscrowTransaction(txCtx, account, &payescrow.EscrowTransaction{
+			Type:         payescrow.EscrowTransactionTypeInterestAccrual,
 			AmountMinor:  interest,
 			OccurredDate: now,
 			Description:  "Quarterly escrow interest accrual per 49 CFR 376.12(k)",
@@ -238,9 +239,9 @@ func (s *Service) AccrueEscrowInterest(
 
 func (s *Service) applyEscrowTransaction(
 	ctx context.Context,
-	account *driverpay.EscrowAccount,
-	tx *driverpay.EscrowTransaction,
-) (*driverpay.EscrowAccount, error) {
+	account *payescrow.EscrowAccount,
+	tx *payescrow.EscrowTransaction,
+) (*payescrow.EscrowAccount, error) {
 	StampEscrowTransaction(account, tx)
 
 	multiErr := errortypes.NewMultiError()
@@ -257,7 +258,7 @@ func (s *Service) applyEscrowTransaction(
 }
 
 func (s *Service) logEscrowAudit(
-	current, previous *driverpay.EscrowAccount,
+	current, previous *payescrow.EscrowAccount,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,

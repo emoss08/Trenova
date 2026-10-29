@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,21 +29,21 @@ type pauseControls struct {
 func (c *pauseControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	c.reads++
 
-	return &tenant.AgentControl{ShadowMode: c.paused}, nil
+	return &agentcontrol.AgentControl{ShadowMode: c.paused}, nil
 }
 
 type holdRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	byID map[pulid.ID]*agent.AgentRun
 }
 
 func (r *holdRuns) ListByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
 	out := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {
@@ -80,17 +81,17 @@ func newHoldWorld(t *testing.T, paused bool) *holdWorld {
 		shadeRun: shadeRun.ID,
 	}
 
-	ctx := loaders.NewAgentsPausedLoaderFactory(
-		loaders.AgentsPausedLoaderFactoryParams{Controls: world.controls},
+	ctx := agentloaders.NewAgentsPausedLoaderFactory(
+		agentloaders.AgentsPausedLoaderFactoryParams{Controls: world.controls},
 	).Attach(t.Context(), world.tenant)
-	ctx = loaders.NewAgentRunByIDLoaderFactory(loaders.AgentRunByIDLoaderFactoryParams{
+	ctx = agentloaders.NewAgentRunByIDLoaderFactory(agentloaders.AgentRunByIDLoaderFactoryParams{
 		Runs: &holdRuns{byID: map[pulid.ID]*agent.AgentRun{
 			liveRun.ID:  liveRun,
 			shadeRun.ID: shadeRun,
 		}},
 	}).Attach(ctx, world.tenant)
-	world.ctx = loaders.NewAgentDefinitionByIDLoaderFactory(
-		loaders.AgentDefinitionByIDLoaderFactoryParams{
+	world.ctx = agentloaders.NewAgentDefinitionByIDLoaderFactory(
+		agentloaders.AgentDefinitionByIDLoaderFactoryParams{
 			Definitions: &resolvertest.DelegateDefinitionsRepo{
 				ByID: map[pulid.ID]*agentdefinition.Definition{live.ID: live, shade.ID: shade},
 			},
@@ -136,14 +137,20 @@ func TestAgentProposalHold_NamesTheAgentInShadow(t *testing.T) {
 	world := newHoldWorld(t, false)
 	resolver := &AgentProposalResolver{}
 
-	held, err := resolver.Hold(world.ctx, world.proposal(world.shadeRun, agent.ProposalStatusPending))
+	held, err := resolver.Hold(
+		world.ctx,
+		world.proposal(world.shadeRun, agent.ProposalStatusPending),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, &gqlmodel.PendingDecisionHold{
 		Reason:    gqlmodel.PendingDecisionHoldReasonAgentShadow,
 		AgentName: "Billing exceptions",
 	}, held)
 
-	live, err := resolver.Hold(world.ctx, world.proposal(world.liveRun, agent.ProposalStatusPending))
+	live, err := resolver.Hold(
+		world.ctx,
+		world.proposal(world.liveRun, agent.ProposalStatusPending),
+	)
 	require.NoError(t, err)
 	assert.Nil(t, live)
 }
@@ -192,7 +199,7 @@ func TestPendingDecisionEdgeHold_AnswersWhatItsNodeAnswers(t *testing.T) {
 func TestPendingDecisionSummary_HeldIsWhatTheBadgeLeavesOut(t *testing.T) {
 	t.Parallel()
 
-	summary := &agentports.PendingDecisionSummary{Total: 5}
+	summary := &agentdecisionqueueports.PendingDecisionSummary{Total: 5}
 
 	assert.Equal(t, 2, pendingDecisionSummary(summary, 3).Held)
 	assert.Equal(t, 5, pendingDecisionSummary(summary, 0).Held, "a pause holds everything")

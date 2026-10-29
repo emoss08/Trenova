@@ -5,6 +5,12 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,26 +25,26 @@ type FetchRequest struct {
 	MaxAgeSeconds int64
 	Purpose       carrierintel.Purpose
 	Force         bool
-	Source        carrierintel.EventSource
-	Control       *carrierintel.CarrierIntelControl
+	Source        carrierintelevent.EventSource
+	Control       *carrierintelcontrol.CarrierIntelControl
 }
 
 type FetchResult struct {
-	Snapshot     *carrierintel.CarrierIntelSnapshot
+	Snapshot     *carrierintelsnapshot.CarrierIntelSnapshot
 	FromCache    bool
 	UsedFallback bool
-	Changes      []carrierintel.FieldChange
-	Raised       []carrierintel.Finding
+	Changes      []carrierinteldiff.FieldChange
+	Raised       []carrierintelrule.Finding
 }
 
-func depthEndpoint(depth carrierintel.LookupDepth) carrierintel.Endpoint {
+func depthEndpoint(depth carrierintel.LookupDepth) carrierintelusage.Endpoint {
 	switch depth {
 	case carrierintel.LookupDepthFull:
-		return carrierintel.EndpointProfileFull
+		return carrierintelusage.EndpointProfileFull
 	case carrierintel.LookupDepthLite:
-		return carrierintel.EndpointProfileLite
+		return carrierintelusage.EndpointProfileLite
 	default:
-		return carrierintel.EndpointProfileFMCSA
+		return carrierintelusage.EndpointProfileFMCSA
 	}
 }
 
@@ -94,7 +100,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 		return nil, err
 	}
 
-	bound, err := s.resolvePrimary(ctx, req.TenantInfo, control)
+	bound, err := s.ResolvePrimary(ctx, req.TenantInfo, control)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +118,7 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 
 	source := req.Source
 	if !source.IsValid() {
-		source = carrierintel.EventSourceSnapshotDiff
+		source = carrierintelevent.EventSourceSnapshotDiff
 	}
 
 	ingested, err := s.ingest(ctx, &ingestInput{
@@ -134,8 +140,8 @@ func (s *Service) Fetch(ctx context.Context, req *FetchRequest) (*FetchResult, e
 
 type lookupAttempt struct {
 	tenant  pagination.TenantInfo
-	control *carrierintel.CarrierIntelControl
-	primary *boundProvider
+	control *carrierintelcontrol.CarrierIntelControl
+	primary *BoundProvider
 	subject carrierintelports.CarrierIntelSubject
 	wanted  carrierintel.LookupDepth
 }
@@ -143,13 +149,13 @@ type lookupAttempt struct {
 func (s *Service) lookupWithFallback(
 	ctx context.Context,
 	attempt *lookupAttempt,
-) (*carrierintelports.CarrierIntelLookupResult, *boundProvider, error) {
+) (*carrierintelports.CarrierIntelLookupResult, *BoundProvider, error) {
 	if s.providerAvailable(attempt.primary) {
 		result, err := s.lookup(ctx, attempt, attempt.primary)
 		if err == nil {
 			return result, attempt.primary, nil
 		}
-		if !isOutageError(err) || isSpendCapError(err) {
+		if !isOutageError(err) || IsSpendCapError(err) {
 			return nil, attempt.primary, s.lookupError(attempt.primary.provider, err)
 		}
 		s.l.Warn("primary carrier intelligence provider failed; trying fallback",
@@ -169,13 +175,13 @@ func (s *Service) lookupWithFallback(
 }
 
 func (s *Service) lookupError(provider integration.Type, err error) error {
-	if isSpendCapError(err) {
+	if IsSpendCapError(err) {
 		var business *errortypes.BusinessError
 		if errors.As(err, &business) {
 			return business
 		}
 	}
-	return toBusinessError(provider, err)
+	return ToBusinessError(provider, err)
 }
 
 func providerUnavailableError(provider integration.Type) error {
@@ -191,9 +197,9 @@ func providerUnavailableError(provider integration.Type) error {
 func (s *Service) chooseDepth(
 	ctx context.Context,
 	attempt *lookupAttempt,
-	bound *boundProvider,
+	bound *BoundProvider,
 ) carrierintel.LookupDepth {
-	caps := bound.capabilities()
+	caps := bound.Capabilities()
 	depth, ok := caps.BestDepth(attempt.wanted)
 	if !ok {
 		return ""
@@ -203,9 +209,9 @@ func (s *Service) chooseDepth(
 		return depth
 	}
 
-	price := bound.prices.Price(carrierintel.EndpointProfileFull)
-	dedupe := carrierintel.BillingDedupeKey(
-		carrierintel.EndpointProfileFull, price, attempt.subject.DOTNumber, s.now(),
+	price := bound.prices.Price(carrierintelusage.EndpointProfileFull)
+	dedupe := carrierintelusage.BillingDedupeKey(
+		carrierintelusage.EndpointProfileFull, price, attempt.subject.DOTNumber, s.now(),
 	)
 	if dedupe == "" {
 		return depth
@@ -224,7 +230,7 @@ func (s *Service) chooseDepth(
 func (s *Service) lookup(
 	ctx context.Context,
 	attempt *lookupAttempt,
-	bound *boundProvider,
+	bound *BoundProvider,
 ) (*carrierintelports.CarrierIntelLookupResult, error) {
 	depth := s.chooseDepth(ctx, attempt, bound)
 	if depth == "" {
@@ -235,14 +241,15 @@ func (s *Service) lookup(
 		}
 	}
 
-	check := &budgetCheck{
-		tenant:    attempt.tenant,
-		control:   attempt.control,
-		bound:     bound,
-		endpoint:  depthEndpoint(depth),
-		dotNumber: attempt.subject.DOTNumber,
+	check := &BudgetCheck{
+		Tenant:    attempt.tenant,
+		Control:   attempt.control,
+		Bound:     bound,
+		Endpoint:  depthEndpoint(depth),
+		DOTNumber: attempt.subject.DOTNumber,
 	}
-	if err := s.guardBudget(ctx, check); err != nil {
+
+	if err := s.GuardBudget(ctx, check); err != nil {
 		logBudgetDenied(s.l, check, err)
 		return nil, err
 	}
@@ -259,7 +266,7 @@ func (s *Service) lookup(
 	}
 
 	var result *carrierintelports.CarrierIntelLookupResult
-	err := s.withRateLimitWait(ctx, func() error {
+	err := s.WithRateLimitWait(ctx, func() error {
 		var lookupErr error
 		result, lookupErr = bound.client.Lookup(ctx, request)
 		return lookupErr

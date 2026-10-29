@@ -2,7 +2,7 @@ package latechargeresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -19,7 +19,7 @@ func lateChargeRequestFromInput(
 	if input == nil {
 		return req, nil
 	}
-	customerIDs, err := base.PulidsFromStrings(input.CustomerIds, "customerIds")
+	customerIDs, err := gqlid.PulidsFromStrings(input.CustomerIds, "customerIds")
 	if err != nil {
 		return nil, err
 	}

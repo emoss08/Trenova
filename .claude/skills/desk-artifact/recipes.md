@@ -81,13 +81,13 @@ func (r *QueryResolver) <Entity>DeskCard(ctx context.Context, id string) (*<enti
 		return nil, err
 	}
 
-	recordID, err := base.RequiredID("id", id)
+	recordID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.<Entity>DeskCards.Get<Entity>Card(ctx, &<entity>deskcardservice.Get<Entity>CardRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ID:             recordID,
 		Include<Other>: r.HasPermission(ctx, authCtx, permission.Resource<Other>, permission.OpRead),
 	})

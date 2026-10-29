@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,15 +19,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*servicetype.ServiceType]
+	validator tenantedvalidation.EntityValidator[*servicetype.ServiceType]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, servicetypedb.ServiceTypesSchema())
+	checker := keelcheck.NewChecker(p.DB, servicetypedb.ServiceTypesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*servicetype.ServiceType]().
+		validator: tenantedvalidation.NewBuilder[*servicetype.ServiceType]().
 			WithModelName("ServiceType").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

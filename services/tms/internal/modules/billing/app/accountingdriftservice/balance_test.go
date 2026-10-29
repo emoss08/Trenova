@@ -3,8 +3,9 @@ package accountingdriftservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,16 +21,19 @@ type balanceDoc struct {
 func (h *harness) customer(name string, docs ...balanceDoc) pulid.ID {
 	id := pulid.MustNew("cus_")
 	for _, doc := range docs {
-		h.source.balances = append(h.source.balances, &accountingsyncports.AccountingDriftBalanceLine{
-			CustomerID:   id,
-			CustomerName: name,
-			CurrencyCode: "USD",
-			ObjectType:   doc.objectType,
-			ObjectID:     pulid.MustNew("inv_"),
-			Number:       "INV-" + doc.externalID,
-			OpenMinor:    doc.openMinor,
-			ExternalID:   doc.externalID,
-		})
+		h.source.balances = append(
+			h.source.balances,
+			&accountingdriftports.AccountingDriftBalanceLine{
+				CustomerID:   id,
+				CustomerName: name,
+				CurrencyCode: "USD",
+				ObjectType:   doc.objectType,
+				ObjectID:     pulid.MustNew("inv_"),
+				Number:       "INV-" + doc.externalID,
+				OpenMinor:    doc.openMinor,
+				ExternalID:   doc.externalID,
+			},
+		)
 		if doc.provider == "" {
 			continue
 		}
@@ -40,11 +44,11 @@ func (h *harness) customer(name string, docs ...balanceDoc) pulid.ID {
 	return id
 }
 
-func (h *harness) balances(t *testing.T) *accountingsyncports.AccountingDriftBalanceResult {
+func (h *harness) balances(t *testing.T) *accountingdriftports.AccountingDriftBalanceResult {
 	t.Helper()
 	result, err := h.svc.ReconcileBalances(
 		t.Context(),
-		&accountingsyncports.ReconcileAccountingDriftBalancesRequest{
+		&accountingdriftports.ReconcileAccountingDriftBalancesRequest{
 			TenantInfo:   h.tenant,
 			ConnectionID: h.conn.ID,
 			EventBudget:  20,
@@ -70,7 +74,7 @@ func TestBalancesOpenAFindingListingTheDocumentsThatDiffer(t *testing.T) {
 	open := h.findings.open()
 	require.Len(t, open, 1)
 	finding := open[0]
-	assert.Equal(t, accountingsync.DriftCustomerBalanceMismatch, finding.Kind)
+	assert.Equal(t, accountingdrift.DriftCustomerBalanceMismatch, finding.Kind)
 	assert.Equal(t, accountingsync.SyncObjectCustomer, finding.ObjectType)
 	assert.Equal(t, customerID, finding.ObjectID)
 	assert.Equal(t, "Acme Freight", finding.PartyName)
@@ -159,21 +163,27 @@ func TestBalancesPageByCustomer(t *testing.T) {
 		h.source.balances[0], h.source.balances[1] = h.source.balances[1], h.source.balances[0]
 	}
 
-	page, err := h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
-		TenantInfo:   h.tenant,
-		ConnectionID: h.conn.ID,
-		Customers:    1,
-	})
+	page, err := h.svc.ReconcileBalances(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftBalancesRequest{
+			TenantInfo:   h.tenant,
+			ConnectionID: h.conn.ID,
+			Customers:    1,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, page.More)
 	assert.Equal(t, first, page.LastCustomerID)
 
-	next, err := h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
-		TenantInfo:      h.tenant,
-		ConnectionID:    h.conn.ID,
-		AfterCustomerID: page.LastCustomerID,
-		Customers:       1,
-	})
+	next, err := h.svc.ReconcileBalances(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftBalancesRequest{
+			TenantInfo:      h.tenant,
+			ConnectionID:    h.conn.ID,
+			AfterCustomerID: page.LastCustomerID,
+			Customers:       1,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, second, next.LastCustomerID)
 	assert.Equal(t, 1, next.Customers)
@@ -193,5 +203,5 @@ func TestBalancesLeaveDocumentFindingsAlone(t *testing.T) {
 
 	open := h.findings.open()
 	require.Len(t, open, 1)
-	assert.Equal(t, accountingsync.DriftAmountMismatch, open[0].Kind)
+	assert.Equal(t, accountingdrift.DriftAmountMismatch, open[0].Kind)
 }

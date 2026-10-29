@@ -10,8 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
@@ -57,7 +60,7 @@ func (r *MutationResolver) CreateTriageRule(ctx context.Context, input gqlmodel.
 	}
 
 	return r.TriageRuleService.Create(ctx, triageruleservice.SaveRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		Rule:       rule,
 	})
@@ -79,7 +82,7 @@ func (r *MutationResolver) UpdateTriageRule(ctx context.Context, id string, vers
 	}
 
 	return r.TriageRuleService.Update(ctx, &triageruleservice.UpdateRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
 		Version:    int64(version),
@@ -99,7 +102,7 @@ func (r *MutationResolver) SetTriageRuleEnabled(ctx context.Context, id string, 
 	}
 
 	return r.TriageRuleService.SetEnabled(ctx, &triageruleservice.SetEnabledRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
 		Enabled:    enabled,
@@ -118,7 +121,7 @@ func (r *MutationResolver) DeleteTriageRule(ctx context.Context, id string) (boo
 	}
 
 	if err = r.TriageRuleService.Delete(ctx, &triageruleservice.DeleteRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		ID:         ruleID,
 	}); err != nil {
@@ -140,7 +143,7 @@ func (r *MutationResolver) CorrectInboundClassification(ctx context.Context, id 
 	}
 
 	return r.TriageCorrectionService.Correct(ctx, &triagecorrectionservice.CorrectRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ActorID:        actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:      messageID,
 		Classification: classification,
@@ -159,7 +162,7 @@ func (r *MutationResolver) FlagInboundFact(ctx context.Context, id string, key s
 	}
 
 	return r.TriageCorrectionService.FlagFact(ctx, &triagecorrectionservice.FlagRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
 		Key:        key,
@@ -178,7 +181,7 @@ func (r *MutationResolver) ResolveInboundConflict(ctx context.Context, id string
 	}
 
 	return r.TriageConflictService.Resolve(ctx, &triageconflictservice.ResolveRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
 		ConflictID: conflictID,
@@ -198,7 +201,7 @@ func (r *MutationResolver) ReopenInboundConflict(ctx context.Context, id string,
 	}
 
 	return r.TriageConflictService.Reopen(ctx, &triageconflictservice.ReopenRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ActorID:    actorutil.FromAuthContext(authCtx).UserID,
 		MessageID:  messageID,
 		ConflictID: conflictID,
@@ -211,7 +214,7 @@ func (r *QueryResolver) TriageBriefing(ctx context.Context) (*inboundmessageport
 		return nil, err
 	}
 
-	return r.TriageBriefingService.Briefing(ctx, base.TenantInfo(authCtx))
+	return r.TriageBriefingService.Briefing(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) TriageRules(ctx context.Context) ([]*triage.Rule, error) {
@@ -220,7 +223,7 @@ func (r *QueryResolver) TriageRules(ctx context.Context) ([]*triage.Rule, error)
 		return nil, err
 	}
 
-	return r.TriageRuleService.List(ctx, base.TenantInfo(authCtx))
+	return r.TriageRuleService.List(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) TriageRulePreview(ctx context.Context, input gqlmodel.TriageRuleInput) (*inboundmessageports.RulePreview, error) {
@@ -234,7 +237,7 @@ func (r *QueryResolver) TriageRulePreview(ctx context.Context, input gqlmodel.Tr
 		return nil, err
 	}
 
-	return r.TriageRuleService.Preview(ctx, base.TenantInfo(authCtx), rule)
+	return r.TriageRuleService.Preview(ctx, resolvercore.TenantInfo(authCtx), rule)
 }
 
 func (r *QueryResolver) TriageRuleMatches(ctx context.Context, id string) (*inboundmessageports.RulePreview, error) {
@@ -249,7 +252,7 @@ func (r *QueryResolver) TriageRuleMatches(ctx context.Context, id string) (*inbo
 	}
 
 	return r.TriageRuleService.Matches(ctx, triageports.GetRuleRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         ruleID,
 	})
 }
@@ -260,7 +263,7 @@ func (r *QueryResolver) TriageSenderDomains(ctx context.Context, query *string) 
 		return nil, err
 	}
 
-	return r.TriageRuleService.SenderDomains(ctx, base.TenantInfo(authCtx), stringutils.FromPtr(query))
+	return r.TriageRuleService.SenderDomains(ctx, resolvercore.TenantInfo(authCtx), stringutils.FromPtr(query))
 }
 
 func (r *QueryResolver) InboundSenderProfile(ctx context.Context, messageID string) (*inboundmessageports.SenderProfile, error) {
@@ -275,7 +278,7 @@ func (r *QueryResolver) InboundSenderProfile(ctx context.Context, messageID stri
 	}
 
 	return r.TriageBriefingService.SenderProfile(ctx, triagebriefingservice.SenderProfileRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		MessageID:  id,
 	})
 }
@@ -286,7 +289,7 @@ func (r *TriageBriefingResolver) UnhealthySources(ctx context.Context, obj *inbo
 		return nil, err
 	}
 
-	return r.TriageBriefingService.UnhealthySources(ctx, base.TenantInfo(authCtx), obj.UnhealthySourceIDs)
+	return r.TriageBriefingService.UnhealthySources(ctx, resolvercore.TenantInfo(authCtx), obj.UnhealthySourceIDs)
 }
 
 func (r *TriageBriefingResolver) OnCall(ctx context.Context, obj *inboundmessageports.Briefing) (*tenant.User, error) {
@@ -294,11 +297,11 @@ func (r *TriageBriefingResolver) OnCall(ctx context.Context, obj *inboundmessage
 }
 
 func (r *TriageConflictResolver) AttachmentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error) {
-	return base.IDPtr(obj.AttachmentID), nil
+	return gqlid.IDPtr(obj.AttachmentID), nil
 }
 
 func (r *TriageConflictResolver) ExistingDocumentID(ctx context.Context, obj *inboundmessage.Conflict) (*string, error) {
-	return base.IDPtr(obj.ExistingDocumentID), nil
+	return gqlid.IDPtr(obj.ExistingDocumentID), nil
 }
 
 func (r *TriageConflictResolver) ExistingShipment(ctx context.Context, obj *inboundmessage.Conflict) (*shipmentports.ShipmentSummary, error) {
@@ -313,11 +316,11 @@ func (r *TriageConflictResolver) ExistingShipment(ctx context.Context, obj *inbo
 	if !r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
 		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
-	if err = base.RequireLoaders(ctx); err != nil {
+	if err = loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.ShipmentSummaryByID(ctx, obj.ExistingShipmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.ShipmentSummaryByID(ctx, obj.ExistingShipmentID.String()))
 }
 
 func (r *TriageConflictResolver) ExistingFiledAt(ctx context.Context, obj *inboundmessage.Conflict) (*int, error) {
@@ -325,11 +328,11 @@ func (r *TriageConflictResolver) ExistingFiledAt(ctx context.Context, obj *inbou
 }
 
 func (r *TriageConflictResolver) ExistingAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error) {
-	return base.NonEmptyPtr(obj.ExistingAmount), nil
+	return gqlscalar.NonEmptyPtr(obj.ExistingAmount), nil
 }
 
 func (r *TriageConflictResolver) NewAmount(ctx context.Context, obj *inboundmessage.Conflict) (*string, error) {
-	return base.NonEmptyPtr(obj.NewAmount), nil
+	return gqlscalar.NonEmptyPtr(obj.NewAmount), nil
 }
 
 func (r *TriageConflictResolver) LoadIndex(ctx context.Context, obj *inboundmessage.Conflict) (*int, error) {
@@ -363,22 +366,22 @@ func (r *TriageDeckItemResolver) Owner(ctx context.Context, obj *inboundmessagep
 }
 
 func (r *TriageRuleResolver) MailboxID(ctx context.Context, obj *triage.Rule) (*string, error) {
-	return base.IDPtr(obj.MailboxID), nil
+	return gqlid.IDPtr(obj.MailboxID), nil
 }
 
 func (r *TriageRuleResolver) Mailbox(ctx context.Context, obj *triage.Rule) (*inboundmessage.Mailbox, error) {
 	if obj.MailboxID.IsNil() {
 		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.InboundMailboxByID(ctx, obj.MailboxID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundMailboxByID(ctx, obj.MailboxID.String()))
 }
 
 func (r *TriageRuleResolver) AssigneeID(ctx context.Context, obj *triage.Rule) (*string, error) {
-	return base.IDPtr(obj.AssigneeID), nil
+	return gqlid.IDPtr(obj.AssigneeID), nil
 }
 
 func (r *TriageRuleResolver) Assignee(ctx context.Context, obj *triage.Rule) (*tenant.User, error) {
@@ -393,11 +396,11 @@ func (r *TriageRuleResolver) MatchesThisMonth(ctx context.Context, obj *triage.R
 	if obj.MatchCount == 0 {
 		return 0, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return 0, err
 	}
 
-	return loaders.TriageRuleMonthMatches(ctx, obj.ID.String())
+	return documentloaders.TriageRuleMonthMatches(ctx, obj.ID.String())
 }
 
 func (r *TriageRuleResolver) LastMatchedAt(ctx context.Context, obj *triage.Rule) (*int, error) {
@@ -408,9 +411,9 @@ func (r *TriageRuleResolver) LastMatch(ctx context.Context, obj *triage.Rule) (*
 	if obj.LastMessageID.IsNil() {
 		return nil, nil //nolint:nilnil // an unset or hidden reference resolves to null
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return loaders.TriageSampleByMessageID(ctx, obj.LastMessageID.String())
+	return documentloaders.TriageSampleByMessageID(ctx, obj.LastMessageID.String())
 }

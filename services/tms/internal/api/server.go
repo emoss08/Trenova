@@ -8,8 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -18,40 +19,46 @@ import (
 type Params struct {
 	fx.In
 
-	Config       *config.Config
+	AppConfig    *appconfig.Config
+	ServerConfig *serverconfig.Config
 	Logger       *zap.Logger
 	ErrorHandler *helpers.ErrorHandler
 	LC           fx.Lifecycle
 	// Realtime ends its event streams as soon as shutdown begins. Shutdown
 	// otherwise waits on every open stream until its deadline, since a stream
 	// is a request that never finishes on its own.
-	Realtime agentports.RealtimeGateway `optional:"true"`
+	Realtime realtimeports.RealtimeGateway `optional:"true"`
 }
 
 type Server struct {
 	httpServer *http.Server
 	router     *gin.Engine
-	cfg        *config.Config
+	cfg        *serverconfig.Config
 	l          *zap.Logger
 }
 
 func NewServer(p Params) (*Server, error) {
-	gin.SetMode(p.Config.Server.Mode)
+	gin.SetMode(p.ServerConfig.Mode)
 
 	router := gin.New()
-	if err := configureClientIPResolution(router, p.Config); err != nil {
+	if err := configureClientIPResolution(router, p.ServerConfig); err != nil {
 		return nil, err
 	}
 
-	handler := middleware.NewRequestTimeoutHandler(router, p.Config, p.ErrorHandler)
+	handler := middleware.NewRequestTimeoutHandler(
+		router,
+		p.AppConfig,
+		p.ServerConfig,
+		p.ErrorHandler,
+	)
 
 	httpServer := &http.Server{
-		Addr:              fmt.Sprintf("%s:%d", p.Config.Server.Host, p.Config.Server.Port),
+		Addr:              fmt.Sprintf("%s:%d", p.ServerConfig.Host, p.ServerConfig.Port),
 		Handler:           handler,
-		ReadTimeout:       p.Config.Server.ReadTimeout,
-		ReadHeaderTimeout: p.Config.Server.ReadHeaderTimeout,
-		WriteTimeout:      p.Config.Server.WriteTimeout,
-		IdleTimeout:       p.Config.Server.IdleTimeout,
+		ReadTimeout:       p.ServerConfig.ReadTimeout,
+		ReadHeaderTimeout: p.ServerConfig.ReadHeaderTimeout,
+		WriteTimeout:      p.ServerConfig.WriteTimeout,
+		IdleTimeout:       p.ServerConfig.IdleTimeout,
 	}
 	if p.Realtime != nil {
 		httpServer.RegisterOnShutdown(p.Realtime.Drain)
@@ -60,7 +67,7 @@ func NewServer(p Params) (*Server, error) {
 	server := &Server{
 		router:     router,
 		l:          p.Logger,
-		cfg:        p.Config,
+		cfg:        p.ServerConfig,
 		httpServer: httpServer,
 	}
 
@@ -76,10 +83,10 @@ func NewServer(p Params) (*Server, error) {
 	return server, nil
 }
 
-func configureClientIPResolution(router *gin.Engine, cfg *config.Config) error {
-	router.TrustedPlatform = trustedPlatformHeader(cfg.Server.TrustedPlatform)
+func configureClientIPResolution(router *gin.Engine, cfg *serverconfig.Config) error {
+	router.TrustedPlatform = trustedPlatformHeader(cfg.TrustedPlatform)
 
-	if err := router.SetTrustedProxies(cfg.Server.TrustedProxies); err != nil {
+	if err := router.SetTrustedProxies(cfg.TrustedProxies); err != nil {
 		return fmt.Errorf("configure trusted proxies: %w", err)
 	}
 
@@ -88,11 +95,11 @@ func configureClientIPResolution(router *gin.Engine, cfg *config.Config) error {
 
 func trustedPlatformHeader(platform string) string {
 	switch platform {
-	case config.TrustedPlatformCloudflare:
+	case serverconfig.TrustedPlatformCloudflare:
 		return gin.PlatformCloudflare
-	case config.TrustedPlatformGoogleAppEngine:
+	case serverconfig.TrustedPlatformGoogleAppEngine:
 		return gin.PlatformGoogleAppEngine
-	case config.TrustedPlatformFlyIO:
+	case serverconfig.TrustedPlatformFlyIO:
 		return gin.PlatformFlyIO
 	default:
 		return ""
@@ -103,7 +110,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.l.Info(
 		"Starting HTTP server",
 		zap.String("address", fmt.Sprintf("http://%s", s.httpServer.Addr)),
-		zap.String("mode", s.cfg.Server.Mode),
+		zap.String("mode", s.cfg.Mode),
 	)
 
 	go func() {

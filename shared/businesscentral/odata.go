@@ -5,6 +5,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/shopspring/decimal"
 )
 
@@ -15,40 +16,40 @@ const (
 	maxFilterValueSize = 250
 )
 
-type number decimal.Decimal
+type Number decimal.Decimal
 
-func (n number) MarshalJSON() ([]byte, error) {
+func (n Number) MarshalJSON() ([]byte, error) {
 	return []byte(decimal.Decimal(n).String()), nil
 }
 
-func numberOf(value decimal.Decimal) *number {
-	out := number(value)
+func NumberOf(value decimal.Decimal) *Number {
+	out := Number(value)
 	return &out
 }
 
-func odataString(value string) (string, error) {
-	if value == "" || !textWithin(value, maxFilterValueSize) || hasControl(value) {
-		return "", ErrInvalidFilter
+func ODataString(value string) (string, error) {
+	if value == "" || !TextWithin(value, maxFilterValueSize) || HasControl(value) {
+		return "", businesscentralerrors.ErrInvalidFilter
 	}
 	return "'" + strings.ReplaceAll(value, "'", "''") + "'", nil
 }
 
-func filterEquals(field, literal string) string {
+func FilterEquals(field, literal string) string {
 	return field + " eq " + literal
 }
 
-func filterIn(field string, literals []string) string {
+func FilterIn(field string, literals []string) string {
 	return field + " in (" + strings.Join(literals, ",") + ")"
 }
 
-func filterModifiedSince(since *time.Time) string {
+func FilterModifiedSince(since *time.Time) string {
 	if since == nil || since.IsZero() {
 		return ""
 	}
-	return lastModifiedDateTimeField + " gt " + odataDateTime(*since)
+	return LastModifiedDateTimeField + " gt " + odataDateTime(*since)
 }
 
-func filterJoin(clauses ...string) string {
+func FilterJoin(clauses ...string) string {
 	kept := make([]string, 0, len(clauses))
 	for _, clause := range clauses {
 		if clause != "" {
@@ -58,11 +59,11 @@ func filterJoin(clauses ...string) string {
 	return strings.Join(kept, " and ")
 }
 
-func textWithin(value string, limit int) bool {
+func TextWithin(value string, limit int) bool {
 	return utf8.RuneCountInString(value) <= limit
 }
 
-func hasControl(value string) bool {
+func HasControl(value string) bool {
 	for _, r := range value {
 		if r < ' ' || r == 0x7f || (r >= 0x80 && r < 0xa0) {
 			return true
@@ -71,20 +72,54 @@ func hasControl(value string) bool {
 	return false
 }
 
-func cleanText(raw string, limit int) (string, error) {
+func CleanText(raw string, limit int) (string, error) {
 	value := strings.TrimSpace(raw)
-	if !textWithin(value, limit) {
-		return "", ErrFieldTooLong
+	if !TextWithin(value, limit) {
+		return "", businesscentralerrors.ErrFieldTooLong
 	}
-	if hasControl(value) {
-		return "", ErrInvalidText
+	if HasControl(value) {
+		return "", businesscentralerrors.ErrInvalidText
 	}
 	return value, nil
 }
 
-func optionalGUID(raw string) (string, error) {
+func OptionalGUID(raw string) (string, error) {
 	if strings.TrimSpace(raw) == "" {
 		return "", nil
 	}
-	return guid(raw)
+	return GUID(raw)
+}
+
+const (
+	LastModifiedDateTimeField = "lastModifiedDateTime"
+)
+
+const (
+	MaxDisplayNameLength  = 100
+	maxCurrencyCodeLength = 10
+	blankEnumValue        = "_x0020_"
+)
+
+func EnumValue(raw string) string {
+	value := strings.TrimSpace(raw)
+	if value == blankEnumValue {
+		return ""
+	}
+	return value
+}
+
+func EmptyGUID(raw string) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	if value == "00000000-0000-0000-0000-000000000000" {
+		return ""
+	}
+	return value
+}
+
+func CurrencyCode(raw string) (string, error) {
+	code := strings.ToUpper(strings.TrimSpace(raw))
+	if !TextWithin(code, maxCurrencyCodeLength) || HasControl(code) {
+		return "", businesscentralerrors.ErrCurrencyCodeInvalid
+	}
+	return code, nil
 }

@@ -13,13 +13,13 @@ import (
 // @ID listStandardFormulaTemplates
 // @Tags Formula Templates
 // @Produce json
-// @Success 200 {array} formulatemplateservice.StandardTemplate
+// @Success 200 {array} formulatemplateimportservice.StandardTemplate
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /formula-templates/standards [get]
 func (h *Handler) listStandards(c *gin.Context) {
-	standards, err := h.service.ListStandards()
+	standards, err := h.imports.ListStandards()
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -32,7 +32,7 @@ func (h *Handler) listStandards(c *gin.Context) {
 // @ID installStandardFormulaTemplates
 // @Tags Formula Templates
 // @Produce json
-// @Success 200 {object} formulatemplateservice.InstallStandardsResponse
+// @Success 200 {object} formulatemplateimportservice.InstallStandardsResponse
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -41,7 +41,7 @@ func (h *Handler) listStandards(c *gin.Context) {
 func (h *Handler) installStandards(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	result, err := h.service.InstallStandards(c.Request.Context(), pagination.TenantInfo{
+	result, err := h.imports.InstallStandards(c.Request.Context(), pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,

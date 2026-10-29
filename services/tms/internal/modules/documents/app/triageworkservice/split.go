@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.temporal.io/sdk/client"
@@ -340,7 +341,7 @@ func splitLabel(staged []triageworkcontract.SplitRange) string {
 
 	return stringutils.TruncateRunes(
 		fmt.Sprintf("%s (%s)",
-			stringutils.CountNoun(len(staged), "document", "documents"),
+			inflect.CountNoun(len(staged), "document", "documents"),
 			strings.Join(names, ", "),
 		),
 		maxFiledAsRunes,
@@ -456,7 +457,7 @@ func (s *Service) RecordSplit(
 		return err
 	}
 
-	detail := stringutils.CountNoun(len(payload.Documents), "document", "documents")
+	detail := inflect.CountNoun(len(payload.Documents), "document", "documents")
 	if payload.Failed > 0 {
 		detail += fmt.Sprintf(", %d could not be filed", payload.Failed)
 	}

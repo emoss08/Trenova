@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
 
@@ -24,17 +24,27 @@ Rules:
 func buildContext(
 	facts *Facts,
 	plain []shipmentbriefports.ShipmentBriefingSegment,
-) agentports.DelimitedContext {
+) llmports.DelimitedContext {
 	var builder strings.Builder
 
 	writeFact(&builder, "Loads delivering today", facts.DeliveringToday,
-		shipment.QuickFilterDeliveringToday)
-	writeFact(&builder, "Loads moving on schedule", facts.Moving, shipment.QuickFilterMoving)
-	writeFact(&builder, "Loads running late", facts.Late, shipment.QuickFilterLate)
+		quickfilter.QuickFilterDeliveringToday)
+	writeFact(&builder, "Loads moving on schedule", facts.Moving, quickfilter.QuickFilterMoving)
+	writeFact(&builder, "Loads running late", facts.Late, quickfilter.QuickFilterLate)
 	writeFact(&builder, "Loads still needing "+facts.OperationType.CoverageNoun(), facts.Uncovered,
-		shipment.QuickFilterUncovered)
-	writeFact(&builder, "Loads accruing detention", facts.Detention, shipment.QuickFilterDetention)
-	writeFact(&builder, "Loads ready to bill", facts.ReadyToBill, shipment.QuickFilterReadyToBill)
+		quickfilter.QuickFilterUncovered)
+	writeFact(
+		&builder,
+		"Loads accruing detention",
+		facts.Detention,
+		quickfilter.QuickFilterDetention,
+	)
+	writeFact(
+		&builder,
+		"Loads ready to bill",
+		facts.ReadyToBill,
+		quickfilter.QuickFilterReadyToBill,
+	)
 	builder.WriteString("Suggested actions waiting for a dispatcher: ")
 	builder.WriteString(strconv.Itoa(facts.OpenSuggestions))
 	builder.WriteString("\n")
@@ -50,8 +60,8 @@ func buildContext(
 	}
 	builder.WriteString("\n")
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{{
 			Title:   "Shipment board",
 			Trusted: false,
 			Content: builder.String(),
@@ -59,7 +69,7 @@ func buildContext(
 	}
 }
 
-func writeFact(builder *strings.Builder, label string, count int, filter shipment.QuickFilter) {
+func writeFact(builder *strings.Builder, label string, count int, filter quickfilter.QuickFilter) {
 	builder.WriteString(label)
 	builder.WriteString(": ")
 	builder.WriteString(strconv.Itoa(count))
@@ -68,7 +78,7 @@ func writeFact(builder *strings.Builder, label string, count int, filter shipmen
 	builder.WriteString(")\n")
 }
 
-func outputSchema(allowed []shipment.QuickFilter) map[string]any {
+func outputSchema(allowed []quickfilter.QuickFilter) map[string]any {
 	filters := make([]string, 0, len(allowed)+1)
 	filters = append(filters, "")
 	for _, filter := range allowed {

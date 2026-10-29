@@ -5,18 +5,26 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -168,17 +176,17 @@ type fakeProposals struct{ proposal *agent.AgentProposal }
 
 func (f *fakeProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return f.proposal, nil
 }
 
-type fakePlans struct{ plan *agent.AgentPlan }
+type fakePlans struct{ plan *agentplan.AgentPlan }
 
 func (f *fakePlans) GetByID(
 	context.Context,
-	agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
+	agentplanports.GetAgentPlanByIDRequest,
+) (*agentplan.AgentPlan, error) {
 	return f.plan, nil
 }
 
@@ -186,7 +194,7 @@ type fakeRuns struct{ run *agent.AgentRun }
 
 func (f *fakeRuns) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if f.run == nil {
 		return nil, errortypes.NewNotFoundError("Run not found")
@@ -195,12 +203,14 @@ func (f *fakeRuns) GetByID(
 	return f.run, nil
 }
 
-type fakeExceptions struct{ exception *agent.AgentException }
+type fakeExceptions struct {
+	exception *agentexception.AgentException
+}
 
 func (f *fakeExceptions) GetByID(
 	context.Context,
-	agentports.GetAgentExceptionByIDRequest,
-) (*agent.AgentException, error) {
+	agentexceptionports.GetAgentExceptionByIDRequest,
+) (*agentexception.AgentException, error) {
 	return f.exception, nil
 }
 
@@ -218,12 +228,15 @@ func (f *fakeDefinitions) GetByID(
 }
 
 type fakeMemories struct {
-	existing []*agent.Memory
-	created  []*agent.Memory
-	asked    []agentports.ListAgentMemorySuggestionContextRequest
+	existing []*agentmemory.Memory
+	created  []*agentmemory.Memory
+	asked    []agentmemoryports.ListAgentMemorySuggestionContextRequest
 }
 
-func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
+func (f *fakeMemories) Create(
+	_ context.Context,
+	entity *agentmemory.Memory,
+) (*agentmemory.Memory, error) {
 	entity.ID = pulid.MustNew("amem_")
 	f.created = append(f.created, entity)
 
@@ -232,19 +245,19 @@ func (f *fakeMemories) Create(_ context.Context, entity *agent.Memory) (*agent.M
 
 func (f *fakeMemories) ListSuggestionContext(
 	_ context.Context,
-	req agentports.ListAgentMemorySuggestionContextRequest,
-) ([]*agent.Memory, error) {
-	f.asked = append(f.asked, req)
+	req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
+) ([]*agentmemory.Memory, error) {
+	f.asked = append(f.asked, *req)
 
 	return f.existing, nil
 }
 
-type fakeRetention struct{ row *tenant.DataRetention }
+type fakeRetention struct{ row *dataretention.DataRetention }
 
 func (f *fakeRetention) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	if f.row == nil {
 		return nil, errortypes.NewNotFoundError("Data Retention not found")
 	}

@@ -41,7 +41,7 @@ export APP_ENV="${APP_ENV:-test}"
 
 go run ./cmd/devdb up -env test
 go run ./cmd/devdb volume -shipments "$shipments" -months 12 -seed 1
-run_psql -d "$database" -c "ANALYZE"
+run_psql -d "$database" -c "VACUUM (ANALYZE)"
 
 printf 'planning the shapes of %s recorded lines\n' "$(wc -l <"$shapes" | tr -d ' ')"
 go run ./cmd/db plans -plain -shapes "$shapes" -sort-limit

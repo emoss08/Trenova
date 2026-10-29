@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +18,7 @@ import (
 // reads it, and the person would think it had gone with the approval.
 func (r *repository) SetPendingModifications(
 	ctx context.Context,
-	req agentports.SetPendingModificationsRequest,
+	req agentproposalports.SetPendingModificationsRequest,
 ) (*agent.AgentProposal, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentProposal, error) {
 		p := agentdb.AgentProposals

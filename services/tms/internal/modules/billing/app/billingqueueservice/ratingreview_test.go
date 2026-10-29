@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -93,7 +94,7 @@ func TestUpdateStatus_ApprovesOnceTheReviewedRatingIsApproved(t *testing.T) {
 	f.expectRead()
 	f.expectHolds()
 	held := f.heldForReview(t, "Holiday pickup")
-	_, err := held.RatingDetail.ApproveReview(pulid.MustNew("usr_"), 1_800_000_100)
+	_, err := shipmentrating.ApproveReview(held.RatingDetail, pulid.MustNew("usr_"), 1_800_000_100)
 	require.NoError(t, err)
 	f.repo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*billingqueue.BillingQueueItem")).

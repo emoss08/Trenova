@@ -3,9 +3,11 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,8 +40,8 @@ func newFingerprintWorld() *fingerprintWorld {
 func (w *fingerprintWorld) service() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{w.lookup}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{w.write}},
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{w.lookup}},
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{w.write}},
 		nil,
 	)
 }
@@ -50,11 +52,11 @@ func TestFingerprint_TheSameAgentGivesTheSameHash(t *testing.T) {
 	world := newFingerprintWorld()
 	provider := pulid.MustNew("aiprv_")
 
-	first := world.service().Fingerprint(
-		testDefinition("find_shipments", "assign_driver"), provider, "model-a",
+	first := world.service().access.Fingerprint(
+		runtimetest.Definition("find_shipments", "assign_driver"), provider, "model-a",
 	)
-	second := world.service().Fingerprint(
-		testDefinition("find_shipments", "assign_driver"), provider, "model-a",
+	second := world.service().access.Fingerprint(
+		runtimetest.Definition("find_shipments", "assign_driver"), provider, "model-a",
 	)
 
 	require.NotNil(t, first)
@@ -68,11 +70,11 @@ func TestFingerprint_ToolOrderDoesNotChangeTheToolHash(t *testing.T) {
 	t.Parallel()
 
 	world := newFingerprintWorld()
-	forward := world.service().Fingerprint(
-		testDefinition("find_shipments", "assign_driver"), pulid.Nil, "",
+	forward := world.service().access.Fingerprint(
+		runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "",
 	)
-	backward := world.service().Fingerprint(
-		testDefinition("assign_driver", "find_shipments"), pulid.Nil, "",
+	backward := world.service().access.Fingerprint(
+		runtimetest.Definition("assign_driver", "find_shipments"), pulid.Nil, "",
 	)
 
 	assert.Equal(t, forward.ToolSpecHash, backward.ToolSpecHash)
@@ -82,29 +84,29 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 	t.Parallel()
 
 	baseline := newFingerprintWorld()
-	base := baseline.service().Fingerprint(
-		testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
+	base := baseline.service().access.Fingerprint(
+		runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
 	)
 
 	tests := []struct {
 		name   string
-		change func(w *fingerprintWorld) *agent.Fingerprint
+		change func(w *fingerprintWorld) *agentfingerprint.Fingerprint
 		prompt bool
 		tools  bool
 	}{
 		{
 			name: "a tool's description",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.lookup.Desc = "Finds shipments by status and customer."
-				return w.service().Fingerprint(
-					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
+				return w.service().access.Fingerprint(
+					runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
 				)
 			},
 			tools: true,
 		},
 		{
 			name: "a tool's schema",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.write.Schema = map[string]any{
 					"type": "object",
 					"properties": map[string]any{
@@ -112,65 +114,65 @@ func TestFingerprint_AnyChangeToTheAgentChangesTheHash(t *testing.T) {
 						"note":     map[string]any{"type": "string"},
 					},
 				}
-				return w.service().Fingerprint(
-					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
+				return w.service().access.Fingerprint(
+					runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
 				)
 			},
 			tools: true,
 		},
 		{
 			name: "a tool's default tier",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
 				w.write.Tier = agent.TierAutoExecute
-				return w.service().Fingerprint(
-					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
+				return w.service().access.Fingerprint(
+					runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
 				)
 			},
 			tools: true,
 		},
 		{
 			name: "the tier the agent sets for a tool",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
-				definition := testDefinition("find_shipments", "assign_driver")
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
+				definition := runtimetest.Definition("find_shipments", "assign_driver")
 				definition.ToolTiers = map[string]agent.AutonomyTier{
 					"assign_driver": agent.TierActWithApproval,
 				}
-				return w.service().Fingerprint(definition, pulid.Nil, "model-a")
+				return w.service().access.Fingerprint(definition, pulid.Nil, "model-a")
 			},
 			tools: true,
 		},
 		{
 			name: "the instructions",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
-				definition := testDefinition("find_shipments", "assign_driver")
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
+				definition := runtimetest.Definition("find_shipments", "assign_driver")
 				definition.Instructions = "Help dispatch, and be brief."
-				return w.service().Fingerprint(definition, pulid.Nil, "model-a")
+				return w.service().access.Fingerprint(definition, pulid.Nil, "model-a")
 			},
 			prompt: true,
 		},
 		{
 			name: "the tools it holds",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
-				return w.service().Fingerprint(
-					testDefinition("find_shipments"), pulid.Nil, "model-a",
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
+				return w.service().access.Fingerprint(
+					runtimetest.Definition("find_shipments"), pulid.Nil, "model-a",
 				)
 			},
 			tools: true,
 		},
 		{
 			name: "the model",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
-				return w.service().Fingerprint(
-					testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-b",
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
+				return w.service().access.Fingerprint(
+					runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-b",
 				)
 			},
 		},
 		{
 			name: "the saved version",
-			change: func(w *fingerprintWorld) *agent.Fingerprint {
-				definition := testDefinition("find_shipments", "assign_driver")
+			change: func(w *fingerprintWorld) *agentfingerprint.Fingerprint {
+				definition := runtimetest.Definition("find_shipments", "assign_driver")
 				definition.Version = 2
-				return w.service().Fingerprint(definition, pulid.Nil, "model-a")
+				return w.service().access.Fingerprint(definition, pulid.Nil, "model-a")
 			},
 		},
 	}
@@ -195,21 +197,21 @@ func TestFingerprint_ChangesNameWhatMoved(t *testing.T) {
 	t.Parallel()
 
 	world := newFingerprintWorld()
-	before := world.service().Fingerprint(
-		testDefinition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
+	before := world.service().access.Fingerprint(
+		runtimetest.Definition("find_shipments", "assign_driver"), pulid.Nil, "model-a",
 	)
-	definition := testDefinition("find_shipments", "assign_driver")
+	definition := runtimetest.Definition("find_shipments", "assign_driver")
 	definition.Version = 4
-	after := world.service().Fingerprint(definition, pulid.Nil, "model-b")
+	after := world.service().access.Fingerprint(definition, pulid.Nil, "model-b")
 
 	changes := after.Changes(before)
-	fields := make([]agent.FingerprintField, 0, len(changes))
+	fields := make([]agentfingerprint.FingerprintField, 0, len(changes))
 	for _, change := range changes {
 		fields = append(fields, change.Field)
 	}
-	assert.Equal(t, []agent.FingerprintField{
-		agent.FingerprintFieldDefinition,
-		agent.FingerprintFieldModel,
+	assert.Equal(t, []agentfingerprint.FingerprintField{
+		agentfingerprint.FingerprintFieldDefinition,
+		agentfingerprint.FingerprintFieldModel,
 	}, fields)
 	assert.Empty(t, after.Changes(after))
 }

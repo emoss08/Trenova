@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -24,9 +25,9 @@ import (
 
 var assignmentErrors = dberror.Mapping{Entity: "Assignment"}
 
-var activeMoveStatuses = []shipment.MoveStatus{
-	shipment.MoveStatusInTransit,
-	shipment.MoveStatusAssigned,
+var activeMoveStatuses = []shipmentvocab.MoveStatus{
+	shipmentvocab.MoveStatusInTransit,
+	shipmentvocab.MoveStatusAssigned,
 }
 
 type Params struct {
@@ -41,7 +42,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.AssignmentRepository {
+func New(p Params) assignmentports.AssignmentRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assignment-repository"),
@@ -77,7 +78,7 @@ func withResources(q *assignmentQuery) *assignmentQuery {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *shipmentports.ListAssignmentsRequest,
+	req *assignmentports.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
 	return dbtx.Read(
 		ctx,
@@ -106,7 +107,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetAssignmentByIDRequest,
+	req *assignmentports.GetAssignmentByIDRequest,
 ) (*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
 		return r.get(ctx, req.AssignmentID)
@@ -232,7 +233,7 @@ func (r *repository) findActiveAssignment(
 		entity, err := a.Join(sm, sm.ID.EqCol(a.ShipmentMoveID)).
 			Where(a.ArchivedAt.IsNull(), subject, sm.Status.In(activeMoveStatuses...)).
 			Order(
-				keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
+				keel.Desc(sm.Status.Eq(shipmentvocab.MoveStatusInTransit)),
 				sm.CreatedAt.Desc(),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -253,7 +254,7 @@ func (r *repository) findInProgressAssignment(
 			Where(
 				a.ArchivedAt.IsNull(),
 				column.Eq(equipmentID),
-				sm.Status.Eq(shipment.MoveStatusInTransit),
+				sm.Status.Eq(shipmentvocab.MoveStatusInTransit),
 				keel.When(!excludeMoveID.IsNil(), a.ShipmentMoveID.Ne(excludeMoveID)),
 			).
 			First(ctx, r.db.Keel(ctx))
@@ -263,57 +264,57 @@ func (r *repository) findInProgressAssignment(
 
 func (r *repository) FindNearestActualEventByTractorID(
 	ctx context.Context,
-	req shipmentports.FindNearestActualTimelineEventRequest,
+	req assignmentports.FindNearestActualTimelineEventRequest,
 	tractorID pulid.ID,
-) (*shipmentports.ActualTimelineEvent, error) {
+) (*assignmentports.ActualTimelineEvent, error) {
 	return r.findNearestActualEvent(ctx, req, shipmentdb.Assignments.TractorID, tractorID)
 }
 
 func (r *repository) FindNearestActualEventByPrimaryWorkerID(
 	ctx context.Context,
-	req shipmentports.FindNearestActualTimelineEventRequest,
+	req assignmentports.FindNearestActualTimelineEventRequest,
 	workerID pulid.ID,
-) (*shipmentports.ActualTimelineEvent, error) {
+) (*assignmentports.ActualTimelineEvent, error) {
 	return r.findNearestActualEvent(ctx, req, shipmentdb.Assignments.PrimaryWorkerID, workerID)
 }
 
 func (r *repository) FindOverlappingActualWindowByTractorID(
 	ctx context.Context,
-	req shipmentports.FindOverlappingActualTimelineWindowRequest,
+	req assignmentports.FindOverlappingActualTimelineWindowRequest,
 	tractorID pulid.ID,
-) (*shipmentports.ActualTimelineWindow, error) {
+) (*assignmentports.ActualTimelineWindow, error) {
 	return r.findOverlappingActualWindow(ctx, shipmentdb.Assignments.TractorID, tractorID, req)
 }
 
 func (r *repository) FindOverlappingActualWindowByPrimaryWorkerID(
 	ctx context.Context,
-	req shipmentports.FindOverlappingActualTimelineWindowRequest,
+	req assignmentports.FindOverlappingActualTimelineWindowRequest,
 	workerID pulid.ID,
-) (*shipmentports.ActualTimelineWindow, error) {
+) (*assignmentports.ActualTimelineWindow, error) {
 	return r.findOverlappingActualWindow(ctx, shipmentdb.Assignments.PrimaryWorkerID, workerID, req)
 }
 
 func (r *repository) findNearestActualEvent(
 	ctx context.Context,
-	req shipmentports.FindNearestActualTimelineEventRequest,
+	req assignmentports.FindNearestActualTimelineEventRequest,
 	column keelkinds.PulidIDCol,
 	resourceID pulid.ID,
-) (*shipmentports.ActualTimelineEvent, error) {
+) (*assignmentports.ActualTimelineEvent, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.ActualTimelineEvent, error) {
+		func(ctx context.Context) (*assignmentports.ActualTimelineEvent, error) {
 			ev := actualTimelineEvents(column, resourceID)
 			ts := ev.Col("timestamp")
 
 			near := ts.Lte(req.Timestamp)
 			order := keel.Desc(ts)
-			if req.Direction == shipmentports.ActualTimelineDirectionNext {
+			if req.Direction == assignmentports.ActualTimelineDirectionNext {
 				near = ts.Gte(req.Timestamp)
 				order = keel.Asc(ts)
 			}
 
-			events, err := keel.Into[shipmentports.ActualTimelineEvent](ctx, r.db.Keel(ctx), ev.
+			events, err := keel.Into[assignmentports.ActualTimelineEvent](ctx, r.db.Keel(ctx), ev.
 				Query().
 				With(ev).
 				Pick(
@@ -347,18 +348,18 @@ func (r *repository) findOverlappingActualWindow(
 	ctx context.Context,
 	column keelkinds.PulidIDCol,
 	resourceID pulid.ID,
-	req shipmentports.FindOverlappingActualTimelineWindowRequest,
-) (*shipmentports.ActualTimelineWindow, error) {
+	req assignmentports.FindOverlappingActualTimelineWindowRequest,
+) (*assignmentports.ActualTimelineWindow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.ActualTimelineWindow, error) {
+		func(ctx context.Context) (*assignmentports.ActualTimelineWindow, error) {
 			ev := actualTimelineEvents(column, resourceID)
 			ts := ev.Col("timestamp")
 			moveID := ev.Col("shipment_move_id")
 			shipmentID := ev.Col("shipment_id")
 
-			windows, err := keel.Into[shipmentports.ActualTimelineWindow](ctx, r.db.Keel(ctx), ev.
+			windows, err := keel.Into[assignmentports.ActualTimelineWindow](ctx, r.db.Keel(ctx), ev.
 				Query().
 				With(ev).
 				Group(moveID, shipmentID).
@@ -385,7 +386,7 @@ func (r *repository) findOverlappingActualWindow(
 func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *keel.CTETable {
 	stopEvents := func(
 		at func(*shipmentdb.StopsTable) keel.Int64Col,
-		kind shipmentports.ActualTimelineEventType,
+		kind assignmentports.ActualTimelineEventType,
 	) *keel.Query[*shipment.Assignment] {
 		a := shipmentdb.Assignments
 		sm := shipmentdb.ShipmentMoves
@@ -406,8 +407,8 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 			Where(
 				a.ArchivedAt.IsNull(),
 				column.Eq(resourceID),
-				sm.Status.Ne(shipment.MoveStatusCanceled),
-				st.Status.Ne(shipment.StopStatusCanceled),
+				sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+				st.Status.Ne(shipmentvocab.StopStatusCanceled),
 				at(st).IsNotNull(),
 			)
 	}
@@ -424,9 +425,9 @@ func actualTimelineEvents(column keelkinds.PulidIDCol, resourceID pulid.ID) *kee
 		},
 		keel.UnionAll(
 			stopEvents(func(st *shipmentdb.StopsTable) keel.Int64Col { return st.ActualArrival },
-				shipmentports.ActualTimelineEventTypeArrival),
+				assignmentports.ActualTimelineEventTypeArrival),
 			stopEvents(func(st *shipmentdb.StopsTable) keel.Int64Col { return st.ActualDeparture },
-				shipmentports.ActualTimelineEventTypeDeparture),
+				assignmentports.ActualTimelineEventTypeDeparture),
 		),
 	)
 }
@@ -480,7 +481,7 @@ func (r *repository) Unassign(
 		n, err := unassignable(entity).Update(
 			ctx,
 			r.db.Keel(ctx),
-			a.Status.To(shipment.AssignmentStatusCanceled),
+			a.Status.To(shipmentvocab.AssignmentStatusCanceled),
 			a.ArchivedAt.To(now),
 		)
 		if err != nil {

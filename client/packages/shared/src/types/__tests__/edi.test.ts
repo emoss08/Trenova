@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ediMessageInspectionSchema } from "@trenova/shared/types/edi";
 
 describe("ediMessageInspectionSchema provenance", () => {
-  // ediservice.EDIInspectionProvenance keeps its Lading version and flow instance ids nullzero:
+  // edimessageview.EDIInspectionProvenance keeps its Lading version and flow instance ids nullzero:
   // a message received before Lading, or one no flow handled, has none, and a nil pulid.ID
   // marshals as null.
   const provenance = ediMessageInspectionSchema.shape.provenance;

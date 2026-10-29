@@ -4,16 +4,20 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -39,7 +43,6 @@ snapshot is a window. Past it, the reconcile resolves them: the tower is
 about what needs a person now.
 */
 const (
-	snapshotLimit = 200
 	// failedRunWindow and violationWindow are how long a fact stays on the
 	// tower.
 	failedRunWindow  = 72 * 60 * 60
@@ -88,7 +91,7 @@ func (s *InsightSource) Snapshot(
 	insights, err := s.repo.ListActive(ctx, insightports.ListActiveInsightsRequest{
 		TenantInfo:          tenant,
 		AllowedDetectorKeys: keys,
-		Limit:               snapshotLimit,
+		Limit:               watchtoweritem.SnapshotLimit,
 	})
 	if err != nil {
 		return nil, err
@@ -105,15 +108,15 @@ func (s *InsightSource) Snapshot(
 // DecisionSource puts what is waiting on a person on the tower: proposals
 // on their own and plans as one unit, the same queue the Desk decides.
 type DecisionSource struct {
-	queue       agentports.AgentDecisionQueueService
-	runs        agentports.AgentRunRepository
+	queue       agentdecisionqueueports.AgentDecisionQueueService
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	kind        watchtower.SourceKind
 }
 
 func NewProposalSource(
-	queue agentports.AgentDecisionQueueService,
-	runs agentports.AgentRunRepository,
+	queue agentdecisionqueueports.AgentDecisionQueueService,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &DecisionSource{
@@ -125,8 +128,8 @@ func NewProposalSource(
 }
 
 func NewPlanSource(
-	queue agentports.AgentDecisionQueueService,
-	runs agentports.AgentRunRepository,
+	queue agentdecisionqueueports.AgentDecisionQueueService,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &DecisionSource{
@@ -143,10 +146,10 @@ func (s *DecisionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	pending := make([]agentports.PendingDecision, 0, decisionPageSize)
+	pending := make([]agentdecisionqueueports.PendingDecision, 0, decisionPageSize)
 	after := ""
 	for range decisionPages {
-		page, err := s.queue.ListPending(ctx, agentports.ListPendingDecisionsRequest{
+		page, err := s.queue.ListPending(ctx, &agentdecisionqueueports.ListPendingDecisionsRequest{
 			TenantInfo: tenant,
 			First:      decisionPageSize,
 			After:      after,
@@ -201,7 +204,7 @@ func (s *DecisionSource) agentNames(
 		return names
 	}
 
-	runs, err := s.runs.ListByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        unique(runIDs),
 		TenantInfo: tenant,
 	})
@@ -265,13 +268,13 @@ func unique(ids []pulid.ID) []pulid.ID {
 // FailedRunSource puts recent agent failures on the tower, so a desk that
 // relies on an agent learns when it stopped working.
 type FailedRunSource struct {
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	now         func() int64
 }
 
 func NewFailedRunSource(
-	runs agentports.AgentRunRepository,
+	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
 ) watchtowerports.WatchtowerSource {
 	return &FailedRunSource{runs: runs, definitions: definitions, now: timeutils.NowUnix}
@@ -283,15 +286,15 @@ func (s *FailedRunSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(agent.RunStatusFailed)),
 		{Field: "createdAt", Operator: dbtype.OpGreaterThan, Value: s.now() - failedRunWindow},
 	}
 
-	result, err := s.runs.List(ctx, &agentports.ListAgentRunRequest{
+	result, err := s.runs.List(ctx, &agentruntimeports.ListAgentRunRequest{
 		Filter: filter,
-		Reader: agentports.PersonRunRead(pulid.Nil),
+		Reader: agentruntimeports.PersonRunRead(pulid.Nil),
 	})
 	if err != nil {
 		return nil, err
@@ -334,10 +337,12 @@ func (s *FailedRunSource) Snapshot(
 
 // ExceptionSource puts open agent exceptions on the tower.
 type ExceptionSource struct {
-	repo agentports.AgentExceptionRepository
+	repo agentexceptionports.AgentExceptionRepository
 }
 
-func NewExceptionSource(repo agentports.AgentExceptionRepository) watchtowerports.WatchtowerSource {
+func NewExceptionSource(
+	repo agentexceptionports.AgentExceptionRepository,
+) watchtowerports.WatchtowerSource {
 	return &ExceptionSource{repo: repo}
 }
 
@@ -347,12 +352,12 @@ func (s *ExceptionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
-		filterEq("resolutionState", string(agent.ResolutionStateOpen)),
+		filterEq("resolutionState", string(agentexception.ResolutionStateOpen)),
 	}
 
-	result, err := s.repo.List(ctx, &agentports.ListAgentExceptionRequest{Filter: filter})
+	result, err := s.repo.List(ctx, &agentexceptionports.ListAgentExceptionRequest{Filter: filter})
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +392,7 @@ func (s *ServiceFailureSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(servicefailure.StatusOpen)),
 	}
@@ -427,8 +432,8 @@ func (s *CarrierIntelSource) Snapshot(
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	result, err := s.repo.ListConnection(ctx, &carrierintelports.ListCarrierIntelEventsRequest{
-		Filter:   tenantQuery(tenant, snapshotLimit),
-		Cursor:   pagination.CursorInfo{Limit: snapshotLimit},
+		Filter:   tenantQuery(tenant, watchtoweritem.SnapshotLimit),
+		Cursor:   pagination.CursorInfo{Limit: watchtoweritem.SnapshotLimit},
 		OpenOnly: true,
 	})
 	if err != nil {
@@ -484,11 +489,11 @@ func (s *WeatherSource) Snapshot(
 
 // EDIQuarantineSource puts held-back inbound files on the tower.
 type EDIQuarantineSource struct {
-	repo ediports.EDIInboundFileRepository
+	repo edimessageports.EDIInboundFileRepository
 }
 
 func NewEDIQuarantineSource(
-	repo ediports.EDIInboundFileRepository,
+	repo edimessageports.EDIInboundFileRepository,
 ) watchtowerports.WatchtowerSource {
 	return &EDIQuarantineSource{repo: repo}
 }
@@ -503,9 +508,9 @@ func (s *EDIQuarantineSource) Snapshot(
 ) ([]watchtowerports.WatchtowerItemInput, error) {
 	files, err := s.repo.ListRecentQuarantined(
 		ctx,
-		ediports.ListRecentQuarantinedEDIInboundFilesRequest{
+		edimessageports.ListRecentQuarantinedEDIInboundFilesRequest{
 			TenantInfo: tenant,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	)
 	if err != nil {
@@ -541,7 +546,7 @@ func (s *BillingExceptionSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
-	filter := tenantQuery(tenant, snapshotLimit)
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(billingqueue.StatusException)),
 	}
@@ -618,7 +623,7 @@ func (s *InboundMessageSource) Snapshot(
 		ctx,
 		inboundmessageports.ListRecentInboundMessagesForReviewRequest{
 			TenantInfo: tenant,
-			Limit:      snapshotLimit,
+			Limit:      watchtoweritem.SnapshotLimit,
 		},
 	)
 	if err != nil {

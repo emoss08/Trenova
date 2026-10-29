@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -26,7 +27,7 @@ type tableViewPayload struct {
 
 func (s *Service) artifact(
 	ctx context.Context,
-	req *agentports.BoardFillRequest,
+	req *assistantports.BoardFillRequest,
 	id pulid.ID,
 ) (*assistantartifact.Artifact, error) {
 	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{
@@ -45,8 +46,8 @@ func (s *Service) artifact(
 
 func (s *Service) readArtifacts(
 	ctx context.Context,
-	req *agentports.BoardFillRequest,
-	reads *board.Reads,
+	req *assistantports.BoardFillRequest,
+	reads *boardassemble.Reads,
 ) {
 	for _, id := range req.Board.Artifacts() {
 		artifact, err := s.artifact(ctx, req, id)
@@ -74,16 +75,16 @@ func tabular(artifact *assistantartifact.Artifact) bool {
 		assistantartifact.FamilyOf(artifact.Kind, artifact.Payload) == assistantartifact.FamilyTable
 }
 
-func analysisOf(artifact *assistantartifact.Artifact) (*board.AnalysisRead, bool) {
+func analysisOf(artifact *assistantartifact.Artifact) (*boardassemble.AnalysisRead, bool) {
 	var display analysis.Display
 	if err := jsonutils.Convert(artifact.Payload, &display); err != nil {
 		return nil, false
 	}
 
-	return &board.AnalysisRead{Title: artifact.Title, Display: display}, true
+	return &boardassemble.AnalysisRead{Title: artifact.Title, Display: display}, true
 }
 
-func tableOf(artifact *assistantartifact.Artifact) (*board.TableRead, bool) {
+func tableOf(artifact *assistantartifact.Artifact) (*boardassemble.TableRead, bool) {
 	var payload tableViewPayload
 	if err := jsonutils.Convert(artifact.Payload, &payload); err != nil ||
 		len(payload.Columns) == 0 {
@@ -108,7 +109,7 @@ func tableOf(artifact *assistantartifact.Artifact) (*board.TableRead, bool) {
 		table.Rows = append(table.Rows, cells)
 	}
 
-	return &board.TableRead{Title: artifact.Title, Table: table}, true
+	return &boardassemble.TableRead{Title: artifact.Title, Table: table}, true
 }
 
 func kindOf(display assistantartifact.DisplayType) analysis.ValueKind {
@@ -150,7 +151,7 @@ func cellOf(display assistantartifact.DisplayType, value any) any {
 	}
 }
 
-func (s *Service) checkArtifacts(ctx context.Context, req *agentports.BoardFillRequest) error {
+func (s *Service) checkArtifacts(ctx context.Context, req *assistantports.BoardFillRequest) error {
 	for idx := range req.Board.Blocks {
 		block := &req.Board.Blocks[idx]
 		at := idx + 1
@@ -181,7 +182,7 @@ func (s *Service) checkArtifacts(ctx context.Context, req *agentports.BoardFillR
 
 func (s *Service) checkFigures(
 	ctx context.Context,
-	req *agentports.BoardFillRequest,
+	req *assistantports.BoardFillRequest,
 	block *board.Block,
 	at int,
 ) error {
@@ -227,7 +228,7 @@ func checkAnalysisBlock(block *board.Block, display *analysis.Display, at int) e
 
 func (s *Service) analysisFor(
 	ctx context.Context,
-	req *agentports.BoardFillRequest,
+	req *assistantports.BoardFillRequest,
 	id pulid.ID,
 	at int,
 ) (*analysis.Display, error) {

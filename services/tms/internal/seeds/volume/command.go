@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/keel/keelcli"
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/seeds/volume/volumegen"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -25,8 +26,12 @@ var Command = keelcli.Command{
 
 func runCommand(ctx context.Context, env *keelcli.Env, args []string) error {
 	fs := env.FlagSet("volume")
-	shipments := fs.Int("shipments", DefaultShipments, "number of shipments to generate")
-	months := fs.Int("months", DefaultHistoryMonths, "months of history to spread the data across")
+	shipments := fs.Int("shipments", volumegen.DefaultShipments, "number of shipments to generate")
+	months := fs.Int(
+		"months",
+		volumegen.DefaultHistoryMonths,
+		"months of history to spread the data across",
+	)
 	seedValue := fs.Uint64("seed", 0, "random seed for a reproducible data set (0 picks one)")
 	org := fs.String("org", "", "organization to fill (default: the development organization)")
 	if err := env.Parse(fs, args); err != nil {
@@ -54,7 +59,7 @@ func runCommand(ctx context.Context, env *keelcli.Env, args []string) error {
 		return ErrEnvironment
 	}
 
-	report, err := Run(ctx, db, Options{
+	report, err := Run(ctx, db, volumegen.Options{
 		Shipments:      *shipments,
 		HistoryMonths:  *months,
 		Seed:           *seedValue,

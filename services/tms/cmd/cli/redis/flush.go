@@ -46,6 +46,7 @@ func runRedisFlush(cmd *cobra.Command, args []string) error {
 		fx.Provide(func() *infraConfig.Config {
 			return cfg
 		}),
+		infraConfig.SectionProviders,
 		fx.Provide(infraConfig.ProvideLogger),
 		infrastructure.RedisModule,
 		fx.Invoke(flushRedis),

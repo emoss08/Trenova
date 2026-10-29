@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,17 +44,17 @@ func New(p Params) tenantports.SequenceConfigRepository {
 func (r *repository) GetByTenant(
 	ctx context.Context,
 	req tenantports.GetSequenceConfigRequest,
-) (*tenant.SequenceConfigDocument, error) {
-	var found []*tenant.SequenceConfig
+) (*sequenceconfig.SequenceConfigDocument, error) {
+	var found []*sequenceconfig.SequenceConfig
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.SequenceConfigDocument]{
-		Find: func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*sequenceconfig.SequenceConfigDocument]{
+		Find: func(ctx context.Context) (*sequenceconfig.SequenceConfigDocument, error) {
 			configs, err := r.listRequired(ctx)
 			if err != nil {
 				return nil, err
 			}
 			found = configs
-			if len(configs) < len(tenant.RequiredSequenceTypes()) {
+			if len(configs) < len(sequenceconfig.RequiredSequenceTypes()) {
 				return nil, sql.ErrNoRows
 			}
 
@@ -63,7 +63,7 @@ func (r *repository) GetByTenant(
 		Create: func(ctx context.Context) error {
 			return r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 		},
-		Default: func() *tenant.SequenceConfigDocument {
+		Default: func() *sequenceconfig.SequenceConfigDocument {
 			return sequenceConfigDocument(
 				req.TenantInfo,
 				withDefaults(found, req.TenantInfo.OrgID, req.TenantInfo.BuID),
@@ -74,18 +74,18 @@ func (r *repository) GetByTenant(
 
 func sequenceConfigDocument(
 	tenantInfo pagination.TenantInfo,
-	configs []*tenant.SequenceConfig,
-) *tenant.SequenceConfigDocument {
+	configs []*sequenceconfig.SequenceConfig,
+) *sequenceconfig.SequenceConfigDocument {
 	sort.Slice(configs, func(i, j int) bool {
-		return tenant.SequenceTypeSortOrder(
+		return sequenceconfig.SequenceTypeSortOrder(
 			configs[i].SequenceType,
-		) < tenant.SequenceTypeSortOrder(
+		) < sequenceconfig.SequenceTypeSortOrder(
 			configs[j].SequenceType,
 		)
 	})
 	normalizeSequenceConfigs(configs)
 
-	return &tenant.SequenceConfigDocument{
+	return &sequenceconfig.SequenceConfigDocument{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Configs:        configs,
@@ -93,21 +93,25 @@ func sequenceConfigDocument(
 }
 
 func withDefaults(
-	saved []*tenant.SequenceConfig,
+	saved []*sequenceconfig.SequenceConfig,
 	orgID, buID pulid.ID,
-) []*tenant.SequenceConfig {
-	bySequence := make(map[tenant.SequenceType]*tenant.SequenceConfig, len(saved))
+) []*sequenceconfig.SequenceConfig {
+	bySequence := make(map[sequenceconfig.SequenceType]*sequenceconfig.SequenceConfig, len(saved))
 	for _, cfg := range saved {
 		bySequence[cfg.SequenceType] = cfg
 	}
 
-	configs := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
-	for _, sequenceType := range tenant.RequiredSequenceTypes() {
+	configs := make(
+		[]*sequenceconfig.SequenceConfig,
+		0,
+		len(sequenceconfig.RequiredSequenceTypes()),
+	)
+	for _, sequenceType := range sequenceconfig.RequiredSequenceTypes() {
 		if cfg, ok := bySequence[sequenceType]; ok {
 			configs = append(configs, cfg)
 			continue
 		}
-		if cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
+		if cfg := sequenceconfig.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
 			configs = append(configs, cfg)
 		}
 	}
@@ -115,9 +119,9 @@ func withDefaults(
 	return configs
 }
 
-func (r *repository) listRequired(ctx context.Context) ([]*tenant.SequenceConfig, error) {
-	sc := tenantdb.SequenceConfigs
-	requiredTypes := tenant.RequiredSequenceTypes()
+func (r *repository) listRequired(ctx context.Context) ([]*sequenceconfig.SequenceConfig, error) {
+	sc := sequenceconfigdb.SequenceConfigs
+	requiredTypes := sequenceconfig.RequiredSequenceTypes()
 
 	return sc.Where(sc.SequenceType.In(requiredTypes...)).
 		Limit(len(requiredTypes)).
@@ -125,78 +129,88 @@ func (r *repository) listRequired(ctx context.Context) ([]*tenant.SequenceConfig
 		List(ctx, r.db.Keel(ctx))
 }
 
-func normalizeSequenceConfigs(configs []*tenant.SequenceConfig) {
+func normalizeSequenceConfigs(configs []*sequenceconfig.SequenceConfig) {
 	for _, cfg := range configs {
-		if cfg == nil || cfg.SequenceType != tenant.SequenceTypeLocationCode {
+		if cfg == nil || cfg.SequenceType != sequenceconfig.SequenceTypeLocationCode {
 			continue
 		}
 
-		cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
+		cfg.LocationCodeStrategy = sequenceconfig.EffectiveLocationCodeStrategy(
+			cfg.LocationCodeStrategy,
+		)
 	}
 }
 
 func (r *repository) UpdateByTenant(
 	ctx context.Context,
-	doc *tenant.SequenceConfigDocument,
-) (*tenant.SequenceConfigDocument, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
-		configs := make([]*tenant.SequenceConfig, 0, len(doc.Configs))
-		for _, cfg := range doc.Configs {
-			if cfg == nil {
-				continue
+	doc *sequenceconfig.SequenceConfigDocument,
+) (*sequenceconfig.SequenceConfigDocument, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*sequenceconfig.SequenceConfigDocument, error) {
+			configs := make([]*sequenceconfig.SequenceConfig, 0, len(doc.Configs))
+			for _, cfg := range doc.Configs {
+				if cfg == nil {
+					continue
+				}
+
+				cfg.OrganizationID = doc.OrganizationID
+				cfg.BusinessUnitID = doc.BusinessUnitID
+				configs = append(configs, cfg)
 			}
 
-			cfg.OrganizationID = doc.OrganizationID
-			cfg.BusinessUnitID = doc.BusinessUnitID
-			configs = append(configs, cfg)
-		}
-
-		if len(configs) > 0 {
-			sc := tenantdb.SequenceConfigs
-			if _, err := sc.Upsert(
-				ctx,
-				r.db.Keel(ctx),
-				configs,
-				keel.OnConflict(sc.SequenceType, sc.OrganizationID, sc.BusinessUnitID).Update(
-					sc.Prefix,
-					sc.IncludeYear,
-					sc.YearDigits,
-					sc.IncludeMonth,
-					sc.IncludeWeekNumber,
-					sc.IncludeDay,
-					sc.SequenceDigits,
-					sc.IncludeLocationCode,
-					sc.IncludeRandomDigits,
-					sc.RandomDigitsCount,
-					sc.IncludeCheckDigit,
-					sc.IncludeBusinessUnitCode,
-					sc.UseSeparators,
-					sc.SeparatorChar,
-					sc.AllowCustomFormat,
-					sc.CustomFormat,
-					sc.LocationCodeStrategy,
-				),
-			); err != nil {
-				return nil, dberror.MapRetryableTransactionError(
-					fmt.Errorf("upsert sequence configs: %w", err),
-					busyMessage,
-				)
+			if len(configs) > 0 {
+				sc := sequenceconfigdb.SequenceConfigs
+				if _, err := sc.Upsert(
+					ctx,
+					r.db.Keel(ctx),
+					configs,
+					keel.OnConflict(sc.SequenceType, sc.OrganizationID, sc.BusinessUnitID).Update(
+						sc.Prefix,
+						sc.IncludeYear,
+						sc.YearDigits,
+						sc.IncludeMonth,
+						sc.IncludeWeekNumber,
+						sc.IncludeDay,
+						sc.SequenceDigits,
+						sc.IncludeLocationCode,
+						sc.IncludeRandomDigits,
+						sc.RandomDigitsCount,
+						sc.IncludeCheckDigit,
+						sc.IncludeBusinessUnitCode,
+						sc.UseSeparators,
+						sc.SeparatorChar,
+						sc.AllowCustomFormat,
+						sc.CustomFormat,
+						sc.LocationCodeStrategy,
+					),
+				); err != nil {
+					return nil, dberror.MapRetryableTransactionError(
+						fmt.Errorf("upsert sequence configs: %w", err),
+						busyMessage,
+					)
+				}
 			}
-		}
 
-		return r.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: doc.OrganizationID,
-				BuID:  doc.BusinessUnitID,
-			},
-		})
-	})
+			return r.GetByTenant(ctx, tenantports.GetSequenceConfigRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: doc.OrganizationID,
+					BuID:  doc.BusinessUnitID,
+				},
+			})
+		},
+	)
 }
 
 func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) error {
-	defaults := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
-	for _, sequenceType := range tenant.RequiredSequenceTypes() {
-		if cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
+	defaults := make(
+		[]*sequenceconfig.SequenceConfig,
+		0,
+		len(sequenceconfig.RequiredSequenceTypes()),
+	)
+	for _, sequenceType := range sequenceconfig.RequiredSequenceTypes() {
+		if cfg := sequenceconfig.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
 			defaults = append(defaults, cfg)
 		}
 	}
@@ -204,7 +218,7 @@ func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) e
 		return nil
 	}
 
-	sc := tenantdb.SequenceConfigs
+	sc := sequenceconfigdb.SequenceConfigs
 	if _, err := sc.CreateOrSkip(
 		ctx,
 		r.db.Keel(ctx),

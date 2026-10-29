@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -45,11 +45,11 @@ type Scheduler struct {
 	l       *zap.Logger
 }
 
-func NewScheduler(p SchedulerParams) agentports.ChapterScheduler {
+func NewScheduler(p SchedulerParams) assistantchapterports.ChapterScheduler {
 	return &Scheduler{signals: p.Signals, l: p.Logger.Named("job.assistant-chapters")}
 }
 
-func (s *Scheduler) Cue(ctx context.Context, req *agentports.ChapterTurnRequest) {
+func (s *Scheduler) Cue(ctx context.Context, req *assistantchapterports.ChapterTurnRequest) {
 	if s.signals == nil || req == nil || req.ThreadID.IsNil() || req.TurnID.IsNil() {
 		return
 	}

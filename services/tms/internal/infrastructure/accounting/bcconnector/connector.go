@@ -8,18 +8,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcrefsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/restx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-var ErrNotConfigured = errors.New("business central is not configured on this instance")
 
 const (
 	maxBoundApps            = 512
@@ -28,10 +34,6 @@ const (
 )
 
 var (
-	errNoRedirect = errors.New(
-		"business central needs app.webBaseUrl or accounting.businessCentral.redirectUrl " +
-			"to build its callback",
-	)
 	errWebhookSignature = errors.New(
 		"business central notifications are verified by their subscription, not a signature",
 	)
@@ -40,20 +42,21 @@ var (
 type Params struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Limiter restx.Limiter `name:"accountingLimiter" optional:"true"`
+	AccountingConfig *accountingconfig.Config
+	AppConfig        *appconfig.Config
+	Logger           *zap.Logger
+	Limiter          restx.Limiter `name:"accountingLimiter" optional:"true"`
 }
 
 type Provider struct {
-	instance       *accountingsyncports.AccountingApp
+	instance       *accountingconnectorports.AccountingApp
 	redirectURL    string
 	webhookBaseURL string
 	apiOpts        []businesscentral.Option
 	oauthOpts      []businesscentral.Option
 	gate           *companyGate
-	locks          *batchLocks
-	setups         *postingSetups
+	locks          *bcsession.BatchLocks
+	setups         *bcsession.PostingSetups
 	now            func() time.Time
 	l              *zap.Logger
 
@@ -62,30 +65,33 @@ type Provider struct {
 }
 
 var (
-	_ accountingsyncports.AccountingProvider             = (*Provider)(nil)
-	_ accountingsyncports.AccountingSubscriptionProvider = (*Provider)(nil)
+	_ accountingconnectorports.AccountingProvider             = (*Provider)(nil)
+	_ accountingconnectorports.AccountingSubscriptionProvider = (*Provider)(nil)
 )
 
 type Connector struct {
-	oauth      *businesscentral.OAuthClient
-	apiOpts    []businesscentral.Option
-	httpClient *http.Client
-	locks      *batchLocks
-	setups     *postingSetups
-	now        func() time.Time
-	l          *zap.Logger
+	*bcsession.Session
+	*bcdocsync.Documents
+	*bcrefsync.References
+	oauth  *businesscentral.OAuthClient
+	setups *bcsession.PostingSetups
 }
 
-var _ accountingsyncports.AccountingConnector = (*Connector)(nil)
+var (
+	_ accountingconnectorports.AccountingConnector        = (*Connector)(nil)
+	_ accountingconnectorports.AccountingDocumentWriter   = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
+)
 
 func New(p Params) (*Provider, error) {
-	cfg := p.Config.Accounting.BusinessCentral
+	cfg := p.AccountingConfig.BusinessCentral
 	provider := &Provider{
-		redirectURL:    cfg.GetRedirectURL(&p.Config.App),
-		webhookBaseURL: cfg.GetWebhookBaseURL(&p.Config.App),
+		redirectURL:    cfg.GetRedirectURL(p.AppConfig),
+		webhookBaseURL: cfg.GetWebhookBaseURL(p.AppConfig),
 		gate:           newCompanyGate(),
-		locks:          newBatchLocks(),
-		setups:         newPostingSetups(time.Now),
+		locks:          bcsession.NewBatchLocks(),
+		setups:         bcsession.NewPostingSetups(time.Now),
 		now:            time.Now,
 		l:              p.Logger.Named("accounting.businesscentral"),
 		bound:          make(map[string]*Connector),
@@ -96,10 +102,10 @@ func New(p Params) (*Provider, error) {
 			businesscentral.WithLimiter(p.Limiter, limiterPrefix),
 		)
 	}
-	if cfg.IsConfigured(&p.Config.App) {
-		provider.instance = &accountingsyncports.AccountingApp{
-			Source:       accountingsync.AppSourceInstance,
-			Environment:  accountingsync.AppEnvironmentProduction,
+	if cfg.IsConfigured(p.AppConfig) {
+		provider.instance = &accountingconnectorports.AccountingApp{
+			Source:       accountingconnection.AppSourceInstance,
+			Environment:  accountingprovider.AppEnvironmentProduction,
 			ClientID:     strings.TrimSpace(cfg.ClientID),
 			ClientSecret: strings.TrimSpace(cfg.ClientSecret),
 		}
@@ -111,7 +117,7 @@ func (p *Provider) IntegrationType() integration.Type {
 	return integration.TypeBusinessCentral
 }
 
-func (p *Provider) InstanceApp() (*accountingsyncports.AccountingApp, bool) {
+func (p *Provider) InstanceApp() (*accountingconnectorports.AccountingApp, bool) {
 	if p.instance == nil {
 		return nil, false
 	}
@@ -124,14 +130,14 @@ func (p *Provider) RedirectURL() string {
 }
 
 func (p *Provider) Bind(
-	app *accountingsyncports.AccountingApp,
-) (accountingsyncports.AccountingConnector, error) {
+	app *accountingconnectorports.AccountingApp,
+) (accountingconnectorports.AccountingConnector, error) {
 	return p.bind(app)
 }
 
-func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, error) {
+func (p *Provider) bind(app *accountingconnectorports.AccountingApp) (*Connector, error) {
 	if app == nil {
-		return nil, ErrNotConfigured
+		return nil, bcsession.ErrNotConfigured
 	}
 
 	key := bindingKey(app)
@@ -141,13 +147,18 @@ func (p *Provider) bind(app *accountingsyncports.AccountingApp) (*Connector, err
 		return conn, nil
 	}
 
+	session := bcsession.NewSession(bcsession.SessionParams{
+		APIOpts:    p.apiOpts,
+		HTTPClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
+		Locks:      p.locks,
+		Setups:     p.setups,
+		Now:        p.now,
+	})
 	conn := &Connector{
-		apiOpts:    p.apiOpts,
-		httpClient: &http.Client{Transport: p.gate.transport(http.DefaultTransport)},
-		locks:      p.locks,
+		Session:    session,
+		Documents:  &bcdocsync.Documents{Session: session},
+		References: &bcrefsync.References{Session: session},
 		setups:     p.setups,
-		now:        p.now,
-		l:          p.l,
 	}
 	if p.redirectURL != "" {
 		oauth, err := businesscentral.NewOAuthClient(businesscentral.OAuthConfig{
@@ -176,7 +187,7 @@ func (p *Provider) WebhookSignatureHeader() string {
 }
 
 func (p *Provider) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
+	return bcsession.ClassifyError(err)
 }
 
 func (p *Provider) NotificationBaseURL() string {
@@ -185,14 +196,14 @@ func (p *Provider) NotificationBaseURL() string {
 
 func (p *Provider) ParseNotifications(
 	body []byte,
-) ([]accountingsyncports.AccountingWebhookNotification, error) {
-	parsed, err := businesscentral.ParseNotifications(body)
+) ([]accountingconnectorports.AccountingWebhookNotification, error) {
+	parsed, err := businesscentralwebhook.ParseNotifications(body)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]accountingsyncports.AccountingWebhookNotification, 0, len(parsed))
+	out := make([]accountingconnectorports.AccountingWebhookNotification, 0, len(parsed))
 	for idx := range parsed {
-		out = append(out, accountingsyncports.AccountingWebhookNotification{
+		out = append(out, accountingconnectorports.AccountingWebhookNotification{
 			SubscriptionID: parsed[idx].SubscriptionID,
 			ClientState:    parsed[idx].ClientState,
 			Resource:       parsed[idx].Resource,
@@ -203,50 +214,30 @@ func (p *Provider) ParseNotifications(
 }
 
 func (p *Provider) ValidationToken(raw string) (string, bool) {
-	return businesscentral.ValidationToken(raw)
+	return businesscentralwebhook.ValidationToken(raw)
 }
 
-func bindingKey(app *accountingsyncports.AccountingApp) string {
+func bindingKey(app *accountingconnectorports.AccountingApp) string {
 	return hashutils.SHA256Hex(
 		strings.TrimSpace(app.ClientID) + "\x00" + strings.TrimSpace(app.ClientSecret),
 	)
 }
 
-func (c *Connector) IntegrationType() integration.Type {
-	return integration.TypeBusinessCentral
-}
-
-func (c *Connector) options() []businesscentral.Option {
-	opts := make([]businesscentral.Option, 0, len(c.apiOpts)+1)
-	opts = append(opts, businesscentral.WithHTTPClient(c.httpClient))
-	return append(opts, c.apiOpts...)
-}
-
-func (c *Connector) client(
-	auth accountingsyncports.AccountingDocumentAuth,
-) (*businesscentral.Client, error) {
-	ref, err := businesscentral.ParseCompanyRef(auth.RealmID)
-	if err != nil {
-		return nil, err
-	}
-	return businesscentral.New(ref, auth.AccessToken, c.options()...)
-}
-
 func (c *Connector) AuthorizeURL(
-	req accountingsyncports.AccountingAuthorizeRequest,
+	req accountingconnectorports.AccountingAuthorizeRequest,
 ) (string, error) {
 	if c.oauth == nil {
-		return "", errNoRedirect
+		return "", bcsession.ErrNoRedirect
 	}
 	return c.oauth.AuthorizeURL(req.State)
 }
 
 func (c *Connector) ExchangeCode(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCodeExchange,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingCodeExchange,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, bcsession.ErrNoRedirect
 	}
 	token, err := c.oauth.ExchangeCode(ctx, req.Code)
 	if err != nil {
@@ -257,10 +248,10 @@ func (c *Connector) ExchangeCode(
 
 func (c *Connector) Refresh(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRefreshRequest,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	req *accountingconnectorports.AccountingRefreshRequest,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, bcsession.ErrNoRedirect
 	}
 	token, err := c.oauth.Refresh(ctx, req.RefreshToken)
 	if err != nil {
@@ -271,29 +262,29 @@ func (c *Connector) Refresh(
 
 func (c *Connector) Revoke(
 	_ context.Context,
-	_ *accountingsyncports.AccountingRevokeRequest,
+	_ *accountingconnectorports.AccountingRevokeRequest,
 ) error {
 	return nil
 }
 
 func (c *Connector) ReleaseCompanies(
 	_ context.Context,
-	_ *accountingsyncports.AccountingTokenGrant,
-	_ []accountingsyncports.AccountingCompany,
+	_ *accountingconnectorports.AccountingTokenGrant,
+	_ []accountingconnectorports.AccountingCompany,
 ) error {
 	return nil
 }
 
 func (c *Connector) VerifyApp(ctx context.Context) error {
 	if c.oauth == nil {
-		return errNoRedirect
+		return bcsession.ErrNoRedirect
 	}
 	err := c.oauth.ProbeCredentials(ctx)
 	switch {
-	case err == nil, businesscentral.IsInvalidGrant(err):
+	case err == nil, businesscentralerrors.IsInvalidGrant(err):
 		return nil
-	case businesscentral.IsInvalidClient(err):
-		return accountingsyncports.ErrAccountingAppRejected
+	case businesscentralerrors.IsInvalidClient(err):
+		return accountingconnectorports.ErrAccountingAppRejected
 	default:
 		return err
 	}
@@ -303,16 +294,12 @@ func (c *Connector) VerifyWebhook(_ string, _ []byte) error {
 	return errWebhookSignature
 }
 
-func (c *Connector) ClassifyError(err error) accountingsync.ErrorCategory {
-	return classifyError(err)
-}
-
-func grantOf(token *businesscentral.Token) *accountingsyncports.AccountingTokenGrant {
-	return &accountingsyncports.AccountingTokenGrant{
+func grantOf(token *businesscentral.Token) *accountingconnectorports.AccountingTokenGrant {
+	return &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    token.AccessToken,
 		RefreshToken:   token.RefreshToken,
 		AccessTokenTTL: token.ExpiresIn,
-		RefreshTokenTTL: accountingsync.MustProfile(integration.TypeBusinessCentral).
+		RefreshTokenTTL: accountingprovider.MustProfile(integration.TypeBusinessCentral).
 			RefreshTokenLifetime,
 	}
 }

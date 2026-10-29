@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,13 +45,13 @@ type Params struct {
 	fx.In
 
 	Control     tenantports.AgentControlRepository
-	Runs        agentports.AgentRunRepository
+	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 }
 
 type Resolver struct {
 	control     tenantports.AgentControlRepository
-	runs        agentports.AgentRunRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 }
 
@@ -115,9 +116,9 @@ func (r *Resolver) ForRuns(
 		return verdicts, nil
 	}
 
-	orgShadow, err := r.Organization(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
+	orgShadow, orgErr := r.Organization(ctx, tenantInfo)
+	if orgErr != nil {
+		return nil, orgErr
 	}
 	if orgShadow {
 		for _, id := range runIDs {
@@ -133,7 +134,7 @@ func (r *Resolver) ForRuns(
 			continue
 		}
 
-		run, err := r.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+		run, err := r.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 			ID:         id,
 			TenantInfo: &tenantInfo,
 		})
@@ -202,12 +203,12 @@ func PlanVerdict(
 	return Verdict{}
 }
 
-func (v Verdict) Hold() *agentports.ProposalHold {
+func (v Verdict) Hold() *assistantproposalports.ProposalHold {
 	if !v.Shadow() {
 		return nil
 	}
 
-	return &agentports.ProposalHold{Reason: string(v.Cause), AgentName: v.AgentName}
+	return &assistantproposalports.ProposalHold{Reason: string(v.Cause), AgentName: v.AgentName}
 }
 
 func VerdictFor(orgShadow bool, definition *agentdefinition.Definition) Verdict {

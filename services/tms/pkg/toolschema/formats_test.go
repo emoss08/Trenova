@@ -3,6 +3,7 @@ package toolschema
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/toolschematest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestValidate_AssertsTheDateFormats(t *testing.T) {
 		"pickup": "2026-10-01T08:00",
 	}))
 
-	errs := fieldErrors(t, Validate(datedSchema(), map[string]any{
+	errs := toolschematest.FieldErrors(t, Validate(datedSchema(), map[string]any{
 		"day":    "10/01/2026",
 		"at":     "2026-10-01 08:00",
 		"pickup": "2026-10-01T08:00:00Z",
@@ -46,7 +47,10 @@ func TestValidate_AssertsTheDateFormats(t *testing.T) {
 func TestValidate_NamesAUnixTimeAsOne(t *testing.T) {
 	t.Parallel()
 
-	errs := fieldErrors(t, Validate(datedSchema(), map[string]any{"day": "1790812800"}))
+	errs := toolschematest.FieldErrors(
+		t,
+		Validate(datedSchema(), map[string]any{"day": "1790812800"}),
+	)
 
 	assert.Equal(t,
 		"1790812800 is a Unix time; send a date as YYYY-MM-DD, such as 2026-10-01", errs["day"])

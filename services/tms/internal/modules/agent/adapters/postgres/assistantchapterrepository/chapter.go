@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,16 +34,16 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.ChapterRepository {
+func New(p Params) assistantchapterports.ChapterRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.assistant-chapter-repository"),
 	}
 }
 
-func chaptersQuery(threadID pulid.ID) *keel.Query[*conversation.Chapter] {
-	c := conversationdb.Chapters
-	tr := conversationdb.AssistantTurns.As("ctr")
+func chaptersQuery(threadID pulid.ID) *keel.Query[*conversationchapter.Chapter] {
+	c := conversationchapterdb.Chapters
+	tr := conversationturndb.AssistantTurns.As("ctr")
 	m := conversationdb.Messages.As("cfm")
 	first := keel.Scalar(m.
 		Pick(m.Sequence).
@@ -58,11 +60,11 @@ func chaptersQuery(threadID pulid.ID) *keel.Query[*conversation.Chapter] {
 
 func (r *repository) List(
 	ctx context.Context,
-	req agentports.ListChaptersRequest,
-) ([]*conversation.Chapter, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.Chapter, error) {
+	req assistantchapterports.ListChaptersRequest,
+) ([]*conversationchapter.Chapter, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversationchapter.Chapter, error) {
 		rows, err := chaptersQuery(req.ThreadID).
-			Limit(conversation.MaxChaptersPerThread).
+			Limit(conversationchapter.MaxChaptersPerThread).
 			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list chapters: %w", err)
@@ -74,10 +76,10 @@ func (r *repository) List(
 
 func (r *repository) Get(
 	ctx context.Context,
-	req agentports.GetChapterRequest,
-) (*conversation.Chapter, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Chapter, error) {
-		c := conversationdb.Chapters
+	req *assistantchapterports.GetChapterRequest,
+) (*conversationchapter.Chapter, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
+		c := conversationchapterdb.Chapters
 		row, err := chaptersQuery(req.ThreadID).Where(c.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, chapterErrors.Map(err, req.ID.String())
@@ -89,10 +91,10 @@ func (r *repository) Get(
 
 func (r *repository) ForTurn(
 	ctx context.Context,
-	req agentports.ChapterForTurnRequest,
-) (*conversation.Chapter, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Chapter, error) {
-		c := conversationdb.Chapters
+	req *assistantchapterports.ChapterForTurnRequest,
+) (*conversationchapter.Chapter, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
+		c := conversationchapterdb.Chapters
 		row, err := chaptersQuery(req.ThreadID).
 			Where(c.TurnID.Eq(req.TurnID)).
 			One(ctx, r.db.Keel(ctx))
@@ -107,9 +109,12 @@ func (r *repository) ForTurn(
 	})
 }
 
-func (r *repository) Count(ctx context.Context, req agentports.ListChaptersRequest) (int, error) {
+func (r *repository) Count(
+	ctx context.Context,
+	req assistantchapterports.ListChaptersRequest,
+) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		count, err := c.Where(c.ThreadID.Eq(req.ThreadID)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count chapters: %w", err)
@@ -121,12 +126,12 @@ func (r *repository) Count(ctx context.Context, req agentports.ListChaptersReque
 
 func (r *repository) Create(
 	ctx context.Context,
-	chapter *conversation.Chapter,
-) (*conversation.Chapter, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Chapter, error) {
+	chapter *conversationchapter.Chapter,
+) (*conversationchapter.Chapter, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
-		c := conversationdb.Chapters
-		if _, err := c.CreateOrSkip(ctx, db, []*conversation.Chapter{chapter}); err != nil {
+		c := conversationchapterdb.Chapters
+		if _, err := c.CreateOrSkip(ctx, db, []*conversationchapter.Chapter{chapter}); err != nil {
 			return nil, chapterErrors.Map(err, chapter.ID.String())
 		}
 
@@ -141,18 +146,18 @@ func (r *repository) Create(
 
 func (r *repository) Retitle(
 	ctx context.Context,
-	req agentports.RetitleChapterRequest,
-) (*conversation.Chapter, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversation.Chapter, error) {
+	req *assistantchapterports.RetitleChapterRequest,
+) (*conversationchapter.Chapter, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*conversationchapter.Chapter, error) {
 		db := r.db.Keel(ctx)
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 
 		var guard keel.Pred
 		switch {
 		case req.Version != nil:
 			guard = c.Version.Eq(*req.Version)
-		case req.TitleSource != conversation.ChapterTitlePerson:
-			guard = c.TitleSource.NotIn(conversation.ChapterTitlePerson)
+		case req.TitleSource != conversationchapter.ChapterTitlePerson:
+			guard = c.TitleSource.NotIn(conversationchapter.ChapterTitlePerson)
 		}
 
 		n, err := c.Where(c.ID.Eq(req.ID), c.ThreadID.Eq(req.ThreadID), guard).Update(ctx, db,
@@ -181,14 +186,14 @@ func (r *repository) Retitle(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req agentports.DeleteChapterRequest,
+	req *assistantchapterports.DeleteChapterRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		c := conversationdb.Chapters
+		c := conversationchapterdb.Chapters
 		n, err := c.Where(
 			c.ID.Eq(req.ID),
 			c.ThreadID.Eq(req.ThreadID),
-			keel.When(req.KeepPerson, c.TitleSource.NotIn(conversation.ChapterTitlePerson)),
+			keel.When(req.KeepPerson, c.TitleSource.NotIn(conversationchapter.ChapterTitlePerson)),
 		).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, chapterErrors.Map(err, req.ID.String())
@@ -200,7 +205,7 @@ func (r *repository) Delete(
 
 func (r *repository) TurnOfMessage(
 	ctx context.Context,
-	req agentports.TurnOfMessageRequest,
+	req *assistantchapterports.TurnOfMessageRequest,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
 		m := conversationdb.Messages

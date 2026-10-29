@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,20 +23,20 @@ type Email struct {
 	email emailports.EmailService
 }
 
-var _ factoringports.FactoringTransport = (*Email)(nil)
+var _ factoringsubmissionports.FactoringTransport = (*Email)(nil)
 
-func NewEmail(p EmailParams) factoringports.FactoringTransport {
+func NewEmail(p EmailParams) factoringsubmissionports.FactoringTransport {
 	return &Email{email: p.Email}
 }
 
-func (t *Email) Method() factoring.TransportMethod {
-	return factoring.TransportMethodEmail
+func (t *Email) Method() factoringsubmission.TransportMethod {
+	return factoringsubmission.TransportMethodEmail
 }
 
 func (t *Email) Send(
 	ctx context.Context,
-	req *factoringports.TransportSendRequest,
-) (*factoringports.TransportSendResult, error) {
+	req *factoringsubmissionports.TransportSendRequest,
+) (*factoringsubmissionports.TransportSendResult, error) {
 	if err := checkSend(req); err != nil {
 		return nil, err
 	}
@@ -83,13 +83,13 @@ func (t *Email) Send(
 		}
 	}
 
-	return &factoringports.TransportSendResult{
+	return &factoringsubmissionports.TransportSendResult{
 		Reference: strings.Join(references, ", "),
 		Parts:     len(parts),
 	}, nil
 }
 
-func (t *Email) Test(_ context.Context, req *factoringports.TransportTestRequest) error {
+func (t *Email) Test(_ context.Context, req *factoringsubmissionports.TransportTestRequest) error {
 	if req == nil || req.Transport == nil {
 		return errortypes.NewBusinessError("There is no delivery setting to test")
 	}
@@ -102,14 +102,14 @@ func (t *Email) Test(_ context.Context, req *factoringports.TransportTestRequest
 }
 
 func PackAttachments(
-	files []factoringports.TransportFile,
+	files []factoringsubmissionports.TransportFile,
 	limit int64,
-) ([][]factoringports.TransportFile, error) {
+) ([][]factoringsubmissionports.TransportFile, error) {
 	if len(files) == 0 {
 		return nil, errortypes.NewBusinessError("The schedule has no files to send")
 	}
-	parts := make([][]factoringports.TransportFile, 0, 1)
-	current := make([]factoringports.TransportFile, 0, len(files))
+	parts := make([][]factoringsubmissionports.TransportFile, 0, 1)
+	current := make([]factoringsubmissionports.TransportFile, 0, len(files))
 	var size int64
 	for _, file := range files {
 		fileSize := int64(len(file.Content))
@@ -122,7 +122,7 @@ func PackAttachments(
 		}
 		if size+fileSize > limit && len(current) > 0 {
 			parts = append(parts, current)
-			current = make([]factoringports.TransportFile, 0, len(files))
+			current = make([]factoringsubmissionports.TransportFile, 0, len(files))
 			size = 0
 		}
 		current = append(current, file)
@@ -131,7 +131,7 @@ func PackAttachments(
 	return append(parts, current), nil
 }
 
-func checkSend(req *factoringports.TransportSendRequest) error {
+func checkSend(req *factoringsubmissionports.TransportSendRequest) error {
 	if req == nil || req.Submission == nil || req.Transport == nil {
 		return errortypes.NewBusinessError("The schedule has nowhere to go")
 	}

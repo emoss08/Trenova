@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func documentTypeColumns(ctx context.Context, nodePathPrefix string) []string {
 func documentTypeConnectionToModel(
 	result *pagination.CursorListResult[*documenttype.DocumentType],
 ) (*gqlmodel.DocumentTypeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *documenttype.DocumentType, cursor string) *gqlmodel.DocumentTypeEdge {
 			return &gqlmodel.DocumentTypeEdge{

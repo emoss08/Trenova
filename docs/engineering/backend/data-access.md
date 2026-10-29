@@ -97,7 +97,7 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   GiST index's predicate names stays inline with `keel.DynConst`.
 - **Partial and expression indexes under generic plans.** A prepared statement settles on a plan
   without its parameters' values, so a predicate reaches a partial index only through a constant.
-  keel writes a declared constant of an enum column into the statement (`s.Status.Eq(shipment.StatusNew)`
+  keel writes a declared constant of an enum column into the statement (`s.Status.Eq(shipmentvocab.StatusNew)`
   is `status = 'New'`); a fixed constant of a plain string column takes `keel.DynConst`. A lookup an
   index on `lower(code)` serves compares `t.Code.Lower().Eq(strings.ToLower(v))`, never `t.Code.Eq(v)`.
   Pin a hot path with `keeltest.UsesIndex` in `schemalint/index_plans_integration_test.go`.
@@ -204,7 +204,10 @@ struct.
   `listquery.Result(items, total)`; a total taken from rows already in memory (a whole set read
   with `AllInto`, a filtered scan) is `len` and exact. Never `keel.CountInto` for a list total.
 - **Select options** use `listquery.SelectOptions` with the search predicate the picker needs
-  (`ContainsFold` over the code and description).
+  (`ContainsFold` over the code and description). A picker hydrating its saved selection reads
+  every selected ID with the kind's one `…ByIDs` read and maps it through
+  `selectoption.OrderedItems`, which keeps the request order and drops an ID that was deleted or
+  is out of scope instead of failing the request (`*selectoptions` resolver packages).
 - **Code that pages to a total** never stops at an estimate: an estimate can sit below the rows
   that match when statistics are stale. Stop at a short or empty page, or at `Total` only when
   `TotalExact` (`invoiceshareservice/candidates.go`), and say whether there is a next page with
@@ -287,16 +290,16 @@ where keel has no typed form: `DynCase`, `DynRow`, arithmetic, text `||`, array 
 Validators build one checker over the entity's table:
 
 ```go
-checker := validationframework.NewKeelChecker(p.DB, tractordb.TractorsSchema())
-validationframework.NewTenantedValidatorBuilder[*tractor.Tractor]().
+checker := keelcheck.NewChecker(p.DB, tractordb.TractorsSchema())
+tenantedvalidation.NewBuilder[*tractor.Tractor]().
 	WithUniquenessChecker(checker).
 	WithReferenceChecker(checker)
 ```
 
 The checker answers references to the entity's table and every table it relates to; a table it
-does not relate to gets a `WithCustomReferenceCheck` with `validationframework.KeelReferenceCheck`,
+does not relate to gets a `WithCustomReferenceCheck` with `keelcheck.ReferenceCheck`,
 or, when the table belongs to a module this one may not import,
-`validationframework.KeelTableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
+`keelcheck.TableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
 table's `id`, `organization_id` and `business_unit_id`). A uniqueness check that must see rows
 row-level security hides (other organizations of the business unit) wraps the checker in a
 `UniquenessChecker` that puts `dbscope.WithSystem` on the context and pins the request's
@@ -317,7 +320,7 @@ security scoped.
 | Concern | Where it lives |
 |---|---|
 | Session timeouts (`statement_timeout`, `lock_timeout`, `idle_in_transaction_session_timeout`) | pgx runtime parameters, from `database.*Timeout` (`connection.go`, `sessionParams`) |
-| `application_name`, `connect_timeout`, `sslmode` | the DSN (`config.Config.GetDSN`) |
+| `application_name`, `connect_timeout`, `sslmode` | the DSN (`databaseconfig.Config.DSN`) |
 | Pool size and lifetimes | `maxOpenConns`, `connMaxLifetime`, `connMaxIdleTime` (and `database.system.maxOpenConns`) |
 | Enum types | keel registers every enum and its array type on each new connection with one catalog query |
 | Slow queries, tracing, query timing | one `slowQueryLog` per pool and `tracingObserver` (`go.sql.query_timing`) |
@@ -331,7 +334,7 @@ security scoped.
 | Wait ceiling | `database.maxWait` (default `60s`, `0` off) is keel's `Config.MaxWait` on the tenant and system pools: a wait for a slot or a connection that reaches it fails with `keel.ErrWaitLimit`, which `dberror.IsRetryableTransactionError` treats as retryable (`MapRetryableTransactionError` gives "busy, retry"), and a read waiting on another request's cache read reads the database itself. It sits above `server.requestTimeout`, so it ends only waits with no deadline of their own (jobs, consumers) |
 | Result cache | `database.cache` on the tenant pool ([Caching](#caching)); `trenova_db_cache_*` |
 | Query budgets | every REST request and GraphQL operation runs under `keel.Budget` ([Budgets](#budgets)) |
-| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`metrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
+| Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`platformmetrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
 
 `dbtx.Read`/`Write` and services' `kernelports.Transactor.Transact(ctx, opts, fn)` go through
 `Connection.Transact`:
@@ -387,14 +390,19 @@ hot path. Tests may set hard limits ([testing.md](testing.md#shapes-and-budgets)
 application sends. Integration test databases record each distinct statement text when
 `KEEL_SHAPES` names a file (`internal/testutil/shapetest`, wired into `seedtest` and every
 `Connection` the tests build), and `scripts/dbplans/dbplans.sh` builds `trenova_plans` on the test
-server (migrations, seeds, fixtures and `volume -shipments 20000`), runs `ANALYZE`, and runs
-`trenova-db plans -shapes FILE -sort-limit`: `EXPLAIN (GENERIC_PLAN)` of every shape, the plan a
+server (migrations, seeds, fixtures and `volume -shipments 20000`), runs `VACUUM (ANALYZE)` (a
+vacuumed table, as autovacuum keeps production's, prices an index-only scan by its index pages
+rather than a heap fetch per row), and runs `trenova-db plans -shapes FILE -sort-limit`: `EXPLAIN (GENERIC_PLAN)` of every shape, the plan a
 prepared statement settles on. It fails (exit 3) on a sequential scan of a relation over 10,000
 rows and on a `Sort` under a `Limit` over such a relation (a page sorted in full because no index
 gives its order); small reference tables pass. A shape that cannot be planned (a temporary table) is
 listed and does not fail. CI runs it after the integration tests; `task db-plans` runs both
-locally. A finding is fixed with the index the query needs, a constant that reaches a partial index,
-or a query whose order an index gives.
+locally. A finding is fixed with the index the query needs, a constant that reaches a partial index
+(a bound value never does under a generic plan: write it with `keel.ConstInt64`, `keel.ConstText`
+or an enum column's value), or a query whose order an index gives. A count or report over a
+tenant's rows gets an index bounded by its `WHERE` (tenant, status, time range) and a sargable
+range: a bucketed or computed timestamp (`created_at / 86400 * 86400 >= $1`, `$now - arrival > $2`)
+is rewritten as a range on the column itself.
 
 ## Migrations
 
@@ -565,7 +573,12 @@ against the generated tables (never raw SQL):
   account `admin` / `admin123!`, the Trenova Logistics and Trenova Transportation
   organizations, workers, equipment, shipments, ledgers, agent activity). Only `trenova-devdb`
   links them; each runs once per database, and a database marked production refuses them.
-  `requireDevelopment` refuses publicly known credentials on staging too.
+  `requireDevelopment` refuses publicly known credentials on staging too. Every fixture is
+  declared in `fixtures/fixtures.go`, in the order it registers; its `Run` lives in a domain
+  package under `fixtures/` (`workforcefixtures`, `shipmentfixtures`, …), with the shared
+  organization and user lookups in `tenantfixtures`. Seeds run in `After` order and, between
+  seeds `After` leaves free, in registration order, so a new fixture goes after every seed whose
+  rows it reads, and names in `After` the ones it cannot run without.
 
 Seed tenancy comes from `seedenv.Env`: the system scope for bookkeeping and global seeds, and an
 RLS tenant scope per organization for `PerTenant` seeds, with the loaded configuration on the
@@ -573,8 +586,9 @@ context (`seedenv.Config`). `task db-migrate` (`trenova-devdb up -env developmen
 applies every changed seed, `task db-seed [name=x]` applies seeds alone, `task db-seed-plan` says
 which would run and why, and `task db-reset` recreates the database from the migrated template
 (which carries the reference seeds) and applies the fixtures. To add a seed, add it to the right
-registry with `Seeds.Add(seed.Seed{…})`, name its `After` dependencies, and list any data file
-under `Inputs` so editing the file reruns it.
+registry with `Seeds.Add(seed.Seed{…})` (a fixture to `fixtures/fixtures.go`, its `Run` in the
+domain package it fills), name its `After` dependencies, and list any data file under `Inputs`
+so editing the file reruns it.
 
 Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
 seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
@@ -583,7 +597,11 @@ database not marked development or test. It streams rows with `COPY` (`Handle.Co
 records through `pkg/seqgen` like the application (over keel-backed sequence and format ports),
 and back-dates rows with `pulid.MustNewAt` and one `keel.Unnest` update per table, because keel
 stamps `autoupdate` columns with the current time on every write. An update that must not move a
-back-dated row's `updated_at` assigns `keepUpdated(h)`. When an entity gains a required relation
+back-dated row's `updated_at` assigns `volumegen.KeepUpdated(h)`. `volumegen` holds the generator
+every phase shares (its options, faker, numberer, tenant references, records and stores);
+`ledgervolume` posts journals and writes the AR rows several phases produce; each phase
+(`masterdatavolume`, `shipmentvolume`, `billingvolume`, …) is a package with one `Seed`
+function, and `volume.Run` calls them in order. When an entity gains a required relation
 or a derived row the application always writes (as every shipment gets an auto-order), generate it
 there too; write an optional relation only in the states where the application would have written
 it (a billing queue item only once a shipment is ready to invoice, a draft invoice only once the

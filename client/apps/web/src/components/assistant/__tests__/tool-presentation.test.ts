@@ -216,7 +216,7 @@ describe("parseToolResult", () => {
     });
   });
 
-  // The notice is the one the server actually writes (agentruntime/fence.go),
+  // The notice is the one the server actually writes (agentruntime/toolresult/fence.go),
   // not the "…(truncated)" marker it replaced. A fixture copied from the old
   // implementation kept passing while every real truncated result fell through
   // as ordinary text with nothing saying it was short.

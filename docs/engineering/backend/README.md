@@ -52,6 +52,32 @@ need is a port declared low and provided by the higher module.
 7. Agent tool or write-coverage entry (`agent-write-coverage.md`).
 8. Client screen through the `trenova-frontend` skill; seeds if development needs data.
 
+## Configuration
+
+`internal/infrastructure/config` holds the root `config.Config`, the loader (files, `.env`, the
+`TRENOVA_` environment) and the validation order. Each config section is its own package under it,
+`config/<section>config` (`databaseconfig`, `aiconfig`, `securityconfig`, ...), holding the
+section's `Config`, its `Defaults()` (keys relative to the section), its rules (`Validate`,
+`ValidateProduction`) and its getters. The root imports the sections; a section never imports the
+root.
+
+- **Consumers take their section from fx, not the root.** A constructor names the section in its
+  `Params` (`AIConfig *aiconfig.Config`, `StorageConfig *storageconfig.Config`), which
+  `config.SectionProviders` supplies, so an edit to one section recompiles only the code that
+  reads it (`infrastructure/minio/client.go`). A struct that keeps configuration stores the
+  sections it reads, one field each. A helper that combines sections lives on the section that
+  owns the data and takes the others as arguments (`databaseconfig.Config.DSN(appName, …)`,
+  `tenderingconfig.Config.PublicLinkBaseURL(app)`). Only the loader, the root fx providers and
+  the composition roots that hand-wire services from a loaded config (`cmd/cli`, `dbcli`, the
+  Desk bench, the seed runner) hold `*config.Config`.
+- **A hand-built fx graph** (a CLI command, a wiring test) that supplies `*config.Config` also
+  adds `config.SectionProviders`.
+- **A new section** is a package with `Config`, `Defaults()` and `Validate()` when it has rules, a
+  field on `config.Config`, its line in `setDefaults` and `validateConfig` (`loader.go`) and its
+  provider in `sectionproviders.go`.
+- Edition sections (`config.Section`, registered through `config.SectionsOption`) are how the
+  Cloud overlay adds paths the public build does not own; they decode into `Config.Extension`.
+
 ## Local infrastructure
 
 `task docker-up` starts `dev/compose.yml`: PostgreSQL with PostGIS (5432), Redis 8 (6379), Redis

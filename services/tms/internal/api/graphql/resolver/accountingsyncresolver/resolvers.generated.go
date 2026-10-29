@@ -3,17 +3,30 @@
 package accountingsyncresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	accountingconnectionports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	accountingdriftports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	accountinginboundports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	accountingmappingports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 )
 
 type Deps struct {
-	*base.Core
-	AccountingConnections    accountingsyncports.AccountingConnectionService
-	AccountingMappingService accountingsyncports.AccountingMappingService
-	AccountingSync           accountingsyncports.AccountingSyncService
-	AccountingInbound        accountingsyncports.AccountingInboundService
-	AccountingDrift          accountingsyncports.AccountingDriftService
+	*resolvercore.Core
+	AccountingConnectionStatus accountingconnectionports.AccountingConnectionStatusReader
+	AccountingAuthorization    accountingconnectionports.AccountingAuthorizationService
+	AccountingCertificates     accountingconnectionports.AccountingCertificateService
+	AccountingHealth           accountingconnectionports.AccountingHealthChecker
+	AccountingApps             accountingconnectionports.AccountingAppService
+	AccountingMappingReader    accountingmappingports.AccountingMappingReader
+	AccountingMappingDecisions accountingmappingports.AccountingMappingDecisionService
+	AccountingReferenceCreator accountingmappingports.AccountingReferenceCreator
+	AccountingSyncReader       accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup        accountingsyncports.AccountingSyncSetupService
+	AccountingSyncActions      accountingsyncports.AccountingSyncActionService
+	AccountingBackfillService  accountingsyncports.AccountingBackfillService
+	AccountingInbound          accountinginboundports.AccountingInboundService
+	AccountingDrift            accountingdriftports.AccountingDriftService
 }
 
 type AccountingAppCredentialResolver struct{ *Deps }

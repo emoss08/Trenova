@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,7 +19,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*ratezone.RateZone]
+	validator tenantedvalidation.EntityValidator[*ratezone.RateZone]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -27,9 +28,8 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func newBuilder(
 	db *postgres.Connection,
-) *validationframework.TenantedValidatorBuilder[*ratezone.RateZone] {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*ratezone.RateZone]().
+) *tenantedvalidation.Builder[*ratezone.RateZone] {
+	builder := tenantedvalidation.NewBuilder[*ratezone.RateZone]().
 		WithModelName("Rate Zone")
 
 	if db == nil {
@@ -38,7 +38,7 @@ func newBuilder(
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewKeelChecker(db, ratezonedb.RateZonesSchema()),
+			keelcheck.NewChecker(db, ratezonedb.RateZonesSchema()),
 		).
 		WithUniqueField(
 			"code",

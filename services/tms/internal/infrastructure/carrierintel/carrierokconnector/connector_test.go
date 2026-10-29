@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/carrierok"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -75,7 +78,7 @@ func testConnector(cfg *config.Config) *Connector {
 	if cfg == nil {
 		cfg = &config.Config{}
 	}
-	connector := New(cfg)
+	connector := New(&cfg.App, &cfg.CarrierIntelligence)
 	connector.extraOptions = []carrierok.Option{carrierok.WithRetry(restx.RetryConfig{})}
 	return connector
 }
@@ -121,7 +124,7 @@ func assertNoSecret(t *testing.T, err error) {
 func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	t.Parallel()
 
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	assert.Equal(t, integration.TypeCarrierOK, connector.IntegrationType())
 
 	descriptor := connector.Descriptor()
@@ -133,23 +136,23 @@ func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	prices := connector.PriceBook()
 	assert.Equal(
 		t,
-		carrierintel.BillingModelPerDOTMonth,
-		prices.Price(carrierintel.EndpointProfileFull).Model,
+		carrierintelusage.BillingModelPerDOTMonth,
+		prices.Price(carrierintelusage.EndpointProfileFull).Model,
 	)
-	assert.Equal(t, "3", prices.Price(carrierintel.EndpointProfileFull).UnitCost.String())
-	assert.Equal(t, "0.5", prices.Price(carrierintel.EndpointProfileLite).UnitCost.String())
+	assert.Equal(t, "3", prices.Price(carrierintelusage.EndpointProfileFull).UnitCost.String())
+	assert.Equal(t, "0.5", prices.Price(carrierintelusage.EndpointProfileLite).UnitCost.String())
 	assert.Equal(
 		t,
-		carrierintel.BillingModelPerMatch,
-		prices.Price(carrierintel.EndpointProfileFMCSA).Model,
+		carrierintelusage.BillingModelPerMatch,
+		prices.Price(carrierintelusage.EndpointProfileFMCSA).Model,
 	)
-	assert.Equal(t, "0.003", prices.Price(carrierintel.EndpointSearch).UnitCost.String())
+	assert.Equal(t, "0.003", prices.Price(carrierintelusage.EndpointSearch).UnitCost.String())
 	assert.Equal(
 		t,
-		carrierintel.BillingModelFree,
-		prices.Price(carrierintel.EndpointMonitorRemove).Model,
+		carrierintelusage.BillingModelFree,
+		prices.Price(carrierintelusage.EndpointMonitorRemove).Model,
 	)
-	assert.Equal(t, "3", prices.Price(carrierintel.EndpointEquipment).UnitCost.String())
+	assert.Equal(t, "3", prices.Price(carrierintelusage.EndpointEquipment).UnitCost.String())
 	assert.Equal(t, "5", prices.MonitoringMonthlyCost(10).String())
 }
 
@@ -160,13 +163,16 @@ func TestConnector_BindRejectsSandboxKeyWhenDisallowed(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.CarrierIntelligence.SandboxAllowed = &disallowed
 
-	_, err := New(cfg).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&cfg.App,
+		&cfg.CarrierIntelligence,
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{integration.ConfigKeyCarrierIntelAPIKey: sandboxKey},
 	})
 	require.Error(t, err)
 	assert.Equal(t, "Sandbox API keys are not allowed in this environment", err.Error())
 
-	err = New(cfg).TestConnection(t.Context(), map[string]string{
+	err = New(&cfg.App, &cfg.CarrierIntelligence).TestConnection(t.Context(), map[string]string{
 		integration.ConfigKeyCarrierIntelAPIKey: sandboxKey,
 	})
 	require.Error(t, err)
@@ -176,7 +182,10 @@ func TestConnector_BindRejectsSandboxKeyWhenDisallowed(t *testing.T) {
 func TestConnector_BindRejectsUnapprovedHost(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelAPIKey:  liveKey,
 			integration.ConfigKeyCarrierIntelBaseURL: "https://attacker.example.com",
@@ -190,7 +199,10 @@ func TestConnector_BindRejectsUnapprovedHost(t *testing.T) {
 func TestConnector_BindRequiresAPIKey(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{},
 	})
 	require.Error(t, err)
@@ -272,7 +284,7 @@ func TestClient_LookupFullRecordsOnce(t *testing.T) {
 		Depth:      carrierintel.LookupDepthFull,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, carrierintel.EndpointProfileFull, result.Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointProfileFull, result.Endpoint)
 	assert.Equal(t, carrierintel.LookupDepthFull, result.Depth)
 	assert.Equal(t, "265752-MC179059", result.ProviderRef)
 	assert.Equal(t, "265752", result.Profile.DOTNumber())
@@ -282,7 +294,7 @@ func TestClient_LookupFullRecordsOnce(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
-	assert.Equal(t, carrierintel.EndpointProfileFull, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointProfileFull, calls[0].Endpoint)
 	assert.Equal(t, "265752", calls[0].DOTNumber)
 	assert.Equal(t, http.StatusOK, calls[0].StatusCode)
 	assert.True(t, calls[0].Found)
@@ -307,7 +319,7 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 		id       carrierintelports.CarrierIntelIdentifier
 		path     string
 		query    string
-		endpoint carrierintel.Endpoint
+		endpoint carrierintelusage.Endpoint
 	}{
 		{
 			name:     "lite by company",
@@ -315,7 +327,7 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 			id:       carrierintelports.CarrierIntelIdentifier{Company: "Sandbox Freight"},
 			path:     "/v2/profile-lite",
 			query:    "company=Sandbox+Freight",
-			endpoint: carrierintel.EndpointProfileLite,
+			endpoint: carrierintelusage.EndpointProfileLite,
 		},
 		{
 			name:     "fmcsa by docket",
@@ -323,15 +335,18 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 			id:       carrierintelports.CarrierIntelIdentifier{DocketNumber: "MC277621"},
 			path:     "/v2/profile-fmcsa",
 			query:    "docket_number=MC277621",
-			endpoint: carrierintel.EndpointProfileFMCSA,
+			endpoint: carrierintelusage.EndpointProfileFMCSA,
 		},
 		{
-			name:     "full prefers dot over docket",
-			depth:    carrierintel.LookupDepthFull,
-			id:       carrierintelports.CarrierIntelIdentifier{DOTNumber: "265752", DocketNumber: "MC1"},
+			name:  "full prefers dot over docket",
+			depth: carrierintel.LookupDepthFull,
+			id: carrierintelports.CarrierIntelIdentifier{
+				DOTNumber:    "265752",
+				DocketNumber: "MC1",
+			},
 			path:     "/v2/profile",
 			query:    "dot_number=265752",
-			endpoint: carrierintel.EndpointProfileFull,
+			endpoint: carrierintelusage.EndpointProfileFull,
 		},
 	}
 
@@ -345,10 +360,13 @@ func TestClient_LookupDepthSelectsEndpoint(t *testing.T) {
 				writeJSON(w, http.StatusOK, fixture(t, "profile_265752.json"))
 			})
 
-			result, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
-				Identifier: tc.id,
-				Depth:      tc.depth,
-			})
+			result, err := bound.client.Lookup(
+				t.Context(),
+				&carrierintelports.CarrierIntelLookupRequest{
+					Identifier: tc.id,
+					Depth:      tc.depth,
+				},
+			)
 			require.NoError(t, err)
 			assert.Equal(t, tc.endpoint, result.Endpoint)
 			assert.Equal(t, tc.depth, result.Depth)
@@ -374,7 +392,13 @@ func TestClient_LookupFMCSARequiresDOTOrDocket(t *testing.T) {
 		Identifier: carrierintelports.CarrierIntelIdentifier{Company: "Acme"},
 		Depth:      carrierintel.LookupDepthFMCSA,
 	})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorInvalidRequest,
+		),
+	)
 	assert.Equal(t, int32(0), hits.Load())
 	assert.Empty(t, bound.log.all())
 }
@@ -453,10 +477,13 @@ func TestClient_ErrorMapping(t *testing.T) {
 				writeJSON(w, tc.status, tc.body)
 			})
 
-			result, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
-				Identifier: carrierintelports.CarrierIntelIdentifier{DOTNumber: "818175"},
-				Depth:      carrierintel.LookupDepthFull,
-			})
+			result, err := bound.client.Lookup(
+				t.Context(),
+				&carrierintelports.CarrierIntelLookupRequest{
+					Identifier: carrierintelports.CarrierIntelIdentifier{DOTNumber: "818175"},
+					Depth:      carrierintel.LookupDepthFull,
+				},
+			)
 			assert.Nil(t, result)
 			assertNoSecret(t, err)
 
@@ -558,11 +585,17 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 2)
-	assert.Equal(t, carrierintel.EndpointSearch, calls[0].Endpoint)
-	assert.Equal(t, carrierintel.EndpointAutocomplete, calls[1].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointSearch, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointAutocomplete, calls[1].Endpoint)
 
 	_, err = bound.client.Autocomplete(t.Context(), "a", 5)
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorInvalidRequest,
+		),
+	)
 }
 
 func TestClient_MonitoringRef(t *testing.T) {
@@ -612,7 +645,7 @@ func TestClient_EnrollSplitsFailures(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
-	assert.Equal(t, carrierintel.EndpointMonitorAdd, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointMonitorAdd, calls[0].Endpoint)
 	assert.Empty(t, calls[0].DOTNumber)
 	assert.Equal(t, 1, calls[0].Units)
 	assert.True(t, calls[0].Found)
@@ -642,11 +675,14 @@ func TestClient_ListChanges(t *testing.T) {
 		writeJSON(w, http.StatusOK, fixture(t, "monitoring_list.json"))
 	})
 
-	page, err := bound.client.ListChanges(t.Context(), &carrierintelports.CarrierIntelChangeFeedRequest{
-		Since:    since,
-		Until:    until,
-		PageSize: 900,
-	})
+	page, err := bound.client.ListChanges(
+		t.Context(),
+		&carrierintelports.CarrierIntelChangeFeedRequest{
+			Since:    since,
+			Until:    until,
+			PageSize: 900,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 2, page.Total)
 	assert.Equal(t, 1, page.Page)
@@ -678,7 +714,7 @@ func TestClient_ListChanges(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
-	assert.Equal(t, carrierintel.EndpointMonitorList, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointMonitorList, calls[0].Endpoint)
 }
 
 func TestClient_ListWatchlist(t *testing.T) {
@@ -711,10 +747,13 @@ func TestClient_FindByEquipment(t *testing.T) {
 		}
 	})
 
-	result, err := bound.client.FindByEquipment(t.Context(), &carrierintelports.CarrierIntelEquipmentRequest{
-		UnitNumber: "101",
-		UnitType:   carrierintel.UnitTypeTractor,
-	})
+	result, err := bound.client.FindByEquipment(
+		t.Context(),
+		&carrierintelports.CarrierIntelEquipmentRequest{
+			UnitNumber: "101",
+			UnitType:   carrierintel.UnitTypeTractor,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, result.Matches, 1)
 	match := result.Matches[0]
@@ -727,20 +766,35 @@ func TestClient_FindByEquipment(t *testing.T) {
 	require.NoError(t, sonic.Unmarshal(result.Raw, &raws))
 	assert.Len(t, raws, 1)
 
-	_, err = bound.client.FindByEquipment(t.Context(), &carrierintelports.CarrierIntelEquipmentRequest{
-		UnitNumber: "999",
-	})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound))
+	_, err = bound.client.FindByEquipment(
+		t.Context(),
+		&carrierintelports.CarrierIntelEquipmentRequest{
+			UnitNumber: "999",
+		},
+	)
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorNotFound),
+	)
 
 	calls := bound.log.all()
 	require.Len(t, calls, 2)
-	assert.Equal(t, carrierintel.EndpointEquipment, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointEquipment, calls[0].Endpoint)
 	assert.Equal(t, "265752", calls[0].DOTNumber)
 	assert.True(t, calls[0].Found)
 	assert.False(t, calls[1].Found)
 
-	_, err = bound.client.FindByEquipment(t.Context(), &carrierintelports.CarrierIntelEquipmentRequest{})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
+	_, err = bound.client.FindByEquipment(
+		t.Context(),
+		&carrierintelports.CarrierIntelEquipmentRequest{},
+	)
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorInvalidRequest,
+		),
+	)
 }
 
 func TestMatchingUnit_ByVINAndPlate(t *testing.T) {

@@ -7,11 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-var resourceNames = permission.NewRegistry()
+var resourceNames = permissioncatalog.NewRegistry()
 
 // LintInstructions reads instructions against the tools a draft holds and
 // returns each thing they ask for that none of those tools can do.

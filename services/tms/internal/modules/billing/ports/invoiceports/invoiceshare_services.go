@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +15,7 @@ type ShareInvoiceRequest struct {
 	InvoiceID  pulid.ID              `json:"-"`
 	UserIDs    []pulid.ID            `json:"userIds"`
 	Note       string                `json:"note"`
-	Tab        invoice.ShareTab      `json:"tab"`
+	Tab        invoiceshare.ShareTab `json:"tab"`
 }
 
 type ShareCandidate struct {
@@ -50,10 +51,10 @@ const InvoiceShareEmailFailed = InvoiceShareEmailStatus("Failed")
 const InvoiceShareEmailNotConfigured = InvoiceShareEmailStatus("NotConfigured")
 
 type ShareInvoiceResult struct {
-	Shares         []*invoice.InvoiceShare `json:"shares"`
-	RecipientCount int                     `json:"recipientCount"`
-	EmailsQueued   int                     `json:"emailsQueued"`
-	EmailStatus    InvoiceShareEmailStatus `json:"emailStatus"`
+	Shares         []*invoiceshare.InvoiceShare `json:"shares"`
+	RecipientCount int                          `json:"recipientCount"`
+	EmailsQueued   int                          `json:"emailsQueued"`
+	EmailStatus    InvoiceShareEmailStatus      `json:"emailStatus"`
 }
 
 type InvoiceShareRecipientPreview struct {
@@ -69,7 +70,7 @@ type InvoiceSharePreview struct {
 	Invoice         *invoice.Invoice
 	SharedByName    string
 	Note            string
-	Tab             invoice.ShareTab
+	Tab             invoiceshare.ShareTab
 	EmailConfigured bool
 	Recipients      []InvoiceShareRecipientPreview
 }
@@ -78,7 +79,7 @@ type InvoiceShareService interface {
 	List(
 		ctx context.Context,
 		req *ListInvoiceSharesRequest,
-	) ([]*invoice.InvoiceShare, error)
+	) ([]*invoiceshare.InvoiceShare, error)
 	Share(
 		ctx context.Context,
 		req *ShareInvoiceRequest,

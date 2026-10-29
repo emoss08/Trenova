@@ -7,18 +7,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,7 +130,7 @@ func (s *AssistantTurnWorkflowTestSuite) prepares(plan *assistantservice.TurnPla
 func (s *AssistantTurnWorkflowTestSuite) answers(text string) {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).Return(
-		&agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+		&modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 			Text:            text,
 			ModelIdentifier: "test-model",
 		}}, nil,
@@ -150,7 +153,7 @@ func (s *AssistantTurnWorkflowTestSuite) finishes(ending *TurnEnding, err error)
 func doneEnding() *TurnEnding {
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{Status: "Completed"},
-		Event:  temporaltype.StreamItem{Event: agentports.AssistantEventDone},
+		Event:  temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}
 }
 
@@ -177,7 +180,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestAnswersTheQuestionAndSavesIt() {
 	s.Require().NotNil(s.finished.Run)
 	s.Equal("Twelve loads are late.", s.finished.Run.Reply)
 	s.Require().NotEmpty(s.finished.Events)
-	s.Equal(agentports.AssistantEventAccepted, s.finished.Events[0].Event,
+	s.Equal(assistantstreamports.AssistantEventAccepted, s.finished.Events[0].Event,
 		"the opening is kept in the turn's account")
 }
 
@@ -194,7 +197,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesARefusalWithoutAskingTheModel(
 	s.NoError(s.env.GetWorkflowError())
 	s.Require().NotNil(s.finished)
 	s.Nil(s.finished.Run)
-	s.Equal(agentports.AssistantEventRefused, s.finished.Events[0].Event)
+	s.Equal(assistantstreamports.AssistantEventRefused, s.finished.Events[0].Event)
 }
 
 // A question turned away for a reason written for the person keeps that
@@ -243,7 +246,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSavesAStoppedTurn() {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
@@ -290,7 +293,8 @@ func (s *AssistantTurnWorkflowTestSuite) TestFailsLoudlyWhenTheTurnCannotBeSaved
 
 			return nil
 		},
-	).Once()
+	).
+		Once()
 
 	s.run()
 
@@ -303,9 +307,9 @@ func answeredEnding(reply string) *TurnEnding {
 	return &TurnEnding{
 		Result: assistantcontract.AssistantTurnResult{
 			Status: "Completed",
-			Result: &agentports.SendMessageResult{Reply: reply},
+			Result: &assistantports.SendMessageResult{Reply: reply},
 		},
-		Event: temporaltype.StreamItem{Event: agentports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}
 }
 
@@ -351,7 +355,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSaysNothingAboutAStoppedTurn() {
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(&TurnEnding{Result: assistantcontract.AssistantTurnResult{Status: "Stopped"}}, nil)
 	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Second)
@@ -369,7 +373,7 @@ func (s *AssistantTurnWorkflowTestSuite) TestSaysNothingAboutAStoppedTurnThatCou
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
 		After(time.Minute).
-		Return(&agentruntime.ModelReply{}, nil).
+		Return(&modelstream.Reply{}, nil).
 		Maybe()
 	s.finishes(nil, errors.New("database is down"))
 	var a *Activities
@@ -422,12 +426,12 @@ func (s *AssistantTurnWorkflowTestSuite) TestTellsThePersonAboutARefusal() {
 		Result: assistantcontract.AssistantTurnResult{
 			Status:  "Refused",
 			Refused: true,
-			Result: &agentports.SendMessageResult{
+			Result: &assistantports.SendMessageResult{
 				Reply:   "I only help with freight.",
 				Refused: true,
 			},
 		},
-		Event: temporaltype.StreamItem{Event: agentports.AssistantEventDone},
+		Event: temporaltype.StreamItem{Event: assistantstreamports.AssistantEventDone},
 	}, nil)
 
 	s.run()

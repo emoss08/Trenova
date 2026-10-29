@@ -11,16 +11,33 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/bootstrap"
+	"github.com/emoss08/trenova/internal/deskbench/benchlive"
+	"github.com/emoss08/trenova/internal/deskbench/benchnamespace"
+	"github.com/emoss08/trenova/internal/deskbench/benchrecord"
+	"github.com/emoss08/trenova/internal/deskbench/benchwatch"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	temporallog "go.temporal.io/sdk/log"
 	"go.uber.org/fx"
 	"go.uber.org/fx/fxevent"
@@ -49,47 +66,43 @@ type deps struct {
 	Config           *config.Config
 	Logger           *zap.Logger
 	DB               *postgres.Connection
-	Assistant        agentports.AssistantService
-	Pages            agentports.PageAssistant
+	Assistant        assistantports.AssistantService
+	Pages            assistantports.PageAssistant
 	AgentDefinitions agentdefinitionports.AgentDefinitionService
 	Turns            *assistantturnservice.Service
 	Users            tenantports.UserRepository
 	Definitions      agentdefinitionports.AgentDefinitionRepository
-	Providers        agentports.AIProviderRepository
-	Proposals        agentports.AgentProposalRepository
-	Previews         agentports.ProposalPreviewService
-	Decisions        agentports.AgentDecisionService
-	Plans            agentports.AgentPlanService
-	Committer        agentports.ApprovalCommitter
+	Providers        aiproviderports.AIProviderRepository
+	Proposals        agentproposalports.AgentProposalRepository
+	Previews         agentruntimeports.ProposalPreviewService
+	Decisions        agentdecisionports.AgentDecisionService
+	Plans            agentplanports.AgentPlanService
+	Committer        agentapprovalports.ApprovalCommitter
 	Documents        *documentservice.Service
 	Contents         documentports.DocumentContentService
-	Recommender      agentports.AgentRecommender
-	Runs             agentports.AgentRunService
-	RunRecords       agentports.AgentRunRepository
-	PriceReference   agentports.ModelPriceReference `optional:"true"`
-	ActionTools      agentports.AgentToolRegistry
-	Shipments        shipmentports.ShipmentService
+	Recommender      agentrecommendationports.AgentRecommender
+	Runs             agentruntimeports.AgentRunService
+	RunRecords       agentruntimeports.AgentRunRepository
+	PriceReference   aiproviderports.ModelPriceReference `optional:"true"`
+	ActionTools      agenttoolports.AgentToolRegistry
+	Shipments        shipmentserviceports.ShipmentLifecycleService
 }
 
 type Bench struct {
 	deps
-	recorder    *Recorder
-	disclosures *DisclosureLog
-	pricer      *pricer
-	watcher     *TurnWatcher
+	recorder    *benchrecord.Recorder
+	disclosures *benchrecord.DisclosureLog
+	pricer      *benchrecord.Pricer
+	watcher     *benchwatch.TurnWatcher
 	app         *fx.App
 	logPath     string
 	sdkLog      *os.File
-	live        *LiveFeed
+	live        *benchlive.Feed
 	locks       sync.Map
-	held        *namespaceLock
-	tidied      sync.Once
-	facts       factSource
+	held        *benchnamespace.Lock
 }
 
-type factSource func(ctx context.Context, session *Session, statement string) ([]string, error)
-
-func (b *Bench) exclusive(key string) func() {
+func (b *Bench) Exclusive(key string) func() {
 	value, _ := b.locks.LoadOrStore(key, &sync.Mutex{})
 	lock := value.(*sync.Mutex)
 	lock.Lock()
@@ -98,13 +111,13 @@ func (b *Bench) exclusive(key string) func() {
 }
 
 func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
-	held, err := lockNamespace(opts.LockDir, opts.Namespace)
+	held, err := benchnamespace.Acquire(opts.LockDir, opts.Namespace)
 	if err != nil {
 		return nil, err
 	}
 	bench, err := open(ctx, opts)
 	if err != nil {
-		return nil, errors.Join(err, held.release())
+		return nil, errors.Join(err, held.Release())
 	}
 	bench.held = held
 
@@ -114,20 +127,20 @@ func Open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 	bench := &Bench{
 		logPath:     filepath.Join(opts.OutDir, logFileName),
-		disclosures: NewDisclosureLog(),
+		disclosures: benchrecord.NewDisclosureLog(),
 	}
 
 	sdkLog, err := os.OpenFile(
 		filepath.Join(opts.OutDir, sdkLogName),
 		os.O_CREATE|os.O_WRONLY|os.O_APPEND,
-		fileMode,
+		benchrecord.FileMode,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("open the temporal log: %w", err)
 	}
 	bench.sdkLog = sdkLog
 
-	live, err := OpenLiveFeed(opts.LivePaths...)
+	live, err := benchlive.Open(opts.LivePaths...)
 	if err != nil {
 		_ = sdkLog.Close()
 		return nil, err
@@ -148,19 +161,25 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 
 			return isolated
 		}),
-		fx.Decorate(func(inner agentports.CompletionService) agentports.CompletionService {
-			bench.recorder = NewRecorder(inner)
+		fx.Decorate(func(inner llmports.CompletionService) llmports.CompletionService {
+			bench.recorder = benchrecord.NewRecorder(inner)
 			return bench.recorder
 		}),
-		fx.Decorate(func(agentports.AgentReflectionScheduler) agentports.AgentReflectionScheduler {
-			return unlearned{}
-		}),
-		fx.Decorate(func(agentports.ChapterScheduler) agentports.ChapterScheduler {
-			return unchaptered{}
-		}),
-		fx.Decorate(func(inner agentports.AgentTrustService) agentports.AgentTrustService {
-			return untrusted{AgentTrustService: inner}
-		}),
+		fx.Decorate(
+			func(agentreflectionports.AgentReflectionScheduler) agentreflectionports.AgentReflectionScheduler {
+				return unlearned{}
+			},
+		),
+		fx.Decorate(
+			func(assistantchapterports.ChapterScheduler) assistantchapterports.ChapterScheduler {
+				return unchaptered{}
+			},
+		),
+		fx.Decorate(
+			func(inner agenttrustports.AgentTrustService) agenttrustports.AgentTrustService {
+				return untrusted{AgentTrustService: inner}
+			},
+		),
 		fx.Decorate(
 			func(inner tenantports.AgentControlRepository) tenantports.AgentControlRepository {
 				return unshadowed{AgentControlRepository: inner}
@@ -170,14 +189,14 @@ func open(ctx context.Context, opts OpenOptions) (*Bench, error) {
 			return unthrottledMatches{RateLimitStore: inner}
 		}),
 		fx.Decorate(func(inner kernelports.WorkflowStarter) kernelports.WorkflowStarter {
-			bench.watcher = NewTurnWatcher(inner)
+			bench.watcher = benchwatch.New(inner)
 			return bench.watcher
 		}),
-		fx.Provide(func() agentports.ToolDisclosureObserver { return bench.disclosures }),
+		fx.Provide(func() agenttoolports.ToolDisclosureObserver { return bench.disclosures }),
 		benchAgentScope(opts.WithoutBenchAgents),
 		fx.Invoke(func(d deps) {
 			bench.deps = d
-			bench.pricer = newPricer(d.Providers, d.PriceReference)
+			bench.pricer = benchrecord.NewPricer(d.Providers, d.PriceReference)
 		}),
 		fx.WithLogger(func(logger *zap.Logger) fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: logger.Named("fx")}
@@ -219,11 +238,23 @@ func (b *Bench) Close() error {
 		stopErr = closeErr
 	}
 
-	return errors.Join(stopErr, b.held.release())
+	return errors.Join(stopErr, b.held.Release())
 }
 
 func (b *Bench) LogPath() string {
 	return b.logPath
+}
+
+func (b *Bench) Live() *benchlive.Feed {
+	return b.live
+}
+
+func (b *Bench) Recorder() *benchrecord.Recorder {
+	return b.recorder
+}
+
+func (b *Bench) Watcher() *benchwatch.TurnWatcher {
+	return b.watcher
 }
 
 func isolate(cfg *config.Config, namespace, logPath string) *config.Config {
@@ -233,7 +264,7 @@ func isolate(cfg *config.Config, namespace, logPath string) *config.Config {
 	cfg.Logging.Output = "file"
 	cfg.Logging.Format = "json"
 	cfg.Logging.Sampling = false
-	cfg.Logging.File = &config.LogFileConfig{
+	cfg.Logging.File = &loggingconfig.FileConfig{
 		Path:       logPath,
 		MaxSize:    500,
 		MaxAge:     7,

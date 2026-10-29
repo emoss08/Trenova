@@ -3,7 +3,7 @@ package costingcontrol
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,7 +19,7 @@ func TestAnUpdateWithoutTheMarginsGroupKeepsTheStoredTargetMargin(t *testing.T) 
 	assert.True(t, decimal.NewFromInt(18).Equal(sent.TargetMarginPercent.Decimal))
 
 	cleared := &CostingControl{}
-	cleared.KeepFields(stored, permission.AllFieldGroups())
+	cleared.KeepFields(stored, protectedfield.AllGroups())
 	assert.False(t, cleared.TargetMarginPercent.Valid,
 		"a writer with the margins group may clear the target")
 

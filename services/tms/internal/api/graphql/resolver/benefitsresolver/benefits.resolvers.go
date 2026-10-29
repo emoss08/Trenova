@@ -9,16 +9,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *MutationResolver) CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error) {
+func (r *MutationResolver) CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -37,7 +39,7 @@ func (r *MutationResolver) CreateBenefitPlan(ctx context.Context, input gqlmodel
 		employerCostMinor: input.EmployerCostMinor,
 		waitingPeriodDays: input.WaitingPeriodDays,
 		status:            input.Status,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +47,7 @@ func (r *MutationResolver) CreateBenefitPlan(ctx context.Context, input gqlmodel
 	return r.BenefitsService.CreatePlan(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error) {
+func (r *MutationResolver) UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -64,7 +66,7 @@ func (r *MutationResolver) UpdateBenefitPlan(ctx context.Context, input gqlmodel
 		employerCostMinor: input.EmployerCostMinor,
 		waitingPeriodDays: input.WaitingPeriodDays,
 		status:            input.Status,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +76,12 @@ func (r *MutationResolver) UpdateBenefitPlan(ctx context.Context, input gqlmodel
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Plan is invalid")
 	}
 	entity.ID = id
-	entity.Version = int64(base.IntValue(input.Version))
+	entity.Version = int64(gqlscalar.IntValue(input.Version))
 
 	return r.BenefitsService.UpdatePlan(ctx, entity, authCtx.UserID)
 }
 
-func (r *MutationResolver) EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error) {
+func (r *MutationResolver) EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -99,14 +101,14 @@ func (r *MutationResolver) EnrollBenefit(ctx context.Context, input gqlmodel.Enr
 	}
 
 	req := &benefitsservice.EnrollRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		WorkerID:          workerID,
 		PlanID:            planID,
-		Waive:             base.BoolValue(input.Waive),
-		WaivedReason:      base.StringValue(input.WaivedReason),
-		EmployeeCostMinor: int64(base.IntValue(input.EmployeeCostMinor)),
-		EffectiveFrom:     int64(base.IntValue(input.EffectiveFrom)),
-		Notes:             base.StringValue(input.Notes),
+		Waive:             gqlscalar.BoolValue(input.Waive),
+		WaivedReason:      gqlscalar.StringValue(input.WaivedReason),
+		EmployeeCostMinor: int64(gqlscalar.IntValue(input.EmployeeCostMinor)),
+		EffectiveFrom:     int64(gqlscalar.IntValue(input.EffectiveFrom)),
+		Notes:             gqlscalar.StringValue(input.Notes),
 		UserID:            authCtx.UserID,
 	}
 	if input.CoverageTier != nil {
@@ -116,7 +118,7 @@ func (r *MutationResolver) EnrollBenefit(ctx context.Context, input gqlmodel.Enr
 	return r.BenefitsService.Enroll(ctx, req)
 }
 
-func (r *MutationResolver) EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*driverpay.WorkerBenefitEnrollment, error) {
+func (r *MutationResolver) EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*paybenefit.WorkerBenefitEnrollment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpAssign)
 	if err != nil {
 		return nil, err
@@ -132,30 +134,30 @@ func (r *MutationResolver) EndBenefitEnrollment(ctx context.Context, input gqlmo
 	}
 
 	return r.BenefitsService.EndEnrollment(ctx, &benefitsservice.EndEnrollmentRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		ID:          id,
-		EffectiveTo: int64(base.IntValue(input.EffectiveTo)),
-		Notes:       base.StringValue(input.Notes),
-		Version:     int64(base.IntValue(input.Version)),
+		EffectiveTo: int64(gqlscalar.IntValue(input.EffectiveTo)),
+		Notes:       gqlscalar.StringValue(input.Notes),
+		Version:     int64(gqlscalar.IntValue(input.Version)),
 		UserID:      authCtx.UserID,
 	})
 }
 
-func (r *QueryResolver) BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*driverpay.BenefitPlan, error) {
+func (r *QueryResolver) BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*paybenefit.BenefitPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.BenefitsService.ListPlans(ctx, &driverpayports.ListBenefitPlansRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
-		ActiveOnly:     base.BoolValue(activeOnly),
-		PlanYear:       int16(base.IntValue(planYear)), //nolint:gosec // a calendar year
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		ActiveOnly:     gqlscalar.BoolValue(activeOnly),
+		PlanYear:       int16(gqlscalar.IntValue(planYear)), //nolint:gosec // a calendar year
 		IncludePayCode: true,
 	})
 }
 
-func (r *QueryResolver) BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error) {
+func (r *QueryResolver) BenefitPlan(ctx context.Context, id string) (*paybenefit.BenefitPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -166,10 +168,10 @@ func (r *QueryResolver) BenefitPlan(ctx context.Context, id string) (*driverpay.
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Plan is invalid")
 	}
 
-	return r.BenefitsService.GetPlan(ctx, base.TenantInfo(authCtx), planID)
+	return r.BenefitsService.GetPlan(ctx, resolvercore.TenantInfo(authCtx), planID)
 }
 
-func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error) {
+func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -181,32 +183,32 @@ func (r *QueryResolver) WorkerBenefitEnrollments(ctx context.Context, workerID s
 	}
 
 	return r.BenefitsService.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    id,
-		OpenOnly:    base.BoolValue(openOnly),
+		OpenOnly:    gqlscalar.BoolValue(openOnly),
 		IncludePlan: true,
 	})
 }
 
-func (r *QueryResolver) BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error) {
+func (r *QueryResolver) BenefitEnrollments(ctx context.Context, planID *string, statuses []paybenefit.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*paybenefit.WorkerBenefitEnrollment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceBenefitPlan, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	plan, err := base.OptionalID(planID)
+	plan, err := gqlid.OptionalID(planID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("planId", errortypes.ErrInvalid, "Plan is invalid")
 	}
 
 	return r.BenefitsService.ListEnrollments(ctx, &driverpayports.ListBenefitEnrollmentsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PlanID:        plan,
 		Statuses:      statuses,
-		OpenOnly:      base.BoolValue(openOnly),
+		OpenOnly:      gqlscalar.BoolValue(openOnly),
 		IncludePlan:   true,
 		IncludeWorker: true,
-		Limit:         base.IntValue(limit),
+		Limit:         gqlscalar.IntValue(limit),
 	})
 }
 
@@ -218,8 +220,8 @@ func (r *QueryResolver) BenefitCosts(ctx context.Context, planYear *int) ([]*dri
 
 	rows, err := r.BenefitsService.BenefitCosts(
 		ctx,
-		base.TenantInfo(authCtx),
-		int16(base.IntValue(planYear)), //nolint:gosec // a calendar year
+		resolvercore.TenantInfo(authCtx),
+		int16(gqlscalar.IntValue(planYear)), //nolint:gosec // a calendar year
 	)
 	if err != nil {
 		return nil, err
@@ -243,7 +245,7 @@ func (r *QueryResolver) WorkerTotalCompensation(ctx context.Context, workerID st
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
 
-	return r.TotalCompensationFor(ctx, base.TenantInfo(authCtx), id, planYear)
+	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), id, planYear)
 }
 
 func (r *QueryResolver) MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error) {
@@ -252,18 +254,18 @@ func (r *QueryResolver) MyTotalCompensation(ctx context.Context, planYear *int) 
 		return nil, err
 	}
 
-	wrk, err := r.DriverPortalService.ResolveWorker(ctx, base.TenantInfo(authCtx))
+	wrk, err := r.DriverPortalService.ResolveWorker(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return r.TotalCompensationFor(ctx, base.TenantInfo(authCtx), wrk.ID, planYear)
+	return r.TotalCompensationFor(ctx, resolvercore.TenantInfo(authCtx), wrk.ID, planYear)
 }
 
-func (r *WorkerBenefitEnrollmentResolver) EffectiveTo(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*int, error) {
-	return base.IntPtr(obj.EffectiveTo), nil
+func (r *WorkerBenefitEnrollmentResolver) EffectiveTo(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*int, error) {
+	return gqlscalar.IntPtr(obj.EffectiveTo), nil
 }
 
-func (r *WorkerBenefitEnrollmentResolver) RecurringDeductionID(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*string, error) {
-	return base.IDPtr(obj.RecurringDeductionID), nil
+func (r *WorkerBenefitEnrollmentResolver) RecurringDeductionID(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*string, error) {
+	return gqlid.IDPtr(obj.RecurringDeductionID), nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -122,11 +123,11 @@ type ListInvoiceStatesByInvoiceIDsRequest struct {
 }
 
 type ListInvoiceStateConnectionRequest struct {
-	Filter             *pagination.QueryOptions `json:"filter"`
-	Cursor             pagination.CursorInfo    `json:"-"`
-	Verdicts           []factoring.Verdict      `json:"verdicts"`
-	FactoringCompanyID pulid.ID                 `json:"factoringCompanyId"`
-	CustomerID         pulid.ID                 `json:"customerId"`
+	Filter             *pagination.QueryOptions     `json:"filter"`
+	Cursor             pagination.CursorInfo        `json:"-"`
+	Verdicts           []factoringreadiness.Verdict `json:"verdicts"`
+	FactoringCompanyID pulid.ID                     `json:"factoringCompanyId"`
+	CustomerID         pulid.ID                     `json:"customerId"`
 }
 
 type ClaimReadyAnnouncementRequest struct {
@@ -206,21 +207,21 @@ type InvoiceStateRepository interface {
 		ctx context.Context,
 		req *ListShipmentContactsRequest,
 	) (map[pulid.ID]*ShipmentContact, error)
-	Get(ctx context.Context, req GetInvoiceStateRequest) (*factoring.InvoiceState, error)
+	Get(ctx context.Context, req GetInvoiceStateRequest) (*factoringreadiness.InvoiceState, error)
 	ListByInvoiceIDs(
 		ctx context.Context,
 		req *ListInvoiceStatesByInvoiceIDsRequest,
-	) (map[pulid.ID]*factoring.InvoiceState, error)
-	Upsert(ctx context.Context, entity *factoring.InvoiceState) error
+	) (map[pulid.ID]*factoringreadiness.InvoiceState, error)
+	Upsert(ctx context.Context, entity *factoringreadiness.InvoiceState) error
 	ListConnection(
 		ctx context.Context,
 		req *ListInvoiceStateConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.InvoiceState], error)
+	) (*pagination.CursorListResult[*factoringreadiness.InvoiceState], error)
 	ClaimReadyAnnouncement(ctx context.Context, req *ClaimReadyAnnouncementRequest) (bool, error)
 	ListReadyUnsubmitted(
 		ctx context.Context,
 		req ListReadyUnsubmittedRequest,
-	) ([]*factoring.InvoiceState, error)
+	) ([]*factoringreadiness.InvoiceState, error)
 	ListCandidateInvoiceIDs(
 		ctx context.Context,
 		req ListCandidateInvoicesRequest,

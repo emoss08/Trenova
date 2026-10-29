@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/shared/textfence"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 
 // BuildContextText renders a delimited context, fencing every untrusted section
 // so prompt injection carried in customer data cannot be read as instruction.
-func BuildContextText(deliminated agentports.DelimitedContext) string {
+func BuildContextText(deliminated llmports.DelimitedContext) string {
 	var builder strings.Builder
 
 	for _, section := range deliminated.Sections {
@@ -44,7 +44,7 @@ func BuildContextText(deliminated agentports.DelimitedContext) string {
 }
 
 func neutralizeUntrusted(content string) string {
-	return stringutils.FenceText(content, untrustedCloseTag)
+	return textfence.FenceText(content, untrustedCloseTag)
 }
 
 // WithSchemaInstruction appends the schema to a system prompt for providers that
@@ -60,7 +60,7 @@ func WithSchemaInstruction(
 		return system
 	}
 
-	encoded, err := requestJSON.MarshalIndent(schema, "", "  ")
+	encoded, err := RequestJSON.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		return system
 	}

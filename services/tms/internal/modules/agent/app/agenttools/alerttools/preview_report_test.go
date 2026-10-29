@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,17 +16,17 @@ import (
 type previewingSchedules struct {
 	scheduleWriter
 
-	previewed *reporting.SaveScheduleRequest
-	created   *reporting.SaveScheduleRequest
+	previewed *reportscheduleservice.SaveScheduleRequest
+	created   *reportscheduleservice.SaveScheduleRequest
 }
 
 func (f *previewingSchedules) PreviewSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
-) (*reporting.SchedulePreview, error) {
+	req *reportscheduleservice.SaveScheduleRequest,
+) (*reportscheduleservice.SchedulePreview, error) {
 	f.previewed = req
 
-	return &reporting.SchedulePreview{
+	return &reportscheduleservice.SchedulePreview{
 		Schedule: &report.ReportSchedule{
 			DefinitionID:   req.DefinitionID,
 			CronExpression: req.CronExpression,
@@ -45,7 +45,7 @@ func (f *previewingSchedules) PreviewSchedule(
 
 func (f *previewingSchedules) CreateSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
+	req *reportscheduleservice.SaveScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	f.created = req
 
@@ -70,10 +70,10 @@ func TestScheduleReportPreview_ShowsTheRecurringEmail(t *testing.T) {
 	require.Nil(t, schedules.created, "a preview must not schedule")
 	assert.Contains(t, preview.Summary, "Unbilled aging")
 
-	created := agenttoolstest.FindChange(t, preview, agent.PreviewOperationCreate)
+	created := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationCreate)
 	assert.Equal(t, "0 7 * * 1", agenttoolstest.FindField(t, created, "cronExpression").After)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, []string{"ops@carrier.example"}, send.Message.To)
 	assert.Equal(t, `"0 7 * * 1" (America/Chicago)`, send.Message.Cadence)
 	assert.Equal(t, "The latest Unbilled aging report, attached as CSV.", send.Message.Body)

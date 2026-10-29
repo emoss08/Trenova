@@ -23,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -78,7 +78,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 
 	control, err := accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
-	control.JournalReversalPolicy = tenant.JournalReversalPolicyNextOpenPeriod
+	control.JournalReversalPolicy = accountingcontrol.JournalReversalPolicyNextOpenPeriod
 	control.RequireManualJEApproval = false
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
@@ -207,7 +207,10 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 
 	posted, err := svc.Post(
 		ctx,
-		&journalreversalports.GetJournalReversalRequest{ReversalID: created.ID, TenantInfo: tenantInfo},
+		&journalreversalports.GetJournalReversalRequest{
+			ReversalID: created.ID,
+			TenantInfo: tenantInfo,
+		},
 		actor,
 	)
 	require.NoError(t, err)

@@ -5,11 +5,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +25,7 @@ import (
 type fakeUnassigner struct {
 	guard     agenttoolstest.WriteGuard
 	assigned  map[pulid.ID]*shipment.Shipment
-	unassigns []*shipmentports.UnassignShipmentMoveRequest
+	unassigns []*assignmentports.UnassignShipmentMoveRequest
 }
 
 func newFakeUnassigner(moves ...*shipment.Shipment) *fakeUnassigner {
@@ -34,21 +38,21 @@ func newFakeUnassigner(moves ...*shipment.Shipment) *fakeUnassigner {
 }
 
 func (f *fakeUnassigner) plan(
-	req *shipmentports.UnassignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.UnassignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	entity, ok := f.assigned[req.ShipmentMoveID]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"Only fresh assigned shipment moves can be unassigned",
 		)
 	}
-	after := shipment.CloneForUpdate(entity)
-	after.Status = shipment.StatusNew
-	after.Moves[0].Status = shipment.MoveStatusNew
-	after.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	after := shipmentcoverage.CloneForUpdate(entity)
+	after.Status = shipmentvocab.StatusNew
+	after.Moves[0].Status = shipmentvocab.MoveStatusNew
+	after.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	after.Moves[0].Assignment = nil
 
-	return &shipmentports.AssignmentPlan{
+	return &assignmentports.AssignmentPlan{
 		Assignment:     entity.Moves[0].Assignment,
 		ShipmentBefore: entity,
 		ShipmentAfter:  after,
@@ -57,14 +61,14 @@ func (f *fakeUnassigner) plan(
 
 func (f *fakeUnassigner) PreviewUnassign(
 	_ context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
-) (*shipmentports.AssignmentPlan, error) {
+	req *assignmentports.UnassignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
 	return f.plan(req)
 }
 
 func (f *fakeUnassigner) Unassign(
 	_ context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -86,19 +90,19 @@ func driverCoveredShipment(pro string) *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: pro,
-		Status:    shipment.StatusAssigned,
+		Status:    shipmentvocab.StatusAssigned,
 		Version:   7,
 		Moves: []*shipment.ShipmentMove{{
 			ID:           moveID,
-			Status:       shipment.MoveStatusAssigned,
-			CoverageType: shipment.MoveCoverageTypeDriver,
+			Status:       shipmentvocab.MoveStatusAssigned,
+			CoverageType: shipmentvocab.MoveCoverageTypeDriver,
 			Version:      3,
 			Assignment: &shipment.Assignment{
 				ID:              pulid.MustNew("asn_"),
 				ShipmentMoveID:  moveID,
 				PrimaryWorkerID: &workerID,
 				TractorID:       &tractorID,
-				Status:          shipment.AssignmentStatusNew,
+				Status:          shipmentvocab.AssignmentStatusNew,
 			},
 		}},
 	}
@@ -142,9 +146,12 @@ func TestUnassignMoves_KeepsGoingPastARefusalAndNamesIt(t *testing.T) {
 	underway := pulid.MustNew("smv_")
 	assignments := newFakeUnassigner(covered)
 
-	err := (&UnassignMovesTool{assignments: assignments}).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{fieldMoveIDs: moveIDsParam(underway, covered.Moves[0].ID)},
-	))
+	err := (&UnassignMovesTool{assignments: assignments}).Execute(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{fieldMoveIDs: moveIDsParam(underway, covered.Moves[0].ID)},
+		),
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unassigned 1 of 2 moves")
@@ -197,9 +204,12 @@ func TestUnassignMoves_OnlyOneFreshMoveRunsWithoutADecision(t *testing.T) {
 	first, second := driverCoveredShipment("S-1001"), driverCoveredShipment("S-1002")
 	tool := &UnassignMovesTool{assignments: newFakeUnassigner(first, second)}
 	limit := func(ids ...pulid.ID) agent.AutonomyTier {
-		return tool.Policy().Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldMoveIDs: moveIDsParam(ids...),
-		}))
+		return tool.Policy().Condition.Limit(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{
+				fieldMoveIDs: moveIDsParam(ids...),
+			}),
+		)
 	}
 
 	assert.Equal(t, agent.TierAutoExecute, limit(first.Moves[0].ID))
@@ -218,23 +228,31 @@ func TestUnassignMoves_PreviewShowsTheAssignmentComingOffAndWhatIsRefused(t *tes
 		fieldMoveIDs: moveIDsParam(covered.Moves[0].ID, underway),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	removed := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationDelete, removed.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, removed.Operation)
 	assert.Equal(t, "Assignment on S-1001", removed.Label)
 	move := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, covered.Moves[0].ID, move.EntityID)
-	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, move, common.FieldStatus).After)
+	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, move, changepreview.FieldStatus).After)
 	require.NotNil(t, move.Version)
 	assert.Equal(t, int64(3), *move.Version)
 	shipmentChange := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
-	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, shipmentChange, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"New",
+		agenttoolstest.FieldByPath(t, shipmentChange, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "S-1001")
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, underway.String())
 }
 
@@ -244,17 +262,17 @@ type fakeMoveStatuses struct {
 	guard    agenttoolstest.WriteGuard
 	moves    map[pulid.ID]*shipment.ShipmentMove
 	shipment *shipment.Shipment
-	single   *shipmentports.UpdateMoveStatusRequest
-	bulk     *shipmentports.BulkUpdateMoveStatusRequest
+	single   *shipmentmoveports.UpdateMoveStatusRequest
+	bulk     *shipmentmoveports.BulkUpdateMoveStatusRequest
 }
 
-func newFakeMoveStatuses(status shipment.MoveStatus, n int) *fakeMoveStatuses {
+func newFakeMoveStatuses(status shipmentvocab.MoveStatus, n int) *fakeMoveStatuses {
 	f := &fakeMoveStatuses{
 		moves: map[pulid.ID]*shipment.ShipmentMove{},
 		shipment: &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: "S-2001",
-			Status:    shipment.StatusInTransit,
+			Status:    shipmentvocab.StatusInTransit,
 		},
 	}
 	for range n {
@@ -282,15 +300,15 @@ func (f *fakeMoveStatuses) ids() []pulid.ID {
 
 func (f *fakeMoveStatuses) PreviewUpdateStatus(
 	_ context.Context,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
-) (*shipmentports.MoveStatusPlan, error) {
-	plan := &shipmentports.MoveStatusPlan{ShipmentsBefore: []*shipment.Shipment{f.shipment}}
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
+) (*shipmentmoveports.MoveStatusPlan, error) {
+	plan := &shipmentmoveports.MoveStatusPlan{ShipmentsBefore: []*shipment.Shipment{f.shipment}}
 	for _, id := range req.MoveIDs {
 		move, ok := f.moves[id]
 		if !ok {
 			return nil, errortypes.NewNotFoundError("Shipment move not found")
 		}
-		if move.Status == shipment.MoveStatusCompleted {
+		if move.Status == shipmentvocab.MoveStatusCompleted {
 			return nil, errortypes.NewBusinessError(
 				"Move status transition from Completed to " + string(
 					req.Status,
@@ -302,8 +320,8 @@ func (f *fakeMoveStatuses) PreviewUpdateStatus(
 		plan.MovesBefore = append(plan.MovesBefore, move)
 		plan.MovesAfter = append(plan.MovesAfter, &after)
 	}
-	derived := shipment.CloneForUpdate(f.shipment)
-	derived.Status = shipment.StatusCompleted
+	derived := shipmentcoverage.CloneForUpdate(f.shipment)
+	derived.Status = shipmentvocab.StatusCompleted
 	plan.ShipmentsAfter = []*shipment.Shipment{derived}
 
 	return plan, nil
@@ -311,7 +329,7 @@ func (f *fakeMoveStatuses) PreviewUpdateStatus(
 
 func (f *fakeMoveStatuses) UpdateStatus(
 	_ context.Context,
-	req *shipmentports.UpdateMoveStatusRequest,
+	req *shipmentmoveports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -323,7 +341,7 @@ func (f *fakeMoveStatuses) UpdateStatus(
 
 func (f *fakeMoveStatuses) BulkUpdateStatus(
 	_ context.Context,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -338,22 +356,28 @@ func (f *fakeMoveStatuses) BulkUpdateStatus(
 func TestUpdateMoveStatus_UsesTheSingleOrTheBulkPathAsTheConsoleDoes(t *testing.T) {
 	t.Parallel()
 
-	one := newFakeMoveStatuses(shipment.MoveStatusInTransit, 1)
+	one := newFakeMoveStatuses(shipmentvocab.MoveStatusInTransit, 1)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldMoveIDs:       moveIDsParam(one.ids()...),
-		common.FieldStatus: "Completed",
+		fieldMoveIDs:              moveIDsParam(one.ids()...),
+		changepreview.FieldStatus: "Completed",
 	})
 	require.NoError(t, (&UpdateMoveStatusTool{moves: one}).Execute(t.Context(), params))
 	require.NotNil(t, one.single)
 	assert.Nil(t, one.bulk)
-	assert.Equal(t, shipment.MoveStatusCompleted, one.single.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusCompleted, one.single.Status)
 	assert.Equal(t, params.OrganizationID, one.single.TenantInfo.OrgID)
 	assert.Equal(t, params.Actor.UserID, one.single.TenantInfo.UserID)
 
-	two := newFakeMoveStatuses(shipment.MoveStatusInTransit, 2)
-	require.NoError(t, (&UpdateMoveStatusTool{moves: two}).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{fieldMoveIDs: moveIDsParam(two.ids()...), common.FieldStatus: "Completed"},
-	)))
+	two := newFakeMoveStatuses(shipmentvocab.MoveStatusInTransit, 2)
+	require.NoError(
+		t,
+		(&UpdateMoveStatusTool{moves: two}).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				fieldMoveIDs:              moveIDsParam(two.ids()...),
+				changepreview.FieldStatus: "Completed",
+			},
+		)),
+	)
 	assert.Nil(t, two.single)
 	require.NotNil(t, two.bulk)
 	assert.Equal(t, two.ids(), two.bulk.MoveIDs)
@@ -364,11 +388,17 @@ func TestUpdateMoveStatus_UsesTheSingleOrTheBulkPathAsTheConsoleDoes(t *testing.
 func TestUpdateMoveStatus_RefusesTheStatusesCoverageDecides(t *testing.T) {
 	t.Parallel()
 
-	moves := newFakeMoveStatuses(shipment.MoveStatusNew, 1)
+	moves := newFakeMoveStatuses(shipmentvocab.MoveStatusNew, 1)
 	for _, status := range []string{"Assigned", "New", "in transit", ""} {
-		err := (&UpdateMoveStatusTool{moves: moves}).Execute(t.Context(), agenttoolstest.ExecuteParams(
-			map[string]any{fieldMoveIDs: moveIDsParam(moves.ids()...), common.FieldStatus: status},
-		))
+		err := (&UpdateMoveStatusTool{moves: moves}).Execute(
+			t.Context(),
+			agenttoolstest.ExecuteParams(
+				map[string]any{
+					fieldMoveIDs:              moveIDsParam(moves.ids()...),
+					changepreview.FieldStatus: status,
+				},
+			),
+		)
 		require.Error(t, err, status)
 	}
 	assert.Nil(t, moves.single)
@@ -385,8 +415,8 @@ func TestUpdateMoveStatus_ACancellationIsAlwaysAProposal(t *testing.T) {
 
 	limit := func(status string) agent.AutonomyTier {
 		return policy.Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldMoveIDs:       moveIDsParam(pulid.MustNew("smv_")),
-			common.FieldStatus: status,
+			fieldMoveIDs:              moveIDsParam(pulid.MustNew("smv_")),
+			changepreview.FieldStatus: status,
 		}))
 	}
 	assert.Equal(t, agent.TierPropose, limit("Canceled"))
@@ -397,25 +427,41 @@ func TestUpdateMoveStatus_ACancellationIsAlwaysAProposal(t *testing.T) {
 func TestUpdateMoveStatus_PreviewShowsEachMoveAndTheShipmentItMoves(t *testing.T) {
 	t.Parallel()
 
-	moves := newFakeMoveStatuses(shipment.MoveStatusInTransit, 2)
+	moves := newFakeMoveStatuses(shipmentvocab.MoveStatusInTransit, 2)
 	tool := &UpdateMoveStatusTool{moves: moves}
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		fieldMoveIDs:       moveIDsParam(moves.ids()...),
-		common.FieldStatus: "Completed",
+		fieldMoveIDs:              moveIDsParam(moves.ids()...),
+		changepreview.FieldStatus: "Completed",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&moves.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	require.Len(t, preview.Changes, 3)
 	first := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Move on S-2001", first.Label)
-	assert.Equal(t, "InTransit", agenttoolstest.FieldByPath(t, first, common.FieldStatus).Before)
-	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, first, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"InTransit",
+		agenttoolstest.FieldByPath(t, first, changepreview.FieldStatus).Before,
+	)
+	assert.Equal(
+		t,
+		"Completed",
+		agenttoolstest.FieldByPath(t, first, changepreview.FieldStatus).After,
+	)
 	shipmentChange := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
-	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, shipmentChange, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Completed",
+		agenttoolstest.FieldByPath(t, shipmentChange, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "shipment S-2001 from InTransit to Completed")
 	assert.Contains(t, preview.Summary, "releases its tractor and trailer")
 	assert.Contains(t, preview.Summary, "together or not at all")
@@ -424,16 +470,20 @@ func TestUpdateMoveStatus_PreviewShowsEachMoveAndTheShipmentItMoves(t *testing.T
 func TestUpdateMoveStatus_PreviewWarnsOfATransitionTheServiceRefuses(t *testing.T) {
 	t.Parallel()
 
-	moves := newFakeMoveStatuses(shipment.MoveStatusCompleted, 1)
+	moves := newFakeMoveStatuses(shipmentvocab.MoveStatusCompleted, 1)
 	tool := &UpdateMoveStatusTool{moves: moves}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			fieldMoveIDs:       moveIDsParam(moves.ids()...),
-			common.FieldStatus: "InTransit",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&moves.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				fieldMoveIDs:              moveIDsParam(moves.ids()...),
+				changepreview.FieldStatus: "InTransit",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

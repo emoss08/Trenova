@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -33,7 +33,7 @@ type Params struct {
 	Logger      *zap.Logger
 	Repo        aianalyticsports.AnalyticsRepository
 	Cache       aianalyticsports.AnalyticsCache `optional:"true"`
-	Providers   agentports.AIProviderRepository
+	Providers   aiproviderports.AIProviderRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 }
 
@@ -42,7 +42,7 @@ type Service struct {
 	reader      aianalyticsports.AnalyticsReader
 	refresher   aianalyticsports.AnalyticsRefresher
 	cache       aianalyticsports.AnalyticsCache
-	providers   agentports.AIProviderRepository
+	providers   aiproviderports.AIProviderRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	clock       func() time.Time
 }

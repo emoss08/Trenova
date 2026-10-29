@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,8 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func grant(resource string, scope permission.DataScope) *permission.ResourcePermission {
-	return &permission.ResourcePermission{
+func grant(resource string, scope permission.DataScope) *rbac.ResourcePermission {
+	return &rbac.ResourcePermission{
 		Resource:   resource,
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  scope,
@@ -44,10 +46,10 @@ func TestCreateRole_RefusesAScopeTheKindDoesNotEnforce(t *testing.T) {
 	err := deps.svc.CreateRole(t.Context(), CreateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
-		Role: &permission.Role{
+		Role: &rbac.Role{
 			Name:           "Customer desk",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment.String(), permission.DataScopeOwn),
 				grant(permission.ResourceCustomer.String(), permission.DataScopeOwn),
 			},
@@ -63,15 +65,15 @@ func TestCreateRole_RefusesADatabaseScopeWhileTheDatabaseDoesNotEnforceIt(t *tes
 	t.Parallel()
 
 	deps := setupTestService(t)
-	deps.svc.scopes = &scopepolicytest.Policy{Registry: permission.NewRegistry()}
+	deps.svc.scopes = &scopepolicytest.Policy{Registry: permissioncatalog.NewRegistry()}
 
 	err := deps.svc.CreateRole(t.Context(), CreateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
-		Role: &permission.Role{
+		Role: &rbac.Role{
 			Name:           "Own loads",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment.String(), permission.DataScopeOwn),
 				grant(permission.ResourceCaptureBatch.String(), permission.DataScopeOwn),
 			},
@@ -87,7 +89,7 @@ func TestUpdateRole_KeepsAScopeTheRoleAlreadyHeld(t *testing.T) {
 
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
-	deps.svc.scopes = &scopepolicytest.Policy{Registry: permission.NewRegistry()}
+	deps.svc.scopes = &scopepolicytest.Policy{Registry: permissioncatalog.NewRegistry()}
 	ctx := t.Context()
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
@@ -96,21 +98,21 @@ func TestUpdateRole_KeepsAScopeTheRoleAlreadyHeld(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: orgID,
-		Permissions:    []*permission.ResourcePermission{held},
+		Permissions:    []*rbac.ResourcePermission{held},
 	}, nil)
 	deps.roleRepo.On("Update", ctx, mock.Anything).Return(nil)
 
 	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
-		Role: &permission.Role{
+		Role: &rbac.Role{
 			ID:             roleID,
 			Name:           "Renamed",
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment.String(), permission.DataScopeOwn),
 			},
 		},
@@ -130,7 +132,7 @@ func TestCreateResourcePermission_RefusesTeamOnAKindWithoutTeams(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{ID: roleID, OrganizationID: orgID}, nil)
+	}).Return(&rbac.Role{ID: roleID, OrganizationID: orgID}, nil)
 
 	rp := grant(permission.ResourceInvoice.String(), permission.DataScopeTeam)
 	rp.RoleID = roleID
@@ -143,7 +145,10 @@ func TestCreateResourcePermission_RefusesTeamOnAKindWithoutTeams(t *testing.T) {
 
 type activationPolicy bool
 
-func (p activationPolicy) RoleActivationRequired(context.Context, pagination.TenantInfo) (bool, error) {
+func (p activationPolicy) RoleActivationRequired(
+	context.Context,
+	pagination.TenantInfo,
+) (bool, error) {
 	return bool(p), nil
 }
 
@@ -154,15 +159,15 @@ func TestSaveRoleConstraint_DynamicSeparationNeedsRoleActivation(t *testing.T) {
 	deps.svc.activation = activationPolicy(false)
 	orgID := pulid.MustNew("org_")
 	first, second := pulid.MustNew("rol_"), pulid.MustNew("rol_")
-	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(&permission.Role{}, nil)
+	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(&rbac.Role{}, nil)
 
 	err := deps.svc.SaveRoleConstraint(t.Context(), &SaveConstraintRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Constraint: &permission.RoleConstraint{
+		Constraint: &rbac.RoleConstraint{
 			Name:     "Approve or post, not both at once",
-			Type:     permission.RoleConstraintTypeDSD,
+			Type:     rbac.RoleConstraintTypeDSD,
 			MaxRoles: 1,
 		},
 		RoleIDs: []pulid.ID{first, second},

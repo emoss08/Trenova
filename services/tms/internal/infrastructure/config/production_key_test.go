@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -50,32 +53,37 @@ func TestLoad_ProductionLocalKeyManager(t *testing.T) {
 	const strongKey = "3f9b1c7e5a2d48f6b0c9e1a7d4f2b8c6"
 
 	t.Run("refused without the opt-in", func(t *testing.T) {
-		_, err := loadConfigYAML(t, EnvProduction, productionLocalKeyConfig(t, false, strongKey))
-		require.ErrorIs(t, err, ErrProductionKMSRequired)
+		_, err := loadConfigYAML(
+			t,
+			appconfig.EnvProduction,
+			productionLocalKeyConfig(t, false, strongKey),
+		)
+		require.ErrorIs(t, err, securityconfig.ErrProductionKMSRequired)
 	})
 
 	t.Run("accepted with the opt-in and a strong key", func(t *testing.T) {
-		cfg, err := loadConfigYAML(t, EnvProduction, productionLocalKeyConfig(t, true, strongKey))
+		cfg, err := loadConfigYAML(
+			t,
+			appconfig.EnvProduction,
+			productionLocalKeyConfig(t, true, strongKey),
+		)
 		require.NoError(t, err)
 		assert.True(t, cfg.Security.Encryption.AllowLocalKeyManagerInProduction)
-		assert.Equal(t, EncryptionKeyManagerLocal, cfg.Security.Encryption.KeyManager)
+		assert.Equal(
+			t,
+			securityconfig.EncryptionKeyManagerLocal,
+			cfg.Security.Encryption.KeyManager,
+		)
 	})
 
 	t.Run("refuses a placeholder key", func(t *testing.T) {
 		_, err := loadConfigYAML(
 			t,
-			EnvProduction,
+			appconfig.EnvProduction,
 			productionLocalKeyConfig(t, true, "change-me-change-me-change-me-change-me"),
 		)
-		require.ErrorIs(t, err, ErrEncryptionKeyIsInsecure)
+		require.ErrorIs(t, err, securityconfig.ErrEncryptionKeyIsInsecure)
 	})
-}
-
-func TestValidateProductionLocalKey_RequiresLength(t *testing.T) {
-	t.Parallel()
-
-	require.ErrorIs(t, validateProductionLocalKey("short"), ErrProductionLocalEncryptionKeyRequired)
-	require.NoError(t, validateProductionLocalKey("3f9b1c7e5a2d48f6b0c9e1a7d4f2b8c6"))
 }
 
 func TestExampleConfigDecodesStrictly(t *testing.T) {
@@ -101,9 +109,9 @@ func TestExampleConfigDecodesStrictly(t *testing.T) {
 	section, err := yaml.Marshal(map[string]any{"platform": platform})
 	require.NoError(t, err)
 
-	cfg, err := loadConfigYAML(t, EnvTest, validConfigYAML()+string(section))
+	cfg, err := loadConfigYAML(t, appconfig.EnvTest, validConfigYAML()+string(section))
 	require.NoError(t, err)
-	assert.Equal(t, PlatformModeSelfHosted, cfg.Platform.GetMode())
+	assert.Equal(t, platformconfig.ModeSelfHosted, cfg.Platform.GetMode())
 
 	encryption, ok := example["security"].(map[string]any)["encryption"].(map[string]any)
 	require.True(t, ok)

@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,9 +33,9 @@ var reassignableStatuses = map[billingqueue.Status]struct{}{
 type reassignPlan struct {
 	shipment    *shipment.Shipment
 	allocations []*shipment.ChargeAllocation
-	resolution  *shipment.ShareResolution
+	resolution  *chargeallocation.ShareResolution
 	active      []*billingqueue.BillingQueueItem
-	toCreate    []*shipment.PayerShare
+	toCreate    []*chargeallocation.PayerShare
 	toCancel    []*billingqueue.BillingQueueItem
 	description string
 }
@@ -42,7 +44,7 @@ type reassignPlan struct {
 // the shipment is still in review. Payers who gain a share get a queue item;
 // payers left with nothing have theirs canceled; everyone else's allocated
 // total is refreshed.
-func (s *service) ReassignCharge(
+func (s *Service) ReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -60,7 +62,7 @@ func (s *service) ReassignCharge(
 	return s.reassignmentResult(ctx, item, plan, created, canceled, req, actor)
 }
 
-func (s *service) PreviewReassignCharge(
+func (s *Service) PreviewReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -80,7 +82,7 @@ func (s *service) PreviewReassignCharge(
 	}, nil
 }
 
-func (s *service) planReassignCharge(
+func (s *Service) planReassignCharge(
 	ctx context.Context,
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
@@ -144,8 +146,8 @@ func validateReassignRequest(
 		multiErr.Add("itemId", errortypes.ErrRequired, "Billing queue item is required")
 	}
 	switch req.ChargeKind {
-	case shipment.ChargeAllocationKindFreight:
-	case shipment.ChargeAllocationKindAccessorial:
+	case shipmentvocab.ChargeAllocationKindFreight:
+	case shipmentvocab.ChargeAllocationKindAccessorial:
 		if req.AdditionalChargeID.IsNil() {
 			multiErr.Add(
 				"additionalChargeId",
@@ -167,7 +169,7 @@ func validateReassignRequest(
 	return nil
 }
 
-func (s *service) planReassignment(
+func (s *Service) planReassignment(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	req *billingqueueports.ReassignChargeRequest,
@@ -212,7 +214,7 @@ func (s *service) planReassignment(
 		return nil, multiErr
 	}
 
-	resolution, err := shipment.ResolveShares(ctx, &candidate, merged)
+	resolution, err := chargeallocation.ResolveShares(ctx, &candidate, merged)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +263,7 @@ func reassignTarget(
 	shp *shipment.Shipment,
 	req *billingqueueports.ReassignChargeRequest,
 ) (target *shipment.AdditionalCharge, description string, err error) {
-	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
+	if req.ChargeKind == shipmentvocab.ChargeAllocationKindFreight {
 		return nil, "Freight", nil
 	}
 	for _, charge := range shp.AdditionalCharges {
@@ -292,7 +294,7 @@ func targetsCharge(
 	if allocation.ChargeKind != req.ChargeKind {
 		return false
 	}
-	if req.ChargeKind == shipment.ChargeAllocationKindFreight {
+	if req.ChargeKind == shipmentvocab.ChargeAllocationKindFreight {
 		return true
 	}
 
@@ -333,7 +335,7 @@ func reassignRows(
 			Amount:           input.Amount,
 			Sequence:         int16(i), //nolint:gosec // bounded by the request's row count
 		}
-		if req.ChargeKind == shipment.ChargeAllocationKindAccessorial {
+		if req.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial {
 			chargeID := req.AdditionalChargeID
 			row.AdditionalChargeID = &chargeID
 		}
@@ -358,7 +360,7 @@ func reassignRows(
 		return rows, nil
 	}
 
-	whole, err := shipment.BillsWholeChargeToPayer(ctx, shp, target, rows)
+	whole, err := chargeallocation.BillsWholeChargeToPayer(ctx, shp, target, rows)
 	if err != nil {
 		return nil, err
 	}
@@ -373,10 +375,10 @@ func reassignRows(
 // open queue item: payers who gained a share need one, and items whose payer now
 // pays nothing are canceled.
 func reconcileQueueItems(
-	resolution *shipment.ShareResolution,
+	resolution *chargeallocation.ShareResolution,
 	active []*billingqueue.BillingQueueItem,
-) (toCreate []*shipment.PayerShare, toCancel []*billingqueue.BillingQueueItem) {
-	paying := make(map[pulid.ID]*shipment.PayerShare, len(resolution.Shares))
+) (toCreate []*chargeallocation.PayerShare, toCancel []*billingqueue.BillingQueueItem) {
+	paying := make(map[pulid.ID]*chargeallocation.PayerShare, len(resolution.Shares))
 	for _, share := range resolution.Shares {
 		if share != nil && len(share.Charges) > 0 {
 			paying[share.PayerID] = share
@@ -406,7 +408,7 @@ func reconcileQueueItems(
 	return toCreate, toCancel
 }
 
-func (s *service) applyReassignment(
+func (s *Service) applyReassignment(
 	ctx context.Context,
 	plan *reassignPlan,
 	req *billingqueueports.ReassignChargeRequest,
@@ -477,7 +479,7 @@ func (s *service) applyReassignment(
 	return created, canceled, nil
 }
 
-func (s *service) reassignmentResult(
+func (s *Service) reassignmentResult(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	plan *reassignPlan,
@@ -495,7 +497,7 @@ func (s *service) reassignmentResult(
 	for _, entity := range created {
 		s.autoAssignDefaultBiller(ctx, entity, entity.BillToCustomerID, req.TenantInfo, actor)
 		s.logAction(entity, auditActor, permission.OpCreate, nil, entity, comment)
-		s.publishInvalidation(ctx, entity, auditActor, "created", entity)
+		s.activity.PublishInvalidation(ctx, entity, auditActor, "created", entity)
 		result.CreatedItemIDs = append(result.CreatedItemIDs, entity.ID)
 	}
 	for _, entity := range canceled {
@@ -507,12 +509,12 @@ func (s *service) reassignmentResult(
 			entity,
 			comment+". "+reassignCancelReason,
 		)
-		s.publishInvalidation(ctx, entity, auditActor, "updated", entity)
+		s.activity.PublishInvalidation(ctx, entity, auditActor, "updated", entity)
 		result.CanceledItemIDs = append(result.CanceledItemIDs, entity.ID)
 	}
 	if !containsID(result.CanceledItemIDs, item.ID) {
 		s.logAction(item, auditActor, permission.OpUpdate, nil, nil, comment)
-		s.publishInvalidation(ctx, item, auditActor, "updated", item)
+		s.activity.PublishInvalidation(ctx, item, auditActor, "updated", item)
 	}
 
 	reloaded, err := s.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{

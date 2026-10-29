@@ -21,8 +21,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/triagetemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/triageworkrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/redis/triagecache"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturemaintenance"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprocessing"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/app/contentscanservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/conversationfileservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
@@ -35,8 +42,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionevalservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionrolloutservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/extractionshadowservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundprocessing"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
@@ -156,15 +169,22 @@ func SharedOptions() fx.Option {
 			extractionshadowservice.NewRunner,
 			extractionshadowservice.AsRunner,
 			extractionshadowservice.AsScorer,
-			inboundmessageservice.New,
-			inboundmessageservice.NewNotifier,
-			func(n *inboundmessageservice.Notifier) inboundmessageports.TriageMessageNotifier { return n },
-			inboundmessageservice.NewActivityRecorder,
-			func(r *inboundmessageservice.ActivityRecorder) inboundmessageports.TriageActivityRecorder {
+			inboundqueue.New,
+			inboundviews.New,
+			inboundreads.New,
+			inboundmailbox.New,
+			inboundmailbox.AsSecretKeeper,
+			inboundprocessing.New,
+			inboundintake.New,
+			inboundupkeep.New,
+			inboundqueue.NewNotifier,
+			func(n *inboundqueue.Notifier) inboundmessageports.TriageMessageNotifier { return n },
+			inboundqueue.NewActivityRecorder,
+			func(r *inboundqueue.ActivityRecorder) inboundmessageports.TriageActivityRecorder {
 				return r
 			},
-			inboundmessageservice.NewEventSink,
-			func(e *inboundmessageservice.EventSink) inboundmessageports.TriageEventSink { return e },
+			inboundqueue.NewEventSink,
+			func(e *inboundqueue.EventSink) inboundmessageports.TriageEventSink { return e },
 			triagewakecontract.NewScheduler,
 			func(s *triagewakecontract.Scheduler) inboundmessageports.TriageWakeScheduler { return s },
 			triagenova.New,
@@ -199,7 +219,17 @@ func SharedOptions() fx.Option {
 			func(i *triagebriefingservice.Invalidator) inboundmessageports.TriageBriefingInvalidator {
 				return i
 			},
-			captureservice.New,
+			capturesupport.New,
+			captureprofiles.New,
+			capturedevices.New,
+			capturerequests.New,
+			captureprocessing.New,
+			captureintake.NewArrivalReaders,
+			captureintake.NewReceivedAnnouncer,
+			captureintake.New,
+			capturefiling.New,
+			capturemaintenance.AsNotifier,
+			capturemaintenance.New,
 			documentpacketruleservice.New,
 			documenttemplateservice.New,
 			func(s *documenttemplateservice.Service) documenttemplateports.DocumentTemplateResolver { return s },

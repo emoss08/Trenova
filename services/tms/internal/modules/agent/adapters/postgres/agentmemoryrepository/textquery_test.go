@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -116,7 +116,7 @@ func TestTextQuery_BoundsTheWordsAndDropsRepeats(t *testing.T) {
 func TestTextQuery_RendersOneSimpleSearch(t *testing.T) {
 	t.Parallel()
 
-	m := agentdb.Memories
+	m := agentmemorydb.Memories
 	primary := newTextQuery("Acme dock-hours", nil).primary()
 	sql, args := keeltest.Render(t, m.Pick(m.ID).
 		Where(primary.matches(m.SearchVector)).

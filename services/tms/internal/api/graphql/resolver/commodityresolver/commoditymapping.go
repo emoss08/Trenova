@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func commodityColumns(ctx context.Context, nodePathPrefix string) []string {
 func commodityConnectionToModel(
 	result *pagination.CursorListResult[*commodity.Commodity],
 ) (*gqlmodel.CommodityConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *commodity.Commodity, cursor string) *gqlmodel.CommodityEdge {
 			return &gqlmodel.CommodityEdge{

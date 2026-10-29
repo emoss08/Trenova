@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/client"
@@ -41,11 +41,11 @@ func TestNewScheduler_WithProviders(t *testing.T) {
 	lc := fxtest.NewLifecycle(t)
 
 	s := NewScheduler(SchedulerParams{
-		Client:    mc,
-		Config:    &config.Config{},
-		Logger:    logger,
-		LC:        lc,
-		Providers: []Provider{provider},
+		Client:         mc,
+		TemporalConfig: &temporalconfig.Config{},
+		Logger:         logger,
+		LC:             lc,
+		Providers:      []Provider{provider},
 	})
 
 	require.NotNil(t, s)
@@ -66,11 +66,11 @@ func TestNewScheduler_NoProviders(t *testing.T) {
 	lc := fxtest.NewLifecycle(t)
 
 	s := NewScheduler(SchedulerParams{
-		Client:    mc,
-		Config:    &config.Config{},
-		Logger:    logger,
-		LC:        lc,
-		Providers: []Provider{},
+		Client:         mc,
+		TemporalConfig: &temporalconfig.Config{},
+		Logger:         logger,
+		LC:             lc,
+		Providers:      []Provider{},
 	})
 
 	require.NotNil(t, s)
@@ -92,7 +92,7 @@ func TestScheduler_Start_NoProviders(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 
@@ -132,7 +132,7 @@ func TestScheduler_Start_WithProviders_Success(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 
@@ -165,7 +165,7 @@ func TestScheduler_Start_WithProviders_Error(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 
@@ -184,11 +184,9 @@ func TestScheduler_Stop_PersistOnStopTrue(t *testing.T) {
 
 	s := &Scheduler{
 		registry: registry,
-		config: &config.Config{
-			Temporal: config.TemporalConfig{
-				Schedule: config.TemporalScheduleConfig{
-					PersistOnStop: true,
-				},
+		config: &temporalconfig.Config{
+			Schedule: temporalconfig.ScheduleConfig{
+				PersistOnStop: true,
 			},
 		},
 		logger: logger.Named("scheduler"),
@@ -206,11 +204,9 @@ func TestScheduler_Stop_PersistOnStopFalse(t *testing.T) {
 
 	s := &Scheduler{
 		registry: registry,
-		config: &config.Config{
-			Temporal: config.TemporalConfig{
-				Schedule: config.TemporalScheduleConfig{
-					PersistOnStop: false,
-				},
+		config: &temporalconfig.Config{
+			Schedule: temporalconfig.ScheduleConfig{
+				PersistOnStop: false,
 			},
 		},
 		logger: logger.Named("scheduler"),
@@ -228,7 +224,7 @@ func TestScheduler_GetRegistry(t *testing.T) {
 
 	s := &Scheduler{
 		registry: registry,
-		config:   &config.Config{},
+		config:   &temporalconfig.Config{},
 		logger:   logger.Named("scheduler"),
 	}
 
@@ -250,7 +246,7 @@ func TestScheduler_GetReconciler(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 
@@ -289,7 +285,7 @@ func TestScheduler_ForceReconcile(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 
@@ -330,7 +326,7 @@ func TestScheduler_ForceReconcile_Error(t *testing.T) {
 	s := &Scheduler{
 		reconciler: reconciler,
 		registry:   registry,
-		config:     &config.Config{},
+		config:     &temporalconfig.Config{},
 		logger:     logger.Named("scheduler"),
 	}
 

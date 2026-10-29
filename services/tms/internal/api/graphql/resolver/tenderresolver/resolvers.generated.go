@@ -3,15 +3,15 @@
 package tenderresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
-	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	tenderports "github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	RoutingGuideService *routingguideservice.Service
-	TenderService       *tenderservice.Service
+	TenderRepo          tenderports.TenderRepository
 }
 
 type QueryResolver struct{ *Deps }

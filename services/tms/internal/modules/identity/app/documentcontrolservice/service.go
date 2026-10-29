@@ -3,8 +3,8 @@ package documentcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -42,15 +42,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	req tenantports.GetDocumentControlRequest,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	return s.repo.GetOrCreate(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *tenant.DocumentControl,
+	entity *documentcontrol.DocumentControl,
 	userID pulid.ID,
-) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("orgID", entity.OrganizationID.String()),

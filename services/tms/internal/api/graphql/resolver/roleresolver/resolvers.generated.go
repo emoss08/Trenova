@@ -3,12 +3,12 @@
 package roleresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	roleservice "github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	RoleService *roleservice.Service
 }
 

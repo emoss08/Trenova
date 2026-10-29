@@ -2,9 +2,10 @@ package workerdqfresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +14,7 @@ import (
 func employmentVerificationFromInput(
 	input *gqlmodel.RecordEmploymentVerificationInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerEmploymentVerification, error) {
+) (*employment.WorkerEmploymentVerification, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -23,23 +24,23 @@ func employmentVerificationFromInput(
 		)
 	}
 
-	entity := &worker.WorkerEmploymentVerification{
+	entity := &employment.WorkerEmploymentVerification{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,
 		EmployerName:      input.EmployerName,
-		EmployerDOTNumber: base.StringValue(input.EmployerDOTNumber),
-		EmployerMCNumber:  base.StringValue(input.EmployerMcNumber),
-		ContactName:       base.StringValue(input.ContactName),
-		ContactPhone:      base.StringValue(input.ContactPhone),
-		ContactEmail:      base.StringValue(input.ContactEmail),
-		EmployedFrom:      base.Int64Ptr(input.EmployedFrom),
-		EmployedTo:        base.Int64Ptr(input.EmployedTo),
+		EmployerDOTNumber: gqlscalar.StringValue(input.EmployerDOTNumber),
+		EmployerMCNumber:  gqlscalar.StringValue(input.EmployerMcNumber),
+		ContactName:       gqlscalar.StringValue(input.ContactName),
+		ContactPhone:      gqlscalar.StringValue(input.ContactPhone),
+		ContactEmail:      gqlscalar.StringValue(input.ContactEmail),
+		EmployedFrom:      gqlscalar.Int64Ptr(input.EmployedFrom),
+		EmployedTo:        gqlscalar.Int64Ptr(input.EmployedTo),
 		// A previous carrier is DOT-regulated unless the office says
 		// otherwise, which is the case for all but a handful of records.
 		WasDOTRegulated: true,
-		RequestedAt:     base.Int64Ptr(input.RequestedAt),
-		Notes:           base.StringValue(input.Notes),
+		RequestedAt:     gqlscalar.Int64Ptr(input.RequestedAt),
+		Notes:           gqlscalar.StringValue(input.Notes),
 	}
 	if input.WasDOTRegulated != nil {
 		entity.WasDOTRegulated = *input.WasDOTRegulated
@@ -67,7 +68,7 @@ func employmentVerificationUpdateRequest(
 			"Investigation is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -85,14 +86,14 @@ func employmentVerificationUpdateRequest(
 		ContactName:                   input.ContactName,
 		ContactPhone:                  input.ContactPhone,
 		ContactEmail:                  input.ContactEmail,
-		EmployedFrom:                  base.Int64Ptr(input.EmployedFrom),
-		EmployedTo:                    base.Int64Ptr(input.EmployedTo),
+		EmployedFrom:                  gqlscalar.Int64Ptr(input.EmployedFrom),
+		EmployedTo:                    gqlscalar.Int64Ptr(input.EmployedTo),
 		WasDOTRegulated:               input.WasDOTRegulated,
 		Status:                        input.Status,
 		Method:                        input.Method,
-		RequestedAt:                   base.Int64Ptr(input.RequestedAt),
-		ResponseReceivedAt:            base.Int64Ptr(input.ResponseReceivedAt),
-		DrugAlcoholResponseReceivedAt: base.Int64Ptr(input.DrugAlcoholResponseReceivedAt),
+		RequestedAt:                   gqlscalar.Int64Ptr(input.RequestedAt),
+		ResponseReceivedAt:            gqlscalar.Int64Ptr(input.ResponseReceivedAt),
+		DrugAlcoholResponseReceivedAt: gqlscalar.Int64Ptr(input.DrugAlcoholResponseReceivedAt),
 		HadAccidents:                  input.HadAccidents,
 		HadDrugAlcoholViolations:      input.HadDrugAlcoholViolations,
 		Findings:                      input.Findings,

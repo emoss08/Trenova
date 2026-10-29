@@ -9,19 +9,21 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *JurisdictionRuleResolver) PermitBaseFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error) {
-	return base.NullDecimalToString(obj.PermitBaseFee), nil
+	return gqldecimal.NullDecimalToString(obj.PermitBaseFee), nil
 }
 
 func (r *JurisdictionRuleResolver) PermitPerMileFee(ctx context.Context, obj *jurisdictionrule.JurisdictionRule) (*string, error) {
-	return base.NullDecimalToString(obj.PermitPerMileFee), nil
+	return gqldecimal.NullDecimalToString(obj.PermitPerMileFee), nil
 }
 
 func (r *QueryResolver) JurisdictionRules(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JurisdictionRuleConnection, error) {
@@ -32,7 +34,7 @@ func (r *QueryResolver) JurisdictionRules(ctx context.Context, input gqlmodel.Da
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (r *QueryResolver) JurisdictionRuleOverrides(ctx context.Context, input gql
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +91,7 @@ func (r *QueryResolver) JurisdictionRuleOverrides(ctx context.Context, input gql
 			Filter: tableInput.Filter,
 			Cursor: tableInput.Cursor,
 		},
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	)
 	if err != nil {
 		return nil, err

@@ -3,7 +3,7 @@ package toolpreview
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -14,8 +14,8 @@ import (
 // an EDI document, a comment a customer sees. The message is what would go
 // out, rendered by the code that sends it, with the recipients it would
 // really reach.
-func Send(rec Record, message *agent.MessagePreview) *agent.RecordChange {
-	change := newChange(agent.PreviewOperationSend, &rec)
+func Send(rec Record, message *agentpreview.MessagePreview) *agentpreview.RecordChange {
+	change := newChange(agentpreview.PreviewOperationSend, &rec)
 	if message == nil {
 		return change
 	}
@@ -35,10 +35,10 @@ func Send(rec Record, message *agent.MessagePreview) *agent.RecordChange {
 // MoneyBlock is an amount the write would move, line by line. The totals are
 // the sums of the lines' known figures, and the delta is after less before;
 // a side with no known figure has no total.
-func MoneyBlock(currency string, lines ...agent.MoneyLine) *agent.MoneyPreview {
-	block := &agent.MoneyPreview{
+func MoneyBlock(currency string, lines ...agentpreview.MoneyLine) *agentpreview.MoneyPreview {
+	block := &agentpreview.MoneyPreview{
 		Currency: strings.ToUpper(strings.TrimSpace(currency)),
-		Lines:    make([]agent.MoneyLine, 0, len(lines)),
+		Lines:    make([]agentpreview.MoneyLine, 0, len(lines)),
 	}
 
 	before, after := decimal.Zero, decimal.Zero
@@ -81,8 +81,12 @@ func MoneyDelta(before, after decimal.NullDecimal) decimal.NullDecimal {
 // sensitivity of the fields it is drawn from (SensitiveAs), or the resource's
 // default. An amount as sensitive as Confidential is never carried: the change
 // is returned without it.
-func Money(rec Record, block *agent.MoneyPreview, opts ...Option) *agent.RecordChange {
-	change := newChange(agent.PreviewOperationUpdate, &rec)
+func Money(
+	rec Record,
+	block *agentpreview.MoneyPreview,
+	opts ...Option,
+) *agentpreview.RecordChange {
+	change := newChange(agentpreview.PreviewOperationUpdate, &rec)
 	AttachMoney(change, block, opts...)
 
 	return change
@@ -90,7 +94,11 @@ func Money(rec Record, block *agent.MoneyPreview, opts ...Option) *agent.RecordC
 
 // AttachMoney puts an amount on a change another builder made, with the same
 // sensitivity rule as Money.
-func AttachMoney(change *agent.RecordChange, block *agent.MoneyPreview, opts ...Option) {
+func AttachMoney(
+	change *agentpreview.RecordChange,
+	block *agentpreview.MoneyPreview,
+	opts ...Option,
+) {
 	if change == nil || block == nil {
 		return
 	}
@@ -104,7 +112,7 @@ func AttachMoney(change *agent.RecordChange, block *agent.MoneyPreview, opts ...
 	}
 
 	attached := *block
-	attached.Lines = append([]agent.MoneyLine(nil), block.Lines...)
+	attached.Lines = append([]agentpreview.MoneyLine(nil), block.Lines...)
 	attached.Sensitivity = sensitivity
 	change.Money = &attached
 }

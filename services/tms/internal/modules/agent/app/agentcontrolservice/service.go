@@ -3,9 +3,10 @@ package agentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
@@ -33,7 +34,7 @@ type Params struct {
 	AuditService auditports.AuditService
 	// Trust promotes the tools that had already earned it when earned
 	// autonomy is turned on or its threshold lowered.
-	Trust agentports.AgentTrustService `optional:"true"`
+	Trust agenttrustports.AgentTrustService `optional:"true"`
 }
 
 type Service struct {
@@ -42,11 +43,12 @@ type Service struct {
 	repo     tenantports.AgentControlRepository
 	versions settingversionports.SettingVersionRepository
 	audit    auditports.AuditService
-	trust    agentports.AgentTrustService
+	trust    agenttrustports.AgentTrustService
 	now      func() int64
 }
 
-func New(p Params) agentports.AgentControlService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentcontrolports.AgentControlService {
 	return &Service{
 		l:        p.Logger.Named("service.agentcontrol"),
 		db:       p.DB,
@@ -61,7 +63,7 @@ func New(p Params) agentports.AgentControlService {
 func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	control, err := s.repo.GetOrCreate(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -72,9 +74,9 @@ func (s *Service) Get(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateAgentControlRequest,
+	req *agentcontrolports.UpdateAgentControlRequest,
 	actor *permissionports.RequestActor,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	control, err := s.repo.GetOrCreate(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -144,7 +146,7 @@ func (s *Service) Update(
 // clean approval to promote it on would otherwise wait for one.
 func (s *Service) promoteEarned(
 	ctx context.Context,
-	previous, updated *tenant.AgentControl,
+	previous, updated *agentcontrol.AgentControl,
 	decidedBy pulid.ID,
 ) {
 	if s.trust == nil || !updated.EarnedAutonomy {
@@ -154,7 +156,7 @@ func (s *Service) promoteEarned(
 		return
 	}
 
-	promoted, err := s.trust.PromoteReady(ctx, &agentports.PromoteReadyRequest{
+	promoted, err := s.trust.PromoteReady(ctx, &agenttrustports.PromoteReadyRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: updated.OrganizationID,
 			BuID:  updated.BusinessUnitID,
@@ -174,10 +176,10 @@ func (s *Service) promoteEarned(
 // save writes the controls and the version they become together.
 func (s *Service) save(
 	ctx context.Context,
-	control *tenant.AgentControl,
+	control *agentcontrol.AgentControl,
 	actor *permissionports.RequestActor,
-) (*tenant.AgentControl, error) {
-	var updated *tenant.AgentControl
+) (*agentcontrol.AgentControl, error) {
+	var updated *agentcontrol.AgentControl
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		updated, txErr = s.repo.Update(txCtx, control)
@@ -220,7 +222,7 @@ func (s *Service) explainConflict(
 		ctx,
 		s.versions,
 		s.l,
-		&editconflict.ExplainRequest[tenant.AgentControl]{
+		&editconflict.ExplainRequest[agentcontrol.AgentControl]{
 			TenantInfo:     tenantInfo,
 			Kind:           settingversion.KindAgentControl,
 			SubjectID:      current.ID,
@@ -228,14 +230,14 @@ func (s *Service) explainConflict(
 			Current:        current,
 			CurrentVersion: current.Version,
 			UpdatedAt:      current.UpdatedAt,
-			Rules:          tenant.AgentControlChangeRules,
+			Rules:          agentcontrol.AgentControlChangeRules,
 			Cause:          cause,
 		},
 	)
 }
 
 func (s *Service) applyTrainingConsent(
-	control *tenant.AgentControl,
+	control *agentcontrol.AgentControl,
 	consent *bool,
 	actor *permissionports.RequestActor,
 	me *errortypes.MultiError,
@@ -257,7 +259,10 @@ func (s *Service) applyTrainingConsent(
 	return control.SetAITrainingConsent(*consent, userID, s.now())
 }
 
-func applyAgentMoney(control *tenant.AgentControl, update *agentports.AgentMoneyLimitsUpdate) {
+func applyAgentMoney(
+	control *agentcontrol.AgentControl,
+	update *agentcontrolports.AgentMoneyLimitsUpdate,
+) {
 	if update.CallCeilingMinor != nil {
 		control.AgentMoneyCallCeilingMinor = *update.CallCeilingMinor
 	}
@@ -278,7 +283,7 @@ func applyAgentMoney(control *tenant.AgentControl, update *agentports.AgentMoney
 func agentControlAuditOptions(
 	ctx context.Context,
 	consentChanged bool,
-	previous, updated *tenant.AgentControl,
+	previous, updated *agentcontrol.AgentControl,
 ) []auditports.LogOption {
 	moneyChanged := agentMoneyChanged(previous, updated)
 	options := []auditports.LogOption{
@@ -292,7 +297,7 @@ func agentControlAuditOptions(
 	return options
 }
 
-func agentMoneyChanged(previous, updated *tenant.AgentControl) bool {
+func agentMoneyChanged(previous, updated *agentcontrol.AgentControl) bool {
 	return previous.AgentMoneyCallCeilingMinor != updated.AgentMoneyCallCeilingMinor ||
 		previous.AgentMoneyRunCalls != updated.AgentMoneyRunCalls ||
 		previous.AgentMoneyRunAmountMinor != updated.AgentMoneyRunAmountMinor ||
@@ -302,7 +307,7 @@ func agentMoneyChanged(previous, updated *tenant.AgentControl) bool {
 
 func agentControlAuditComment(
 	consentChanged, moneyChanged bool,
-	control *tenant.AgentControl,
+	control *agentcontrol.AgentControl,
 ) string {
 	switch {
 	case consentChanged && control.AITrainingConsent:

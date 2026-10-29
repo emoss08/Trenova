@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -33,7 +34,7 @@ type options struct {
 	labels      map[string]string
 	types       map[string]assistantartifact.DisplayType
 	sensitiveAs []string
-	registry    *permission.Registry
+	registry    *permissioncatalog.Registry
 }
 
 func newOptions(opts []Option) *options {
@@ -111,7 +112,7 @@ func SensitiveAs(paths ...string) Option {
 
 // WithRegistry classifies sensitivity against a registry other than the
 // process's own.
-func WithRegistry(registry *permission.Registry) Option {
+func WithRegistry(registry *permissioncatalog.Registry) Option {
 	return func(o *options) {
 		if registry != nil {
 			o.registry = registry

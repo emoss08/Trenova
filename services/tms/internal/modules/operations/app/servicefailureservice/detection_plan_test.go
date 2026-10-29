@@ -3,14 +3,14 @@ package servicefailureservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +44,7 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		buID,
 		moveID,
 		pulid.MustNew("stp_"),
-		shipment.StopTypeDelivery,
+		shipmentvocab.StopTypeDelivery,
 		1_360,
 	)
 	onTime := serviceFailureStopFixture(
@@ -52,11 +52,11 @@ func newDetectionFixture(t *testing.T) *detectionFixture {
 		buID,
 		moveID,
 		pulid.MustNew("stp_"),
-		shipment.StopTypePickup,
+		shipmentvocab.StopTypePickup,
 		1_000,
 	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, onTime)
-	source.Status = shipment.StatusInTransit
+	source.Status = shipmentvocab.StatusInTransit
 	source.Moves[0].Stops = append(source.Moves[0].Stops, late)
 
 	fixture := &detectionFixture{
@@ -127,7 +127,7 @@ func TestPreviewEvaluateShipment_PlansTheFailureWithoutSavingIt(t *testing.T) {
 	assert.Equal(t, "not late after grace", plan.SkippedStops[0].Reason)
 	assert.True(t, plan.MarksDelayed)
 	assert.False(t, fixture.marker.called)
-	assert.Equal(t, shipment.StatusInTransit, fixture.source.Status)
+	assert.Equal(t, shipmentvocab.StatusInTransit, fixture.source.Status)
 }
 
 func TestPreviewEvaluateShipment_RefreshesAnOpenFailureInsteadOfOpeningAnother(t *testing.T) {

@@ -14,12 +14,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -41,11 +42,11 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerCredentialRepository
+	Repo         workercredentialports.WorkerCredentialRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 	// DriverNotify carries a renewal ask to the driver, in the wording the
 	// organization's own template gives it.
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
@@ -54,11 +55,11 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.WorkerCredentialRepository
+	repo          workercredentialports.WorkerCredentialRepository
 	workerRepo    workerports.WorkerRepository
 	documentRepo  documentports.DocumentRepository
 	auditService  auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	driverNotify  *drivernotificationservice.Service
 	fields        permissionports.FieldAccess
 	seededTenants sync.Map
@@ -78,7 +79,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) auditType(
-	current, previous *worker.WorkerCredentialType,
+	current, previous *workercredential.WorkerCredentialType,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -98,7 +99,7 @@ func (s *Service) auditType(
 }
 
 func (s *Service) auditCredential(
-	current, previous *worker.WorkerCredential,
+	current, previous *workercredential.WorkerCredential,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -183,6 +184,6 @@ func (s *Service) publish(
 	}
 }
 
-func credentialTenant(entity *worker.WorkerCredential) pagination.TenantInfo {
+func credentialTenant(entity *workercredential.WorkerCredential) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

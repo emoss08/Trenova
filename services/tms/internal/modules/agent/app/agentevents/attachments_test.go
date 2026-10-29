@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevents"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ type recordingAttachments struct {
 
 func (r *recordingAttachments) AttachmentExtracted(
 	_ context.Context,
-	event *agentports.AgentEvent,
+	event *agenteventports.AgentEvent,
 ) {
 	r.seen = append(r.seen, event.SubjectID)
 }
@@ -40,17 +40,17 @@ func TestPublish_TellsAttachmentObserversOfEachExtraction(t *testing.T) {
 	observer := &recordingAttachments{}
 	agentevents.RegisterAttachmentObservers(agentevents.ObserverParams{
 		Publisher: publisher,
-		Observers: []agentports.AttachmentExtractionObserver{observer, nil},
+		Observers: []agenteventports.AttachmentExtractionObserver{observer, nil},
 	})
 	extracted := pulid.MustNew("doc_")
 
-	publisher.Publish(t.Context(), agentports.AgentEvent{
-		Kind:       agent.EventDocumentExtracted,
+	publisher.Publish(t.Context(), &agenteventports.AgentEvent{
+		Kind:       agenttrigger.EventDocumentExtracted,
 		SubjectID:  extracted,
 		TenantInfo: tenantInfo,
 	})
-	publisher.Publish(t.Context(), agentports.AgentEvent{
-		Kind:       agent.EventBillingQueueItemException,
+	publisher.Publish(t.Context(), &agenteventports.AgentEvent{
+		Kind:       agenttrigger.EventBillingQueueItemException,
 		SubjectID:  pulid.MustNew("bqi_"),
 		TenantInfo: tenantInfo,
 	})
@@ -70,8 +70,8 @@ func TestPublish_WithNoAttachmentObserversStillPublishes(t *testing.T) {
 	})
 
 	assert.NotPanics(t, func() {
-		publisher.Publish(t.Context(), agentports.AgentEvent{
-			Kind:       agent.EventDocumentExtracted,
+		publisher.Publish(t.Context(), &agenteventports.AgentEvent{
+			Kind:       agenttrigger.EventDocumentExtracted,
 			SubjectID:  pulid.MustNew("doc_"),
 			TenantInfo: tenantInfo,
 		})

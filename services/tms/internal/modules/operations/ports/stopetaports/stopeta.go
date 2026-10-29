@@ -3,7 +3,7 @@ package stopetaports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,13 +17,13 @@ type ReplaceForShipmentsRequest struct {
 
 type ListTrackedShipmentIDsRequest struct {
 	TenantInfo pagination.TenantInfo
-	Statuses   []shipment.Status
+	Statuses   []shipmentvocab.Status
 	Limit      int
 }
 
 type ListAttentionRequest struct {
 	TenantInfo  pagination.TenantInfo
-	Statuses    []shipment.Status
+	Statuses    []shipmentvocab.Status
 	ShipmentIDs []pulid.ID
 	Limit       int
 }
@@ -32,7 +32,7 @@ type AttentionStop struct {
 	ETA          *stopeta.StopETA
 	ProNumber    string
 	OwnerID      pulid.ID
-	StopType     shipment.StopType
+	StopType     shipmentvocab.StopType
 	LocationName string
 	City         string
 	StateCode    string
@@ -52,7 +52,7 @@ type Repository interface {
 	) ([]pulid.ID, error)
 	ListActiveTenants(
 		ctx context.Context,
-		statuses []shipment.Status,
+		statuses []shipmentvocab.Status,
 	) ([]pagination.TenantInfo, error)
 }
 

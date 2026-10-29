@@ -3,38 +3,45 @@ package infrastructure
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/infrastructure/redis"
-	"github.com/emoss08/trenova/internal/infrastructure/redis/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/accesscache"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/aicache"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/authstore"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/entitycache"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/feedstate"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/idempotencystore"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/providerstate"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/writebuffer"
 	"go.uber.org/fx"
 )
 
 var RedisRepositoriesModule = fx.Module("redis-repositories",
 	fx.Provide(
-		repositories.NewOrganizationRepository,
-		repositories.NewSessionRepository,
-		repositories.NewSSOLoginStateRepository,
-		repositories.NewMFAChallengeRepository,
-		repositories.NewAccountingOAuthStateRepository,
-		repositories.NewAuditBufferRepository,
-		repositories.NewPermissionCacheRepository,
-		repositories.NewScopeVerdictCacheRepository,
-		repositories.NewModelPriceCacheRepository,
-		repositories.NewQueryVectorCache,
-		repositories.NewProviderBreakerRepository,
-		repositories.NewProviderSlotRepository,
-		repositories.NewCustomerCacheRepository,
-		repositories.NewDocumentCacheRepository,
-		repositories.NewShipmentImportChatCacheRepository,
-		repositories.NewShipmentCacheRepository,
-		repositories.NewWorkerCacheRepository,
-		repositories.NewStoredMileageBufferRepository,
-		repositories.NewIdempotencyStore,
-		repositories.NewLoginThrottleStore,
-		repositories.NewShipmentBoardCache,
-		repositories.NewShipmentBoardEpochBumper,
-		repositories.NewAIControlSummaryCache,
-		repositories.NewAIAnalyticsCache,
-		repositories.NewAITuneUpFreshness,
-		repositories.NewWeatherAlertFeedStateStore,
+		entitycache.NewOrganizationRepository,
+		authstore.NewSessionRepository,
+		authstore.NewSSOLoginStateRepository,
+		authstore.NewMFAChallengeRepository,
+		authstore.NewAccountingOAuthStateRepository,
+		writebuffer.NewAuditBufferRepository,
+		accesscache.NewPermissionCacheRepository,
+		accesscache.NewScopeVerdictCacheRepository,
+		providerstate.NewModelPriceCacheRepository,
+		aicache.NewQueryVectorCache,
+		providerstate.NewProviderBreakerRepository,
+		providerstate.NewProviderSlotRepository,
+		entitycache.NewCustomerCacheRepository,
+		entitycache.NewDocumentCacheRepository,
+		entitycache.NewShipmentImportChatCacheRepository,
+		entitycache.NewShipmentCacheRepository,
+		entitycache.NewWorkerCacheRepository,
+		writebuffer.NewStoredMileageBufferRepository,
+		idempotencystore.NewIdempotencyStore,
+		authstore.NewLoginThrottleStore,
+		entitycache.NewShipmentBoardCache,
+		entitycache.NewShipmentBoardEpochBumper,
+		aicache.NewAIControlSummaryCache,
+		aicache.NewAIAnalyticsCache,
+		aicache.NewAITuneUpFreshness,
+		feedstate.NewWeatherAlertFeedStateStore,
 	),
 )
 

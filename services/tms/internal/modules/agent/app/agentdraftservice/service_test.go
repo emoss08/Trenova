@@ -9,9 +9,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,20 +29,20 @@ type stubCompleter struct {
 	reply string
 	err   error
 	calls int
-	saw   *agentports.StructuredCompletionRequest
+	saw   *llmports.StructuredCompletionRequest
 }
 
 func (s *stubCompleter) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.calls++
 	s.saw = req
 	if s.err != nil {
 		return nil, s.err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
+	return &llmports.StructuredCompletionResult{Text: s.reply, ModelIdentifier: "stub"}, nil
 }
 
 type stubDefinitions struct {
@@ -87,15 +90,15 @@ func (s *stubDefinitions) Draft(
 }
 
 type stubProviders struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers []*aiprovider.Provider
 	err       error
-	asked     aiprovider.Task
+	asked     aitask.Task
 }
 
 func (s *stubProviders) ListForTask(
 	_ context.Context,
-	req agentports.ListAIProvidersForTaskRequest,
+	req aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
 	s.asked = req.Task
 	if s.err != nil {
@@ -168,14 +171,14 @@ func TestDraftFromDescriptionAsksTheChatProvidersAndSavesNothing(t *testing.T) {
 	service := newTestService(completer, definitions, &stubProviders{})
 	tenantInfo := testTenant()
 
-	draft, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	draft, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  tenantInfo,
 		Description: "Answer customers asking where their loads are.",
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, completer.saw)
-	assert.Equal(t, aiprovider.TaskAssistantChat, completer.saw.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, completer.saw.Task)
 	assert.Equal(t, aiusage.FeatureAgentDrafting, completer.saw.Attribution.Feature)
 	assert.Equal(t, tenantInfo.UserID, completer.saw.Attribution.UserID)
 	assert.NotEmpty(t, completer.saw.OutputSchema)
@@ -213,13 +216,13 @@ func TestDraftFromDescriptionRefusesBeforeAskingTheModel(t *testing.T) {
 	completer := &stubCompleter{reply: validDraftReply}
 	service := newTestService(completer, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "   ",
 	})
 	require.Error(t, err)
 
-	_, err = service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err = service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: strings.Repeat("a", maxDescriptionRunes+1),
 	})
@@ -241,7 +244,7 @@ func TestDraftFromDescriptionFailsClearlyOnAnEmptyReply(t *testing.T) {
 		definitions := &stubDefinitions{}
 		service := newTestService(completer, definitions, &stubProviders{})
 
-		_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+		_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 			TenantInfo:  testTenant(),
 			Description: "Watch for late loads.",
 		})
@@ -256,26 +259,28 @@ func TestDraftFromDescriptionPassesOnTheRoutersError(t *testing.T) {
 	t.Parallel()
 
 	routerErr := errortypes.NewBusinessError("No AI provider is configured for AssistantChat").
-		WithInternal(agentports.ErrNoProviderConfigured)
+		WithInternal(llmports.ErrNoProviderConfigured)
 	service := newTestService(&stubCompleter{err: routerErr}, &stubDefinitions{}, &stubProviders{})
 
-	_, err := service.DraftFromDescription(t.Context(), &agentports.DraftAgentRequest{
+	_, err := service.DraftFromDescription(t.Context(), &agentdraftports.DraftAgentRequest{
 		TenantInfo:  testTenant(),
 		Description: "Watch for late loads.",
 	})
 
-	require.ErrorIs(t, err, agentports.ErrNoProviderConfigured)
+	require.ErrorIs(t, err, llmports.ErrNoProviderConfigured)
 }
 
 func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.T) {
 	t.Parallel()
 
-	completer := &stubCompleter{reply: `{"instructions":"Help {{user.name}}. Look loads up first."}`}
+	completer := &stubCompleter{
+		reply: `{"instructions":"Help {{user.name}}. Look loads up first."}`,
+	}
 	service := newTestService(completer, &stubDefinitions{}, &stubProviders{})
 
 	result, err := service.TightenInstructions(
 		t.Context(),
-		&agentports.TightenAgentInstructionsRequest{
+		&agentdraftports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}. Always look the loads up before anything else.",
 		},
@@ -284,7 +289,7 @@ func TestTightenInstructionsKeepsPlaceholdersAndAsksTheChatProviders(t *testing.
 
 	assert.Equal(t, "Help {{user.name}}. Look loads up first.", result.Instructions)
 	assert.True(t, result.Changed)
-	assert.Equal(t, aiprovider.TaskAssistantChat, completer.saw.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, completer.saw.Task)
 	assert.Equal(t, aiusage.FeatureAgentDrafting, completer.saw.Attribution.Feature)
 }
 
@@ -296,7 +301,7 @@ func TestTightenInstructionsRefusesAReplyThatLostAPlaceholder(t *testing.T) {
 
 	_, err := service.TightenInstructions(
 		t.Context(),
-		&agentports.TightenAgentInstructionsRequest{
+		&agentdraftports.TightenAgentInstructionsRequest{
 			TenantInfo:   testTenant(),
 			Instructions: "You should help {{user.name}}.",
 		},
@@ -315,7 +320,10 @@ func TestTightenInstructionsRefusesEmptyAndOverlongInstructions(t *testing.T) {
 	for _, text := range []string{" ", strings.Repeat("x", agentdefinition.MaxInstructionsRunes+1)} {
 		_, err := service.TightenInstructions(
 			t.Context(),
-			&agentports.TightenAgentInstructionsRequest{TenantInfo: testTenant(), Instructions: text},
+			&agentdraftports.TightenAgentInstructionsRequest{
+				TenantInfo:   testTenant(),
+				Instructions: text,
+			},
 		)
 		require.Error(t, err)
 	}
@@ -328,17 +336,17 @@ func TestAvailableWhenAnEnabledProviderTakesAssistantChat(t *testing.T) {
 	chat := &aiprovider.Provider{
 		Name:    "Chat",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}
 	disabled := &aiprovider.Provider{
 		Name:    "Off",
 		Enabled: false,
-		Tasks:   []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:   []aitask.Task{aitask.TaskAssistantChat},
 	}
 	other := &aiprovider.Provider{
 		Name:    "Docs",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 
 	cases := []struct {
@@ -363,7 +371,7 @@ func TestAvailableWhenAnEnabledProviderTakesAssistantChat(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, available)
-			assert.Equal(t, aiprovider.TaskAssistantChat, providers.asked)
+			assert.Equal(t, aitask.TaskAssistantChat, providers.asked)
 		})
 	}
 }

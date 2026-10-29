@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,11 +36,13 @@ func intPtr(value int) *int {
 	return &value
 }
 
-func upsertReturnsEntity(repo *tenantportsmock.MockDataRetentionRepository) *tenant.DataRetention {
-	saved := &tenant.DataRetention{}
+func upsertReturnsEntity(
+	repo *tenantportsmock.MockDataRetentionRepository,
+) *dataretention.DataRetention {
+	saved := &dataretention.DataRetention{}
 	repo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*tenant.DataRetention")).
-		RunAndReturn(func(_ context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error) {
+		Upsert(mock.Anything, mock.AnythingOfType("*dataretention.DataRetention")).
+		RunAndReturn(func(_ context.Context, entity *dataretention.DataRetention) (*dataretention.DataRetention, error) {
 			*saved = *entity
 			return entity, nil
 		}).
@@ -67,7 +68,7 @@ func TestGet_DefaultsTheAIAuditTrailToSevenYears(t *testing.T) {
 	entity, err := svc.Get(t.Context(), info)
 
 	require.NoError(t, err)
-	assert.Equal(t, tenant.DefaultAIAuditRetentionDays, entity.AIAuditRetentionPeriod)
+	assert.Equal(t, dataretention.DefaultAIAuditRetentionDays, entity.AIAuditRetentionPeriod)
 }
 
 func TestUpdate_SavesTheAIAuditTrailRetentionItWasGiven(t *testing.T) {
@@ -97,7 +98,7 @@ func TestUpdate_KeepsTheCurrentAIAuditTrailRetentionWhenNotSent(t *testing.T) {
 	info := testTenant()
 	repo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetDataRetentionRequest")).
-		Return(&tenant.DataRetention{
+		Return(&dataretention.DataRetention{
 			AuditRetentionPeriod:         120,
 			AgentEvalCaseRetentionPeriod: 90,
 			AIAuditRetentionPeriod:       1825,
@@ -167,5 +168,9 @@ func TestGet_DefaultsAICorrectionRetentionWhenNothingIsSaved(t *testing.T) {
 	entity, err := svc.Get(t.Context(), testTenant())
 
 	require.NoError(t, err)
-	assert.Equal(t, tenant.DefaultAICorrectionRetentionDays, entity.AICorrectionRetentionPeriod)
+	assert.Equal(
+		t,
+		dataretention.DefaultAICorrectionRetentionDays,
+		entity.AICorrectionRetentionPeriod,
+	)
 }

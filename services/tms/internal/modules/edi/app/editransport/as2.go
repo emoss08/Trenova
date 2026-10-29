@@ -12,12 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/ediconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const (
@@ -90,7 +91,7 @@ func AS2ConfigFromProfile(
 		BasicAuthPassword:    strings.TrimSpace(secrets[SecretKeyBasicAuthPassword]),
 	}
 	if pemData := maputils.StringValue(profile.Config, ConfigKeyLocalCertificate); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("local AS2 certificate is invalid: %w", err)
 		}
@@ -100,7 +101,7 @@ func AS2ConfigFromProfile(
 		profile.Config,
 		ConfigKeyPartnerSigningCertificate,
 	); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("partner AS2 signing certificate is invalid: %w", err)
 		}
@@ -110,7 +111,7 @@ func AS2ConfigFromProfile(
 		profile.Config,
 		ConfigKeyPartnerEncryptionCertificate,
 	); pemData != "" {
-		certificate, err := as2.ParseCertificate([]byte(pemData))
+		certificate, err := smime.ParseCertificate([]byte(pemData))
 		if err != nil {
 			return nil, fmt.Errorf("partner AS2 encryption certificate is invalid: %w", err)
 		}
@@ -120,7 +121,7 @@ func AS2ConfigFromProfile(
 		cfg.PartnerEncryptionCertificate = cfg.PartnerSigningCertificate
 	}
 	if keyPEM := strings.TrimSpace(secrets[SecretKeyAS2PrivateKey]); keyPEM != "" {
-		key, err := as2.ParsePrivateKey([]byte(keyPEM))
+		key, err := smime.ParsePrivateKey([]byte(keyPEM))
 		if err != nil {
 			return nil, fmt.Errorf("AS2 private key secret is invalid: %w", err)
 		}
@@ -144,8 +145,8 @@ type AS2Transport struct {
 	policy httpsafe.Policy
 }
 
-func NewAS2Transport(cfg *config.Config) *AS2Transport {
-	return NewAS2TransportWithPolicy(cfg.GetEDIConfig().EgressPolicy())
+func NewAS2Transport(cfg *ediconfig.Config) *AS2Transport {
+	return NewAS2TransportWithPolicy(cfg.EgressPolicy())
 }
 
 func NewAS2TransportWithPolicy(policy httpsafe.Policy) *AS2Transport {
@@ -169,8 +170,8 @@ func (t *AS2Transport) Method() edi.ConnectionMethod {
 
 func (t *AS2Transport) Deliver(
 	ctx context.Context,
-	req *ediports.EDITransportRequest,
-) (*ediports.EDITransportResult, error) {
+	req *editransportports.EDITransportRequest,
+) (*editransportports.EDITransportResult, error) {
 	if req == nil || req.Profile == nil {
 		return nil, ErrEDICommunicationProfileRequired
 	}
@@ -221,7 +222,7 @@ func (t *AS2Transport) Deliver(
 		)
 	}
 
-	result := &ediports.EDITransportResult{
+	result := &editransportports.EDITransportResult{
 		RemotePath: cfg.EndpointURL,
 		MessageID:  built.MessageID,
 		MIC:        built.MIC,

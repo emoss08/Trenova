@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -65,7 +66,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 
 	cases := []struct {
 		name   string
-		params agentports.ToolExecuteParams
+		params *agenttoolports.ToolExecuteParams
 		want   agent.AutonomyTier
 	}{
 		{
@@ -90,7 +91,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "an agent principal, not a person",
-			params: func() agentports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 
@@ -100,7 +101,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "a person with no user",
-			params: func() agentports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor.UserID = pulid.Nil
 
@@ -110,7 +111,7 @@ func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *te
 		},
 		{
 			name: "no actor",
-			params: func() agentports.ToolExecuteParams {
+			params: func() *agenttoolports.ToolExecuteParams {
 				params := agenttoolstest.PersonParams(base())
 				params.Actor = nil
 
@@ -145,10 +146,14 @@ func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	writer := &namingReportWriter{id: pulid.MustNew("rd_")}
 	tool := NewCreateReportTool(writer)
 
-	result, err := agentports.ExecuteTool(t.Context(), tool, agenttoolstest.PersonParams(map[string]any{
-		"name":       "Shipments for Peak Distributing",
-		"definition": definitionArgument(),
-	}))
+	result, err := agenttoolports.ExecuteTool(
+		t.Context(),
+		tool,
+		agenttoolstest.PersonParams(map[string]any{
+			"name":       "Shipments for Peak Distributing",
+			"definition": definitionArgument(),
+		}),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, writer.created)
@@ -157,8 +162,12 @@ func TestCreateReport_ExecuteWithResultNamesTheSavedReport(t *testing.T) {
 	assert.Equal(t, "report", result.Kind)
 	assert.Equal(t, "Shipments for Peak Distributing", result.Name)
 	assert.Equal(t, map[string]string{"definitionId": writer.id.String()}, result.IDs)
-	assert.Equal(t, &agent.RecordRef{EntityType: "report", ID: writer.id.String()}, result.Record,
-		"the saved report is named as the record it opens as")
+	assert.Equal(
+		t,
+		&agentrecord.RecordRef{EntityType: "report", ID: writer.id.String()},
+		result.Record,
+		"the saved report is named as the record it opens as",
+	)
 }
 
 // The record a report tool names must be one the app can open: an entity the
@@ -181,10 +190,12 @@ func TestCreateReport_ExecuteWithResultReportsNothingWhenTheSaveFails(t *testing
 
 	writer := &namingReportWriter{id: pulid.MustNew("rd_"), err: errors.New("name taken")}
 
-	result, err := agentports.ExecuteTool(
+	result, err := agenttoolports.ExecuteTool(
 		t.Context(),
 		NewCreateReportTool(writer),
-		agenttoolstest.PersonParams(map[string]any{"name": "Lane revenue", "definition": definitionArgument()}),
+		agenttoolstest.PersonParams(
+			map[string]any{"name": "Lane revenue", "definition": definitionArgument()},
+		),
 	)
 
 	require.ErrorContains(t, err, "name taken")

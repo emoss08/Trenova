@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,19 +20,19 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 	t.Parallel()
 
 	comments := &fakeCommentService{}
-	tool := shipmenttools.NewAddShipmentCommentTool(comments)
+	tool := shipmentcommenttools.NewAddShipmentCommentTool(comments)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Reefer alarm; call the driver now.",
 		"priority":   "Urgent",
 	})))
-	assert.Equal(t, shipment.CommentPriorityUrgent, comments.created.Priority)
-	assert.Equal(t, shipment.CommentVisibilityInternal, comments.created.Visibility,
+	assert.Equal(t, shipmentvocab.CommentPriorityUrgent, comments.created.Priority)
+	assert.Equal(t, shipmentvocab.CommentVisibilityInternal, comments.created.Visibility,
 		"an absent visibility is Internal")
 
 	comments = &fakeCommentService{}
-	tool = shipmenttools.NewAddShipmentCommentTool(comments)
+	tool = shipmentcommenttools.NewAddShipmentCommentTool(comments)
 	err := tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
 		"comment":    "Update.",
@@ -42,6 +42,6 @@ func TestAddShipmentComment_TakesEveryDomainPriorityAndRefusesTheRest(t *testing
 	assert.Contains(t, err.Error(), "Customers")
 	assert.Nil(t, comments.created)
 
-	_, validates := tool.(agentports.ToolValidator)
+	_, validates := tool.(agenttoolports.ToolValidator)
 	assert.True(t, validates, "the note is checked before it is filed")
 }

@@ -5,8 +5,8 @@ package agentqualityrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ func TestControlUpsertCreatesTheFirstControl(t *testing.T) {
 	_, err := repo.Get(ctx, tenant)
 	require.True(t, errortypes.IsNotFoundError(err))
 
-	created, err := repo.Upsert(ctx, &agentquality.Control{
+	created, err := repo.Upsert(ctx, &agentqualitycontrol.Control{
 		OrganizationID:      tenant.OrgID,
 		BusinessUnitID:      tenant.BuID,
 		Enabled:             true,

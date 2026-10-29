@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -48,13 +49,13 @@ func (f *FakeShipmentWriter) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	f.Previews++
 	if f.PreviewErr != nil {
 		return nil, f.PreviewErr
 	}
 
-	return &shipmentports.ShipmentCreatePlan{Shipment: entity}, nil
+	return &shipmentserviceports.ShipmentCreatePlan{Shipment: entity}, nil
 }
 
 func (f *FakeShipmentWriter) Update(
@@ -69,24 +70,24 @@ func (f *FakeShipmentWriter) Update(
 }
 
 type FakeTenders struct {
-	Waterfall *tenderservice.CreateWaterfallTenderRequest `json:"-"`
-	Spot      *tenderservice.CreateSpotTenderRequest      `json:"-"`
+	Waterfall *tendercreate.CreateWaterfallTenderRequest `json:"-"`
+	Spot      *tendercreate.CreateSpotTenderRequest      `json:"-"`
 }
 
 func (f *FakeTenders) CreateWaterfall(
 	_ context.Context,
-	req *tenderservice.CreateWaterfallTenderRequest,
-) (*tenderservice.CreateWaterfallResult, error) {
+	req *tendercreate.CreateWaterfallTenderRequest,
+) (*tendercreate.CreateWaterfallResult, error) {
 	f.Waterfall = req
 
-	return &tenderservice.CreateWaterfallResult{
+	return &tendercreate.CreateWaterfallResult{
 		Tender: &tender.Tender{ID: pulid.MustNew("tnd_")},
 	}, nil
 }
 
 func (f *FakeTenders) CreateSpot(
 	_ context.Context,
-	req *tenderservice.CreateSpotTenderRequest,
+	req *tendercreate.CreateSpotTenderRequest,
 ) (*tender.Tender, error) {
 	f.Spot = req
 

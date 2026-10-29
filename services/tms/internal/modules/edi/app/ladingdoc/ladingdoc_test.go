@@ -7,6 +7,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,7 +70,7 @@ func TestAReadTenderBecomesATenderPayload(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, "L-1001", key)
-	assert.Equal(t, edi.LoadTenderPurposeOriginal, payload.PurposeCode)
+	assert.Equal(t, editransfer.LoadTenderPurposeOriginal, payload.PurposeCode)
 	assert.Equal(t, "BOL-55", payload.BOL)
 	assert.Equal(t, edi.MappingSourceID("BT-1"), payload.CustomerID)
 	require.Len(t, payload.Moves, 1)
@@ -79,7 +81,11 @@ func TestAReadTenderBecomesATenderPayload(t *testing.T) {
 	assert.Equal(t, "DALLAS", pickup.LocationCity)
 	assert.NotZero(t, pickup.ScheduledWindowStart)
 	assert.Equal(t, "Delivery", payload.Moves[0].Stops[1].Type)
-	assert.Contains(t, payload.RequiredMappingEntityIDs[edi.MappingEntityTypeLocation], pickup.LocationID)
+	assert.Contains(
+		t,
+		payload.RequiredMappingEntityIDs[edi.MappingEntityTypeLocation],
+		pickup.LocationID,
+	)
 	require.True(t, payload.TotalChargeAmount.Valid)
 	assert.Equal(t, "1850", payload.TotalChargeAmount.Decimal.String())
 	require.NotNil(t, payload.Weight)
@@ -91,10 +97,10 @@ func TestAStatusPayloadWritesA214(t *testing.T) {
 
 	encoded, _ := project(t, lading.RoleCarrier)
 	stop := int64(2)
-	document, err := ladingdoc.FromShipmentStatus(&edi.ShipmentStatusPayload{
+	document, err := ladingdoc.FromShipmentStatus(&edipayload.ShipmentStatusPayload{
 		ShipperReference: "L-1001",
 		ProNumber:        "PRO-9",
-		Events: []edi.ShipmentStatusEvent{{
+		Events: []edipayload.ShipmentStatusEvent{{
 			StatusCode:   "X1",
 			EventAt:      1_768_055_400,
 			StopSequence: &stop,
@@ -121,11 +127,11 @@ func TestAnInvoicePayloadWritesA210(t *testing.T) {
 	t.Parallel()
 
 	encoded, _ := project(t, lading.RoleCarrier)
-	document, err := ladingdoc.FromFreightInvoice(&edi.FreightInvoicePayload{
+	document, err := ladingdoc.FromFreightInvoice(&edipayload.FreightInvoicePayload{
 		InvoiceNumber: "INV-1",
 		InvoiceDate:   1_768_219_200,
 		TotalAmount:   decimal.NewNullDecimal(decimal.RequireFromString("1250.5")),
-		LineCharges: []edi.FreightInvoiceCharge{
+		LineCharges: []edipayload.FreightInvoiceCharge{
 			{Sequence: 1, Amount: decimal.RequireFromString("1250.5")},
 		},
 	}, "L-1001", "America/Chicago", nil)
@@ -149,10 +155,15 @@ func TestATenderPayloadWritesA204(t *testing.T) {
 
 	encoded, _ := project(t, lading.RoleBroker)
 	locationID := pulid.ID("loc_1")
-	document, err := ladingdoc.FromLoadTender(&edi.LoadTenderPayload{
+	document, err := ladingdoc.FromLoadTender(&editransfer.LoadTenderPayload{
 		BOL: "BOL-1",
-		Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
-			{LocationID: locationID, LocationName: "Dock", Type: "Pickup", ScheduledWindowStart: 1_768_053_600},
+		Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
+			{
+				LocationID:           locationID,
+				LocationName:         "Dock",
+				Type:                 "Pickup",
+				ScheduledWindowStart: 1_768_053_600,
+			},
 			{Type: "Delivery", ScheduledWindowStart: 1_768_147_200},
 		}}},
 	}, "tof_1", ladingdoc.Zones{
@@ -177,8 +188,8 @@ func TestAnOutboundDocumentCarriesTheLoadsCustomFields(t *testing.T) {
 	t.Parallel()
 
 	custom := map[string]any{"po_number": "PO-559031", "declared_value": 1250.5}
-	document, err := ladingdoc.FromShipmentStatus(&edi.ShipmentStatusPayload{
-		Events: []edi.ShipmentStatusEvent{{StatusCode: "X1", EventAt: 1_768_055_400}},
+	document, err := ladingdoc.FromShipmentStatus(&edipayload.ShipmentStatusPayload{
+		Events: []edipayload.ShipmentStatusEvent{{StatusCode: "X1", EventAt: 1_768_055_400}},
 	}, "L-1001", ladingdoc.Zones{Default: "America/Chicago"}, custom)
 	require.NoError(t, err)
 

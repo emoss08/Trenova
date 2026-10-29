@@ -1,21 +1,13 @@
 package modeladapter
 
 const (
-	thinkingAnswerRoom   = 2048
+	ThinkingAnswerRoom   = 2048
 	thinkingFloor        = 8192
-	reasoningAnswerFloor = thinkingFloor + thinkingAnswerRoom
+	ReasoningAnswerFloor = thinkingFloor + ThinkingAnswerRoom
 )
 
-func answerRoom(call *Call, ceiling int) int {
-	if !call.reasons() {
-		return ceiling
-	}
-
-	return max(ceiling, reasoningAnswerFloor)
-}
-
-func (c *Call) reasons() bool {
-	if c.reasoning().Enabled() {
+func (c *Call) Reasons() bool {
+	if c.ReasoningEffort().Enabled() {
 		return true
 	}
 	if c.Provider == nil || c.Request == nil {

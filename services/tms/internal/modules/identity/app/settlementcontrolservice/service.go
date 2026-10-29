@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -41,15 +41,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.SettlementControl, error) {
+) (*settlementcontrol.SettlementControl, error) {
 	return s.repo.GetOrCreate(ctx, tenantInfo)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *tenant.SettlementControl,
+	entity *settlementcontrol.SettlementControl,
 	userID pulid.ID,
-) (*tenant.SettlementControl, error) {
+) (*settlementcontrol.SettlementControl, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {

@@ -9,10 +9,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargemapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,13 +27,13 @@ func (r *MutationResolver) CreateFuelIndex(ctx context.Context, input gqlmodel.F
 		return nil, err
 	}
 
-	entity := fuelIndexFromInput(&input, base.TenantInfo(authCtx))
+	entity := fuelIndexFromInput(&input, resolvercore.TenantInfo(authCtx))
 	created, err := r.FuelSurchargeService.CreateIndex(ctx, entity, authCtx.UserID)
 	if err != nil {
 		return nil, err
 	}
 
-	return base.FuelIndexToModel(created), nil
+	return fuelsurchargemapping.FuelIndexToModel(created), nil
 }
 
 func (r *MutationResolver) UpdateFuelIndex(ctx context.Context, id string, input gqlmodel.FuelIndexInput) (*gqlmodel.FuelIndex, error) {
@@ -46,13 +49,13 @@ func (r *MutationResolver) UpdateFuelIndex(ctx context.Context, id string, input
 
 	existing, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	entity := fuelIndexFromInput(&input, base.TenantInfo(authCtx))
+	entity := fuelIndexFromInput(&input, resolvercore.TenantInfo(authCtx))
 	entity.ID = indexID
 	entity.Version = existing.Version
 
@@ -61,7 +64,7 @@ func (r *MutationResolver) UpdateFuelIndex(ctx context.Context, id string, input
 		return nil, err
 	}
 
-	return base.FuelIndexToModel(updated), nil
+	return fuelsurchargemapping.FuelIndexToModel(updated), nil
 }
 
 func (r *MutationResolver) DeleteFuelIndex(ctx context.Context, id string) (bool, error) {
@@ -77,7 +80,7 @@ func (r *MutationResolver) DeleteFuelIndex(ctx context.Context, id string) (bool
 
 	if err = r.FuelSurchargeService.DeleteIndex(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 	}, authCtx.UserID); err != nil {
 		return false, err
 	}
@@ -97,12 +100,12 @@ func (r *MutationResolver) AddFuelIndexPrice(ctx context.Context, input gqlmodel
 			"fuelIndexId", errortypes.ErrInvalid, "Invalid fuel index")
 	}
 
-	price, err := base.DecimalFromString(input.Price, "price")
+	price, err := gqldecimal.DecimalFromString(input.Price, "price")
 	if err != nil {
 		return nil, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	created, err := r.FuelSurchargeService.AddManualPrice(ctx, &fuelsurcharge.FuelIndexPrice{
 		OrganizationID: ti.OrgID,
 		BusinessUnitID: ti.BuID,
@@ -128,12 +131,12 @@ func (r *MutationResolver) UpdateFuelIndexPrice(ctx context.Context, input gqlmo
 		return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, "Invalid fuel price")
 	}
 
-	price, err := base.DecimalFromString(input.Price, "price")
+	price, err := gqldecimal.DecimalFromString(input.Price, "price")
 	if err != nil {
 		return nil, err
 	}
 
-	ti := base.TenantInfo(authCtx)
+	ti := resolvercore.TenantInfo(authCtx)
 	updated, err := r.FuelSurchargeService.UpdateManualPrice(ctx, &fuelsurcharge.FuelIndexPrice{
 		ID:             priceID,
 		OrganizationID: ti.OrgID,
@@ -161,7 +164,7 @@ func (r *MutationResolver) DeleteFuelIndexPrice(ctx context.Context, id string) 
 
 	if err = r.FuelSurchargeService.DeleteManualPrice(ctx, &fuelsurchargeports.GetFuelIndexPriceByIDRequest{
 		PriceID:    priceID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}); err != nil {
 		return false, err
 	}
@@ -175,7 +178,7 @@ func (r *MutationResolver) CreateFuelSurchargeProgram(ctx context.Context, input
 		return nil, err
 	}
 
-	entity, err := fuelSurchargeProgramFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := fuelSurchargeProgramFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -204,14 +207,14 @@ func (r *MutationResolver) UpdateFuelSurchargeProgram(ctx context.Context, id st
 		ctx,
 		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:  programID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	entity, err := fuelSurchargeProgramFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := fuelSurchargeProgramFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +245,7 @@ func (r *MutationResolver) DeleteFuelSurchargeProgram(ctx context.Context, id st
 		ctx,
 		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:  programID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 		authCtx.UserID,
 	); err != nil {
@@ -258,7 +261,7 @@ func (r *QueryResolver) FuelIndexes(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -290,13 +293,13 @@ func (r *QueryResolver) FuelIndex(ctx context.Context, id string) (*gqlmodel.Fue
 
 	entity, err := r.FuelIndexRepo.GetByID(ctx, &fuelsurchargeports.GetFuelIndexByIDRequest{
 		FuelIndexID: indexID,
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return base.FuelIndexToModel(entity), nil
+	return fuelsurchargemapping.FuelIndexToModel(entity), nil
 }
 
 func (r *QueryResolver) FuelIndexPriceHistory(ctx context.Context, indexID string, from *string, to *string, limit *int) ([]*gqlmodel.FuelIndexPrice, error) {
@@ -313,7 +316,7 @@ func (r *QueryResolver) FuelIndexPriceHistory(ctx context.Context, indexID strin
 
 	req := &fuelsurchargeports.ListFuelIndexPricesRequest{
 		FuelIndexID: fuelIndexID,
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Limit:       104,
 	}
 	if from != nil {
@@ -340,7 +343,7 @@ func (r *QueryResolver) FuelDashboard(ctx context.Context) ([]*gqlmodel.FuelInde
 		return nil, err
 	}
 
-	entries, err := r.FuelSurchargeService.Dashboard(ctx, base.TenantInfo(authCtx))
+	entries, err := r.FuelSurchargeService.Dashboard(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +357,7 @@ func (r *QueryResolver) FuelSurchargePrograms(ctx context.Context, input gqlmode
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +392,7 @@ func (r *QueryResolver) FuelSurchargeProgram(ctx context.Context, id string) (*g
 		ctx,
 		&fuelsurchargeports.GetFuelSurchargeProgramByIDRequest{
 			ProgramID:     programID,
-			TenantInfo:    base.TenantInfo(authCtx),
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
 			IncludeRows:   true,
 			IncludeIndex:  true,
 			IncludeCharge: true,
@@ -408,7 +411,7 @@ func (r *QueryResolver) FuelProgramCurrentRates(ctx context.Context) ([]*gqlmode
 		return nil, err
 	}
 
-	entries, err := r.FuelSurchargeService.ProgramCurrentRates(ctx, base.TenantInfo(authCtx))
+	entries, err := r.FuelSurchargeService.ProgramCurrentRates(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -421,23 +424,23 @@ func (r *QueryResolver) GenerateFuelSurchargeTable(ctx context.Context, input gq
 		return nil, err
 	}
 
-	minPrice, err := base.DecimalFromString(input.MinPrice, "minPrice")
+	minPrice, err := gqldecimal.DecimalFromString(input.MinPrice, "minPrice")
 	if err != nil {
 		return nil, err
 	}
-	maxPrice, err := base.DecimalFromString(input.MaxPrice, "maxPrice")
+	maxPrice, err := gqldecimal.DecimalFromString(input.MaxPrice, "maxPrice")
 	if err != nil {
 		return nil, err
 	}
-	increment, err := base.DecimalFromString(input.Increment, "increment")
+	increment, err := gqldecimal.DecimalFromString(input.Increment, "increment")
 	if err != nil {
 		return nil, err
 	}
-	startValue, err := base.DecimalFromString(input.StartValue, "startValue")
+	startValue, err := gqldecimal.DecimalFromString(input.StartValue, "startValue")
 	if err != nil {
 		return nil, err
 	}
-	valueStep, err := base.DecimalFromString(input.ValueStep, "valueStep")
+	valueStep, err := gqldecimal.DecimalFromString(input.ValueStep, "valueStep")
 	if err != nil {
 		return nil, err
 	}

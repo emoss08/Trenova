@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,7 +12,7 @@ import (
 
 func EnsureAssignmentEquipmentAvailable(
 	ctx context.Context,
-	assignmentRepo shipmentports.AssignmentRepository,
+	assignmentRepo assignmentports.AssignmentRepository,
 	tenantInfo pagination.TenantInfo,
 	assignment *shipment.Assignment,
 	moveID pulid.ID,

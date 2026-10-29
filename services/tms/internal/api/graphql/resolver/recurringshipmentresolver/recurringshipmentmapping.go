@@ -2,7 +2,7 @@ package recurringshipmentresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func recurringShipmentConnectionToModel(
 	result *pagination.CursorListResult[*recurringshipment.RecurringShipment],
 ) (*gqlmodel.RecurringShipmentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *recurringshipment.RecurringShipment, cursor string) *gqlmodel.RecurringShipmentEdge {
 			return &gqlmodel.RecurringShipmentEdge{

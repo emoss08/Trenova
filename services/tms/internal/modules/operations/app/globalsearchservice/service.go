@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -28,7 +28,7 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Config       *config.Config
+	SearchConfig *searchconfig.Config
 	SearchRepo   customerports.SearchRepository
 	ShipmentRead shipmentports.ShipmentSearchCardReader
 	Permissions  permissionports.PermissionEngine
@@ -41,7 +41,7 @@ type Params struct {
 
 type Service struct {
 	logger       *zap.Logger
-	config       *config.SearchConfig
+	config       *searchconfig.Config
 	searchRepo   customerports.SearchRepository
 	shipmentRead shipmentports.ShipmentSearchCardReader
 	permissions  permissionports.PermissionEngine
@@ -71,7 +71,7 @@ const (
 func New(p Params) kernelports.GlobalSearchService {
 	return &Service{
 		logger:       p.Logger.Named("service.global-search"),
-		config:       p.Config.GetSearchConfig(),
+		config:       p.SearchConfig,
 		searchRepo:   p.SearchRepo,
 		shipmentRead: p.ShipmentRead,
 		permissions:  p.Permissions,

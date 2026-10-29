@@ -37,14 +37,3 @@ func TestUnreadableHere_AFileTheServerReadOrRefusedOnItsOwnRuns(t *testing.T) {
 		FailureCode: string(documentupload.FailureUnsupportedFormat),
 	}), "a file the server cannot read is the agent's to say so about")
 }
-
-func TestRequirement_DocumentTextIsCheckedWhenTheFileIsAttached(t *testing.T) {
-	t.Parallel()
-
-	needs := Requirement{DocumentText: true}
-	require.NoError(t, needs.validate())
-	statement, args := needs.probe()
-	assert.Equal(t, attachedTextReadySQL, statement, "no row says whether the converter runs")
-	assert.Empty(t, args)
-	assert.Contains(t, needs.Label(), "documentConversion")
-}

@@ -1,16 +1,16 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingsynctools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*accountingtools.RetryAccountingSyncTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*accountingsynctools.RetryAccountingSyncTool)(nil)
 
-var _ agentports.ToolPreviewer = (*accountingtools.SkipAccountingSyncTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*accountingsynctools.SkipAccountingSyncTool)(nil)
 
-var _ agentports.ToolPreviewer = (*accountingtools.PauseAccountingSyncTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*accountingsynctools.PauseAccountingSyncTool)(nil)
 
-var _ agentports.ToolPreviewer = (*accountingtools.ResumeAccountingSyncTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*accountingsynctools.ResumeAccountingSyncTool)(nil)
 
-var _ agentports.ToolPreviewer = (*accountingtools.RequestAccountingBackfillTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*accountingsynctools.RequestAccountingBackfillTool)(nil)

@@ -3,15 +3,23 @@
 package ediresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edimessageview "github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
+	edioutbound "github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 )
 
 type Deps struct {
-	*base.Core
-	EdiService        *ediservice.Service
-	EdiInboundService *ediinboundservice.Service
+	*resolvercore.Core
+	EdiSetupService    *edisetup.Service
+	EdiTransferService *editransferservice.Service
+	EdiOutboundService *edioutbound.Service
+	EdiMessageService  *edimessageview.Service
+	EdiOverviewService *edioverview.Service
+	EdiInboundService  *ediinboundservice.Service
 }
 
 type EdiFlowInstanceResolver struct{ *Deps }

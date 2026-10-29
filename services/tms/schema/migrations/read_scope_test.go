@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,7 +42,7 @@ func TestReadScopeMigration_PoliciesCoverEveryDatabaseScopedKind(t *testing.T) {
 	for _, name := range []string{readScopesUp, unreadableScopesUp, linkedRowsUp} {
 		assert.Equal(
 			t,
-			permission.NewRegistry().DatabaseScopedResources(),
+			permissioncatalog.NewRegistry().DatabaseScopedResources(),
 			policyKinds(readMigration(t, name)),
 			"%s: each kind the registry says the database scopes needs a read_scope policy, and no other",
 			name,
@@ -58,7 +59,7 @@ func TestReadScopeMigration_NoPolicyHidesAKindThePrincipalCannotRead(t *testing.
 
 	up := readMigration(t, linkedRowsUp)
 	policies := strings.Split(up, "CREATE POLICY read_scope ON ")
-	require.Len(t, policies, len(permission.NewRegistry().DatabaseScopedResources())+1)
+	require.Len(t, policies, len(permissioncatalog.NewRegistry().DatabaseScopedResources())+1)
 
 	for _, policy := range policies[1:] {
 		kinds := policyKinds(policy)
@@ -72,7 +73,7 @@ func TestReadScopeMigration_KeepsExactlyTheScopesTheRegistryDeclares(t *testing.
 	t.Parallel()
 
 	up := readMigration(t, readScopesUp)
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 
 	matches := declaredScopes.FindAllStringSubmatch(up, -1)
 	require.NotEmpty(t, matches)

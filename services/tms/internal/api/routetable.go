@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/routegroup"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/shared/reflectutils"
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +21,6 @@ func RouteTableWith(edition routegroup.Registrars) (routes gin.RoutesInfo, err e
 
 	engine := gin.New()
 	params.Server = &Server{router: engine}
-	params.Config = &config.Config{}
 
 	defer func() {
 		if recovered := recover(); recovered != nil {

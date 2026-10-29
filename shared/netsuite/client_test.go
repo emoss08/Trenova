@@ -15,6 +15,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -131,12 +132,12 @@ func TestNewAccountClientValidates(t *testing.T) {
 	t.Parallel()
 
 	_, err := netsuite.NewAccountClient(netsuite.AccountConfig{AccountID: testAccount})
-	require.ErrorIs(t, err, netsuite.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrAccessTokenRequired)
 
 	_, err = netsuite.NewAccountClient(netsuite.AccountConfig{
 		AccountID: "1234567-SB1", AccessToken: testAccessToken,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 
 	client, err := netsuite.NewAccountClient(netsuite.AccountConfig{
 		AccountID: " 1234567_sb1 ", AccessToken: testAccessToken,
@@ -195,16 +196,16 @@ func TestUpsertValidatesInput(t *testing.T) {
 		_, err := client.Upsert(t.Context(), netsuite.RecordWrite{
 			Type: "invoice", ExternalID: external, Body: body,
 		})
-		require.ErrorIs(t, err, netsuite.ErrInvalidExternalID, external)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidExternalID, external)
 	}
 	for _, kind := range []string{"", "../invoice", "invoice/1", "1invoice"} {
 		_, err := client.Upsert(t.Context(), netsuite.RecordWrite{
 			Type: kind, ExternalID: "trn-1", Body: body,
 		})
-		require.ErrorIs(t, err, netsuite.ErrInvalidRecordType, kind)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidRecordType, kind)
 	}
 	_, err := client.Upsert(t.Context(), netsuite.RecordWrite{Type: "invoice", ExternalID: "x"})
-	require.ErrorIs(t, err, netsuite.ErrBodyRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrBodyRequired)
 }
 
 func TestUpsertWithoutLocationIsUnexpected(t *testing.T) {
@@ -216,7 +217,7 @@ func TestUpsertWithoutLocationIsUnexpected(t *testing.T) {
 	_, err := client.Upsert(t.Context(), netsuite.RecordWrite{
 		Type: "invoice", ExternalID: "trn-1", Body: map[string]any{},
 	})
-	require.ErrorIs(t, err, netsuite.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, netsuiteerrors.ErrUnexpectedPayload)
 }
 
 func TestLocationOnAForeignHostIsRefused(t *testing.T) {
@@ -226,19 +227,19 @@ func TestLocationOnAForeignHostIsRefused(t *testing.T) {
 		created(w, "https://evil.example"+testRecordBase+"/invoice/1201")
 	})
 	_, err := client.Create(t.Context(), "invoice", map[string]any{})
-	require.ErrorIs(t, err, netsuite.ErrForeignLocation)
+	require.ErrorIs(t, err, netsuiteerrors.ErrForeignLocation)
 
 	client, _ = newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		created(w, "/services/rest/query/v1/invoice/1201")
 	})
 	_, err = client.Create(t.Context(), "invoice", map[string]any{})
-	require.ErrorIs(t, err, netsuite.ErrForeignLocation)
+	require.ErrorIs(t, err, netsuiteerrors.ErrForeignLocation)
 
 	client, _ = newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		created(w, testRecordBase+"/vendorBill/1201")
 	})
 	_, err = client.Create(t.Context(), "invoice", map[string]any{})
-	require.ErrorIs(t, err, netsuite.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, netsuiteerrors.ErrUnexpectedPayload)
 }
 
 func TestCreatePostsAndReadsTheLocation(t *testing.T) {
@@ -280,7 +281,7 @@ func TestPatchSendsReplace(t *testing.T) {
 	err = client.Patch(t.Context(), netsuite.RecordPatch{
 		Type: "invoice", ID: "1201", Body: map[string]any{}, Replace: []string{"item,apply"},
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidFieldName)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidFieldName)
 }
 
 func TestPatchWithoutReplaceAndByExternalID(t *testing.T) {
@@ -349,7 +350,7 @@ func TestGetExpandsSubResources(t *testing.T) {
 
 	require.ErrorIs(t, client.Get(t.Context(), netsuite.RecordRead{
 		Type: "invoice", ID: "1",
-	}, nil), netsuite.ErrOutRequired)
+	}, nil), netsuiteerrors.ErrOutRequired)
 }
 
 func TestGetWithoutOptionsSendsNoQuery(t *testing.T) {
@@ -397,7 +398,7 @@ func TestWritesAreNeverRetried(t *testing.T) {
 		Type: "invoice", ExternalID: "trn-1", Body: map[string]any{},
 	})
 	require.Error(t, err)
-	assert.True(t, netsuite.IsTransient(err))
+	assert.True(t, netsuiteerrors.IsTransient(err))
 	_, err = client.Create(t.Context(), "invoice", map[string]any{})
 	require.Error(t, err)
 	require.Error(t, client.Patch(t.Context(), netsuite.RecordPatch{
@@ -422,7 +423,7 @@ func TestTransportErrorOnAWriteIsNotRetried(t *testing.T) {
 
 	_, err := client.Create(t.Context(), "invoice", map[string]any{})
 	require.Error(t, err)
-	assert.True(t, netsuite.IsTransient(err))
+	assert.True(t, netsuiteerrors.IsTransient(err))
 	assert.Equal(t, int32(1), calls.Load())
 	assert.NotContains(t, err.Error(), "super-secret-access")
 }

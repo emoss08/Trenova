@@ -8,7 +8,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -17,9 +18,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func recordChanged(t *testing.T, tn tenant, recordID string, audience pulid.ID) *agentports.RealtimeEnvelope {
+func recordChanged(
+	t *testing.T,
+	tn tenant,
+	recordID string,
+	audience pulid.ID,
+) *realtimeports.RealtimeEnvelope {
 	t.Helper()
-	payload, err := sonic.Marshal(agentports.ResourceInvalidationEvent{
+	payload, err := sonic.Marshal(realtimeports.ResourceInvalidationEvent{
 		Resource:    "audited:shipment",
 		Action:      "updated",
 		RecordID:    recordID,
@@ -30,23 +36,30 @@ func recordChanged(t *testing.T, tn tenant, recordID string, audience pulid.ID) 
 	})
 	require.NoError(t, err)
 
-	return &agentports.RealtimeEnvelope{
+	return &realtimeports.RealtimeEnvelope{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		AudienceUserID: audience,
-		Event:          agentports.RealtimeEventInvalidation,
+		Event:          realtimeports.RealtimeEventInvalidation,
 		Payload:        payload,
 	}
 }
 
 func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
-	cfg := &config.Config{Realtime: config.RealtimeConfig{ShardCount: 4}}
+	cfg := &config.Config{Realtime: realtimeconfig.Config{ShardCount: 4}}
 	lc := fxtest.NewLifecycle(t)
-	pub := NewPublisher(PublisherParams{Client: client, Config: cfg, Logger: zap.NewNop(), LC: lc})
+	pub := NewPublisher(
+		PublisherParams{
+			Client:         client,
+			RealtimeConfig: &cfg.Realtime,
+			Logger:         zap.NewNop(),
+			LC:             lc,
+		},
+	)
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
-	feed := NewChangeFeed(ChangeFeedParams{Client: client, Config: cfg})
+	feed := NewChangeFeed(ChangeFeedParams{Client: client, RealtimeConfig: &cfg.Realtime})
 
 	tn, stranger := newTenant(), newTenant()
 	before := recordChanged(t, tn, feedRecord, pulid.Nil)
@@ -64,9 +77,9 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	require.True(t, pub.Enqueue(recordChanged(t, tn, feedRecord, pulid.MustNew("usr_"))))
 	require.True(t, pub.Enqueue(recordChanged(t, tn, feedRecord, pulid.Nil)))
 
-	var found *agentports.RecordChanges
+	var found *realtimeports.RecordChanges
 	require.Eventually(t, func() bool {
-		found, err = feed.Since(t.Context(), &agentports.RecordChangesRequest{
+		found, err = feed.Since(t.Context(), &realtimeports.RecordChangesRequest{
 			OrganizationID: tn.org,
 			BusinessUnitID: tn.bu,
 			Cursor:         cursor,
@@ -79,7 +92,7 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 	assert.Equal(t, []string{"status"}, found.Changes[0].Fields)
 	assert.NotEqual(t, cursor, found.Cursor)
 
-	again, err := feed.Since(t.Context(), &agentports.RecordChangesRequest{
+	again, err := feed.Since(t.Context(), &realtimeports.RecordChangesRequest{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		Cursor:         found.Cursor,
@@ -91,11 +104,11 @@ func TestChangeFeed_ReadsWatchedChangesSinceTheCursor(t *testing.T) {
 
 func TestChangeFeed_ACursorFromAnotherLayoutStartsAtTheHead(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
-	cfg := &config.Config{Realtime: config.RealtimeConfig{ShardCount: 4}}
-	feed := NewChangeFeed(ChangeFeedParams{Client: client, Config: cfg})
+	cfg := &config.Config{Realtime: realtimeconfig.Config{ShardCount: 4}}
+	feed := NewChangeFeed(ChangeFeedParams{Client: client, RealtimeConfig: &cfg.Realtime})
 	tn := newTenant()
 
-	found, err := feed.Since(t.Context(), &agentports.RecordChangesRequest{
+	found, err := feed.Since(t.Context(), &realtimeports.RecordChangesRequest{
 		OrganizationID: tn.org,
 		BusinessUnitID: tn.bu,
 		Cursor:         "not-a-cursor",

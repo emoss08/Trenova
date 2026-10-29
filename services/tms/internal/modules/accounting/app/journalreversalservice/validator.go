@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -82,7 +82,7 @@ func (v *Validator) ResolvePostingPeriod(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 	accountingDate int64,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 ) (*fiscalperiod.FiscalPeriod, int64, *errortypes.MultiError) {
 	me := errortypes.NewMultiError()
 	period, err := v.fiscalRepo.GetPeriodByDate(
@@ -100,7 +100,7 @@ func (v *Validator) ResolvePostingPeriod(
 	if period.Status == fiscalperiod.StatusClosed ||
 		period.Status == fiscalperiod.StatusPermanentlyClosed {
 		if control == nil ||
-			control.JournalReversalPolicy != tenant.JournalReversalPolicyNextOpenPeriod {
+			control.JournalReversalPolicy != accountingcontrol.JournalReversalPolicyNextOpenPeriod {
 			me.Add(
 				"requestedAccountingDate",
 				errortypes.ErrInvalidOperation,

@@ -9,6 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -28,12 +30,17 @@ func TestRequestTimeoutHandler_ReturnsGatewayTimeoutWithHeaders(t *testing.T) {
 		AllowHeaders:     []string{"Content-Type"},
 		AllowCredentials: true,
 	}))
-	router.Use(NewSecurityHeadersMiddleware(cfg))
+	router.Use(NewSecurityHeadersMiddleware(&cfg.App))
 	router.GET("/slow", func(c *gin.Context) {
 		time.Sleep(200 * time.Millisecond)
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/slow", nil)
@@ -67,7 +74,12 @@ func TestRequestTimeoutHandler_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	for _, path := range []string{"/api/v1/realtime/live", "/api/v1/realtime/ws/connect"} {
 		w := httptest.NewRecorder()
@@ -97,7 +109,12 @@ func TestRequestTimeoutHandler_SkipsAPostedStream(t *testing.T) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
 	})
-	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
+	handler := NewRequestTimeoutHandler(
+		router,
+		&cfg.App,
+		&cfg.Server,
+		newRequestTimeoutTestErrorHandler(cfg),
+	)
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(
@@ -113,15 +130,15 @@ func TestRequestTimeoutHandler_SkipsAPostedStream(t *testing.T) {
 
 func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 	return &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Name:    "trenova",
-			Env:     config.EnvTest,
+			Env:     appconfig.EnvTest,
 			Version: "test",
 			Debug:   true,
 		},
-		Server: config.ServerConfig{
+		Server: serverconfig.Config{
 			RequestTimeout: timeout,
-			CORS: config.CORSConfig{
+			CORS: serverconfig.CORSConfig{
 				Enabled:        true,
 				AllowedOrigins: []string{"https://cloud.trenova.app"},
 				Credentials:    true,
@@ -132,7 +149,7 @@ func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 
 func newRequestTimeoutTestErrorHandler(cfg *config.Config) *helpers.ErrorHandler {
 	return helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 }

@@ -3,8 +3,8 @@ package agentdecisionservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,11 +26,18 @@ func TestDecideWithOutcome_RefusesATenantThatIsNotTheDeciders(t *testing.T) {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	_, err := (&Service{}).DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
-		ProposalID: pulid.MustNew("ap_"),
-		Decision:   agent.DecisionAccepted,
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: actor.BusinessUnitID},
-	}, actor)
+	_, err := (&Service{}).DecideWithOutcome(
+		t.Context(),
+		&agentdecisionports.DecideAgentProposalRequest{
+			ProposalID: pulid.MustNew("ap_"),
+			Decision:   agentdecision.DecisionAccepted,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  actor.BusinessUnitID,
+			},
+		},
+		actor,
+	)
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "own organization")

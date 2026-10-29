@@ -3,8 +3,8 @@ package agenttoolschema_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func TestEnum_ListsTheSourceAndNamesIt(t *testing.T) {
 func TestSource_HoldsTheDomainsValues(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, shipment.CommentPriorityValues(), agenttoolschema.CommentPriorities.Values)
+	assert.Equal(t, shipmentvocab.CommentPriorityValues(), agenttoolschema.CommentPriorities.Values)
 	assert.Contains(t, agenttoolschema.CommentPriorities.Names(), "Urgent")
 }
 

@@ -3,13 +3,14 @@ package documentextractionservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +22,7 @@ import (
 func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) {
 	t.Parallel()
 
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 	tenant := plantest.Tenant()
 	documentID := pulid.MustNew("doc_")
@@ -35,11 +36,15 @@ func TestReextractRefusesWhenThePlanRestrictsDocumentIntelligence(t *testing.T) 
 	}, nil)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:       zap.NewNop(),
-		Config:       &config.Config{},
-		Metrics:      metricRegistry,
-		DocumentRepo: documentRepo,
-		Plans:        plantest.Restricting(t, platformplan.CapabilityDocumentIntelligence),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &documentconversionconfig.Config{},
+		SearchConfig:             &searchconfig.Config{},
+		Metrics:                  metricRegistry,
+		DocumentRepo:             documentRepo,
+		Plans: plantest.Restricting(
+			t,
+			platformplan.CapabilityDocumentIntelligence,
+		),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenant)

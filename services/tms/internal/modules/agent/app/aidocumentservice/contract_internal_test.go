@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,15 +17,19 @@ import (
 func TestContractRequestIsTheProductionExtractionCall(t *testing.T) {
 	t.Parallel()
 
-	pages := []documentaiextractionports.AIDocumentPage{{PageNumber: 1, Text: strings.Repeat("x", extractPageLimit+500)}}
+	pages := []documentaiextractionports.AIDocumentPage{
+		{PageNumber: 1, Text: strings.Repeat("x", extractPageLimit+500)},
+	}
 	req := Contract{}.CompletionRequest("document.pdf", pages)
-	production := newExtractCall(&documentaiextractionports.AIExtractRequest{FileName: "document.pdf", Pages: pages}).request()
+	production := newExtractCall(
+		&documentaiextractionports.AIExtractRequest{FileName: "document.pdf", Pages: pages},
+	).request()
 
 	assert.Equal(t, production.System, req.System)
 	assert.Equal(t, production.Context, req.Context)
 	assert.Equal(t, production.OutputSchema, req.OutputSchema)
 	assert.Equal(t, schemaNameExtract, req.SchemaName)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, req.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, req.Task)
 	assert.Equal(t, extractPageLimit, Contract{}.PageLimit())
 	assert.NotContains(t, req.Context.Sections[1].Content, strings.Repeat("x", extractPageLimit+1))
 }
@@ -153,7 +157,7 @@ func TestContractParseReplyRejectsMalformedText(t *testing.T) {
 	t.Parallel()
 
 	_, err := Contract{}.ParseReply("not json")
-	require.ErrorIs(t, err, agentports.ErrModelSchemaValidation)
+	require.ErrorIs(t, err, llmports.ErrModelSchemaValidation)
 }
 
 const pipelineSchemaFixture = "../../../../../../../tools/extraction-finetune/tests/fixtures/extraction-schema.json"
@@ -172,7 +176,11 @@ func TestFineTuningPipelineSchemaFixtureIsCurrent(t *testing.T) {
 	}
 
 	fixture, err := os.ReadFile(pipelineSchemaFixture)
-	require.NoError(t, err, "regenerate with TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/")
+	require.NoError(
+		t,
+		err,
+		"regenerate with TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/",
+	)
 	assert.JSONEq(t, string(encoded), string(fixture),
 		"the fine-tuning pipeline's schema fixture is stale; regenerate it with "+
 			"TRENOVA_UPDATE_FIXTURES=1 go test ./internal/modules/agent/app/aidocumentservice/")

@@ -5,12 +5,20 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,49 +30,49 @@ import (
 
 type fakeCredentials struct {
 	calls   int
-	summary *worker.WorkerCredentialSummary
+	summary *workercredential.WorkerCredentialSummary
 }
 
 func (f *fakeCredentials) Summary(
 	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
-) (*worker.WorkerCredentialSummary, error) {
+) (*workercredential.WorkerCredentialSummary, error) {
 	f.calls++
 	return f.summary, nil
 }
 
 type fakeTraining struct {
 	calls   int
-	summary *worker.WorkerTrainingSummary
+	summary *workertraining.WorkerTrainingSummary
 }
 
 func (f *fakeTraining) Summary(
 	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
-) (*worker.WorkerTrainingSummary, error) {
+) (*workertraining.WorkerTrainingSummary, error) {
 	f.calls++
 	return f.summary, nil
 }
 
 type fakeSafety struct {
 	calls int
-	card  *worker.SafetyScorecard
+	card  *safetyscorecard.SafetyScorecard
 	err   error
 }
 
 func (f *fakeSafety) Scorecard(
 	_ context.Context, _ pagination.TenantInfo, _ pulid.ID,
-) (*worker.SafetyScorecard, error) {
+) (*safetyscorecard.SafetyScorecard, error) {
 	f.calls++
 	return f.card, f.err
 }
 
 type fakeChecklists struct {
 	calls      int
-	checklists []*worker.WorkerChecklist
+	checklists []*workerchecklist.WorkerChecklist
 }
 
 func (f *fakeChecklists) ListForWorker(
 	_ context.Context, _ pagination.TenantInfo, _ pulid.ID, _ bool,
-) ([]*worker.WorkerChecklist, error) {
+) ([]*workerchecklist.WorkerChecklist, error) {
 	f.calls++
 	return f.checklists, nil
 }
@@ -72,7 +80,7 @@ func (f *fakeChecklists) ListForWorker(
 type fakeBalances struct {
 	calls    int
 	balances []*ptoledgerservice.BalanceView
-	summary  *workerports.PTOBalanceSummary
+	summary  *ptoledgerports.PTOBalanceSummary
 }
 
 func (f *fakeBalances) GetBalances(
@@ -84,21 +92,21 @@ func (f *fakeBalances) GetBalances(
 
 func (f *fakeBalances) Summary(
 	_ context.Context, _ pagination.TenantInfo,
-) (*workerports.PTOBalanceSummary, error) {
+) (*ptoledgerports.PTOBalanceSummary, error) {
 	if f.summary == nil {
-		return &workerports.PTOBalanceSummary{}, nil
+		return &ptoledgerports.PTOBalanceSummary{}, nil
 	}
 	return f.summary, nil
 }
 
 type fakeReviews struct {
 	calls   int
-	reviews []*worker.PerformanceReview
+	reviews []*workerreview.PerformanceReview
 }
 
 func (f *fakeReviews) ListReviews(
-	_ context.Context, _ pagination.TenantInfo, _ pulid.ID, _ []worker.ReviewStatus,
-) ([]*worker.PerformanceReview, error) {
+	_ context.Context, _ pagination.TenantInfo, _ pulid.ID, _ []workerreview.ReviewStatus,
+) ([]*workerreview.PerformanceReview, error) {
 	f.calls++
 	return f.reviews, nil
 }
@@ -106,12 +114,12 @@ func (f *fakeReviews) ListReviews(
 type fakeReviewCounter struct {
 	count    int
 	err      error
-	statuses []worker.ReviewStatus
+	statuses []workerreview.ReviewStatus
 }
 
 func (f *fakeReviewCounter) CountReviews(
 	_ context.Context,
-	req *workerports.CountPerformanceReviewsRequest,
+	req *workerreviewports.CountPerformanceReviewsRequest,
 ) (int, error) {
 	f.statuses = req.Statuses
 	return f.count, f.err
@@ -147,12 +155,14 @@ func newOverviewHarness(t *testing.T) *overviewHarness {
 
 	h := &overviewHarness{
 		credentials: &fakeCredentials{
-			summary: &worker.WorkerCredentialSummary{
+			summary: &workercredential.WorkerCredentialSummary{
 				ComplianceStatus: worker.ComplianceStatusCompliant,
 			},
 		},
-		training:   &fakeTraining{summary: &worker.WorkerTrainingSummary{Compliant: true}},
-		safety:     &fakeSafety{card: &worker.SafetyScorecard{Rating: worker.SafetyRatingGood}},
+		training: &fakeTraining{summary: &workertraining.WorkerTrainingSummary{Compliant: true}},
+		safety: &fakeSafety{
+			card: &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingGood},
+		},
 		checklists: &fakeChecklists{},
 		pto:        &fakeBalances{},
 		reviews:    &fakeReviews{},
@@ -190,7 +200,7 @@ func TestGet_ComposesEverySectionWhenAllowed(t *testing.T) {
 
 	overview := h.get(t, workeroverviewservice.All())
 
-	assert.Equal(t, worker.StandingGood, overview.Standing)
+	assert.Equal(t, workercompliance.StandingGood, overview.Standing)
 	assert.NotNil(t, overview.Credentials)
 	assert.NotNil(t, overview.Training)
 	assert.NotNil(t, overview.Safety)
@@ -219,13 +229,13 @@ func TestGet_SkipsSectionsTheCallerCannotRead(t *testing.T) {
 // not be reported as at risk on evidence the viewer is not allowed to read.
 func TestGet_StandingIgnoresSectionsTheCallerCannotRead(t *testing.T) {
 	h := newOverviewHarness(t)
-	h.safety.card = &worker.SafetyScorecard{Rating: worker.SafetyRatingAtRisk, Score: 20}
+	h.safety.card = &safetyscorecard.SafetyScorecard{Rating: worker.SafetyRatingAtRisk, Score: 20}
 
 	withSafety := h.get(t, workeroverviewservice.All())
-	assert.Equal(t, worker.StandingAtRisk, withSafety.Standing)
+	assert.Equal(t, workercompliance.StandingAtRisk, withSafety.Standing)
 
 	withoutSafety := h.get(t, workeroverviewservice.Sections{Credentials: true, Training: true})
-	assert.Equal(t, worker.StandingGood, withoutSafety.Standing)
+	assert.Equal(t, workercompliance.StandingGood, withoutSafety.Standing)
 	assert.Empty(t, withoutSafety.Concerns)
 }
 
@@ -245,10 +255,10 @@ func TestGet_SectionFailureFailsTheQuery(t *testing.T) {
 // most recently started; closed ones are history and must not be offered.
 func TestGet_PicksTheNewestOpenChecklist(t *testing.T) {
 	h := newOverviewHarness(t)
-	h.checklists.checklists = []*worker.WorkerChecklist{
-		{Name: "Older onboarding", Status: worker.ChecklistStatusOpen, StartedAt: 1_000},
-		{Name: "Equipment handover", Status: worker.ChecklistStatusOpen, StartedAt: 9_000},
-		{Name: "Closed one", Status: worker.ChecklistStatusCompleted, StartedAt: 99_000},
+	h.checklists.checklists = []*workerchecklist.WorkerChecklist{
+		{Name: "Older onboarding", Status: workerchecklist.ChecklistStatusOpen, StartedAt: 1_000},
+		{Name: "Equipment handover", Status: workerchecklist.ChecklistStatusOpen, StartedAt: 9_000},
+		{Name: "Closed one", Status: workerchecklist.ChecklistStatusCompleted, StartedAt: 99_000},
 	}
 
 	overview := h.get(t, workeroverviewservice.All())
@@ -259,8 +269,8 @@ func TestGet_PicksTheNewestOpenChecklist(t *testing.T) {
 
 func TestGet_NoOpenChecklistLeavesItNil(t *testing.T) {
 	h := newOverviewHarness(t)
-	h.checklists.checklists = []*worker.WorkerChecklist{
-		{Name: "Closed one", Status: worker.ChecklistStatusCompleted, StartedAt: 99_000},
+	h.checklists.checklists = []*workerchecklist.WorkerChecklist{
+		{Name: "Closed one", Status: workerchecklist.ChecklistStatusCompleted, StartedAt: 99_000},
 	}
 
 	assert.Nil(t, h.get(t, workeroverviewservice.All()).Checklist)
@@ -272,9 +282,9 @@ func TestGet_NoOpenChecklistLeavesItNil(t *testing.T) {
 func TestGet_ReviewInFlightSuppressesTheDueDate(t *testing.T) {
 	h := newOverviewHarness(t)
 	due := int64(1_000)
-	h.reviews.reviews = []*worker.PerformanceReview{
-		{Status: worker.ReviewStatusClosed, PeriodEnd: 500, NextReviewAt: &due},
-		{Status: worker.ReviewStatusDraft, PeriodEnd: 900},
+	h.reviews.reviews = []*workerreview.PerformanceReview{
+		{Status: workerreview.ReviewStatusClosed, PeriodEnd: 500, NextReviewAt: &due},
+		{Status: workerreview.ReviewStatusDraft, PeriodEnd: 900},
 	}
 
 	overview := h.get(t, workeroverviewservice.All())
@@ -282,16 +292,16 @@ func TestGet_ReviewInFlightSuppressesTheDueDate(t *testing.T) {
 	require.NotNil(t, overview.OpenReview)
 	require.NotNil(t, overview.LastReview)
 	assert.Nil(t, overview.NextReviewAt)
-	assert.Equal(t, worker.StandingGood, overview.Standing)
+	assert.Equal(t, workercompliance.StandingGood, overview.Standing)
 }
 
 func TestGet_LastClosedReviewSuppliesTheDueDate(t *testing.T) {
 	h := newOverviewHarness(t)
 	older := int64(1_000)
 	newer := int64(2_000)
-	h.reviews.reviews = []*worker.PerformanceReview{
-		{Status: worker.ReviewStatusClosed, PeriodEnd: 500, NextReviewAt: &older},
-		{Status: worker.ReviewStatusClosed, PeriodEnd: 900, NextReviewAt: &newer},
+	h.reviews.reviews = []*workerreview.PerformanceReview{
+		{Status: workerreview.ReviewStatusClosed, PeriodEnd: 500, NextReviewAt: &older},
+		{Status: workerreview.ReviewStatusClosed, PeriodEnd: 900, NextReviewAt: &newer},
 	}
 
 	overview := h.get(t, workeroverviewservice.All())
@@ -316,7 +326,7 @@ func TestRosterAttention_GathersEveryArea(t *testing.T) {
 		}, nil).
 		Once()
 	h.reviewCounts.count = 4
-	h.pto.summary = &workerports.PTOBalanceSummary{
+	h.pto.summary = &ptoledgerports.PTOBalanceSummary{
 		TotalBalanceDays: decimal.NewFromInt(312),
 	}
 
@@ -349,7 +359,7 @@ func TestRosterAttention_CountsOnlySubmittedReviews(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]worker.ReviewStatus{worker.ReviewStatusSubmitted},
+		[]workerreview.ReviewStatus{workerreview.ReviewStatusSubmitted},
 		h.reviewCounts.statuses,
 	)
 }
@@ -376,12 +386,12 @@ func TestRosterAttention_CountsNothingTheReaderMayNotRead(t *testing.T) {
 
 type fakeLeaveCounter struct {
 	count int
-	req   *workerports.ListLeaveCasesRequest
+	req   *workerleaveports.ListLeaveCasesRequest
 }
 
 func (f *fakeLeaveCounter) CountCases(
 	_ context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) (int, error) {
 	f.req = req
 	return f.count, nil

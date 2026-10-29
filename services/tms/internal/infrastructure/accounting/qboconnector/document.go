@@ -10,12 +10,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/shopspring/decimal"
 )
 
-var _ accountingsyncports.AccountingDocumentWriter = (*Connector)(nil)
+var _ accountingconnectorports.AccountingDocumentWriter = (*Connector)(nil)
 
 const (
 	providerName        = "QuickBooks Online"
@@ -27,9 +29,9 @@ const (
 
 var errDocumentKind = errors.New("quickbooks: this record type is not a document QuickBooks holds")
 
-func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimits {
-	return accountingsyncports.AccountingDocumentLimits{
-		MaxDocNumberLength:      quickbooks.MaxDocNumberLength,
+func (c *Connector) DocumentLimits() accountingconnectorports.AccountingDocumentLimits {
+	return accountingconnectorports.AccountingDocumentLimits{
+		MaxDocNumberLength:      quickbookstxn.MaxDocNumberLength,
 		SupportsDebitMemo:       false,
 		CanVoidCreditMemo:       false,
 		CanVoidPurchaseDocument: false,
@@ -37,28 +39,28 @@ func (c *Connector) DocumentLimits() accountingsyncports.AccountingDocumentLimit
 }
 
 func (c *Connector) DocumentURL(
-	_ accountingsyncports.AccountingDocumentAuth,
-	link accountingsyncports.AccountingDocumentLink,
+	_ accountingconnectorports.AccountingDocumentAuth,
+	link accountingconnectorports.AccountingDocumentLink,
 ) string {
 	externalID := link.ExternalID
 	var path string
 	switch link.Kind { //nolint:exhaustive // drift-only kinds have no QuickBooks page to link to
 	case accountingsync.SyncObjectCustomer:
-		path = quickbooks.CustomerAppPath()
+		path = quickbookstxn.CustomerAppPath()
 	case accountingsync.SyncObjectCarrierVendor, accountingsync.SyncObjectDriverVendor:
-		path = quickbooks.VendorAppPath()
+		path = quickbookstxn.VendorAppPath()
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		path = quickbooks.TxnInvoice.AppPath()
+		path = quickbookstxn.TxnInvoice.AppPath()
 	case accountingsync.SyncObjectCreditMemo:
-		path = quickbooks.TxnCreditMemo.AppPath()
+		path = quickbookstxn.TxnCreditMemo.AppPath()
 	case accountingsync.SyncObjectCustomerPayment, accountingsync.SyncObjectCreditApplication:
-		path = quickbooks.TxnPayment.AppPath()
+		path = quickbookstxn.TxnPayment.AppPath()
 	case accountingsync.SyncObjectCarrierBill, accountingsync.SyncObjectDriverBill:
-		path = quickbooks.TxnBill.AppPath()
+		path = quickbookstxn.TxnBill.AppPath()
 	case accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncObjectDriverBillPay:
-		path = quickbooks.TxnBillPayment.AppPath()
+		path = quickbookstxn.TxnBillPayment.AppPath()
 	case accountingsync.SyncObjectJournalEntry, accountingsync.SyncObjectJournalSummary:
-		path = quickbooks.TxnJournalEntry.AppPath()
+		path = quickbookstxn.TxnJournalEntry.AppPath()
 	default:
 		return ""
 	}
@@ -74,32 +76,35 @@ func (c *Connector) appURL(path, externalID string) string {
 }
 
 func (c *Connector) client(
-	auth accountingsyncports.AccountingDocumentAuth,
+	auth accountingconnectorports.AccountingDocumentAuth,
 ) (*quickbooks.Client, error) {
 	return quickbooks.New(c.env, auth.RealmID, auth.AccessToken, c.apiOpts...)
 }
 
 func (c *Connector) UpsertCustomer(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCustomerDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCustomerDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	draft := partyDraftOf(&doc.Party)
-	draft.DisplayName = quickbooks.SanitizeName(draft.DisplayName, quickbooks.MaxPartyNameLength)
+	draft.DisplayName = quickbooksref.SanitizeName(
+		draft.DisplayName,
+		quickbooksref.MaxPartyNameLength,
+	)
 
-	var saved *quickbooks.ReferenceObject
+	var saved *quickbooksref.ReferenceObject
 	if id := strings.TrimSpace(doc.ExternalID); id != "" {
-		saved, err = client.UpdateCustomer(ctx, doc.RequestID, id, draft)
+		saved, err = quickbookstxn.UpdateCustomer(ctx, client, doc.RequestID, id, draft)
 	} else {
-		saved, err = client.CreateCustomer(ctx, doc.RequestID, draft)
+		saved, err = quickbooksref.CreateCustomer(ctx, client, doc.RequestID, draft)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.Name,
 	}, nil
@@ -107,8 +112,8 @@ func (c *Connector) UpsertCustomer(
 
 func (c *Connector) CreateSalesDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingSalesDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingSalesDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
@@ -119,12 +124,12 @@ func (c *Connector) CreateSalesDocument(
 		result.ExternalID = existing
 	} else {
 		txn := salesTxnOf(doc)
-		var created *quickbooks.TxnResult
+		var created *quickbookstxn.TxnResult
 		switch doc.Kind {
 		case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-			created, err = client.CreateInvoice(ctx, doc.RequestID, txn)
+			created, err = quickbookstxn.CreateInvoice(ctx, client, doc.RequestID, txn)
 		case accountingsync.SyncObjectCreditMemo:
-			created, err = client.CreateCreditMemo(ctx, doc.RequestID, txn)
+			created, err = quickbookstxn.CreateCreditMemo(ctx, client, doc.RequestID, txn)
 		case accountingsync.SyncObjectCustomer,
 			accountingsync.SyncObjectCustomerPayment,
 			accountingsync.SyncObjectCreditApplication,
@@ -153,25 +158,26 @@ func (c *Connector) CreateSalesDocument(
 		return result, nil
 	}
 
-	applied, err := client.CreatePayment(
+	applied, err := quickbookstxn.CreatePayment(
 		ctx,
+		client,
 		accountingsync.SyncStepRequestID(doc.RequestID, 1),
-		&quickbooks.PaymentTxn{
+		&quickbookstxn.PaymentTxn{
 			CustomerID:   doc.CustomerExternalID,
 			TxnDate:      doc.TxnDate,
 			CurrencyCode: doc.CurrencyCode,
 			ExchangeRate: doc.ExchangeRate,
 			PrivateNote:  creditApplyNote + doc.DocNumber,
 			TotalAmount:  decimal.Zero,
-			Links: []quickbooks.PaymentLink{
+			Links: []quickbookstxn.PaymentLink{
 				{
 					TxnID:   doc.ApplyToExternalID,
-					TxnKind: quickbooks.TxnInvoice,
+					TxnKind: quickbookstxn.TxnInvoice,
 					Amount:  doc.ApplyAmount,
 				},
 				{
 					TxnID:   result.ExternalID,
-					TxnKind: quickbooks.TxnCreditMemo,
+					TxnKind: quickbookstxn.TxnCreditMemo,
 					Amount:  doc.ApplyAmount,
 				},
 			},
@@ -184,12 +190,12 @@ func (c *Connector) CreateSalesDocument(
 	return result, nil
 }
 
-func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.SalesTxn {
+func salesTxnOf(doc *accountingconnectorports.AccountingSalesDocument) *quickbookstxn.SalesTxn {
 	note := doc.PrivateNote
 	if doc.Kind == accountingsync.SyncObjectDebitMemo {
 		note = strings.TrimSpace(debitMemoNotePrefix + ". " + note)
 	}
-	txn := &quickbooks.SalesTxn{
+	txn := &quickbookstxn.SalesTxn{
 		CustomerID:   doc.CustomerExternalID,
 		DocNumber:    doc.DocNumber,
 		TxnDate:      doc.TxnDate,
@@ -199,7 +205,7 @@ func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.Sa
 		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  note,
 		CustomerMemo: doc.CustomerMemo,
-		Lines:        make([]quickbooks.SalesLine, 0, len(doc.Lines)),
+		Lines:        make([]quickbookstxn.SalesLine, 0, len(doc.Lines)),
 	}
 	if doc.Kind == accountingsync.SyncObjectCreditMemo {
 		txn.DueDate = ""
@@ -207,7 +213,7 @@ func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.Sa
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
-		txn.Lines = append(txn.Lines, quickbooks.SalesLine{
+		txn.Lines = append(txn.Lines, quickbookstxn.SalesLine{
 			Description: line.Description,
 			ItemID:      line.ItemExternalID,
 			Quantity:    line.Quantity,
@@ -221,8 +227,8 @@ func salesTxnOf(doc *accountingsyncports.AccountingSalesDocument) *quickbooks.Sa
 
 func (c *Connector) VoidSalesDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -232,23 +238,34 @@ func (c *Connector) VoidSalesDocument(
 
 	switch ref.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		if _, err = client.VoidInvoice(ctx, ref.RequestID, ref.ExternalID); err != nil &&
-			!quickbooks.IsObjectNotFound(err) {
+		if _, err = quickbookstxn.VoidInvoice(
+			ctx,
+			client,
+			ref.RequestID,
+			ref.ExternalID,
+		); err != nil &&
+			!quickbookstxn.IsObjectNotFound(err) {
 			return result, err
 		}
 		return result, nil
 	case accountingsync.SyncObjectCreditMemo:
 		if application := result.Refs[accountingsync.ExternalRefApplication]; application != "" {
-			if _, err = client.VoidPayment(
+			if _, err = quickbookstxn.VoidPayment(
 				ctx,
+				client,
 				accountingsync.SyncStepRequestID(ref.RequestID, 1),
 				application,
-			); err != nil && !quickbooks.IsObjectNotFound(err) {
+			); err != nil && !quickbookstxn.IsObjectNotFound(err) {
 				return result, err
 			}
 		}
-		if _, err = client.DeleteCreditMemo(ctx, ref.RequestID, ref.ExternalID); err != nil &&
-			!quickbooks.IsObjectNotFound(err) {
+		if _, err = quickbookstxn.DeleteCreditMemo(
+			ctx,
+			client,
+			ref.RequestID,
+			ref.ExternalID,
+		); err != nil &&
+			!quickbookstxn.IsObjectNotFound(err) {
 			return result, err
 		}
 		return result, nil
@@ -269,20 +286,20 @@ func (c *Connector) VoidSalesDocument(
 
 func (c *Connector) SavePayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	result := newResult(doc.Refs)
 
-	links := make([]quickbooks.PaymentLink, 0, len(doc.Applications)*2)
+	links := make([]quickbookstxn.PaymentLink, 0, len(doc.Applications)*2)
 	for idx := range doc.Applications {
 		app := &doc.Applications[idx]
-		links = append(links, quickbooks.PaymentLink{
+		links = append(links, quickbookstxn.PaymentLink{
 			TxnID:   app.InvoiceExternalID,
-			TxnKind: quickbooks.TxnInvoice,
+			TxnKind: quickbookstxn.TxnInvoice,
 			Amount:  app.AppliedAmount.Add(app.ShortPayAmount),
 		})
 		if !app.ShortPayAmount.IsPositive() {
@@ -292,14 +309,14 @@ func (c *Connector) SavePayment(
 		if memoErr != nil {
 			return result, memoErr
 		}
-		links = append(links, quickbooks.PaymentLink{
+		links = append(links, quickbookstxn.PaymentLink{
 			TxnID:   memoID,
-			TxnKind: quickbooks.TxnCreditMemo,
+			TxnKind: quickbookstxn.TxnCreditMemo,
 			Amount:  app.ShortPayAmount,
 		})
 	}
 
-	txn := &quickbooks.PaymentTxn{
+	txn := &quickbookstxn.PaymentTxn{
 		CustomerID:       doc.CustomerExternalID,
 		TxnDate:          doc.TxnDate,
 		CurrencyCode:     doc.CurrencyCode,
@@ -312,11 +329,11 @@ func (c *Connector) SavePayment(
 		Links:            links,
 	}
 
-	var saved *quickbooks.TxnResult
+	var saved *quickbookstxn.TxnResult
 	if id := strings.TrimSpace(doc.ExternalID); id != "" {
-		saved, err = client.UpdatePayment(ctx, doc.RequestID, id, txn)
+		saved, err = quickbookstxn.UpdatePayment(ctx, client, doc.RequestID, id, txn)
 	} else {
-		saved, err = client.CreatePayment(ctx, doc.RequestID, txn)
+		saved, err = quickbookstxn.CreatePayment(ctx, client, doc.RequestID, txn)
 	}
 	if err != nil {
 		return result, err
@@ -326,16 +343,16 @@ func (c *Connector) SavePayment(
 	return result, nil
 }
 
-func shortPayRefKey(app *accountingsyncports.AccountingPaymentApplication) string {
+func shortPayRefKey(app *accountingconnectorports.AccountingPaymentApplication) string {
 	return accountingsync.ExternalRefShortPayPrefix + app.InvoiceExternalID
 }
 
 func (c *Connector) shortPayMemo(
 	ctx context.Context,
 	client *quickbooks.Client,
-	doc *accountingsyncports.AccountingPaymentDocument,
+	doc *accountingconnectorports.AccountingPaymentDocument,
 	idx int,
-	result *accountingsyncports.AccountingDocumentResult,
+	result *accountingconnectorports.AccountingDocumentResult,
 ) (string, error) {
 	app := &doc.Applications[idx]
 	if id := strings.TrimSpace(app.ShortPayCreditExternalID); id != "" {
@@ -354,16 +371,17 @@ func (c *Connector) shortPayMemo(
 		}
 	}
 
-	memo, err := client.CreateCreditMemo(
+	memo, err := quickbookstxn.CreateCreditMemo(
 		ctx,
+		client,
 		accountingsync.SyncStepRequestID(doc.RequestID, idx+1),
-		&quickbooks.SalesTxn{
+		&quickbookstxn.SalesTxn{
 			CustomerID:   doc.CustomerExternalID,
 			TxnDate:      doc.TxnDate,
 			CurrencyCode: doc.CurrencyCode,
 			ExchangeRate: doc.ExchangeRate,
 			PrivateNote:  shortPayMemoNote + app.InvoiceNumber,
-			Lines: []quickbooks.SalesLine{{
+			Lines: []quickbookstxn.SalesLine{{
 				Description: shortPayMemoNote + app.InvoiceNumber,
 				ItemID:      doc.ShortPayItemExternalID,
 				Amount:      app.ShortPayAmount,
@@ -379,8 +397,8 @@ func (c *Connector) shortPayMemo(
 
 func (c *Connector) VoidPayment(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
@@ -388,8 +406,8 @@ func (c *Connector) VoidPayment(
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
-	if _, err = client.VoidPayment(ctx, ref.RequestID, ref.ExternalID); err != nil &&
-		!quickbooks.IsObjectNotFound(err) {
+	if _, err = quickbookstxn.VoidPayment(ctx, client, ref.RequestID, ref.ExternalID); err != nil &&
+		!quickbookstxn.IsObjectNotFound(err) {
 		return result, err
 	}
 
@@ -399,11 +417,12 @@ func (c *Connector) VoidPayment(
 			continue
 		}
 		step++
-		if _, err = client.DeleteCreditMemo(
+		if _, err = quickbookstxn.DeleteCreditMemo(
 			ctx,
+			client,
 			accountingsync.SyncStepRequestID(ref.RequestID, step),
 			result.Refs[key],
-		); err != nil && !quickbooks.IsObjectNotFound(err) {
+		); err != nil && !quickbookstxn.IsObjectNotFound(err) {
 			return result, err
 		}
 	}
@@ -412,36 +431,45 @@ func (c *Connector) VoidPayment(
 
 func (c *Connector) CreateCreditApplication(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingCreditApplicationDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingCreditApplicationDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	if !doc.Amount.IsPositive() {
-		return nil, quickbooks.ErrNegativeAmount
+		return nil, quickbookstxn.ErrNegativeAmount
 	}
 
-	applied, err := client.CreatePayment(ctx, doc.RequestID, &quickbooks.PaymentTxn{
-		CustomerID:   doc.CustomerExternalID,
-		TxnDate:      doc.TxnDate,
-		CurrencyCode: doc.CurrencyCode,
-		ExchangeRate: doc.ExchangeRate,
-		PrivateNote:  doc.PrivateNote,
-		TotalAmount:  decimal.Zero,
-		Links: []quickbooks.PaymentLink{
-			{TxnID: doc.InvoiceExternalID, TxnKind: quickbooks.TxnInvoice, Amount: doc.Amount},
-			{
-				TxnID:   doc.CreditMemoExternalID,
-				TxnKind: quickbooks.TxnCreditMemo,
-				Amount:  doc.Amount,
+	applied, err := quickbookstxn.CreatePayment(
+		ctx,
+		client,
+		doc.RequestID,
+		&quickbookstxn.PaymentTxn{
+			CustomerID:   doc.CustomerExternalID,
+			TxnDate:      doc.TxnDate,
+			CurrencyCode: doc.CurrencyCode,
+			ExchangeRate: doc.ExchangeRate,
+			PrivateNote:  doc.PrivateNote,
+			TotalAmount:  decimal.Zero,
+			Links: []quickbookstxn.PaymentLink{
+				{
+					TxnID:   doc.InvoiceExternalID,
+					TxnKind: quickbookstxn.TxnInvoice,
+					Amount:  doc.Amount,
+				},
+				{
+					TxnID:   doc.CreditMemoExternalID,
+					TxnKind: quickbookstxn.TxnCreditMemo,
+					Amount:  doc.Amount,
+				},
 			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: applied.ID,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: applied.ID},
 	}, nil
@@ -449,17 +477,17 @@ func (c *Connector) CreateCreditApplication(
 
 func (c *Connector) VoidCreditApplication(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(ref.Auth)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = client.VoidPayment(ctx, ref.RequestID, ref.ExternalID); err != nil &&
-		!quickbooks.IsObjectNotFound(err) {
+	if _, err = quickbookstxn.VoidPayment(ctx, client, ref.RequestID, ref.ExternalID); err != nil &&
+		!quickbookstxn.IsObjectNotFound(err) {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: ref.ExternalID,
 		Refs:       map[string]string{},
 	}, nil
@@ -467,14 +495,14 @@ func (c *Connector) VoidCreditApplication(
 
 func (c *Connector) FindDocument(
 	ctx context.Context,
-	req *accountingsyncports.AccountingFindDocumentRequest,
-) (*accountingsyncports.AccountingDocumentResult, bool, error) {
-	var kind quickbooks.TxnKind
+	req *accountingconnectorports.AccountingFindDocumentRequest,
+) (*accountingconnectorports.AccountingDocumentResult, bool, error) {
+	var kind quickbookstxn.TxnKind
 	switch req.Kind {
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
-		kind = quickbooks.TxnInvoice
+		kind = quickbookstxn.TxnInvoice
 	case accountingsync.SyncObjectCreditMemo:
-		kind = quickbooks.TxnCreditMemo
+		kind = quickbookstxn.TxnCreditMemo
 	case accountingsync.SyncObjectCustomer,
 		accountingsync.SyncObjectCustomerPayment,
 		accountingsync.SyncObjectCreditApplication,
@@ -492,11 +520,11 @@ func (c *Connector) FindDocument(
 	if err != nil {
 		return nil, false, err
 	}
-	found, ok, err := client.FindTransactionByDocNumber(ctx, kind, req.DocNumber)
+	found, ok, err := quickbookstxn.FindTransactionByDocNumber(ctx, client, kind, req.DocNumber)
 	if err != nil || !ok {
 		return nil, false, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: found.ID,
 		DocNumber:  found.DocNumber,
 		Refs:       map[string]string{},
@@ -512,7 +540,7 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 		return syncErr
 	}
 
-	code := strings.Join(quickbooks.FaultCodes(err), ",")
+	code := strings.Join(quickbookstxn.FaultCodes(err), ",")
 	message := faultMessage(err)
 	classified := func(
 		category accountingsync.SyncErrorCategory,
@@ -537,30 +565,30 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 			"Reconnect "+providerName+" from the accounting integration")
 	case quickbooks.IsRateLimited(err):
 		return classified(accountingsync.SyncErrorRateLimited, "")
-	case quickbooks.IsStaleObject(err),
+	case quickbookstxn.IsStaleObject(err),
 		quickbooks.IsTransient(err),
 		errors.Is(err, context.DeadlineExceeded):
 		return classified(accountingsync.SyncErrorTransient, "")
-	case quickbooks.IsDuplicateDocNumber(err):
+	case quickbookstxn.IsDuplicateDocNumber(err):
 		return classified(accountingsync.SyncErrorDuplicate,
 			"A document with this number already exists in "+providerName+
 				". Skip this record if it is the same document, or renumber the one in "+providerName)
-	case quickbooks.IsDuplicateName(err):
+	case quickbooksref.IsDuplicateName(err):
 		return classified(accountingsync.SyncErrorDuplicate,
 			"A customer, vendor or employee with this name already exists in "+providerName+
 				". Map the record to it instead, or rename one of them")
-	case quickbooks.IsClosedPeriod(err):
+	case quickbookstxn.IsClosedPeriod(err):
 		return classified(accountingsync.SyncErrorClosedPeriod,
 			"The books are closed for this date in "+providerName+
 				". Reopen the period there or skip this record")
-	case quickbooks.IsObjectNotFound(err):
+	case quickbookstxn.IsObjectNotFound(err):
 		return classified(accountingsync.SyncErrorNotFound,
 			"The linked record no longer exists in "+providerName)
-	case quickbooks.IsInvalidReference(err):
+	case quickbookstxn.IsInvalidReference(err):
 		return classified(accountingsync.SyncErrorMapping,
 			"A mapped "+providerName+" record is missing or inactive. "+
 				"Refresh the reference data and fix the mapping")
-	case isLocalValidation(err), quickbooks.IsValidationFault(err):
+	case isLocalValidation(err), quickbookstxn.IsValidationFault(err):
 		return classified(accountingsync.SyncErrorValidation,
 			"Correct the document in Trenova, then retry")
 	default:
@@ -570,20 +598,20 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 
 func isLocalValidation(err error) bool {
 	for _, target := range []error{
-		quickbooks.ErrCustomerRequired,
-		quickbooks.ErrLinesRequired,
-		quickbooks.ErrItemRequired,
-		quickbooks.ErrDocNumberTooLong,
-		quickbooks.ErrNegativeAmount,
-		quickbooks.ErrTxnIDRequired,
-		quickbooks.ErrUnknownTxnKind,
-		quickbooks.ErrInvalidName,
+		quickbookstxn.ErrCustomerRequired,
+		quickbookstxn.ErrLinesRequired,
+		quickbookstxn.ErrItemRequired,
+		quickbookstxn.ErrDocNumberTooLong,
+		quickbookstxn.ErrNegativeAmount,
+		quickbookstxn.ErrTxnIDRequired,
+		quickbookstxn.ErrUnknownTxnKind,
+		quickbooksref.ErrInvalidName,
 		quickbooks.ErrRequestIDRequired,
-		quickbooks.ErrVendorRequired,
-		quickbooks.ErrAccountRequired,
-		quickbooks.ErrBankAccountRequired,
-		quickbooks.ErrBillRequired,
-		quickbooks.ErrNonPositiveAmount,
+		quickbookstxn.ErrVendorRequired,
+		quickbookstxn.ErrAccountRequired,
+		quickbookstxn.ErrBankAccountRequired,
+		quickbookstxn.ErrBillRequired,
+		quickbookstxn.ErrNonPositiveAmount,
 		errDocumentKind,
 		errPurchaseDocumentType,
 	} {
@@ -618,8 +646,8 @@ func truncateMessage(message string) string {
 	return string(runes[:maxFaultMessage])
 }
 
-func newResult(refs map[string]string) *accountingsyncports.AccountingDocumentResult {
+func newResult(refs map[string]string) *accountingconnectorports.AccountingDocumentResult {
 	copied := make(map[string]string, len(refs)+2)
 	maps.Copy(copied, refs)
-	return &accountingsyncports.AccountingDocumentResult{Refs: copied}
+	return &accountingconnectorports.AccountingDocumentResult{Refs: copied}
 }

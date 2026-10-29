@@ -3,8 +3,10 @@ package assistantartifact
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -32,11 +34,11 @@ func NormalizeTitle(title string) string {
 		return untitledTitle
 	}
 
-	return stringutils.TruncateRunes(stringutils.CapitalizeFirst(cleaned), MaxTitleRunes)
+	return stringutils.TruncateRunes(textcase.CapitalizeFirst(cleaned), MaxTitleRunes)
 }
 
 func RecordNoun(entity string) string {
-	return permission.RecordKind(entity).Noun()
+	return recordkind.Kind(entity).Noun()
 }
 
 func RecordTitle(entity, label string) string {
@@ -44,9 +46,9 @@ func RecordTitle(entity, label string) string {
 }
 
 func RecordsTitle(entity string) string {
-	return NormalizeTitle(stringutils.PluralNoun(RecordNoun(stringutils.SingularNoun(entity))))
+	return NormalizeTitle(inflect.PluralNoun(RecordNoun(inflect.SingularNoun(entity))))
 }
 
 func PhraseTitle(identifier string) string {
-	return NormalizeTitle(stringutils.HumanizeSnakeCasePhrase(identifier))
+	return NormalizeTitle(textcase.HumanizeSnakeCasePhrase(identifier))
 }

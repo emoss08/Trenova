@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -17,12 +17,12 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*agent.AgentRun]
+	validator tenantedvalidation.EntityValidator[*agent.AgentRun]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*agent.AgentRun]().WithModelName("AgentRun").
+		validator: tenantedvalidation.NewBuilder[*agent.AgentRun]().WithModelName("AgentRun").
 			Build(),
 	}
 }

@@ -6,7 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,18 +32,18 @@ type Params struct {
 	DB           kernelports.Transactor
 	Logger       *zap.Logger
 	Repo         trackingeventports.TrackingEventRepository
-	MoveRepo     shipmentports.ShipmentMoveRepository
+	MoveRepo     shipmentmoveports.ShipmentMoveRepository
 	ShipmentRepo shipmentports.ShipmentRepository
-	MoveService  shipmentports.ShipmentMoveService
+	MoveService  shipmentmoveports.ShipmentMoveService
 }
 
 type Service struct {
 	db           kernelports.Transactor
 	l            *zap.Logger
 	repo         trackingeventports.TrackingEventRepository
-	moveRepo     shipmentports.ShipmentMoveRepository
+	moveRepo     shipmentmoveports.ShipmentMoveRepository
 	shipmentRepo shipmentports.ShipmentRepository
-	moveService  shipmentports.ShipmentMoveService
+	moveService  shipmentmoveports.ShipmentMoveService
 }
 
 func New(p Params) *Service { //nolint:gocritic // dependency injection
@@ -179,7 +181,7 @@ func (s *Service) RecordReported(
 			return err
 		}
 		if !inserted {
-			current, getErr := s.moveRepo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+			current, getErr := s.moveRepo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 				MoveID:            params.MoveID,
 				TenantInfo:        params.TenantInfo,
 				ExpandMoveDetails: true,
@@ -193,7 +195,7 @@ func (s *Service) RecordReported(
 
 		recorded, err := s.moveService.RecordStopActual(
 			txCtx,
-			&shipmentports.RecordStopActualRequest{
+			&shipmentmoveports.RecordStopActualRequest{
 				TenantInfo: params.TenantInfo,
 				MoveID:     params.MoveID,
 				StopID:     params.StopID,
@@ -233,7 +235,7 @@ func reportedEvents(
 	move *shipment.ShipmentMove,
 	in reportedEventInput,
 ) []*trackingevent.TrackingEvent {
-	build := func(kind shipment.VisitKind, key string, at int64) *trackingevent.TrackingEvent {
+	build := func(kind shipmentvocab.VisitKind, key string, at int64) *trackingevent.TrackingEvent {
 		return &trackingevent.TrackingEvent{
 			ID:             trackingevent.NewID(),
 			OrganizationID: params.TenantInfo.OrgID,
@@ -261,7 +263,7 @@ func reportedEvents(
 	}
 	if params.DepartedAt != nil {
 		reports = append(reports, build(
-			shipment.VisitDeparture,
+			shipmentvocab.VisitDeparture,
 			stringutils.TruncateRunes(
 				strings.TrimSpace(in.sourceKey),
 				trackingevent.MaxSourceKeyLength-len(departureKeySuffix),
@@ -372,7 +374,7 @@ func (s *Service) reconcile(
 
 		result, err := s.moveService.ReconcileStopActuals(
 			txCtx,
-			&shipmentports.ReconcileStopActualsRequest{
+			&shipmentmoveports.ReconcileStopActualsRequest{
 				TenantInfo: tenantInfo,
 				MoveID:     moveID,
 				Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]shipment.StopActualChange, error) {
@@ -425,7 +427,7 @@ func (s *Service) projectionOptions(
 		return trackingevent.Options{}, err
 	}
 	switch {
-	case entity.StatusEquals(shipment.StatusInvoiced):
+	case entity.StatusEquals(shipmentvocab.StatusInvoiced):
 		return trackingevent.Options{LockedReason: reasonInvoiced}, nil
 	case !entity.BillingTransferStatus.IsOutsideBillingQueue():
 		return trackingevent.Options{LockedReason: reasonBillingQueue}, nil
@@ -439,7 +441,7 @@ func (s *Service) loadMove(
 	tenantInfo pagination.TenantInfo,
 	moveID, stopID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	move, err := s.moveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.moveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenantInfo,
 		ExpandMoveDetails: true,
@@ -490,11 +492,11 @@ func replayed(
 	}
 }
 
-func visitForAction(action shipmentports.StopActualAction) shipment.VisitKind {
-	if action == shipmentports.StopActualActionDepart {
-		return shipment.VisitDeparture
+func visitForAction(action shipmentmoveports.StopActualAction) shipmentvocab.VisitKind {
+	if action == shipmentmoveports.StopActualActionDepart {
+		return shipmentvocab.VisitDeparture
 	}
-	return shipment.VisitArrival
+	return shipmentvocab.VisitArrival
 }
 
 func validateEntity(entity *trackingevent.TrackingEvent) *errortypes.MultiError {

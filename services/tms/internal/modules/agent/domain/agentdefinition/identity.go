@@ -4,126 +4,45 @@ import (
 	"errors"
 	"hash/fnv"
 	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 )
 
-const (
-	IconBot       = "bot"
-	IconTruck     = "truck"
-	IconRoute     = "route"
-	IconReceipt   = "receipt"
-	IconWallet    = "wallet"
-	IconShield    = "shield"
-	IconHeadset   = "headset"
-	IconClipboard = "clipboard"
-	IconCompass   = "compass"
-	IconRadar     = "radar"
-	IconGauge     = "gauge"
-	IconPackage   = "package"
-	IconFile      = "file"
-	IconSearch    = "search"
-	IconBell      = "bell"
-	IconSparkle   = "sparkle"
-	IconInbox     = "inbox"
-	IconBanknote  = "banknote"
-	IconCoins     = "coins"
-)
-
-const (
-	AccentIndigo = "indigo"
-	AccentTeal   = "teal"
-	AccentAmber  = "amber"
-	AccentRose   = "rose"
-	AccentEmeral = "emerald"
-	AccentSky    = "sky"
-	AccentViolet = "violet"
-	AccentSlate  = "slate"
-)
-
-var knownIcons = []string{
-	IconBot,
-	IconTruck,
-	IconRoute,
-	IconReceipt,
-	IconWallet,
-	IconShield,
-	IconHeadset,
-	IconClipboard,
-	IconCompass,
-	IconRadar,
-	IconGauge,
-	IconPackage,
-	IconFile,
-	IconSearch,
-	IconBell,
-	IconSparkle,
-	IconInbox,
-	IconBanknote,
-	IconCoins,
+var templateIcons = map[agenttemplate.Template]string{
+	agenttemplate.TemplateDispatchAssistant:    agentmark.IconTruck,
+	agenttemplate.TemplateBillingAssistant:     agentmark.IconReceipt,
+	agenttemplate.TemplateComplianceAssistant:  agentmark.IconShield,
+	agenttemplate.TemplateCustomerAssistant:    agentmark.IconHeadset,
+	agenttemplate.TemplateGeneralAssistant:     agentmark.IconBot,
+	agenttemplate.TemplateBillingException:     agentmark.IconReceipt,
+	agenttemplate.TemplateDispatchAssignment:   agentmark.IconRoute,
+	agenttemplate.TemplateImportAssistant:      agentmark.IconFile,
+	agenttemplate.TemplateLoadMonitor:          agentmark.IconRadar,
+	agenttemplate.TemplateShipmentIntake:       agentmark.IconPackage,
+	agenttemplate.TemplateCashApplication:      agentmark.IconWallet,
+	agenttemplate.TemplateDetentionDesk:        agentmark.IconGauge,
+	agenttemplate.TemplateCredentialDesk:       agentmark.IconClipboard,
+	agenttemplate.TemplateCustomerUpdateDesk:   agentmark.IconBell,
+	agenttemplate.TemplateCarrierRiskDesk:      agentmark.IconSearch,
+	agenttemplate.TemplateIntakeDesk:           agentmark.IconInbox,
+	agenttemplate.TemplateLoadEntryCheck:       agentmark.IconClipboard,
+	agenttemplate.TemplateServiceFailureDesk:   agentmark.IconHeadset,
+	agenttemplate.TemplateInsightAnalyst:       agentmark.IconCompass,
+	agenttemplate.TemplateEDIDesk:              agentmark.IconFile,
+	agenttemplate.TemplateFormulaAssistant:     agentmark.IconSparkle,
+	agenttemplate.TemplateBooksKeeper:          agentmark.IconReceipt,
+	agenttemplate.TemplateFactoringClerk:       agentmark.IconBanknote,
+	agenttemplate.TemplateSettlementsClerk:     agentmark.IconBanknote,
+	agenttemplate.TemplateReceivables:          agentmark.IconCoins,
+	agenttemplate.TemplateMasterDataSteward:    agentmark.IconFile,
+	agenttemplate.TemplateWorkforceCoordinator: agentmark.IconClipboard,
+	agenttemplate.TemplateFuelTaxClerk:         agentmark.IconGauge,
+	agenttemplate.TemplateReportAnalyst:        agentmark.IconCompass,
 }
 
-var knownAccents = []string{
-	AccentIndigo,
-	AccentTeal,
-	AccentAmber,
-	AccentRose,
-	AccentEmeral,
-	AccentSky,
-	AccentViolet,
-	AccentSlate,
-}
-
-var templateIcons = map[Template]string{
-	TemplateDispatchAssistant:    IconTruck,
-	TemplateBillingAssistant:     IconReceipt,
-	TemplateComplianceAssistant:  IconShield,
-	TemplateCustomerAssistant:    IconHeadset,
-	TemplateGeneralAssistant:     IconBot,
-	TemplateBillingException:     IconReceipt,
-	TemplateDispatchAssignment:   IconRoute,
-	TemplateImportAssistant:      IconFile,
-	TemplateLoadMonitor:          IconRadar,
-	TemplateShipmentIntake:       IconPackage,
-	TemplateCashApplication:      IconWallet,
-	TemplateDetentionDesk:        IconGauge,
-	TemplateCredentialDesk:       IconClipboard,
-	TemplateCustomerUpdateDesk:   IconBell,
-	TemplateCarrierRiskDesk:      IconSearch,
-	TemplateIntakeDesk:           IconInbox,
-	TemplateLoadEntryCheck:       IconClipboard,
-	TemplateServiceFailureDesk:   IconHeadset,
-	TemplateInsightAnalyst:       IconCompass,
-	TemplateEDIDesk:              IconFile,
-	TemplateFormulaAssistant:     IconSparkle,
-	TemplateBooksKeeper:          IconReceipt,
-	TemplateFactoringClerk:       IconBanknote,
-	TemplateSettlementsClerk:     IconBanknote,
-	TemplateReceivables:          IconCoins,
-	TemplateMasterDataSteward:    IconFile,
-	TemplateWorkforceCoordinator: IconClipboard,
-	TemplateFuelTaxClerk:         IconGauge,
-	TemplateReportAnalyst:        IconCompass,
-}
-
-func KnownIcons() []string {
-	out := make([]string, len(knownIcons))
-	copy(out, knownIcons)
-
-	return out
-}
-
-func KnownAccents() []string {
-	out := make([]string, len(knownAccents))
-	copy(out, knownAccents)
-
-	return out
-}
-
-func IsKnownIcon(name string) bool {
-	return contains(knownIcons, name)
-}
-
-func IsKnownAccent(name string) bool {
-	return contains(knownAccents, name)
+func TemplateIcon(template agenttemplate.Template) string {
+	return templateIcons[template]
 }
 
 // ResolvedIcon is what an agent should be drawn with: its own choice, else the
@@ -133,7 +52,7 @@ func (d *Definition) ResolvedIcon() string {
 		return icon
 	}
 
-	return IconBot
+	return agentmark.IconBot
 }
 
 // ChosenIcon is the agent's own icon, else the one its starter implies, and
@@ -141,7 +60,7 @@ func (d *Definition) ResolvedIcon() string {
 // name draws an agent with no icon of its own by its initials, which the
 // generic icon would hide, so this is what is served beside the name.
 func (d *Definition) ChosenIcon() string {
-	if icon := strings.TrimSpace(d.Icon); IsKnownIcon(icon) {
+	if icon := strings.TrimSpace(d.Icon); agentmark.IsKnownIcon(icon) {
 		return icon
 	}
 	if icon, ok := templateIcons[d.Template]; ok {
@@ -157,7 +76,7 @@ func (d *Definition) ChosenIcon() string {
 // agents in a list rarely collide. A definition that has not been saved yet falls
 // back to its name so the builder can preview a mark before the first write.
 func (d *Definition) ResolvedAccent() string {
-	if accent := strings.TrimSpace(d.Accent); IsKnownAccent(accent) {
+	if accent := strings.TrimSpace(d.Accent); agentmark.IsKnownAccent(accent) {
 		return accent
 	}
 
@@ -169,17 +88,9 @@ func (d *Definition) ResolvedAccent() string {
 	hasher := fnv.New32a()
 	_, _ = hasher.Write([]byte(seed))
 
-	return knownAccents[int(hasher.Sum32()%uint32(len(knownAccents)))]
-}
+	accents := agentmark.KnownAccents()
 
-func contains(values []string, want string) bool {
-	for _, value := range values {
-		if value == want {
-			return true
-		}
-	}
-
-	return false
+	return accents[int(hasher.Sum32())%len(accents)]
 }
 
 var (

@@ -5,9 +5,11 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,8 +18,8 @@ import (
 func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
-	for tool, read := range graphQLReads {
+	registry := permissioncatalog.NewRegistry()
+	for tool, read := range graphqlread.Reads {
 		if read.SelfScoped {
 			assert.Emptyf(t, read.Resource, "%s reads the caller's own record, checked by no "+
 				"resource", tool)
@@ -25,15 +27,20 @@ func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 			assert.Truef(t, registry.HasResource(read.Resource),
 				"%s reads %s, which the permission registry does not know", tool, read.Resource)
 		}
-		assert.NotEmptyf(t, agentports.NamespaceOf(tool), "%s is outside a tool namespace", tool)
+		assert.NotEmptyf(
+			t,
+			agenttoolports.NamespaceOf(tool),
+			"%s is outside a tool namespace",
+			tool,
+		)
 	}
 }
 
 func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 	t.Parallel()
 
-	for tool, read := range graphQLReads {
-		if read.Verb == graphQLVerbGet {
+	for tool, read := range graphqlread.Reads {
+		if read.Verb == graphqlread.VerbGet {
 			continue
 		}
 		t.Run(tool, func(t *testing.T) {
@@ -44,7 +51,7 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 				assert.Empty(t, derived, "a root that takes no argument offers none")
 				return
 			}
-			if read.Verb == graphQLVerbList {
+			if read.Verb == graphqlread.VerbList {
 				require.NotEmpty(t, derived, "a list tool reads by at least one typed parameter")
 			}
 
@@ -63,32 +70,32 @@ func TestGraphQLReadsDeriveTheirTypedParameters(t *testing.T) {
 // root field reads: an unpaged list's arguments, a paged list's record
 // fields but the ones its spec leaves unoffered and its root arguments, a
 // get's arguments but its id.
-func derivedParams(t *testing.T, tool string, read *graphQLRead) []graphQLParam {
+func derivedParams(t *testing.T, tool string, read *graphqlread.Read) []graphqlread.Param {
 	t.Helper()
 
 	if read.Unpaged {
-		derived, _, err := read.argumentParams(tool)
+		derived, _, err := read.ArgumentParams(tool)
 		require.NoError(t, err)
 		return derived
 	}
-	skip := map[string]struct{}{includeTotalCount: {}, graphQLIDVariable: {}}
-	if input, _, tabled := read.tableInput(); tabled {
+	skip := map[string]struct{}{graphqllisttool.IncludeTotalCount: {}, graphqlread.IDVariable: {}}
+	if input, _, tabled := read.TableInput(); tabled {
 		skip[input] = struct{}{}
-	} else if read.Verb == graphQLVerbList {
-		skip[inputFirst], skip[inputAfter] = struct{}{}, struct{}{}
+	} else if read.Verb == graphqlread.VerbList {
+		skip[graphqlread.InputFirst], skip[graphqlread.InputAfter] = struct{}{}, struct{}{}
 	}
-	args, _, _, err := read.rootParams(tool, skip)
+	args, _, _, err := read.RootParams(tool, skip)
 	require.NoError(t, err)
 	var unoffered []string
 	for _, spec := range graphQLListSpecs() {
-		if spec.name == tool {
-			unoffered = spec.unoffered
+		if spec.Name == tool {
+			unoffered = spec.Unoffered
 		}
 	}
-	fields, err := offered(tool, read.typedParams(), unoffered)
+	fields, err := graphqllisttool.Offered(tool, read.TypedParams(), unoffered)
 	require.NoError(t, err)
 
-	return withRootArgs(fields, args)
+	return graphqlread.WithRootArgs(fields, args)
 }
 
 // Every field a converted tool's hand-kept catalog entry lets a model filter
@@ -98,10 +105,10 @@ func TestGraphQLReadsKeepEveryFilterTheCatalogOffered(t *testing.T) {
 
 	catalog := make(map[string][]filtercatalog.Field)
 	for _, spec := range listCatalogSpecs() {
-		catalog[spec.name] = spec.fields
+		catalog[spec.Name] = spec.Fields
 	}
 
-	for tool, read := range graphQLReads {
+	for tool, read := range graphqlread.Reads {
 		fields, listed := catalog[tool]
 		if !listed {
 			continue
@@ -109,7 +116,7 @@ func TestGraphQLReadsKeepEveryFilterTheCatalogOffered(t *testing.T) {
 		t.Run(tool, func(t *testing.T) {
 			t.Parallel()
 
-			params := read.typedParams()
+			params := read.TypedParams()
 			sources := make([]string, 0, len(params))
 			for _, param := range params {
 				sources = append(sources, param.Field)
@@ -125,11 +132,11 @@ func TestGraphQLReadsKeepEveryFilterTheCatalogOffered(t *testing.T) {
 func TestTypedParamsCompileIntoTheOperationsFilters(t *testing.T) {
 	t.Parallel()
 
-	read := graphQLReads["masterdata_list_hazardous_materials"]
-	params := read.typedParams()
+	read := graphqlread.Reads["masterdata_list_hazardous_materials"]
+	params := read.TypedParams()
 	clk := filtercatalog.NewClock("America/Chicago")
 
-	filters, err := compileFilters(params, map[string]any{
+	filters, err := graphqlread.CompileFilters(params, map[string]any{
 		"status":          []any{"Active"},
 		"placardRequired": true,
 		"createdAtFrom":   "2026-10-01",
@@ -152,10 +159,10 @@ func TestTypedParamsCompileIntoTheOperationsFilters(t *testing.T) {
 func TestTypedParamsRefuseADayThatIsNotADay(t *testing.T) {
 	t.Parallel()
 
-	read := graphQLReads["masterdata_list_hazardous_materials"]
-	params := read.typedParams()
+	read := graphqlread.Reads["masterdata_list_hazardous_materials"]
+	params := read.TypedParams()
 
-	_, err := compileFilters(params, map[string]any{"createdAtFrom": "last week"},
+	_, err := graphqlread.CompileFilters(params, map[string]any{"createdAtFrom": "last week"},
 		filtercatalog.NewClock("UTC"))
 
 	assert.ErrorContains(t, err, "createdAtFrom")
@@ -173,18 +180,25 @@ func TestGraphQLReadsCheckTheToolsOwnResource(t *testing.T) {
 		for idx := range args {
 			args[idx] = reflect.Zero(fn.Type().In(idx))
 		}
-		tool, ok := fn.Call(args)[0].Interface().(agentports.AgentQueryTool)
+		tool, ok := fn.Call(args)[0].Interface().(agenttoolports.AgentQueryTool)
 		if !ok || tool == nil {
 			continue
 		}
-		read, bound := graphQLReads[tool.Name()]
+		read, bound := graphqlread.Reads[tool.Name()]
 		if !bound {
 			continue
 		}
 		if read.SelfScoped {
-			assert.Equalf(t, agent.ToolScopeSelf, tool.Policy().Scope, "%s reads %s, whose "+
-				"resolver acts only on the caller's own record, so the tool must be scoped to "+
-				"the caller", tool.Name(), read.Operation)
+			assert.Equalf(
+				t,
+				agenttooltrust.ToolScopeSelf,
+				tool.Policy().Scope,
+				"%s reads %s, whose "+
+					"resolver acts only on the caller's own record, so the tool must be scoped to "+
+					"the caller",
+				tool.Name(),
+				read.Operation,
+			)
 			continue
 		}
 		assert.Equalf(t, read.Resource, tool.Policy().Resource.String(),

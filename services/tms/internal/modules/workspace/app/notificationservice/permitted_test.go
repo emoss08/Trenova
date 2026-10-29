@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,12 +56,12 @@ func (r *permittedRoles) ListUsersWithPermission(
 }
 
 type silentRealtime struct {
-	agentports.RealtimeService
+	realtimeports.RealtimeService
 }
 
 func (silentRealtime) PublishResourceInvalidation(
 	context.Context,
-	*agentports.PublishResourceInvalidationRequest,
+	*realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -126,7 +126,9 @@ func TestNotifyPermitted_SaysNothingWhenTheSameThingWasJustSaid(t *testing.T) {
 	t.Parallel()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	roles := &permittedRoles{users: []permissionports.PermittedUser{{UserID: pulid.MustNew("usr_")}}}
+	roles := &permittedRoles{
+		users: []permissionports.PermittedUser{{UserID: pulid.MustNew("usr_")}},
+	}
 	repo := &recordingNotificationRepo{recent: true}
 	req := permittedRequest(tenant)
 	req.DedupeSince = req.Now - 3600

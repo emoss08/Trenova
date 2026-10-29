@@ -458,12 +458,21 @@ func FromServices(s *Services) *Resolver {
 		AccessorialChargeService: s.AccessorialChargeService,
 	}
 	accountingsyncDeps := &accountingsyncresolver.Deps{
-		Core:                     s.Core,
-		AccountingConnections:    s.AccountingConnections,
-		AccountingMappingService: s.AccountingMappingService,
-		AccountingSync:           s.AccountingSync,
-		AccountingInbound:        s.AccountingInbound,
-		AccountingDrift:          s.AccountingDrift,
+		Core:                       s.Core,
+		AccountingConnectionStatus: s.AccountingConnectionStatus,
+		AccountingAuthorization:    s.AccountingAuthorization,
+		AccountingCertificates:     s.AccountingCertificates,
+		AccountingHealth:           s.AccountingHealth,
+		AccountingApps:             s.AccountingApps,
+		AccountingMappingReader:    s.AccountingMappingReader,
+		AccountingMappingDecisions: s.AccountingMappingDecisions,
+		AccountingReferenceCreator: s.AccountingReferenceCreator,
+		AccountingSyncReader:       s.AccountingSyncReader,
+		AccountingSyncSetup:        s.AccountingSyncSetup,
+		AccountingSyncActions:      s.AccountingSyncActions,
+		AccountingBackfillService:  s.AccountingBackfillService,
+		AccountingInbound:          s.AccountingInbound,
+		AccountingDrift:            s.AccountingDrift,
 	}
 	accountsreceivableDeps := &accountsreceivableresolver.Deps{
 		Core:                      s.Core,
@@ -576,7 +585,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	attentionDeps := &attentionresolver.Deps{
 		Core:                      s.Core,
-		EdiService:                s.EdiService,
+		EdiOverviewService:        s.EdiOverviewService,
 		ServiceFailureSvc:         s.ServiceFailureSvc,
 		BillingQueueService:       s.BillingQueueService,
 		InvoiceAdjustmentService:  s.InvoiceAdjustmentService,
@@ -587,10 +596,11 @@ func FromServices(s *Services) *Resolver {
 		AuditService: s.AuditService,
 	}
 	benefitsDeps := &benefitsresolver.Deps{
-		Core:                    s.Core,
-		BenefitsService:         s.BenefitsService,
-		DriverSettlementService: s.DriverSettlementService,
-		DriverPortalService:     s.DriverPortalService,
+		Core:                             s.Core,
+		BenefitsService:                  s.BenefitsService,
+		DriverSettlementService:          s.DriverSettlementService,
+		DriverSettlementWorkspaceService: s.DriverSettlementWorkspaceService,
+		DriverPortalService:              s.DriverPortalService,
 	}
 	billingqueueDeps := &billingqueueresolver.Deps{
 		Core:                      s.Core,
@@ -611,7 +621,11 @@ func FromServices(s *Services) *Resolver {
 	}
 	captureDeps := &captureresolver.Deps{
 		Core:                  s.Core,
-		CaptureService:        s.CaptureService,
+		CaptureSupportService: s.CaptureSupportService,
+		CaptureProfileService: s.CaptureProfileService,
+		CaptureDeviceService:  s.CaptureDeviceService,
+		CaptureRequestService: s.CaptureRequestService,
+		CaptureFilingService:  s.CaptureFilingService,
 		CaptureReleaseService: s.CaptureReleaseService,
 	}
 	carrierDeps := &carrierresolver.Deps{
@@ -623,15 +637,23 @@ func FromServices(s *Services) *Resolver {
 		CarrierCapacityService: s.CarrierCapacityService,
 	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
-		Core:                s.Core,
-		CarrierIntelService: s.CarrierIntelService,
+		Core:                          s.Core,
+		CarrierIntelService:           s.CarrierIntelService,
+		CarrierIntelEnrollmentService: s.CarrierIntelEnrollmentService,
+		CarrierIntelMonitorService:    s.CarrierIntelMonitorService,
+		CarrierIntelReviewService:     s.CarrierIntelReviewService,
+		CarrierIntelVetService:        s.CarrierIntelVetService,
+		CarrierIntelSourcingService:   s.CarrierIntelSourcingService,
+		CarrierIntelVerifyService:     s.CarrierIntelVerifyService,
 	}
 	carriersettlementDeps := &carriersettlementresolver.Deps{
-		Core:                       s.Core,
-		CarrierSettlementService:   s.CarrierSettlementService,
-		CarrierSettlementRepo:      s.CarrierSettlementRepo,
-		CarrierSettlementBatchRepo: s.CarrierSettlementBatchRepo,
-		CarrierCostEventRepo:       s.CarrierCostEventRepo,
+		Core:                              s.Core,
+		CarrierSettlementService:          s.CarrierSettlementService,
+		CarrierSettlementCostService:      s.CarrierSettlementCostService,
+		CarrierSettlementWorkspaceService: s.CarrierSettlementWorkspaceService,
+		CarrierSettlementRepo:             s.CarrierSettlementRepo,
+		CarrierSettlementBatchRepo:        s.CarrierSettlementBatchRepo,
+		CarrierCostEventRepo:              s.CarrierCostEventRepo,
 	}
 	checkcallDeps := &checkcallresolver.Deps{
 		Core:             s.Core,
@@ -654,7 +676,7 @@ func FromServices(s *Services) *Resolver {
 		CustomerPaymentService: s.CustomerPaymentService,
 		CustomerPaymentRepo:    s.CustomerPaymentRepo,
 		CustomerService:        s.CustomerService,
-		InvoiceService:         s.InvoiceService,
+		InvoiceQueryService:    s.InvoiceQueryService,
 	}
 	customertrackingDeps := &customertrackingresolver.Deps{
 		Core:                    s.Core,
@@ -682,7 +704,9 @@ func FromServices(s *Services) *Resolver {
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   s.Core,
-		DetentionService:       s.DetentionService,
+		DetentionReview:        s.DetentionReview,
+		DetentionSimulation:    s.DetentionSimulation,
+		DetentionNotices:       s.DetentionNotices,
 		DetentionPolicyService: s.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
@@ -714,31 +738,39 @@ func FromServices(s *Services) *Resolver {
 		DocumentTypeService: s.DocumentTypeService,
 	}
 	driverportalDeps := &driverportalresolver.Deps{
-		Core:                    s.Core,
-		TelematicsService:       s.TelematicsService,
-		NotificationService:     s.NotificationService,
-		DriverSettlementService: s.DriverSettlementService,
-		DriverPortalService:     s.DriverPortalService,
-		DashControlService:      s.DashControlService,
+		Core:                          s.Core,
+		TelematicsService:             s.TelematicsService,
+		NotificationService:           s.NotificationService,
+		DriverSettlementReviewService: s.DriverSettlementReviewService,
+		DriverPortalService:           s.DriverPortalService,
+		DriverPortalInvitationService: s.DriverPortalInvitationService,
+		DriverPortalRecordsService:    s.DriverPortalRecordsService,
+		DashControlService:            s.DashControlService,
 	}
 	driversettlementDeps := &driversettlementresolver.Deps{
-		Core:                     s.Core,
-		DriverPayService:         s.DriverPayService,
-		DriverSettlementService:  s.DriverSettlementService,
-		SettlementControlService: s.SettlementControlService,
-		PayProfileRepo:           s.PayProfileRepo,
-		RecurringDeductionRepo:   s.RecurringDeductionRepo,
-		RecurringEarningRepo:     s.RecurringEarningRepo,
-		PayAdvanceRepo:           s.PayAdvanceRepo,
-		EscrowAccountRepo:        s.EscrowAccountRepo,
-		DriverSettlementRepo:     s.DriverSettlementRepo,
-		SettlementBatchRepo:      s.SettlementBatchRepo,
-		PayEventRepo:             s.PayEventRepo,
+		Core:                             s.Core,
+		DriverPayService:                 s.DriverPayService,
+		DriverSettlementService:          s.DriverSettlementService,
+		DriverSettlementTransferService:  s.DriverSettlementTransferService,
+		DriverSettlementWorkspaceService: s.DriverSettlementWorkspaceService,
+		SettlementControlService:         s.SettlementControlService,
+		PayProfileRepo:                   s.PayProfileRepo,
+		RecurringDeductionRepo:           s.RecurringDeductionRepo,
+		RecurringEarningRepo:             s.RecurringEarningRepo,
+		PayAdvanceRepo:                   s.PayAdvanceRepo,
+		EscrowAccountRepo:                s.EscrowAccountRepo,
+		DriverSettlementRepo:             s.DriverSettlementRepo,
+		SettlementBatchRepo:              s.SettlementBatchRepo,
+		PayEventRepo:                     s.PayEventRepo,
 	}
 	ediDeps := &ediresolver.Deps{
-		Core:              s.Core,
-		EdiService:        s.EdiService,
-		EdiInboundService: s.EdiInboundService,
+		Core:               s.Core,
+		EdiSetupService:    s.EdiSetupService,
+		EdiTransferService: s.EdiTransferService,
+		EdiOutboundService: s.EdiOutboundService,
+		EdiMessageService:  s.EdiMessageService,
+		EdiOverviewService: s.EdiOverviewService,
+		EdiInboundService:  s.EdiInboundService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         s.Core,
@@ -840,7 +872,11 @@ func FromServices(s *Services) *Resolver {
 	}
 	inboundmessageDeps := &inboundmessageresolver.Deps{
 		Core:                  s.Core,
-		InboundMessageService: s.InboundMessageService,
+		InboundQueueService:   s.InboundQueueService,
+		InboundReadService:    s.InboundReadService,
+		InboundViewService:    s.InboundViewService,
+		InboundMailboxService: s.InboundMailboxService,
+		InboundIntakeService:  s.InboundIntakeService,
 	}
 	inboundreplyDeps := &inboundreplyresolver.Deps{
 		Core:                s.Core,
@@ -849,9 +885,13 @@ func FromServices(s *Services) *Resolver {
 		TriagePeekService:   s.TriagePeekService,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
-		Core:            s.Core,
-		CustomerService: s.CustomerService,
-		InvoiceService:  s.InvoiceService,
+		Core:                   s.Core,
+		CustomerService:        s.CustomerService,
+		InvoiceQueryService:    s.InvoiceQueryService,
+		InvoiceCreationService: s.InvoiceCreationService,
+		InvoiceMemoService:     s.InvoiceMemoService,
+		InvoiceVoidService:     s.InvoiceVoidService,
+		InvoiceEDIService:      s.InvoiceEDIService,
 	}
 	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
 		Core:                     s.Core,
@@ -915,9 +955,9 @@ func FromServices(s *Services) *Resolver {
 		PageAccessService: s.PageAccessService,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
-		Core:                     s.Core,
-		PerformanceReviewService: s.PerformanceReviewService,
-		DriverPortalService:      s.DriverPortalService,
+		Core:                       s.Core,
+		PerformanceReviewService:   s.PerformanceReviewService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 	ptopolicyDeps := &ptopolicyresolver.Deps{
 		Core:             s.Core,
@@ -937,9 +977,12 @@ func FromServices(s *Services) *Resolver {
 		RecurringShipmentService: s.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:               s.Core,
-		TableExportService: s.TableExportService,
-		ReportingService:   s.ReportingService,
+		Core:                   s.Core,
+		TableExportService:     s.TableExportService,
+		ReportingService:       s.ReportingService,
+		ReportViewService:      s.ReportViewService,
+		ReportScheduleService:  s.ReportScheduleService,
+		ReportDashboardService: s.ReportDashboardService,
 	}
 	roleDeps := &roleresolver.Deps{
 		Core:        s.Core,
@@ -964,8 +1007,9 @@ func FromServices(s *Services) *Resolver {
 	selectoptionsDeps := &selectoptionsresolver.Deps{
 		Core:                         s.Core,
 		OrganizationService:          s.OrganizationService,
-		ShipmentService:              s.ShipmentService,
-		EdiService:                   s.EdiService,
+		ShipmentReader:               s.ShipmentReader,
+		EdiSetupService:              s.EdiSetupService,
+		EdiTransferService:           s.EdiTransferService,
 		EquipmentTypeService:         s.EquipmentTypeService,
 		AccessorialChargeService:     s.AccessorialChargeService,
 		AccountTypeService:           s.AccountTypeService,
@@ -1008,7 +1052,8 @@ func FromServices(s *Services) *Resolver {
 		JournalEntryService:          s.JournalEntryService,
 		ServiceFailureReasonCodeSvc:  s.ServiceFailureReasonCodeSvc,
 		AiProviderService:            s.AiProviderService,
-		CaptureService:               s.CaptureService,
+		CaptureProfileService:        s.CaptureProfileService,
+		CaptureDeviceService:         s.CaptureDeviceService,
 		RoleService:                  s.RoleService,
 		UserService:                  s.UserService,
 		DriverPayService:             s.DriverPayService,
@@ -1034,13 +1079,19 @@ func FromServices(s *Services) *Resolver {
 	shipmentDeps := &shipmentresolver.Deps{
 		Core:                        s.Core,
 		AnalyticsService:            s.AnalyticsService,
-		ShipmentService:             s.ShipmentService,
+		ShipmentReader:              s.ShipmentReader,
+		ShipmentWriter:              s.ShipmentWriter,
+		ShipmentLifecycle:           s.ShipmentLifecycle,
+		ShipmentReadiness:           s.ShipmentReadiness,
+		ShipmentBillingTransfer:     s.ShipmentBillingTransfer,
+		ShipmentAutoRater:           s.ShipmentAutoRater,
+		ShipmentLoadingPlanner:      s.ShipmentLoadingPlanner,
 		ShipmentCommentService:      s.ShipmentCommentService,
 		ShipmentRatingReviewService: s.ShipmentRatingReviewService,
 		ShipmentEventService:        s.ShipmentEventService,
 		TrackingEventService:        s.TrackingEventService,
 		ShipmentImportAssistant:     s.ShipmentImportAssistant,
-		InvoiceService:              s.InvoiceService,
+		InvoiceQueryService:         s.InvoiceQueryService,
 		DriverSettlementRepo:        s.DriverSettlementRepo,
 		CarrierSettlementRepo:       s.CarrierSettlementRepo,
 	}
@@ -1085,7 +1136,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	telematicsDeps := &telematicsresolver.Deps{
 		Core:              s.Core,
-		ShipmentService:   s.ShipmentService,
+		ShipmentReader:    s.ShipmentReader,
 		TelematicsService: s.TelematicsService,
 	}
 	tenantDeps := &tenantresolver.Deps{
@@ -1095,7 +1146,7 @@ func FromServices(s *Services) *Resolver {
 	tenderDeps := &tenderresolver.Deps{
 		Core:                s.Core,
 		RoutingGuideService: s.RoutingGuideService,
-		TenderService:       s.TenderService,
+		TenderRepo:          s.TenderRepo,
 	}
 	timesheetDeps := &timesheetresolver.Deps{
 		Core:             s.Core,
@@ -1162,14 +1213,14 @@ func FromServices(s *Services) *Resolver {
 		WorkerOverviewService: s.WorkerOverviewService,
 	}
 	workersafetyDeps := &workersafetyresolver.Deps{
-		Core:                s.Core,
-		WorkerSafetyService: s.WorkerSafetyService,
-		DriverPortalService: s.DriverPortalService,
+		Core:                       s.Core,
+		WorkerSafetyService:        s.WorkerSafetyService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 	workertrainingDeps := &workertrainingresolver.Deps{
-		Core:                  s.Core,
-		WorkerTrainingService: s.WorkerTrainingService,
-		DriverPortalService:   s.DriverPortalService,
+		Core:                       s.Core,
+		WorkerTrainingService:      s.WorkerTrainingService,
+		DriverPortalRecordsService: s.DriverPortalRecordsService,
 	}
 
 	return &Resolver{

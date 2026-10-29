@@ -10,6 +10,9 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/x12field"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,21 +57,21 @@ func unix(value DateTime) int64 {
 	return instant.Unix()
 }
 
-func localDateTime(event *StatusEvent) edi.X12DateTime {
+func localDateTime(event *StatusEvent) x12field.X12DateTime {
 	if !event.Local {
-		return edi.X12DateTime{}
+		return x12field.X12DateTime{}
 	}
 	instant, err := time.Parse(time.RFC3339, event.At.At)
 	if err != nil {
-		return edi.X12DateTime{}
+		return x12field.X12DateTime{}
 	}
 	if zone, zoneErr := time.LoadLocation(event.At.Zone); event.At.Zone != "" && zoneErr == nil {
 		instant = instant.In(zone)
 	}
-	return edi.X12DateTime{
+	return x12field.X12DateTime{
 		Date:     instant.Format("20060102"),
 		Time:     instant.Format("150405"),
-		TimeCode: edi.X12TimeCodeLocal,
+		TimeCode: x12field.X12TimeCodeLocal,
 	}
 }
 
@@ -120,7 +123,7 @@ func amountOf(value *Money) decimal.NullDecimal {
 }
 
 type mapped struct {
-	payload *edi.LoadTenderPayload
+	payload *editransfer.LoadTenderPayload
 }
 
 func (m mapped) require(entity edi.MappingEntityType, id pulid.ID) {
@@ -159,14 +162,14 @@ func source(
 	return edi.MappingSourceID(code), stringutils.FirstNonEmpty(label, code)
 }
 
-func purposeCode(purpose string) edi.LoadTenderPurposeCode {
+func purposeCode(purpose string) editransfer.LoadTenderPurposeCode {
 	switch purpose {
 	case PurposeChange:
-		return edi.LoadTenderPurposeChange
+		return editransfer.LoadTenderPurposeChange
 	case PurposeCancel:
-		return edi.LoadTenderPurposeCancel
+		return editransfer.LoadTenderPurposeCancel
 	default:
-		return edi.LoadTenderPurposeOriginal
+		return editransfer.LoadTenderPurposeOriginal
 	}
 }
 
@@ -184,12 +187,12 @@ var paymentCodes = map[string]string{
 func ToLoadTender(
 	raw jsonutils.RawJSON,
 	unmapped Unmapped,
-) (*edi.LoadTenderPayload, string, error) {
+) (*editransfer.LoadTenderPayload, string, error) {
 	var document LoadTender
 	if err := decode(raw, &document); err != nil {
 		return nil, "", err
 	}
-	payload := &edi.LoadTenderPayload{
+	payload := &editransfer.LoadTenderPayload{
 		PurposeCode:              purposeCode(document.Purpose),
 		BOL:                      document.BOL,
 		Weight:                   wholePounds(document.Weight),
@@ -243,11 +246,11 @@ func ToLoadTender(
 	need.require(edi.MappingEntityTypeFormulaTemplate, payload.FormulaTemplateID)
 	need.require(edi.MappingEntityTypeShipmentType, payload.ShipmentTypeID)
 
-	stops := make([]edi.LoadTenderStop, 0, len(document.Stops))
+	stops := make([]editransfer.LoadTenderStop, 0, len(document.Stops))
 	for index := range document.Stops {
 		stop := &document.Stops[index]
 		path := fmt.Sprintf("stops[%d].location", index)
-		written := edi.LoadTenderStop{
+		written := editransfer.LoadTenderStop{
 			Type:                 stop.Type,
 			ScheduleType:         openScheduleType,
 			Sequence:             stop.Sequence,
@@ -303,7 +306,7 @@ func ToLoadTender(
 		stops = append(stops, written)
 	}
 	if len(stops) > 0 {
-		payload.Moves = []edi.LoadTenderMove{{Loaded: true, Stops: stops}}
+		payload.Moves = []editransfer.LoadTenderMove{{Loaded: true, Stops: stops}}
 	}
 	for index := range document.Commodities {
 		line := &document.Commodities[index]
@@ -313,7 +316,7 @@ func ToLoadTender(
 			fmt.Sprintf("commodities[%d].commodity", index),
 			line.Description,
 		)
-		commodity := edi.LoadTenderCommodity{
+		commodity := editransfer.LoadTenderCommodity{
 			CommodityID:          id,
 			CommodityLabel:       stringutils.FirstNonEmpty(label, line.Description),
 			CommodityDescription: line.Description,
@@ -336,7 +339,7 @@ func ToLoadTender(
 			charge.Code,
 		)
 		amount := amountOf(&charge.Amount)
-		payload.AdditionalCharges = append(payload.AdditionalCharges, edi.LoadTenderCharge{
+		payload.AdditionalCharges = append(payload.AdditionalCharges, editransfer.LoadTenderCharge{
 			AccessorialChargeID:    id,
 			AccessorialLabel:       label,
 			AccessorialCode:        charge.Code,
@@ -395,12 +398,12 @@ func sortedValues(values map[string]string) []string {
 }
 
 // ToShipmentStatus is the status payload of a shipmentStatus a map read.
-func ToShipmentStatus(raw jsonutils.RawJSON) (*edi.ShipmentStatusPayload, error) {
+func ToShipmentStatus(raw jsonutils.RawJSON) (*edipayload.ShipmentStatusPayload, error) {
 	var document ShipmentStatus
 	if err := decode(raw, &document); err != nil {
 		return nil, err
 	}
-	payload := &edi.ShipmentStatusPayload{
+	payload := &edipayload.ShipmentStatusPayload{
 		BOL:              document.BOL,
 		ProNumber:        document.ProNumber,
 		ShipperReference: stringutils.FirstNonEmpty(document.ShipperReference, document.Key),
@@ -414,7 +417,7 @@ func ToShipmentStatus(raw jsonutils.RawJSON) (*edi.ShipmentStatusPayload, error)
 	}
 	for index := range document.Events {
 		event := &document.Events[index]
-		written := edi.ShipmentStatusEvent{
+		written := edipayload.ShipmentStatusEvent{
 			Index:           index,
 			StatusCode:      StatusCodeOf(event.Kind),
 			ReasonCode:      event.Reason,
@@ -448,12 +451,12 @@ func ToShipmentStatus(raw jsonutils.RawJSON) (*edi.ShipmentStatusPayload, error)
 }
 
 // ToFreightInvoice is the invoice payload of a freightInvoice a map read.
-func ToFreightInvoice(raw jsonutils.RawJSON) (*edi.FreightInvoicePayload, error) {
+func ToFreightInvoice(raw jsonutils.RawJSON) (*edipayload.FreightInvoicePayload, error) {
 	var document FreightInvoice
 	if err := decode(raw, &document); err != nil {
 		return nil, err
 	}
-	payload := &edi.FreightInvoicePayload{
+	payload := &edipayload.FreightInvoicePayload{
 		InvoiceNumber:    document.Number,
 		InvoiceDate:      unixDay(document.Date),
 		DeliveryDate:     unixDay(document.DeliveryDate),
@@ -484,7 +487,7 @@ func ToFreightInvoice(raw jsonutils.RawJSON) (*edi.FreightInvoicePayload, error)
 	for index := range document.Lines {
 		line := &document.Lines[index]
 		amount := amountOf(&line.Amount)
-		charge := edi.FreightInvoiceCharge{
+		charge := edipayload.FreightInvoiceCharge{
 			Sequence:    line.Sequence,
 			Code:        stringutils.FirstNonEmpty(line.Code, refCode(line.Accessorial)),
 			Description: line.Description,
@@ -498,7 +501,7 @@ func ToFreightInvoice(raw jsonutils.RawJSON) (*edi.FreightInvoicePayload, error)
 	}
 	for index := range document.Shipments {
 		shipment := &document.Shipments[index]
-		payload.Shipments = append(payload.Shipments, edi.FreightInvoiceShipment{
+		payload.Shipments = append(payload.Shipments, edipayload.FreightInvoiceShipment{
 			ProNumber:    shipment.ProNumber,
 			BOL:          shipment.BOL,
 			PONumber:     shipment.PONumber,

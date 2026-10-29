@@ -9,13 +9,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -56,7 +58,10 @@ func (r *tuneUpRepo) List(context.Context, pagination.TenantInfo) ([]*aituneup.T
 	return out, nil
 }
 
-func (r *tuneUpRepo) GetByID(_ context.Context, req aituneupports.GetAITuneUpRequest) (*aituneup.TuneUp, error) {
+func (r *tuneUpRepo) GetByID(
+	_ context.Context,
+	req aituneupports.GetAITuneUpRequest,
+) (*aituneup.TuneUp, error) {
 	row, ok := r.rows[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("AITuneUp not found")
@@ -80,7 +85,10 @@ func (r *tuneUpRepo) Save(_ context.Context, _ pagination.TenantInfo, plan *aitu
 	return nil
 }
 
-func (r *tuneUpRepo) Decide(_ context.Context, req *aituneupports.DecideAITuneUpRequest) (*aituneup.TuneUp, error) {
+func (r *tuneUpRepo) Decide(
+	_ context.Context,
+	req *aituneupports.DecideAITuneUpRequest,
+) (*aituneup.TuneUp, error) {
 	r.decided = append(r.decided, req)
 	row := r.rows[req.ID]
 	if row.Version != req.Version {
@@ -94,7 +102,10 @@ func (r *tuneUpRepo) Decide(_ context.Context, req *aituneupports.DecideAITuneUp
 	return &copied, nil
 }
 
-func (r *tuneUpRepo) Reopen(_ context.Context, req *aituneupports.ReopenAITuneUpRequest) (*aituneup.TuneUp, error) {
+func (r *tuneUpRepo) Reopen(
+	_ context.Context,
+	req *aituneupports.ReopenAITuneUpRequest,
+) (*aituneup.TuneUp, error) {
 	row := r.rows[req.ID]
 	row.Status = aituneup.StatusOpen
 	row.DismissedUntil = nil
@@ -123,10 +134,13 @@ func (f *freshness) Clear(context.Context, pagination.TenantInfo) error { return
 
 type controlRepo struct {
 	tenantports.AgentControlRepository
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
-func (c *controlRepo) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (c *controlRepo) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentcontrol.AgentControl, error) {
 	return c.control, nil
 }
 
@@ -167,11 +181,14 @@ func (d *definitionRepo) ListByIDs(
 }
 
 type providerRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers []*aiprovider.Provider
 }
 
-func (p *providerRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (p *providerRepo) ListEnabled(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	out := make([]*aiprovider.Provider, 0)
 	for _, provider := range p.providers {
 		if provider.Enabled {
@@ -181,7 +198,10 @@ func (p *providerRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*a
 	return out, nil
 }
 
-func (p *providerRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (p *providerRepo) ListOrdered(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	return p.providers, nil
 }
 
@@ -198,18 +218,24 @@ func (u *usageRepo) ProviderTaskTotals(
 }
 
 type trust struct {
-	agentports.AgentTrustService
-	ready    []agentports.ToolPromotion
-	promoted []*agentports.PromoteToolRequest
+	agenttrustports.AgentTrustService
+	ready    []agenttrustports.ToolPromotion
+	promoted []*agenttrustports.PromoteToolRequest
 }
 
-func (t *trust) PromotionCandidates(context.Context, *agentports.PromoteReadyRequest) ([]agentports.ToolPromotion, error) {
+func (t *trust) PromotionCandidates(
+	context.Context,
+	*agenttrustports.PromoteReadyRequest,
+) ([]agenttrustports.ToolPromotion, error) {
 	return t.ready, nil
 }
 
-func (t *trust) PromoteTool(_ context.Context, req *agentports.PromoteToolRequest) (*agentports.ToolPromotion, error) {
+func (t *trust) PromoteTool(
+	_ context.Context,
+	req *agenttrustports.PromoteToolRequest,
+) (*agenttrustports.ToolPromotion, error) {
 	t.promoted = append(t.promoted, req)
-	return &agentports.ToolPromotion{}, nil
+	return &agenttrustports.ToolPromotion{}, nil
 }
 
 type shadow struct {
@@ -217,7 +243,10 @@ type shadow struct {
 	asked   []pulid.ID
 }
 
-func (s *shadow) Report(_ context.Context, req *agentshadowports.AgentShadowReportRequest) (*agentshadow.Report, error) {
+func (s *shadow) Report(
+	_ context.Context,
+	req *agentshadowports.AgentShadowReportRequest,
+) (*agentshadow.Report, error) {
 	s.asked = append(s.asked, req.AgentID)
 	if report, ok := s.reports[req.AgentID]; ok {
 		return report, nil
@@ -245,15 +274,15 @@ func (a *agentService) Patch(
 }
 
 type providerService struct {
-	agentports.AIProviderService
+	aiproviderports.AIProviderService
 	reordered [][]pulid.ID
-	assigned  []*agentports.AssignAIProviderTaskRequest
+	assigned  []*aiproviderports.AssignAIProviderTaskRequest
 	fail      error
 }
 
 func (p *providerService) Reorder(
 	_ context.Context,
-	req *agentports.ReorderAIProvidersRequest,
+	req *aiproviderports.ReorderAIProvidersRequest,
 	_ *permissionports.RequestActor,
 ) ([]*aiprovider.Provider, error) {
 	p.reordered = append(p.reordered, req.ProviderIDs)
@@ -262,7 +291,7 @@ func (p *providerService) Reorder(
 
 func (p *providerService) AssignTask(
 	_ context.Context,
-	req *agentports.AssignAIProviderTaskRequest,
+	req *aiproviderports.AssignAIProviderTaskRequest,
 	_ *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	p.assigned = append(p.assigned, req)
@@ -273,7 +302,7 @@ type fixture struct {
 	svc       *Service
 	repo      *tuneUpRepo
 	fresh     *freshness
-	control   *tenant.AgentControl
+	control   *agentcontrol.AgentControl
 	agents    *definitionRepo
 	providers *providerRepo
 	trust     *trust
@@ -289,7 +318,7 @@ func newFixture(t *testing.T, rows ...*aituneup.TuneUp) *fixture {
 	f := &fixture{
 		repo:      newTuneUpRepo(rows...),
 		fresh:     &freshness{fresh: true},
-		control:   &tenant.AgentControl{EarnedAutonomy: false, PromotionThreshold: 10},
+		control:   &agentcontrol.AgentControl{EarnedAutonomy: false, PromotionThreshold: 10},
 		agents:    &definitionRepo{},
 		providers: &providerRepo{},
 		trust:     &trust{},
@@ -345,7 +374,10 @@ func open(id string, kind aituneup.Kind) *aituneup.TuneUp {
 	}
 }
 
-var actor = &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, UserID: pulid.ID("usr_1")}
+var actor = &permissionports.RequestActor{
+	PrincipalType: permissionports.PrincipalTypeUser,
+	UserID:        pulid.ID("usr_1"),
+}
 
 func TestListComputesWhenNothingFreshIsStored(t *testing.T) {
 	t.Parallel()
@@ -391,7 +423,12 @@ func TestListServesWhatIsStoredWhileFresh(t *testing.T) {
 	list, err := f.svc.List(t.Context(), tenantInfo)
 	require.NoError(t, err)
 	assert.Empty(t, f.repo.saved, "nothing is computed while the stored set is fresh")
-	require.Len(t, list.Items, 1, "a dismissed one is hidden, and one whose agent is gone is dropped")
+	require.Len(
+		t,
+		list.Items,
+		1,
+		"a dismissed one is hidden, and one whose agent is gone is dropped",
+	)
 	assert.Equal(t, shown.ID, list.Items[0].TuneUp.ID)
 }
 
@@ -432,7 +469,7 @@ func TestComputeReadsTrustOnlyWhileEarnedAutonomyIsOff(t *testing.T) {
 	f := newFixture(t)
 	dispatch := agent("agd_dispatch")
 	f.addAgent(dispatch)
-	f.trust.ready = []agentports.ToolPromotion{{
+	f.trust.ready = []agenttrustports.ToolPromotion{{
 		AgentDefinitionID: dispatch.ID, ToolName: "assign_driver", Streak: 11, Approvals: 22, TrackedSince: now - 14*day,
 	}}
 
@@ -521,7 +558,11 @@ func TestApplyReorderPutsTheRescuerAheadOfTheFailingProvider(t *testing.T) {
 	}, actor)
 	require.NoError(t, err)
 	require.Len(t, f.provSvc.reordered, 1)
-	assert.Equal(t, []pulid.ID{"aip_cloud", "aip_local", "aip_vllm", "aip_other"}, f.provSvc.reordered[0])
+	assert.Equal(
+		t,
+		[]pulid.ID{"aip_cloud", "aip_local", "aip_vllm", "aip_other"},
+		f.provSvc.reordered[0],
+	)
 	require.NotNil(t, view.Provider)
 	assert.Equal(t, "Local", view.Provider.Name)
 	assert.Equal(t, "vLLM", view.OtherProvider.Name)
@@ -532,7 +573,7 @@ func TestApplyAssignTaskGivesTheProviderTheTask(t *testing.T) {
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
 	tuneUp.ProviderID = pulid.ID("aip_local")
-	tuneUp.Task = aiprovider.TaskEmbedding
+	tuneUp.Task = aitask.TaskEmbedding
 	f := newFixture(t, tuneUp)
 	f.providers.providers = []*aiprovider.Provider{{ID: "aip_local", Name: "Local", Enabled: true}}
 
@@ -541,7 +582,7 @@ func TestApplyAssignTaskGivesTheProviderTheTask(t *testing.T) {
 	}, actor)
 	require.NoError(t, err)
 	require.Len(t, f.provSvc.assigned, 1)
-	assert.Equal(t, aiprovider.TaskEmbedding, f.provSvc.assigned[0].Task)
+	assert.Equal(t, aitask.TaskEmbedding, f.provSvc.assigned[0].Task)
 }
 
 func TestApplyLeavesTheTuneUpOpenWhenTheChangeFails(t *testing.T) {
@@ -549,7 +590,7 @@ func TestApplyLeavesTheTuneUpOpenWhenTheChangeFails(t *testing.T) {
 
 	tuneUp := open("aitu_task", aituneup.KindAssignTask)
 	tuneUp.ProviderID = pulid.ID("aip_local")
-	tuneUp.Task = aiprovider.TaskEmbedding
+	tuneUp.Task = aitask.TaskEmbedding
 	f := newFixture(t, tuneUp)
 	f.provSvc.fail = errors.New("refused")
 

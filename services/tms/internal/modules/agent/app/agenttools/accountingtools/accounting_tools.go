@@ -3,47 +3,38 @@ package accountingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type accountingConnectionChecker interface {
-	Status(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		typ integration.Type,
-	) (*accountingsyncports.AccountingSyncStatus, error)
-	CheckHealth(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		connectionID pulid.ID,
-	) (*accountingsync.AccountingConnection, error)
-}
-
 type CheckAccountingConnectionTool struct {
-	accounting accountingConnectionChecker
+	status accountingconnectionports.AccountingConnectionStatusReader
+	health accountingconnectionports.AccountingHealthChecker
 }
 
 func newCheckAccountingConnectionTool(
-	accounting accountingConnectionChecker,
-) agentports.AgentTool {
-	return &CheckAccountingConnectionTool{accounting: accounting}
+	status accountingconnectionports.AccountingConnectionStatusReader,
+	health accountingconnectionports.AccountingHealthChecker,
+) agenttoolports.AgentTool {
+	return &CheckAccountingConnectionTool{status: status, health: health}
 }
 
 func ProvideCheckAccountingConnectionTool(
-	accounting accountingsyncports.AccountingConnectionService,
-) agentports.AgentTool {
-	return newCheckAccountingConnectionTool(accounting)
+	status accountingconnectionports.AccountingConnectionStatusReader,
+	health accountingconnectionports.AccountingHealthChecker,
+) agenttoolports.AgentTool {
+	return newCheckAccountingConnectionTool(status, health)
 }
 
 func (t *CheckAccountingConnectionTool) Name() string { return "accounting_check_connection" }
@@ -70,19 +61,19 @@ func (t *CheckAccountingConnectionTool) ParamSchema() map[string]any {
 	}, "system")
 }
 
-func (t *CheckAccountingConnectionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CheckAccountingConnectionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAccountingIntegration,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    false,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Asks the accounting system whether it answers and records the result in " +
 			"Trenova; it writes nothing to the books.",
 	}
@@ -90,43 +81,43 @@ func (t *CheckAccountingConnectionTool) Policy() agentports.ToolPolicy {
 
 func (t *CheckAccountingConnectionTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.connection(ctx, &params)
+	_, err := t.connection(ctx, params)
 	return err
 }
 
 func (t *CheckAccountingConnectionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	conn, err := t.connection(ctx, &params)
+	conn, err := t.connection(ctx, params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.accounting.CheckHealth(ctx, common.TenantFrom(params), conn.ID)
+	_, err = t.health.CheckHealth(ctx, toolparams.TenantFrom(params), conn.ID)
 	return err
 }
 
 func (t *CheckAccountingConnectionTool) connection(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*accountingsync.AccountingConnection, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*accountingconnection.AccountingConnection, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	system, err := common.RequireString(params.Params, "system")
+	system, err := toolparams.RequireString(params.Params, "system")
 	if err != nil {
 		return nil, err
 	}
 	typ := integration.Type(system)
-	if !accountingsync.SupportsAccountingSync(typ) {
+	if !accountingprovider.SupportsAccountingSync(typ) {
 		return nil, agenttoolschema.ErrAccountingSystem()
 	}
 
-	status, err := t.accounting.Status(ctx, common.TenantFrom(*params), typ)
+	status, err := t.status.Status(ctx, toolparams.TenantFrom(params), typ)
 	if err != nil {
 		return nil, err
 	}

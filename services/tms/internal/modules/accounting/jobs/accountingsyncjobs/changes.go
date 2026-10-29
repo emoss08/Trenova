@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,8 +70,8 @@ type KickChangesResult struct {
 }
 
 type (
-	ChangesReadResult       = accountingsyncports.AccountingChangesPollResult
-	ChangesEvaluationResult = accountingsyncports.AccountingInboundEvaluation
+	ChangesReadResult       = accountinginboundports.AccountingChangesPollResult
+	ChangesEvaluationResult = accountinginboundports.AccountingInboundEvaluation
 )
 
 func ChangesWorkflowID(connectionID pulid.ID) string {
@@ -138,7 +139,7 @@ func PollAccountingChangesWorkflow(
 		if read.Recorded > 0 {
 			if err := workflow.Sleep(
 				ctx,
-				accountingsync.InboundEvaluationSettle+changesSettleMargin,
+				accountinginbound.InboundEvaluationSettle+changesSettleMargin,
 			); err != nil {
 				return result, err
 			}
@@ -211,7 +212,7 @@ func (a *Activities) PollAccountingChangesActivity(
 	ctx context.Context,
 	payload *ChangesPayload,
 ) (*ChangesReadResult, error) {
-	result, err := a.inbound.PollChanges(ctx, &accountingsyncports.PollAccountingChangesRequest{
+	result, err := a.inbound.PollChanges(ctx, &accountinginboundports.PollAccountingChangesRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 	})
@@ -225,7 +226,7 @@ func (a *Activities) EvaluateAccountingInboundActivity(
 	ctx context.Context,
 	payload *ChangesPayload,
 ) (*ChangesEvaluationResult, error) {
-	result, err := a.inbound.Evaluate(ctx, &accountingsyncports.EvaluateAccountingInboundRequest{
+	result, err := a.inbound.Evaluate(ctx, &accountinginboundports.EvaluateAccountingInboundRequest{
 		TenantInfo:   payload.TenantInfo(),
 		ConnectionID: payload.ConnectionID,
 	})
@@ -243,7 +244,7 @@ func (a *Activities) KickAccountingChangesActivity(
 	for {
 		conns, err := a.connRepo.ListActive(
 			ctx,
-			accountingsyncports.ListActiveAccountingConnectionsRequest{
+			accountingconnectionports.ListActiveAccountingConnectionsRequest{
 				AfterID: afterID,
 				Limit:   changesConnectionsPage,
 			},
@@ -286,7 +287,7 @@ type ChangesPoller struct {
 	signals kernelports.WorkflowSignalStarter
 }
 
-var _ accountingsyncports.AccountingChangePoller = (*ChangesPoller)(nil)
+var _ accountinginboundports.AccountingChangePoller = (*ChangesPoller)(nil)
 
 func NewChangesPoller(p ChangesPollerParams) *ChangesPoller {
 	return &ChangesPoller{signals: p.Signals}

@@ -2,32 +2,18 @@ package ediinboundservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type PollMailboxRequest struct {
-	ProfileID  pulid.ID              `json:"profileId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-}
-
-type PollMailboxResult struct {
-	ProfileID     pulid.ID   `json:"profileId"`
-	StagedFileIDs []pulid.ID `json:"stagedFileIds"`
-	SkippedFiles  int        `json:"skippedFiles"`
-}
-
 type ProcessInboundFileRequest struct {
 	FileID     pulid.ID              `json:"fileId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	Reprocess  bool                  `json:"reprocess"`
-}
-
-type PollableProfile struct {
-	ProfileID  pulid.ID              `json:"profileId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type parsedInterchange struct {
@@ -58,7 +44,7 @@ type parsedGroup struct {
 }
 
 type parsedTransaction struct {
-	set                edi.TransactionSet
+	set                edidocument.TransactionSet
 	controlNumber      string
 	groupControlNumber string
 	functionalGroupID  string
@@ -75,7 +61,7 @@ func (t *parsedTransaction) rejected() bool {
 }
 
 type transactionOutcome struct {
-	message  *edi.EDIMessage
+	message  *edimessage.EDIMessage
 	warnings []string
 	err      error
 	tendered bool
@@ -85,7 +71,7 @@ type acknowledgmentEntry struct {
 	originalTransactionSet    string
 	originalControlNumber     string
 	acknowledgmentCode        string
-	diagnostics               []edi.AcknowledgmentDiagnostic
+	diagnostics               []edipayload.AcknowledgmentDiagnostic
 	groupAcknowledgmentCode   string
 	originalFunctionalGroupID string
 	originalGroupControl      string
@@ -110,7 +96,7 @@ type shipmentStatusDetails struct {
 	reasonCode    string
 	eventAt       int64
 	references    []string
-	events        []edi.ShipmentStatusEvent
+	events        []edipayload.ShipmentStatusEvent
 }
 
 const stopSequenceQualifier = "QN"

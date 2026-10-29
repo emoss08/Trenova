@@ -1,22 +1,26 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*ratetools.GenerateRateConfirmationTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*rateconfirmationtools.GenerateRateConfirmationTool)(nil)
 
-var _ agentports.ToolPreviewer = (*ratetools.SendRateConfirmationTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*rateconfirmationtools.SendRateConfirmationTool)(nil)
 
-var _ agentports.ToolPreviewer = (*ratetools.VoidRateConfirmationTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*rateconfirmationtools.VoidRateConfirmationTool)(nil)
 
-var _ agentports.ToolPreviewer = (*ratetools.RecordRateConfirmationConfirmedTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*rateconfirmationtools.RecordRateConfirmationConfirmedTool)(
+	nil,
+)
 
-var _ agentports.ToolValidator = (*ratetools.GenerateRateConfirmationTool)(nil)
+var _ agenttoolports.ToolValidator = (*rateconfirmationtools.GenerateRateConfirmationTool)(nil)
 
-var _ agentports.ToolValidator = (*ratetools.SendRateConfirmationTool)(nil)
+var _ agenttoolports.ToolValidator = (*rateconfirmationtools.SendRateConfirmationTool)(nil)
 
-var _ agentports.ToolValidator = (*ratetools.VoidRateConfirmationTool)(nil)
+var _ agenttoolports.ToolValidator = (*rateconfirmationtools.VoidRateConfirmationTool)(nil)
 
-var _ agentports.ToolValidator = (*ratetools.RecordRateConfirmationConfirmedTool)(nil)
+var _ agenttoolports.ToolValidator = (*rateconfirmationtools.RecordRateConfirmationConfirmedTool)(
+	nil,
+)

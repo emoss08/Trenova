@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,7 +25,7 @@ type DriftChecker struct {
 	workflows kernelports.WorkflowStarter
 }
 
-var _ accountingsyncports.AccountingDriftChecker = (*DriftChecker)(nil)
+var _ accountingdriftports.AccountingDriftChecker = (*DriftChecker)(nil)
 
 func NewDriftChecker(p DriftCheckerParams) *DriftChecker {
 	return &DriftChecker{workflows: p.Workflows}

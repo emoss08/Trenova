@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -210,7 +211,7 @@ func (s *Service) prepareLog(
 	if err != nil {
 		return nil, err
 	}
-	if move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCanceled {
 		return nil, errortypes.NewBusinessError("This load is canceled, so it takes no check calls")
 	}
 	if details.Kind.IsStopVisit() && findStop(move, details.StopID) == nil {
@@ -259,7 +260,7 @@ func (s *Service) loadMove(
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	return s.moveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	return s.moveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenantInfo,
 		ExpandMoveDetails: true,

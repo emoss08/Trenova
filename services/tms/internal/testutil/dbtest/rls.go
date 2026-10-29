@@ -11,7 +11,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,34 +50,33 @@ func NewRLSConnection(t *testing.T, admin *keel.DB, dsn string) *postgres.Connec
 	port, err := strconv.Atoi(parsed.Port())
 	require.NoError(t, err)
 
-	cfg := &config.Config{
-		App: config.AppConfig{Name: "trenova-rls-test"},
-		Database: config.DatabaseConfig{
-			Host:         parsed.Hostname(),
-			Port:         port,
-			Name:         strings.TrimPrefix(parsed.Path, "/"),
-			User:         appRole,
-			Password:     password,
-			SSLMode:      "disable",
-			MaxOpenConns: 16,
-			RLS: config.RLSConfig{
-				Mode:       "enforce",
-				ScopeKeyID: rlsTestScopeKeyID,
-				ScopeKey:   base64.StdEncoding.EncodeToString(randomBytes(t, 48)),
-			},
-			System: config.DatabaseRole{User: systemRole, Password: password},
+	database := &databaseconfig.Config{
+		Host:         parsed.Hostname(),
+		Port:         port,
+		Name:         strings.TrimPrefix(parsed.Path, "/"),
+		User:         appRole,
+		Password:     password,
+		SSLMode:      "disable",
+		MaxOpenConns: 16,
+		RLS: databaseconfig.RLSConfig{
+			Mode:       "enforce",
+			ScopeKeyID: rlsTestScopeKeyID,
+			ScopeKey:   base64.StdEncoding.EncodeToString(randomBytes(t, 48)),
 		},
+		System: databaseconfig.Role{User: systemRole, Password: password},
 	}
 
-	_, err = postgres.ProvisionRLS(ctx, admin, cfg)
+	_, err = postgres.ProvisionRLS(ctx, admin, database)
 	require.NoError(t, err)
 
 	lifecycle := fxtest.NewLifecycle(t)
 	conn, err := postgres.NewConnection(postgres.ConnectionParams{
-		Lifecycle: lifecycle,
-		Config:    cfg,
-		Logger:    zaptest.NewLogger(t),
-		Observers: shapetest.Observers(t),
+		Lifecycle:       lifecycle,
+		AppConfig:       &appconfig.Config{Name: "trenova-rls-test"},
+		DatabaseConfig:  database,
+		ReportingConfig: &reportingconfig.Config{},
+		Logger:          zaptest.NewLogger(t),
+		Observers:       shapetest.Observers(t),
 	})
 	require.NoError(t, err)
 	lifecycle.RequireStart()

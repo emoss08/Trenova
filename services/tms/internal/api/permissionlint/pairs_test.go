@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/permissionlint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +38,7 @@ func TestEveryCheckedPermissionIsDeclared(t *testing.T) {
 	pairs := result.Pairs
 	require.Greater(t, len(pairs), 500, "the analyzer stopped finding permission checks")
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	var undeclared []string
 	for _, pair := range pairs {
 		if !registry.Declares(pair.Resource, permission.Operation(pair.Operation)) {
@@ -78,7 +79,7 @@ func TestAnalyzerFollowsBoundWrappers(t *testing.T) {
 var dynamicChecks = map[string]string{
 	"graphql/resolver/aicontrolresolver/tuneups.go:requireApplyPermission":                             "the resource the tune-up changes, from its kind",
 	"graphql/resolver/attentionresolver/attentionhelpers.go:attentionSectionRunner":                    "each attention section passes its own resource",
-	"graphql/resolver/base/agentproposalchoices.go:subsetLabels":                                       "the resource a proposal field reads",
+	"graphql/resolver/resolvercore/agentproposalchoices.go:subsetLabels":                               "the resource a proposal field reads",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:StartBulkEdit":                           "the resource the bulk editor registry resolves",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:UndoMyBulkEdit":                          "the resource the bulk editor registry resolves",
 	"graphql/resolver/bulkeditresolver/bulk_edit.resolvers.go:BulkEditFields":                          "the resource the bulk editor registry resolves",
@@ -93,6 +94,7 @@ var dynamicChecks = map[string]string{
 	"graphql/resolver/reportresolver/report.resolvers.go:ScheduleTableView":                            "the table being scheduled; an unknown resource has no grant",
 	"handlers/assistanthandler/artifacts.go:registerArtifactRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/cases.go:registerCaseRoutes":                                            "the assistant resource, passed by RegisterRoutes",
+	"handlers/assistanthandler/chapters.go:registerChapterRoutes":                                      "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/queue.go:registerQueueRoutes":                                           "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/schedules.go:registerScheduleRoutes":                                    "the assistant resource, passed by RegisterRoutes",
 	"handlers/assistanthandler/waits.go:registerWaitRoutes":                                            "the assistant resource, passed by RegisterRoutes",
@@ -164,7 +166,7 @@ func TestEveryClientPermissionGateIsDeclared(t *testing.T) {
 	require.Greater(t, len(result.Pairs), 50, "the client analyzer stopped finding gates")
 	require.Empty(t, result.Unresolved, "these gates name a resource the client does not know")
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	var undeclared []string
 	for _, pair := range result.Pairs {
 		if !registry.Declares(pair.Resource, permission.Operation(pair.Operation)) {

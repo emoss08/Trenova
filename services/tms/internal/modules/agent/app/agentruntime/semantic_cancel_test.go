@@ -5,8 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,9 +19,9 @@ type failingVectorizer struct{ err error }
 
 func (v failingVectorizer) Vectorize(
 	context.Context,
-	*agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
-	return agentports.QueryVector{}, v.err
+	*retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
+	return retrievalports.QueryVector{}, v.err
 }
 
 func (v failingVectorizer) Availability(
@@ -34,9 +35,9 @@ type failingSimilarities struct{ err error }
 
 func (f failingSimilarities) Similarities(
 	context.Context,
-	*agentports.CatalogSimilarityRequest,
-) (agentports.CatalogSimilarities, error) {
-	return agentports.CatalogSimilarities{}, f.err
+	*retrievalports.CatalogSimilarityRequest,
+) (retrievalports.CatalogSimilarities, error) {
+	return retrievalports.CatalogSimilarities{}, f.err
 }
 
 func observedRuntime(t *testing.T, err error) (*Service, *observer.ObservedLogs) {
@@ -44,9 +45,9 @@ func observedRuntime(t *testing.T, err error) (*Service, *observer.ObservedLogs)
 
 	service, _ := wideRuntime(t)
 	core, logs := observer.New(zap.WarnLevel)
-	service.logger = zap.New(core)
-	service.vectorizer = failingVectorizer{err: err}
-	service.vectors = failingSimilarities{err: err}
+	rewire(service, func(p *Params) { p.Logger = zap.New(core) })
+	rewire(service, func(p *Params) { p.Vectorizer = failingVectorizer{err: err} })
+	rewire(service, func(p *Params) { p.CatalogVectors = failingSimilarities{err: err} })
 
 	return service, logs
 }
@@ -55,12 +56,12 @@ func embedAndCompare(t *testing.T, service *Service) {
 	t.Helper()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	query := service.vectorize(t.Context(), &agentports.QueryVectorRequest{
+	query := service.access.Vectorize(t.Context(), &retrievalports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       "which invoices are past due",
 	})
 	assert.False(t, query.Usable())
-	assert.Nil(t, service.toolSemantic(t.Context(), tenant, usableQuery()))
+	assert.Nil(t, service.access.ToolSemantic(t.Context(), tenant, runtimetest.UsableQuery()))
 }
 
 func TestSemantic_StaysQuietWhenThePersonTypedOn(t *testing.T) {

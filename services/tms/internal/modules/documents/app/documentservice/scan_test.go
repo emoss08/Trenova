@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
@@ -23,11 +23,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func newScannedService(t *testing.T, gate contentscanports.Gate) (*Service, *objectstoretest.Store) {
+func newScannedService(
+	t *testing.T,
+	gate contentscanports.Gate,
+) (*Service, *objectstoretest.Store) {
 	t.Helper()
 
 	store := objectstoretest.New()
-	storageCfg := &config.StorageConfig{
+	storageCfg := &storageconfig.Config{
 		AllowedMIMETypes:   []string{"application/pdf"},
 		MaxFileSize:        50 * 1024 * 1024,
 		PresignedURLExpiry: 15 * time.Minute,
@@ -38,7 +41,7 @@ func newScannedService(t *testing.T, gate contentscanports.Gate) (*Service, *obj
 		customerportsmock.NewMockDocumentCacheRepository(t),
 		documentuploadportsmock.NewMockDocumentUploadSessionRepository(t),
 		store,
-		NewValidator(ValidatorParams{Config: &config.Config{Storage: *storageCfg}}),
+		NewValidator(ValidatorParams{StorageConfig: storageCfg}),
 		&mocks.NoopAuditService{},
 		storageCfg,
 		thumbnailservice.NewGenerator(nil),

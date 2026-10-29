@@ -7,12 +7,14 @@ package workertrainingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,20 +36,20 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerTrainingRepository
+	Repo         workertrainingports.WorkerTrainingRepository
 	WorkerRepo   workerports.WorkerRepository
 	DocumentRepo documentports.DocumentRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerTrainingRepository
+	repo         workertrainingports.WorkerTrainingRepository
 	workerRepo   workerports.WorkerRepository
 	documentRepo documentports.DocumentRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -61,7 +63,7 @@ func New(p Params) *Service {
 	}
 }
 
-var _ workerports.TrainingAssigner = (*Service)(nil)
+var _ workertrainingports.TrainingAssigner = (*Service)(nil)
 
 type auditParams struct {
 	resource   permission.Resource
@@ -99,7 +101,7 @@ func (s *Service) audit(p *auditParams) {
 }
 
 func (s *Service) auditCourse(
-	current, previous *worker.TrainingCourse,
+	current, previous *workertraining.TrainingCourse,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -119,7 +121,7 @@ func (s *Service) auditCourse(
 }
 
 func (s *Service) auditRecord(
-	current, previous *worker.WorkerTrainingRecord,
+	current, previous *workertraining.WorkerTrainingRecord,
 	operation permission.Operation,
 	userID pulid.ID,
 	comment string,
@@ -169,11 +171,11 @@ func (s *Service) publish(
 	}
 }
 
-func courseTenant(entity *worker.TrainingCourse) pagination.TenantInfo {
+func courseTenant(entity *workertraining.TrainingCourse) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func recordTenant(entity *worker.WorkerTrainingRecord) pagination.TenantInfo {
+func recordTenant(entity *workertraining.WorkerTrainingRecord) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 

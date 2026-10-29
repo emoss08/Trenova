@@ -153,6 +153,28 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req fiscalperiodports.GetFiscalPeriodsByIDsRequest,
+) ([]*fiscalperiod.FiscalPeriod, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalperiod.FiscalPeriod, error) {
+		if len(req.FiscalPeriodIDs) == 0 {
+			return []*fiscalperiod.FiscalPeriod{}, nil
+		}
+
+		fp := fiscalperioddb.FiscalPeriods
+		entities, err := fp.Where(fp.ID.In(req.FiscalPeriodIDs...)).
+			Limit(len(req.FiscalPeriodIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get fiscal periods", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByIDForUpdate(
 	ctx context.Context,
 	req fiscalperiodports.GetFiscalPeriodByIDRequest,

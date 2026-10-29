@@ -10,11 +10,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -74,7 +76,7 @@ func (r *MutationResolver) PatchEquipmentManufacturer(ctx context.Context, id st
 
 	existing, err := r.EquipmentManufacturerService.Get(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID:         equipmentManufacturerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -98,7 +100,7 @@ func (r *MutationResolver) BulkUpdateEquipmentManufacturerStatus(ctx context.Con
 		return nil, err
 	}
 
-	equipmentManufacturerIDs, err := base.ParseIDs(input.EquipmentManufacturerIds)
+	equipmentManufacturerIDs, err := gqlid.ParseIDs(input.EquipmentManufacturerIds)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (r *MutationResolver) BulkUpdateEquipmentManufacturerStatus(ctx context.Con
 	entities, err := r.EquipmentManufacturerService.BulkUpdateStatus(
 		ctx,
 		&equipmentmanufacturerports.BulkUpdateEquipmentManufacturerStatusRequest{
-			TenantInfo:               base.TenantInfo(authCtx),
+			TenantInfo:               resolvercore.TenantInfo(authCtx),
 			EquipmentManufacturerIDs: equipmentManufacturerIDs,
 			Status:                   input.Status,
 		},
@@ -124,7 +126,7 @@ func (r *QueryResolver) EquipmentManufacturers(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +159,6 @@ func (r *QueryResolver) EquipmentManufacturer(ctx context.Context, id string) (*
 
 	return r.EquipmentManufacturerService.Get(ctx, equipmentmanufacturerports.GetEquipmentManufacturerByIDRequest{
 		ID:         equipmentManufacturerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }

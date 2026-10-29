@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +27,7 @@ func TestAgentControlIsCreatedOnceThenServedFromTheCacheUntilAnUpdate(t *testing
 	require.NoError(t, err)
 	require.True(t, created.ID.IsNotNil(), "the first read finds or writes the row")
 
-	var control *tenant.AgentControl
+	var control *agentcontrol.AgentControl
 	read := func() error {
 		var readErr error
 		control, readErr = repo.GetOrCreate(tctx, data.Info())

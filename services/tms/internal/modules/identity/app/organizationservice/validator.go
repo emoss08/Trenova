@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/scopedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -19,11 +21,11 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.ScopedEntityValidator[*tenant.Organization]
+	validator scopedvalidation.EntityValidator[*tenant.Organization]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	builder := validationframework.NewScopedValidatorBuilder[*tenant.Organization]().
+	builder := scopedvalidation.NewBuilder[*tenant.Organization]().
 		WithModelName("Organization").
 		WithScopeField(
 			"businessUnitId",
@@ -55,7 +57,7 @@ func NewValidator(p ValidatorParams) *Validator {
 			func(o *tenant.Organization) any { return o.LoginSlug },
 		).
 		WithCustomRule(
-			validationframework.NewScopedRule[*tenant.Organization]("operating_capabilities").
+			scopedvalidation.NewRule[*tenant.Organization]("operating_capabilities").
 				OnUpdate().
 				WithParallelSafeExecution().
 				WithValidation(validateOperatingCapabilities),
@@ -63,7 +65,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 	if p.DB != nil {
 		builder.WithUniquenessChecker(businessUnitWideChecker{
-			checker: validationframework.NewKeelChecker(p.DB, tenantdb.OrganizationsSchema()),
+			checker: keelcheck.NewChecker(p.DB, tenantdb.OrganizationsSchema()),
 		})
 	}
 
@@ -98,7 +100,7 @@ func businessUnitWideScope(ctx context.Context) context.Context {
 func validateOperatingCapabilities(
 	_ context.Context,
 	entity *tenant.Organization,
-	_ *validationframework.ScopedValidationContext,
+	_ *scopedvalidation.ValidationContext,
 	multiErr *errortypes.MultiError,
 ) error {
 	if entity.BrokerageEnabled || entity.AssetOperationsEnabled {

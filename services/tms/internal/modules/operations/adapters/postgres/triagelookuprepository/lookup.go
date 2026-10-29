@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
@@ -35,7 +35,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) shipmentports.TriageLookupRepository {
+func New(p Params) triagelookupports.TriageLookupRepository {
 	return &repository{db: p.DB}
 }
 
@@ -51,12 +51,12 @@ func (r *repository) PeekDetails(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
-) (map[pulid.ID]*shipmentports.TriagePeekDetail, error) {
+) (map[pulid.ID]*triagelookupports.TriagePeekDetail, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]*shipmentports.TriagePeekDetail, error) {
-			details := make(map[pulid.ID]*shipmentports.TriagePeekDetail, len(shipmentIDs))
+		func(ctx context.Context) (map[pulid.ID]*triagelookupports.TriagePeekDetail, error) {
+			details := make(map[pulid.ID]*triagelookupports.TriagePeekDetail, len(shipmentIDs))
 			if len(shipmentIDs) == 0 {
 				return details, nil
 			}
@@ -64,7 +64,7 @@ func (r *repository) PeekDetails(
 			sp := shipmentdb.Shipments
 			cus := customerdb.Customers
 			et := equipmenttypedb.EquipmentTypes
-			rows, err := keel.Into[shipmentports.TriagePeekDetail](ctx, r.db.Keel(ctx), sp.
+			rows, err := keel.Into[triagelookupports.TriagePeekDetail](ctx, r.db.Keel(ctx), sp.
 				LeftJoin(cus, cus.ID.EqCol(sp.CustomerID)).
 				LeftJoin(et, et.ID.EqCol(sp.TrailerTypeID)).
 				Pick(
@@ -90,11 +90,14 @@ func (r *repository) PeekDetails(
 
 func (r *repository) CustomerShipments(
 	ctx context.Context,
-	req *shipmentports.TriageCustomerShipmentsQuery,
+	req *triagelookupports.TriageCustomerShipmentsQuery,
 ) ([]pulid.ID, int, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) ([]pulid.ID, int, error) {
 		sp := shipmentdb.Shipments
-		scope := sp.Where(sp.CustomerID.Eq(req.CustomerID), sp.Status.Ne(shipment.StatusCanceled))
+		scope := sp.Where(
+			sp.CustomerID.Eq(req.CustomerID),
+			sp.Status.Ne(shipmentvocab.StatusCanceled),
+		)
 
 		var ids []pulid.ID
 		var thisWeek int64
@@ -117,13 +120,13 @@ func (r *repository) CustomerDefaults(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	customerID pulid.ID,
-) (*shipmentports.TriageShipmentDefaults, error) {
+) (*triagelookupports.TriageShipmentDefaults, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.TriageShipmentDefaults, error) {
+		func(ctx context.Context) (*triagelookupports.TriageShipmentDefaults, error) {
 			sp := shipmentdb.Shipments
-			defaults, err := keel.IntoOne[shipmentports.TriageShipmentDefaults](
+			defaults, err := keel.IntoOne[triagelookupports.TriageShipmentDefaults](
 				ctx,
 				r.db.Keel(ctx),
 				sp.Pick(
@@ -133,7 +136,7 @@ func (r *repository) CustomerDefaults(
 					text(sp.TractorTypeID),
 					text(sp.TrailerTypeID),
 				).
-					Where(sp.CustomerID.Eq(customerID), sp.Status.Ne(shipment.StatusCanceled)).
+					Where(sp.CustomerID.Eq(customerID), sp.Status.Ne(shipmentvocab.StatusCanceled)).
 					Order(sp.CreatedAt.Desc()).
 					Limit(1),
 			)
@@ -166,17 +169,17 @@ func (r *repository) ActiveServiceTypes(
 
 func (r *repository) FindCustomers(
 	ctx context.Context,
-	req *shipmentports.TriageLookupQuery,
-) ([]shipmentports.TriageRecordMatch, error) {
+	req *triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
+		func(ctx context.Context) ([]triagelookupports.TriageRecordMatch, error) {
 			c := customerdb.Customers
 			exact := keel.Or(lowerEq(c.Code, query), lowerEq(c.Name, query))
-			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
+			return keel.Into[triagelookupports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
 				Pick(c.ID, c.Name, exact).
 				Where(
 					c.Status.Eq(domaintypes.StatusActive),
@@ -190,8 +193,8 @@ func (r *repository) FindCustomers(
 
 func (r *repository) FindLocations(
 	ctx context.Context,
-	req *shipmentports.TriageLocationQuery,
-) ([]shipmentports.TriageLocationMatch, error) {
+	req *triagelookupports.TriageLocationQuery,
+) ([]triagelookupports.TriageLocationMatch, error) {
 	name := strings.TrimSpace(req.Name)
 	city := strings.TrimSpace(req.City)
 	state := strings.TrimSpace(req.State)
@@ -199,7 +202,7 @@ func (r *repository) FindLocations(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]shipmentports.TriageLocationMatch, error) {
+		func(ctx context.Context) ([]triagelookupports.TriageLocationMatch, error) {
 			loc := locationdb.Locations
 			us := usstatedb.UsStates
 
@@ -212,7 +215,7 @@ func (r *repository) FindLocations(
 			case city != "":
 				exact = keel.True()
 			default:
-				return []shipmentports.TriageLocationMatch{}, nil
+				return []triagelookupports.TriageLocationMatch{}, nil
 			}
 
 			var stateMatch keel.Pred
@@ -223,7 +226,7 @@ func (r *repository) FindLocations(
 				)
 			}
 
-			return keel.Into[shipmentports.TriageLocationMatch](ctx, r.db.Keel(ctx), loc.
+			return keel.Into[triagelookupports.TriageLocationMatch](ctx, r.db.Keel(ctx), loc.
 				LeftJoin(us, us.ID.EqCol(loc.StateID)).
 				Pick(
 					loc.ID,
@@ -245,17 +248,17 @@ func (r *repository) FindLocations(
 
 func (r *repository) FindTrailerTypes(
 	ctx context.Context,
-	req *shipmentports.TriageLookupQuery,
-) ([]shipmentports.TriageRecordMatch, error) {
+	req *triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
+		func(ctx context.Context) ([]triagelookupports.TriageRecordMatch, error) {
 			et := equipmenttypedb.EquipmentTypes
 			exact := keel.Or(lowerEq(et.Code, query), lowerEq(et.Description, query))
-			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), et.
+			return keel.Into[triagelookupports.TriageRecordMatch](ctx, r.db.Keel(ctx), et.
 				Pick(et.ID, et.Description.NullIf("").Coalesce(et.Code), exact).
 				Where(
 					et.Status.Eq(domaintypes.StatusActive),
@@ -270,17 +273,17 @@ func (r *repository) FindTrailerTypes(
 
 func (r *repository) FindCommodities(
 	ctx context.Context,
-	req *shipmentports.TriageLookupQuery,
-) ([]shipmentports.TriageRecordMatch, error) {
+	req *triagelookupports.TriageLookupQuery,
+) ([]triagelookupports.TriageRecordMatch, error) {
 	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
+		func(ctx context.Context) ([]triagelookupports.TriageRecordMatch, error) {
 			c := commoditydb.Commodities
 			exact := lowerEq(c.Name, query)
-			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
+			return keel.Into[triagelookupports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
 				Pick(c.ID, c.Name, exact).
 				Where(
 					c.Status.Eq(domaintypes.StatusActive),

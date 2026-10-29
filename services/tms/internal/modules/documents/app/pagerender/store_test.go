@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -65,9 +65,9 @@ func TestGet_OneWaiterCancellingDoesNotFailTheOthers(t *testing.T) {
 		Encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("pagerender-test-key-material"),
 		),
-		Generator: thumbnailservice.NewGenerator(imaging),
-		Config:    &config.Config{},
-		Logger:    zap.NewNop(),
+		Generator:     thumbnailservice.NewGenerator(imaging),
+		ImagingConfig: &imagingconfig.Config{},
+		Logger:        zap.NewNop(),
 	})
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	doc := &document.Document{
@@ -166,9 +166,9 @@ func newPrerenderHarness(t *testing.T, pageCount int) *prerenderHarness {
 		Encryption: encryptionservice.NewWithKeyManager(
 			encryptionservice.NewLocalKeyManager("pagerender-test-key-material"),
 		),
-		Generator: thumbnailservice.NewGenerator(imaging),
-		Config:    &config.Config{},
-		Logger:    zap.NewNop(),
+		Generator:     thumbnailservice.NewGenerator(imaging),
+		ImagingConfig: &imagingconfig.Config{},
+		Logger:        zap.NewNop(),
 	})
 	h.tenant = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	h.doc = &document.Document{
@@ -311,7 +311,10 @@ func TestPrerender_AResumeTheWorkerRefusesAsOutOfRangeIsDone(t *testing.T) {
 		*kernelports.ImagingRenderRequest,
 		func(*kernelports.ImagingArtifact) error,
 	) (*kernelports.ImagingRenderSummary, error) {
-		return nil, fmt.Errorf("%w: page 3 is outside the document", kernelports.ErrImagingPageOutOfRange)
+		return nil, fmt.Errorf(
+			"%w: page 3 is outside the document",
+			kernelports.ErrImagingPageOutOfRange,
+		)
 	}
 	h.store.generator = thumbnailservice.NewGenerator(imaging)
 

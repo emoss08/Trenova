@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/deskbench"
+	"github.com/emoss08/trenova/internal/deskbench/benchrouting"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +52,7 @@ func runRouting(cmd *cobra.Command, args []string) error {
 	if len(paths) == 0 {
 		paths = []string{defaultRouting}
 	}
-	cases, err := deskbench.LoadRoutingCases(paths)
+	cases, err := benchrouting.LoadRoutingCases(paths)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func runRouting(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintf(os.Stderr, "desk bench: %d routing case(s), writing to %s\n", len(cases), outDir)
 	startedAt := time.Now()
-	results, routeErr := bench.Route(ctx, cases, deskbench.RouteOptions{
+	results, routeErr := benchrouting.Match(ctx, bench, cases, benchrouting.RouteOptions{
 		User:     flags.user,
 		Progress: printRouting,
 	})
@@ -98,7 +99,7 @@ func runRouting(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("the routing run was cut short: %w", routeErr)
 	}
 
-	report := deskbench.BuildRoutingReport(commit(), flags.user, startedAt, results)
+	report := benchrouting.BuildRoutingReport(commit(), flags.user, startedAt, results)
 	if err = report.Write(outDir, baseline); err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func runRouting(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println()
-	fmt.Print(deskbench.RenderRouting(report, baseline))
+	fmt.Print(benchrouting.RenderRouting(report, baseline))
 	fmt.Printf("\n%s\n", filepath.Join(outDir, "routing.md"))
 
 	if failed := report.Total - report.Passed; failed > 0 {
@@ -121,7 +122,7 @@ func runRouting(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func loadRoutingBaseline(compare string) *deskbench.RoutingReport {
+func loadRoutingBaseline(compare string) *benchrouting.RoutingReport {
 	if compare == "" {
 		return nil
 	}
@@ -135,7 +136,7 @@ func loadRoutingBaseline(compare string) *deskbench.RoutingReport {
 		path = strings.TrimSpace(string(raw))
 	}
 
-	baseline, err := deskbench.LoadRoutingReport(path)
+	baseline, err := benchrouting.LoadRoutingReport(path)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "not comparing: %v\n", err)
 		return nil
@@ -144,7 +145,7 @@ func loadRoutingBaseline(compare string) *deskbench.RoutingReport {
 	return baseline
 }
 
-func printRouting(result *deskbench.RoutingResult) {
+func printRouting(result *benchrouting.RoutingResult) {
 	mark := "PASS"
 	if !result.Passed {
 		mark = "FAIL"

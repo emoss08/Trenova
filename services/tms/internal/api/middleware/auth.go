@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,20 +18,20 @@ var errNoCookie = errors.New("no session cookie")
 type AuthMiddlewareParams struct {
 	fx.In
 
-	Config       *config.Config
-	Service      tenantports.AuthService
-	ErrorHandler *helpers.ErrorHandler
+	SecurityConfig *securityconfig.Config
+	Service        tenantports.AuthService
+	ErrorHandler   *helpers.ErrorHandler
 }
 
 type AuthMiddleware struct {
-	cfg          *config.Config
+	cfg          *securityconfig.Config
 	service      tenantports.AuthService
 	errorHandler *helpers.ErrorHandler
 }
 
 func NewAuthMiddleware(p AuthMiddlewareParams) *AuthMiddleware {
 	return &AuthMiddleware{
-		cfg:          p.Config,
+		cfg:          p.SecurityConfig,
 		service:      p.Service,
 		errorHandler: p.ErrorHandler,
 	}
@@ -61,7 +61,7 @@ func (m *AuthMiddleware) authenticate(c *gin.Context) error {
 }
 
 func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
-	cookie, err := c.Cookie(m.cfg.Security.Session.Name)
+	cookie, err := c.Cookie(m.cfg.Session.Name)
 	if err != nil {
 		return errNoCookie
 	}
@@ -123,7 +123,7 @@ func (m *AuthMiddleware) authenticateWithBearer(c *gin.Context, token string) er
 }
 
 func (m *AuthMiddleware) clearSessionCookie(c *gin.Context) {
-	sessionCfg := m.cfg.Security.Session
+	sessionCfg := m.cfg.Session
 	c.SetSameSite(sessionCfg.GetSameSite())
 	c.SetCookie(
 		sessionCfg.Name,

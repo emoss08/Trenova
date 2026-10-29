@@ -3,7 +3,7 @@ package integrationservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,7 +67,7 @@ func (s *Service) syncCarrierIntelRole(ctx context.Context, change *carrierIntel
 }
 
 func applyCarrierIntelRole(
-	control *carrierintel.CarrierIntelControl,
+	control *carrierintelcontrol.CarrierIntelControl,
 	change *carrierIntelRoleChange,
 ) bool {
 	typ := change.typ

@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -19,7 +22,7 @@ const (
 	toolRevokeCustomerTrackingLink = "shipment_revoke_tracking_link"
 	paramRecipientEmail            = "recipientEmail"
 	paramTrackingLinkID            = "linkId"
-	toolShipmentList               = "shipment_list"
+	ToolShipmentList               = "shipment_list"
 )
 
 type customerTrackingLinker interface {
@@ -47,30 +50,28 @@ type sharedLinkView struct {
 
 // classifyShareLink tells a link that is only shared apart from one emailed to
 // an address outside the organization.
-//
-//nolint:gocritic // the Classify hook passes params by value
-func classifyShareLink(params agentports.ToolExecuteParams) agentports.CallPolicy {
-	if common.OptionalString(params.Params, paramRecipientEmail) != "" {
-		return agentports.CallPolicy{Egress: agent.EgressExternalRecipient}
+func classifyShareLink(params *agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	if toolparams.OptionalString(params.Params, paramRecipientEmail) != "" {
+		return agenttoolports.CallPolicy{Egress: agent.EgressExternalRecipient}
 	}
-	return agentports.CallPolicy{Egress: agent.EgressCustomerVisible}
+	return agenttoolports.CallPolicy{Egress: agent.EgressCustomerVisible}
 }
 
-func shipmentTarget(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+func shipmentTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func NewShareCustomerTrackingLinkTool(
 	tracking customertrackingports.CustomerTrackingService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newShareCustomerTrackingLinkTool(tracking)
 }
 
-func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentports.AgentTool {
-	return common.NewReceivableTool(
-		&common.ReceivableSpec{
+func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolShareCustomerTrackingLink,
-			Recipe: []string{toolShipmentList, toolShareCustomerTrackingLink},
+			Recipe: []string{ToolShipmentList, toolShareCustomerTrackingLink},
 			Description: "Share a link to a shipment's tracking page with the customer, and email it " +
 				"when given an address. The page shows only what the customer's tracking settings " +
 				"allow and needs no sign-in. Use the address the customer asked you to send it to; " +
@@ -87,33 +88,38 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 				"outside the organization; the link can be revoked.",
 			Target: shipmentTarget,
 			Properties: map[string]any{
-				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-					"The shipment to share, from the page, shipment_list."),
-				paramRecipientEmail: common.StringProperty(
+				toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
+					permission.ResourceShipment,
+					"The shipment to share, from the page, shipment_list.",
+				),
+				paramRecipientEmail: toolparams.StringProperty(
 					"Where to email the link. Leave it out to share the link without emailing it.",
 					customertracking.MaxRecipientEmailLength,
 				),
 			},
-			Required: []string{common.ParamShipmentID},
+			Required: []string{toolparams.ParamShipmentID},
 		},
-		common.ReceivablePlan[*customertrackingports.IssueLinkRequest, *customertrackingports.LinkPreview]{
-			Request: func(params *agentports.ToolExecuteParams) (*customertrackingports.IssueLinkRequest, error) {
-				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+		toolspec.ReceivablePlan[*customertrackingports.IssueLinkRequest, *customertrackingports.LinkPreview]{
+			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.IssueLinkRequest, error) {
+				shipmentID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamShipmentID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				tenant := common.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(params)
 				return &customertrackingports.IssueLinkRequest{
 					TenantInfo:     tenant,
 					ShipmentID:     shipmentID,
-					RecipientEmail: common.OptionalString(params.Params, paramRecipientEmail),
+					RecipientEmail: toolparams.OptionalString(params.Params, paramRecipientEmail),
 					IssuedByID:     tenant.UserID,
 				}, nil
 			},
 			Plan: func(
 				ctx context.Context,
 				req *customertrackingports.IssueLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*customertrackingports.LinkPreview, error) {
 				return tracking.PreviewIssueLink(ctx, req)
 			},
@@ -124,8 +130,8 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 			Run: func(
 				ctx context.Context,
 				req *customertrackingports.IssueLinkRequest,
-				_ *agentports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+				_ *agenttoolports.ToolExecuteParams,
+			) (*agentrecord.ToolExecutionResult, error) {
 				return shareLink(ctx, tracking, req)
 			},
 		},
@@ -135,7 +141,7 @@ func newShareCustomerTrackingLinkTool(tracking customerTrackingLinker) agentport
 func renderSharedLink(
 	_ *customertrackingports.IssueLinkRequest,
 	plan *customertrackingports.LinkPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	created, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       plan.ShipmentID,
@@ -161,18 +167,18 @@ func shareLink(
 	ctx context.Context,
 	tracking customerTrackingLinker,
 	req *customertrackingports.IssueLinkRequest,
-) (*agent.ToolExecutionResult, error) {
+) (*agentrecord.ToolExecutionResult, error) {
 	issued, err := tracking.IssueLink(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	result := &agent.ToolExecutionResult{
+	result := &agentrecord.ToolExecutionResult{
 		Action: "shared",
 		Kind:   "customer tracking link",
 		Name:   issued.URL,
 		IDs: map[string]string{
-			common.ParamShipmentID: req.ShipmentID.String(),
-			paramTrackingLinkID:    issued.Link.ID.String(),
+			toolparams.ParamShipmentID: req.ShipmentID.String(),
+			paramTrackingLinkID:        issued.Link.ID.String(),
 		},
 		State: "Link shared; not emailed",
 	}
@@ -192,15 +198,15 @@ type revokedLinksView struct {
 
 func NewRevokeCustomerTrackingLinkTool(
 	tracking customertrackingports.CustomerTrackingService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRevokeCustomerTrackingLinkTool(tracking)
 }
 
-func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentports.AgentTool {
-	return common.NewReceivableTool(
-		&common.ReceivableSpec{
+func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name:   toolRevokeCustomerTrackingLink,
-			Recipe: []string{toolShipmentList, toolRevokeCustomerTrackingLink},
+			Recipe: []string{ToolShipmentList, toolRevokeCustomerTrackingLink},
 			Description: "Stop every live customer tracking link on a shipment from working. Use " +
 				"it when a link reached the wrong person or the customer asks for access to end; " +
 				"share a new link afterwards if someone should keep following the load.",
@@ -213,19 +219,24 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 				"can be shared later.",
 			Target: shipmentTarget,
 			Properties: map[string]any{
-				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+				toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
+					permission.ResourceShipment,
 					"The shipment whose links to revoke, from the page or "+
-						"shipment_list."),
+						"shipment_list.",
+				),
 			},
-			Required: []string{common.ParamShipmentID},
+			Required: []string{toolparams.ParamShipmentID},
 		},
-		common.ReceivablePlan[*customertrackingports.RevokeLinkRequest, []*customertracking.Link]{
-			Request: func(params *agentports.ToolExecuteParams) (*customertrackingports.RevokeLinkRequest, error) {
-				shipmentID, err := common.RequirePulid(params.Params, common.ParamShipmentID)
+		toolspec.ReceivablePlan[*customertrackingports.RevokeLinkRequest, []*customertracking.Link]{
+			Request: func(params *agenttoolports.ToolExecuteParams) (*customertrackingports.RevokeLinkRequest, error) {
+				shipmentID, err := toolparams.RequirePulid(
+					params.Params,
+					toolparams.ParamShipmentID,
+				)
 				if err != nil {
 					return nil, err
 				}
-				tenant := common.TenantFrom(*params)
+				tenant := toolparams.TenantFrom(params)
 				return &customertrackingports.RevokeLinkRequest{
 					TenantInfo:  tenant,
 					ShipmentID:  shipmentID,
@@ -235,7 +246,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Plan: func(
 				ctx context.Context,
 				req *customertrackingports.RevokeLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) ([]*customertracking.Link, error) {
 				return tracking.PreviewRevokeLink(ctx, req)
 			},
@@ -245,7 +256,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Render: func(
 				req *customertrackingports.RevokeLinkRequest,
 				links []*customertracking.Link,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				sentTo := make([]string, 0, len(links))
 				for _, link := range links {
 					if link.RecipientEmail != "" {
@@ -268,17 +279,17 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Run: func(
 				ctx context.Context,
 				req *customertrackingports.RevokeLinkRequest,
-				_ *agentports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+				_ *agenttoolports.ToolExecuteParams,
+			) (*agentrecord.ToolExecutionResult, error) {
 				revoked, err := tracking.RevokeLink(ctx, req)
 				if err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "revoked",
 					Kind:   "customer tracking link",
 					Name:   fmt.Sprintf("%d link(s)", revoked),
-					IDs:    map[string]string{common.ParamShipmentID: req.ShipmentID.String()},
+					IDs:    map[string]string{toolparams.ParamShipmentID: req.ShipmentID.String()},
 				}, nil
 			},
 		},

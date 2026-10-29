@@ -130,5 +130,5 @@ the person is `PersonID`, never `UserID`, so it is not mistaken for the actor).
 - The writing instructions: change `organizationSystemPrompt` / `userSystemPrompt` and bump
   `PromptVersion`.
 - The prompt sections: `buildOrganizationProfileSection` and `describeUserProfile` in
-  `domain/agentdefinition/prompt.go`; bump `agentdefinition.PromptVersion` and regenerate the
+  `domain/agentprompt/prompt.go`; bump `agentprompt.PromptVersion` and regenerate the
   prompt goldens.

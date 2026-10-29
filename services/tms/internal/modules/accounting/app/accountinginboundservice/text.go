@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/shared/money"
@@ -13,7 +13,7 @@ import (
 
 func paymentName(p *postingPlan) string {
 	noun := "Payment"
-	if p.change.Kind == accountingsync.InboundBillPayment {
+	if p.change.Kind == accountinginbound.InboundBillPayment {
 		noun = "Bill payment"
 	}
 	if p.change.ExternalNumber != "" {

@@ -4,47 +4,49 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/deskbench/benchlive"
+	"github.com/emoss08/trenova/internal/deskbench/benchrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 )
 
 type eventCollector struct {
-	live   *liveTurn
-	events []Event
+	live   *benchlive.Turn
+	events []benchrecord.Event
 	deltas int
-	tools  []*ToolCallRecord
-	byCall map[string]*ToolCallRecord
+	tools  []*benchrecord.ToolCallRecord
+	byCall map[string]*benchrecord.ToolCallRecord
 }
 
-func newEventCollector(live *liveTurn) *eventCollector {
+func newEventCollector(live *benchlive.Turn) *eventCollector {
 	return &eventCollector{
 		live:   live,
-		events: make([]Event, 0, 32),
-		tools:  make([]*ToolCallRecord, 0, 8),
-		byCall: make(map[string]*ToolCallRecord, 8),
+		events: make([]benchrecord.Event, 0, 32),
+		tools:  make([]*benchrecord.ToolCallRecord, 0, 8),
+		byCall: make(map[string]*benchrecord.ToolCallRecord, 8),
 	}
 }
 
 func streamedText(event string) bool {
 	switch event {
-	case agentports.AssistantEventDelta,
-		agentports.AssistantEventReasoning,
-		agentports.AssistantEventDelegateDelta,
-		agentports.AssistantEventDelegateReasoning:
+	case assistantstreamports.AssistantEventDelta,
+		assistantstreamports.AssistantEventReasoning,
+		assistantstreamports.AssistantEventDelegateDelta,
+		assistantstreamports.AssistantEventDelegateReasoning:
 		return true
 	}
 
 	return false
 }
 
-func (e *eventCollector) onFrame(frame agentports.TurnStreamFrame) error {
-	e.live.frame(frame)
+func (e *eventCollector) onFrame(frame assistantstreamports.TurnStreamFrame) error {
+	e.live.Frame(frame)
 	if streamedText(frame.Event) {
 		e.deltas++
 		return nil
 	}
 
 	at := time.Now()
-	event := Event{At: at, Name: frame.Event}
+	event := benchrecord.Event{At: at, Name: frame.Event}
 	if len(frame.Data) > 0 {
 		var data any
 		if err := sonic.Unmarshal(frame.Data, &data); err != nil {
@@ -56,13 +58,13 @@ func (e *eventCollector) onFrame(frame agentports.TurnStreamFrame) error {
 	e.events = append(e.events, event)
 
 	switch frame.Event {
-	case agentports.AssistantEventToolStarted:
-		var started agentports.AssistantToolStartedEvent
+	case assistantstreamports.AssistantEventToolStarted:
+		var started assistantstreamports.AssistantToolStartedEvent
 		if sonic.Unmarshal(frame.Data, &started) == nil {
 			e.start(at, &started)
 		}
-	case agentports.AssistantEventToolFinished:
-		var finished agentports.AssistantToolFinishedEvent
+	case assistantstreamports.AssistantEventToolFinished:
+		var finished assistantstreamports.AssistantToolFinishedEvent
 		if sonic.Unmarshal(frame.Data, &finished) == nil {
 			e.finish(at, &finished)
 		}
@@ -75,8 +77,11 @@ func callKey(callID, delegateCallID string) string {
 	return delegateCallID + "/" + callID
 }
 
-func (e *eventCollector) start(at time.Time, started *agentports.AssistantToolStartedEvent) {
-	record := &ToolCallRecord{
+func (e *eventCollector) start(
+	at time.Time,
+	started *assistantstreamports.AssistantToolStartedEvent,
+) {
+	record := &benchrecord.ToolCallRecord{
 		CallID:         started.CallID,
 		Name:           started.Name,
 		Arguments:      started.Arguments,
@@ -89,11 +94,14 @@ func (e *eventCollector) start(at time.Time, started *agentports.AssistantToolSt
 	e.byCall[callKey(started.CallID, started.DelegateCallID)] = record
 }
 
-func (e *eventCollector) finish(at time.Time, finished *agentports.AssistantToolFinishedEvent) {
+func (e *eventCollector) finish(
+	at time.Time,
+	finished *assistantstreamports.AssistantToolFinishedEvent,
+) {
 	key := callKey(finished.CallID, finished.DelegateCallID)
 	record, ok := e.byCall[key]
 	if !ok {
-		record = &ToolCallRecord{
+		record = &benchrecord.ToolCallRecord{
 			CallID:         finished.CallID,
 			Name:           finished.Name,
 			AgentID:        finished.AgentID,
@@ -116,7 +124,7 @@ func (e *eventCollector) finish(at time.Time, finished *agentports.AssistantTool
 	}
 }
 
-func (e *eventCollector) into(record *TurnRecord) {
+func (e *eventCollector) into(record *benchrecord.TurnRecord) {
 	record.Events = e.events
 	record.StreamDeltas = e.deltas
 	record.Tools = e.tools

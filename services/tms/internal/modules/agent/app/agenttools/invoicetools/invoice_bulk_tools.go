@@ -3,13 +3,19 @@ package invoicetools
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,8 +30,6 @@ const nounInvoices = "invoices"
 const toolInvoicePost = "invoice_post"
 
 const toolInvoiceSend = "invoice_send"
-
-const toolInvoiceGet = "invoice_get"
 
 const bulkApprovalDescription = "Propose approving billing queue items, one or up to 50 in one proposal the person decides together. On your own, propose only items you reviewed and found clean: charges that match the agreement, the documents the customer requires and no detention charge waiting on approval. When the person asks for items, propose those and say in reviewNotes what you could not confirm. Approval creates each item's draft invoice, or puts it on a statement customer's statement, and the auto-post setting may post it; the person may untick items. Name every ready item in one call; an item the queue would refuse is reported, not approved, and the rest still go."
 
@@ -42,7 +46,7 @@ type invoiceNumberReader interface {
 	) ([]*invoice.Invoice, error)
 }
 
-func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
+func invoiceNumbers(reader invoiceNumberReader) recordbatch.RecordLabels {
 	return func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -60,7 +64,7 @@ func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
 		}
 		labels := make(map[pulid.ID]string, len(invoices))
 		for _, entity := range invoices {
-			labels[entity.ID] = common.InvoiceLabel(entity)
+			labels[entity.ID] = invoicepreview.InvoiceLabel(entity)
 		}
 
 		return labels
@@ -69,25 +73,25 @@ func invoiceNumbers(reader invoiceNumberReader) common.RecordLabels {
 
 type PostInvoicesTool struct {
 	single *PostInvoiceTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewPostInvoicesTool(
 	invoices invoicePoster,
 	numbers invoiceNumberReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	single := &PostInvoiceTool{invoices: invoices}
 
 	return &PostInvoicesTool{
 		single: single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramInvoiceIDs,
-			SingleParam: common.ParamInvoiceID,
+			SingleParam: toolparams.ParamInvoiceID,
 			Resource:    permission.ResourceInvoice,
 			Noun:        nounInvoice,
 			Nouns:       nounInvoices,
 			Verb:        "post",
-			Past:        common.PastPosted,
+			Past:        changepreview.PastPosted,
 			Unchanged:   "is already posted",
 			Single:      single,
 			NeedsPerson: ErrInvoiceNeedsAPerson,
@@ -99,10 +103,10 @@ func NewPostInvoicesTool(
 func (t *PostInvoicesTool) Name() string { return toolInvoicePost }
 
 func (t *PostInvoicesTool) Recipe() []string {
-	return []string{"invoice_list", toolInvoiceGet, toolInvoicePost}
+	return []string{"invoice_list", toolparams.ToolInvoiceGet, toolInvoicePost}
 }
 
-func (t *PostInvoicesTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *PostInvoicesTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -111,13 +115,13 @@ func (t *PostInvoicesTool) SearchTerms() []string { return []string{nounInvoices
 func (t *PostInvoicesTool) Description() string { return bulkPostDescription }
 
 func (t *PostInvoicesTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
+	return recordbatch.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
-func (t *PostInvoicesTool) Policy() agentports.ToolPolicy {
+func (t *PostInvoicesTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 	policy.Rationale = "Books receivables to the ledger and queues each for the accounting " +
 		"system and the customer's EDI; only a person posts, and may untick any of them, " +
 		"and hands-off posting is the billing-control auto-post setting."
@@ -127,9 +131,9 @@ func (t *PostInvoicesTool) Policy() agentports.ToolPolicy {
 
 func (t *PostInvoicesTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *PostInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -138,14 +142,14 @@ func (t *PostInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any
 
 func (t *PostInvoicesTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *PostInvoicesTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -154,27 +158,27 @@ func (t *PostInvoicesTool) Execute(
 
 func (t *PostInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }
 
 type SendInvoicesTool struct {
 	single *SendInvoiceTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewSendInvoicesTool(
 	invoices invoiceSender,
 	numbers invoiceNumberReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	single := &SendInvoiceTool{invoices: invoices}
 
 	return &SendInvoicesTool{
 		single: single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramInvoiceIDs,
-			SingleParam: common.ParamInvoiceID,
+			SingleParam: toolparams.ParamInvoiceID,
 			Resource:    permission.ResourceInvoice,
 			Noun:        nounInvoice,
 			Nouns:       nounInvoices,
@@ -189,7 +193,7 @@ func NewSendInvoicesTool(
 
 func (t *SendInvoicesTool) Name() string { return toolInvoiceSend }
 
-func (t *SendInvoicesTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SendInvoicesTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -198,13 +202,13 @@ func (t *SendInvoicesTool) SearchTerms() []string { return []string{nounInvoices
 func (t *SendInvoicesTool) Description() string { return bulkSendDescription }
 
 func (t *SendInvoicesTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
+	return recordbatch.BulkIDsSchema(t.batch, bulkInvoiceIDsDescription, nil)
 }
 
-func (t *SendInvoicesTool) Policy() agentports.ToolPolicy {
+func (t *SendInvoicesTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 	policy.Rationale = "Emails customers their invoices; only a person sends them, is named " +
 		"as who sent each, and sees every recipient before approving."
 
@@ -213,9 +217,9 @@ func (t *SendInvoicesTool) Policy() agentports.ToolPolicy {
 
 func (t *SendInvoicesTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *SendInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -224,14 +228,14 @@ func (t *SendInvoicesTool) SplitRecords(params map[string]any) ([]map[string]any
 
 func (t *SendInvoicesTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *SendInvoicesTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -240,37 +244,37 @@ func (t *SendInvoicesTool) Execute(
 
 func (t *SendInvoicesTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }
 
 type ApproveBillingQueueItemsTool struct {
 	single *billingtools.ApproveBillingQueueItemTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
 func NewApproveBillingQueueItemsTool(
-	billing common.BillingQueueDecider,
-	invoices common.ApprovalInvoicePlanner,
-) agentports.AgentTool {
+	billing billingqueuepreview.BillingQueueDecider,
+	invoices billingqueuepreview.ApprovalInvoicePlanner,
+) agenttoolports.AgentTool {
 	single, _ := billingtools.NewApproveBillingQueueItemTool(billing, invoices).(*billingtools.ApproveBillingQueueItemTool)
 
 	return &ApproveBillingQueueItemsTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
-			Verb:        common.VerbApprove,
-			Past:        common.PastApproved,
-			Shared:      []string{common.ParamReviewNotes},
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
+			Verb:        changepreview.VerbApprove,
+			Past:        changepreview.PastApproved,
+			Shared:      []string{billingqueuepreview.ParamReviewNotes},
 			Single:      single,
-			NeedsPerson: common.ErrDecisionNeedsAPerson,
-			Labels:      common.QueueItemNumbers(billing),
+			NeedsPerson: billingqueuepreview.ErrDecisionNeedsAPerson,
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -285,27 +289,29 @@ func (t *ApproveBillingQueueItemsTool) Recipe() []string {
 	}
 }
 
-func (t *ApproveBillingQueueItemsTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *ApproveBillingQueueItemsTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
 func (t *ApproveBillingQueueItemsTool) Description() string { return bulkApprovalDescription }
 
 func (t *ApproveBillingQueueItemsTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch,
+	return recordbatch.BulkIDsSchema(t.batch,
 		"The billing queue items, by id from billing_list_queue_items or "+
 			"billing_get_queue_item. Never guess one.",
 		map[string]any{
-			common.ParamReviewNotes: map[string]any{
+			billingqueuepreview.ParamReviewNotes: map[string]any{
 				toolschema.KeyType:      toolschema.TypeString,
-				toolschema.KeyMaxLength: common.MaxDecisionNoteChars,
+				toolschema.KeyMaxLength: billingqueuepreview.MaxDecisionNoteChars,
 				toolschema.KeyDescription: "What you checked, kept on each item as its " +
 					"review notes.",
 			},
 		})
 }
 
-func (t *ApproveBillingQueueItemsTool) Policy() agentports.ToolPolicy {
+func (t *ApproveBillingQueueItemsTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Rationale = "Approving creates the invoices customers are billed on, so only a " +
@@ -316,9 +322,9 @@ func (t *ApproveBillingQueueItemsTool) Policy() agentports.ToolPolicy {
 
 func (t *ApproveBillingQueueItemsTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *ApproveBillingQueueItemsTool) SplitRecords(
@@ -329,14 +335,14 @@ func (t *ApproveBillingQueueItemsTool) SplitRecords(
 
 func (t *ApproveBillingQueueItemsTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *ApproveBillingQueueItemsTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -345,7 +351,7 @@ func (t *ApproveBillingQueueItemsTool) Execute(
 
 func (t *ApproveBillingQueueItemsTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }

@@ -5,17 +5,17 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-var activeAssignmentStatuses = []shipment.AssignmentStatus{
-	shipment.AssignmentStatusNew,
-	shipment.AssignmentStatusInProgress,
+var activeAssignmentStatuses = []shipmentvocab.AssignmentStatus{
+	shipmentvocab.AssignmentStatusNew,
+	shipmentvocab.AssignmentStatusInProgress,
 }
 
 var unpaidDriverSettlementStatuses = []driversettlement.Status{

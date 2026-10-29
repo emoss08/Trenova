@@ -5,20 +5,21 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"go.uber.org/fx"
 )
 
 type ActivitiesParams struct {
 	fx.In
 
-	Chapters   agentports.AssistantChapterService
-	Completion agentports.CompletionService
+	Chapters   assistantchapterports.AssistantChapterService
+	Completion llmports.CompletionService
 }
 
 type Activities struct {
-	chapters   agentports.AssistantChapterService
-	completion agentports.CompletionService
+	chapters   assistantchapterports.AssistantChapterService
+	completion llmports.CompletionService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -29,8 +30,8 @@ var Module = fx.Module("assistant-chapter-jobs", fx.Provide(NewActivities))
 
 func (a *Activities) PlanChapterActivity(
 	ctx context.Context,
-	req *agentports.ChapterTurnRequest,
-) (*agentports.ChapterPlan, error) {
+	req *assistantchapterports.ChapterTurnRequest,
+) (*assistantchapterports.ChapterPlan, error) {
 	plan, err := a.chapters.Plan(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("plan the turn's chapter: %w", err)
@@ -41,8 +42,8 @@ func (a *Activities) PlanChapterActivity(
 
 func (a *Activities) ChapterModelActivity(
 	ctx context.Context,
-	plan *agentports.ChapterPlan,
-) (*agentports.StructuredCompletionResult, error) {
+	plan *assistantchapterports.ChapterPlan,
+) (*llmports.StructuredCompletionResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -57,7 +58,7 @@ func (a *Activities) ChapterModelActivity(
 func (a *Activities) ApplyChapterActivity(
 	ctx context.Context,
 	in *ApplyInput,
-) (*agentports.ChapterOutcome, error) {
+) (*assistantchapterports.ChapterOutcome, error) {
 	outcome, err := a.chapters.Apply(ctx, in.Plan, in.Result)
 	if err != nil {
 		return nil, fmt.Errorf("keep the turn's chapter: %w", err)

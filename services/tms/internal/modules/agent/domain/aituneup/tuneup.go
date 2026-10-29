@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -70,7 +70,7 @@ type Evidence struct {
 	Recorded         int                `json:"recorded,omitempty"`
 	MatchRate        float64            `json:"matchRate,omitempty"`
 	WouldFail        int                `json:"wouldFail,omitempty"`
-	Tasks            []aiprovider.Task  `json:"tasks,omitempty"`
+	Tasks            []aitask.Task      `json:"tasks,omitempty"`
 	Model            string             `json:"model,omitempty"`
 	LastRunAt        *int64             `json:"lastRunAt,omitempty"`
 	IdleSince        int64              `json:"idleSince,omitempty"`
@@ -84,14 +84,14 @@ type TuneUp struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Kind              Kind            `json:"kind"              keel:"kind"`
-	Fingerprint       string          `json:"fingerprint"       keel:"fingerprint"`
-	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
-	ProviderID        pulid.ID        `json:"providerId"        keel:"provider_id,nullzero"`
-	OtherProviderID   pulid.ID        `json:"otherProviderId"   keel:"other_provider_id,nullzero"`
-	ToolName          string          `json:"toolName"          keel:"tool_name,nullzero"`
-	Task              aiprovider.Task `json:"task"              keel:"task,nullzero"`
-	Evidence          Evidence        `json:"evidence"          keel:"evidence,jsonb"`
+	Kind              Kind        `json:"kind"              keel:"kind"`
+	Fingerprint       string      `json:"fingerprint"       keel:"fingerprint"`
+	AgentDefinitionID pulid.ID    `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	ProviderID        pulid.ID    `json:"providerId"        keel:"provider_id,nullzero"`
+	OtherProviderID   pulid.ID    `json:"otherProviderId"   keel:"other_provider_id,nullzero"`
+	ToolName          string      `json:"toolName"          keel:"tool_name,nullzero"`
+	Task              aitask.Task `json:"task"              keel:"task,nullzero"`
+	Evidence          Evidence    `json:"evidence"          keel:"evidence,jsonb"`
 
 	Status         Status   `json:"status"         keel:"status"`
 	DismissedUntil *int64   `json:"dismissedUntil" keel:"dismissed_until"`

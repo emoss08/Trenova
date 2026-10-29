@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -39,7 +39,7 @@ type Params struct {
 	DB                  kernelports.Transactor
 	Repo                latechargeports.LateChargeRepository
 	BillingControlRepo  tenantports.BillingControlRepository
-	InvoiceService      invoiceports.InvoiceService
+	InvoiceMemos        invoiceports.InvoiceMemoService
 	AuditService        auditports.AuditService
 	NotificationService *notificationservice.Service `optional:"true"`
 }
@@ -52,7 +52,7 @@ type Service struct {
 	db                  kernelports.Transactor
 	repo                latechargeports.LateChargeRepository
 	billingRepo         tenantports.BillingControlRepository
-	invoiceService      invoiceports.InvoiceService
+	invoiceMemos        invoiceports.InvoiceMemoService
 	auditService        auditports.AuditService
 	notificationService *notificationservice.Service
 }
@@ -63,7 +63,7 @@ func New(p Params) latechargeports.LateChargeService {
 		db:                  p.DB,
 		repo:                p.Repo,
 		billingRepo:         p.BillingControlRepo,
-		invoiceService:      p.InvoiceService,
+		invoiceMemos:        p.InvoiceMemos,
 		auditService:        p.AuditService,
 		notificationService: p.NotificationService,
 	}
@@ -72,8 +72,8 @@ func New(p Params) latechargeports.LateChargeService {
 // customerPageSize is how many customers' candidates one page reads.
 const customerPageSize = 200
 
-func refuseDisabled(mode tenant.LateChargeAssessmentMode) error {
-	if mode != tenant.LateChargeAssessmentModeDisabled {
+func refuseDisabled(mode billingcontrol.LateChargeAssessmentMode) error {
+	if mode != billingcontrol.LateChargeAssessmentModeDisabled {
 		return nil
 	}
 
@@ -84,8 +84,8 @@ func refuseDisabled(mode tenant.LateChargeAssessmentMode) error {
 	)
 }
 
-func memosAutoPost(control *tenant.BillingControl) bool {
-	return control.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions
+func memosAutoPost(control *billingcontrol.BillingControl) bool {
+	return control.InvoicePostingMode == billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions
 }
 
 func (s *Service) PlanAssess(
@@ -150,7 +150,7 @@ func (s *Service) Assess(
 	}
 	mode := control.LateChargeAssessmentMode
 	if !mode.IsValid() {
-		mode = tenant.LateChargeAssessmentModeDisabled
+		mode = billingcontrol.LateChargeAssessmentModeDisabled
 	}
 	result := &latechargeports.LateChargeAssessmentResult{
 		AsOfDate:  asOf,
@@ -190,7 +190,7 @@ func (s *Service) Assess(
 
 type pageRun struct {
 	req     *latechargeports.LateChargeAssessmentRequest
-	control *tenant.BillingControl
+	control *billingcontrol.BillingControl
 	plans   []*customerPlan
 	actor   *permissionports.RequestActor
 	result  *latechargeports.LateChargeAssessmentResult
@@ -379,7 +379,7 @@ func buildPlans(
 func (s *Service) raiseMemo(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	plan *customerPlan,
 	actor *permissionports.RequestActor,
 ) error {
@@ -411,7 +411,7 @@ func (s *Service) raiseMemo(
 			plan.result.Lines,
 		)
 
-		memo, txErr = s.invoiceService.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
+		memo, txErr = s.invoiceMemos.CreateMemo(txCtx, &invoiceports.CreateMemoRequest{
 			ID:               memoID,
 			TenantInfo:       tenantInfo,
 			CustomerID:       plan.result.CustomerID,

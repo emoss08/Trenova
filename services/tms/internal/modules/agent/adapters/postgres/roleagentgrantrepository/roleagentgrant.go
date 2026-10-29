@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -42,8 +42,8 @@ func New(p Params) permissionports.RoleAgentGrantRepository {
 func grantedAgentIDsQuery(
 	ctx context.Context,
 	req permissionports.ListGrantedAgentIDsRequest,
-) *keel.Query[*permission.RoleAgentGrant] {
-	rag := permissiondb.RoleAgentGrants
+) *keel.Query[*rbac.RoleAgentGrant] {
+	rag := rbacdb.RoleAgentGrants
 	q := rag.Group(rag.AgentDefinitionID).Pick(rag.AgentDefinitionID)
 	if dbscope.IsSystem(ctx) {
 		q = q.AllTenants()
@@ -52,14 +52,14 @@ func grantedAgentIDsQuery(
 	return q.Where(rag.OrganizationID.Eq(req.OrganizationID), rag.RoleID.In(req.RoleIDs...))
 }
 
-func grantsQuery(key keelkinds.PulidIDCol, ids []pulid.ID) *keel.Query[*permission.RoleAgentGrant] {
-	rag := permissiondb.RoleAgentGrants
+func grantsQuery(key keelkinds.PulidIDCol, ids []pulid.ID) *keel.Query[*rbac.RoleAgentGrant] {
+	rag := rbacdb.RoleAgentGrants
 
 	return rag.Where(key.In(ids...)).Order(rag.GrantedAt.Asc())
 }
 
-func rolesQuery(ids []pulid.ID) *keel.Query[*permission.Role] {
-	ro := permissiondb.Roles
+func rolesQuery(ids []pulid.ID) *keel.Query[*rbac.Role] {
+	ro := rbacdb.Roles
 
 	return ro.Where(keel.When(len(ids) > 0, ro.ID.In(ids...))).Order(ro.Name.Asc())
 }
@@ -70,8 +70,8 @@ func definitionsQuery(ids []pulid.ID) *keel.Query[*agentdefinition.Definition] {
 	return d.Where(d.ID.In(ids...)).Order(d.Name.Asc())
 }
 
-func currentGrantsQuery(p *replaceParams) *keel.Query[*permission.RoleAgentGrant] {
-	rag := permissiondb.RoleAgentGrants
+func currentGrantsQuery(p *replaceParams) *keel.Query[*rbac.RoleAgentGrant] {
+	rag := rbacdb.RoleAgentGrants
 
 	return rag.Pick(p.varying).Where(p.fixed.Eq(p.fixedID)).Lock(keel.ForUpdate)
 }
@@ -99,8 +99,8 @@ func (r *repository) listGrants(
 	ctx context.Context,
 	key keelkinds.PulidIDCol,
 	ids []pulid.ID,
-) ([]*permission.RoleAgentGrant, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleAgentGrant, error) {
+) ([]*rbac.RoleAgentGrant, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.RoleAgentGrant, error) {
 		grants, err := grantsQuery(key, ids).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list role agent grants: %w", err)
@@ -113,19 +113,19 @@ func (r *repository) listGrants(
 func (r *repository) ListRolesByAgents(
 	ctx context.Context,
 	req permissionports.ListGrantsByAgentsRequest,
-) (map[pulid.ID][]*permission.Role, error) {
+) (map[pulid.ID][]*rbac.Role, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID][]*permission.Role, error) {
-			out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
+		func(ctx context.Context) (map[pulid.ID][]*rbac.Role, error) {
+			out := make(map[pulid.ID][]*rbac.Role, len(req.AgentIDs))
 			if len(req.AgentIDs) == 0 {
 				return out, nil
 			}
 
 			grants, err := r.listGrants(
 				ctx,
-				permissiondb.RoleAgentGrants.AgentDefinitionID,
+				rbacdb.RoleAgentGrants.AgentDefinitionID,
 				req.AgentIDs,
 			)
 			if err != nil {
@@ -175,7 +175,7 @@ func (r *repository) ListAgentsByRoles(
 				return out, nil
 			}
 
-			grants, err := r.listGrants(ctx, permissiondb.RoleAgentGrants.RoleID, req.RoleIDs)
+			grants, err := r.listGrants(ctx, rbacdb.RoleAgentGrants.RoleID, req.RoleIDs)
 			if err != nil {
 				r.l.Error("failed to list grants by role", zap.Error(err))
 				return nil, err
@@ -217,8 +217,8 @@ func (r *repository) ListAgentsByRoles(
 func (r *repository) ListGrantableRoles(
 	ctx context.Context,
 	req permissionports.ListGrantableRolesRequest,
-) ([]*permission.Role, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rbac.Role, error) {
 		roles, err := rolesQuery(req.RoleIDs).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list grantable roles", zap.Error(err))
@@ -234,7 +234,7 @@ type replaceParams struct {
 	fixedID pulid.ID
 	varying keelkinds.PulidIDCol
 	wanted  []pulid.ID
-	grant   func(varyingID pulid.ID) *permission.RoleAgentGrant
+	grant   func(varyingID pulid.ID) *rbac.RoleAgentGrant
 }
 
 func (r *repository) replace(
@@ -243,7 +243,7 @@ func (r *repository) replace(
 ) (permissionports.GrantChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (permissionports.GrantChange, error) {
 		db := r.db.Keel(ctx)
-		rag := permissiondb.RoleAgentGrants
+		rag := rbacdb.RoleAgentGrants
 
 		previous, err := keel.Into[pulid.ID](ctx, db, currentGrantsQuery(&p))
 		if err != nil {
@@ -266,7 +266,7 @@ func (r *repository) replace(
 		}
 
 		if len(change.Added) > 0 {
-			rows := make([]*permission.RoleAgentGrant, 0, len(change.Added))
+			rows := make([]*rbac.RoleAgentGrant, 0, len(change.Added))
 			for _, id := range change.Added {
 				rows = append(rows, p.grant(id))
 			}
@@ -289,14 +289,14 @@ func (r *repository) ReplaceForAgent(
 	ctx context.Context,
 	req permissionports.ReplaceAgentGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	rag := permissiondb.RoleAgentGrants
+	rag := rbacdb.RoleAgentGrants
 	change, err := r.replace(ctx, replaceParams{
 		fixed:   rag.AgentDefinitionID,
 		fixedID: req.AgentID,
 		varying: rag.RoleID,
 		wanted:  req.RoleIDs,
-		grant: func(roleID pulid.ID) *permission.RoleAgentGrant {
-			return &permission.RoleAgentGrant{
+		grant: func(roleID pulid.ID) *rbac.RoleAgentGrant {
+			return &rbac.RoleAgentGrant{
 				OrganizationID:    req.TenantInfo.OrgID,
 				BusinessUnitID:    req.TenantInfo.BuID,
 				RoleID:            roleID,
@@ -317,14 +317,14 @@ func (r *repository) ReplaceForRole(
 	ctx context.Context,
 	req permissionports.ReplaceRoleGrantsRequest,
 ) (permissionports.GrantChange, error) {
-	rag := permissiondb.RoleAgentGrants
+	rag := rbacdb.RoleAgentGrants
 	change, err := r.replace(ctx, replaceParams{
 		fixed:   rag.RoleID,
 		fixedID: req.RoleID,
 		varying: rag.AgentDefinitionID,
 		wanted:  req.AgentIDs,
-		grant: func(agentID pulid.ID) *permission.RoleAgentGrant {
-			return &permission.RoleAgentGrant{
+		grant: func(agentID pulid.ID) *rbac.RoleAgentGrant {
+			return &rbac.RoleAgentGrant{
 				OrganizationID:    req.TenantInfo.OrgID,
 				BusinessUnitID:    req.TenantInfo.BuID,
 				RoleID:            req.RoleID,

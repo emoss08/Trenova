@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +24,7 @@ import (
 const testNow = int64(1_800_000_000)
 
 type fakeConversations struct {
-	agentports.ConversationRepository
+	conversationports.ConversationRepository
 
 	thread  *conversation.Thread
 	updates int
@@ -31,7 +32,7 @@ type fakeConversations struct {
 
 func (f *fakeConversations) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.thread == nil || req.ID != f.thread.ID || req.UserID != f.thread.UserID {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -103,12 +104,15 @@ func (f *fakeWaitRepo) ListOpenByThreads(
 }
 
 type fakeSubjects struct {
-	agentports.AgentSubjectRepository
+	agentsubjectports.AgentSubjectRepository
 
 	exists bool
 }
 
-func (f *fakeSubjects) Exists(context.Context, agentports.AgentSubjectExistsRequest) (bool, error) {
+func (f *fakeSubjects) Exists(
+	context.Context,
+	*agentsubjectports.AgentSubjectExistsRequest,
+) (bool, error) {
 	return f.exists, nil
 }
 

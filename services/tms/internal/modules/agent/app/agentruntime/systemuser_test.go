@@ -5,13 +5,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -32,18 +35,18 @@ func TestRun_AnUnattendedSystemUserCannotReachASelfScopedTool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				callsTurn(agentports.ToolCall{
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+				callsTurn(llmports.ToolCall{
 					ID:        "home",
 					Name:      "home_add_widget",
 					Arguments: map[string]any{"key": "kpi"},
 				}),
-				textTurn("done"),
+				runtimetest.TextTurn("done"),
 			}}
 			service, permissions := selfScopedRuntime(completion)
-			actor := systemUserActor()
-			req := &agentports.RunRequest{
-				Definition: testDefinition("home_add_widget"),
+			actor := runtimetest.SystemUserActor()
+			req := &agentruntimeports.RunRequest{
+				Definition: runtimetest.Definition("home_add_widget"),
 				Actor:      actor,
 				Input:      "tidy the home page",
 				Unattended: tt.unattended,
@@ -71,21 +74,21 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 
 	tool := actionTool("update_worker", agent.TierAutoExecute, nil)
 	tool.Resource = permission.ResourceWorker
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		callsTurn(agentports.ToolCall{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		callsTurn(llmports.ToolCall{
 			ID:        "write",
 			Name:      "update_worker",
 			Arguments: map[string]any{"workerId": "wrk_1"},
 		}),
-		textTurn("done"),
+		runtimetest.TextTurn("done"),
 	}}
 	permissions := &agenttest.StubPermissions{}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, permissions)
-	actor := systemUserActor()
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, permissions)
+	actor := runtimetest.SystemUserActor()
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: autoDefinition("update_worker"),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.AutoDefinition("update_worker"),
 		Actor:      actor,
 		Input:      "A worker changed.",
 		Unattended: true,
@@ -105,45 +108,33 @@ func TestRun_AnUnattendedRunIsCheckedAsTheAgentNotItsSystemUser(t *testing.T) {
 func TestContextBuilder_NeverDescribesTheSystemUserAsThePerson(t *testing.T) {
 	t.Parallel()
 
-	builder := &ContextBuilder{
-		logger:        zap.NewNop(),
-		organizations: &stubOrganizations{org: &tenant.Organization{Timezone: "America/Denver"}},
-		users:         &stubUsers{user: &tenant.User{Name: "System Account"}},
-		runtime: newRuntime(
+	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+		Logger: zap.NewNop(),
+		Organizations: &runtimetest.StubOrganizations{
+			Org: &tenant.Organization{Timezone: "America/Denver"},
+		},
+		Users: &runtimetest.StubUsers{User: &tenant.User{Name: "System Account"}},
+		Runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
 			&stubActionRegistry{},
 			nil,
 		),
-	}
-	definition := testDefinition()
+	})
+	definition := runtimetest.Definition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{agentdefinition.ContextUser}
 
-	unattended, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	unattended, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
-		Actor:      systemUserActor(),
+		Actor:      runtimetest.SystemUserActor(),
 	})
 	require.NoError(t, err)
 	assert.Nil(t, unattended.User, "the system user is not someone the agent works for")
 
-	person, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	person, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, person.User)
-}
-
-func TestTurnAttribution_UsageIsNotChargedToTheSystemUser(t *testing.T) {
-	t.Parallel()
-
-	unattended := turnAttribution(&agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      systemUserActor(),
-	})
-	assert.Equal(t, pulid.Nil, unattended.UserID)
-
-	actor := testActor()
-	person := turnAttribution(&agentports.RunRequest{Definition: testDefinition(), Actor: actor})
-	assert.Equal(t, actor.UserID, person.UserID)
 }

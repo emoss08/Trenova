@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/providertest"
@@ -14,10 +14,10 @@ import (
 
 var ErrPerformedDuringPreview = errors.New("a preview performed a settlement action")
 
-func BuildTool(t *testing.T, provider any) agentports.AgentTool {
+func BuildTool(t *testing.T, provider any) agenttoolports.AgentTool {
 	t.Helper()
 
-	tool, ok := providertest.Build(t, provider, nil).(agentports.AgentTool)
+	tool, ok := providertest.Build(t, provider, nil).(agenttoolports.AgentTool)
 	require.Truef(t, ok, "%T does not build a tool", provider)
 
 	return tool

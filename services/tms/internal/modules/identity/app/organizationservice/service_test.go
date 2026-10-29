@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -156,7 +157,10 @@ func (n *noopStorageClient) Upload(
 	}, nil
 }
 
-func (n *noopStorageClient) Download(_ context.Context, _ string) (*kernelports.DownloadResult, error) {
+func (n *noopStorageClient) Download(
+	_ context.Context,
+	_ string,
+) (*kernelports.DownloadResult, error) {
 	return &kernelports.DownloadResult{Body: io.NopCloser(bytes.NewReader(nil))}, nil
 }
 
@@ -224,7 +228,10 @@ func (n *noopStorageClient) ListMultipartUploadParts(
 	return nil, nil
 }
 
-func (n *noopStorageClient) GetFileInfo(_ context.Context, key string) (*kernelports.FileInfo, error) {
+func (n *noopStorageClient) GetFileInfo(
+	_ context.Context,
+	key string,
+) (*kernelports.FileInfo, error) {
 	return &kernelports.FileInfo{Key: key}, nil
 }
 
@@ -236,7 +243,7 @@ func setupTest(t *testing.T) *testDeps {
 		l:          zap.NewNop(),
 		repo:       repo,
 		storage:    &noopStorageClient{},
-		storageCfg: &config.StorageConfig{PresignedURLExpiry: 15 * time.Minute},
+		storageCfg: &storageconfig.Config{PresignedURLExpiry: 15 * time.Minute},
 		v:          NewValidator(ValidatorParams{}),
 	}
 	return &testDeps{repo: repo, svc: svc}
@@ -563,12 +570,13 @@ func TestNew(t *testing.T) {
 	repo := new(mockOrganizationRepo)
 
 	svc := New(Params{
-		DB:        dbtest.NopConnection{},
-		Logger:    zap.NewNop(),
-		Repo:      repo,
-		Storage:   &noopStorageClient{},
-		Config:    &config.Config{},
-		Validator: NewValidator(ValidatorParams{}),
+		DB:             dbtest.NopConnection{},
+		Logger:         zap.NewNop(),
+		Repo:           repo,
+		Storage:        &noopStorageClient{},
+		SecurityConfig: &securityconfig.Config{},
+		StorageConfig:  &storageconfig.Config{},
+		Validator:      NewValidator(ValidatorParams{}),
 	})
 
 	require.NotNil(t, svc)

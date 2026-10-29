@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,9 +26,9 @@ func TestPreview_PassesTheCallersPolicyZoneAndSupersedeKey(t *testing.T) {
 		Definition: storedRunDefinition(),
 		Supersede:  true,
 	})
-	require.ErrorIs(t, err, errNotExecuted)
+	require.ErrorIs(t, err, reportingtest.ErrNotExecuted)
 
-	previews := engine.recorded("preview")
+	previews := engine.Recorded("preview")
 	require.Len(t, previews, 1)
 	got := previews[0].Request
 	access, ok := got.Policy.(*reportaccess.Access)
@@ -49,21 +50,21 @@ func TestPreview_PagesWhenAPageSizeIsGiven(t *testing.T) {
 		Cursor:     "abc",
 		PageSize:   25,
 	})
-	require.ErrorIs(t, err, errNotExecuted)
+	require.ErrorIs(t, err, reportingtest.ErrNotExecuted)
 
-	pages := engine.recorded("page")
+	pages := engine.Recorded("page")
 	require.Len(t, pages, 1)
 	assert.Equal(t, "abc", pages[0].Cursor)
 	assert.Equal(t, 25, pages[0].PageSize)
-	assert.Empty(t, engine.recorded("preview"))
+	assert.Empty(t, engine.Recorded("preview"))
 
 	_, err = svc.Preview(t.Context(), &PreviewRequest{
 		Request:    planRequest(testUserID()),
 		Definition: storedRunDefinition(),
 		PageSize:   5000,
 	})
-	require.ErrorIs(t, err, errNotExecuted)
-	pages = engine.recorded("page")
+	require.ErrorIs(t, err, reportingtest.ErrNotExecuted)
+	pages = engine.Recorded("page")
 	require.Len(t, pages, 2)
 	assert.Equal(t, 40, pages[1].PageSize, "a page is never larger than a preview")
 }
@@ -97,9 +98,9 @@ func TestDrillThrough_LeavesTheRowCapToThePreview(t *testing.T) {
 			PivotValues: []string{"New"},
 			Limit:       requested,
 		})
-		require.ErrorIs(t, err, errNotExecuted, requested)
+		require.ErrorIs(t, err, reportingtest.ErrNotExecuted, requested)
 
-		drills := engine.recorded("drill")
+		drills := engine.Recorded("drill")
 		require.Len(t, drills, 1, requested)
 		assert.Equal(t, want, drills[0].Drill.Limit, requested)
 		assert.Equal(t, []string{"New"}, drills[0].Drill.PivotValues)

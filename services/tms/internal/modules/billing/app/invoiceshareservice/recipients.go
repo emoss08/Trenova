@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -22,7 +22,7 @@ const systemUsername = "system"
 type shareInput struct {
 	userIDs []pulid.ID
 	note    string
-	tab     invoice.ShareTab
+	tab     invoiceshare.ShareTab
 }
 
 func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiError {
@@ -35,12 +35,12 @@ func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiEr
 			errortypes.ErrRequired,
 			"Choose at least one teammate to share with",
 		)
-	case len(input.userIDs) > invoice.MaxShareRecipients:
+	case len(input.userIDs) > invoiceshare.MaxShareRecipients:
 		multiErr.Add(
 			"userIds",
 			errortypes.ErrInvalid,
 			"An invoice can be shared with at most {0} teammates at a time",
-			invoice.MaxShareRecipients,
+			invoiceshare.MaxShareRecipients,
 		)
 	}
 
@@ -65,12 +65,12 @@ func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiEr
 	if !input.tab.IsValid() {
 		multiErr.Add("tab", errortypes.ErrInvalid, "Invoice tab is invalid")
 	}
-	if utf8.RuneCountInString(input.note) > invoice.MaxShareNoteLength {
+	if utf8.RuneCountInString(input.note) > invoiceshare.MaxShareNoteLength {
 		multiErr.Add(
 			"note",
 			errortypes.ErrInvalid,
 			"Note must be {0} characters or fewer",
-			invoice.MaxShareNoteLength,
+			invoiceshare.MaxShareNoteLength,
 		)
 	}
 

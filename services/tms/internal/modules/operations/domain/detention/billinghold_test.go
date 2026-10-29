@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -61,7 +62,7 @@ func TestOccurrence_BillingHoldReason(t *testing.T) {
 
 	threshold := billableOccurrence()
 	threshold.RequiresApproval = true
-	threshold.PolicySnapshot = &detention.PolicySnapshot{
+	threshold.PolicySnapshot = &detentionpolicy.PolicySnapshot{
 		RequireApprovalOverAmount: decimal.NewNullDecimal(decimal.NewFromInt(200)),
 	}
 	assert.Equal(
@@ -73,9 +74,9 @@ func TestOccurrence_BillingHoldReason(t *testing.T) {
 	notice := billableOccurrence()
 	notice.RequiresApproval = true
 	notice.NotificationStatus = detention.NotificationStatusMissed
-	notice.PolicySnapshot = &detention.PolicySnapshot{
-		NotificationRequirement:   detention.NotificationRequirementRequired,
-		UnnotifiedBehavior:        detention.UnnotifiedBehaviorFlag,
+	notice.PolicySnapshot = &detentionpolicy.PolicySnapshot{
+		NotificationRequirement:   detentionpolicy.NotificationRequirementRequired,
+		UnnotifiedBehavior:        detentionpolicy.UnnotifiedBehaviorFlag,
 		RequireApprovalOverAmount: decimal.NewNullDecimal(decimal.NewFromInt(500)),
 	}
 	assert.Equal(t, detention.BillingHoldReasonNoticeNotSent, notice.BillingHoldReason())
@@ -83,9 +84,9 @@ func TestOccurrence_BillingHoldReason(t *testing.T) {
 	escalated := billableOccurrence()
 	escalated.RequiresApproval = true
 	escalated.NotificationStatus = detention.NotificationStatusSent
-	escalated.PolicySnapshot = &detention.PolicySnapshot{
-		NotificationRequirement: detention.NotificationRequirementRequired,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorFlag,
+	escalated.PolicySnapshot = &detentionpolicy.PolicySnapshot{
+		NotificationRequirement: detentionpolicy.NotificationRequirementRequired,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorFlag,
 	}
 	assert.Equal(t, detention.BillingHoldReasonEscalated, escalated.BillingHoldReason())
 

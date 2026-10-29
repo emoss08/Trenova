@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 )
 
 const (
@@ -20,7 +22,7 @@ const (
 )
 
 type Client struct {
-	core        *core
+	core        *Core
 	ref         CompanyRef
 	envPath     string
 	companyPath string
@@ -40,7 +42,7 @@ type GeneralLedgerSetup struct {
 }
 
 func (s *GeneralLedgerSetup) AllowsPosting(date string) (bool, error) {
-	value, err := inputDate(date, true)
+	value, err := InputDate(date, true)
 	if err != nil {
 		return false, err
 	}
@@ -92,8 +94,8 @@ type wireGeneralLedgerSetup struct {
 func (w *wireGeneralLedgerSetup) setup() GeneralLedgerSetup {
 	return GeneralLedgerSetup{
 		LocalCurrencyCode: strings.ToUpper(strings.TrimSpace(w.LocalCurrencyCode)),
-		AllowPostingFrom:  outputDate(w.AllowPostingFrom),
-		AllowPostingTo:    outputDate(w.AllowPostingTo),
+		AllowPostingFrom:  OutputDate(w.AllowPostingFrom),
+		AllowPostingTo:    OutputDate(w.AllowPostingTo),
 	}
 }
 
@@ -107,7 +109,7 @@ type wireAccountingPeriod struct {
 
 func (w *wireAccountingPeriod) period() AccountingPeriod {
 	return AccountingPeriod{
-		StartingDate:  outputDate(w.StartingDate),
+		StartingDate:  OutputDate(w.StartingDate),
 		Name:          w.Name,
 		NewFiscalYear: w.NewFiscalYear,
 		Closed:        w.Closed,
@@ -128,7 +130,7 @@ func (w *wireCurrency) currency() Currency {
 func New(ref CompanyRef, accessToken string, opts ...Option) (*Client, error) {
 	token := strings.TrimSpace(accessToken)
 	if token == "" {
-		return nil, ErrAccessTokenRequired
+		return nil, businesscentralerrors.ErrAccessTokenRequired
 	}
 	normalized, err := NewCompanyRef(ref.TenantID, ref.Environment, ref.CompanyID)
 	if err != nil {
@@ -150,7 +152,7 @@ func New(ref CompanyRef, accessToken string, opts ...Option) (*Client, error) {
 		core:        c,
 		ref:         normalized,
 		envPath:     envPath,
-		companyPath: envPath + "/" + companiesEntity + "(" + normalized.CompanyID + ")",
+		companyPath: envPath + "/" + CompaniesEntity + "(" + normalized.CompanyID + ")",
 	}, nil
 }
 
@@ -159,66 +161,78 @@ func (c *Client) Ref() CompanyRef {
 }
 
 func (c *Client) CompanyInformation(ctx context.Context) (*CompanyInformation, error) {
-	return fetchFirst(ctx, c.core, &listCall{
-		endpoint: "company-information",
-		path:     c.collectionPath("companyInformation"),
+	return FetchFirst(ctx, c.core, &ListCall{
+		Endpoint: "company-information",
+		Path:     c.CollectionPath("companyInformation"),
 	}, (*wireCompanyInformation).info)
 }
 
 func (c *Client) GeneralLedgerSetup(ctx context.Context) (*GeneralLedgerSetup, error) {
-	return fetchFirst(ctx, c.core, &listCall{
-		endpoint: "general-ledger-setup",
-		path:     c.collectionPath("generalLedgerSetup"),
+	return FetchFirst(ctx, c.core, &ListCall{
+		Endpoint: "general-ledger-setup",
+		Path:     c.CollectionPath("generalLedgerSetup"),
 	}, (*wireGeneralLedgerSetup).setup)
 }
 
 func (c *Client) AccountingPeriods(ctx context.Context) ([]AccountingPeriod, error) {
-	return collect(ctx, c.core, &listCall{
-		endpoint: "accounting-periods",
-		path:     c.collectionPath("accountingPeriods"),
+	return Collect(ctx, c.core, &ListCall{
+		Endpoint: "accounting-periods",
+		Path:     c.CollectionPath("accountingPeriods"),
 	}, (*wireAccountingPeriod).period)
 }
 
 func (c *Client) Currencies(ctx context.Context) ([]Currency, error) {
-	return collect(ctx, c.core, &listCall{
-		endpoint: "currencies",
-		path:     c.collectionPath("currencies"),
+	return Collect(ctx, c.core, &ListCall{
+		Endpoint: "currencies",
+		Path:     c.CollectionPath("currencies"),
 	}, (*wireCurrency).currency)
 }
 
-func (c *Client) collectionPath(entity string) string {
+func (c *Client) Core() *Core {
+	return c.core
+}
+
+func (c *Client) EnvPath() string {
+	return c.envPath
+}
+
+func (c *Client) CollectionPath(entity string) string {
 	return c.companyPath + "/" + entity
 }
 
-func (c *Client) entityPath(entity, id string) string {
+func (c *Client) EntityPath(entity, id string) string {
 	return c.companyPath + "/" + entity + "(" + id + ")"
 }
 
-func (c *Client) actionPath(entity, id, action string) string {
-	return c.entityPath(entity, id) + "/" + actionPrefix + action
+func (c *Client) ActionPath(entity, id, action string) string {
+	return c.EntityPath(entity, id) + "/" + actionPrefix + action
 }
 
-func (c *Client) invoke(ctx context.Context, endpoint, path string) error {
-	_, err := c.core.do(ctx, &call{
-		endpoint: endpoint,
-		method:   http.MethodPost,
-		path:     path,
-		expected: []int{http.StatusNoContent, http.StatusOK},
+func (c *Client) Invoke(ctx context.Context, endpoint, path string) error {
+	_, err := c.core.do(ctx, &Call{
+		Endpoint: endpoint,
+		Method:   http.MethodPost,
+		Path:     path,
+		Expected: []int{http.StatusNoContent, http.StatusOK},
 	})
 	return err
 }
 
-func (c *Client) remove(ctx context.Context, endpoint, path, etag string) error {
-	match, err := ifMatch(etag)
+func (c *Client) Remove(ctx context.Context, endpoint, path, etag string) error {
+	match, err := IfMatch(etag)
 	if err != nil {
 		return err
 	}
-	_, err = c.core.do(ctx, &call{
-		endpoint: endpoint,
-		method:   http.MethodDelete,
-		path:     path,
-		ifMatch:  match,
-		expected: []int{http.StatusNoContent, http.StatusOK},
+	_, err = c.core.do(ctx, &Call{
+		Endpoint: endpoint,
+		Method:   http.MethodDelete,
+		Path:     path,
+		IfMatch:  match,
+		Expected: []int{http.StatusNoContent, http.StatusOK},
 	})
 	return err
 }
+
+const (
+	ActionPost = "post"
+)

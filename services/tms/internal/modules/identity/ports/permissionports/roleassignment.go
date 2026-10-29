@@ -3,7 +3,7 @@ package permissionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -23,9 +23,9 @@ type RoleAssignmentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListRoleAssignmentsRequest,
-	) (*pagination.ListResult[*permission.UserRoleAssignment], error)
+	) (*pagination.ListResult[*rbac.UserRoleAssignment], error)
 	GetByID(
 		ctx context.Context,
 		req GetRoleAssignmentByIDRequest,
-	) (*permission.UserRoleAssignment, error)
+	) (*rbac.UserRoleAssignment, error)
 }

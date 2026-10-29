@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -140,7 +140,7 @@ func sameSet(left, right []any) bool {
 }
 
 func canonical(value any) string {
-	return fmt.Sprint(agent.NormalizeValue(value))
+	return fmt.Sprint(agentreplay.NormalizeValue(value))
 }
 
 func isEmpty(value any) bool {

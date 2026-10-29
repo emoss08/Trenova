@@ -3,8 +3,8 @@ package detentionresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -16,14 +16,14 @@ import (
 func TestDetentionPolicyToModel_EmptyListsAreNotNull(t *testing.T) {
 	t.Parallel()
 
-	model := detentionPolicyToModel(&detention.DetentionPolicy{
+	model := detentionPolicyToModel(&detentionpolicy.DetentionPolicy{
 		ID:                  pulid.MustNew("dtp_"),
 		OrganizationID:      pulid.MustNew("org_"),
 		BusinessUnitID:      pulid.MustNew("bu_"),
 		Name:                "Standard detention terms",
 		Code:                "DET-STD",
-		Status:              detention.PolicyStatusActive,
-		RateSource:          detention.RateSourceAccessorial,
+		Status:              detentionpolicy.PolicyStatusActive,
+		RateSource:          detentionpolicy.RateSourceAccessorial,
 		AccessorialChargeID: pulid.MustNew("acc_"),
 		Currency:            "USD",
 	})
@@ -42,18 +42,18 @@ func TestDetentionPolicyToModel_PopulatedLists(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	policyID := pulid.MustNew("dtp_")
 
-	model := detentionPolicyToModel(&detention.DetentionPolicy{
+	model := detentionPolicyToModel(&detentionpolicy.DetentionPolicy{
 		ID:                  policyID,
 		OrganizationID:      orgID,
 		BusinessUnitID:      buID,
 		Name:                "Acme negotiated detention",
 		Code:                "DET-ACME",
-		Status:              detention.PolicyStatusActive,
-		RateSource:          detention.RateSourceTiers,
+		Status:              detentionpolicy.PolicyStatusActive,
+		RateSource:          detentionpolicy.RateSourceTiers,
 		AccessorialChargeID: pulid.MustNew("acc_"),
 		Currency:            "USD",
-		StopTypes:           []shipment.StopType{shipment.StopTypeDelivery},
-		Tiers: []*detention.DetentionPolicyTier{
+		StopTypes:           []shipmentvocab.StopType{shipmentvocab.StopTypeDelivery},
+		Tiers: []*detentionpolicy.DetentionPolicyTier{
 			nil,
 			{
 				ID:                pulid.MustNew("dpt_"),
@@ -62,7 +62,7 @@ func TestDetentionPolicyToModel_PopulatedLists(t *testing.T) {
 				DetentionPolicyID: policyID,
 				FromMinute:        0,
 				Rate:              decimal.NewFromInt(60),
-				RateUnit:          detention.TierRateUnitHour,
+				RateUnit:          detentionpolicy.TierRateUnitHour,
 				Label:             "First 4 hours",
 			},
 		},

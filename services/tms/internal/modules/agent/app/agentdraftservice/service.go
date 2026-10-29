@@ -6,11 +6,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +22,7 @@ import (
 )
 
 const (
-	draftingTask        = aiprovider.TaskAssistantChat
+	draftingTask        = aitask.TaskAssistantChat
 	maxDescriptionRunes = 1000
 	draftMaxTokens      = 4000
 	tightenMaxTokens    = 8000
@@ -29,21 +32,21 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    agentports.StructuredCompleter
+	Completion    llmports.StructuredCompleter
 	Definitions   agentdefinitionports.AgentDefinitionService
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Organizations tenantports.OrganizationRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	completion    agentports.StructuredCompleter
+	completion    llmports.StructuredCompleter
 	definitions   agentdefinitionports.AgentDefinitionService
-	providers     agentports.AIProviderRepository
+	providers     aiproviderports.AIProviderRepository
 	organizations tenantports.OrganizationRepository
 }
 
-var _ agentports.AgentDraftingService = (*Service)(nil)
+var _ agentdraftports.AgentDraftingService = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
@@ -56,7 +59,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
 		Task:       draftingTask,
 		TenantInfo: tenantInfo,
 	})
@@ -64,13 +67,13 @@ func (s *Service) Available(ctx context.Context, tenantInfo pagination.TenantInf
 		return false, err
 	}
 
-	return aiprovider.RouteFor(providers, draftingTask) != nil, nil
+	return airouting.RouteFor(providers, draftingTask) != nil, nil
 }
 
 func (s *Service) DraftFromDescription(
 	ctx context.Context,
-	req *agentports.DraftAgentRequest,
-) (*agentports.AgentDraft, error) {
+	req *agentdraftports.DraftAgentRequest,
+) (*agentdraftports.AgentDraft, error) {
 	description, err := checkDescription(req.Description)
 	if err != nil {
 		return nil, err
@@ -84,7 +87,7 @@ func (s *Service) DraftFromDescription(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo: req.TenantInfo,
 			Task:       draftingTask,
 			System:     draftSystemPrompt,
@@ -143,8 +146,8 @@ func (s *Service) DraftFromDescription(
 
 func (s *Service) TightenInstructions(
 	ctx context.Context,
-	req *agentports.TightenAgentInstructionsRequest,
-) (*agentports.TightenedAgentInstructions, error) {
+	req *agentdraftports.TightenAgentInstructionsRequest,
+) (*agentdraftports.TightenedAgentInstructions, error) {
 	instructions, err := checkInstructions(req.Instructions)
 	if err != nil {
 		return nil, err
@@ -152,7 +155,7 @@ func (s *Service) TightenInstructions(
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
 			Task:         draftingTask,
 			System:       tightenSystemPrompt,
@@ -249,9 +252,9 @@ func checkInstructions(text string) (string, error) {
 
 func draftOf(
 	definition *agentdefinition.Definition,
-	notes []agentports.AgentDraftNote,
-) *agentports.AgentDraft {
-	return &agentports.AgentDraft{
+	notes []agentdraftports.AgentDraftNote,
+) *agentdraftports.AgentDraft {
+	return &agentdraftports.AgentDraft{
 		Name:                   definition.Name,
 		Description:            definition.Description,
 		Icon:                   definition.Icon,

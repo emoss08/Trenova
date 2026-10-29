@@ -1,21 +1,27 @@
 package carrierassignmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,17 +56,17 @@ type planFixture struct {
 	tenantInfo  pagination.TenantInfo
 	moveID      pulid.ID
 	original    *shipment.Shipment
-	assignments *shipmentportsmock.MockAssignmentRepository
-	repo        *shipmentportsmock.MockCarrierAssignmentRepository
+	assignments *assignmentportsmock.MockAssignmentRepository
+	repo        *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	carriers    *carrierportsmock.MockCarrierRepository
 	shipments   *shipmentportsmock.MockShipmentRepository
-	holds       *shipmentportsmock.MockShipmentHoldRepository
+	holds       *shipmentholdportsmock.MockShipmentHoldRepository
 	controls    *tenantportsmock.MockShipmentControlRepository
 	rateCons    *readOnlyRateCons
 	svc         *Service
 }
 
-func newPlanFixture(t *testing.T, moveStatus shipment.MoveStatus) *planFixture {
+func newPlanFixture(t *testing.T, moveStatus shipmentvocab.MoveStatus) *planFixture {
 	t.Helper()
 
 	f := &planFixture{
@@ -70,11 +76,11 @@ func newPlanFixture(t *testing.T, moveStatus shipment.MoveStatus) *planFixture {
 			UserID: pulid.MustNew("usr_"),
 		},
 		moveID:      pulid.MustNew("sm_"),
-		assignments: shipmentportsmock.NewMockAssignmentRepository(t),
-		repo:        shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		assignments: assignmentportsmock.NewMockAssignmentRepository(t),
+		repo:        carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 		carriers:    carrierportsmock.NewMockCarrierRepository(t),
 		shipments:   shipmentportsmock.NewMockShipmentRepository(t),
-		holds:       shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holds:       shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		controls:    tenantportsmock.NewMockShipmentControlRepository(t),
 		rateCons:    &readOnlyRateCons{active: map[pulid.ID]*rateconfirmation.RateConfirmation{}},
 	}
@@ -114,12 +120,12 @@ func (f *planFixture) expectShipmentRead() {
 			context.Context,
 			*shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(f.original), nil
+			return shipmentcoverage.CloneForUpdate(f.original), nil
 		}).
 		Once()
 	f.controls.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: f.tenantInfo}).
-		Return(&tenant.ShipmentControl{}, nil).
+		Return(&shipmentcontrol.ShipmentControl{}, nil).
 		Once()
 }
 
@@ -130,12 +136,14 @@ func (f *planFixture) expectCarrier(entity *carrier.Carrier) {
 		Once()
 }
 
-func (f *planFixture) assignRequest(carrierID pulid.ID) *shipmentports.AssignMoveToCarrierRequest {
-	return &shipmentports.AssignMoveToCarrierRequest{
+func (f *planFixture) assignRequest(
+	carrierID pulid.ID,
+) *carrierassignmentports.AssignMoveToCarrierRequest {
+	return &carrierassignmentports.AssignMoveToCarrierRequest{
 		TenantInfo:     f.tenantInfo,
 		ShipmentMoveID: f.moveID,
 		CarrierID:      carrierID,
-		RateMethod:     shipment.CarrierRateMethodFlat,
+		RateMethod:     shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:       decimal.NewFromInt(1800),
 		FuelSurcharge:  decimal.NewFromInt(120),
 	}
@@ -144,14 +152,17 @@ func (f *planFixture) assignRequest(carrierID pulid.ID) *shipmentports.AssignMov
 func TestPreviewAssignToMove_ProjectsTheCarrierWithoutSavingIt(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusNew)
+	f := newPlanFixture(t, shipmentvocab.MoveStatusNew)
 	entity := qualifiedCarrier(timeutils.NowUnix())
 	entity.ID = pulid.MustNew("car_")
 	entity.Name = "Ridgeline Freight"
-	f.original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	f.original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 
 	f.holds.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
-	f.assignments.EXPECT().GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).Return(nil, nil).Once()
+	f.assignments.EXPECT().
+		GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).
+		Return(nil, nil).
+		Once()
 	f.repo.On("GetActiveByMoveID", mock.Anything, f.tenantInfo, f.moveID).Return(nil, nil).Once()
 	f.expectCarrier(entity)
 	f.expectShipmentRead()
@@ -161,12 +172,16 @@ func TestPreviewAssignToMove_ProjectsTheCarrierWithoutSavingIt(t *testing.T) {
 
 	require.NotNil(t, plan.Created)
 	assert.Equal(t, entity.ID, plan.Created.CarrierID)
-	assert.Equal(t, shipment.CarrierAssignmentStatusPending, plan.Created.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusPending, plan.Created.Status)
 	assert.True(t, decimal.NewFromInt(1920).Equal(plan.Created.TotalCost))
 	assert.Equal(t, "Ridgeline Freight", plan.Carrier.Name)
 	assert.Nil(t, plan.CanceledBefore)
-	assert.Equal(t, shipment.MoveCoverageTypeUnassigned, plan.ShipmentBefore.Moves[0].CoverageType)
-	assert.Equal(t, shipment.MoveCoverageTypeCarrier, plan.ShipmentAfter.Moves[0].CoverageType)
+	assert.Equal(
+		t,
+		shipmentvocab.MoveCoverageTypeUnassigned,
+		plan.ShipmentBefore.Moves[0].CoverageType,
+	)
+	assert.Equal(t, shipmentvocab.MoveCoverageTypeCarrier, plan.ShipmentAfter.Moves[0].CoverageType)
 }
 
 // Replacing a carrier cancels the one on the move and voids its standing rate
@@ -174,14 +189,14 @@ func TestPreviewAssignToMove_ProjectsTheCarrierWithoutSavingIt(t *testing.T) {
 func TestPreviewAssignToMove_ShowsTheCarrierItReplaces(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusAssigned)
+	f := newPlanFixture(t, shipmentvocab.MoveStatusAssigned)
 	entity := qualifiedCarrier(timeutils.NowUnix())
 	entity.ID = pulid.MustNew("car_")
 	existing := &shipment.CarrierAssignment{
 		ID:             pulid.MustNew("casn_"),
 		ShipmentMoveID: f.moveID,
 		CarrierID:      pulid.MustNew("car_"),
-		Status:         shipment.CarrierAssignmentStatusConfirmed,
+		Status:         shipmentvocab.CarrierAssignmentStatusConfirmed,
 	}
 	active := &rateconfirmation.RateConfirmation{
 		ID:                  pulid.MustNew("rc_"),
@@ -190,7 +205,10 @@ func TestPreviewAssignToMove_ShowsTheCarrierItReplaces(t *testing.T) {
 	}
 
 	f.holds.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
-	f.assignments.EXPECT().GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).Return(nil, nil).Once()
+	f.assignments.EXPECT().
+		GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).
+		Return(nil, nil).
+		Once()
 	f.repo.On("GetActiveByMoveID", mock.Anything, f.tenantInfo, f.moveID).
 		Return(existing, nil).
 		Once()
@@ -204,22 +222,25 @@ func TestPreviewAssignToMove_ShowsTheCarrierItReplaces(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, plan.CanceledAfter)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, plan.CanceledBefore.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusCanceled, plan.CanceledAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, plan.CanceledBefore.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusCanceled, plan.CanceledAfter.Status)
 	assert.Equal(t, replacedAssignmentReason, plan.CanceledAfter.CancellationReason)
 	require.NotNil(t, plan.VoidedAfter)
 	assert.Equal(t, rateconfirmation.StatusSent, plan.VoidedBefore.Status)
 	assert.Equal(t, rateconfirmation.StatusVoided, plan.VoidedAfter.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, existing.Status,
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, existing.Status,
 		"the stored assignment is left as it was")
 }
 
 func TestPreviewAssignToMove_RefusesAMoveThatAlreadyHasACarrier(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusAssigned)
+	f := newPlanFixture(t, shipmentvocab.MoveStatusAssigned)
 	f.holds.EXPECT().HasActiveDispatchHold(mock.Anything, mock.Anything).Return(false, nil).Once()
-	f.assignments.EXPECT().GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).Return(nil, nil).Once()
+	f.assignments.EXPECT().
+		GetByMoveID(mock.Anything, f.tenantInfo, f.moveID).
+		Return(nil, nil).
+		Once()
 	f.repo.On("GetActiveByMoveID", mock.Anything, f.tenantInfo, f.moveID).
 		Return(&shipment.CarrierAssignment{ID: pulid.MustNew("casn_")}, nil).
 		Once()
@@ -235,7 +256,7 @@ func TestPreviewAssignToMove_RefusesAMoveThatAlreadyHasACarrier(t *testing.T) {
 func TestPreviewAssignToMove_RefusesToPriceFromTheContract(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusNew)
+	f := newPlanFixture(t, shipmentvocab.MoveStatusNew)
 	req := f.assignRequest(pulid.MustNew("car_"))
 	req.BaseRate = decimal.Zero
 	req.AutoRate = true
@@ -248,13 +269,13 @@ func TestPreviewAssignToMove_RefusesToPriceFromTheContract(t *testing.T) {
 func TestPreviewCancel_ProjectsTheMoveUncoveredAndTheRateConfirmationVoided(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusAssigned)
-	f.original.Moves[0].CoverageType = shipment.MoveCoverageTypeCarrier
+	f := newPlanFixture(t, shipmentvocab.MoveStatusAssigned)
+	f.original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 	existing := &shipment.CarrierAssignment{
 		ID:             pulid.MustNew("casn_"),
 		ShipmentMoveID: f.moveID,
 		CarrierID:      pulid.MustNew("car_"),
-		Status:         shipment.CarrierAssignmentStatusPending,
+		Status:         shipmentvocab.CarrierAssignmentStatusPending,
 		Carrier:        &carrier.Carrier{Name: "Ridgeline Freight"},
 	}
 	f.original.Moves[0].CarrierAssignment = existing
@@ -270,20 +291,27 @@ func TestPreviewCancel_ProjectsTheMoveUncoveredAndTheRateConfirmationVoided(t *t
 	f.rateCons.active[existing.ID] = active
 	f.expectShipmentRead()
 
-	plan, err := f.svc.PreviewCancel(t.Context(), &shipmentports.CancelCarrierAssignmentRequest{
-		TenantInfo:     f.tenantInfo,
-		ShipmentMoveID: f.moveID,
-		Reason:         "Carrier fell off",
-	})
+	plan, err := f.svc.PreviewCancel(
+		t.Context(),
+		&carrierassignmentports.CancelCarrierAssignmentRequest{
+			TenantInfo:     f.tenantInfo,
+			ShipmentMoveID: f.moveID,
+			Reason:         "Carrier fell off",
+		},
+	)
 	require.NoError(t, err)
 
-	assert.Equal(t, shipment.CarrierAssignmentStatusPending, plan.CanceledBefore.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusCanceled, plan.CanceledAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusPending, plan.CanceledBefore.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusCanceled, plan.CanceledAfter.Status)
 	assert.Equal(t, "Carrier fell off", plan.CanceledAfter.CancellationReason)
 	assert.Equal(t, rateconfirmation.StatusVoided, plan.VoidedAfter.Status)
 	assert.Equal(t, "Ridgeline Freight", plan.Carrier.Name)
-	assert.Equal(t, shipment.MoveCoverageTypeUnassigned, plan.ShipmentAfter.Moves[0].CoverageType)
-	assert.Equal(t, shipment.CarrierAssignmentStatusPending, existing.Status)
+	assert.Equal(
+		t,
+		shipmentvocab.MoveCoverageTypeUnassigned,
+		plan.ShipmentAfter.Moves[0].CoverageType,
+	)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusPending, existing.Status)
 }
 
 // Cancel and its preview refuse a move the carrier has started from one
@@ -291,11 +319,11 @@ func TestPreviewCancel_ProjectsTheMoveUncoveredAndTheRateConfirmationVoided(t *t
 func TestPreviewCancel_RefusesWhatCancelRefuses(t *testing.T) {
 	t.Parallel()
 
-	f := newPlanFixture(t, shipment.MoveStatusInTransit)
+	f := newPlanFixture(t, shipmentvocab.MoveStatusInTransit)
 	f.repo.On("GetActiveByMoveID", mock.Anything, f.tenantInfo, f.moveID).
 		Return(&shipment.CarrierAssignment{ID: pulid.MustNew("casn_")}, nil).
 		Twice()
-	req := &shipmentports.CancelCarrierAssignmentRequest{
+	req := &carrierassignmentports.CancelCarrierAssignmentRequest{
 		TenantInfo:     f.tenantInfo,
 		ShipmentMoveID: f.moveID,
 		Reason:         "Carrier fell off",

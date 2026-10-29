@@ -4,6 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,15 +31,15 @@ type CarrierIntelControlRepository interface {
 	GetOrCreate(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*carrierintel.CarrierIntelControl, error)
+	) (*carrierintelcontrol.CarrierIntelControl, error)
 	Update(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelControl,
-	) (*carrierintel.CarrierIntelControl, error)
+		entity *carrierintelcontrol.CarrierIntelControl,
+	) (*carrierintelcontrol.CarrierIntelControl, error)
 	ListConfigured(
 		ctx context.Context,
 		req *ListCarrierIntelTenantsRequest,
-	) ([]*carrierintel.CarrierIntelControl, error)
+	) ([]*carrierintelcontrol.CarrierIntelControl, error)
 }
 
 type CarrierIntelSubjectRef struct {
@@ -82,33 +89,33 @@ type CarrierIntelSnapshotRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		subject CarrierIntelSubjectRef,
-	) (*carrierintel.CarrierIntelSnapshot, error)
+	) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	GetCurrentByCarrierIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	GetCurrentBySubjectIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		subjectType carrierintel.SubjectType,
 		subjectIDs []string,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	GetLatestFullByDOT(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		dotNumber string,
 		since int64,
-	) (*carrierintel.CarrierIntelSnapshot, error)
+	) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	ListHistory(
 		ctx context.Context,
 		req *ListCarrierIntelSnapshotHistoryRequest,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	InsertCurrent(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelSnapshot,
-	) (*carrierintel.CarrierIntelSnapshot, error)
-	UpdateEvaluation(ctx context.Context, entity *carrierintel.CarrierIntelSnapshot) error
+		entity *carrierintelsnapshot.CarrierIntelSnapshot,
+	) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
+	UpdateEvaluation(ctx context.Context, entity *carrierintelsnapshot.CarrierIntelSnapshot) error
 	TouchConfirmed(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -119,11 +126,11 @@ type CarrierIntelSnapshotRepository interface {
 	ListForRecompute(
 		ctx context.Context,
 		req *ListSnapshotsForRecomputeRequest,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	ListReviewQueue(
 		ctx context.Context,
 		req *ListCarrierIntelReviewQueueRequest,
-	) ([]*carrierintel.CarrierIntelSnapshot, error)
+	) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	PruneHistory(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -135,20 +142,20 @@ type CarrierIntelSnapshotRepository interface {
 type CarrierIntelRawPayloadRepository interface {
 	Insert(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelRawPayload,
-	) (*carrierintel.CarrierIntelRawPayload, error)
+		entity *carrierintelsnapshot.CarrierIntelRawPayload,
+	) (*carrierintelsnapshot.CarrierIntelRawPayload, error)
 	GetByID(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*carrierintel.CarrierIntelRawPayload, error)
+	) (*carrierintelsnapshot.CarrierIntelRawPayload, error)
 	PurgeExpired(ctx context.Context, before int64, limit int) (int, error)
 }
 
 type ListCarrierIntelEventsRequest struct {
 	Filter       *pagination.QueryOptions
 	Cursor       pagination.CursorInfo
-	Statuses     []carrierintel.EventStatus
+	Statuses     []carrierintelevent.EventStatus
 	Severities   []carrierintel.Severity
 	Categories   []carrierintel.Section
 	SubjectType  carrierintel.SubjectType
@@ -181,21 +188,21 @@ type CarrierIntelEventCounts struct {
 type CarrierIntelEventRepository interface {
 	InsertIgnoreDuplicates(
 		ctx context.Context,
-		entities []*carrierintel.CarrierIntelEvent,
-	) ([]*carrierintel.CarrierIntelEvent, error)
+		entities []*carrierintelevent.CarrierIntelEvent,
+	) ([]*carrierintelevent.CarrierIntelEvent, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListCarrierIntelEventsRequest,
-	) (*pagination.CursorListResult[*carrierintel.CarrierIntelEvent], error)
+	) (*pagination.CursorListResult[*carrierintelevent.CarrierIntelEvent], error)
 	GetByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ids []pulid.ID,
-	) ([]*carrierintel.CarrierIntelEvent, error)
+	) ([]*carrierintelevent.CarrierIntelEvent, error)
 	Update(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelEvent,
-	) (*carrierintel.CarrierIntelEvent, error)
+		entity *carrierintelevent.CarrierIntelEvent,
+	) (*carrierintelevent.CarrierIntelEvent, error)
 	BulkAcknowledge(
 		ctx context.Context,
 		req *BulkAcknowledgeCarrierIntelEventsRequest,
@@ -212,7 +219,7 @@ type CarrierIntelEventRepository interface {
 	ListForDigest(
 		ctx context.Context,
 		req *ListCarrierIntelDigestEventsRequest,
-	) ([]*carrierintel.CarrierIntelEvent, error)
+	) ([]*carrierintelevent.CarrierIntelEvent, error)
 	MarkNotified(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -247,8 +254,8 @@ type ListEnrollmentConnectionRequest struct {
 	Filter       *pagination.QueryOptions
 	Cursor       pagination.CursorInfo
 	Provider     integration.Type
-	DesiredState carrierintel.DesiredState
-	VendorStates []carrierintel.VendorState
+	DesiredState carrierintelenrollment.DesiredState
+	VendorStates []carrierintelenrollment.VendorState
 }
 
 type TouchEnrollmentsConfirmedRequest struct {
@@ -270,43 +277,43 @@ type CarrierMonitoringEnrollmentRepository interface {
 	ListBySubjects(
 		ctx context.Context,
 		req *ListEnrollmentsBySubjectRequest,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	GetByCarrierIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	ListDesired(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		provider integration.Type,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	Upsert(
 		ctx context.Context,
-		entities []*carrierintel.CarrierMonitoringEnrollment,
+		entities []*carrierintelenrollment.CarrierMonitoringEnrollment,
 	) error
 	SaveSyncState(
 		ctx context.Context,
-		entities []*carrierintel.CarrierMonitoringEnrollment,
+		entities []*carrierintelenrollment.CarrierMonitoringEnrollment,
 	) error
 	ListNeedingSync(
 		ctx context.Context,
 		req *ListEnrollmentsNeedingSyncRequest,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	ListActive(
 		ctx context.Context,
 		req *ListActiveEnrollmentsRequest,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	ListByProviderRefs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		provider integration.Type,
 		refs []string,
-	) ([]*carrierintel.CarrierMonitoringEnrollment, error)
+	) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListEnrollmentConnectionRequest,
-	) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error)
+	) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error)
 	TouchConfirmed(ctx context.Context, req *TouchEnrollmentsConfirmedRequest) error
 	Counts(
 		ctx context.Context,
@@ -318,20 +325,20 @@ type CarrierMonitoringEnrollmentRepository interface {
 type CarrierIntelFeedStateKey struct {
 	TenantInfo pagination.TenantInfo
 	Provider   integration.Type
-	FeedType   carrierintel.FeedType
+	FeedType   carrierintelenrollment.FeedType
 }
 
 type CarrierIntelFeedStateRepository interface {
 	Get(
 		ctx context.Context,
 		key CarrierIntelFeedStateKey,
-	) (*carrierintel.CarrierIntelFeedState, error)
-	Upsert(ctx context.Context, entity *carrierintel.CarrierIntelFeedState) error
+	) (*carrierintelenrollment.CarrierIntelFeedState, error)
+	Upsert(ctx context.Context, entity *carrierintelenrollment.CarrierIntelFeedState) error
 }
 
 type CarrierIntelUsageSummaryRow struct {
 	Provider      integration.Type
-	Endpoint      carrierintel.Endpoint
+	Endpoint      carrierintelusage.Endpoint
 	Calls         int
 	BillableUnits int
 	EstimatedCost decimal.Decimal
@@ -352,12 +359,12 @@ type ListCarrierIntelUsageDailyRequest struct {
 type CountBillableUsageRequest struct {
 	TenantInfo pagination.TenantInfo
 	Provider   integration.Type
-	Endpoint   carrierintel.Endpoint
+	Endpoint   carrierintelusage.Endpoint
 	Since      int64
 }
 
 type CarrierIntelUsageRepository interface {
-	Insert(ctx context.Context, entity *carrierintel.CarrierIntelUsageRecord) (bool, error)
+	Insert(ctx context.Context, entity *carrierintelusage.CarrierIntelUsageRecord) (bool, error)
 	ExistsDedupeKey(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -377,7 +384,7 @@ type CarrierIntelUsageRepository interface {
 	ListDaily(
 		ctx context.Context,
 		req *ListCarrierIntelUsageDailyRequest,
-	) ([]*carrierintel.CarrierIntelUsageDaily, error)
+	) ([]*carrierintelusage.CarrierIntelUsageDaily, error)
 	RollupDay(ctx context.Context, dayStart int64) (int, error)
 	DeleteOlderThan(ctx context.Context, before int64, limit int) (int, error)
 }
@@ -388,46 +395,46 @@ type CarrierIntelOverrideRepository interface {
 		tenantInfo pagination.TenantInfo,
 		carrierIDs []pulid.ID,
 		now int64,
-	) ([]*carrierintel.CarrierIntelOverride, error)
+	) ([]*carrierinteloverride.CarrierIntelOverride, error)
 	ListByCarrier(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		carrierID pulid.ID,
-	) ([]*carrierintel.CarrierIntelOverride, error)
+	) ([]*carrierinteloverride.CarrierIntelOverride, error)
 	GetByID(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*carrierintel.CarrierIntelOverride, error)
+	) (*carrierinteloverride.CarrierIntelOverride, error)
 	Create(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelOverride,
-	) (*carrierintel.CarrierIntelOverride, error)
+		entity *carrierinteloverride.CarrierIntelOverride,
+	) (*carrierinteloverride.CarrierIntelOverride, error)
 	Update(
 		ctx context.Context,
-		entity *carrierintel.CarrierIntelOverride,
-	) (*carrierintel.CarrierIntelOverride, error)
+		entity *carrierinteloverride.CarrierIntelOverride,
+	) (*carrierinteloverride.CarrierIntelOverride, error)
 }
 
 type CarrierEquipmentVerificationRepository interface {
 	Create(
 		ctx context.Context,
-		entity *carrierintel.CarrierEquipmentVerification,
-	) (*carrierintel.CarrierEquipmentVerification, error)
+		entity *carrierintelverification.CarrierEquipmentVerification,
+	) (*carrierintelverification.CarrierEquipmentVerification, error)
 	GetByID(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
-	) (*carrierintel.CarrierEquipmentVerification, error)
+	) (*carrierintelverification.CarrierEquipmentVerification, error)
 	ListByAssignmentIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentIDs []pulid.ID,
-	) ([]*carrierintel.CarrierEquipmentVerification, error)
+	) ([]*carrierintelverification.CarrierEquipmentVerification, error)
 	Update(
 		ctx context.Context,
-		entity *carrierintel.CarrierEquipmentVerification,
-	) (*carrierintel.CarrierEquipmentVerification, error)
+		entity *carrierintelverification.CarrierEquipmentVerification,
+	) (*carrierintelverification.CarrierEquipmentVerification, error)
 }
 
 type CarrierIntelSubject struct {

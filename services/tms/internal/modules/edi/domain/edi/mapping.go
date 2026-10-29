@@ -136,3 +136,7 @@ func (i *EDIMappingProfileItem) Validate(multiErr *errortypes.MultiError) {
 }
 
 const maxMappingLabelLength = 255
+
+const (
+	maxEDINameLength = 200
+)

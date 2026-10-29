@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -73,7 +74,7 @@ func (s *Service) readMetrics(
 	ctx context.Context,
 	actor *permissionports.RequestActor,
 	keys []string,
-	reads *board.Reads,
+	reads *boardassemble.Reads,
 ) error {
 	wanted := make([]string, 0, len(keys))
 	for _, key := range keys {

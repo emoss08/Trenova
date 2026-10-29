@@ -3,8 +3,8 @@ package schedulingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -13,9 +13,9 @@ import (
 // ShiftAssignmentPlan is what putting a worker on a pattern would do: the
 // assignment made, and the open one it ends the day before.
 type ShiftAssignmentPlan struct {
-	Created  *worker.WorkerShiftAssignment
-	Template *worker.ShiftTemplate
-	Ended    []*worker.WorkerShiftAssignment
+	Created  *workerschedule.WorkerShiftAssignment
+	Template *workerschedule.ShiftTemplate
+	Ended    []*workerschedule.WorkerShiftAssignment
 	EndedAt  int64
 }
 
@@ -42,7 +42,7 @@ func (s *Service) planAssignShift(
 		return nil, multiErr
 	}
 
-	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         entity.ShiftTemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -90,8 +90,8 @@ func (s *Service) planAssignShift(
 func (s *Service) openAssignmentsToClose(
 	ctx context.Context,
 	p *closeAssignmentParams,
-) ([]*worker.WorkerShiftAssignment, error) {
-	open, err := s.repo.ListAssignments(ctx, &workerports.ListShiftAssignmentsRequest{
+) ([]*workerschedule.WorkerShiftAssignment, error) {
+	open, err := s.repo.ListAssignments(ctx, &workerscheduleports.ListShiftAssignmentsRequest{
 		TenantInfo: p.tenantInfo,
 		WorkerID:   p.workerID,
 		ActiveAt:   p.endAt + secondsPerDay,
@@ -100,7 +100,7 @@ func (s *Service) openAssignmentsToClose(
 		return nil, err
 	}
 
-	toClose := make([]*worker.WorkerShiftAssignment, 0, len(open))
+	toClose := make([]*workerschedule.WorkerShiftAssignment, 0, len(open))
 	for _, assignment := range open {
 		if assignment.EffectiveTo != nil {
 			continue
@@ -120,8 +120,8 @@ func (s *Service) openAssignmentsToClose(
 
 // AssignmentChange is an assignment before and after a change to it.
 type AssignmentChange struct {
-	Before *worker.WorkerShiftAssignment
-	After  *worker.WorkerShiftAssignment
+	Before *workerschedule.WorkerShiftAssignment
+	After  *workerschedule.WorkerShiftAssignment
 }
 
 func (s *Service) PreviewEndAssignment(
@@ -139,11 +139,14 @@ func (s *Service) PreviewEndAssignment(
 func (s *Service) planEndAssignment(
 	ctx context.Context,
 	req *EndAssignmentRequest,
-) (before, after *worker.WorkerShiftAssignment, err error) {
-	assignment, err := s.repo.GetAssignmentByID(ctx, &workerports.GetShiftAssignmentByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+) (before, after *workerschedule.WorkerShiftAssignment, err error) {
+	assignment, err := s.repo.GetAssignmentByID(
+		ctx,
+		&workerscheduleports.GetShiftAssignmentByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -171,8 +174,8 @@ func (s *Service) planEndAssignment(
 // PreferenceChange is a worker's preference for a weekday as it stands and as
 // setting it would leave it; Before is nil when none is on file.
 type PreferenceChange struct {
-	Before *worker.WorkerAvailabilityPreference
-	After  *worker.WorkerAvailabilityPreference
+	Before *workerschedule.WorkerAvailabilityPreference
+	After  *workerschedule.WorkerAvailabilityPreference
 }
 
 func (s *Service) PreviewSetPreference(
@@ -184,10 +187,13 @@ func (s *Service) PreviewSetPreference(
 		return nil, err
 	}
 
-	existing, err := s.repo.ListPreferences(ctx, &workerports.ListAvailabilityPreferencesRequest{
-		TenantInfo: req.TenantInfo,
-		WorkerID:   entity.WorkerID,
-	})
+	existing, err := s.repo.ListPreferences(
+		ctx,
+		&workerscheduleports.ListAvailabilityPreferencesRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   entity.WorkerID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +217,7 @@ func (s *Service) PreviewSetPreference(
 
 func (s *Service) planSetPreference(
 	req *SetPreferenceRequest,
-) (*worker.WorkerAvailabilityPreference, error) {
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
@@ -227,15 +233,17 @@ func (s *Service) planSetPreference(
 
 func (s *Service) PreviewProposeSwap(
 	req *ProposeSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	return s.planProposeSwap(req)
 }
 
-func (s *Service) planProposeSwap(req *ProposeSwapRequest) (*worker.ShiftSwapRequest, error) {
+func (s *Service) planProposeSwap(
+	req *ProposeSwapRequest,
+) (*workerschedule.ShiftSwapRequest, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
-	entity.Status = worker.SwapProposed
+	entity.Status = workerschedule.SwapProposed
 	entity.ShiftDate = startOfDayUTC(entity.ShiftDate)
 	if entity.CounterpartyShiftDate != nil {
 		counterDate := startOfDayUTC(*entity.CounterpartyShiftDate)
@@ -261,8 +269,8 @@ func (s *Service) planProposeSwap(req *ProposeSwapRequest) (*worker.ShiftSwapReq
 
 // SwapChange is a swap before and after a transition.
 type SwapChange struct {
-	Before *worker.ShiftSwapRequest
-	After  *worker.ShiftSwapRequest
+	Before *workerschedule.ShiftSwapRequest
+	After  *workerschedule.ShiftSwapRequest
 }
 
 func (s *Service) PreviewTransitionSwap(
@@ -280,8 +288,8 @@ func (s *Service) PreviewTransitionSwap(
 func (s *Service) planTransitionSwap(
 	ctx context.Context,
 	req *TransitionSwapRequest,
-) (before, after *worker.ShiftSwapRequest, err error) {
-	swap, err := s.repo.GetSwapByID(ctx, &workerports.GetShiftSwapByIDRequest{
+) (before, after *workerschedule.ShiftSwapRequest, err error) {
+	swap, err := s.repo.GetSwapByID(ctx, &workerscheduleports.GetShiftSwapByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -308,12 +316,12 @@ func (s *Service) planTransitionSwap(
 	}
 
 	switch req.Status {
-	case worker.SwapAccepted, worker.SwapDeclined, worker.SwapWithdrawn:
+	case workerschedule.SwapAccepted, workerschedule.SwapDeclined, workerschedule.SwapWithdrawn:
 		swap.RespondedAt = &now
-	case worker.SwapApproved, worker.SwapRejected:
+	case workerschedule.SwapApproved, workerschedule.SwapRejected:
 		swap.DecidedAt = &now
 		swap.DecidedByID = req.UserID
-	case worker.SwapProposed:
+	case workerschedule.SwapProposed:
 	}
 
 	multiErr := errortypes.NewMultiError()

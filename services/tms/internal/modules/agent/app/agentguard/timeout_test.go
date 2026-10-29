@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +16,7 @@ import (
 // practice: it replies eventually, long after the person stopped reading
 // "Checking the question…".
 type slowCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	delay time.Duration
 	calls int
@@ -24,13 +24,13 @@ type slowCompletion struct {
 
 func (s *slowCompletion) CompleteStructured(
 	ctx context.Context,
-	_ *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	_ *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	s.calls++
 
 	select {
 	case <-time.After(s.delay):
-		return &agentports.StructuredCompletionResult{
+		return &llmports.StructuredCompletionResult{
 			Text: `{"category":"transportation_operations","reasoning":"stub"}`,
 		}, nil
 	case <-ctx.Done():
@@ -86,20 +86,20 @@ func TestEvaluate_TheStricterPostureStillRefusesOnATimeout(t *testing.T) {
 }
 
 type hedgeRecorder struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	hedge     time.Duration
-	reasoning aiprovider.ReasoningEffort
+	reasoning aireasoning.ReasoningEffort
 }
 
 func (h *hedgeRecorder) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	h.hedge = req.HedgeAfter
 	h.reasoning = req.Reasoning
 
-	return &agentports.StructuredCompletionResult{
+	return &llmports.StructuredCompletionResult{
 		Text: `{"category":"TransportationOperations","reasoning":"stub"}`,
 	}, nil
 }
@@ -138,7 +138,10 @@ func TestEvaluate_TheClassifierAsksProvidersNotToReason(t *testing.T) {
 	guard := &agentguard.Service{ClassifierTimeout: 3 * time.Second}
 	agentguard.SetCompletionForTest(guard, stub)
 
-	guard.Evaluate(t.Context(), agentguard.EvaluateRequest{Input: "how many shipments are in transit"})
+	guard.Evaluate(
+		t.Context(),
+		agentguard.EvaluateRequest{Input: "how many shipments are in transit"},
+	)
 
-	require.Equal(t, aiprovider.ReasoningNone, stub.reasoning)
+	require.Equal(t, aireasoning.ReasoningNone, stub.reasoning)
 }

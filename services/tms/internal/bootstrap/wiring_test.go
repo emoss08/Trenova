@@ -8,12 +8,20 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/apiapp"
 	"github.com/emoss08/trenova/internal/bootstrap/core"
 	"github.com/emoss08/trenova/internal/bootstrap/workerapp"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aitrainingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -137,26 +145,26 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 				processOptions,
 				fx.Invoke(
 					func(
-						agentports.AgentEventPublisher,
+						agenteventports.AgentEventPublisher,
 						watchtowerports.WatchtowerProjector,
 						// A trajectory recorder is optional at every use site, so
 						// an installation missing it records nothing and says
 						// nothing — the exact failure this file exists to catch.
 						// It matters most in the worker, where the background runs
 						// that had no durable account of themselves execute.
-						agentports.AgentRunEventRecorder,
-						agentports.QueryVectorizer,
-						agentports.CatalogVectorIndex,
-						agentports.RetrievalIndexer,
-						agentports.RetrievalSearcher,
-						agentports.MemoryVectorSearcher,
-						agentports.MemoryRanker,
+						agentruntimeports.AgentRunEventRecorder,
+						retrievalports.QueryVectorizer,
+						retrievalports.CatalogVectorIndex,
+						retrievalports.RetrievalIndexer,
+						retrievalports.RetrievalSearcher,
+						retrievalports.MemoryVectorSearcher,
+						agentmemoryports.MemoryRanker,
 						kernelports.WorkflowSignalStarter,
 						// Previews are optional to the runtime, the decision
 						// services and the resolvers; without them nothing is
 						// previewed, no baseline is kept and no digest checked.
-						agentports.ProposalPreviewService,
-						agentports.RecordLabeler,
+						agentruntimeports.ProposalPreviewService,
+						agentruntimeports.RecordLabeler,
 						aicorrectionports.AICorrectionService,
 						agentqualityports.EvaluationBudget,
 						extractionevalports.ExtractionEvalRunStarter,
@@ -171,13 +179,13 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						// The change feed compares edited documents only when
 						// the drift check is there; without it an edit waits
 						// for the nightly run.
-						accountingsyncports.AccountingDriftRechecker,
-						accountingsyncports.AccountingDriftChecker,
+						accountingdriftports.AccountingDriftRechecker,
+						accountingdriftports.AccountingDriftChecker,
 						accountingsyncports.AccountingSyncDispatcher,
 						proposalrecorder.PlanStore,
-						agentports.AgentTrustService,
-						agentports.AgentProposalNotifier,
-						agentports.AgentActivityPublisher,
+						agenttrustports.AgentTrustService,
+						agentproposalports.AgentProposalNotifier,
+						agentactivityports.AgentActivityPublisher,
 						inboundmessageports.TriageRuleEvaluator,
 						inboundmessageports.TriageRuleTeacher,
 						inboundmessageports.SenderHintProvider,
@@ -206,7 +214,7 @@ runs in process, which went without it until `trenova desk` could not start.
 func TestWiring_EveryProcessBuildsTheAgentGraphQLReader(t *testing.T) {
 	t.Parallel()
 
-	need := fx.Invoke(func(agentports.GraphQLReader) {})
+	need := fx.Invoke(func(graphqlreadports.GraphQLReader) {})
 	graphs := map[string][]fx.Option{
 		"api":           {bootstrap.Options(), bootstrap.APIOptions(), need},
 		"worker":        {bootstrap.Options(), bootstrap.WorkerOptions(), need},

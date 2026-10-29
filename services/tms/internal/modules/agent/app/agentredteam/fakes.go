@@ -7,8 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,7 +57,7 @@ func (r *inboundMessageRepository) GetByID(
 	return r.desk.GetByID(ctx, req)
 }
 
-func (d *inboundDesk) CheckLink(_ context.Context, req inboundmessageservice.LinkRequest) error {
+func (d *inboundDesk) CheckLink(_ context.Context, req *inboundqueue.LinkRequest) error {
 	d.rec.read(ReadInboundBox, "CheckLink", req.TenantInfo)
 
 	return nil
@@ -63,7 +65,7 @@ func (d *inboundDesk) CheckLink(_ context.Context, req inboundmessageservice.Lin
 
 func (d *inboundDesk) Link(
 	ctx context.Context,
-	req inboundmessageservice.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
@@ -73,7 +75,7 @@ func (d *inboundDesk) Link(
 
 func (d *inboundDesk) Review(
 	ctx context.Context,
-	req inboundmessageservice.ReviewRequest,
+	req *inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return d.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         req.MessageID,
@@ -82,14 +84,17 @@ func (d *inboundDesk) Review(
 }
 
 type memoryRepository struct {
-	agentports.AgentMemoryRepository
+	agentmemoryports.AgentMemoryRepository
 
 	rec      *recorder
 	mu       sync.Mutex
-	memories []*agent.Memory
+	memories []*agentmemory.Memory
 }
 
-func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
+func (r *memoryRepository) Create(
+	_ context.Context,
+	entity *agentmemory.Memory,
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Create", pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -98,7 +103,7 @@ func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*age
 	created := *entity
 	created.ID = pulid.MustNew("amem_")
 	if created.Scope == "" {
-		created.Scope = agent.MemoryScopeOrganization
+		created.Scope = agentmemory.MemoryScopeOrganization
 	}
 
 	r.mu.Lock()
@@ -111,8 +116,8 @@ func (r *memoryRepository) Create(_ context.Context, entity *agent.Memory) (*age
 
 func (r *memoryRepository) FindActive(
 	_ context.Context,
-	req agentports.FindActiveAgentMemoryRequest,
-) (*agent.Memory, error) {
+	req *agentmemoryports.FindActiveAgentMemoryRequest,
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "FindActive", req.TenantInfo)
 
 	r.mu.Lock()
@@ -120,7 +125,7 @@ func (r *memoryRepository) FindActive(
 
 	for _, memory := range r.memories {
 		if sameTenant(memory, req.TenantInfo) &&
-			memory.Status == agent.MemoryStatusActive &&
+			memory.Status == agentmemory.MemoryStatusActive &&
 			memory.Content == strings.TrimSpace(req.Content) &&
 			memory.ToolName == req.ToolName {
 			return memory, nil
@@ -136,7 +141,7 @@ func (r *memoryRepository) FindActive(
 // which tenant was touched.
 func (r *memoryRepository) MarkUsed(
 	_ context.Context,
-	req agentports.MarkAgentMemoriesUsedRequest,
+	req *agentmemoryports.MarkAgentMemoriesUsedRequest,
 ) error {
 	r.rec.read(ReadMemoryRepo, "MarkUsed", req.TenantInfo)
 
@@ -148,8 +153,8 @@ func (r *memoryRepository) MarkUsed(
 // as they do by default.
 func (r *memoryRepository) GetPreference(
 	_ context.Context,
-	req agentports.GetAgentMemoryPreferenceRequest,
-) (*agent.MemoryPreference, error) {
+	req agentmemoryports.GetAgentMemoryPreferenceRequest,
+) (*agentmemory.MemoryPreference, error) {
 	r.rec.read(ReadMemoryRepo, "GetPreference", req.TenantInfo)
 
 	return nil, nil //nolint:nilnil // a person who never chose has no preference row
@@ -157,8 +162,8 @@ func (r *memoryRepository) GetPreference(
 
 func (r *memoryRepository) GetByID(
 	_ context.Context,
-	req agentports.GetAgentMemoryByIDRequest,
-) (*agent.Memory, error) {
+	req agentmemoryports.GetAgentMemoryByIDRequest,
+) (*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "GetByID", req.TenantInfo)
 
 	r.mu.Lock()
@@ -175,8 +180,8 @@ func (r *memoryRepository) GetByID(
 
 func (r *memoryRepository) Search(
 	_ context.Context,
-	req agentports.SearchAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+	req *agentmemoryports.SearchAgentMemoriesRequest,
+) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "Search", req.TenantInfo)
 
 	return nil, nil
@@ -184,26 +189,26 @@ func (r *memoryRepository) Search(
 
 func (r *memoryRepository) ListActive(
 	_ context.Context,
-	req agentports.ListActiveAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+	req *agentmemoryports.ListActiveAgentMemoriesRequest,
+) ([]*agentmemory.Memory, error) {
 	r.rec.read(ReadMemoryRepo, "ListActive", req.TenantInfo)
 
 	return nil, nil
 }
 
-func sameTenant(memory *agent.Memory, tenant pagination.TenantInfo) bool {
+func sameTenant(memory *agentmemory.Memory, tenant pagination.TenantInfo) bool {
 	return memory.OrganizationID == tenant.OrgID && memory.BusinessUnitID == tenant.BuID
 }
 
 type runRepository struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	rec *recorder
 }
 
 func (r *runRepository) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	tenant := pagination.TenantInfo{}
 	if req.TenantInfo != nil {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion/agentversiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -37,10 +37,10 @@ func NewVersionRepository(p VersionParams) agentdefinitionports.AgentDefinitionV
 
 func (r *versionRepository) Create(
 	ctx context.Context,
-	version *agentdefinition.DefinitionVersion,
+	version *agentversion.DefinitionVersion,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := agentdefinitiondb.DefinitionVersions.Create(ctx, r.db.Keel(ctx), version)
+		err := agentversiondb.DefinitionVersions.Create(ctx, r.db.Keel(ctx), version)
 		if err != nil {
 			return fmt.Errorf("record agent version: %w", err)
 		}
@@ -51,17 +51,17 @@ func (r *versionRepository) Create(
 func (r *versionRepository) List(
 	ctx context.Context,
 	req *agentdefinitionports.ListAgentDefinitionVersionsRequest,
-) ([]*agentdefinition.DefinitionVersion, error) {
+) ([]*agentversion.DefinitionVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*agentdefinition.DefinitionVersion, error) {
+		func(ctx context.Context) ([]*agentversion.DefinitionVersion, error) {
 			limit := req.Limit
-			if limit <= 0 || limit > agentdefinition.VersionsKept {
-				limit = agentdefinition.VersionsKept
+			if limit <= 0 || limit > agentversion.VersionsKept {
+				limit = agentversion.VersionsKept
 			}
 
-			v := agentdefinitiondb.DefinitionVersions
+			v := agentversiondb.DefinitionVersions
 			versions, err := v.Omit(v.Snapshot).
 				Load(v.Author()).
 				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID)).
@@ -80,12 +80,12 @@ func (r *versionRepository) List(
 func (r *versionRepository) Get(
 	ctx context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
-) (*agentdefinition.DefinitionVersion, error) {
+) (*agentversion.DefinitionVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-			v := agentdefinitiondb.DefinitionVersions
+		func(ctx context.Context) (*agentversion.DefinitionVersion, error) {
+			v := agentversiondb.DefinitionVersions
 			version, err := v.Load(v.Author()).
 				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID), v.Version.Eq(req.Version)).
 				One(ctx, r.db.Keel(ctx))
@@ -101,12 +101,12 @@ func (r *versionRepository) Get(
 func (r *versionRepository) LatestAt(
 	ctx context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
-) (*agentdefinition.DefinitionVersion, error) {
+) (*agentversion.DefinitionVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentdefinition.DefinitionVersion, error) {
-			v := agentdefinitiondb.DefinitionVersions
+		func(ctx context.Context) (*agentversion.DefinitionVersion, error) {
+			v := agentversiondb.DefinitionVersions
 			version, err := v.Load(v.Author()).
 				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID), v.Version.Lte(req.Version)).
 				Order(v.Version.Desc()).

@@ -3,12 +3,12 @@
 package customerresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CustomerService *customerservice.Service
 }
 

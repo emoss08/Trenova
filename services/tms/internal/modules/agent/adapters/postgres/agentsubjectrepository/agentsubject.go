@@ -7,21 +7,27 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift/accountingdriftdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound/accountinginbounddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance/factoringremittancedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile/ediinboundfiledb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent/carrierinteleventdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
@@ -43,7 +49,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentSubjectRepository {
+func New(p Params) agentsubjectports.AgentSubjectRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-subject-repository"),
@@ -93,11 +99,11 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectCarrierIntelEvent: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := carrierinteldb.CarrierIntelEvents
+		t := carrierinteleventdb.CarrierIntelEvents
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectEDIInboundFile: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := edidb.EDIInboundFiles
+		t := ediinboundfiledb.EDIInboundFiles
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectInboundMessage: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -113,7 +119,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingConnection: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingConnections
+		t := accountingconnectiondb.AccountingConnections
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingSyncRecord: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -121,11 +127,11 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingInbound: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingInboundChanges
+		t := accountinginbounddb.AccountingInboundChanges
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectAccountingDrift: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := accountingsyncdb.AccountingDriftFindings
+		t := accountingdriftdb.AccountingDriftFindings
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFormulaTemplate: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -141,7 +147,7 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectInvoiceDispute: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := invoicedb.InvoiceDisputes
+		t := invoicedisputedb.InvoiceDisputes
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringNoa: func(id pulid.ID, found *bool) keel.BatchItem {
@@ -149,18 +155,18 @@ var subjectTables = map[agent.SubjectType]subjectExists{
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringSubmission: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := factoringdb.Submissions
+		t := factoringsubmissiondb.Submissions
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 	agent.SubjectFactoringRemittance: func(id pulid.ID, found *bool) keel.BatchItem {
-		t := factoringdb.Remittances
+		t := factoringremittancedb.Remittances
 		return keel.ExistsInto(t.Where(t.ID.Eq(id)), found)
 	},
 }
 
 func (r *repository) Exists(
 	ctx context.Context,
-	req agentports.AgentSubjectExistsRequest,
+	req *agentsubjectports.AgentSubjectExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		if req.SubjectID.IsNil() {

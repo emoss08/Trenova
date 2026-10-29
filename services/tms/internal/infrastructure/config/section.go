@@ -6,19 +6,21 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/spf13/viper"
 )
 
 type Section interface {
 	Name() string
 	Paths() []string
-	PlatformModes() []PlatformMode
+	PlatformModes() []platformconfig.Mode
 	SetDefaults(v *viper.Viper, envPrefix string)
 	Decode(v *viper.Viper) (any, error)
 	Validate(cfg *Config, env string) error
 }
 
-var editionPlatformModes = []PlatformMode{PlatformModeCloud}
+var editionPlatformModes = []platformconfig.Mode{platformconfig.ModeCloud}
 
 var editionSectionPaths = []string{
 	"platform.cloud",
@@ -182,5 +184,5 @@ func (c *Config) SetExtension(name string, value any) {
 }
 
 func IsProductionLike(env string) bool {
-	return isProductionLike(env)
+	return env == appconfig.EnvProduction || env == appconfig.EnvStaging
 }

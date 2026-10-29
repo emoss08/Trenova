@@ -6,12 +6,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopvisit"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -41,7 +43,7 @@ func (s *Service) autoStopActualsEnabled(
 type stopEvent struct {
 	tenantInfo   pagination.TenantInfo
 	record       *telematics.TelematicsEvent
-	visit        shipment.VisitKind
+	visit        shipmentvocab.VisitKind
 	providerStop bool
 }
 
@@ -70,7 +72,7 @@ func (s *Service) applyStopEvent(ctx context.Context, event *stopEvent) {
 		return
 	}
 
-	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.shipmentMoveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            assignment.ShipmentMoveID,
 		TenantInfo:        event.tenantInfo,
 		ExpandMoveDetails: true,
@@ -117,21 +119,21 @@ func (s *Service) notifyVisitWaits(
 	if s.waits == nil {
 		return
 	}
-	stop, match := move.MatchObservedVisit(event.record.LocationID, event.visit)
-	if stop == nil || match == shipment.VisitMatchNoStop {
+	stop, match := stopvisit.MatchObserved(move, event.record.LocationID, event.visit)
+	if stop == nil || match == stopvisit.MatchNoStop {
 		return
 	}
 
-	kind, verb := agent.EventShipmentMoveArrived, "entered"
-	if event.visit == shipment.VisitDeparture {
-		kind, verb = agent.EventShipmentMoveDeparted, "left"
+	kind, verb := agenttrigger.EventShipmentMoveArrived, "entered"
+	if event.visit == shipmentvocab.VisitDeparture {
+		kind, verb = agenttrigger.EventShipmentMoveDeparted, "left"
 	}
 	at := event.record.OccurredAt
 	if at == 0 {
 		at = timeutils.NowUnix()
 	}
 
-	s.waits.NotifyEvent(ctx, &agentports.AgentEvent{
+	s.waits.NotifyEvent(ctx, &agenteventports.AgentEvent{
 		Kind:       kind,
 		SubjectID:  move.ID,
 		TenantInfo: event.tenantInfo,
@@ -148,7 +150,7 @@ func (s *Service) settleStopVisit(
 ) (*telematics.StopVisitResult, bool) {
 	result := &telematics.StopVisitResult{Visit: event.visit, MoveID: move.ID}
 
-	stop := move.StopForObservedVisit(event.record.LocationID, event.visit)
+	stop := stopvisit.StopForObserved(move, event.record.LocationID, event.visit)
 	if stop == nil {
 		if !event.providerStop {
 			return result, false
@@ -164,7 +166,7 @@ func (s *Service) settleStopVisit(
 		Event:        event.record,
 		MoveID:       move.ID,
 		StopID:       stop.ID,
-		Departure:    event.visit == shipment.VisitDeparture,
+		Departure:    event.visit == shipmentvocab.VisitDeparture,
 		ProviderStop: event.providerStop,
 	})
 	if err != nil {
@@ -204,7 +206,7 @@ func (s *Service) projectStopVisit(
 
 	switch {
 	case record.StopOutcome.NeedsReview():
-		s.watchtower.Upsert(ctx, watchtowersources.DescribeTelematicsStopVisit(
+		s.watchtower.Upsert(ctx, watchtowershipment.DescribeTelematicsStopVisit(
 			&telematicsports.StopReview{Event: record, ShipmentID: shipmentID},
 		))
 	case record.StopOutcome == telematics.StopOutcomeRecorded:
@@ -212,13 +214,13 @@ func (s *Service) projectStopVisit(
 			ctx,
 			tenantInfo,
 			watchtower.SourceTelematicsStopVisit,
-			watchtowersources.TelematicsStopVisitSourceID(record),
+			watchtowershipment.TelematicsStopVisitSourceID(record),
 		)
 	}
 }
 
-func visitNoun(visit shipment.VisitKind) string {
-	if visit == shipment.VisitDeparture {
+func visitNoun(visit shipmentvocab.VisitKind) string {
+	if visit == shipmentvocab.VisitDeparture {
 		return "departure"
 	}
 	return "arrival"

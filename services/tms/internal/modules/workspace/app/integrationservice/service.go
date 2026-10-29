@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -35,7 +36,7 @@ type Params struct {
 	Repo         integrationports.IntegrationRepository
 	Encryption   *encryptionservice.Service
 	AuditService auditports.AuditService
-	Registry     *permission.Registry
+	Registry     *permissioncatalog.Registry
 
 	FuelCardConnectors     []fuelpurchaseports.FuelCardProvider            `group:"fuelCardConnectors"`
 	CarrierIntelConnectors []carrierintelports.CarrierIntelConnector       `group:"carrierIntelConnectors"`
@@ -49,7 +50,7 @@ type Service struct {
 	encryption             *encryptionservice.Service
 	secrets                secretconfig.Codec
 	auditService           auditports.AuditService
-	registry               *permission.Registry
+	registry               *permissioncatalog.Registry
 	fuelCardConnectors     map[integration.Type]fuelpurchaseports.FuelCardProvider
 	carrierIntelConnectors map[integration.Type]carrierintelports.CarrierIntelConnector
 	carrierIntelControls   carrierintelports.CarrierIntelControlRepository

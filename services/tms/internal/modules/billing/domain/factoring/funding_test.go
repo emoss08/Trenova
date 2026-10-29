@@ -42,7 +42,7 @@ func TestExpectedFunding(t *testing.T) {
 			face: 10000,
 			days: 0,
 			want: factoring.Funding{
-				FaceMinor: 10000, AdvanceMinor: 9000, FeeMinor: 1500,
+				FaceMinor: 10000, AdvanceMinor: 8500, FeeMinor: 1500,
 				ReserveMinor: 1000, RestOnReleaseMinor: 0, Days: 0, FeeRateBP: 300,
 			},
 		},
@@ -51,7 +51,7 @@ func TestExpectedFunding(t *testing.T) {
 			face: 15,
 			days: -3,
 			want: factoring.Funding{
-				FaceMinor: 15, AdvanceMinor: 14, FeeMinor: 1500,
+				FaceMinor: 15, AdvanceMinor: 0, FeeMinor: 15,
 				ReserveMinor: 2, RestOnReleaseMinor: 0, Days: 0, FeeRateBP: 300,
 			},
 		},
@@ -62,6 +62,37 @@ func TestExpectedFunding(t *testing.T) {
 			assert.Equal(t, tt.want, factoring.ExpectedFunding(tt.face, agreement, tt.days))
 		})
 	}
+}
+
+func TestExpectedFundingAtTheRateLimit(t *testing.T) {
+	t.Parallel()
+
+	agreement := validAgreement()
+	agreement.AdvanceRateBP = 9400
+	agreement.ReserveRateBP = 300
+	agreement.FeeTiers = []*factoring.FeeTier{
+		{DaysFrom: 0, DaysTo: intPtr(75), RateBP: 425},
+		{DaysFrom: 75, RateBP: 600},
+	}
+	assert.Equal(t, factoring.Funding{
+		FaceMinor: 200000, AdvanceMinor: 188000, FeeMinor: 12000,
+		ReserveMinor: 6000, RestOnReleaseMinor: 0, Days: 88, FeeRateBP: 600,
+	}, factoring.ExpectedFunding(200000, agreement, 88))
+	assert.Equal(t, factoring.Funding{
+		FaceMinor: 25, AdvanceMinor: 23, FeeMinor: 2,
+		ReserveMinor: 1, RestOnReleaseMinor: 0, Days: 88, FeeRateBP: 600,
+	}, factoring.ExpectedFunding(25, agreement, 88), "both rates round up; the advance gives way")
+}
+
+func TestExpectedFundingFlatFeeOnASmallInvoice(t *testing.T) {
+	t.Parallel()
+
+	agreement := validAgreement()
+	agreement.FeeTiers = []*factoring.FeeTier{{DaysFrom: 0, RateBP: 300, FlatMinor: 2500}}
+	assert.Equal(t, factoring.Funding{
+		FaceMinor: 20000, AdvanceMinor: 16900, FeeMinor: 3100,
+		ReserveMinor: 2000, RestOnReleaseMinor: 0, Days: 5, FeeRateBP: 300,
+	}, factoring.ExpectedFunding(20000, agreement, 5))
 }
 
 func TestExpectedFundingWithoutAgreement(t *testing.T) {

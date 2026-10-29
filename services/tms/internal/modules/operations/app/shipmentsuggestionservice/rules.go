@@ -14,11 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -40,7 +41,7 @@ type ruleInput struct {
 	timezone string
 	loc      *time.Location
 	now      time.Time
-	caps     *shipmentports.ShipmentBoardCapabilities
+	caps     *shipmentboardports.ShipmentBoardCapabilities
 	board    *dispatchconsoleservice.Board
 }
 
@@ -317,7 +318,7 @@ func assignReason(in *ruleInput, deadhead string, driveRemainingMs, pickupDue in
 		return closes
 	}
 
-	return stringutils.CapitalizeFirst(strings.Join(parts, " ")) + ". " + closes
+	return textcase.CapitalizeFirst(strings.Join(parts, " ")) + ". " + closes
 }
 
 func tenderSuggestion(

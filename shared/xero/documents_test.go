@@ -8,20 +8,22 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func freightInvoice() xero.InvoiceInput {
-	return xero.InvoiceInput{
-		Type:          xero.InvoiceTypeReceivable,
+func freightInvoice() xerodocs.InvoiceInput {
+	return xerodocs.InvoiceInput{
+		Type:          xerodocs.InvoiceTypeReceivable,
 		ContactID:     testContact,
 		InvoiceNumber: "INV-1001",
 		Reference:     "PRO 55012",
 		Date:          time.Date(2026, 9, 24, 15, 0, 0, 0, time.UTC),
 		DueDate:       time.Date(2026, 10, 24, 0, 0, 0, 0, time.UTC),
 		CurrencyCode:  "usd",
-		Lines: []xero.LineItem{{
+		Lines: []xerodocs.LineItem{{
 			Description: "Linehaul Chicago to Dallas",
 			Quantity:    dec("1"),
 			UnitAmount:  dec("1450.25"),
@@ -57,7 +59,7 @@ func TestCreateInvoicePutsAnAuthorisedNoTaxInvoice(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_invoice.json"))
 	})
 
-	invoice, err := client.CreateInvoice(t.Context(), testKey, freightInvoice())
+	invoice, err := xerodocs.CreateInvoice(t.Context(), client, testKey, freightInvoice())
 	require.NoError(t, err)
 
 	sent := firstOf(t, body, "Invoices")
@@ -111,9 +113,9 @@ func TestCreateInvoiceSendsARateOnlyWhenGiven(t *testing.T) {
 	in.Type = "accpay"
 	in.CurrencyCode = "CAD"
 	in.CurrencyRate = dec("1.364512")
-	in.Status = xero.StatusDraft
+	in.Status = xerodocs.StatusDraft
 	in.LineAmountTypes = "exclusive"
-	_, err := client.CreateInvoice(t.Context(), testKey, in)
+	_, err := xerodocs.CreateInvoice(t.Context(), client, testKey, in)
 	require.NoError(t, err)
 
 	sent := firstOf(t, body, "Invoices")
@@ -129,25 +131,37 @@ func TestCreateInvoiceValidatesBeforeCallingXero(t *testing.T) {
 	var calls atomic.Int32
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
 
-	check := func(mutate func(*xero.InvoiceInput), want error) {
+	check := func(mutate func(*xerodocs.InvoiceInput), want error) {
 		t.Helper()
 		in := freightInvoice()
 		mutate(&in)
-		_, err := client.CreateInvoice(t.Context(), testKey, in)
+		_, err := xerodocs.CreateInvoice(t.Context(), client, testKey, in)
 		require.ErrorIs(t, err, want)
 	}
-	check(func(in *xero.InvoiceInput) { in.Type = "ACCRECCREDIT" }, xero.ErrUnknownType)
-	check(func(in *xero.InvoiceInput) { in.ContactID = "" }, xero.ErrContactRequired)
-	check(func(in *xero.InvoiceInput) { in.ContactID = "58" }, xero.ErrInvalidID)
-	check(func(in *xero.InvoiceInput) { in.Date = time.Time{} }, xero.ErrDateRequired)
-	check(func(in *xero.InvoiceInput) { in.CurrencyCode = "US" }, xero.ErrCurrencyCodeInvalid)
-	check(func(in *xero.InvoiceInput) { in.CurrencyRate = dec("-1") }, xero.ErrNegativeRate)
-	check(func(in *xero.InvoiceInput) { in.Status = xero.StatusPaid }, xero.ErrUnknownStatus)
-	check(func(in *xero.InvoiceInput) { in.LineAmountTypes = "Gross" }, xero.ErrUnknownAmountTypes)
-	check(func(in *xero.InvoiceInput) { in.Lines = nil }, xero.ErrLinesRequired)
-	check(func(in *xero.InvoiceInput) {
-		in.Lines = []xero.LineItem{{Quantity: dec("1"), UnitAmount: dec("10")}}
-	}, xero.ErrLineDescription)
+	check(func(in *xerodocs.InvoiceInput) { in.Type = "ACCRECCREDIT" }, xeroerrors.ErrUnknownType)
+	check(func(in *xerodocs.InvoiceInput) { in.ContactID = "" }, xeroerrors.ErrContactRequired)
+	check(func(in *xerodocs.InvoiceInput) { in.ContactID = "58" }, xeroerrors.ErrInvalidID)
+	check(func(in *xerodocs.InvoiceInput) { in.Date = time.Time{} }, xeroerrors.ErrDateRequired)
+	check(
+		func(in *xerodocs.InvoiceInput) { in.CurrencyCode = "US" },
+		xeroerrors.ErrCurrencyCodeInvalid,
+	)
+	check(
+		func(in *xerodocs.InvoiceInput) { in.CurrencyRate = dec("-1") },
+		xeroerrors.ErrNegativeRate,
+	)
+	check(
+		func(in *xerodocs.InvoiceInput) { in.Status = xerodocs.StatusPaid },
+		xeroerrors.ErrUnknownStatus,
+	)
+	check(
+		func(in *xerodocs.InvoiceInput) { in.LineAmountTypes = "Gross" },
+		xeroerrors.ErrUnknownAmountTypes,
+	)
+	check(func(in *xerodocs.InvoiceInput) { in.Lines = nil }, xeroerrors.ErrLinesRequired)
+	check(func(in *xerodocs.InvoiceInput) {
+		in.Lines = []xerodocs.LineItem{{Quantity: dec("1"), UnitAmount: dec("10")}}
+	}, xeroerrors.ErrLineDescription)
 	assert.Zero(t, calls.Load(), "nothing reaches Xero")
 }
 
@@ -161,14 +175,14 @@ func TestUpdateInvoicePostsToTheInvoice(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_invoice.json"))
 	})
 
-	_, err := client.UpdateInvoice(t.Context(), testKey, testInvoice, freightInvoice())
+	_, err := xerodocs.UpdateInvoice(t.Context(), client, testKey, testInvoice, freightInvoice())
 	require.NoError(t, err)
 	sent := firstOf(t, body, "Invoices")
 	assert.Equal(t, testInvoice, sent["InvoiceID"])
 	assert.Equal(t, "INV-1001", sent["InvoiceNumber"])
 
-	_, err = client.UpdateInvoice(t.Context(), testKey, "", freightInvoice())
-	require.ErrorIs(t, err, xero.ErrIDRequired)
+	_, err = xerodocs.UpdateInvoice(t.Context(), client, testKey, "", freightInvoice())
+	require.ErrorIs(t, err, xeroerrors.ErrIDRequired)
 }
 
 func TestVoidInvoiceSendsOnlyTheIDAndStatus(t *testing.T) {
@@ -181,10 +195,14 @@ func TestVoidInvoiceSendsOnlyTheIDAndStatus(t *testing.T) {
 		_, _ = w.Write(fixture(t, "void_invoice.json"))
 	})
 
-	invoice, err := client.VoidInvoice(t.Context(), testKey, testInvoice)
+	invoice, err := xerodocs.VoidInvoice(t.Context(), client, testKey, testInvoice)
 	require.NoError(t, err)
-	assert.Equal(t, map[string]any{"InvoiceID": testInvoice, "Status": "VOIDED"}, firstOf(t, body, "Invoices"))
-	assert.Equal(t, xero.StatusVoided, invoice.Status)
+	assert.Equal(
+		t,
+		map[string]any{"InvoiceID": testInvoice, "Status": "VOIDED"},
+		firstOf(t, body, "Invoices"),
+	)
+	assert.Equal(t, xerodocs.StatusVoided, invoice.Status)
 	assert.True(t, invoice.AmountDue.IsZero())
 }
 
@@ -198,11 +216,16 @@ func TestInvoicesByIDReadsPaymentsAndCredits(t *testing.T) {
 		_, _ = w.Write(fixture(t, "invoices_by_id.json"))
 	})
 
-	invoices, err := client.InvoicesByID(t.Context(), []string{
+	invoices, err := xerodocs.InvoicesByID(t.Context(), client, []string{
 		testInvoice, " " + testBill + " ", "FEE88EEA-F2AA-4A71-A372-33D6D83D3C45",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, testInvoice+","+testBill, ids, "ids are trimmed, lower cased and asked for once")
+	assert.Equal(
+		t,
+		testInvoice+","+testBill,
+		ids,
+		"ids are trimmed, lower cased and asked for once",
+	)
 
 	require.Len(t, invoices, 2)
 	open := invoices[0]
@@ -220,7 +243,7 @@ func TestInvoicesByIDReadsPaymentsAndCredits(t *testing.T) {
 
 	bill := invoices[1]
 	assert.Equal(t, "ACCPAY", bill.Type)
-	assert.Equal(t, xero.StatusVoided, bill.Status)
+	assert.Equal(t, xerodocs.StatusVoided, bill.Status)
 	assert.Empty(t, bill.Payments)
 	assert.True(t, bill.DueDate.IsZero())
 }
@@ -231,19 +254,19 @@ func TestInvoicesByIDRefusesWhatCannotBeAnID(t *testing.T) {
 	var calls atomic.Int32
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
 
-	invoices, err := client.InvoicesByID(t.Context(), nil)
+	invoices, err := xerodocs.InvoicesByID(t.Context(), client, nil)
 	require.NoError(t, err)
 	assert.Empty(t, invoices)
 
-	_, err = client.InvoicesByID(t.Context(), []string{testInvoice, testBill + ",x"})
-	require.ErrorIs(t, err, xero.ErrInvalidID)
+	_, err = xerodocs.InvoicesByID(t.Context(), client, []string{testInvoice, testBill + ",x"})
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidID)
 
 	many := make([]string, 0, xero.MaxIDsPerRead+1)
 	for i := range xero.MaxIDsPerRead + 1 {
 		many = append(many, fmt.Sprintf("00000000-0000-4000-8000-%012d", i))
 	}
-	_, err = client.InvoicesByID(t.Context(), many)
-	require.ErrorIs(t, err, xero.ErrTooManyIDs)
+	_, err = xerodocs.InvoicesByID(t.Context(), client, many)
+	require.ErrorIs(t, err, xeroerrors.ErrTooManyIDs)
 	assert.Zero(t, calls.Load())
 }
 
@@ -261,13 +284,13 @@ func TestInvoicesPageUsesPaginationAndModifiedSince(t *testing.T) {
 		_, _ = w.Write(fixture(t, "invoices_page.json"))
 	})
 
-	page, err := client.Invoices(t.Context(), 2, &since)
+	page, err := xerodocs.Invoices(t.Context(), client, 2, &since)
 	require.NoError(t, err)
 	assert.Len(t, page.Invoices, 2)
 	assert.False(t, page.More, "page 2 of 2")
 
-	_, err = client.Invoices(t.Context(), -1, nil)
-	require.ErrorIs(t, err, xero.ErrInvalidPage)
+	_, err = xerodocs.Invoices(t.Context(), client, -1, nil)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidPage)
 }
 
 func TestFindInvoicesUsesParamsAndAWhereForTypeAndDate(t *testing.T) {
@@ -294,7 +317,7 @@ func TestFindInvoicesUsesParamsAndAWhereForTypeAndDate(t *testing.T) {
 			`"}],"pagination":{"page":2,"pageSize":1000,"pageCount":2,"itemCount":1001}}`))
 	})
 
-	invoices, err := client.FindInvoices(t.Context(), xero.InvoiceFilter{
+	invoices, err := xerodocs.FindInvoices(t.Context(), client, xerodocs.InvoiceFilter{
 		Type:       "accpay",
 		Numbers:    []string{"INV-1001", "BILL 88/2", "INV-1001"},
 		ContactIDs: []string{testContact},
@@ -315,18 +338,34 @@ func TestFindInvoicesRejectsUnsafeOrEmptyFilters(t *testing.T) {
 	var calls atomic.Int32
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls.Add(1) })
 
-	_, err := client.FindInvoices(t.Context(), xero.InvoiceFilter{})
-	require.ErrorIs(t, err, xero.ErrEmptyFilter)
-	_, err = client.FindInvoices(t.Context(), xero.InvoiceFilter{Numbers: []string{`A" OR Type=="ACCPAY`}})
-	require.ErrorIs(t, err, xero.ErrInvalidFilter)
-	_, err = client.FindInvoices(t.Context(), xero.InvoiceFilter{Numbers: []string{"A,B"}})
-	require.ErrorIs(t, err, xero.ErrInvalidFilter)
-	_, err = client.FindInvoices(t.Context(), xero.InvoiceFilter{Type: "SALES"})
-	require.ErrorIs(t, err, xero.ErrUnknownType)
-	_, err = client.FindInvoices(t.Context(), xero.InvoiceFilter{Statuses: []string{"OPEN"}})
-	require.ErrorIs(t, err, xero.ErrUnknownStatus)
-	_, err = client.FindInvoices(t.Context(), xero.InvoiceFilter{ContactIDs: []string{"x"}})
-	require.ErrorIs(t, err, xero.ErrInvalidID)
+	_, err := xerodocs.FindInvoices(t.Context(), client, xerodocs.InvoiceFilter{})
+	require.ErrorIs(t, err, xeroerrors.ErrEmptyFilter)
+	_, err = xerodocs.FindInvoices(
+		t.Context(),
+		client,
+		xerodocs.InvoiceFilter{Numbers: []string{`A" OR Type=="ACCPAY`}},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidFilter)
+	_, err = xerodocs.FindInvoices(
+		t.Context(),
+		client,
+		xerodocs.InvoiceFilter{Numbers: []string{"A,B"}},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidFilter)
+	_, err = xerodocs.FindInvoices(t.Context(), client, xerodocs.InvoiceFilter{Type: "SALES"})
+	require.ErrorIs(t, err, xeroerrors.ErrUnknownType)
+	_, err = xerodocs.FindInvoices(
+		t.Context(),
+		client,
+		xerodocs.InvoiceFilter{Statuses: []string{"OPEN"}},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrUnknownStatus)
+	_, err = xerodocs.FindInvoices(
+		t.Context(),
+		client,
+		xerodocs.InvoiceFilter{ContactIDs: []string{"x"}},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidID)
 	assert.Zero(t, calls.Load())
 }
 
@@ -338,11 +377,11 @@ func TestDuplicateInvoiceNumberIsADuplicate(t *testing.T) {
 		_, _ = w.Write(fixture(t, "error_duplicate_number.json"))
 	})
 
-	_, err := client.CreateInvoice(t.Context(), testKey, freightInvoice())
+	_, err := xerodocs.CreateInvoice(t.Context(), client, testKey, freightInvoice())
 	require.Error(t, err)
-	assert.True(t, xero.IsValidation(err))
-	assert.True(t, xero.IsDuplicateNumber(err))
-	assert.False(t, xero.IsLockDate(err))
+	assert.True(t, xeroerrors.IsValidation(err))
+	assert.True(t, xeroerrors.IsDuplicateNumber(err))
+	assert.False(t, xeroerrors.IsLockDate(err))
 	assert.Contains(t, err.Error(), "Invoice # must be unique.")
 }
 
@@ -354,21 +393,21 @@ func TestInvoiceBeforeTheLockDateIsALockDate(t *testing.T) {
 		_, _ = w.Write(fixture(t, "error_lock_date.json"))
 	})
 
-	_, err := client.CreateInvoice(t.Context(), testKey, freightInvoice())
+	_, err := xerodocs.CreateInvoice(t.Context(), client, testKey, freightInvoice())
 	require.Error(t, err)
-	assert.True(t, xero.IsLockDate(err))
-	assert.False(t, xero.IsDuplicateNumber(err))
-	assert.False(t, xero.IsTransient(err))
+	assert.True(t, xeroerrors.IsLockDate(err))
+	assert.False(t, xeroerrors.IsDuplicateNumber(err))
+	assert.False(t, xeroerrors.IsTransient(err))
 }
 
-func creditNote() xero.CreditNoteInput {
-	return xero.CreditNoteInput{
-		Type:             xero.CreditNoteTypeReceivable,
+func creditNote() xerodocs.CreditNoteInput {
+	return xerodocs.CreditNoteInput{
+		Type:             xerodocs.CreditNoteTypeReceivable,
 		ContactID:        testContact,
 		CreditNoteNumber: "CN-0007",
 		Reference:        "Rate correction PRO 55012",
 		Date:             time.Date(2026, 9, 24, 0, 0, 0, 0, time.UTC),
-		Lines: []xero.LineItem{{
+		Lines: []xerodocs.LineItem{{
 			Description: "Rate correction",
 			Quantity:    dec("1"),
 			UnitAmount:  dec("250"),
@@ -387,7 +426,7 @@ func TestCreateCreditNotePutsTheCredit(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_credit_note.json"))
 	})
 
-	note, err := client.CreateCreditNote(t.Context(), testKey, creditNote())
+	note, err := xerodocs.CreateCreditNote(t.Context(), client, testKey, creditNote())
 	require.NoError(t, err)
 	sent := firstOf(t, body, "CreditNotes")
 	assert.Equal(t, "ACCRECCREDIT", sent["Type"])
@@ -402,9 +441,9 @@ func TestCreateCreditNotePutsTheCredit(t *testing.T) {
 	assert.Empty(t, note.Allocations)
 
 	in := creditNote()
-	in.Type = xero.InvoiceTypeReceivable
-	_, err = client.CreateCreditNote(t.Context(), testKey, in)
-	require.ErrorIs(t, err, xero.ErrUnknownType)
+	in.Type = xerodocs.InvoiceTypeReceivable
+	_, err = xerodocs.CreateCreditNote(t.Context(), client, testKey, in)
+	require.ErrorIs(t, err, xeroerrors.ErrUnknownType)
 }
 
 func TestUpdateAndVoidCreditNote(t *testing.T) {
@@ -422,16 +461,16 @@ func TestUpdateAndVoidCreditNote(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_credit_note.json"))
 	})
 
-	_, err := client.UpdateCreditNote(t.Context(), testKey, testCreditNote, creditNote())
+	_, err := xerodocs.UpdateCreditNote(t.Context(), client, testKey, testCreditNote, creditNote())
 	require.NoError(t, err)
-	voided, err := client.VoidCreditNote(t.Context(), testKey, testCreditNote)
+	voided, err := xerodocs.VoidCreditNote(t.Context(), client, testKey, testCreditNote)
 	require.NoError(t, err)
 
 	require.Len(t, bodies, 2)
 	assert.Equal(t, testCreditNote, firstOf(t, bodies[0], "CreditNotes")["CreditNoteID"])
 	assert.Equal(t, map[string]any{"CreditNoteID": testCreditNote, "Status": "VOIDED"},
 		firstOf(t, bodies[1], "CreditNotes"))
-	assert.Equal(t, xero.StatusVoided, voided.Status)
+	assert.Equal(t, xerodocs.StatusVoided, voided.Status)
 }
 
 func TestCreditNotesByIDReadAllocations(t *testing.T) {
@@ -443,7 +482,7 @@ func TestCreditNotesByIDReadAllocations(t *testing.T) {
 		_, _ = w.Write(fixture(t, "credit_notes_by_id.json"))
 	})
 
-	notes, err := client.CreditNotesByID(t.Context(), []string{testCreditNote})
+	notes, err := xerodocs.CreditNotesByID(t.Context(), client, []string{testCreditNote})
 	require.NoError(t, err)
 	require.Len(t, notes, 1)
 	note := notes[0]
@@ -471,7 +510,7 @@ func TestCreditNotesPageWithoutPaginationIsTheLastWhenShort(t *testing.T) {
 	})
 
 	since := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
-	page, err := client.CreditNotes(t.Context(), 1, &since)
+	page, err := xerodocs.CreditNotes(t.Context(), client, 1, &since)
 	require.NoError(t, err)
 	assert.Len(t, page.CreditNotes, 1)
 	assert.False(t, page.More)
@@ -488,19 +527,21 @@ func TestFindCreditNotesBuildsAWhere(t *testing.T) {
 		_, _ = w.Write(fixture(t, "credit_notes_page.json"))
 	})
 
-	notes, err := client.FindCreditNotes(t.Context(), xero.InvoiceFilter{
-		Type:       xero.CreditNoteTypeReceivable,
+	notes, err := xerodocs.FindCreditNotes(t.Context(), client, xerodocs.InvoiceFilter{
+		Type:       xerodocs.CreditNoteTypeReceivable,
 		Numbers:    []string{"CN-0007", "CN-0008"},
 		ContactIDs: []string{testContact},
-		Statuses:   []string{xero.StatusAuthorised},
+		Statuses:   []string{xerodocs.StatusAuthorised},
 		DateFrom:   time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC),
 	})
 	require.NoError(t, err)
 	assert.Len(t, notes, 1)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		`Type=="ACCRECCREDIT" AND (CreditNoteNumber=="CN-0007" OR CreditNoteNumber=="CN-0008") AND `+
 			`Contact.ContactID==guid("`+testContact+`") AND Status=="AUTHORISED" AND Date>=DateTime(2026,09,01)`,
-		where)
+		where,
+	)
 }
 
 func TestAllocateAppliesTheCreditToAnInvoice(t *testing.T) {
@@ -513,11 +554,17 @@ func TestAllocateAppliesTheCreditToAnInvoice(t *testing.T) {
 		_, _ = w.Write(fixture(t, "allocation.json"))
 	})
 
-	allocation, err := client.Allocate(t.Context(), testKey, testCreditNote, xero.AllocationInput{
-		InvoiceID: testInvoice,
-		Amount:    dec("100"),
-		Date:      time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
-	})
+	allocation, err := xerodocs.Allocate(
+		t.Context(),
+		client,
+		testKey,
+		testCreditNote,
+		xerodocs.AllocationInput{
+			InvoiceID: testInvoice,
+			Amount:    dec("100"),
+			Date:      time.Date(2026, 9, 25, 0, 0, 0, 0, time.UTC),
+		},
+	)
 	require.NoError(t, err)
 	sent := firstOf(t, body, "Allocations")
 	assert.Equal(t, map[string]any{"InvoiceID": testInvoice}, sent["Invoice"])
@@ -527,11 +574,17 @@ func TestAllocateAppliesTheCreditToAnInvoice(t *testing.T) {
 	assert.Equal(t, testInvoice, allocation.InvoiceID)
 	assert.Equal(t, testCreditNote, allocation.CreditNoteID)
 
-	_, err = client.Allocate(t.Context(), testKey, testCreditNote, xero.AllocationInput{
-		InvoiceID: testInvoice,
-		Amount:    dec("0"),
-	})
-	require.ErrorIs(t, err, xero.ErrAmountNotPositive)
+	_, err = xerodocs.Allocate(
+		t.Context(),
+		client,
+		testKey,
+		testCreditNote,
+		xerodocs.AllocationInput{
+			InvoiceID: testInvoice,
+			Amount:    dec("0"),
+		},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrAmountNotPositive)
 }
 
 func TestDeleteAllocation(t *testing.T) {
@@ -539,11 +592,22 @@ func TestDeleteAllocation(t *testing.T) {
 
 	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodDelete, r.Method)
-		assert.Equal(t, "/api.xro/2.0/CreditNotes/"+testCreditNote+"/Allocations/"+testAllocation, r.URL.Path)
+		assert.Equal(
+			t,
+			"/api.xro/2.0/CreditNotes/"+testCreditNote+"/Allocations/"+testAllocation,
+			r.URL.Path,
+		)
 		assertAPIHeaders(t, r)
 		_, _ = w.Write(fixture(t, "delete_allocation.json"))
 	})
 
-	require.NoError(t, client.DeleteAllocation(t.Context(), testCreditNote, testAllocation))
-	require.ErrorIs(t, client.DeleteAllocation(t.Context(), testCreditNote, "1/../2"), xero.ErrInvalidID)
+	require.NoError(
+		t,
+		xerodocs.DeleteAllocation(t.Context(), client, testCreditNote, testAllocation),
+	)
+	require.ErrorIs(
+		t,
+		xerodocs.DeleteAllocation(t.Context(), client, testCreditNote, "1/../2"),
+		xeroerrors.ErrInvalidID,
+	)
 }

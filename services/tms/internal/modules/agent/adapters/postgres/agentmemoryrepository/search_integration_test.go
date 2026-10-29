@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +21,7 @@ import (
 )
 
 type searchFixture struct {
-	repo   agentports.AgentMemoryRepository
+	repo   agentmemoryports.AgentMemoryRepository
 	tenant pagination.TenantInfo
 	now    int64
 }
@@ -45,17 +45,17 @@ func newSearchFixture(t *testing.T) (context.Context, searchFixture) {
 func (f searchFixture) record(
 	ctx context.Context,
 	t *testing.T,
-	memory *agent.Memory,
-) *agent.Memory {
+	memory *agentmemory.Memory,
+) *agentmemory.Memory {
 	t.Helper()
 
 	memory.OrganizationID = f.tenant.OrgID
 	memory.BusinessUnitID = f.tenant.BuID
 	if memory.Kind == "" {
-		memory.Kind = agent.MemoryKindFact
+		memory.Kind = agentmemory.MemoryKindFact
 	}
-	memory.Source = agent.MemorySourceUser
-	memory.Status = agent.MemoryStatusActive
+	memory.Source = agentmemory.MemorySourceUser
+	memory.Status = agentmemory.MemoryStatusActive
 	created, err := f.repo.Create(ctx, memory)
 	require.NoError(t, err)
 
@@ -75,7 +75,7 @@ func (f searchFixture) search(
 			terms = append(terms, word)
 		}
 	}
-	found, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	found, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      query,
@@ -90,13 +90,13 @@ func TestSearch_FindsAMemoryByItsWordsNotTheWholePhrase(t *testing.T) {
 	ctx, f := newSearchFixture(t)
 	customerID := pulid.MustNew("cus_")
 
-	dock := f.record(ctx, t, &agent.Memory{
+	dock := f.record(ctx, t, &agentmemory.Memory{
 		Content:     "The dock closes at four on Fridays; book the appointment before noon.",
-		SubjectType: agent.MemorySubjectCustomer, SubjectID: &customerID,
+		SubjectType: agentmemory.MemorySubjectCustomer, SubjectID: &customerID,
 		SubjectLabel: "Acme Foods",
 	})
-	hours := f.record(ctx, t, &agent.Memory{Content: "Office hours are nine to five."})
-	f.record(ctx, t, &agent.Memory{Content: "Quote every lane in dollars."})
+	hours := f.record(ctx, t, &agentmemory.Memory{Content: "Office hours are nine to five."})
+	f.record(ctx, t, &agentmemory.Memory{Content: "Quote every lane in dollars."})
 
 	assert.Equal(t, []pulid.ID{dock.ID}, f.search(ctx, t, "acme dock"),
 		"the subject's name and the content are one set of words")
@@ -114,8 +114,8 @@ func TestSearch_FindsAMemoryByItsWordsNotTheWholePhrase(t *testing.T) {
 func TestSearch_HonoursWebsearchOperators(t *testing.T) {
 	ctx, f := newSearchFixture(t)
 
-	friday := f.record(ctx, t, &agent.Memory{Content: "Acme receives on Fridays only."})
-	monday := f.record(ctx, t, &agent.Memory{Content: "Acme receives on Mondays as well."})
+	friday := f.record(ctx, t, &agentmemory.Memory{Content: "Acme receives on Fridays only."})
+	monday := f.record(ctx, t, &agentmemory.Memory{Content: "Acme receives on Mondays as well."})
 
 	assert.Equal(t, []pulid.ID{monday.ID}, f.search(ctx, t, "acme -fridays"))
 	assert.Equal(t, []pulid.ID{friday.ID}, f.search(ctx, t, `"on fridays"`))
@@ -124,13 +124,13 @@ func TestSearch_HonoursWebsearchOperators(t *testing.T) {
 func TestSearch_ReadsToolNamesAndRanksBeforeKind(t *testing.T) {
 	ctx, f := newSearchFixture(t)
 
-	correction := f.record(ctx, t, &agent.Memory{
-		Kind:     agent.MemoryKindCorrection,
+	correction := f.record(ctx, t, &agentmemory.Memory{
+		Kind:     agentmemory.MemoryKindCorrection,
 		ToolName: "dispatch_assign_move",
 		Content:  "A person changed the tractor to the one already at the yard.",
 	})
-	instruction := f.record(ctx, t, &agent.Memory{
-		Kind:    agent.MemoryKindInstruction,
+	instruction := f.record(ctx, t, &agentmemory.Memory{
+		Kind:    agentmemory.MemoryKindInstruction,
 		Content: "Mention the tractor number when you assign.",
 	})
 
@@ -141,12 +141,16 @@ func TestSearch_ReadsToolNamesAndRanksBeforeKind(t *testing.T) {
 func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	ctx, f := newSearchFixture(t)
 
-	var last *agent.Memory
-	for idx := range agent.MaxMemoryRecallLimit + 5 {
-		last = f.record(ctx, t, &agent.Memory{Content: fmt.Sprintf("Lane rule number %d.", idx)})
+	var last *agentmemory.Memory
+	for idx := range agentmemory.MaxMemoryRecallLimit + 5 {
+		last = f.record(
+			ctx,
+			t,
+			&agentmemory.Memory{Content: fmt.Sprintf("Lane rule number %d.", idx)},
+		)
 	}
 
-	byID, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	byID, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		IDs:        []pulid.ID{last.ID},
@@ -156,40 +160,40 @@ func TestSearch_ReadsOneMemoryByIDAndBoundsTheRows(t *testing.T) {
 	assert.Equal(t, last.ID, byID[0].ID)
 	assert.Empty(t, byID[0].SearchVector, "the search column is never read back")
 
-	defaulted, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	defaulted, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
 	})
 	require.NoError(t, err)
-	assert.Len(t, defaulted, agent.DefaultMemoryRecallLimit)
+	assert.Len(t, defaulted, agentmemory.DefaultMemoryRecallLimit)
 
-	capped, err := f.repo.Search(ctx, agentports.SearchAgentMemoriesRequest{
+	capped, err := f.repo.Search(ctx, &agentmemoryports.SearchAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 		Query:      "lane",
 		Limit:      1000,
 	})
 	require.NoError(t, err)
-	assert.Len(t, capped, agent.MaxMemoryRecallLimit)
+	assert.Len(t, capped, agentmemory.MaxMemoryRecallLimit)
 }
 
 func TestCountActive_CountsOnlyWhatAgentsMayRead(t *testing.T) {
 	ctx, f := newSearchFixture(t)
 
-	f.record(ctx, t, &agent.Memory{Content: "Read one."})
+	f.record(ctx, t, &agentmemory.Memory{Content: "Read one."})
 	past := f.now - 60
-	f.record(ctx, t, &agent.Memory{Content: "Expired.", ExpiresAt: &past})
-	retired := f.record(ctx, t, &agent.Memory{Content: "Retired."})
-	_, err := f.repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	f.record(ctx, t, &agentmemory.Memory{Content: "Expired.", ExpiresAt: &past})
+	retired := f.record(ctx, t, &agentmemory.Memory{Content: "Retired."})
+	_, err := f.repo.SetStatus(ctx, &agentmemoryports.SetAgentMemoryStatusQuery{
 		ID:         retired.ID,
 		TenantInfo: f.tenant,
-		Status:     agent.MemoryStatusRetired,
+		Status:     agentmemory.MemoryStatusRetired,
 		At:         f.now,
 	})
 	require.NoError(t, err)
 
-	count, err := f.repo.CountActive(ctx, agentports.CountActiveAgentMemoriesRequest{
+	count, err := f.repo.CountActive(ctx, agentmemoryports.CountActiveAgentMemoriesRequest{
 		TenantInfo: f.tenant,
 		Now:        f.now,
 	})

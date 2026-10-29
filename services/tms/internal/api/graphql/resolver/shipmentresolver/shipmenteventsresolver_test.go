@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -42,7 +42,7 @@ func TestQueryResolver_ShipmentEvents_MapsRequest(t *testing.T) {
 	}
 	permissionEngine := &resolvertest.RecordingPermissionEngine{}
 	resolver := &QueryResolver{&Deps{
-		Core:                 &base.Core{PermissionEngine: permissionEngine},
+		Core:                 &resolvercore.Core{PermissionEngine: permissionEngine},
 		ShipmentEventService: service,
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
@@ -94,7 +94,9 @@ func TestQueryResolver_ShipmentEvents_AllowsOptionalFilters(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	service := &recordingShipmentEventService{}
 	resolver := &QueryResolver{&Deps{
-		Core:                 &base.Core{PermissionEngine: &resolvertest.RecordingPermissionEngine{}},
+		Core: &resolvercore.Core{
+			PermissionEngine: &resolvertest.RecordingPermissionEngine{},
+		},
 		ShipmentEventService: service,
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{

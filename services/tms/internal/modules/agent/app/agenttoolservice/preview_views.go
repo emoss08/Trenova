@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*masterdatatools.SaveTableViewTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*dashboardtools.SaveTableViewTool)(nil)

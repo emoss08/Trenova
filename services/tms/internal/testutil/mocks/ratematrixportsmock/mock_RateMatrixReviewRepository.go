@@ -5,6 +5,7 @@
 package ratematrixportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -42,26 +43,26 @@ func (_m *MockRateMatrixReviewRepository) EXPECT() *MockRateMatrixReviewReposito
 }
 
 // Create provides a mock function for the type MockRateMatrixReviewRepository
-func (_mock *MockRateMatrixReviewRepository) Create(ctx context.Context, entity *ratematrix.RateMatrixReview) (*ratematrix.RateMatrixReview, error) {
+func (_mock *MockRateMatrixReviewRepository) Create(ctx context.Context, entity *ratematrixreview.RateMatrixReview) (*ratematrixreview.RateMatrixReview, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *ratematrix.RateMatrixReview
+	var r0 *ratematrixreview.RateMatrixReview
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrixReview) (*ratematrix.RateMatrixReview, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixreview.RateMatrixReview) (*ratematrixreview.RateMatrixReview, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrixReview) *ratematrix.RateMatrixReview); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixreview.RateMatrixReview) *ratematrixreview.RateMatrixReview); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ratematrix.RateMatrixReview)
+			r0 = ret.Get(0).(*ratematrixreview.RateMatrixReview)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrix.RateMatrixReview) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixreview.RateMatrixReview) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -76,20 +77,20 @@ type MockRateMatrixReviewRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *ratematrix.RateMatrixReview
+//   - entity *ratematrixreview.RateMatrixReview
 func (_e *MockRateMatrixReviewRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockRateMatrixReviewRepository_Create_Call {
 	return &MockRateMatrixReviewRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockRateMatrixReviewRepository_Create_Call) Run(run func(ctx context.Context, entity *ratematrix.RateMatrixReview)) *MockRateMatrixReviewRepository_Create_Call {
+func (_c *MockRateMatrixReviewRepository_Create_Call) Run(run func(ctx context.Context, entity *ratematrixreview.RateMatrixReview)) *MockRateMatrixReviewRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *ratematrix.RateMatrixReview
+		var arg1 *ratematrixreview.RateMatrixReview
 		if args[1] != nil {
-			arg1 = args[1].(*ratematrix.RateMatrixReview)
+			arg1 = args[1].(*ratematrixreview.RateMatrixReview)
 		}
 		run(
 			arg0,
@@ -99,34 +100,34 @@ func (_c *MockRateMatrixReviewRepository_Create_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_Create_Call) Return(rateMatrixReview *ratematrix.RateMatrixReview, err error) *MockRateMatrixReviewRepository_Create_Call {
+func (_c *MockRateMatrixReviewRepository_Create_Call) Return(rateMatrixReview *ratematrixreview.RateMatrixReview, err error) *MockRateMatrixReviewRepository_Create_Call {
 	_c.Call.Return(rateMatrixReview, err)
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *ratematrix.RateMatrixReview) (*ratematrix.RateMatrixReview, error)) *MockRateMatrixReviewRepository_Create_Call {
+func (_c *MockRateMatrixReviewRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *ratematrixreview.RateMatrixReview) (*ratematrixreview.RateMatrixReview, error)) *MockRateMatrixReviewRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Latest provides a mock function for the type MockRateMatrixReviewRepository
-func (_mock *MockRateMatrixReviewRepository) Latest(ctx context.Context, rateMatrixID pulid.ID, tenantInfo pagination.TenantInfo) (*ratematrix.RateMatrixReview, error) {
+func (_mock *MockRateMatrixReviewRepository) Latest(ctx context.Context, rateMatrixID pulid.ID, tenantInfo pagination.TenantInfo) (*ratematrixreview.RateMatrixReview, error) {
 	ret := _mock.Called(ctx, rateMatrixID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Latest")
 	}
 
-	var r0 *ratematrix.RateMatrixReview
+	var r0 *ratematrixreview.RateMatrixReview
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*ratematrix.RateMatrixReview, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*ratematrixreview.RateMatrixReview, error)); ok {
 		return returnFunc(ctx, rateMatrixID, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *ratematrix.RateMatrixReview); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *ratematrixreview.RateMatrixReview); ok {
 		r0 = returnFunc(ctx, rateMatrixID, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ratematrix.RateMatrixReview)
+			r0 = ret.Get(0).(*ratematrixreview.RateMatrixReview)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
@@ -173,34 +174,34 @@ func (_c *MockRateMatrixReviewRepository_Latest_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_Latest_Call) Return(rateMatrixReview *ratematrix.RateMatrixReview, err error) *MockRateMatrixReviewRepository_Latest_Call {
+func (_c *MockRateMatrixReviewRepository_Latest_Call) Return(rateMatrixReview *ratematrixreview.RateMatrixReview, err error) *MockRateMatrixReviewRepository_Latest_Call {
 	_c.Call.Return(rateMatrixReview, err)
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_Latest_Call) RunAndReturn(run func(ctx context.Context, rateMatrixID pulid.ID, tenantInfo pagination.TenantInfo) (*ratematrix.RateMatrixReview, error)) *MockRateMatrixReviewRepository_Latest_Call {
+func (_c *MockRateMatrixReviewRepository_Latest_Call) RunAndReturn(run func(ctx context.Context, rateMatrixID pulid.ID, tenantInfo pagination.TenantInfo) (*ratematrixreview.RateMatrixReview, error)) *MockRateMatrixReviewRepository_Latest_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListByMatrix provides a mock function for the type MockRateMatrixReviewRepository
-func (_mock *MockRateMatrixReviewRepository) ListByMatrix(ctx context.Context, req *ratematrixports.ListReviewsRequest) ([]*ratematrix.RateMatrixReview, error) {
+func (_mock *MockRateMatrixReviewRepository) ListByMatrix(ctx context.Context, req *ratematrixports.ListReviewsRequest) ([]*ratematrixreview.RateMatrixReview, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByMatrix")
 	}
 
-	var r0 []*ratematrix.RateMatrixReview
+	var r0 []*ratematrixreview.RateMatrixReview
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListReviewsRequest) ([]*ratematrix.RateMatrixReview, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListReviewsRequest) ([]*ratematrixreview.RateMatrixReview, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListReviewsRequest) []*ratematrix.RateMatrixReview); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListReviewsRequest) []*ratematrixreview.RateMatrixReview); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixReview)
+			r0 = ret.Get(0).([]*ratematrixreview.RateMatrixReview)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.ListReviewsRequest) error); ok {
@@ -241,12 +242,12 @@ func (_c *MockRateMatrixReviewRepository_ListByMatrix_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_ListByMatrix_Call) Return(rateMatrixReviews []*ratematrix.RateMatrixReview, err error) *MockRateMatrixReviewRepository_ListByMatrix_Call {
+func (_c *MockRateMatrixReviewRepository_ListByMatrix_Call) Return(rateMatrixReviews []*ratematrixreview.RateMatrixReview, err error) *MockRateMatrixReviewRepository_ListByMatrix_Call {
 	_c.Call.Return(rateMatrixReviews, err)
 	return _c
 }
 
-func (_c *MockRateMatrixReviewRepository_ListByMatrix_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListReviewsRequest) ([]*ratematrix.RateMatrixReview, error)) *MockRateMatrixReviewRepository_ListByMatrix_Call {
+func (_c *MockRateMatrixReviewRepository_ListByMatrix_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListReviewsRequest) ([]*ratematrixreview.RateMatrixReview, error)) *MockRateMatrixReviewRepository_ListByMatrix_Call {
 	_c.Call.Return(run)
 	return _c
 }

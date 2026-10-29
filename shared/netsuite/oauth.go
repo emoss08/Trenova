@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/jsonflex"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -92,13 +93,13 @@ func NewOAuthClient(cfg OAuthConfig, opts ...Option) (*OAuthClient, error) {
 	cfg.ClientID = strings.TrimSpace(cfg.ClientID)
 	cfg.RedirectURL = strings.TrimSpace(cfg.RedirectURL)
 	if cfg.ClientID == "" {
-		return nil, ErrClientIDRequired
+		return nil, netsuiteerrors.ErrClientIDRequired
 	}
 	if strings.TrimSpace(cfg.ClientSecret) == "" {
-		return nil, ErrClientSecretRequired
+		return nil, netsuiteerrors.ErrClientSecretRequired
 	}
 	if cfg.RedirectURL == "" {
-		return nil, ErrRedirectURLRequired
+		return nil, netsuiteerrors.ErrRedirectURLRequired
 	}
 	credentials := cfg.ClientID + ":" + cfg.ClientSecret
 	return &OAuthClient{
@@ -114,10 +115,10 @@ func (c *OAuthClient) ClientID() string {
 
 func (c *OAuthClient) AuthorizeURL(req AuthorizeRequest) (string, error) {
 	if !validState(req.State) {
-		return "", ErrInvalidState
+		return "", netsuiteerrors.ErrInvalidState
 	}
 	if !validChallenge(req.CodeChallenge) {
-		return "", ErrInvalidChallenge
+		return "", netsuiteerrors.ErrInvalidChallenge
 	}
 	target, err := url.Parse(c.settings.loginURL + authorizePath)
 	if err != nil {
@@ -145,10 +146,10 @@ func (c *OAuthClient) TokenURL(accountID string) (string, error) {
 
 func (c *OAuthClient) ExchangeCode(ctx context.Context, req CodeExchange) (*Token, error) {
 	if strings.TrimSpace(req.Code) == "" {
-		return nil, ErrCodeRequired
+		return nil, netsuiteerrors.ErrCodeRequired
 	}
 	if !validVerifier(req.CodeVerifier) {
-		return nil, ErrInvalidVerifier
+		return nil, netsuiteerrors.ErrInvalidVerifier
 	}
 	return c.requestToken(ctx, &tokenCall{
 		accountID: req.AccountID,
@@ -167,7 +168,7 @@ func (c *OAuthClient) ExchangeCode(ctx context.Context, req CodeExchange) (*Toke
 
 func (c *OAuthClient) Refresh(ctx context.Context, req RefreshRequest) (*Token, error) {
 	if strings.TrimSpace(req.RefreshToken) == "" {
-		return nil, ErrTokenRequired
+		return nil, netsuiteerrors.ErrTokenRequired
 	}
 	return c.requestToken(ctx, &tokenCall{
 		accountID: req.AccountID,
@@ -183,7 +184,7 @@ func (c *OAuthClient) Refresh(ctx context.Context, req RefreshRequest) (*Token, 
 
 func (c *OAuthClient) Revoke(ctx context.Context, req RevokeRequest) error {
 	if strings.TrimSpace(req.Token) == "" {
-		return ErrTokenRequired
+		return netsuiteerrors.ErrTokenRequired
 	}
 	return c.send(ctx, &tokenCall{
 		accountID: req.AccountID,
@@ -206,7 +207,7 @@ func (c *OAuthClient) requestToken(ctx context.Context, req *tokenCall) (*Token,
 	}
 	expiresIn := out.ExpiresIn.Value()
 	if out.AccessToken == "" || expiresIn <= 0 || (req.requireRefresh && out.RefreshToken == "") {
-		return nil, ErrUnexpectedPayload
+		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
 	return &Token{
 		AccessToken:  out.AccessToken,
@@ -233,7 +234,7 @@ func (c *OAuthClient) send(ctx context.Context, req *tokenCall) error {
 		Headers:      headers,
 		Retry:        restx.RetryConfig{},
 		Observer:     c.settings.observer,
-		ErrorDecoder: decodeOAuthError,
+		ErrorDecoder: netsuiteerrors.DecodeOAuthError,
 	})
 	if err != nil {
 		return fmt.Errorf("netsuite: configure identity transport: %w", err)
@@ -246,7 +247,7 @@ func (c *OAuthClient) send(ctx context.Context, req *tokenCall) error {
 		Out:            req.out,
 		ExpectedStatus: req.expected,
 	}); err != nil {
-		redactSecrets(err, append(req.secrets, c.cfg.ClientSecret)...)
+		netsuiteerrors.RedactSecrets(err, append(req.secrets, c.cfg.ClientSecret)...)
 		return err
 	}
 	return nil

@@ -10,7 +10,7 @@ activity and must keep to its determinism rules.
 
 ## The model
 
-`internal/modules/agent/domain/agent/preview.go`.
+`internal/modules/agent/domain/agentpreview/preview.go`.
 
 | Type | Is |
 |---|---|
@@ -57,7 +57,7 @@ and warned.
 A write tool implements `ToolPreviewer` (`ports/services/agenttool.go`):
 
 ```go
-Preview(ctx context.Context, params ToolExecuteParams) (*agent.ToolPreview, error)
+Preview(ctx context.Context, params *ToolExecuteParams) (*agentpreview.ToolPreview, error)
 ```
 
 The contract: read-only, deterministic given the database and the parameters, and it decides
@@ -102,7 +102,7 @@ repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
-`internal/modules/agent/app/proposalpreviewservice`, behind `agentports.ProposalPreviewService`.
+`internal/modules/agent/app/proposalpreviewservice`, behind `agentruntimeports.ProposalPreviewService`.
 
 `ForProposal(ctx, {Proposal, Modifications, Viewer})`, in order:
 
@@ -188,14 +188,14 @@ before anything is written, for `Accepted` and `Modified`:
 
 - the write is previewed as the decider sees it, with their changes;
 - **stale → refused as approved**: the approval is recorded with the stale preview, the
-  proposal moves to `ExecutionFailed` with an `agent.ErrTargetChanged` reason naming the
+  proposal moves to `ExecutionFailed` with an `agentplan.ErrTargetChanged` reason naming the
   record and both versions, nothing runs, the trust ledger is left alone and the
   conversation's follow-up says why (not held for an undo window; commit-now on it is a
   no-op). The caller is not sent an error: every decide mutation answers with what came
   of it (`AgentProposalDecisionResult` for a proposal, alone or in a batch, with
   `refused` and the reason in `error`; `AgentPlanDecisionResult` for a plan, with
   `refused` and the failed `plan`), built by `DecisionOutcome.Result` and
-  `agent.PlanTargetChanged`. Clients clear any undo hold, mark the proposal or plan failed
+  `agentplan.PlanTargetChanged`. Clients clear any undo hold, mark the proposal or plan failed
   in the cache and say "This changed since you opened it" with the server's reason
   (`lib/approval-outcome.ts`);
 - a `previewDigest` that no longer matches → **`ConflictError`**, nothing recorded; the
@@ -211,7 +211,7 @@ classified again from the tool's policy with the merged parameters
 (`proposalexecutor.CallEgress`), so an edit that makes an internal write reach a customer
 needs the preview too; `proposalexecutor.ReviewRequired` is the whole rule, and both the
 decision service and the preview service apply it. A plan needs its digest when any step
-still waiting does (`agent.PlanNeedsReview`). Every proposal the server files is classified,
+still waiting does (`agentplan.PlanNeedsReview`). Every proposal the server files is classified,
 the auto-assign planner's included (`dispatchautoassignservice` asks the executor, as the
 recorder asks the tool), so an internal write is not held by a missing class. Without one the approval is refused before anything is recorded with
 the business error "This change must be reviewed before it is approved"
@@ -300,7 +300,7 @@ approval would be recorded unreviewed. In the Desk:
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
-chat's editable fields (`agentports.ProposalFields`).
+chat's editable fields (`agenttoolports.ProposalFields`).
 
 ## Record subsets
 
@@ -321,7 +321,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   a list of strings, back as the parameter's modification.
 - **Labels.** GraphQL reads them through the `SubsetLabels` loader: each subset field asks
   once for all of its ids, and a request's fields are labelled together, one query per
-  resource for each `agentports.MaxRecordLabelsPerResource` (5000) records. The chat's
+  resource for each `agentruntimeports.MaxRecordLabelsPerResource` (5000) records. The chat's
   `/assistant/threads/{id}/proposals/` labels every pending proposal in a thread in one
   `Labels` read. Both check the reader's read permission on the resource first and read
   nothing without it.
@@ -368,7 +368,7 @@ array-of-ids parameter as a subset of one permission resource's records with
   "everything awaiting approval" unseen is what the tool exists to prevent),
   `carrier_set_monitoring` (billed per carrier from `carrier_list`, a general list), and
   `edi_retry_message` and `edi_reprocess_inbound_file` (general lists of messages
-  and files, capped at `ediservice.MaxBulkEDIActionItems`), and `invoice_post`,
+  and files, capped at `edibulk.MaxItems`), and `invoice_post`,
   `invoice_send`, `billing_approve_queue_item` and the four settlement approve and post
   tools (up to 50, each record previewed and run through its single-record tool; see
   [Tools that take one record or many](#tools-that-take-one-record-or-many)).
@@ -398,7 +398,7 @@ approves exactly the set that remains:
 | `settlement_approve_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's approve decision |
 | `settlement_post_carrier` | `settlementIds` (carrier settlement) | the carrier settlement's post decision |
 
-Each such tool wraps a single-record tool (`agenttools/common/bulk_records.go`) and copies its
+Each such tool wraps a single-record tool (`agenttools/recordbatch/bulk_records.go`) and copies its
 policy: the same class, permission and floor. Phase 3 merged each of them with its
 single-record tool, so the single-record tool is an implementation the registered tool runs,
 not a tool of its own. A call naming one record is the single tool's call: its
@@ -501,12 +501,12 @@ unstable digest shows itself.
 
 | Piece | Path (under `services/tms`) |
 |---|---|
-| Model, bounds, digest | `internal/modules/agent/domain/agent/preview.go`, `proposalbaseline.go` |
-| Ports | `internal/modules/agent/ports/agentports/agenttool.go`, `internal/modules/agent/ports/agentports/proposalpreview.go`, `internal/modules/agent/ports/agentports/agentproposalbaseline.go` |
+| Model, bounds, digest | `internal/modules/agent/domain/agentpreview/preview.go`, `proposalbaseline.go` |
+| Ports | `internal/modules/agent/ports/agenttoolports/agenttool.go`, `internal/modules/agent/ports/agentruntimeports/proposalpreview.go`, `internal/modules/agent/ports/agentproposalports/agentproposalbaseline.go` |
 | Builder | `internal/modules/agent/app/toolpreview/` |
 | Service | `internal/modules/agent/app/proposalpreviewservice/` |
 | Labels, baselines | `internal/modules/agent/adapters/postgres/{recordlabelrepository,agentproposalbaselinerepository}/` |
-| Filing | `internal/modules/agent/app/agentruntime/baseline.go` |
+| Filing | `internal/modules/agent/app/agentruntime/tooldispatch/baseline.go` |
 | Decisions | `agentdecisionservice/preview.go`, `agentplanservice/preview.go`, `proposalexecutor` |
 | Migration | `20261231006790_agent_proposal_previews` |
 

@@ -2,7 +2,6 @@ package apikeyhandler_test
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"net/http"
 	"testing"
 	"time"
@@ -11,11 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,14 +30,16 @@ import (
 	"go.uber.org/zap"
 )
 
-func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.MockAPIKeyRepository) {
+func setupAPIKeyHandler(
+	t *testing.T,
+) (*apikeyhandler.Handler, *apikeyportsmock.MockAPIKeyRepository) {
 	t.Helper()
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
-			APIToken: config.APITokenConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
+			APIToken: securityconfig.APITokenConfig{
 				Enabled:          true,
 				DefaultExpiry:    24 * time.Hour,
 				MaxExpiry:        7 * 24 * time.Hour,
@@ -43,19 +48,19 @@ func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.
 		},
 	}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},
 		ErrorHandler:     errorHandler,
 	})
 	svc := apikeyservice.New(apikeyservice.Params{
-		Logger:   zap.NewNop(),
-		Repo:     repo,
-		Registry: permissiondomain.NewRegistry(),
-		Engine:   &mocks.AllowAllPermissionEngine{},
-		Config:   cfg,
+		Logger:         zap.NewNop(),
+		Repo:           repo,
+		Registry:       permissioncatalog.NewRegistry(),
+		Engine:         &mocks.AllowAllPermissionEngine{},
+		SecurityConfig: &cfg.Security,
 	})
 
 	return apikeyhandler.New(apikeyhandler.Params{

@@ -4,15 +4,17 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
-	return &accountingsyncports.AccountingPaymentDocument{
+func paymentDoc() *accountingconnectorports.AccountingPaymentDocument {
+	return &accountingconnectorports.AccountingPaymentDocument{
 		Auth:                     testAuth(),
 		RequestID:                testRequestID,
 		CustomerExternalID:       testCustomer,
@@ -23,7 +25,7 @@ func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
 		PrivateNote:              "Payment P-9",
 		TotalAmount:              decimal.NewFromInt(1450),
 		ShortPayItemExternalID:   testWriteOffItem,
-		Applications: []accountingsyncports.AccountingPaymentApplication{
+		Applications: []accountingconnectorports.AccountingPaymentApplication{
 			{
 				InvoiceExternalID: testInvoice,
 				InvoiceNumber:     "INV-1001",
@@ -40,7 +42,7 @@ func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
 }
 
 func shortPayRequest() string {
-	return accountingsync.SyncStepRequestID(testRequestID, stepShortPayBase)
+	return accountingsync.SyncStepRequestID(testRequestID, nsdocsync.StepShortPayBase)
 }
 
 func TestSavePaymentWritesTheShortPayCreditThenThePayment(t *testing.T) {
@@ -48,10 +50,10 @@ func TestSavePaymentWritesTheShortPayCreditThenThePayment(t *testing.T) {
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
 		switch {
-		case call.is(http.MethodPut, eidPath(recordCreditMemo, shortPayRequest())):
-			return upserted(recordCreditMemo, "1320")
-		case call.is(http.MethodPut, eidPath(recordCustomerPayment, testRequestID)):
-			return upserted(recordCustomerPayment, testPayment)
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordCreditMemo, shortPayRequest())):
+			return upserted(nsdocsync.RecordCreditMemo, "1320")
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordCustomerPayment, testRequestID)):
+			return upserted(nsdocsync.RecordCustomerPayment, testPayment)
 		}
 		return reply{}
 	}}
@@ -60,13 +62,17 @@ func TestSavePaymentWritesTheShortPayCreditThenThePayment(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testPayment, result.ExternalID)
 	assert.Equal(t, "DOC-"+testPayment, result.DocNumber)
-	assert.Equal(t, docTypeCustomerPayment, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.DocTypeCustomerPayment,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	assert.Equal(t, "1320", result.Refs[accountingsync.ExternalRefShortPayPrefix+testInvoice])
 
 	writes := fake.writes()
 	require.Equal(t, []string{
-		"PUT " + eidPath(recordCreditMemo, shortPayRequest()),
-		"PUT " + eidPath(recordCustomerPayment, testRequestID),
+		"PUT " + eidPath(nsdocsync.RecordCreditMemo, shortPayRequest()),
+		"PUT " + eidPath(nsdocsync.RecordCustomerPayment, testRequestID),
 	}, methods(writes))
 
 	memo := writes[0].Body
@@ -95,7 +101,7 @@ func TestSavePaymentUpdateUnappliesInvoicesNoLongerPaid(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)) &&
+		if call.is(http.MethodGet, recordPath(nsdocsync.RecordCustomerPayment, testPayment)) &&
 			call.Query.Get("expandSubResources") == "true" {
 			return fixtureReply(t, http.StatusOK, "customer_payment.json")
 		}
@@ -114,7 +120,7 @@ func TestSavePaymentUpdateUnappliesInvoicesNoLongerPaid(t *testing.T) {
 	writes := fake.writes()
 	require.Equal(
 		t,
-		[]string{"PATCH " + recordPath(recordCustomerPayment, testPayment)},
+		[]string{"PATCH " + recordPath(nsdocsync.RecordCustomerPayment, testPayment)},
 		methods(writes),
 	)
 	apply := items(t, writes[0].Body, "apply")
@@ -146,12 +152,12 @@ func TestSavePaymentRefusesUnmappedAccountsAndItems(t *testing.T) {
 	doc = paymentDoc()
 	doc.Applications[1].AppliedAmount = decimal.NewFromInt(-1)
 	_, err = conn.SavePayment(t.Context(), doc)
-	require.ErrorIs(t, err, errAmountInvalid)
+	require.ErrorIs(t, err, nsbinding.ErrAmountInvalid)
 
 	doc = paymentDoc()
 	doc.Applications[1].InvoiceExternalID = ""
 	_, err = conn.SavePayment(t.Context(), doc)
-	require.ErrorIs(t, err, errApplyTarget)
+	require.ErrorIs(t, err, nsbinding.ErrApplyTarget)
 	assert.Equal(t, accountingsync.SyncErrorValidation, conn.ClassifyDocumentError(err).Category)
 	assert.Empty(t, fake.writes())
 }
@@ -166,9 +172,9 @@ func paymentVoidResponder(t *testing.T, state string) func(call nsCall) reply {
 					"type": "CustPymt", "closed": state,
 				})),
 			}
-		case call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCustomerPayment, testPayment)):
 			return fixtureReply(t, http.StatusOK, "customer_payment.json")
-		case call.is(http.MethodGet, recordPath(recordCreditMemo, "1320")):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCreditMemo, "1320")):
 			return reply{status: http.StatusOK, body: `{"id":"1320","apply":{"items":[` +
 				`{"doc":{"id":"1201"},"apply":true,"amount":50.0}]}}`}
 		}
@@ -189,10 +195,10 @@ func TestVoidPaymentUnappliesThenDeletes(t *testing.T) {
 
 	writes := fake.writes()
 	require.Equal(t, []string{
-		"PATCH " + recordPath(recordCustomerPayment, testPayment),
-		"DELETE " + recordPath(recordCustomerPayment, testPayment),
-		"PATCH " + recordPath(recordCreditMemo, "1320"),
-		"DELETE " + recordPath(recordCreditMemo, "1320"),
+		"PATCH " + recordPath(nsdocsync.RecordCustomerPayment, testPayment),
+		"DELETE " + recordPath(nsdocsync.RecordCustomerPayment, testPayment),
+		"PATCH " + recordPath(nsdocsync.RecordCreditMemo, "1320"),
+		"DELETE " + recordPath(nsdocsync.RecordCreditMemo, "1320"),
 	}, methods(writes))
 	apply := items(t, writes[0].Body, "apply")
 	require.Len(t, apply, 2)
@@ -227,7 +233,7 @@ func TestVoidPaymentWhoseDeleteIsRefusedForThePeriodAsksForAReversal(t *testing.
 
 	responder := paymentVoidResponder(t, "F")
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodDelete, recordPath(recordCustomerPayment, testPayment)) {
+		if call.is(http.MethodDelete, recordPath(nsdocsync.RecordCustomerPayment, testPayment)) {
 			return fixtureReply(t, http.StatusBadRequest, "error_period_closed.json")
 		}
 		return responder(call)
@@ -239,7 +245,7 @@ func TestVoidPaymentWhoseDeleteIsRefusedForThePeriodAsksForAReversal(t *testing.
 	)
 	classified := conn.ClassifyDocumentError(err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, classified.Category)
-	assert.Equal(t, reversePayment, classified.Resolution)
+	assert.Equal(t, nsdocsync.ReversePayment, classified.Resolution)
 }
 
 func TestVoidPaymentOffsetsAShortPayCreditMemoInAClosedPeriod(t *testing.T) {
@@ -255,12 +261,12 @@ func TestVoidPaymentOffsetsAShortPayCreditMemoInAClosedPeriod(t *testing.T) {
 			}
 			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(testPayment,
 				map[string]any{"type": "CustPymt"}))}
-		case call.is(http.MethodGet, recordPath(recordCustomerPayment, testPayment)):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCustomerPayment, testPayment)):
 			return fixtureReply(t, http.StatusOK, "customer_payment.json")
-		case call.is(http.MethodGet, recordPath(recordCreditMemo, "1320")):
+		case call.is(http.MethodGet, recordPath(nsdocsync.RecordCreditMemo, "1320")):
 			return fixtureReply(t, http.StatusOK, "credit_memo.json")
-		case call.is(http.MethodPut, eidPath(recordInvoice, offsetID)):
-			return upserted(recordInvoice, "1211")
+		case call.is(http.MethodPut, eidPath(nsdocsync.RecordInvoice, offsetID)):
+			return upserted(nsdocsync.RecordInvoice, "1211")
 		}
 		return reply{}
 	}}
@@ -269,11 +275,11 @@ func TestVoidPaymentOffsetsAShortPayCreditMemoInAClosedPeriod(t *testing.T) {
 	ref.Refs[accountingsync.ExternalRefShortPayPrefix+testInvoice] = "1320"
 	result, err := conn.VoidPayment(t.Context(), ref)
 	require.NoError(t, err)
-	assert.Equal(t, "1211", result.Refs[refCorrective+"-"+testInvoice])
+	assert.Equal(t, "1211", result.Refs[nsdocsync.RefCorrective+"-"+testInvoice])
 	writes := methods(fake.writes())
-	assert.Contains(t, writes, "DELETE "+recordPath(recordCustomerPayment, testPayment))
-	assert.Contains(t, writes, "PUT "+eidPath(recordInvoice, offsetID))
-	assert.NotContains(t, writes, "DELETE "+recordPath(recordCreditMemo, "1320"))
+	assert.Contains(t, writes, "DELETE "+recordPath(nsdocsync.RecordCustomerPayment, testPayment))
+	assert.Contains(t, writes, "PUT "+eidPath(nsdocsync.RecordInvoice, offsetID))
+	assert.NotContains(t, writes, "DELETE "+recordPath(nsdocsync.RecordCreditMemo, "1320"))
 }
 
 func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
@@ -283,7 +289,7 @@ func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 	conn := testConnector(t, fake)
 	result, err := conn.CreateCreditApplication(
 		t.Context(),
-		&accountingsyncports.AccountingCreditApplicationDocument{
+		&accountingconnectorports.AccountingCreditApplicationDocument{
 			Auth:                 testAuth(),
 			RequestID:            testRequestID,
 			CustomerExternalID:   testCustomer,
@@ -297,7 +303,7 @@ func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 	assert.Equal(t, testCreditMemo, result.Refs[accountingsync.ExternalRefDocument])
 	assert.Equal(t, testInvoice, result.Refs[accountingsync.ExternalRefApplication])
 
-	patch, ok := fake.find(http.MethodPatch, recordPath(recordCreditMemo, testCreditMemo))
+	patch, ok := fake.find(http.MethodPatch, recordPath(nsdocsync.RecordCreditMemo, testCreditMemo))
 	require.True(t, ok)
 	apply := items(t, patch.Body, "apply")
 	require.Len(t, apply, 1)
@@ -307,12 +313,12 @@ func TestCreateCreditApplicationPatchesTheCreditMemoApplyList(t *testing.T) {
 
 	_, err = conn.CreateCreditApplication(
 		t.Context(),
-		&accountingsyncports.AccountingCreditApplicationDocument{
+		&accountingconnectorports.AccountingCreditApplicationDocument{
 			Auth:   testAuth(),
 			Amount: decimal.Zero,
 		},
 	)
-	require.ErrorIs(t, err, errAmountInvalid)
+	require.ErrorIs(t, err, nsbinding.ErrAmountInvalid)
 }
 
 func TestVoidCreditApplicationTurnsTheApplyLineOff(t *testing.T) {
@@ -324,7 +330,7 @@ func TestVoidCreditApplicationTurnsTheApplyLineOff(t *testing.T) {
 	ref.Refs[accountingsync.ExternalRefApplication] = testInvoice
 	_, err := conn.VoidCreditApplication(t.Context(), ref)
 	require.NoError(t, err)
-	patch, ok := fake.find(http.MethodPatch, recordPath(recordCreditMemo, testCreditMemo))
+	patch, ok := fake.find(http.MethodPatch, recordPath(nsdocsync.RecordCreditMemo, testCreditMemo))
 	require.True(t, ok)
 	apply := items(t, patch.Body, "apply")
 	require.Len(t, apply, 1)
@@ -335,5 +341,9 @@ func TestVoidCreditApplicationTurnsTheApplyLineOff(t *testing.T) {
 	unknown := voidRef(accountingsync.SyncObjectCreditApplication, testCreditMemo)
 	_, err = conn.VoidCreditApplication(t.Context(), unknown)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, syncErrorOf(t, err).Category)
-	assert.Equal(t, 1, fake.count(http.MethodPatch, recordPath(recordCreditMemo, testCreditMemo)))
+	assert.Equal(
+		t,
+		1,
+		fake.count(http.MethodPatch, recordPath(nsdocsync.RecordCreditMemo, testCreditMemo)),
+	)
 }

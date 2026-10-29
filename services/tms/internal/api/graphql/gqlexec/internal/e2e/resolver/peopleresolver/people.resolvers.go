@@ -11,11 +11,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
 )
 
 func (r *DriverResolver) Truck(ctx context.Context, obj *model.Driver) (*model.Truck, error) {
-	return base.TruckByID(r.Fleet, obj.TruckID), nil
+	return resolvercore.TruckByID(r.Fleet, obj.TruckID), nil
 }
 
 func (r *MutationResolver) Touch(ctx context.Context, ids []string) ([]string, error) {

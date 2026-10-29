@@ -4,17 +4,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -68,7 +70,7 @@ func TestReadSignatureLeavesALowConfidenceReadingUnknown(t *testing.T) {
 
 			finding := readSignature(&documentaiextractionports.AISignatureReading{
 				Status:     status,
-				Confidence: reviewReadyConfidenceThreshold - 0.01,
+				Confidence: documentanalysis.ReviewReadyConfidenceThreshold - 0.01,
 				SignedDate: "2026-10-14",
 			}, signatureNow())
 
@@ -117,7 +119,7 @@ type signatureFixture struct {
 	activities *Activities
 	docRepo    *documentportsmock.MockDocumentRepository
 	typeRepo   *documenttypeportsmock.MockDocumentTypeRepository
-	realtime   *agentportsmock.MockRealtimeService
+	realtime   *realtimeportsmock.MockRealtimeService
 	doc        *document.Document
 	tenant     pagination.TenantInfo
 }
@@ -130,7 +132,7 @@ func newSignatureFixture(t *testing.T, requiresSignature bool) *signatureFixture
 	typeID := pulid.MustNew("dt_")
 	docRepo := documentportsmock.NewMockDocumentRepository(t)
 	typeRepo := documenttypeportsmock.NewMockDocumentTypeRepository(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 
 	typeRepo.EXPECT().
@@ -149,7 +151,7 @@ func newSignatureFixture(t *testing.T, requiresSignature bool) *signatureFixture
 		activities: &Activities{
 			logger: zap.NewNop(),
 			metrics: &metrics.Registry{
-				Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+				Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 			},
 			documentRepo:     docRepo,
 			documentTypeRepo: typeRepo,
@@ -190,7 +192,7 @@ func TestRecordDetectedSignatureWritesAConfidentReadingAndSignalsTheChange(t *te
 	fx.realtime.EXPECT().
 		PublishResourceInvalidation(
 			mock.Anything,
-			mock.MatchedBy(func(req *agentports.PublishResourceInvalidationRequest) bool {
+			mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == permission.ResourceDocument.String() &&
 					req.RecordID == fx.doc.ID
 			}),

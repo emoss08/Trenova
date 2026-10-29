@@ -9,7 +9,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -36,9 +42,9 @@ func (f *fakeDB) Transact(
 	return fn(ctx)
 }
 
-type fakeRegistry struct{ tools []agentports.AgentTool }
+type fakeRegistry struct{ tools []agenttoolports.AgentTool }
 
-func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (r fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	for _, tool := range r.tools {
 		if tool.Name() == name {
 			return tool, true
@@ -48,14 +54,14 @@ func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r fakeRegistry) All() []agentports.AgentTool { return r.tools }
+func (r fakeRegistry) All() []agenttoolports.AgentTool { return r.tools }
 
-func (r fakeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (r fakeRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
 type baseTool struct {
 	name     string
 	resource permission.Resource
-	scope    agent.ToolScope
+	scope    agenttooltrust.ToolScope
 }
 
 func (t *baseTool) Name() string        { return t.name }
@@ -73,39 +79,39 @@ func (t *baseTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *baseTool) Policy() agentports.ToolPolicy {
+func (t *baseTool) Policy() agenttoolports.ToolPolicy {
 	scope := t.scope
 	if scope == "" {
-		scope = agent.ToolScopeTenant
+		scope = agenttooltrust.ToolScopeTenant
 	}
 
-	return agentports.ToolPolicy{
+	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.resource,
 		Operation:     permission.OpUpdate,
 		Scope:         scope,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A test tool.",
 	}
 }
 
-func (t *baseTool) Execute(context.Context, agentports.ToolExecuteParams) error {
+func (t *baseTool) Execute(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return fmt.Errorf("%s must never run in a preview", t.name)
 }
 
-func (t *baseTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *baseTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	raw, _ := params["shipmentId"].(string)
 	id, err := pulid.Parse(raw)
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, true
 }
 
 // shipmentState is what the fake "database" holds for the previewing tool.
@@ -123,7 +129,7 @@ type previewingTool struct {
 
 	state   *shipmentState
 	block   bool
-	asked   []agentports.ToolExecuteParams
+	asked   []agenttoolports.ToolExecuteParams
 	money   bool
 	failErr error
 	refusal error
@@ -131,9 +137,9 @@ type previewingTool struct {
 
 func (t *previewingTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
-	t.asked = append(t.asked, params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	t.asked = append(t.asked, *params)
 	if t.block {
 		<-ctx.Done()
 
@@ -144,7 +150,8 @@ func (t *previewingTool) Preview(
 	}
 	if t.refusal != nil {
 		preview := toolpreview.Build("Would set PRO " + t.state.ProNumber + ".")
-		preview.AddWarning(toolpreview.WouldFail(t.refusal))
+		warning := toolpreview.WouldFail(t.refusal)
+		preview.AddWarning(&warning)
 
 		return preview, nil
 	}
@@ -174,7 +181,7 @@ func (t *previewingTool) Preview(
 		return nil, err
 	}
 	if t.money {
-		change.Money = toolpreview.MoneyBlock("USD", agent.MoneyLine{
+		change.Money = toolpreview.MoneyBlock("USD", agentpreview.MoneyLine{
 			Label:  "Linehaul",
 			Before: decimal.NewNullDecimal(decimal.RequireFromString("100")),
 			After:  decimal.NewNullDecimal(decimal.RequireFromString("120")),
@@ -191,7 +198,7 @@ type validatingTool struct {
 	err error
 }
 
-func (t *validatingTool) Validate(context.Context, agentports.ToolExecuteParams) error {
+func (t *validatingTool) Validate(context.Context, *agenttoolports.ToolExecuteParams) error {
 	return t.err
 }
 
@@ -205,7 +212,7 @@ type fakeVersions struct {
 func (f *fakeVersions) Version(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	target agentports.ToolTarget,
+	target agenttoolports.ToolTarget,
 ) (int64, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -218,7 +225,7 @@ func (f *fakeVersions) Version(
 }
 
 type fakeLabeler struct {
-	labels agentports.RecordLabels
+	labels agentruntimeports.RecordLabels
 	asked  []map[permission.Resource][]pulid.ID
 }
 
@@ -226,7 +233,7 @@ func (f *fakeLabeler) Labels(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (agentports.RecordLabels, error) {
+) (agentruntimeports.RecordLabels, error) {
 	f.asked = append(f.asked, refs)
 
 	return f.labels, nil
@@ -234,12 +241,12 @@ func (f *fakeLabeler) Labels(
 
 type fakeBaselines struct {
 	mu      sync.Mutex
-	kept    []*agent.ProposalBaseline
-	stored  []*agent.ProposalBaseline
+	kept    []*agentpreview.ProposalBaseline
+	stored  []*agentpreview.ProposalBaseline
 	listErr error
 }
 
-func (f *fakeBaselines) Create(_ context.Context, baseline *agent.ProposalBaseline) error {
+func (f *fakeBaselines) Create(_ context.Context, baseline *agentpreview.ProposalBaseline) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.kept = append(f.kept, baseline)
@@ -249,12 +256,12 @@ func (f *fakeBaselines) Create(_ context.Context, baseline *agent.ProposalBaseli
 
 func (f *fakeBaselines) ListByProposals(
 	_ context.Context,
-	req agentports.ListProposalBaselinesRequest,
-) ([]*agent.ProposalBaseline, error) {
+	req agentproposalports.ListProposalBaselinesRequest,
+) ([]*agentpreview.ProposalBaseline, error) {
 	if f.listErr != nil {
 		return nil, f.listErr
 	}
-	out := make([]*agent.ProposalBaseline, 0, len(f.stored))
+	out := make([]*agentpreview.ProposalBaseline, 0, len(f.stored))
 	for _, baseline := range f.stored {
 		for _, id := range req.ProposalIDs {
 			if baseline.ProposalID == id {
@@ -267,13 +274,13 @@ func (f *fakeBaselines) ListByProposals(
 }
 
 type fakeDecisions struct {
-	decisions []*agent.AgentDecision
+	decisions []*agentdecision.AgentDecision
 }
 
 func (f *fakeDecisions) ListByProposals(
 	context.Context,
-	agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+	agentdecisionports.ListAgentDecisionsByProposalsRequest,
+) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
 
@@ -283,7 +290,7 @@ type fakeSteps struct {
 
 func (f *fakeSteps) ListByPlan(
 	context.Context,
-	agentports.ListAgentProposalsByPlanRequest,
+	agentproposalports.ListAgentProposalsByPlanRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.steps, nil
 }
@@ -295,7 +302,10 @@ type fakeChecker struct {
 	reviewed map[string]any
 }
 
-func (f *fakeChecker) ReviewRequired(proposal *agent.AgentProposal, modifications map[string]any) bool {
+func (f *fakeChecker) ReviewRequired(
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+) bool {
 	f.reviewed = modifications
 	if f.byClass {
 		return proposal.ApprovalNeedsReview()
@@ -361,7 +371,7 @@ type fixture struct {
 	customer  pulid.ID
 }
 
-func newFixture(extra ...agentports.AgentTool) *fixture {
+func newFixture(extra ...agenttoolports.AgentTool) *fixture {
 	f := &fixture{
 		db:        &fakeDB{},
 		versions:  &fakeVersions{versions: map[pulid.ID]int64{}, missing: map[pulid.ID]bool{}},
@@ -385,11 +395,11 @@ func newFixture(extra ...agentports.AgentTool) *fixture {
 		},
 	}
 	f.versions.versions[f.tool.state.ID] = 3
-	f.labeler = &fakeLabeler{labels: agentports.RecordLabels{
+	f.labeler = &fakeLabeler{labels: agentruntimeports.RecordLabels{
 		permission.ResourceCustomer: {f.customer: "Acme Foods"},
 	}}
 
-	tools := append([]agentports.AgentTool{f.tool}, extra...)
+	tools := append([]agenttoolports.AgentTool{f.tool}, extra...)
 	f.svc = &Service{
 		l:           zap.NewNop(),
 		db:          f.db,
@@ -427,8 +437,8 @@ func (f *fixture) cancelParams() map[string]any {
 	return map[string]any{"shipmentId": f.tool.state.ID.String(), "status": "Cancelled"}
 }
 
-func (f *fixture) viewer() *agentports.PreviewViewer {
-	return &agentports.PreviewViewer{
+func (f *fixture) viewer() *agentruntimeports.PreviewViewer {
+	return &agentruntimeports.PreviewViewer{
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    pulid.MustNew("usr_"),

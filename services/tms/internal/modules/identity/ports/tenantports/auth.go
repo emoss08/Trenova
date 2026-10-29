@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -103,15 +104,15 @@ type TenantLoginMetadataResponse struct {
 }
 
 type AuthProviderSummary struct {
-	ID       pulid.ID           `json:"id"`
-	Name     string             `json:"name"`
-	Provider tenant.SSOProvider `json:"provider"`
-	Protocol tenant.SSOProtocol `json:"protocol"`
-	Enabled  bool               `json:"enabled"`
+	ID       pulid.ID        `json:"id"`
+	Name     string          `json:"name"`
+	Provider sso.SSOProvider `json:"provider"`
+	Protocol sso.SSOProtocol `json:"protocol"`
+	Enabled  bool            `json:"enabled"`
 }
 
 type StartSSOLoginRequest struct {
-	Provider         tenant.SSOProvider
+	Provider         sso.SSOProvider
 	ProviderID       pulid.ID
 	OrganizationSlug string
 	ReturnTo         string

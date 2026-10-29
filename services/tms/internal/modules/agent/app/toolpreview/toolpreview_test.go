@@ -5,9 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -36,11 +38,11 @@ type testRecord struct {
 	UpdatedAt      int64           `json:"updatedAt"`
 }
 
-func testRegistry(t *testing.T) *permission.Registry {
+func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
-	registry := permission.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:           testResource.String(),
 		DefaultSensitivity: permission.SensitivityInternal,
 		FieldSensitivities: map[string]permission.FieldSensitivity{
@@ -69,7 +71,11 @@ func sampleRecord() *testRecord {
 	}
 }
 
-func fieldByPath(t *testing.T, change *agent.RecordChange, path string) agent.PreviewFieldChange {
+func fieldByPath(
+	t *testing.T,
+	change *agentpreview.RecordChange,
+	path string,
+) agentpreview.PreviewFieldChange {
 	t.Helper()
 
 	for _, field := range change.Fields {
@@ -79,10 +85,10 @@ func fieldByPath(t *testing.T, change *agent.RecordChange, path string) agent.Pr
 	}
 	require.Failf(t, "field not found", "no field %q in %+v", path, change.Fields)
 
-	return agent.PreviewFieldChange{}
+	return agentpreview.PreviewFieldChange{}
 }
 
-func paths(change *agent.RecordChange) []string {
+func paths(change *agentpreview.RecordChange) []string {
 	out := make([]string, 0, len(change.Fields))
 	for _, field := range change.Fields {
 		out = append(out, field.Path)
@@ -117,7 +123,7 @@ func TestUpdate_DiffsWhatThePlanFunctionChanges(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PreviewOperationUpdate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, change.Operation)
 	assert.Equal(t, "PRO-100", change.Label, "the record is named by its PRO")
 	assert.Equal(t, before.ID, change.EntityID)
 	assert.Equal(t, []string{"status", "ratingAmount", "customerId", "notes"}, paths(change),
@@ -200,7 +206,7 @@ func TestArchive_IsAnUpdateThatRetires(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, []string{"status"}, paths(change))
 }
 
@@ -214,7 +220,7 @@ func TestCreate_ShowsTheValuesTheRecordWouldHold(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, "New shipment", change.Label)
 	assert.ElementsMatch(t,
 		[]string{"proNumber", "status", "ratingAmount", "customerId", "pickupAt"},
@@ -234,7 +240,7 @@ func TestDelete_ShowsWhatWouldGo(t *testing.T) {
 
 	change, err := Delete(Record{Resource: testResource}, sampleRecord(), Only("proNumber"))
 	require.NoError(t, err)
-	assert.Equal(t, agent.PreviewOperationDelete, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationDelete, change.Operation)
 	require.Len(t, change.Fields, 1)
 	assert.Equal(t, "PRO-100", change.Fields[0].Before)
 	assert.Nil(t, change.Fields[0].After)
@@ -249,14 +255,14 @@ func TestSend_CarriesTheRenderedMessage(t *testing.T) {
 	t.Parallel()
 
 	change := Send(Record{Resource: permission.ResourceCustomer, Label: "Acme"},
-		&agent.MessagePreview{
-			Channel: agent.MessageChannelEmail,
+		&agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelEmail,
 			To:      []string{"ap@acme.test", " "},
 			Subject: "  Your delivery  ",
 			Body:    "Hello",
 		})
 
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	require.NotNil(t, change.Message)
 	assert.Equal(t, []string{"ap@acme.test"}, change.Message.To)
 	assert.Equal(t, "Your delivery", change.Message.Subject)
@@ -266,12 +272,12 @@ func TestMoney_TotalsLinesAndHonoursSensitivity(t *testing.T) {
 	t.Parallel()
 
 	block := MoneyBlock("usd",
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label:  "Linehaul",
 			Before: decimal.NewNullDecimal(decimal.RequireFromString("1000")),
 			After:  decimal.NewNullDecimal(decimal.RequireFromString("1200")),
 		},
-		agent.MoneyLine{
+		agentpreview.MoneyLine{
 			Label: "Detention",
 			After: decimal.NewNullDecimal(decimal.RequireFromString("150.25")),
 		},
@@ -295,20 +301,24 @@ func TestMoney_TotalsLinesAndHonoursSensitivity(t *testing.T) {
 func TestBuild_BoundsWhatItKeeps(t *testing.T) {
 	t.Parallel()
 
-	changes := make([]*agent.RecordChange, 0, agent.MaxPreviewRecords+3)
-	for range agent.MaxPreviewRecords + 3 {
-		fields := make([]agent.PreviewFieldChange, 0, agent.MaxPreviewFieldsPerRecord+5)
-		for j := range agent.MaxPreviewFieldsPerRecord + 5 {
-			fields = append(fields, agent.PreviewFieldChange{
+	changes := make([]*agentpreview.RecordChange, 0, agentpreview.MaxPreviewRecords+3)
+	for range agentpreview.MaxPreviewRecords + 3 {
+		fields := make(
+			[]agentpreview.PreviewFieldChange,
+			0,
+			agentpreview.MaxPreviewFieldsPerRecord+5,
+		)
+		for j := range agentpreview.MaxPreviewFieldsPerRecord + 5 {
+			fields = append(fields, agentpreview.PreviewFieldChange{
 				Path:  "field" + string(rune('a'+j%26)),
-				After: strings.Repeat("x", agent.MaxPreviewValueBytes+10),
+				After: strings.Repeat("x", agentpreview.MaxPreviewValueBytes+10),
 			})
 		}
-		changes = append(changes, &agent.RecordChange{
-			Operation: agent.PreviewOperationUpdate,
+		changes = append(changes, &agentpreview.RecordChange{
+			Operation: agentpreview.PreviewOperationUpdate,
 			Fields:    fields,
-			Message: &agent.MessagePreview{
-				Body: strings.Repeat("b", agent.MaxPreviewBodyBytes+1),
+			Message: &agentpreview.MessagePreview{
+				Body: strings.Repeat("b", agentpreview.MaxPreviewBodyBytes+1),
 			},
 		})
 	}
@@ -317,16 +327,16 @@ func TestBuild_BoundsWhatItKeeps(t *testing.T) {
 	preview := Build(" Would do a lot. ", changes...)
 
 	assert.Equal(t, "Would do a lot.", preview.Summary)
-	assert.Len(t, preview.Changes, agent.MaxPreviewRecords)
+	assert.Len(t, preview.Changes, agentpreview.MaxPreviewRecords)
 	assert.Equal(t, 3, preview.OmittedRecords)
 	assert.True(t, preview.Partial)
 	first := preview.Changes[0]
-	assert.Len(t, first.Fields, agent.MaxPreviewFieldsPerRecord)
+	assert.Len(t, first.Fields, agentpreview.MaxPreviewFieldsPerRecord)
 	assert.Equal(t, 5, first.OmittedFields)
 	assert.True(t, first.Fields[0].Truncated)
-	assert.LessOrEqual(t, len(first.Fields[0].After.(string)), agent.MaxPreviewValueBytes)
+	assert.LessOrEqual(t, len(first.Fields[0].After.(string)), agentpreview.MaxPreviewValueBytes)
 	assert.True(t, first.Message.BodyTruncated)
-	assert.Len(t, first.Message.Body, agent.MaxPreviewBodyBytes)
+	assert.Len(t, first.Message.Body, agentpreview.MaxPreviewBodyBytes)
 }
 
 func TestDescribe_IsTheParametersAndNothingMore(t *testing.T) {
@@ -341,7 +351,7 @@ func TestDescribe_IsTheParametersAndNothingMore(t *testing.T) {
 	assert.True(t, preview.Partial)
 	assert.Contains(t, preview.Summary, "Would run shipment_cancel")
 	require.Len(t, preview.Changes, 1)
-	assert.Equal(t, agent.PreviewOperationRun, preview.Changes[0].Operation)
+	assert.Equal(t, agentpreview.PreviewOperationRun, preview.Changes[0].Operation)
 	assert.Equal(t, []string{"cancelReason", "shipmentId"}, paths(&preview.Changes[0]),
 		"the owner the runtime writes is not a parameter anyone set")
 	assert.Equal(t, "Cancel reason", preview.Changes[0].Fields[0].Label)
@@ -370,18 +380,20 @@ func TestChain_ProjectsALaterStepFromTheEarlierOne(t *testing.T) {
 
 	shipment := pulid.MustNew("shp_")
 	other := pulid.MustNew("shp_")
-	first := &agent.ProposalPreview{Changes: []agent.RecordChange{{
+	first := &agentpreview.ProposalPreview{Changes: []agentpreview.RecordChange{{
 		Resource:  permission.ResourceShipment,
 		EntityID:  shipment,
-		Operation: agent.PreviewOperationUpdate,
-		Fields:    []agent.PreviewFieldChange{{Path: "status", Before: "New", After: "Hold"}},
+		Operation: agentpreview.PreviewOperationUpdate,
+		Fields: []agentpreview.PreviewFieldChange{
+			{Path: "status", Before: "New", After: "Hold"},
+		},
 	}}}
-	second := &agent.ProposalPreview{Changes: []agent.RecordChange{
+	second := &agentpreview.ProposalPreview{Changes: []agentpreview.RecordChange{
 		{
 			Resource:  permission.ResourceShipment,
 			EntityID:  shipment,
-			Operation: agent.PreviewOperationUpdate,
-			Fields: []agent.PreviewFieldChange{
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{
 				{Path: "status", Before: "New", After: "Cancelled"},
 				{Path: "notes", Before: nil, After: "gone"},
 			},
@@ -389,15 +401,17 @@ func TestChain_ProjectsALaterStepFromTheEarlierOne(t *testing.T) {
 		{
 			Resource:  permission.ResourceShipment,
 			EntityID:  other,
-			Operation: agent.PreviewOperationUpdate,
-			Fields:    []agent.PreviewFieldChange{{Path: "status", Before: "New", After: "Hold"}},
+			Operation: agentpreview.PreviewOperationUpdate,
+			Fields: []agentpreview.PreviewFieldChange{
+				{Path: "status", Before: "New", After: "Hold"},
+			},
 		},
 	}}
-	third := &agent.ProposalPreview{Changes: []agent.RecordChange{{
+	third := &agentpreview.ProposalPreview{Changes: []agentpreview.RecordChange{{
 		Resource:  permission.ResourceShipment,
 		EntityID:  shipment,
-		Operation: agent.PreviewOperationUpdate,
-		Fields:    []agent.PreviewFieldChange{{Path: "status", Before: "New", After: "New"}},
+		Operation: agentpreview.PreviewOperationUpdate,
+		Fields:    []agentpreview.PreviewFieldChange{{Path: "status", Before: "New", After: "New"}},
 	}}}
 
 	Chain(
@@ -419,7 +433,7 @@ func TestChain_ProjectsALaterStepFromTheEarlierOne(t *testing.T) {
 	assert.Zero(t, chained.Fields[1].ProjectedFromStep)
 	assert.Zero(t, second.Changes[1].DependsOnStep, "another record is not chained")
 	require.Len(t, second.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningDependsOnStep, second.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDependsOnStep, second.Warnings[0].Code)
 	assert.Equal(t, []string{"1"}, second.Warnings[0].Args)
 
 	assert.Equal(t, 2, third.Changes[0].DependsOnStep, "the nearest earlier step")

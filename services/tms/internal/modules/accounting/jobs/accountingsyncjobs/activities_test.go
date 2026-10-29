@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,7 +16,7 @@ import (
 )
 
 type fakeMappingService struct {
-	accountingsyncports.AccountingMappingService
+	accountingmappingports.AccountingMappingScorer
 	modelErr error
 	applied  int
 }
@@ -49,7 +49,11 @@ func TestModelPassActivityFallsBackOnTheFinalAttempt(t *testing.T) {
 	fake := &fakeMappingService{modelErr: errors.New("model overloaded"), applied: 1}
 	a := NewActivities(ActivitiesParams{Mappings: fake, Logger: zap.NewNop()})
 
-	applied, err := a.AccountingMappingModelPassActivity(t.Context(), refreshPayload(), []pulid.ID{pulid.MustNew("acctm_")})
+	applied, err := a.AccountingMappingModelPassActivity(
+		t.Context(),
+		refreshPayload(),
+		[]pulid.ID{pulid.MustNew("acctm_")},
+	)
 	require.NoError(t, err, "outside a retrying activity every attempt is the last")
 	assert.Equal(t, 1, applied)
 

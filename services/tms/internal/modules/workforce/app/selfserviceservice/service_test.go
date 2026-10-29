@@ -6,7 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,38 +19,38 @@ import (
 )
 
 type fakeRepo struct {
-	workerports.SelfServiceRepository
+	selfserviceports.SelfServiceRepository
 
-	policy     *worker.WorkerPolicy
-	policies   []*worker.WorkerPolicy
-	acks       []*worker.WorkerPolicyAcknowledgement
+	policy     *workerpolicy.WorkerPolicy
+	policies   []*workerpolicy.WorkerPolicy
+	acks       []*workerpolicy.WorkerPolicyAcknowledgement
 	ackCount   int
-	saved      *worker.WorkerPolicy
-	pending    []*worker.WorkerProfileChangeRequest
-	request    *worker.WorkerProfileChangeRequest
-	created    *worker.WorkerProfileChangeRequest
-	updated    *worker.WorkerProfileChangeRequest
-	compliance []workerports.PolicyComplianceRow
+	saved      *workerpolicy.WorkerPolicy
+	pending    []*profilechange.WorkerProfileChangeRequest
+	request    *profilechange.WorkerProfileChangeRequest
+	created    *profilechange.WorkerProfileChangeRequest
+	updated    *profilechange.WorkerProfileChangeRequest
+	compliance []selfserviceports.PolicyComplianceRow
 }
 
 func (r *fakeRepo) GetPolicyByID(
 	_ context.Context,
-	_ *workerports.GetWorkerPolicyByIDRequest,
-) (*worker.WorkerPolicy, error) {
+	_ *selfserviceports.GetWorkerPolicyByIDRequest,
+) (*workerpolicy.WorkerPolicy, error) {
 	return r.policy, nil
 }
 
 func (r *fakeRepo) ListPolicies(
 	_ context.Context,
-	_ *workerports.ListWorkerPoliciesRequest,
-) ([]*worker.WorkerPolicy, error) {
+	_ *selfserviceports.ListWorkerPoliciesRequest,
+) ([]*workerpolicy.WorkerPolicy, error) {
 	return r.policies, nil
 }
 
 func (r *fakeRepo) UpdatePolicy(
 	_ context.Context,
-	entity *worker.WorkerPolicy,
-) (*worker.WorkerPolicy, error) {
+	entity *workerpolicy.WorkerPolicy,
+) (*workerpolicy.WorkerPolicy, error) {
 	r.saved = entity
 	return entity, nil
 }
@@ -63,9 +66,9 @@ func (r *fakeRepo) CountAcknowledgements(
 
 func (r *fakeRepo) ListAcknowledgements(
 	_ context.Context,
-	req *workerports.ListPolicyAcknowledgementsRequest,
-) ([]*worker.WorkerPolicyAcknowledgement, error) {
-	out := make([]*worker.WorkerPolicyAcknowledgement, 0, len(r.acks))
+	req *selfserviceports.ListPolicyAcknowledgementsRequest,
+) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
+	out := make([]*workerpolicy.WorkerPolicyAcknowledgement, 0, len(r.acks))
 	for _, ack := range r.acks {
 		if !req.PolicyID.IsNil() && ack.PolicyID != req.PolicyID {
 			continue
@@ -80,8 +83,8 @@ func (r *fakeRepo) ListAcknowledgements(
 
 func (r *fakeRepo) CreateAcknowledgement(
 	_ context.Context,
-	entity *worker.WorkerPolicyAcknowledgement,
-) (*worker.WorkerPolicyAcknowledgement, error) {
+	entity *workerpolicy.WorkerPolicyAcknowledgement,
+) (*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	entity.ID = pulid.MustNew("wpak_")
 	r.acks = append(r.acks, entity)
 	return entity, nil
@@ -89,29 +92,29 @@ func (r *fakeRepo) CreateAcknowledgement(
 
 func (r *fakeRepo) PolicyCompliance(
 	_ context.Context,
-	_ *workerports.PolicyComplianceRequest,
-) ([]workerports.PolicyComplianceRow, error) {
+	_ *selfserviceports.PolicyComplianceRequest,
+) ([]selfserviceports.PolicyComplianceRow, error) {
 	return r.compliance, nil
 }
 
 func (r *fakeRepo) ListChangeRequests(
 	_ context.Context,
-	_ *workerports.ListProfileChangeRequestsRequest,
-) ([]*worker.WorkerProfileChangeRequest, error) {
+	_ *selfserviceports.ListProfileChangeRequestsRequest,
+) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	return r.pending, nil
 }
 
 func (r *fakeRepo) GetChangeRequestByID(
 	_ context.Context,
-	_ *workerports.GetProfileChangeRequestByIDRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	_ *selfserviceports.GetProfileChangeRequestByIDRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	return r.request, nil
 }
 
 func (r *fakeRepo) CreateChangeRequest(
 	_ context.Context,
-	entity *worker.WorkerProfileChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	entity *profilechange.WorkerProfileChangeRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	entity.ID = pulid.MustNew("wpcr_")
 	r.created = entity
 	return entity, nil
@@ -119,8 +122,8 @@ func (r *fakeRepo) CreateChangeRequest(
 
 func (r *fakeRepo) UpdateChangeRequest(
 	_ context.Context,
-	entity *worker.WorkerProfileChangeRequest,
-) (*worker.WorkerProfileChangeRequest, error) {
+	entity *profilechange.WorkerProfileChangeRequest,
+) (*profilechange.WorkerProfileChangeRequest, error) {
 	r.updated = entity
 	return entity, nil
 }
@@ -179,8 +182,8 @@ func employee() *worker.Worker {
 	}
 }
 
-func handbook() *worker.WorkerPolicy {
-	return &worker.WorkerPolicy{
+func handbook() *workerpolicy.WorkerPolicy {
+	return &workerpolicy.WorkerPolicy{
 		ID:                pulid.MustNew("wpol_"),
 		Status:            domaintypes.StatusActive,
 		Code:              "HANDBOOK",
@@ -188,7 +191,7 @@ func handbook() *worker.WorkerPolicy {
 		Body:              "Be safe.",
 		VersionLabel:      "1",
 		RequiresSignature: true,
-		AppliesTo:         worker.PolicyAudienceEmployees,
+		AppliesTo:         workerpolicy.PolicyAudienceEmployees,
 		EffectiveFrom:     1_700_000_000,
 	}
 }
@@ -256,8 +259,8 @@ func TestPoliciesForWorker_HidesPoliciesForOtherAudiences(t *testing.T) {
 
 	forContractors := handbook()
 	forContractors.ID = pulid.MustNew("wpol_")
-	forContractors.AppliesTo = worker.PolicyAudienceContractors
-	repo := &fakeRepo{policies: []*worker.WorkerPolicy{handbook(), forContractors}}
+	forContractors.AppliesTo = workerpolicy.PolicyAudienceContractors
+	repo := &fakeRepo{policies: []*workerpolicy.WorkerPolicy{handbook(), forContractors}}
 
 	standings, err := newService(repo, &fakeWorkers{}).PoliciesForWorker(
 		t.Context(),
@@ -267,7 +270,7 @@ func TestPoliciesForWorker_HidesPoliciesForOtherAudiences(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, standings, 1)
-	assert.Equal(t, worker.PolicyAudienceEmployees, standings[0].Policy.AppliesTo)
+	assert.Equal(t, workerpolicy.PolicyAudienceEmployees, standings[0].Policy.AppliesTo)
 	assert.True(t, standings[0].Outstanding())
 }
 
@@ -277,8 +280,8 @@ func TestPoliciesForWorker_ANewVersionIsOutstandingAgain(t *testing.T) {
 	policy := handbook()
 	policy.VersionLabel = "2"
 	repo := &fakeRepo{
-		policies: []*worker.WorkerPolicy{policy},
-		acks: []*worker.WorkerPolicyAcknowledgement{{
+		policies: []*workerpolicy.WorkerPolicy{policy},
+		acks: []*workerpolicy.WorkerPolicyAcknowledgement{{
 			PolicyID:     policy.ID,
 			WorkerID:     "wrk_1",
 			VersionLabel: "1",
@@ -387,7 +390,7 @@ func TestAcknowledge_RefusesAPolicyThatDoesNotApply(t *testing.T) {
 	t.Parallel()
 
 	policy := handbook()
-	policy.AppliesTo = worker.PolicyAudienceContractors
+	policy.AppliesTo = workerpolicy.PolicyAudienceContractors
 	repo := &fakeRepo{policy: policy}
 
 	_, err := newService(repo, &fakeWorkers{}).Acknowledge(
@@ -433,7 +436,7 @@ func TestPolicyCompliance_CountsBothSides(t *testing.T) {
 
 	repo := &fakeRepo{
 		policy: handbook(),
-		compliance: []workerports.PolicyComplianceRow{
+		compliance: []selfserviceports.PolicyComplianceRow{
 			{WorkerID: "wrk_1", AcknowledgedAt: 1},
 			{WorkerID: "wrk_2"},
 			{WorkerID: "wrk_3"},
@@ -461,7 +464,7 @@ func TestSubmitChange_RefusesARequestThatChangesNothing(t *testing.T) {
 		t.Context(),
 		&selfserviceservice.SubmitChangeRequest{
 			Worker:     wrk,
-			Wanted:     worker.ContactSnapshotOf(wrk),
+			Wanted:     profilechange.ContactSnapshotOf(wrk),
 			TenantInfo: tenant(),
 		},
 	)
@@ -477,8 +480,8 @@ func TestSubmitChange_RefusesASecondRequestWhileOneWaits(t *testing.T) {
 	t.Parallel()
 
 	wrk := employee()
-	repo := &fakeRepo{pending: []*worker.WorkerProfileChangeRequest{{ID: "wpcr_1"}}}
-	wanted := worker.ContactSnapshotOf(wrk)
+	repo := &fakeRepo{pending: []*profilechange.WorkerProfileChangeRequest{{ID: "wpcr_1"}}}
+	wanted := profilechange.ContactSnapshotOf(wrk)
 	wanted.City = "Shelbyville"
 
 	_, err := newService(repo, &fakeWorkers{wrk: wrk}).SubmitChange(
@@ -495,7 +498,7 @@ func TestSubmitChange_StoresOnlyWhatMoves(t *testing.T) {
 
 	wrk := employee()
 	repo := &fakeRepo{}
-	wanted := worker.ContactSnapshotOf(wrk)
+	wanted := profilechange.ContactSnapshotOf(wrk)
 	wanted.City = "Shelbyville"
 	wanted.PhoneNumber = "555-0100"
 
@@ -510,10 +513,10 @@ func TestSubmitChange_StoresOnlyWhatMoves(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, worker.ProfileChangePending, created.Status)
+	assert.Equal(t, profilechange.ProfileChangePending, created.Status)
 	require.Len(t, created.Changes, 2)
-	assert.Equal(t, worker.ProfileFieldPhoneNumber, created.Changes[0].Field)
-	assert.Equal(t, worker.ProfileFieldCity, created.Changes[1].Field)
+	assert.Equal(t, profilechange.ProfileFieldPhoneNumber, created.Changes[0].Field)
+	assert.Equal(t, profilechange.ProfileFieldCity, created.Changes[1].Field)
 	assert.Equal(t, "Springfield", created.Changes[1].From)
 }
 
@@ -524,13 +527,13 @@ func TestDecideChange_ApprovalWritesTheStoredChangesOntoTheWorker(t *testing.T) 
 
 	wrk := employee()
 	workers := &fakeWorkers{wrk: wrk}
-	repo := &fakeRepo{request: &worker.WorkerProfileChangeRequest{
+	repo := &fakeRepo{request: &profilechange.WorkerProfileChangeRequest{
 		ID:          pulid.MustNew("wpcr_"),
 		WorkerID:    "wrk_1",
-		Status:      worker.ProfileChangePending,
+		Status:      profilechange.ProfileChangePending,
 		SubmittedAt: 1_800_000_000,
-		Changes: []worker.FieldChange{
-			{Field: worker.ProfileFieldCity, From: "Springfield", To: "Shelbyville"},
+		Changes: []profilechange.FieldChange{
+			{Field: profilechange.ProfileFieldCity, From: "Springfield", To: "Shelbyville"},
 		},
 	}}
 
@@ -545,7 +548,7 @@ func TestDecideChange_ApprovalWritesTheStoredChangesOntoTheWorker(t *testing.T) 
 	)
 
 	require.NoError(t, err)
-	assert.Equal(t, worker.ProfileChangeApproved, decided.Status)
+	assert.Equal(t, profilechange.ProfileChangeApproved, decided.Status)
 	require.NotNil(t, workers.written)
 	assert.Equal(t, "Shelbyville", workers.written.City)
 	require.NotNil(t, decided.DecidedAt)
@@ -555,13 +558,13 @@ func TestDecideChange_RejectionNeedsAReasonAndTouchesNothing(t *testing.T) {
 	t.Parallel()
 
 	workers := &fakeWorkers{wrk: employee()}
-	repo := &fakeRepo{request: &worker.WorkerProfileChangeRequest{
+	repo := &fakeRepo{request: &profilechange.WorkerProfileChangeRequest{
 		ID:          pulid.MustNew("wpcr_"),
 		WorkerID:    "wrk_1",
-		Status:      worker.ProfileChangePending,
+		Status:      profilechange.ProfileChangePending,
 		SubmittedAt: 1_800_000_000,
-		Changes: []worker.FieldChange{
-			{Field: worker.ProfileFieldCity, From: "Springfield", To: "Shelbyville"},
+		Changes: []profilechange.FieldChange{
+			{Field: profilechange.ProfileFieldCity, From: "Springfield", To: "Shelbyville"},
 		},
 	}}
 
@@ -583,10 +586,10 @@ func TestDecideChange_RejectionNeedsAReasonAndTouchesNothing(t *testing.T) {
 func TestWithdrawChange_OnlyTheRequesterCan(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeRepo{request: &worker.WorkerProfileChangeRequest{
+	repo := &fakeRepo{request: &profilechange.WorkerProfileChangeRequest{
 		ID:       pulid.MustNew("wpcr_"),
 		WorkerID: "wrk_1",
-		Status:   worker.ProfileChangePending,
+		Status:   profilechange.ProfileChangePending,
 	}}
 
 	_, err := newService(repo, &fakeWorkers{}).WithdrawChange(

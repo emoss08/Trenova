@@ -4,15 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -43,20 +47,20 @@ const fullSplitPercent int64 = 100
 type payAssigner interface {
 	PlanAssignment(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
+		entity *payassignment.WorkerPayAssignment,
 	) (*driverpayservice.AssignmentPlan, error)
 	AssignProfileToWorker(
 		ctx context.Context,
-		entity *driverpay.WorkerPayAssignment,
+		entity *payassignment.WorkerPayAssignment,
 		actor *permissionports.RequestActor,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 type AssignPayProfileTool struct {
 	Assignments payAssigner `json:"-"`
 }
 
-func ProvideAssignPayProfileTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideAssignPayProfileTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &AssignPayProfileTool{Assignments: s}
 }
 
@@ -70,26 +74,30 @@ func (t *AssignPayProfileTool) Description() string {
 }
 
 func (t *AssignPayProfileTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
-		common.ParamWorkerID: common.WorkerProperty(),
+	return toolparams.ObjectParams(map[string]any{
+		toolparams.ParamWorkerID: toolparams.WorkerProperty(),
 		ParamPayProfileID: agenttoolschema.KindID(
 			"The pay profile, from "+payProfileSourcesTool+". Never guess one.",
-			permission.KindPayProfile,
+			recordkind.PayProfile,
 		),
-		common.ParamEffectiveFrom: agenttoolschema.Date("The first day pay is computed under it."),
-		common.ParamEffectiveTo: agenttoolschema.Date(
+		toolparams.ParamEffectiveFrom: agenttoolschema.Date(
+			"The first day pay is computed under it.",
+		),
+		toolparams.ParamEffectiveTo: agenttoolschema.Date(
 			"The day it stops, when it is temporary; leave it " +
 				"out for open-ended.",
 		),
-		paramSplitPercent: common.AmountProperty("The driver's share of each load, as a percent; " +
-			"50 for an even team split. Leave it out for 100."),
-		common.ParamNote: common.StringProperty("Why the driver moves to this profile.",
+		paramSplitPercent: toolparams.AmountProperty(
+			"The driver's share of each load, as a percent; " +
+				"50 for an even team split. Leave it out for 100.",
+		),
+		toolparams.ParamNote: toolparams.StringProperty("Why the driver moves to this profile.",
 			maxAssignmentNotes),
-	}, common.ParamWorkerID, ParamPayProfileID, common.ParamEffectiveFrom)
+	}, toolparams.ParamWorkerID, ParamPayProfileID, toolparams.ParamEffectiveFrom)
 }
 
-func (t *AssignPayProfileTool) Policy() agentports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+func (t *AssignPayProfileTool) Policy() agenttoolports.ToolPolicy {
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  payAssignmentResource,
 		Operation: permission.OpAssign,
@@ -99,37 +107,37 @@ func (t *AssignPayProfileTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *AssignPayProfileTool) entity(
-	params *agentports.ToolExecuteParams,
-) (*driverpay.WorkerPayAssignment, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*payassignment.WorkerPayAssignment, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	workerID, err := common.RequirePulid(params.Params, common.ParamWorkerID)
+	workerID, err := toolparams.RequirePulid(params.Params, toolparams.ParamWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	profileID, err := common.RequirePulid(params.Params, ParamPayProfileID)
+	profileID, err := toolparams.RequirePulid(params.Params, ParamPayProfileID)
 	if err != nil {
 		return nil, err
 	}
-	from, err := common.RequireDay(params.Params, common.ParamEffectiveFrom)
+	from, err := toolparams.RequireDay(params.Params, toolparams.ParamEffectiveFrom)
 	if err != nil {
 		return nil, err
 	}
-	to, hasTo, err := common.OptionalDay(params.Params, common.ParamEffectiveTo)
+	to, hasTo, err := toolparams.OptionalDay(params.Params, toolparams.ParamEffectiveTo)
 	if err != nil {
 		return nil, err
 	}
-	split, hasSplit, err := common.OptionalDecimal(params.Params, paramSplitPercent)
+	split, hasSplit, err := toolparams.OptionalDecimal(params.Params, paramSplitPercent)
 	if err != nil {
 		return nil, err
 	}
 	if !hasSplit {
 		split = decimal.NewFromInt(fullSplitPercent)
 	}
-	notes, err := common.BoundedString(
+	notes, err := toolparams.BoundedString(
 		params.Params,
-		common.ParamNote,
+		toolparams.ParamNote,
 		maxAssignmentNotes,
 		false,
 	)
@@ -137,7 +145,7 @@ func (t *AssignPayProfileTool) entity(
 		return nil, err
 	}
 
-	entity := &driverpay.WorkerPayAssignment{
+	entity := &payassignment.WorkerPayAssignment{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		WorkerID:       workerID,
@@ -154,14 +162,14 @@ func (t *AssignPayProfileTool) entity(
 }
 
 type assignmentPlan struct {
-	entity  *driverpay.WorkerPayAssignment
+	entity  *payassignment.WorkerPayAssignment
 	plan    *driverpayservice.AssignmentPlan
 	refusal error
 }
 
 func (t *AssignPayProfileTool) planned(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*assignmentPlan, error) {
 	entity, err := t.entity(params)
 	if err != nil {
@@ -169,7 +177,7 @@ func (t *AssignPayProfileTool) planned(
 	}
 	plan, err := t.Assignments.PlanAssignment(ctx, entity)
 	if err != nil {
-		refusal, failure := common.RefusalOrFailure(err)
+		refusal, failure := changepreview.RefusalOrFailure(err)
 		if failure != nil {
 			return nil, failure
 		}
@@ -182,9 +190,9 @@ func (t *AssignPayProfileTool) planned(
 
 func (t *AssignPayProfileTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -194,15 +202,15 @@ func (t *AssignPayProfileTool) Validate(
 
 func (t *AssignPayProfileTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	entity, err := t.entity(&params)
+	entity, err := t.entity(params)
 	if err != nil {
 		return err
 	}
@@ -211,30 +219,33 @@ func (t *AssignPayProfileTool) Execute(
 	return err
 }
 
-func assignmentRecord(assignment *driverpay.WorkerPayAssignment, label string) toolpreview.Record {
+func assignmentRecord(
+	assignment *payassignment.WorkerPayAssignment,
+	label string,
+) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: payAssignmentResource,
 		ID:       assignment.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(assignment.Version),
+		Version:  changepreview.PinnedVersion(assignment.Version),
 	}
 }
 
 func (t *AssignPayProfileTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := fmt.Sprintf(
 		"Would pay the driver under a new pay profile from %s.",
-		common.DayText(plan.entity.EffectiveFrom),
+		changepreview.DayText(plan.entity.EffectiveFrom),
 	)
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 
 	profile := plan.plan.Profile
@@ -242,31 +253,36 @@ func (t *AssignPayProfileTool) Preview(
 		"Would pay the driver under %s (%s) from %s at a %s%% share.",
 		profile.Name,
 		profile.Classification,
-		common.DayText(plan.entity.EffectiveFrom),
+		changepreview.DayText(plan.entity.EffectiveFrom),
 		plan.entity.SplitPercent.String(),
 	)
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: payAssignmentResource, Label: labelPayAssignment + ": " +
 			profile.Name},
 		plan.entity,
-		toolpreview.Only(common.ParamWorkerID, common.FieldEffectiveFrom, common.FieldEffectiveTo,
-			fieldSplitPercent, common.FieldNotes),
+		toolpreview.Only(
+			toolparams.ParamWorkerID,
+			changepreview.FieldEffectiveFrom,
+			changepreview.FieldEffectiveTo,
+			fieldSplitPercent,
+			changepreview.FieldNotes,
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			common.ParamWorkerID: permission.ResourceWorker,
+			toolparams.ParamWorkerID: permission.ResourceWorker,
 		}),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 	for _, ended := range plan.plan.Ended {
 		change, changeErr := toolpreview.Changed(
 			assignmentRecord(ended, labelPayAssignment+" in force"),
 			endedBefore(ended),
 			ended,
-			toolpreview.Only(common.FieldEffectiveTo),
-			toolpreview.Types(common.DriverPayDateTypes),
+			toolpreview.Only(changepreview.FieldEffectiveTo),
+			toolpreview.Types(settlementpreview.DriverPayDateTypes),
 		)
 		if changeErr != nil {
 			return nil, changeErr
@@ -275,13 +291,13 @@ func (t *AssignPayProfileTool) Preview(
 	}
 	if len(plan.plan.Ended) > 0 {
 		summary += fmt.Sprintf(" %s in force ends that day.",
-			common.CountOf(len(plan.plan.Ended), "assignment"))
+			changepreview.CountOf(len(plan.plan.Ended), "assignment"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func endedBefore(ended *driverpay.WorkerPayAssignment) *driverpay.WorkerPayAssignment {
+func endedBefore(ended *payassignment.WorkerPayAssignment) *payassignment.WorkerPayAssignment {
 	before := *ended
 	before.EffectiveTo = nil
 
@@ -293,21 +309,21 @@ type assignmentEnder interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 	EndAssignment(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		assignmentID pulid.ID,
 		endDate int64,
 		actor *permissionports.RequestActor,
-	) (*driverpay.WorkerPayAssignment, error)
+	) (*payassignment.WorkerPayAssignment, error)
 }
 
 type EndPayAssignmentTool struct {
 	Assignments assignmentEnder `json:"-"`
 }
 
-func ProvideEndPayAssignmentTool(s *driverpayservice.Service) agentports.AgentTool {
+func ProvideEndPayAssignmentTool(s *driverpayservice.Service) agenttoolports.AgentTool {
 	return &EndPayAssignmentTool{Assignments: s}
 }
 
@@ -321,17 +337,17 @@ func (t *EndPayAssignmentTool) Description() string {
 }
 
 func (t *EndPayAssignmentTool) ParamSchema() map[string]any {
-	return common.ObjectParams(map[string]any{
+	return toolparams.ObjectParams(map[string]any{
 		ParamAssignmentID: agenttoolschema.KindID(
 			"The assignment, from "+assignmentSourcesTool+". Never guess one.",
-			permission.KindPayAssignment,
+			recordkind.PayAssignment,
 		),
 		ParamEndDate: agenttoolschema.Date("The day it stops applying."),
 	}, ParamAssignmentID, ParamEndDate)
 }
 
-func (t *EndPayAssignmentTool) Policy() agentports.ToolPolicy {
-	return (&common.PersonOnlyPolicy{
+func (t *EndPayAssignmentTool) Policy() agenttoolports.ToolPolicy {
+	return (&settlementpreview.PersonOnlyPolicy{
 		Name:      t.Name(),
 		Resource:  payAssignmentResource,
 		Operation: permission.OpAssign,
@@ -341,28 +357,28 @@ func (t *EndPayAssignmentTool) Policy() agentports.ToolPolicy {
 }
 
 type assignmentEnding struct {
-	before  *driverpay.WorkerPayAssignment
-	after   *driverpay.WorkerPayAssignment
+	before  *payassignment.WorkerPayAssignment
+	after   *payassignment.WorkerPayAssignment
 	endDate int64
 	refusal error
 }
 
 func (t *EndPayAssignmentTool) planned(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*assignmentEnding, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	assignmentID, err := common.RequirePulid(params.Params, ParamAssignmentID)
+	assignmentID, err := toolparams.RequirePulid(params.Params, ParamAssignmentID)
 	if err != nil {
 		return nil, err
 	}
-	endDate, err := common.RequireDay(params.Params, ParamEndDate)
+	endDate, err := toolparams.RequireDay(params.Params, ParamEndDate)
 	if err != nil {
 		return nil, err
 	}
-	before, err := t.Assignments.GetAssignment(ctx, common.TenantFrom(*params), assignmentID)
+	before, err := t.Assignments.GetAssignment(ctx, toolparams.TenantFrom(params), assignmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -375,9 +391,9 @@ func (t *EndPayAssignmentTool) planned(
 
 func (t *EndPayAssignmentTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -387,21 +403,21 @@ func (t *EndPayAssignmentTool) Validate(
 
 func (t *EndPayAssignmentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	if err := common.RequirePersonsApproval(&params); err != nil {
+	if err := settlementpreview.RequirePersonsApproval(params); err != nil {
 		return err
 	}
-	plan, err := t.planned(ctx, &params)
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return err
 	}
 	_, err = t.Assignments.EndAssignment(
 		ctx,
-		common.TenantFrom(params),
+		toolparams.TenantFrom(params),
 		plan.before.ID,
 		plan.endDate,
 		params.Actor,
@@ -412,9 +428,9 @@ func (t *EndPayAssignmentTool) Execute(
 
 func (t *EndPayAssignmentTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	plan, err := t.planned(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -423,16 +439,16 @@ func (t *EndPayAssignmentTool) Preview(
 	if plan.before.PayProfile != nil {
 		label += ": " + plan.before.PayProfile.Name
 	}
-	summary := fmt.Sprintf("Would end %s on %s.", label, common.DayText(plan.endDate))
+	summary := fmt.Sprintf("Would end %s on %s.", label, changepreview.DayText(plan.endDate))
 	if plan.refusal != nil {
-		return common.WouldFail(toolpreview.Build(summary), plan.refusal)
+		return changepreview.WouldFail(toolpreview.Build(summary), plan.refusal)
 	}
 	change, err := toolpreview.Changed(
 		assignmentRecord(plan.before, label),
 		plan.before,
 		plan.after,
-		toolpreview.Only(common.FieldEffectiveTo),
-		toolpreview.Types(common.DriverPayDateTypes),
+		toolpreview.Only(changepreview.FieldEffectiveTo),
+		toolpreview.Types(settlementpreview.DriverPayDateTypes),
 	)
 	if err != nil {
 		return nil, err

@@ -5,12 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -19,10 +14,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -32,7 +31,7 @@ import (
 
 func newTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*worker.Worker]().
+		validator: tenantedvalidation.NewBuilder[*worker.Worker]().
 			WithModelName("Worker").
 			Build(),
 	}
@@ -643,13 +642,13 @@ func TestCreate(t *testing.T) {
 	})
 }
 
-type fixedFieldAccess permission.FieldGroupSet
+type fixedFieldAccess protectedfield.GroupSet
 
 func (f fixedFieldAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
-	return permission.FieldGroupSet(f)
+) protectedfield.GroupSet {
+	return protectedfield.GroupSet(f)
 }
 
 func TestUpdate(t *testing.T) {
@@ -674,7 +673,8 @@ func TestUpdate(t *testing.T) {
 
 		deps.repo.On("GetByID", mock.Anything, mock.MatchedBy(func(req workerports.GetWorkerByIDRequest) bool {
 			return req.IncludeProfile
-		})).Return(original, nil)
+		})).
+			Return(original, nil)
 		deps.repo.On("Update", mock.Anything, mock.MatchedBy(func(w *worker.Worker) bool {
 			return w.FirstName == "Jonathan" &&
 				w.Profile.DOB == 946684800 &&
@@ -696,7 +696,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("takes personal details from an editor with the group", func(t *testing.T) {
 		t.Parallel()
 		deps := setupTest(t)
-		deps.svc.fields = fixedFieldAccess(permission.AllFieldGroups())
+		deps.svc.fields = fixedFieldAccess(protectedfield.AllGroups())
 		userID := pulid.MustNew("usr_")
 		entity := newTestWorker()
 		entity.Profile.LicenseNumber = "DL999999"

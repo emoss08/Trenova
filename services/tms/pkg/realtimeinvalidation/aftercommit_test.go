@@ -2,10 +2,9 @@ package realtimeinvalidation
 
 import (
 	"context"
-
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -20,14 +19,14 @@ func (r fakeRecord) GetOrganizationID() pulid.ID { return r.org }
 func (r fakeRecord) GetBusinessUnitID() pulid.ID { return r.bu }
 
 type capturedRealtime struct {
-	agentports.RealtimeService
+	realtimeports.RealtimeService
 
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (c *capturedRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	c.published = append(c.published, req)
 	return nil
@@ -36,11 +35,20 @@ func (c *capturedRealtime) PublishResourceInvalidation(
 func TestPublishAfterCommitSendsTheChangeOutsideATransaction(t *testing.T) {
 	t.Parallel()
 
-	record := fakeRecord{id: pulid.MustNew("inv_"), org: pulid.MustNew("org_"), bu: pulid.MustNew("bu_")}
+	record := fakeRecord{
+		id:  pulid.MustNew("inv_"),
+		org: pulid.MustNew("org_"),
+		bu:  pulid.MustNew("bu_"),
+	}
 	actor := kernelports.AuditActor{UserID: pulid.MustNew("usr_")}
 	realtime := &capturedRealtime{}
 
-	PublishAfterCommit(t.Context(), realtime, nil, ChangeOf("invoice", record, "send.updated", actor, map[string]string{"number": "INV-1"}))
+	PublishAfterCommit(
+		t.Context(),
+		realtime,
+		nil,
+		ChangeOf("invoice", record, "send.updated", actor, map[string]string{"number": "INV-1"}),
+	)
 
 	require.Len(t, realtime.published, 1)
 	got := realtime.published[0]

@@ -3,15 +3,15 @@
 package iftaresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	shipmentdistanceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	IftaService                *iftaservice.Service
-	DistanceCalculationService shipmentports.DistanceCalculationService
+	DistanceCalculationService shipmentdistanceports.DistanceCalculationService
 }
 
 type IFTAFleetMPGResolver struct{ *Deps }

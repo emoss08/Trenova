@@ -2,6 +2,7 @@ import type { FactoringAgreement } from "@/lib/graphql/factoring";
 import {
   basisPointsToPercent,
   formatMinutesOfDay,
+  MAX_BASIS_POINTS,
   parseMinutesOfDay,
   percentToBasisPoints,
 } from "@/lib/factoring";
@@ -93,6 +94,21 @@ export const factoringAgreementFormSchema = z
         code: "custom",
         path: ["reserveRatePercent"],
         message: translate("Advance and reserve together cannot be more than 100%"),
+      });
+    }
+    const advanceBp = percentToBasisPoints(values.advanceRatePercent);
+    if (advanceBp > 0 && advanceBp <= MAX_BASIS_POINTS) {
+      values.feeTiers.forEach((tier, index) => {
+        const feeBp = percentToBasisPoints(tier.ratePercent);
+        if (feeBp <= MAX_BASIS_POINTS && advanceBp + feeBp > MAX_BASIS_POINTS) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["feeTiers", index, "ratePercent"],
+            message: translate(
+              "Advance and fee rate together cannot be more than 100% of the invoice",
+            ),
+          });
+        }
       });
     }
     if (values.effectiveTo != null && values.effectiveTo <= values.effectiveFrom) {

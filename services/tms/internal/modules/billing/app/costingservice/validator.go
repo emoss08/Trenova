@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -18,24 +20,22 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	controlValidator  validationframework.TenantedEntityValidator[*costingcontrol.CostingControl]
-	categoryValidator validationframework.TenantedEntityValidator[*costingcontrol.CostCategory]
+	controlValidator  tenantedvalidation.EntityValidator[*costingcontrol.CostingControl]
+	categoryValidator tenantedvalidation.EntityValidator[*costingcontrol.CostCategory]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	controls := validationframework.NewKeelChecker(p.DB, costingcontroldb.CostingControlsSchema())
-	categories := validationframework.NewKeelChecker(p.DB, costingcontroldb.CostCategoriesSchema())
+	controls := keelcheck.NewChecker(p.DB, costingcontroldb.CostingControlsSchema())
+	categories := keelcheck.NewChecker(p.DB, costingcontroldb.CostCategoriesSchema())
 
 	return &Validator{
-		controlValidator: validationframework.
-			NewTenantedValidatorBuilder[*costingcontrol.CostingControl]().
+		controlValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostingControl]().
 			WithModelName("CostingControl").
 			WithUniquenessChecker(controls).
 			WithReferenceChecker(controls).
 			WithCustomRule(createGLActualsRule()).
 			Build(),
-		categoryValidator: validationframework.
-			NewTenantedValidatorBuilder[*costingcontrol.CostCategory]().
+		categoryValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostCategory]().
 			WithModelName("CostCategory").
 			WithUniquenessChecker(categories).
 			WithReferenceChecker(categories).

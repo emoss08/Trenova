@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantqueueservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,16 +29,16 @@ func (h *Handler) registerQueueRoutes(api *gin.RouterGroup, resource string) {
 }
 
 type queueListResponse struct {
-	Items []*conversation.QueuedMessage `json:"items"`
+	Items []*conversationqueue.QueuedMessage `json:"items"`
 }
 
 type enqueueRequest struct {
-	Content               string              `json:"content"`
-	Context               *pageContextRequest `json:"context"`
-	Surface               agent.Surface       `json:"surface"`
-	ProviderID            *pulid.ID           `json:"providerId"`
-	AttachmentDocumentIDs []pulid.ID          `json:"attachmentDocumentIds"`
-	Mentions              []agent.EntityRef   `json:"mentions"`
+	Content               string                       `json:"content"`
+	Context               *pageContextRequest          `json:"context"`
+	Surface               agentpagecontext.Surface     `json:"surface"`
+	ProviderID            *pulid.ID                    `json:"providerId"`
+	AttachmentDocumentIDs []pulid.ID                   `json:"attachmentDocumentIds"`
+	Mentions              []agentpagecontext.EntityRef `json:"mentions"`
 	// DirectedAgentID hands the message to another agent the person may use,
 	// once the conversation is free.
 	DirectedAgentID pulid.ID `json:"directedAgentId"`
@@ -59,10 +59,10 @@ type reorderQueueRequest struct {
 // queueOutcomeResponse is what became of a message handed to the queue: still
 // waiting, read into the reply under way, or sent as a turn of its own.
 type queueOutcomeResponse struct {
-	Item     *conversation.QueuedMessage `json:"item,omitempty"`
-	Steering bool                        `json:"steering"`
-	Held     string                      `json:"held,omitempty"`
-	Turn     *startTurnResponse          `json:"turn,omitempty"`
+	Item     *conversationqueue.QueuedMessage `json:"item,omitempty"`
+	Steering bool                             `json:"steering"`
+	Held     string                           `json:"held,omitempty"`
+	Turn     *startTurnResponse               `json:"turn,omitempty"`
 }
 
 func outcomeResponse(outcome *assistantqueueservice.Outcome) queueOutcomeResponse {
@@ -130,7 +130,7 @@ func (h *Handler) enqueue(c *gin.Context) {
 		return
 	}
 
-	request := conversation.QueuedRequest{
+	request := conversationqueue.QueuedRequest{
 		Page:                  body.Context.page(),
 		Surface:               body.Surface,
 		Mentions:              body.Mentions,

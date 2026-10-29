@@ -3,7 +3,9 @@ package capturejobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturemaintenance"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprocessing"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,22 +17,28 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Capture *captureservice.Service
-	Items   captureports.CaptureItemRepository
-	Logger  *zap.Logger
+	Processing  *captureprocessing.Service
+	Filing      *capturefiling.Service
+	Maintenance *capturemaintenance.Service
+	Items       captureports.CaptureItemRepository
+	Logger      *zap.Logger
 }
 
 type Activities struct {
-	capture *captureservice.Service
-	items   captureports.CaptureItemRepository
-	l       *zap.Logger
+	processing  *captureprocessing.Service
+	filing      *capturefiling.Service
+	maintenance *capturemaintenance.Service
+	items       captureports.CaptureItemRepository
+	l           *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		capture: p.Capture,
-		items:   p.Items,
-		l:       p.Logger.Named("capture-activities"),
+		processing:  p.Processing,
+		filing:      p.Filing,
+		maintenance: p.Maintenance,
+		items:       p.Items,
+		l:           p.Logger.Named("capture-activities"),
 	}
 }
 
@@ -43,7 +51,7 @@ func (a *Activities) ProcessCaptureBatchActivity(
 	ctx context.Context,
 	payload *ProcessBatchPayload,
 ) (*ProcessResult, error) {
-	return a.capture.ProcessBatch(
+	return a.processing.ProcessBatch(
 		ctx,
 		pagination.TenantInfo{OrgID: payload.OrganizationID, BuID: payload.BusinessUnitID},
 		payload.BatchID,
@@ -78,7 +86,7 @@ func (a *Activities) AutoFileCaptureItemActivity(
 		return nil
 	}
 
-	_, err = a.capture.FileItem(ctx, &captureservice.FileItemInput{
+	_, err = a.filing.FileItem(ctx, &capturefiling.FileItemInput{
 		TenantInfo:     tenantInfo,
 		ItemID:         item.ID,
 		TargetType:     suggestion.ResourceType,
@@ -98,7 +106,7 @@ func (a *Activities) RecordCaptureFiledActivity(
 	ctx context.Context,
 	payload *RecordFiledPayload,
 ) error {
-	_, err := a.capture.RecordFiled(
+	_, err := a.filing.RecordFiled(
 		ctx,
 		tenantOf(&payload.FileItemPayload),
 		payload.ItemID,
@@ -112,7 +120,7 @@ func (a *Activities) RecordCaptureFilingFailedActivity(
 	ctx context.Context,
 	payload *RecordFailedPayload,
 ) error {
-	_, err := a.capture.RecordFilingFailed(
+	_, err := a.filing.RecordFilingFailed(
 		ctx,
 		tenantOf(&payload.FileItemPayload),
 		payload.ItemID,
@@ -123,7 +131,7 @@ func (a *Activities) RecordCaptureFilingFailedActivity(
 }
 
 func (a *Activities) CaptureMaintenanceActivity(ctx context.Context) (*MaintenanceResult, error) {
-	return a.capture.Maintain(ctx)
+	return a.maintenance.Maintain(ctx)
 }
 
 func tenantOf(payload *FileItemPayload) pagination.TenantInfo {

@@ -10,12 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -36,7 +37,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDICommunicationProfileRepository {
+func New(p Params) edipartnerports.EDICommunicationProfileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-communication-profile-repository"),
@@ -45,7 +46,7 @@ func New(p Params) ediports.EDICommunicationProfileRepository {
 
 func (r *repository) ListProfiles(
 	ctx context.Context,
-	req *ediports.ListEDICommunicationProfilesRequest,
+	req *edipartnerports.ListEDICommunicationProfilesRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(
 		ctx,
@@ -68,7 +69,7 @@ func (r *repository) ListProfiles(
 
 func (r *repository) SelectProfileOptions(
 	ctx context.Context,
-	req *ediports.EDICommunicationProfileSelectOptionsRequest,
+	req *edipartnerports.EDICommunicationProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(
 		ctx,
@@ -89,7 +90,7 @@ func (r *repository) SelectProfileOptions(
 }
 
 func profileOptionsQuery(
-	req *ediports.EDICommunicationProfileSelectOptionsRequest,
+	req *edipartnerports.EDICommunicationProfileSelectOptionsRequest,
 ) *keel.Query[*edi.EDICommunicationProfile] {
 	cp := edidb.EDICommunicationProfiles
 	return cp.Pick(
@@ -120,7 +121,7 @@ func profileOptionsSearch(s string) keel.Pred {
 
 func (r *repository) GetProfileByID(
 	ctx context.Context,
-	req ediports.GetEDICommunicationProfileByIDRequest,
+	req edipartnerports.GetEDICommunicationProfileByIDRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		cp := edidb.EDICommunicationProfiles
@@ -135,7 +136,7 @@ func (r *repository) GetProfileByID(
 
 func (r *repository) ListProfilesByPartner(
 	ctx context.Context,
-	req ediports.ListEDICommunicationProfilesByPartnerRequest,
+	req edipartnerports.ListEDICommunicationProfilesByPartnerRequest,
 ) ([]*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
 		cp := edidb.EDICommunicationProfiles
@@ -145,9 +146,34 @@ func (r *repository) ListProfilesByPartner(
 	})
 }
 
+func profilesByIDs(ids []pulid.ID) *keel.Query[*edi.EDICommunicationProfile] {
+	cp := edidb.EDICommunicationProfiles
+
+	return cp.Where(cp.ID.In(ids...)).Limit(len(ids))
+}
+
+func (r *repository) GetProfilesByIDs(
+	ctx context.Context,
+	req edipartnerports.GetEDICommunicationProfilesByIDsRequest,
+) ([]*edi.EDICommunicationProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*edi.EDICommunicationProfile{}, nil
+		}
+
+		entities, err := profilesByIDs(req.ProfileIDs).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get edi communication profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetActiveProfileByPartner(
 	ctx context.Context,
-	req ediports.GetActiveEDICommunicationProfileByPartnerRequest,
+	req edipartnerports.GetActiveEDICommunicationProfileByPartnerRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
 		cp := edidb.EDICommunicationProfiles
@@ -184,7 +210,7 @@ func (r *repository) ListInboundPollingProfiles(
 
 func (r *repository) RecordInboundPollOutcome(
 	ctx context.Context,
-	req ediports.RecordEDIProfilePollOutcomeRequest,
+	req edipartnerports.RecordEDIProfilePollOutcomeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		cp := edidb.EDICommunicationProfiles
@@ -223,7 +249,7 @@ func (r *repository) CountStaleInboundPollingProfiles(
 
 func (r *repository) GetActiveAS2ProfileByIdentifiers(
 	ctx context.Context,
-	req ediports.GetActiveAS2ProfileByIdentifiersRequest,
+	req edipartnerports.GetActiveAS2ProfileByIdentifiersRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
@@ -291,7 +317,7 @@ func (r *repository) UpdateProfile(
 
 func (r *repository) ListProfilesCursor(
 	ctx context.Context,
-	req *ediports.ListEDICommunicationProfilesRequest,
+	req *edipartnerports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
 	return dbtx.Read(
 		ctx,

@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -20,7 +20,7 @@ import (
 )
 
 type paymentChangePlan struct {
-	control      *tenant.AccountingControl
+	control      *accountingcontrol.AccountingControl
 	payment      *customerpayment.Payment
 	applications []*customerpayment.Application
 	invoices     []*invoice.Invoice
@@ -55,7 +55,7 @@ func (s *Service) loadPaymentAndControl(
 	ctx context.Context,
 	paymentID pulid.ID,
 	tenantInfo invoiceports.GetInvoiceByIDRequest,
-) (*customerpayment.Payment, *tenant.AccountingControl, error) {
+) (*customerpayment.Payment, *accountingcontrol.AccountingControl, error) {
 	payment, err := s.repo.GetByID(
 		ctx,
 		customerpaymentports.GetCustomerPaymentByIDRequest{
@@ -149,13 +149,13 @@ func (s *Service) planReverse(
 	}, nil
 }
 
-func cashRecognized(control *tenant.AccountingControl) bool {
-	return control.AccountingBasis == tenant.AccountingBasisCash ||
-		control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt
+func cashRecognized(control *accountingcontrol.AccountingControl) bool {
+	return control.AccountingBasis == accountingcontrol.AccountingBasisCash ||
+		control.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt
 }
 
 func applicationJournal(
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	payment *customerpayment.Payment,
 	appliedDelta int64,
 	applications []*customerpayment.Application,
@@ -230,7 +230,7 @@ func applicationJournal(
 }
 
 func reversalJournal(
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	payment *customerpayment.Payment,
 ) paymentJournal {
 	description := fmt.Sprintf("Customer payment reversal %s", payment.DocumentLabel())
@@ -310,7 +310,7 @@ func reversalJournal(
 }
 
 func (j paymentJournal) preview(
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	accountingDate int64,
 	period *fiscalperiod.FiscalPeriod,
 	userID pulid.ID,

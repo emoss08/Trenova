@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -35,10 +37,10 @@ func TestRebindSealedKeyReplacesOnlyTheKeyItWasHanded(t *testing.T) {
 		Kind:                 aiprovider.KindOpenAIChat,
 		BaseURL:              "https://api.example.com/v1",
 		Model:                "gpt-test",
-		Tasks:                []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks:                []aitask.Task{aitask.TaskGeneral},
 		StructuredOutputMode: aiprovider.KindOpenAIChat.DefaultStructuredOutputMode(),
-		ReasoningEffort:      aiprovider.ReasoningOff,
-		ThinkingStyle:        aiprovider.ThinkingStyleAuto,
+		ReasoningEffort:      aireasoning.ReasoningOff,
+		ThinkingStyle:        aireasoning.ThinkingStyleAuto,
 		EmbeddingInputStyle:  aiprovider.EmbeddingInputStyleNone,
 		TimeoutSeconds:       aiprovider.DefaultTimeoutSeconds,
 		MaxTokens:            aiprovider.ClampMaxTokens(8192),
@@ -49,13 +51,13 @@ func TestRebindSealedKeyReplacesOnlyTheKeyItWasHanded(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, keys.RebindSealedKey(ctx, &agentports.RebindAIProviderKeyRequest{
+	require.NoError(t, keys.RebindSealedKey(ctx, &aiproviderports.RebindAIProviderKeyRequest{
 		ID:          created.ID,
 		TenantInfo:  tenant,
 		Expected:    "someone-else-replaced-it",
 		Replacement: "bound-current",
 	}))
-	require.NoError(t, keys.RebindSealedKey(ctx, &agentports.RebindAIProviderKeyRequest{
+	require.NoError(t, keys.RebindSealedKey(ctx, &aiproviderports.RebindAIProviderKeyRequest{
 		ID:          created.ID,
 		TenantInfo:  tenant,
 		Previous:    true,
@@ -63,7 +65,7 @@ func TestRebindSealedKeyReplacesOnlyTheKeyItWasHanded(t *testing.T) {
 		Replacement: "bound-previous",
 	}))
 
-	loaded, err := providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	loaded, err := providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         created.ID,
 		TenantInfo: tenant,
 	})

@@ -5,7 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -32,7 +35,7 @@ func (s *Service) heldVerdict(
 func (s *Service) withdrawHeld(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	group []*agent.AgentDecision,
+	group []*agentdecision.AgentDecision,
 	open []pulid.ID,
 	actor kernelports.AuditActor,
 ) ([]pulid.ID, error) {
@@ -48,7 +51,7 @@ func (s *Service) withdrawHeld(
 		if _, isOpen := openSet[decision.ID]; !isOpen || decision.ProposalID == nil {
 			continue
 		}
-		proposal, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+		proposal, err := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 			ID:         *decision.ProposalID,
 			TenantInfo: &tenant,
 		})
@@ -69,11 +72,14 @@ func (s *Service) withdrawHeld(
 		return open, nil
 	}
 
-	withdrawn, err := s.decisionRepo.MarkUndone(ctx, agentports.SettleAgentDecisionsRequest{
-		IDs:        held,
-		TenantInfo: tenant,
-		At:         timeutils.NowUnix(),
-	})
+	withdrawn, err := s.decisionRepo.MarkUndone(
+		ctx,
+		&agentdecisionports.SettleAgentDecisionsRequest{
+			IDs:        held,
+			TenantInfo: tenant,
+			At:         timeutils.NowUnix(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +90,7 @@ func (s *Service) withdrawHeld(
 		proposal := proposals[id]
 		s.reopen(ctx, tenant, proposal.ID)
 		s.logHeld(proposal, verdicts[id], actor)
-		s.announce(ctx, proposal, tenant, actor, agentports.ActivityUndone)
+		s.announce(ctx, proposal, tenant, actor, agentactivityports.ActivityUndone)
 	}
 
 	remaining := make([]pulid.ID, 0, len(open))

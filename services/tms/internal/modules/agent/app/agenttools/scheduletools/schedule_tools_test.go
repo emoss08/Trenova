@@ -5,8 +5,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -73,7 +76,7 @@ func (f *fakePlanner) CreatePlanned(
 	return f.answer(req)
 }
 
-func scheduleParams(args map[string]any) agentports.ToolExecuteParams {
+func scheduleParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	person := pulid.MustNew("usr_")
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -83,7 +86,7 @@ func scheduleParams(args map[string]any) agentports.ToolExecuteParams {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	return agentports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -115,12 +118,17 @@ func TestCreateSchedule_KeepsTheRequestInThisConversationForThePerson(t *testing
 	params := scheduleParams(boardArgs())
 	params.ProposalID = pulid.MustNew("aprp_")
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	require.Len(t, planner.created, 1)
 	req := planner.created[0]
-	assert.Equal(t, params.ThreadID, req.ThreadID, "the conversation is the runtime's, not the model's")
+	assert.Equal(
+		t,
+		params.ThreadID,
+		req.ThreadID,
+		"the conversation is the runtime's, not the model's",
+	)
 	assert.Equal(t, params.Actor.UserID, req.Actor.UserID)
 	assert.Equal(t, "day", req.Edit.Repeat)
 	assert.Equal(t, "09:30", req.Edit.Time)
@@ -129,12 +137,13 @@ func TestCreateSchedule_KeepsTheRequestInThisConversationForThePerson(t *testing
 
 	assert.Equal(t, "created", result.Action)
 	assert.Equal(t, "schedule", result.Kind)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"Every day · 9:30 AM · Give me today's operations board: active shipments, on-time %, at-risk",
 		result.Name,
 	)
 	assert.NotEmpty(t, result.IDs["scheduleId"])
-	assert.Equal(t, &agent.RecordRef{
+	assert.Equal(t, &agentrecord.RecordRef{
 		EntityType: "assistant_thread",
 		ID:         params.ThreadID.String(),
 	}, result.Record, "the result links to the conversation its answers post into")
@@ -148,7 +157,7 @@ func TestCreateSchedule_PreviewsWhatWouldRun(t *testing.T) {
 	t.Parallel()
 
 	planner := &fakePlanner{}
-	preview, err := NewCreateScheduleTool(planner).(agentports.ToolPreviewer).
+	preview, err := NewCreateScheduleTool(planner).(agenttoolports.ToolPreviewer).
 		Preview(t.Context(), scheduleParams(boardArgs()))
 	require.NoError(t, err)
 
@@ -157,7 +166,7 @@ func TestCreateSchedule_PreviewsWhatWouldRun(t *testing.T) {
 			"here every day at 9:30 AM, on America/New_York time")
 	assert.Empty(t, preview.Warnings)
 	require.Len(t, preview.Changes, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, preview.Changes[0].Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, preview.Changes[0].Operation)
 	assert.Empty(t, planner.created, "a preview keeps nothing")
 }
 
@@ -180,13 +189,13 @@ func TestCreateSchedule_RefusesARepeatButNotARetriedApproval(t *testing.T) {
 		"request": "Unbilled loads", "repeat": "weekday", "time": "07:30",
 	})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already asks \"Unbilled loads\" every weekday at 7:30 AM")
 
 	params.ProposalID = pulid.MustNew("aprp_")
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "found", result.Action)
 	assert.Equal(t, existing.ID.String(), result.IDs["scheduleId"])
@@ -199,7 +208,7 @@ func TestCreateSchedule_RefusesWhatItCannotKeep(t *testing.T) {
 		t.Parallel()
 		params := scheduleParams(boardArgs())
 		params.ThreadID = pulid.Nil
-		err := NewCreateScheduleTool(&fakePlanner{}).(agentports.ToolValidator).
+		err := NewCreateScheduleTool(&fakePlanner{}).(agenttoolports.ToolValidator).
 			Validate(t.Context(), params)
 		require.ErrorIs(t, err, errNeedsConversation)
 	})
@@ -208,7 +217,7 @@ func TestCreateSchedule_RefusesWhatItCannotKeep(t *testing.T) {
 		t.Parallel()
 		params := scheduleParams(boardArgs())
 		params.Actor.PrincipalType = permissionports.PrincipalTypeAgent
-		err := NewCreateScheduleTool(&fakePlanner{}).(agentports.ToolValidator).
+		err := NewCreateScheduleTool(&fakePlanner{}).(agenttoolports.ToolValidator).
 			Validate(t.Context(), params)
 		require.ErrorIs(t, err, errNeedsPerson)
 	})
@@ -217,7 +226,7 @@ func TestCreateSchedule_RefusesWhatItCannotKeep(t *testing.T) {
 		t.Parallel()
 		args := boardArgs()
 		args["repeat"] = "hourly"
-		err := NewCreateScheduleTool(&fakePlanner{}).(agentports.ToolValidator).
+		err := NewCreateScheduleTool(&fakePlanner{}).(agenttoolports.ToolValidator).
 			Validate(t.Context(), scheduleParams(args))
 		require.Error(t, err)
 	})
@@ -225,7 +234,7 @@ func TestCreateSchedule_RefusesWhatItCannotKeep(t *testing.T) {
 	t.Run("an approver whose conversation it is not", func(t *testing.T) {
 		t.Parallel()
 		planner := &fakePlanner{err: errortypes.NewNotFoundError("Thread not found")}
-		_, err := NewCreateScheduleTool(planner).(agentports.ToolResultReporter).
+		_, err := NewCreateScheduleTool(planner).(agenttoolports.ToolResultReporter).
 			ExecuteWithResult(t.Context(), scheduleParams(boardArgs()))
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
@@ -243,6 +252,6 @@ func TestCreateSchedule_AlwaysWaitsForAPerson(t *testing.T) {
 	policy := NewCreateScheduleTool(nil).Policy()
 	assert.Equal(t, agent.TierPropose, policy.DefaultTier)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
-	assert.Equal(t, agent.ToolScopeSelf, policy.Scope)
+	assert.Equal(t, agenttooltrust.ToolScopeSelf, policy.Scope)
 	assert.Equal(t, []agent.EgressClass{agent.EgressPersonal}, policy.Egress)
 }

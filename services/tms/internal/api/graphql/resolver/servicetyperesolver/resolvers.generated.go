@@ -3,12 +3,12 @@
 package servicetyperesolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	ServiceTypeService *servicetypeservice.Service
 }
 

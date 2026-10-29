@@ -9,18 +9,19 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 )
 
 func (r *AuthEventResolver) UserID(ctx context.Context, obj *iam.AuthEvent) (*string, error) {
-	return base.IDPtr(obj.UserID), nil
+	return gqlid.IDPtr(obj.UserID), nil
 }
 
 func (r *AuthEventResolver) IdentityProviderID(ctx context.Context, obj *iam.AuthEvent) (*string, error) {
-	return base.IDPtr(obj.IdentityProviderID), nil
+	return gqlid.IDPtr(obj.IdentityProviderID), nil
 }
 
 func (r *AuthEventResolver) Outcome(ctx context.Context, obj *iam.AuthEvent) (string, error) {
@@ -32,11 +33,11 @@ func (r *AuthEventResolver) RiskOutcome(ctx context.Context, obj *iam.AuthEvent)
 }
 
 func (r *AuthEventResolver) User(ctx context.Context, obj *iam.AuthEvent) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.UserID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.UserID))
 }
 
 func (r *ExternalIdentityResolver) User(ctx context.Context, obj *iam.ExternalIdentity) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.UserID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.UserID))
 }
 
 func (r *MFAAuthenticatorResolver) Type(ctx context.Context, obj *iam.MFAAuthenticator) (string, error) {
@@ -44,7 +45,7 @@ func (r *MFAAuthenticatorResolver) Type(ctx context.Context, obj *iam.MFAAuthent
 }
 
 func (r *MFAAuthenticatorResolver) User(ctx context.Context, obj *iam.MFAAuthenticator) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.UserID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.UserID))
 }
 
 func (r *QueryResolver) AuthEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuthEventConnection, error) {
@@ -124,7 +125,7 @@ func (r *QueryResolver) MfaAuthenticators(ctx context.Context, input gqlmodel.Da
 }
 
 func (r *RiskDecisionResolver) UserID(ctx context.Context, obj *iam.RiskDecision) (*string, error) {
-	return base.IDPtr(obj.UserID), nil
+	return gqlid.IDPtr(obj.UserID), nil
 }
 
 func (r *RiskDecisionResolver) Outcome(ctx context.Context, obj *iam.RiskDecision) (string, error) {
@@ -132,7 +133,7 @@ func (r *RiskDecisionResolver) Outcome(ctx context.Context, obj *iam.RiskDecisio
 }
 
 func (r *RiskDecisionResolver) User(ctx context.Context, obj *iam.RiskDecision) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.UserID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.UserID))
 }
 
 func (r *QueryResolver) ScimDirectories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SCIMDirectoryConnection, error) {

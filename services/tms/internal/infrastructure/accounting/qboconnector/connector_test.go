@@ -12,8 +12,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -21,20 +25,23 @@ import (
 	"go.uber.org/zap"
 )
 
-func newProvider(t *testing.T, qbo config.QuickBooksConfig) *Provider {
+func newProvider(t *testing.T, qbo accountingconfig.QuickBooksConfig) *Provider {
 	t.Helper()
 	cfg := &config.Config{
-		App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-		Accounting: config.AccountingConfig{QuickBooks: qbo},
+		App:        appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Accounting: accountingconfig.Config{QuickBooks: qbo},
 	}
-	provider, err := New(Params{Config: cfg, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	return provider
 }
 
-func tenantApp(environment accountingsync.AppEnvironment) *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
-		Source:               accountingsync.AppSourceTenant,
+func tenantApp(
+	environment accountingprovider.AppEnvironment,
+) *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
+		Source:               accountingconnection.AppSourceTenant,
 		Environment:          environment,
 		ClientID:             "tenant-id",
 		ClientSecret:         "tenant-secret",
@@ -42,12 +49,12 @@ func tenantApp(environment accountingsync.AppEnvironment) *accountingsyncports.A
 	}
 }
 
-func newConnector(t *testing.T, qbo config.QuickBooksConfig) *Connector {
+func newConnector(t *testing.T, qbo accountingconfig.QuickBooksConfig) *Connector {
 	t.Helper()
 	provider := newProvider(t, qbo)
 	app, ok := provider.InstanceApp()
 	if !ok {
-		environment, parsed := accountingsync.ParseAppEnvironment(qbo.GetEnvironment())
+		environment, parsed := accountingprovider.ParseAppEnvironment(qbo.GetEnvironment())
 		require.True(t, parsed)
 		app = tenantApp(environment)
 	}
@@ -59,7 +66,7 @@ func newConnector(t *testing.T, qbo config.QuickBooksConfig) *Connector {
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
@@ -70,15 +77,15 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{
 		ClientID:     "id",
 		ClientSecret: "secret",
 		Environment:  "sandbox",
 	})
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
-	assert.Equal(t, accountingsync.AppSourceInstance, app.Source)
-	assert.Equal(t, accountingsync.AppEnvironmentSandbox, app.Environment)
+	assert.Equal(t, accountingconnection.AppSourceInstance, app.Source)
+	assert.Equal(t, accountingprovider.AppEnvironmentSandbox, app.Environment)
 	assert.Equal(t,
 		"https://app.example.com/admin/integrations/quickbooks/callback",
 		provider.RedirectURL(),
@@ -86,17 +93,26 @@ func TestConfiguredInstanceAppBuildsAuthorizeURLWithDerivedRedirect(t *testing.T
 
 	conn, err := provider.Bind(app)
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-1"})
+	raw, err := conn.AuthorizeURL(
+		accountingconnectorports.AccountingAuthorizeRequest{State: "state-1"},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=id")
-	assert.Contains(t, raw, "redirect_uri=https%3A%2F%2Fapp.example.com%2Fadmin%2Fintegrations%2Fquickbooks%2Fcallback")
+	assert.Contains(
+		t,
+		raw,
+		"redirect_uri=https%3A%2F%2Fapp.example.com%2Fadmin%2Fintegrations%2Fquickbooks%2Fcallback",
+	)
 	assert.Contains(t, raw, "state=state-1")
 }
 
 func TestInstanceAppIsReturnedAsACopy(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
+	provider := newProvider(
+		t,
+		accountingconfig.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"},
+	)
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
 	app.ClientID = "changed"
@@ -107,10 +123,12 @@ func TestInstanceAppIsReturnedAsACopy(t *testing.T) {
 func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-2"})
+	raw, err := conn.AuthorizeURL(
+		accountingconnectorports.AccountingAuthorizeRequest{State: "state-2"},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, raw, "client_id=tenant-id")
 }
@@ -118,14 +136,14 @@ func TestTenantAppBindsWithoutAnInstanceApp(t *testing.T) {
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
-	first, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
+	first, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	second, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	second, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	assert.Same(t, first, second)
 
-	rotated := tenantApp(accountingsync.AppEnvironmentSandbox)
+	rotated := tenantApp(accountingprovider.AppEnvironmentSandbox)
 	rotated.ClientSecret = "rotated"
 	third, err := provider.Bind(rotated)
 	require.NoError(t, err)
@@ -135,10 +153,10 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestBindingKeepsEachAppsEnvironment(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
-	sandbox, err := provider.bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
+	sandbox, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	production, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	production, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	assert.Equal(t, quickbooks.EnvironmentSandbox, sandbox.env)
 	assert.Equal(t, quickbooks.EnvironmentProduction, production.env)
@@ -147,7 +165,7 @@ func TestBindingKeepsEachAppsEnvironment(t *testing.T) {
 func TestBindingRejectsAnUnknownEnvironment(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	_, err := provider.Bind(tenantApp("Staging"))
 	require.Error(t, err)
 }
@@ -155,15 +173,19 @@ func TestBindingRejectsAnUnknownEnvironment(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	assert.Empty(t, provider.RedirectURL())
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
+	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code"})
+	_, err = conn.ExchangeCode(
+		t.Context(),
+		&accountingconnectorports.AccountingCodeExchange{Code: "code"},
+	)
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
 }
@@ -171,10 +193,11 @@ func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 func TestUnknownEnvironmentIsRejected(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.Config{Accounting: config.AccountingConfig{
-		QuickBooks: config.QuickBooksConfig{Environment: "staging"},
+	cfg := &config.Config{Accounting: accountingconfig.Config{
+		QuickBooks: accountingconfig.QuickBooksConfig{Environment: "staging"},
 	}}
-	_, err := New(Params{Config: cfg, Logger: zap.NewNop()})
+	_, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop()})
 	require.Error(t, err)
 }
 
@@ -187,12 +210,12 @@ func verifyAppAgainst(t *testing.T, status int, body string) error {
 	}))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.QuickBooksConfig{})
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
 	provider.oauthOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
 	}
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	return conn.VerifyApp(t.Context())
 }
@@ -207,7 +230,7 @@ func TestVerifyAppRejectsKeysTheProviderRefuses(t *testing.T) {
 	t.Parallel()
 
 	err := verifyAppAgainst(t, http.StatusUnauthorized, `{"error":"invalid_client"}`)
-	require.ErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	require.ErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 }
 
 func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
@@ -215,14 +238,14 @@ func TestVerifyAppPassesOnOtherFailures(t *testing.T) {
 
 	err := verifyAppAgainst(t, http.StatusBadGateway, `{}`)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 }
 
 func TestVerifyWebhookUsesTheBoundAppsVerifier(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.QuickBooksConfig{})
-	conn, err := provider.Bind(tenantApp(accountingsync.AppEnvironmentSandbox))
+	provider := newProvider(t, accountingconfig.QuickBooksConfig{})
+	conn, err := provider.Bind(tenantApp(accountingprovider.AppEnvironmentSandbox))
 	require.NoError(t, err)
 	body := []byte(`[]`)
 	mac := hmac.New(sha256.New, []byte("tenant-verifier"))
@@ -239,16 +262,24 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/v3/company/123/companyinfo/123":
-			_, _ = w.Write([]byte(`{"CompanyInfo":{"CompanyName":"Acme","LegalName":"Acme LLC","Country":"US"}}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"CompanyInfo":{"CompanyName":"Acme","LegalName":"Acme LLC","Country":"US"}}`,
+				),
+			)
 		case "/v3/company/123/preferences":
-			_, _ = w.Write([]byte(`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30","FirstMonthOfFiscalYear":"July"}}}`))
+			_, _ = w.Write(
+				[]byte(
+					`{"Preferences":{"CurrencyPrefs":{"MultiCurrencyEnabled":true,"HomeCurrency":{"value":"cad"}},"AccountingInfoPrefs":{"BookCloseDate":"2026-06-30","FirstMonthOfFiscalYear":"July"}}}`,
+				),
+			)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -269,21 +300,45 @@ func TestCompanyFactsCombinesInfoAndPreferences(t *testing.T) {
 func TestClassifyError(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	cases := []struct {
 		name string
 		err  error
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"revoked", &quickbooks.OAuthError{StatusCode: 400, Code: "invalid_grant"}, accountingsync.ErrorCategoryRevoked},
-		{"unauthorized", &quickbooks.FaultError{StatusCode: 401}, accountingsync.ErrorCategoryUnauthorized},
-		{"forbidden", &quickbooks.FaultError{StatusCode: 403}, accountingsync.ErrorCategoryUnauthorized},
-		{"rate limited", &quickbooks.FaultError{StatusCode: 429}, accountingsync.ErrorCategoryRateLimited},
+		{
+			"revoked",
+			&quickbooks.OAuthError{StatusCode: 400, Code: "invalid_grant"},
+			accountingsync.ErrorCategoryRevoked,
+		},
+		{
+			"unauthorized",
+			&quickbooks.FaultError{StatusCode: 401},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"forbidden",
+			&quickbooks.FaultError{StatusCode: 403},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"rate limited",
+			&quickbooks.FaultError{StatusCode: 429},
+			accountingsync.ErrorCategoryRateLimited,
+		},
 		{"server", &quickbooks.FaultError{StatusCode: 503}, accountingsync.ErrorCategoryTransient},
-		{"transport", &restx.TransportError{Err: errors.New("reset")}, accountingsync.ErrorCategoryTransient},
+		{
+			"transport",
+			&restx.TransportError{Err: errors.New("reset")},
+			accountingsync.ErrorCategoryTransient,
+		},
 		{"deadline", context.DeadlineExceeded, accountingsync.ErrorCategoryTransient},
-		{"validation", &quickbooks.FaultError{StatusCode: 400}, accountingsync.ErrorCategoryUnknown},
+		{
+			"validation",
+			&quickbooks.FaultError{StatusCode: 400},
+			accountingsync.ErrorCategoryUnknown,
+		},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, conn.ClassifyError(tc.err), tc.name)

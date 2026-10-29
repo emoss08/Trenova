@@ -8,10 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookssync"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +48,10 @@ func (f *fakeChangeFeed) connector(t *testing.T) *Connector {
 		_, _ = w.Write([]byte(f.respond(call)))
 	}))
 	t.Cleanup(server.Close)
-	conn := newConnector(t, config.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"})
+	conn := newConnector(
+		t,
+		accountingconfig.QuickBooksConfig{ClientID: "id", ClientSecret: "secret"},
+	)
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
@@ -80,15 +85,18 @@ const cdcPaymentAndCustomer = `{"CDCResponse":[{"QueryResponse":[
 {"Vendor":[{"Id":"81","status":"Deleted","MetaData":{"LastUpdatedTime":"2026-09-24T13:00:00Z"}}]}
 ]}]}`
 
-func readRequest(cursor string, now time.Time) *accountingsyncports.ReadAccountingChangesRequest {
-	return &accountingsyncports.ReadAccountingChangesRequest{
+func readRequest(
+	cursor string,
+	now time.Time,
+) *accountingconnectorports.ReadAccountingChangesRequest {
+	return &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:         auth(),
 		Cursor:       cursor,
 		Now:          now,
 		Payments:     true,
 		BillPayments: true,
-		ReferenceKinds: []accountingsync.ReferenceKind{
-			accountingsync.ReferenceKindVendor,
+		ReferenceKinds: []accountingprovider.ReferenceKind{
+			accountingprovider.ReferenceKindVendor,
 		},
 	}
 }
@@ -107,7 +115,7 @@ func TestChangeCursorRoundTrips(t *testing.T) {
 		since:   now.Add(-40 * 24 * time.Hour),
 		paging:  true,
 		started: now,
-		targets: []quickbooks.ChangeEntity{quickbooks.ChangePayment, "Vendor"},
+		targets: []quickbookssync.ChangeEntity{quickbookssync.ChangePayment, "Vendor"},
 		index:   1,
 		start:   1001,
 	}
@@ -147,8 +155,8 @@ func TestReadChangesMapsProviderDocumentsToNeutralOnes(t *testing.T) {
 
 	require.Len(t, page.Payments, 4)
 	paid := page.Payments[0]
-	assert.Equal(t, accountingsync.InboundCustomerPayment, paid.Kind)
-	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, paid.Operation)
+	assert.Equal(t, accountinginbound.InboundCustomerPayment, paid.Kind)
+	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, paid.Operation)
 	assert.Equal(t, "301", paid.ExternalID)
 	assert.Equal(t, "10442", paid.Number)
 	assert.Equal(t, "58", paid.PartyExternalID)
@@ -158,21 +166,21 @@ func TestReadChangesMapsProviderDocumentsToNeutralOnes(t *testing.T) {
 	assert.True(t, decimal.RequireFromString("49.75").Equal(paid.Unapplied))
 	assert.Equal(t, "35", paid.AccountExternalID)
 	require.Len(t, paid.Lines, 3)
-	assert.Equal(t, accountingsync.InboundDocInvoice, paid.Lines[0].DocumentKind)
-	assert.Equal(t, accountingsync.InboundDocCreditMemo, paid.Lines[1].DocumentKind)
-	assert.Equal(t, accountingsync.InboundDocOther, paid.Lines[2].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocInvoice, paid.Lines[0].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocCreditMemo, paid.Lines[1].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocOther, paid.Lines[2].DocumentKind)
 
-	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Payments[1].Operation)
-	assert.Equal(t, accountingsyncports.AccountingChangeDelete, page.Payments[2].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, page.Payments[1].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeDelete, page.Payments[2].Operation)
 
 	bill := page.Payments[3]
-	assert.Equal(t, accountingsync.InboundBillPayment, bill.Kind)
+	assert.Equal(t, accountinginbound.InboundBillPayment, bill.Kind)
 	assert.Equal(t, "5521", bill.Number)
 	assert.Equal(t, "77", bill.PartyExternalID)
-	assert.Equal(t, accountingsync.InboundDocBill, bill.Lines[0].DocumentKind)
+	assert.Equal(t, accountinginbound.InboundDocBill, bill.Lines[0].DocumentKind)
 
 	require.Len(t, page.References, 1)
-	assert.Equal(t, accountingsync.ReferenceKindVendor, page.References[0].Object.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindVendor, page.References[0].Object.Kind)
 	assert.Equal(t, "81", page.References[0].Object.ExternalID)
 	assert.True(t, page.References[0].Deleted)
 }
@@ -229,7 +237,7 @@ func TestReadChangesPagesAnEntityThatFilledTheChangeFeed(t *testing.T) {
 
 	var cdc strings.Builder
 	cdc.WriteString(`{"CDCResponse":[{"QueryResponse":[{"Payment":[`)
-	for idx := range quickbooks.MaxChangesPerCall {
+	for idx := range quickbookssync.MaxChangesPerCall {
 		if idx > 0 {
 			cdc.WriteString(",")
 		}

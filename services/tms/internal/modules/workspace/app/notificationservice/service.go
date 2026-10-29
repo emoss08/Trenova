@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
@@ -24,20 +24,20 @@ type Params struct {
 
 	Logger   *zap.Logger
 	Repo     notificationports.NotificationRepository
-	Realtime agentports.RealtimeService
+	Realtime realtimeports.RealtimeService
 	WebPush  *webpushservice.Service `optional:"true"`
 	// Roles answers who may read a resource, for NotifyPermitted.
 	Roles       permissionports.RoleRepository         `optional:"true"`
 	Users       tenantports.UserRepository             `optional:"true"`
 	Preferences notificationports.PreferenceRepository `optional:"true"`
 	Email       emailports.EmailService                `optional:"true"`
-	Config      *config.Config                         `optional:"true"`
+	AppConfig   *appconfig.Config                      `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
 	repo        notificationports.NotificationRepository
-	realtime    agentports.RealtimeService
+	realtime    realtimeports.RealtimeService
 	webPush     *webpushservice.Service
 	roles       permissionports.RoleRepository
 	users       tenantports.UserRepository
@@ -59,8 +59,8 @@ func New(p Params) *Service {
 		email:       p.Email,
 		now:         time.Now,
 	}
-	if p.Config != nil {
-		svc.webBaseURL = strings.TrimRight(p.Config.App.GetWebBaseURL(), "/")
+	if p.AppConfig != nil {
+		svc.webBaseURL = strings.TrimRight(p.AppConfig.GetWebBaseURL(), "/")
 	}
 
 	return svc
@@ -100,7 +100,7 @@ func (s *Service) Create(
 
 	pubErr := s.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: created.OrganizationID,
 			BusinessUnitID: buID,
 			AudienceUserID: pulid.ConvertFromPtr(created.TargetUserID),

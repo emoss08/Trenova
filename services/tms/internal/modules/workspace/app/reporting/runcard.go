@@ -69,7 +69,7 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 		return nil, err
 	}
 
-	timezone := s.orgTimezone(ctx, req.TenantInfo)
+	timezone := s.OrgTimezone(ctx, req.TenantInfo)
 	card := &RunCard{
 		Run:        run,
 		Timezone:   timezone,

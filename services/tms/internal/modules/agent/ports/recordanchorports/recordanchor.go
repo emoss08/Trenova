@@ -1,0 +1,21 @@
+package recordanchorports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/pagination"
+)
+
+type RecordAnchorRequest struct {
+	TenantInfo pagination.TenantInfo
+	Actor      *permissionports.RequestActor
+	Records    []agentpagecontext.EntityRef
+	Timezone   string
+}
+
+type RecordAnchorReader interface {
+	Anchor(ctx context.Context, req *RecordAnchorRequest) []agentturn.RuntimeAnchor
+}

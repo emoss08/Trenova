@@ -10,35 +10,39 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // CreateWorkerPolicy is the resolver for the createWorkerPolicy field.
-func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error) {
+func (r *MutationResolver) CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	entity, err := workerPolicyFromInput(input, base.TenantInfo(authCtx))
+	entity, err := workerPolicyFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	return r.SelfServiceService.CreatePolicy(ctx, &selfserviceservice.PolicyRequest{
 		Entity:     entity,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
 
 // UpdateWorkerPolicy is the resolver for the updateWorkerPolicy field.
-func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error) {
+func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -46,10 +50,10 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	entity, err := workerPolicyFromInput(input, base.TenantInfo(authCtx))
+	entity, err := workerPolicyFromInput(input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -57,16 +61,16 @@ func (r *MutationResolver) UpdateWorkerPolicy(ctx context.Context, id string, in
 
 	return r.SelfServiceService.UpdatePolicy(ctx, &selfserviceservice.PolicyRequest{
 		Entity:     entity,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 	})
 }
 
 // DecideProfileChange is the resolver for the decideProfileChange field.
-func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*worker.WorkerProfileChangeRequest, error) {
+func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error) {
 	requestID, err := pulid.MustParse(input.ID)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Request is invalid")
+		return nil, gqlid.InvalidIDError("id", "Request is invalid")
 	}
 
 	authCtx, err := r.RequireAuth(ctx)
@@ -76,9 +80,9 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 
 	request, err := r.SelfServiceService.GetChangeRequest(
 		ctx,
-		&workerports.GetProfileChangeRequestByIDRequest{
+		&selfserviceports.GetProfileChangeRequestByIDRequest{
 			ID:         requestID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -95,7 +99,7 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 		ctx,
 		permission.ResourceProfileChangeRequest,
 		operation,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		request.WorkerID,
 	); err != nil {
 		return nil, err
@@ -104,29 +108,29 @@ func (r *MutationResolver) DecideProfileChange(ctx context.Context, input gqlmod
 	return r.SelfServiceService.DecideChange(ctx, &selfserviceservice.DecideChangeRequest{
 		ID:         requestID,
 		Approve:    input.Approve,
-		Note:       base.StringValue(input.Note),
-		TenantInfo: base.TenantInfo(authCtx),
+		Note:       gqlscalar.StringValue(input.Note),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Actor:      actorutil.FromAuthContext(authCtx),
 	})
 }
 
 // WorkerPolicies is the resolver for the workerPolicies field.
-func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.WorkerPolicy, error) {
+func (r *QueryResolver) WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.SelfServiceService.ListPolicies(ctx, &workerports.ListWorkerPoliciesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		ActiveOnly: base.BoolValue(activeOnly),
-		Limit:      base.IntValue(limit),
+	return r.SelfServiceService.ListPolicies(ctx, &selfserviceports.ListWorkerPoliciesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ActiveOnly: gqlscalar.BoolValue(activeOnly),
+		Limit:      gqlscalar.IntValue(limit),
 	})
 }
 
 // WorkerPolicy is the resolver for the workerPolicy field.
-func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*worker.WorkerPolicy, error) {
+func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -134,10 +138,10 @@ func (r *QueryResolver) WorkerPolicy(ctx context.Context, id string) (*worker.Wo
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	return r.SelfServiceService.GetPolicy(ctx, base.TenantInfo(authCtx), policyID)
+	return r.SelfServiceService.GetPolicy(ctx, resolvercore.TenantInfo(authCtx), policyID)
 }
 
 // WorkerPolicyCompliance is the resolver for the workerPolicyCompliance field.
@@ -149,10 +153,10 @@ func (r *QueryResolver) WorkerPolicyCompliance(ctx context.Context, id string) (
 
 	policyID, err := pulid.MustParse(id)
 	if err != nil {
-		return nil, base.InvalidIDError("id", "Policy is invalid")
+		return nil, gqlid.InvalidIDError("id", "Policy is invalid")
 	}
 
-	compliance, err := r.SelfServiceService.PolicyCompliance(ctx, base.TenantInfo(authCtx), policyID)
+	compliance, err := r.SelfServiceService.PolicyCompliance(ctx, resolvercore.TenantInfo(authCtx), policyID)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +165,7 @@ func (r *QueryResolver) WorkerPolicyCompliance(ctx context.Context, id string) (
 }
 
 // WorkerPolicyAcknowledgements is the resolver for the workerPolicyAcknowledgements field.
-func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error) {
+func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPolicy, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -169,46 +173,46 @@ func (r *QueryResolver) WorkerPolicyAcknowledgements(ctx context.Context, worker
 
 	id, err := pulid.MustParse(workerID)
 	if err != nil {
-		return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 	}
 
 	return r.SelfServiceService.ListAcknowledgements(
 		ctx,
-		&workerports.ListPolicyAcknowledgementsRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+		&selfserviceports.ListPolicyAcknowledgementsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			WorkerID:   id,
 		},
 	)
 }
 
 // ProfileChangeRequests is the resolver for the profileChangeRequests field.
-func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error) {
+func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error) {
 	authCtx, managerIDs, err := r.RequireListTeamScope(
 		ctx,
 		permission.ResourceProfileChangeRequest,
 		permission.OpRead,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &workerports.ListProfileChangeRequestsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+	req := &selfserviceports.ListProfileChangeRequestsRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		IncludeWorker: true,
 		ManagerIDs:    managerIDs,
 	}
 	if filter != nil {
-		if req.WorkerID, err = base.OptionalID(filter.WorkerID); err != nil {
-			return nil, base.InvalidIDError("workerId", "Worker is invalid")
+		if req.WorkerID, err = gqlid.OptionalID(filter.WorkerID); err != nil {
+			return nil, gqlid.InvalidIDError("workerId", "Worker is invalid")
 		}
 		req.Statuses = filter.Statuses
-		req.Limit = base.IntValue(filter.Limit)
-		if base.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
+		req.Limit = gqlscalar.IntValue(filter.Limit)
+		if gqlscalar.BoolValue(filter.TeamOnly) && len(req.ManagerIDs) == 0 {
 			if req.ManagerIDs, err = r.RotaManagerIDs(
 				ctx,
 				authCtx.UserID,
-				base.TenantInfo(authCtx),
+				resolvercore.TenantInfo(authCtx),
 			); err != nil {
 				return nil, err
 			}
@@ -219,7 +223,7 @@ func (r *QueryResolver) ProfileChangeRequests(ctx context.Context, filter *gqlmo
 }
 
 // Changes is the resolver for the changes field.
-func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *worker.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error) {
+func (r *WorkerProfileChangeRequestResolver) Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error) {
 	out := make([]*gqlmodel.ProfileFieldChange, 0, len(obj.Changes))
 	for _, change := range obj.Changes {
 		out = append(out, &gqlmodel.ProfileFieldChange{

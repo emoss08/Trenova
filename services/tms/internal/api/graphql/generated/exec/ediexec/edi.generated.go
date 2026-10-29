@@ -10,6 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -188,7 +193,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIAckHealth)
 					return obj.RecentDeadLettered, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ),
 			},
 		}},
 		{Object: "EdiAckStatusCount", Fields: []*gqlexec.Field{
@@ -200,7 +205,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIAckStatusCount)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageAcknowledgmentStatus),
 			},
 			{
 				Name:     "count",
@@ -586,7 +591,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -596,7 +601,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.EDIPartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -605,7 +610,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "projectId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.ProjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -614,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "versionId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.VersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -624,7 +629,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.Flow, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -634,7 +639,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.Key, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -644,10 +649,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatus),
 			},
 			{
 				Name:       "reason",
@@ -655,7 +660,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return gqlexec.Resolver[resolverEdiFlowInstance](ec, "EdiFlowInstance").Reason(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -664,7 +669,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "wakeAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.WakeAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -673,7 +678,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shipmentId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.ShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -682,7 +687,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "transferId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.TransferID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -692,7 +697,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.LastEventAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -701,7 +706,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "heldAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.HeldAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -710,7 +715,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "resolvedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.ResolvedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -720,7 +725,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -730,7 +735,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -740,7 +745,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.FlowInstance)
+					obj := o.(*ladingproject.FlowInstance)
 					return obj.Partner, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -799,7 +804,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIFlowInstanceEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiFlowInstance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstance),
+				Marshal: gqlexec.Marshal(marshalNEdiFlowInstance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstance),
 			},
 			{
 				Name:     "cursor",
@@ -818,7 +823,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -828,7 +833,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -838,7 +843,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -848,7 +853,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.CommunicationProfileID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -857,7 +862,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "ediPartnerId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.EDIPartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -867,7 +872,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.Method, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐConnectionMethod),
@@ -877,7 +882,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.RemotePath, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -887,7 +892,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.FileName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -897,7 +902,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.Checksum, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -907,7 +912,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.SizeBytes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -916,7 +921,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "interchangeControlNumber",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.InterchangeControlNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -925,7 +930,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "isaSenderQualifier",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ISASenderQualifier, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -934,7 +939,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "isaSenderId",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ISASenderID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -943,7 +948,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "isaReceiverQualifier",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ISAReceiverQualifier, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -952,7 +957,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "isaReceiverId",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ISAReceiverID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -962,16 +967,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐInboundFileStatus),
 			},
 			{
 				Name:     "failureReason",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.FailureReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -981,7 +986,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.TransactionCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -991,7 +996,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ReceivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1000,7 +1005,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "processedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.ProcessedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1010,7 +1015,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1020,7 +1025,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1030,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1040,7 +1045,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.Partner, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -1049,7 +1054,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rawPurgedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIInboundFile)
+					obj := o.(*ediinboundfile.EDIInboundFile)
 					return obj.RawPurgedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1108,7 +1113,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIInboundFileDetail)
 					return obj.File, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFile),
 			},
 			{
 				Name:     "communicationProfileName",
@@ -1138,7 +1143,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIInboundFileDetail)
 					return obj.Messages, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ),
 			},
 			{
 				Name:      "raw",
@@ -1161,7 +1166,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIInboundFileEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFile),
 			},
 			{
 				Name:     "cursor",
@@ -1193,7 +1198,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDILadingExchange)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection),
 			},
 			{
 				Name:     "map",
@@ -1314,7 +1319,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1324,7 +1329,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.EDIPartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1333,7 +1338,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "activeVersionId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.ActiveVersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1342,7 +1347,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shadowVersionId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.ShadowVersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1352,7 +1357,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1362,7 +1367,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1372,7 +1377,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingProject)
+					obj := o.(*ladingproject.LadingProject)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1384,7 +1389,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.Errors, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1394,7 +1399,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.Failing, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1404,7 +1409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.Tests, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1414,7 +1419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.UncoveredFlowClauses, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1424,7 +1429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.Ready, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1434,7 +1439,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingReadiness)
+					obj := o.(*ladingproject.LadingReadiness)
 					return obj.CheckedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1446,7 +1451,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1456,7 +1461,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ProjectID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1466,7 +1471,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.Number, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1476,16 +1481,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiLadingVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingVersionStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiLadingVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingVersionStatus),
 			},
 			{
 				Name:     "parentVersionId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ParentVersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1495,16 +1500,16 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiLadingReadiness",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.Readiness, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiLadingReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingReadiness),
+				Marshal: gqlexec.Marshal(marshalOEdiLadingReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingReadiness),
 			},
 			{
 				Name:     "notes",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -1514,7 +1519,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ErrorCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1524,7 +1529,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.WarningCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1533,7 +1538,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shadowUntil",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ShadowUntil, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1542,7 +1547,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "certifiedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.CertifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1551,7 +1556,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "activatedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ActivatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1560,7 +1565,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "supersededAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.SupersededAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1569,7 +1574,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "archivedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.ArchivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -1581,7 +1586,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiLadingInterchange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return gqlexec.Resolver[resolverEdiLadingVersion](ec, "EdiLadingVersion").Interchange(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiLadingInterchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDILadingInterchange),
@@ -1594,7 +1599,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiLadingExchange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return gqlexec.Resolver[resolverEdiLadingVersion](ec, "EdiLadingVersion").Exchanges(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiLadingExchange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDILadingExchangeᚄ),
@@ -1604,7 +1609,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1614,7 +1619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.LadingVersion)
+					obj := o.(*ladingproject.LadingVersion)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1955,7 +1960,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1965,7 +1970,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1975,7 +1980,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1985,7 +1990,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.EDIPartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1995,7 +2000,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DocumentTypeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2004,7 +2009,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "ladingVersionId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.LadingVersionID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2013,7 +2018,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "flowInstanceId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.FlowInstanceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2022,7 +2027,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shipmentId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.ShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2031,7 +2036,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "transferId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.TransferID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2040,7 +2045,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "inboundFileId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.InboundFileID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2050,10 +2055,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection),
 			},
 			{
 				Name:       "transactionSet",
@@ -2062,7 +2067,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return gqlexec.Resolver[resolverEdiMessage](ec, "EdiMessage").TransactionSet(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2072,7 +2077,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.X12Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2082,17 +2087,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageStatus),
 			},
 			{
 				Name:     "interchangeControlNumber",
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.InterchangeControlNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2102,7 +2107,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.GroupControlNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2112,7 +2117,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.TransactionControlNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2122,7 +2127,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.SegmentCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2131,16 +2136,16 @@ var Shard = &gqlexec.Shard{
 				Name:     "deliveryStatus",
 				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliveryStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageDeliveryStatus),
+				Marshal: gqlexec.Marshal(marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageDeliveryStatus),
 			},
 			{
 				Name:     "deliveryRemotePath",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliveryRemotePath, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2150,7 +2155,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliveryAttempts, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2159,7 +2164,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "deliveryLastAttemptAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliveryLastAttemptAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2168,7 +2173,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "deliverySentAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliverySentAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2177,7 +2182,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "deliveryLastError",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.DeliveryLastError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2186,16 +2191,16 @@ var Shard = &gqlexec.Shard{
 				Name:     "ackStatus",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.AckStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus),
+				Marshal: gqlexec.Marshal(marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageAcknowledgmentStatus),
 			},
 			{
 				Name:     "ackMessageId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.AckMessageID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2204,7 +2209,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "ackReceivedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.AckReceivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2213,7 +2218,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "ackLastError",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.AckLastError, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -2223,7 +2228,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.GeneratedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2233,7 +2238,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2243,7 +2248,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2253,7 +2258,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2263,7 +2268,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.Partner, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -2272,7 +2277,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "invoiceId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.InvoiceID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2281,7 +2286,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rawPurgedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDIMessage)
+					obj := o.(*edimessage.EDIMessage)
 					return obj.RawPurgedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2340,7 +2345,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIMessageDetail)
 					return obj.Message, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessage),
 			},
 			{
 				Name:     "decoded",
@@ -2461,7 +2466,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIMessageEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessage),
 			},
 			{
 				Name:     "cursor",
@@ -2534,7 +2539,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIOverduePartnerAcks)
 					return obj.Messages, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ),
 			},
 		}},
 		{Object: "EdiPartner", Fields: []*gqlexec.Field{
@@ -2928,7 +2933,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerAttention)
 					return obj.OverdueAcks, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ),
 			},
 			{
 				Name:      "deadLettered",
@@ -2939,7 +2944,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerAttention)
 					return obj.DeadLettered, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ),
 			},
 			{
 				Name:      "quarantinedFiles",
@@ -2950,7 +2955,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerAttention)
 					return obj.QuarantinedFiles, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFileᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiInboundFile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFileᚄ),
 			},
 		}},
 		{Object: "EdiPartnerCard", Fields: []*gqlexec.Field{
@@ -3252,7 +3257,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerLading)
 					return obj.Project, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiLadingProject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingProject),
+				Marshal: gqlexec.Marshal(marshalOEdiLadingProject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingProject),
 			},
 			{
 				Name:      "active",
@@ -3262,7 +3267,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerLading)
 					return obj.Active, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingVersion),
+				Marshal: gqlexec.Marshal(marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingVersion),
 			},
 			{
 				Name:      "shadow",
@@ -3272,7 +3277,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerLading)
 					return obj.Shadow, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingVersion),
+				Marshal: gqlexec.Marshal(marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingVersion),
 			},
 		}},
 		{Object: "EdiPartnerMappingSummary", Fields: []*gqlexec.Field{
@@ -3547,7 +3552,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDIPartnerSetActivity)
 					return obj.Direction, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection),
+				Marshal: gqlexec.Marshal(marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection),
 			},
 			{
 				Name:     "count",
@@ -4061,7 +4066,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4071,7 +4076,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SourceOrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4081,7 +4086,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SourceBusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4091,7 +4096,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.TargetOrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4101,7 +4106,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.TargetBusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4111,7 +4116,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SourcePartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4121,7 +4126,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.TargetPartnerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4130,7 +4135,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "sourceShipmentId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SourceShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4139,7 +4144,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "targetShipmentId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.TargetShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4148,7 +4153,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "inboundMessageId",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.InboundMessageID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -4158,10 +4163,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild22,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTransferStatus),
+				Marshal: gqlexec.Marshal(marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋeditransferᚐTransferStatus),
 			},
 			{
 				Name:       "tenderPayload",
@@ -4170,7 +4175,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").TenderPayload(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAny2interface),
@@ -4182,7 +4187,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild17,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").MappingSnapshot(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNAny2interface),
@@ -4191,7 +4196,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "rejectionReason",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.RejectionReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -4200,7 +4205,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "failureReason",
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.FailureReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -4210,7 +4215,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SubmittedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4219,7 +4224,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "processedAt",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.ProcessedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -4229,7 +4234,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -4239,7 +4244,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4249,7 +4254,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -4259,7 +4264,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.SourcePartner, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -4269,7 +4274,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return obj.TargetPartner, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -4281,7 +4286,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild23,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Direction(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiTransferDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDITransferDirection),
@@ -4293,7 +4298,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiPartner",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Counterparty(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIPartner),
@@ -4304,7 +4309,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").BOL(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -4315,7 +4320,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").CustomerLabel(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -4326,7 +4331,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").ServiceTypeLabel(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -4337,7 +4342,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").ShipmentTypeLabel(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -4348,7 +4353,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Pieces(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -4359,7 +4364,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Weight(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -4370,7 +4375,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").TemperatureMin(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -4381,7 +4386,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").TemperatureMax(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -4393,7 +4398,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").StopCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -4406,7 +4411,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiTenderStop",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Stops(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiTenderStop2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDITenderStopᚄ),
@@ -4419,7 +4424,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiTenderCommodity",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Commodities(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiTenderCommodity2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDITenderCommodityᚄ),
@@ -4431,7 +4436,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "EdiTenderCharges",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").Charges(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOEdiTenderCharges2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDITenderCharges),
@@ -4443,7 +4448,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.EDITransfer)
+					obj := o.(*editransfer.EDITransfer)
 					return gqlexec.Resolver[resolverEdiTransfer](ec, "EdiTransfer").CanDecide(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -4502,7 +4507,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDITransferDetail)
 					return obj.Transfer, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITransfer),
+				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋeditransferᚐEDITransfer),
 			},
 			{
 				Name:      "unresolvedMappings",
@@ -4536,7 +4541,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDITransferEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITransfer),
+				Marshal: gqlexec.Marshal(marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋeditransferᚐEDITransfer),
 			},
 			{
 				Name:     "cursor",
@@ -4852,7 +4857,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ediMessages_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIMessages(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["transactionSet"].(*string), fc.Args["direction"].(*edi.DocumentDirection), fc.Args["partnerId"].(*string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIMessages(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["transactionSet"].(*string), fc.Args["direction"].(*edidocument.DocumentDirection), fc.Args["partnerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiMessageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDIMessageConnection),
 			},
@@ -4866,7 +4871,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ediInboundFiles_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIInboundFiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*edi.InboundFileStatus), fc.Args["partnerId"].(*string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIInboundFiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*ediinboundfile.InboundFileStatus), fc.Args["partnerId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiInboundFileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDIInboundFileConnection),
 			},
@@ -4894,7 +4899,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_ediFlowInstances_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIFlowInstances(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["partnerId"].(*string), fc.Args["shipmentId"].(*string), fc.Args["statuses"].([]edi.FlowInstanceStatus))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").EDIFlowInstances(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["partnerId"].(*string), fc.Args["shipmentId"].(*string), fc.Args["statuses"].([]ladingproject.FlowInstanceStatus))
 				},
 				Marshal: gqlexec.Marshal(marshalNEdiFlowInstanceConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEDIFlowInstanceConnection),
 			},
@@ -4980,36 +4985,36 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverEdiFlowInstance interface {
-	Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error)
+	Reason(ctx context.Context, obj *ladingproject.FlowInstance) (*string, error)
 }
 
 type resolverEdiLadingVersion interface {
-	Interchange(ctx context.Context, obj *edi.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
-	Exchanges(ctx context.Context, obj *edi.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
+	Interchange(ctx context.Context, obj *ladingproject.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
+	Exchanges(ctx context.Context, obj *ladingproject.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
 }
 
 type resolverEdiMessage interface {
-	TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error)
+	TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error)
 }
 
 type resolverEdiTransfer interface {
-	TenderPayload(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	MappingSnapshot(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	Direction(ctx context.Context, obj *edi.EDITransfer) (gqlmodel.EDITransferDirection, error)
-	Counterparty(ctx context.Context, obj *edi.EDITransfer) (*edi.EDIPartner, error)
-	BOL(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	CustomerLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ServiceTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ShipmentTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	Pieces(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	Weight(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMin(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMax(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	StopCount(ctx context.Context, obj *edi.EDITransfer) (int, error)
-	Stops(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
-	Commodities(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
-	Charges(ctx context.Context, obj *edi.EDITransfer) (*gqlmodel.EDITenderCharges, error)
-	CanDecide(ctx context.Context, obj *edi.EDITransfer) (bool, error)
+	TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	MappingSnapshot(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	Direction(ctx context.Context, obj *editransfer.EDITransfer) (gqlmodel.EDITransferDirection, error)
+	Counterparty(ctx context.Context, obj *editransfer.EDITransfer) (*edi.EDIPartner, error)
+	BOL(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	CustomerLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ServiceTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ShipmentTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	Pieces(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	Weight(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMin(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMax(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	StopCount(ctx context.Context, obj *editransfer.EDITransfer) (int, error)
+	Stops(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
+	Commodities(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
+	Charges(ctx context.Context, obj *editransfer.EDITransfer) (*gqlmodel.EDITenderCharges, error)
+	CanDecide(ctx context.Context, obj *editransfer.EDITransfer) (bool, error)
 }
 
 type resolverQuery interface {
@@ -5020,10 +5025,10 @@ type resolverQuery interface {
 	EDIMessage(ctx context.Context, id string) (*gqlmodel.EDIMessageDetail, error)
 	EDIInboundFile(ctx context.Context, id string) (*gqlmodel.EDIInboundFileDetail, error)
 	EDIAckHealth(ctx context.Context, partnerID *string, transactionSet *string, overdueAfterSeconds *int, sinceHours *int) (*gqlmodel.EDIAckHealth, error)
-	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
-	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
+	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edidocument.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
+	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *ediinboundfile.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
 	EDIMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EDIMappingProfileConnection, error)
-	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
+	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []ladingproject.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
 	EDISummary(ctx context.Context, sinceHours *int) (*gqlmodel.EDISummary, error)
 	EDIPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIPartnerScorecard, error)
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)
@@ -5209,8 +5214,8 @@ func field_Query_ediMessages_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 	}
 	args["transactionSet"] = arg1
 	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
-		func(ctx context.Context, v any) (*edi.DocumentDirection, error) {
-			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx, ec, v)
+		func(ctx context.Context, v any) (*edidocument.DocumentDirection, error) {
+			return unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5238,8 +5243,8 @@ func field_Query_ediInboundFiles_args(ctx context.Context, ec *gqlexec.Exec, raw
 	}
 	args["input"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
-		func(ctx context.Context, v any) (*edi.InboundFileStatus, error) {
-			return unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx, ec, v)
+		func(ctx context.Context, v any) (*ediinboundfile.InboundFileStatus, error) {
+			return unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐInboundFileStatus(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5304,8 +5309,8 @@ func field_Query_ediFlowInstances_args(ctx context.Context, ec *gqlexec.Exec, ra
 	}
 	args["shipmentId"] = arg2
 	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "statuses",
-		func(ctx context.Context, v any) ([]edi.FlowInstanceStatus, error) {
-			return unmarshalOEdiFlowInstanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatusᚄ(ctx, ec, v)
+		func(ctx context.Context, v any) ([]ladingproject.FlowInstanceStatus, error) {
+			return unmarshalOEdiFlowInstanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatusᚄ(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -5388,9 +5393,9 @@ func unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (edi.FlowInstanceStatus, error) {
+func unmarshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatus(ctx context.Context, ec *gqlexec.Exec, v any) (ladingproject.FlowInstanceStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := edi.FlowInstanceStatus(tmp)
+	res := ladingproject.FlowInstanceStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5409,28 +5414,28 @@ func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
-func unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.DocumentDirection, error) {
+func unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, v any) (*edidocument.DocumentDirection, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := edi.DocumentDirection(tmp)
+	res := edidocument.DocumentDirection(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOEdiFlowInstanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]edi.FlowInstanceStatus, error) {
+func unmarshalOEdiFlowInstanceStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]ladingproject.FlowInstanceStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatus)
 }
 
-func unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*edi.InboundFileStatus, error) {
+func unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*ediinboundfile.InboundFileStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := edi.InboundFileStatus(tmp)
+	res := ediinboundfile.InboundFileStatus(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -5566,7 +5571,7 @@ func marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedidocumentᚐDocumentDirection(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edidocument.DocumentDirection) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5574,7 +5579,7 @@ func marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNEdiFlowInstance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.FlowInstance) graphql.Marshaler {
+func marshalNEdiFlowInstance2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstance(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ladingproject.FlowInstance) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5606,7 +5611,7 @@ func marshalNEdiFlowInstanceEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EdiFlowInstanceEdge", v)
 }
 
-func marshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐFlowInstanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.FlowInstanceStatus) graphql.Marshaler {
+func marshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐFlowInstanceStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ladingproject.FlowInstanceStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5614,15 +5619,15 @@ func marshalNEdiFlowInstanceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNEdiInboundFile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDIInboundFile) graphql.Marshaler {
-	return gqlexec.List[*edi.EDIInboundFile]{
-		Elem:        marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile,
+func marshalNEdiInboundFile2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFileᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*ediinboundfile.EDIInboundFile) graphql.Marshaler {
+	return gqlexec.List[*ediinboundfile.EDIInboundFile]{
+		Elem:        marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFile,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIInboundFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIInboundFile) graphql.Marshaler {
+func marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐEDIInboundFile(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ediinboundfile.EDIInboundFile) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5662,7 +5667,7 @@ func marshalNEdiInboundFileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "EdiInboundFileEdge", v)
 }
 
-func marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.InboundFileStatus) graphql.Marshaler {
+func marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediinboundfileᚐInboundFileStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ediinboundfile.InboundFileStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5686,7 +5691,7 @@ func marshalNEdiLadingExchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "EdiLadingExchange", v)
 }
 
-func marshalNEdiLadingVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingVersionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.LadingVersionStatus) graphql.Marshaler {
+func marshalNEdiLadingVersionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingVersionStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v ladingproject.LadingVersionStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5758,15 +5763,15 @@ func marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "EdiMappingProfileItem", v)
 }
 
-func marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.EDIMessage) graphql.Marshaler {
-	return gqlexec.List[*edi.EDIMessage]{
-		Elem:        marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage,
+func marshalNEdiMessage2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessageᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edimessage.EDIMessage) graphql.Marshaler {
+	return gqlexec.List[*edimessage.EDIMessage]{
+		Elem:        marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessage,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDIMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDIMessage) graphql.Marshaler {
+func marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐEDIMessage(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edimessage.EDIMessage) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -5774,7 +5779,7 @@ func marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 	return ec.MarshalType(ctx, sel, "EdiMessage", v)
 }
 
-func marshalNEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
+func marshalNEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edimessage.MessageAcknowledgmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -5830,7 +5835,7 @@ func marshalNEdiMessageEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return ec.MarshalType(ctx, sel, "EdiMessageEdge", v)
 }
 
-func marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageStatus) graphql.Marshaler {
+func marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edimessage.MessageStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -6138,7 +6143,7 @@ func marshalNEdiTenderStop2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	return ec.MarshalType(ctx, sel, "EdiTenderStop", v)
 }
 
-func marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐEDITransfer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.EDITransfer) graphql.Marshaler {
+func marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋeditransferᚐEDITransfer(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *editransfer.EDITransfer) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -6198,7 +6203,7 @@ func marshalNEdiTransferMappingNeed2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "EdiTransferMappingNeed", v)
 }
 
-func marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐTransferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.TransferStatus) graphql.Marshaler {
+func marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋeditransferᚐTransferStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v editransfer.TransferStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -6395,21 +6400,21 @@ func marshalOEdiLadingInterchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "EdiLadingInterchange", v)
 }
 
-func marshalOEdiLadingProject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingProject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.LadingProject) graphql.Marshaler {
+func marshalOEdiLadingProject2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingProject(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ladingproject.LadingProject) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiLadingProject", v)
 }
 
-func marshalOEdiLadingReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingReadiness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.LadingReadiness) graphql.Marshaler {
+func marshalOEdiLadingReadiness2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingReadiness(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ladingproject.LadingReadiness) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "EdiLadingReadiness", v)
 }
 
-func marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐLadingVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.LadingVersion) graphql.Marshaler {
+func marshalOEdiLadingVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋladingprojectᚐLadingVersion(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *ladingproject.LadingVersion) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6423,12 +6428,12 @@ func marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
+func marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageAcknowledgmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edimessage.MessageAcknowledgmentStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }
 
-func marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐMessageDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edi.MessageDeliveryStatus) graphql.Marshaler {
+func marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedimessageᚐMessageDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v edimessage.MessageDeliveryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	return res
 }

@@ -5,13 +5,15 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -29,23 +31,25 @@ func setupPermissionHandler(
 
 	logger := zap.NewNop()
 
-	registry := permission.NewEmptyRegistry()
-	_ = registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	_ = registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_resource",
 		DisplayName: "Test Resource",
 		Category:    "test",
 	})
-	_ = registry.Register(&permission.ResourceDefinition{
+	_ = registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "test_owned",
 		DisplayName: "Test Owned",
 		Category:    "test",
-		Scopes: []permission.ScopeSupport{
-			{Scope: permission.DataScopeOwn, EnforcedBy: permission.ScopeEnforcedByDatabase},
+		Scopes: []permissionspec.ScopeSupport{
+			{Scope: permission.DataScopeOwn, EnforcedBy: permissionspec.ScopeEnforcedByDatabase},
 		},
 	})
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
+	)
 
 	return permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: engine,
@@ -309,14 +313,14 @@ func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforc
 	t.Parallel()
 
 	logger := zap.NewNop()
-	registry := permission.NewRegistry()
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	registry := permissioncatalog.NewRegistry()
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	handler := permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
 		Registry:         registry,
 		Scopes:           &scopepolicytest.Policy{Registry: registry},
 		ErrorHandler: helpers.NewErrorHandler(
-			helpers.ErrorHandlerParams{Logger: logger, Config: cfg},
+			helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
 		),
 	})
 
@@ -346,8 +350,8 @@ func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforc
 		} `json:"templates"`
 	}
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	require.Len(t, resp.Bundles, len(permission.Bundles()))
-	require.Len(t, resp.Templates, len(permission.JobTemplates()))
+	require.Len(t, resp.Bundles, len(permissioncatalog.Bundles()))
+	require.Len(t, resp.Templates, len(permissioncatalog.JobTemplates()))
 
 	for _, bundle := range resp.Bundles {
 		if bundle.ID != "hr.team" {
@@ -369,28 +373,28 @@ func TestPermissionHandler_GetBundles_DowngradesScopesTheDeploymentDoesNotEnforc
 func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "invoice",
 		DisplayName: "Invoice",
 		Category:    "Billing",
-		Operations: []permission.OperationDefinition{
+		Operations: []permissionspec.OperationDefinition{
 			{Operation: permission.OpRead, DisplayName: "View"},
 		},
 	}))
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissionspec.ResourceDefinition{
 		Resource:    "assistant",
 		DisplayName: "Desk",
 		Category:    "Desk",
 	}))
 
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
 	handler := permissionhandler.New(permissionhandler.Params{
 		PermissionEngine: permissionportsmock.NewMockPermissionEngine(t),
 		Registry:         registry,
 		Scopes:           &scopepolicytest.Policy{Registry: registry, DatabaseEnforcing: true},
 		ErrorHandler: helpers.NewErrorHandler(
-			helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg},
+			helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
 		),
 	})
 
@@ -426,5 +430,10 @@ func TestPermissionHandler_GetAvailableResources_TranslatesAndFollowsTheRail(t *
 
 	def, ok := registry.Get("invoice")
 	require.True(t, ok)
-	assert.Equal(t, "Invoice", def.DisplayName, "translating a response must not change the registry")
+	assert.Equal(
+		t,
+		"Invoice",
+		def.DisplayName,
+		"translating a response must not change the registry",
+	)
 }

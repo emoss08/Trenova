@@ -5,24 +5,17 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
@@ -31,10 +24,20 @@ import (
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +48,7 @@ import (
 
 func newTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*trailer.Trailer]().
+		validator: tenantedvalidation.NewBuilder[*trailer.Trailer]().
 			WithModelName("Trailer").
 			Build(),
 	}
@@ -324,7 +327,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -334,7 +337,7 @@ func TestLocate_RejectsBrandNewTrailer(t *testing.T) {
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = continuityRepo
 	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
 	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
@@ -426,14 +429,14 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			CustomerID:        pulid.MustNew("cust_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
 			BOL:               "BOL-1",
-			Status:            shipment.StatusNew,
+			Status:            shipmentvocab.StatusNew,
 			Moves: []*shipment.ShipmentMove{
 				{
 					ID:             sourceMoveID,
 					ShipmentID:     shipmentID,
 					OrganizationID: orgID,
 					BusinessUnitID: buID,
-					Status:         shipment.MoveStatusAssigned,
+					Status:         shipmentvocab.MoveStatusAssigned,
 					Stops: []*shipment.Stop{
 						{
 							ID:                   pulid.MustNew("stp_"),
@@ -441,12 +444,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 							OrganizationID:       orgID,
 							BusinessUnitID:       buID,
 							LocationID:           currentLocationID,
-							Type:                 shipment.StopTypePickup,
-							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Type:                 shipmentvocab.StopTypePickup,
+							ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 							Sequence:             0,
 							ScheduledWindowStart: 1,
 							ScheduledWindowEnd:   new(int64(2)),
-							Status:               shipment.StopStatusNew,
+							Status:               shipmentvocab.StopStatusNew,
 						},
 						{
 							ID:                   pulid.MustNew("stp_"),
@@ -454,12 +457,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 							OrganizationID:       orgID,
 							BusinessUnitID:       buID,
 							LocationID:           currentLocationID,
-							Type:                 shipment.StopTypeDelivery,
-							ScheduleType:         shipment.StopScheduleTypeOpen,
+							Type:                 shipmentvocab.StopTypeDelivery,
+							ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 							Sequence:             1,
 							ScheduledWindowStart: 3,
 							ScheduledWindowEnd:   new(int64(4)),
-							Status:               shipment.StopStatusNew,
+							Status:               shipmentvocab.StopStatusNew,
 						},
 					},
 				},
@@ -473,12 +476,12 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			lastMove := entity.Moves[1]
 			lastMove.ID = pulid.MustNew("sm_")
 			require.False(t, lastMove.Loaded)
-			assert.Equal(t, shipment.MoveStatusCompleted, lastMove.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusCompleted, lastMove.Status)
 			require.Len(t, lastMove.Stops, 2)
 			assert.Equal(t, currentLocationID, lastMove.Stops[0].LocationID)
 			assert.Equal(t, newLocationID, lastMove.Stops[1].LocationID)
-			assert.Equal(t, shipment.StopStatusCompleted, lastMove.Stops[0].Status)
-			assert.Equal(t, shipment.StopStatusCompleted, lastMove.Stops[1].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, lastMove.Stops[0].Status)
+			assert.Equal(t, shipmentvocab.StopStatusCompleted, lastMove.Stops[1].Status)
 			require.NotNil(t, lastMove.Stops[0].ActualArrival)
 			require.NotNil(t, lastMove.Stops[0].ActualDeparture)
 			require.NotNil(t, lastMove.Stops[1].ActualArrival)
@@ -507,7 +510,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	systemUserID := pulid.MustNew("usr_")
@@ -516,7 +519,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&tenant.User{ID: systemUserID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(nil, nil).
@@ -526,7 +529,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 			return entity.OrganizationID == orgID &&
 				entity.BusinessUnitID == buID &&
 				entity.ShipmentMoveID != pulid.Nil &&
-				entity.Status == shipment.AssignmentStatusCompleted &&
+				entity.Status == shipmentvocab.AssignmentStatusCompleted &&
 				entity.PrimaryWorkerID == nil &&
 				entity.TractorID == nil &&
 				entity.TrailerID != nil &&
@@ -554,7 +557,7 @@ func TestLocate_AppendsMoveAndAdvancesContinuity(t *testing.T) {
 		Return(&location.Location{ID: newLocationID, OrganizationID: orgID, BusinessUnitID: buID, Name: "Greensboro Yard"}, nil).
 		Once()
 
-	commentRepo := shipmentportsmock.NewMockShipmentCommentRepository(t)
+	commentRepo := shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	commentRepo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
 			return comment.ShipmentID == shipmentID &&
@@ -606,7 +609,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 		Return(&trailer.Trailer{ID: trailerID, OrganizationID: orgID, BusinessUnitID: buID}, nil).
 		Once()
 
-	assignmentRepo := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignmentRepo := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignmentRepo.EXPECT().
 		FindInProgressByTrailerID(mock.Anything, tenantInfo, trailerID, pulid.Nil).
 		Return(&shipment.Assignment{
@@ -620,7 +623,7 @@ func TestLocate_RejectsTrailerAlreadyInProgress(t *testing.T) {
 	deps.svc.assignmentRepo = assignmentRepo
 	deps.svc.continuityRepo = equipmentcontinuityportsmock.NewMockEquipmentContinuityRepository(t)
 	deps.svc.shipmentRepo = shipmentportsmock.NewMockShipmentRepository(t)
-	deps.svc.shipmentCommentRepo = shipmentportsmock.NewMockShipmentCommentRepository(t)
+	deps.svc.shipmentCommentRepo = shipmentcommentportsmock.NewMockShipmentCommentRepository(t)
 	deps.svc.controlRepo = tenantportsmock.NewMockShipmentControlRepository(t)
 	deps.svc.locationRepo = locationportsmock.NewMockLocationRepository(t)
 	deps.svc.shipmentValidator = newTestShipmentValidator(t)
@@ -659,15 +662,19 @@ func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *tes
 	assert.Equal(
 		t,
 		shipmentstate.DisabledDelayThresholdMinutes,
-		shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          false,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}),
 	)
-	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
-		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: new(int16(30)),
-	}))
+	assert.Equal(
+		t,
+		int16(30),
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: new(int16(30)),
+		}),
+	)
 }
 
 func TestUpdate_Success(t *testing.T) {

@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,13 +15,13 @@ import (
 )
 
 type (
-	CaseChange  = kernelports.RecordChange[worker.WorkerLeaveCase]
-	EntryChange = kernelports.RecordChange[worker.WorkerLeaveEntry]
+	CaseChange  = kernelports.RecordChange[workerleave.WorkerLeaveCase]
+	EntryChange = kernelports.RecordChange[workerleave.WorkerLeaveEntry]
 )
 
 func (s *Service) prepareOpenCase(
 	ctx context.Context,
-	entity *worker.WorkerLeaveCase,
+	entity *workerleave.WorkerLeaveCase,
 	userID pulid.ID,
 ) error {
 	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
@@ -36,9 +37,9 @@ func (s *Service) prepareOpenCase(
 
 func (s *Service) PlanOpenCase(
 	ctx context.Context,
-	entity *worker.WorkerLeaveCase,
+	entity *workerleave.WorkerLeaveCase,
 	userID pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	planned := *entity
 	if err := s.prepareOpenCase(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -50,8 +51,8 @@ func (s *Service) loadCase(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (original, leaveCase *worker.WorkerLeaveCase, err error) {
-	original, err = s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+) (original, leaveCase *workerleave.WorkerLeaveCase, err error) {
+	original, err = s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -83,10 +84,10 @@ func (s *Service) PlanCloseCase(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == worker.LeaveCaseClosed {
+	if original.Status == workerleave.LeaveCaseClosed {
 		return &CaseChange{Before: original, After: entity}, nil
 	}
-	if original.Status == worker.LeaveCasePending {
+	if original.Status == workerleave.LeaveCasePending {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -95,7 +96,7 @@ func (s *Service) PlanCloseCase(
 	}
 
 	now := timeutils.NowUnix()
-	entity.Status = worker.LeaveCaseClosed
+	entity.Status = workerleave.LeaveCaseClosed
 	entity.ClosedAt = &now
 	if entity.EndsAt == nil {
 		entity.EndsAt = &now
@@ -126,7 +127,7 @@ func (s *Service) PlanRequestCertification(
 		due = *req.DueAt
 	}
 
-	entity.CertificationStatus = worker.CertificationRequested
+	entity.CertificationStatus = workerleave.CertificationRequested
 	entity.CertificationRequestedAt = &now
 	entity.CertificationDueAt = &due
 	entity.CertificationReceivedAt = nil
@@ -140,8 +141,8 @@ func (s *Service) PlanRequestCertification(
 func (s *Service) PlanRecordDay(
 	ctx context.Context,
 	req *RecordDayRequest,
-) (*worker.WorkerLeaveEntry, error) {
-	leaveCase, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+) (*workerleave.WorkerLeaveEntry, error) {
+	leaveCase, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -158,7 +159,7 @@ func (s *Service) PlanRecordDay(
 		)
 	}
 
-	entity := &worker.WorkerLeaveEntry{
+	entity := &workerleave.WorkerLeaveEntry{
 		OrganizationID:           leaveCase.OrganizationID,
 		BusinessUnitID:           leaveCase.BusinessUnitID,
 		WorkerID:                 leaveCase.WorkerID,
@@ -180,7 +181,7 @@ func (s *Service) PlanRecordDay(
 }
 
 func (s *Service) PlanUpdateDay(ctx context.Context, req *UpdateDayRequest) (*EntryChange, error) {
-	original, err := s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+	original, err := s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         req.EntryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -214,8 +215,8 @@ func (s *Service) PlanDeleteDay(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerLeaveEntry, error) {
-	return s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+) (*workerleave.WorkerLeaveEntry, error) {
+	return s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

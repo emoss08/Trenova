@@ -7,8 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,27 +22,27 @@ import (
 
 type fakeControlRepo struct {
 	carrierintelports.CarrierIntelControlRepository
-	control *carrierintel.CarrierIntelControl
+	control *carrierintelcontrol.CarrierIntelControl
 }
 
 func (f *fakeControlRepo) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*carrierintel.CarrierIntelControl, error) {
+) (*carrierintelcontrol.CarrierIntelControl, error) {
 	return f.control, nil
 }
 
 type fakeSnapshotRepo struct {
 	carrierintelports.CarrierIntelSnapshotRepository
-	byCarrier map[pulid.ID]*carrierintel.CarrierIntelSnapshot
+	byCarrier map[pulid.ID]*carrierintelsnapshot.CarrierIntelSnapshot
 }
 
 func (f *fakeSnapshotRepo) GetCurrentByCarrierIDs(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
-) ([]*carrierintel.CarrierIntelSnapshot, error) {
-	out := make([]*carrierintel.CarrierIntelSnapshot, 0, len(carrierIDs))
+) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+	out := make([]*carrierintelsnapshot.CarrierIntelSnapshot, 0, len(carrierIDs))
 	for _, id := range carrierIDs {
 		if snap, ok := f.byCarrier[id]; ok {
 			out = append(out, snap)
@@ -49,7 +53,7 @@ func (f *fakeSnapshotRepo) GetCurrentByCarrierIDs(
 
 type fakeOverrideRepo struct {
 	carrierintelports.CarrierIntelOverrideRepository
-	overrides []*carrierintel.CarrierIntelOverride
+	overrides []*carrierinteloverride.CarrierIntelOverride
 }
 
 func (f *fakeOverrideRepo) ListActiveByCarrierIDs(
@@ -57,12 +61,12 @@ func (f *fakeOverrideRepo) ListActiveByCarrierIDs(
 	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
 	now int64,
-) ([]*carrierintel.CarrierIntelOverride, error) {
+) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 	wanted := make(map[pulid.ID]bool, len(carrierIDs))
 	for _, id := range carrierIDs {
 		wanted[id] = true
 	}
-	out := make([]*carrierintel.CarrierIntelOverride, 0, len(f.overrides))
+	out := make([]*carrierinteloverride.CarrierIntelOverride, 0, len(f.overrides))
 	for _, o := range f.overrides {
 		if wanted[o.CarrierID] && o.IsActive(now) {
 			out = append(out, o)
@@ -106,7 +110,7 @@ func newGateHarness(t *testing.T) *gateHarness {
 	g := &gateHarness{
 		harness: base,
 		snapshots: &fakeSnapshotRepo{
-			byCarrier: make(map[pulid.ID]*carrierintel.CarrierIntelSnapshot),
+			byCarrier: make(map[pulid.ID]*carrierintelsnapshot.CarrierIntelSnapshot),
 		},
 		overrides: &fakeOverrideRepo{},
 		subjects:  &fakeSubjectRepo{},
@@ -131,9 +135,9 @@ func outOfServiceProfile() *carrierintel.Profile {
 func (g *gateHarness) addSnapshot(
 	carrierID pulid.ID,
 	ageSeconds int64,
-) *carrierintel.CarrierIntelSnapshot {
+) *carrierintelsnapshot.CarrierIntelSnapshot {
 	profile := outOfServiceProfile()
-	snap := &carrierintel.CarrierIntelSnapshot{
+	snap := &carrierintelsnapshot.CarrierIntelSnapshot{
 		CarrierID:     carrierID,
 		SubjectType:   carrierintel.SubjectTypeCarrier,
 		SubjectID:     carrierID.String(),
@@ -142,7 +146,7 @@ func (g *gateHarness) addSnapshot(
 		Profile:       profile,
 		PolicyVersion: g.control.PolicyVersion,
 		FetchedAt:     g.now - ageSeconds,
-		Findings: carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
+		Findings: carrierintelrule.EvaluateFindings(&carrierintelrule.EvaluateInput{
 			Profile:  profile,
 			Now:      g.now,
 			Subject:  carrierintel.SubjectTypeCarrier,
@@ -153,7 +157,7 @@ func (g *gateHarness) addSnapshot(
 	return snap
 }
 
-func gateFinding(gate *carrier.IntelGate, code carrierintel.RuleCode) *carrier.IntelFinding {
+func gateFinding(gate *carrier.IntelGate, code carrierintelrule.RuleCode) *carrier.IntelFinding {
 	for idx := range gate.Findings {
 		if gate.Findings[idx].Code == code.String() {
 			return &gate.Findings[idx]
@@ -204,7 +208,7 @@ func TestGateFor(t *testing.T) {
 		assert.False(t, gate.PastHardMaxAge)
 		assert.Empty(t, g.subjects.requested)
 
-		finding := gateFinding(gate, carrierintel.RuleSafetyOOSOrder)
+		finding := gateFinding(gate, carrierintelrule.RuleSafetyOOSOrder)
 		require.NotNil(t, finding)
 		assert.Equal(t, carrier.IntelAction(carrierintel.RuleActionBlock), finding.Action)
 		for _, f := range gate.Findings {
@@ -247,15 +251,15 @@ func TestGateFor(t *testing.T) {
 		carrierID := pulid.MustNew("car_")
 		g.addSnapshot(carrierID, 3600)
 
-		g.control.Rules = carrierintel.RuleSettings{
-			carrierintel.RuleSafetyOOSOrder: {Action: carrierintel.RuleActionWarn},
+		g.control.Rules = carrierintelrule.RuleSettings{
+			carrierintelrule.RuleSafetyOOSOrder: {Action: carrierintel.RuleActionWarn},
 		}
 		g.control.PolicyVersion++
 
 		gates, err := g.svc.GateFor(t.Context(), g.tenant, []pulid.ID{carrierID})
 		require.NoError(t, err)
 		require.Len(t, g.subjects.requested, 1)
-		finding := gateFinding(gates[carrierID], carrierintel.RuleSafetyOOSOrder)
+		finding := gateFinding(gates[carrierID], carrierintelrule.RuleSafetyOOSOrder)
 		require.NotNil(t, finding)
 		assert.Equal(t, carrier.IntelAction(carrierintel.RuleActionWarn), finding.Action)
 	})
@@ -266,14 +270,14 @@ func TestGateFor(t *testing.T) {
 		carrierID := pulid.MustNew("car_")
 		g.addSnapshot(carrierID, 3600)
 
-		g.control.Rules = carrierintel.RuleSettings{
-			carrierintel.RuleSafetyOOSOrder: {Action: carrierintel.RuleActionOff},
+		g.control.Rules = carrierintelrule.RuleSettings{
+			carrierintelrule.RuleSafetyOOSOrder: {Action: carrierintel.RuleActionOff},
 		}
 		g.control.PolicyVersion++
 
 		gates, err := g.svc.GateFor(t.Context(), g.tenant, []pulid.ID{carrierID})
 		require.NoError(t, err)
-		assert.Nil(t, gateFinding(gates[carrierID], carrierintel.RuleSafetyOOSOrder))
+		assert.Nil(t, gateFinding(gates[carrierID], carrierintelrule.RuleSafetyOOSOrder))
 	})
 
 	t.Run("active overrides mark the block overridden until expiry", func(t *testing.T) {
@@ -282,16 +286,16 @@ func TestGateFor(t *testing.T) {
 		carrierID := pulid.MustNew("car_")
 		g.addSnapshot(carrierID, 3600)
 		expiresAt := g.now + 7*timeutils.SecondsPerDay
-		g.overrides.overrides = []*carrierintel.CarrierIntelOverride{{
+		g.overrides.overrides = []*carrierinteloverride.CarrierIntelOverride{{
 			ID:        pulid.MustNew("ciovr_"),
 			CarrierID: carrierID,
-			RuleCode:  carrierintel.RuleSafetyOOSOrder,
+			RuleCode:  carrierintelrule.RuleSafetyOOSOrder,
 			ExpiresAt: expiresAt,
 		}}
 
 		gates, err := g.svc.GateFor(t.Context(), g.tenant, []pulid.ID{carrierID})
 		require.NoError(t, err)
-		finding := gateFinding(gates[carrierID], carrierintel.RuleSafetyOOSOrder)
+		finding := gateFinding(gates[carrierID], carrierintelrule.RuleSafetyOOSOrder)
 		require.NotNil(t, finding)
 		assert.True(t, finding.Overridden)
 		require.NotNil(t, finding.OverrideExpiresAt)
@@ -324,6 +328,6 @@ func TestGateFor(t *testing.T) {
 		gates, err := g.svc.GateFor(t.Context(), g.tenant, []pulid.ID{carrierID})
 		require.NoError(t, err)
 		assert.True(t, gates[carrierID].ProviderUnavailable)
-		assert.NotNil(t, gateFinding(gates[carrierID], carrierintel.RuleSafetyOOSOrder))
+		assert.NotNil(t, gateFinding(gates[carrierID], carrierintelrule.RuleSafetyOOSOrder))
 	})
 }

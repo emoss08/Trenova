@@ -3,13 +3,13 @@
 package deskmemoryresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentmemoryports "github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 )
 
 type Deps struct {
-	*base.Core
-	AgentMemoryService agentports.AgentMemoryService
+	*resolvercore.Core
+	AgentMemoryService agentmemoryports.AgentMemoryService
 }
 
 type MutationResolver struct{ *Deps }

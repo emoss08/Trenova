@@ -9,7 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -137,7 +139,7 @@ func FieldWords(field string, isKind func(field string) bool) string {
 // kind, where the kind is not part of the carrier.
 func LinkedFrom(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 ) (map[string][]string, error) {
 	kinds, err := gqlext.KindTypes(schema, registry)
 	if err != nil {
@@ -201,13 +203,13 @@ func reachedKinds(
 
 // RenderWords writes the role editor's words for every kind with a view, and
 // which kinds link to each.
-func RenderWords(schema *ast.Schema, registry *permission.Registry) (string, error) {
+func RenderWords(schema *ast.Schema, registry *permissioncatalog.Registry) (string, error) {
 	linked, err := LinkedFrom(schema, registry)
 	if err != nil {
 		return "", err
 	}
 	defs := registry.All()
-	slices.SortFunc(defs, func(a, b *permission.ResourceDefinition) int {
+	slices.SortFunc(defs, func(a, b *permissionspec.ResourceDefinition) int {
 		return strings.Compare(a.Resource, b.Resource)
 	})
 
@@ -219,7 +221,7 @@ func RenderWords(schema *ast.Schema, registry *permission.Registry) (string, err
 	b.WriteString("var viewWords = map[string][]viewWord{\n")
 	for _, def := range defs {
 		words := ViewWords(def.ReferenceView, func(field string) bool {
-			_, ok := registry.Get(stringutils.ConvertCamelToSnake(field))
+			_, ok := registry.Get(textcase.ConvertCamelToSnake(field))
 			return ok
 		})
 		if len(words) == 0 {

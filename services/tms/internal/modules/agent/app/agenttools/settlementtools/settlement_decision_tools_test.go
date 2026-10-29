@@ -6,9 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
@@ -99,16 +102,16 @@ func driverPlanner(
 	}
 }
 
-func settlementTool(t *testing.T, provider any, book any) agentports.AgentTool {
+func settlementTool(t *testing.T, provider any, book any) agenttoolports.AgentTool {
 	t.Helper()
 
 	switch build := provider.(type) {
-	case func(*driversettlementservice.Service) agentports.AgentTool:
+	case func(*driversettlementservice.Service) agenttoolports.AgentTool:
 		tool := build(nil).(*SettlementDecisionTool[driversettlement.Settlement])
 		tool.book = book.(SettlementBook[driversettlement.Settlement])
 
 		return tool
-	case func(*carriersettlementservice.Service) agentports.AgentTool:
+	case func(*carriersettlementservice.Service) agenttoolports.AgentTool:
 		tool := build(nil).(*SettlementDecisionTool[carriersettlement.CarrierSettlement])
 		tool.book = book.(SettlementBook[carriersettlement.CarrierSettlement])
 
@@ -169,10 +172,17 @@ func TestSettlementDecisions_MoneyAndFinalOnesAreAPersonsDecision(t *testing.T) 
 	driverPost := agenttoolstest.BuildTool(t, postDriverSingle).Policy()
 	assert.True(t, driverPost.HasEgress(agent.EgressDriverVisible))
 	require.NotNil(t, driverPost.Classify)
-	assert.Equal(t, agent.EgressMoney, driverPost.Classify(agentports.ToolExecuteParams{}).Egress)
+	assert.Equal(
+		t,
+		agent.EgressMoney,
+		driverPost.Classify(&agenttoolports.ToolExecuteParams{}).Egress,
+	)
 	assert.Equal(t, permission.ResourceCarrierSettlement,
 		agenttoolstest.BuildTool(t, provideVoidCarrierSettlementTool).Policy().Resource)
-	assert.NotNil(t, agenttoolstest.BuildTool(t, provideRejectDriverSettlementTool).Policy().TaintHold)
+	assert.NotNil(
+		t,
+		agenttoolstest.BuildTool(t, provideRejectDriverSettlementTool).Policy().TaintHold,
+	)
 }
 
 func TestApproveDriverSettlement_RunsOnlyFromAPersonsApproval(t *testing.T) {
@@ -182,9 +192,15 @@ func TestApproveDriverSettlement_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	entity.Status = driversettlement.StatusPendingApproval
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
 	tool := settlementTool(t, approveDriverSingle, book)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrSettlementNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), params),
+		settlementpreview.ErrSettlementNeedsAPerson,
+	)
 	assert.Nil(t, book.performed)
 
 	params.ProposalID = pulid.MustNew("ap_")
@@ -195,10 +211,12 @@ func TestApproveDriverSettlement_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, book.performed.TenantInfo.OrgID)
 	assert.Equal(t, params.Actor, book.actor)
 
-	agentParams := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	agentParams := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	agentParams.ProposalID = pulid.MustNew("ap_")
-	require.ErrorIs(t, tool.Execute(t.Context(), agentParams), common.ErrAgentCannotApprove)
+	require.ErrorIs(t, tool.Execute(t.Context(), agentParams), toolguard.ErrAgentCannotApprove)
 }
 
 func TestSubmitDriverSettlement_RunsWithoutAProposal(t *testing.T) {
@@ -208,15 +226,17 @@ func TestSubmitDriverSettlement_RunsWithoutAProposal(t *testing.T) {
 	entity.Status = driversettlement.StatusDraft
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
 	tool := settlementTool(t, provideSubmitDriverSettlementTool, book)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, settlementshared.ActionSubmit, book.performed.Action)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{
+	assert.Equal(t, agenttoolports.ToolTarget{
 		Resource: permission.ResourceDriverSettlement,
 		ID:       entity.ID,
 	}, target)
@@ -242,9 +262,11 @@ func TestPostDriverSettlement_PreviewShowsTheStatusMoneyAndJournal(t *testing.T)
 		locked: true,
 	}
 	tool := settlementTool(t, postDriverSingle, book)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Empty(t, preview.Warnings)
@@ -262,7 +284,7 @@ func TestPostDriverSettlement_PreviewShowsTheStatusMoneyAndJournal(t *testing.T)
 
 	entry := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceJournalEntry, entry.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, entry.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, entry.Operation)
 	require.NotNil(t, entry.Money)
 	assert.True(t, entry.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("1800")))
 }
@@ -277,14 +299,16 @@ func TestSettlementDecision_ARefusalIsAWouldFail(t *testing.T) {
 		locked: true,
 	}
 	tool := settlementTool(t, approveDriverSingle, book)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
-	err = tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err = tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
 }
@@ -297,23 +321,29 @@ func TestRejectDriverSettlement_NeedsABoundedReason(t *testing.T) {
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
 	tool := settlementTool(t, provideRejectDriverSettlementTool, book)
 
-	missing := agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: entity.ID.String()})
+	missing := agenttoolstest.ExecuteParams(
+		map[string]any{settlementpreview.ParamSettlementID: entity.ID.String()},
+	)
 	require.Error(t, tool.Execute(t.Context(), missing))
 
 	long := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: entity.ID.String(),
-		paramSettlementReason:    string(make([]byte, maxSettlementReason+1)),
+		settlementpreview.ParamSettlementID: entity.ID.String(),
+		paramSettlementReason:               string(make([]byte, maxSettlementReason+1)),
 	})
 	require.Error(t, tool.Execute(t.Context(), long))
 	assert.Nil(t, book.performed)
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: entity.ID.String(),
-		paramSettlementReason:    "  Detention line is doubled  ",
+		settlementpreview.ParamSettlementID: entity.ID.String(),
+		paramSettlementReason:               "  Detention line is doubled  ",
 	})
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	assert.Equal(t, "Draft", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	assert.Equal(
+		t,
+		"Draft",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "Detention line is doubled", book.performed.Reason)
@@ -326,9 +356,9 @@ func TestMarkSettlementPaid_TakesOnlyAKnownPaymentMethod(t *testing.T) {
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
 	tool := settlementTool(t, provideMarkDriverSettlementPaidTool, book)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID:     entity.ID.String(),
-		common.ParamPaymentMethod:    "Bitcoin",
-		common.ParamPaymentReference: "CHK-1",
+		settlementpreview.ParamSettlementID:     entity.ID.String(),
+		settlementpreview.ParamPaymentMethod:    "Bitcoin",
+		settlementpreview.ParamPaymentReference: "CHK-1",
 	})
 	params.ProposalID = pulid.MustNew("ap_")
 
@@ -336,7 +366,7 @@ func TestMarkSettlementPaid_TakesOnlyAKnownPaymentMethod(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "ACH, Check, InstantPay, Other")
 
-	params.Params[common.ParamPaymentMethod] = "Check"
+	params.Params[settlementpreview.ParamPaymentMethod] = "Check"
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "Check", book.performed.PaymentMethod)
 	assert.Equal(t, "CHK-1", book.performed.PaymentReference)
@@ -351,8 +381,8 @@ func TestMarkSettlementPaid_TakesOnlyAKnownPaymentMethod(t *testing.T) {
 	}
 	carrierTool := settlementTool(t, provideMarkCarrierSettlementPaidTool, carrierBook)
 	carrierParams := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID:  pulid.MustNew("carstl_").String(),
-		common.ParamPaymentMethod: "InstantPay",
+		settlementpreview.ParamSettlementID:  pulid.MustNew("carstl_").String(),
+		settlementpreview.ParamPaymentMethod: "InstantPay",
 	})
 	carrierParams.ProposalID = pulid.MustNew("ap_")
 	require.Error(t, carrierTool.Execute(t.Context(), carrierParams))
@@ -368,32 +398,36 @@ func TestAddDriverSettlementAdjustment_PreviewsTheNewNet(t *testing.T) {
 	payCode := pulid.MustNew("payc_")
 
 	zero := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID:   entity.ID.String(),
-		paramAdjustmentDescription: "Nothing",
-		paramAdjustmentAmount:      "0.00",
+		settlementpreview.ParamSettlementID: entity.ID.String(),
+		paramAdjustmentDescription:          "Nothing",
+		paramAdjustmentAmount:               "0.00",
 	})
 	require.Error(t, tool.Execute(t.Context(), zero))
 
 	badCode := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID:   entity.ID.String(),
-		paramAdjustmentDescription: "Fuel advance repaid",
-		paramAdjustmentAmount:      "-50",
-		common.ParamPayCodeID:      "not-an-id",
+		settlementpreview.ParamSettlementID: entity.ID.String(),
+		paramAdjustmentDescription:          "Fuel advance repaid",
+		paramAdjustmentAmount:               "-50",
+		toolparams.ParamPayCodeID:           "not-an-id",
 	})
 	require.Error(t, tool.Execute(t.Context(), badCode))
 
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID:   entity.ID.String(),
-		paramAdjustmentDescription: "Fuel advance repaid",
-		paramAdjustmentAmount:      "-50.00",
-		common.ParamPayCodeID:      payCode.String(),
+		settlementpreview.ParamSettlementID: entity.ID.String(),
+		paramAdjustmentDescription:          "Fuel advance repaid",
+		paramAdjustmentAmount:               "-50.00",
+		toolparams.ParamPayCodeID:           payCode.String(),
 	})
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Money)
 	assert.True(t, change.Money.Delta.Decimal.Equal(decimal.RequireFromString("-50")))
-	assert.Equal(t, true, agenttoolstest.FieldByPath(t, change, common.FieldHasExceptions).After)
+	assert.Equal(
+		t,
+		true,
+		agenttoolstest.FieldByPath(t, change, settlementpreview.FieldHasExceptions).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, book.performed.Adjustment)
@@ -415,13 +449,17 @@ func TestRemoveSettlementAdjustment_TakesTheLineFromTheSettlement(t *testing.T) 
 	tool := settlementTool(t, provideRemoveCarrierSettlementAdjustmentTool, book)
 	settlementID := pulid.MustNew("carstl_")
 
-	require.Error(t, tool.Execute(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamSettlementID: settlementID.String()})))
+	require.Error(t, tool.Execute(
+		t.Context(),
+		agenttoolstest.ExecuteParams(
+			map[string]any{settlementpreview.ParamSettlementID: settlementID.String()},
+		),
+	))
 
 	lineID := pulid.MustNew("carstll_")
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamSettlementID: settlementID.String(),
-		paramLineID:              lineID.String(),
+		settlementpreview.ParamSettlementID: settlementID.String(),
+		paramLineID:                         lineID.String(),
 	})))
 	assert.Equal(t, lineID, book.performed.LineID)
 	assert.Equal(t, settlementshared.ActionRemoveAdjustment, book.performed.Action)
@@ -430,18 +468,18 @@ func TestRemoveSettlementAdjustment_TakesTheLineFromTheSettlement(t *testing.T) 
 // The single approve and post tools are no longer registered: the merged
 // tools run them for each settlement. These build them for the tests that
 // exercise one settlement directly.
-func approveDriverSingle(s *driversettlementservice.Service) agentports.AgentTool {
+func approveDriverSingle(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return driverDecisionTool(approveDecision, s)
 }
 
-func postDriverSingle(s *driversettlementservice.Service) agentports.AgentTool {
+func postDriverSingle(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return driverDecisionTool(postDecision, s)
 }
 
-func approveCarrierSingle(s *carriersettlementservice.Service) agentports.AgentTool {
+func approveCarrierSingle(s *carriersettlementservice.Service) agenttoolports.AgentTool {
 	return carrierDecisionTool(approveDecision, s)
 }
 
-func postCarrierSingle(s *carriersettlementservice.Service) agentports.AgentTool {
+func postCarrierSingle(s *carriersettlementservice.Service) agenttoolports.AgentTool {
 	return carrierDecisionTool(postDecision, s)
 }

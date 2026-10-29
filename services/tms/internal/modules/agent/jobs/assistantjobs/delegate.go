@@ -3,7 +3,7 @@ package assistantjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 )
@@ -21,14 +21,14 @@ func newDelegateOpener(assistant *assistantservice.Service) agentflow.DelegateOp
 func (o *delegateOpener) OpenDelegate(
 	ctx context.Context,
 	run agentflow.RunContext,
-	call agentruntime.DelegateCall,
+	call *delegation.Call,
 ) (*agentflow.DelegateOpening, error) {
 	opened, err := o.assistant.OpenDelegate(ctx, &assistantservice.OpenDelegateRequest{
 		Parent:    run.Definition,
 		Actor:     run.Actor,
 		ThreadID:  run.ThreadID,
 		StepOwner: run.StepOwner,
-		Call:      call,
+		Call:      *call,
 		Records:   run.Records,
 		Inline:    run.Inline,
 	})

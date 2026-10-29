@@ -192,3 +192,9 @@ func Find(text string, limit int) []string {
 
 	return ids
 }
+
+var anyCase = regexp.MustCompile(`(?i)\b` + idPattern + `\b`)
+
+func Mentioned(text string) bool {
+	return anyCase.MatchString(text)
+}

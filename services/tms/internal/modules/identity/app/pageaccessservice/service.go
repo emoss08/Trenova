@@ -13,6 +13,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pageaccess"
@@ -30,13 +32,13 @@ type Params struct {
 
 	Engine   permissionports.PermissionEngine
 	Roles    permissionports.RoleRepository
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 }
 
 type Service struct {
 	engine   permissionports.PermissionEngine
 	roles    permissionports.RoleRepository
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	views    *refview.Views
 	manifest *pageaccess.Manifest
 	// readBy is how many screens read each kind as root records.
@@ -213,18 +215,18 @@ func (s *Service) grants(
 	tenant pagination.TenantInfo,
 	roleID pulid.ID,
 	draft *RoleDraft,
-) (permission.RoleGrants, error) {
+) (permissioncatalog.RoleGrants, error) {
 	if (roleID.IsNil()) == (draft == nil) {
-		return permission.RoleGrants{}, errortypes.NewValidationError(
+		return permissioncatalog.RoleGrants{}, errortypes.NewValidationError(
 			"roleId", errortypes.ErrInvalid, "Choose a saved role or send the role being edited",
 		)
 	}
 
-	var role *permission.Role
+	var role *rbac.Role
 	if draft != nil {
 		built, err := s.draftRole(draft)
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		role = built
 	} else {
@@ -233,33 +235,33 @@ func (s *Service) grants(
 			TenantInfo: tenant,
 		})
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		role = saved
 	}
 
-	roles := []*permission.Role{role}
+	roles := []*rbac.Role{role}
 	if len(role.ParentRoleIDs) > 0 {
 		inherited, err := s.roles.GetRolesWithInheritance(ctx, role.ParentRoleIDs)
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		found := make(map[pulid.ID]struct{}, len(inherited))
 		for _, parent := range inherited {
 			if parent.OrganizationID.IsNotNil() && parent.OrganizationID != tenant.OrgID {
-				return permission.RoleGrants{}, foreignParentError()
+				return permissioncatalog.RoleGrants{}, foreignParentError()
 			}
 			found[parent.ID] = struct{}{}
 		}
 		for _, id := range role.ParentRoleIDs {
 			if _, ok := found[id]; !ok {
-				return permission.RoleGrants{}, foreignParentError()
+				return permissioncatalog.RoleGrants{}, foreignParentError()
 			}
 		}
 		roles = append(roles, inherited...)
 	}
 
-	return permission.GrantsOf(roles...), nil
+	return permissioncatalog.GrantsOf(roles...), nil
 }
 
 func foreignParentError() error {
@@ -270,15 +272,15 @@ func foreignParentError() error {
 	)
 }
 
-func (s *Service) draftRole(draft *RoleDraft) (*permission.Role, error) {
+func (s *Service) draftRole(draft *RoleDraft) (*rbac.Role, error) {
 	multiErr := errortypes.NewMultiError()
 	if !draft.MaxSensitivity.IsValid() {
 		multiErr.Add("maxSensitivity", errortypes.ErrInvalid, "Choose a valid sensitivity")
 	}
-	role := &permission.Role{
+	role := &rbac.Role{
 		MaxSensitivity: draft.MaxSensitivity,
 		ParentRoleIDs:  draft.ParentRoleIDs,
-		Permissions:    make([]*permission.ResourcePermission, 0, len(draft.Permissions)),
+		Permissions:    make([]*rbac.ResourcePermission, 0, len(draft.Permissions)),
 	}
 	for _, grant := range draft.Permissions {
 		if _, ok := s.registry.Get(grant.Resource); !ok {
@@ -295,7 +297,7 @@ func (s *Service) draftRole(draft *RoleDraft) (*permission.Role, error) {
 					"A permission names an operation its resource does not have")
 			}
 		}
-		role.Permissions = append(role.Permissions, &permission.ResourcePermission{
+		role.Permissions = append(role.Permissions, &rbac.ResourcePermission{
 			Resource:   grant.Resource,
 			Operations: grant.Operations,
 		})

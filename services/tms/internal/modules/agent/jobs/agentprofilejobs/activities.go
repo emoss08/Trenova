@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -20,7 +20,7 @@ type ActivitiesParams struct {
 
 	Profiles   agentprofileports.Generator
 	Facts      agentprofileports.FactsReader
-	Completion agentports.CompletionService
+	Completion llmports.CompletionService
 	Tenants    tenantports.TenantSyncRepository
 	Logger     *zap.Logger
 }
@@ -28,7 +28,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	profiles   agentprofileports.Generator
 	facts      agentprofileports.FactsReader
-	completion agentports.CompletionService
+	completion llmports.CompletionService
 	tenants    tenantports.TenantSyncRepository
 	l          *zap.Logger
 }
@@ -94,7 +94,7 @@ func (a *Activities) ProfileModelActivity(
 
 	result, err := a.completion.CompleteStructured(ctx, plan.Request)
 	if err != nil {
-		if errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return &ModelReply{NoProvider: true}, nil
 		}
 

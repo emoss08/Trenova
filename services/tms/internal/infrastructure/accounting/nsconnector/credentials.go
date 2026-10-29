@@ -2,20 +2,17 @@ package nsconnector
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsrefsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const maxCertificateSubject = 64
-
-var errCertificateRevoked = errors.New(
-	"netsuite refused the certificate: the client credentials mapping is missing or was " +
-		"cleared, for example by a sandbox refresh",
-)
 
 func (c *Connector) NormalizeAccountID(raw string) (string, error) {
 	return netsuite.NormalizeAccountID(raw)
@@ -23,19 +20,19 @@ func (c *Connector) NormalizeAccountID(raw string) (string, error) {
 
 func (c *Connector) PrepareCertificate(
 	subject string,
-) (*accountingsyncports.AccountingCertificate, error) {
+) (*accountingconnectorports.AccountingCertificate, error) {
 	cert, err := netsuite.NewCertificate(netsuite.CertificateRequest{
 		Subject: stringutils.TruncateBytes(
-			cleanText(subject, maxCertificateSubject),
+			nsrefsync.CleanText(subject, maxCertificateSubject),
 			maxCertificateSubject,
 		),
-		Now:      c.now(),
+		Now:      c.Clock(),
 		Validity: netsuite.MaxCertificateValidity,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingCertificate{
+	return &accountingconnectorports.AccountingCertificate{
 		PrivateKeyPEM:  cert.PrivateKeyPEM,
 		CertificatePEM: cert.CertificatePEM,
 		ExpiresAt:      cert.ExpiresAt,
@@ -44,12 +41,12 @@ func (c *Connector) PrepareCertificate(
 
 func (c *Connector) TokenFromCertificate(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingCertificateGrant,
-) (*accountingsyncports.AccountingTokenGrant, error) {
+	grant *accountingconnectorports.AccountingCertificateGrant,
+) (*accountingconnectorports.AccountingTokenGrant, error) {
 	if c.oauth == nil {
-		return nil, errNoRedirect
+		return nil, nsbinding.ErrNoRedirect
 	}
-	account, err := accountOf(grant.RealmID)
+	account, err := nsbinding.AccountOf(grant.RealmID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,12 +60,12 @@ func (c *Connector) TokenFromCertificate(
 		PrivateKey:    key,
 	})
 	if err != nil {
-		if netsuite.IsInvalidClient(err) || netsuite.IsInvalidGrant(err) {
-			return nil, fmt.Errorf("%w: %w", errCertificateRevoked, err)
+		if netsuiteerrors.IsInvalidClient(err) || netsuiteerrors.IsInvalidGrant(err) {
+			return nil, fmt.Errorf("%w: %w", nsbinding.ErrCertificateRevoked, err)
 		}
 		return nil, err
 	}
-	return &accountingsyncports.AccountingTokenGrant{
+	return &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    token.AccessToken,
 		AccessTokenTTL: token.ExpiresIn,
 	}, nil

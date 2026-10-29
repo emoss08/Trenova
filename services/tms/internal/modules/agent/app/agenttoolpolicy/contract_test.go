@@ -2,28 +2,32 @@ package agenttoolpolicy_test
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var registeredTools = sync.OnceValues(registered.Build)
+
 func buildRegistered(t *testing.T) registered.Tools {
 	t.Helper()
 
-	tools, err := registered.Build()
+	tools, err := registeredTools()
 	require.NoError(t, err)
 
 	return tools
 }
 
-func registeredPolicy(t *testing.T, name string) agentports.ToolPolicy {
+func registeredPolicy(t *testing.T, name string) agenttoolports.ToolPolicy {
 	t.Helper()
 
 	tools := buildRegistered(t)
@@ -39,7 +43,7 @@ func registeredPolicy(t *testing.T, name string) agentports.ToolPolicy {
 	}
 	t.Fatalf("%q is not a registered tool", name)
 
-	return agentports.ToolPolicy{}
+	return agenttoolports.ToolPolicy{}
 }
 
 /*
@@ -54,11 +58,11 @@ func TestEveryRegisteredToolValidates(t *testing.T) {
 	catalog, err := agenttoolpolicy.Build(
 		tools.Queries,
 		tools.Actions,
-		agentruntime.RuntimePolicies(),
+		runtimetools.Policies(),
 	)
 	require.NoError(t, err)
 
-	total := len(tools.Queries) + len(tools.Actions) + len(agentruntime.RuntimePolicies())
+	total := len(tools.Queries) + len(tools.Actions) + len(runtimetools.Policies())
 	assert.Len(t, catalog.All(), total)
 	for _, policy := range catalog.All() {
 		found, ok := catalog.Get(policy.Name)
@@ -72,7 +76,7 @@ func TestEveryQueryToolChangesNothingAndSendsNothing(t *testing.T) {
 
 	for _, tool := range buildRegistered(t).Queries {
 		policy := tool.Policy()
-		assert.Equal(t, agent.ToolKindQuery, policy.Kind, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolKindQuery, policy.Kind, tool.Name())
 		assert.Equal(t, []agent.EgressClass{agent.EgressNone}, policy.Egress, tool.Name())
 	}
 }
@@ -82,39 +86,39 @@ func TestEveryQueryToolChangesNothingAndSendsNothing(t *testing.T) {
 func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]agent.ExternalRead{
-		"inbox_get_inbound_message":               agent.ExternalReadAlways,
-		"inbox_list_inbound_messages":             agent.ExternalReadAlways,
-		"document_list":                           agent.ExternalReadAlways,
-		"document_get_summary":                    agent.ExternalReadAlways,
-		"intake_get_draft":                        agent.ExternalReadAlways,
-		"receivable_get_bank_receipt":             agent.ExternalReadAlways,
-		"receivable_list_bank_receipt_exceptions": agent.ExternalReadAlways,
-		"insight_list_weather_alerts":             agent.ExternalReadAlways,
-		"agent_list_memories":                     agent.ExternalReadMarked,
-		"agent_get_run":                           agent.ExternalReadMarked,
-		"shipment_get":                            agent.ExternalReadMarked,
-		"exception_list_watchtower_items":         agent.ExternalReadMarked,
-		"agent_list_runs":                         agent.ExternalReadMarked,
-		"insight_get_daily_briefing":              agent.ExternalReadNever,
-		"customer_get":                            agent.ExternalReadNever,
-		"edi_list_inbound_files":                  agent.ExternalReadAlways,
-		"edi_get_inbound_file":                    agent.ExternalReadAlways,
-		"edi_get_message":                         agent.ExternalReadAlways,
-		"edi_list_transfers":                      agent.ExternalReadAlways,
-		"edi_get_partner":                         agent.ExternalReadNever,
-		"settlement_get_dispute":                  agent.ExternalReadMarked,
-		"carrier_list_invoice_matches":            agent.ExternalReadMarked,
-		"invoice_get":                             agent.ExternalReadNever,
-		"receivable_get_aging":                    agent.ExternalReadNever,
-		"settlement_get_driver":                   agent.ExternalReadNever,
-		"rate_get_agreement":                      agent.ExternalReadNever,
-		"order_get":                               agent.ExternalReadNever,
+	cases := map[string]agenttooltrust.ExternalRead{
+		"inbox_get_inbound_message":               agenttooltrust.ExternalReadAlways,
+		"inbox_list_inbound_messages":             agenttooltrust.ExternalReadAlways,
+		"document_list":                           agenttooltrust.ExternalReadAlways,
+		"document_get_summary":                    agenttooltrust.ExternalReadAlways,
+		"intake_get_draft":                        agenttooltrust.ExternalReadAlways,
+		"receivable_get_bank_receipt":             agenttooltrust.ExternalReadAlways,
+		"receivable_list_bank_receipt_exceptions": agenttooltrust.ExternalReadAlways,
+		"insight_list_weather_alerts":             agenttooltrust.ExternalReadAlways,
+		"agent_list_memories":                     agenttooltrust.ExternalReadMarked,
+		"agent_get_run":                           agenttooltrust.ExternalReadMarked,
+		"shipment_get":                            agenttooltrust.ExternalReadMarked,
+		"exception_list_watchtower_items":         agenttooltrust.ExternalReadMarked,
+		"agent_list_runs":                         agenttooltrust.ExternalReadMarked,
+		"insight_get_daily_briefing":              agenttooltrust.ExternalReadNever,
+		"customer_get":                            agenttooltrust.ExternalReadNever,
+		"edi_list_inbound_files":                  agenttooltrust.ExternalReadAlways,
+		"edi_get_inbound_file":                    agenttooltrust.ExternalReadAlways,
+		"edi_get_message":                         agenttooltrust.ExternalReadAlways,
+		"edi_list_transfers":                      agenttooltrust.ExternalReadAlways,
+		"edi_get_partner":                         agenttooltrust.ExternalReadNever,
+		"settlement_get_dispute":                  agenttooltrust.ExternalReadMarked,
+		"carrier_list_invoice_matches":            agenttooltrust.ExternalReadMarked,
+		"invoice_get":                             agenttooltrust.ExternalReadNever,
+		"receivable_get_aging":                    agenttooltrust.ExternalReadNever,
+		"settlement_get_driver":                   agenttooltrust.ExternalReadNever,
+		"rate_get_agreement":                      agenttooltrust.ExternalReadNever,
+		"order_get":                               agenttooltrust.ExternalReadNever,
 	}
 	for name, want := range cases {
 		policy := registeredPolicy(t, name)
 		assert.Equal(t, want, policy.ReadsExternal, name)
-		if want != agent.ExternalReadNever {
+		if want != agenttooltrust.ExternalReadNever {
 			assert.True(t, policy.Source.IsValid(), name)
 		}
 	}
@@ -549,19 +553,31 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"shipment_record_permit":                        {agent.EgressInternal},
 		"shipment_update_permit":                        {agent.EgressInternal},
 		"settlement_start_dispute_review":               {agent.EgressDriverVisible},
-		"settlement_resolve_dispute":                    {agent.EgressDriverVisible, agent.EgressMoney},
-		"settlement_review_driver_expense":              {agent.EgressDriverVisible, agent.EgressMoney},
-		"settlement_generate_payroll_export":            {agent.EgressMoney},
-		"settlement_void_payroll_export":                {agent.EgressMoney},
+		"settlement_resolve_dispute": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"settlement_review_driver_expense": {
+			agent.EgressDriverVisible,
+			agent.EgressMoney,
+		},
+		"settlement_generate_payroll_export": {agent.EgressMoney},
+		"settlement_void_payroll_export":     {agent.EgressMoney},
 
-		"carrier_create":                           {agent.EgressInternal, agent.EgressMoney},
-		"carrier_update":                           {agent.EgressInternal, agent.EgressMoney},
-		"carrier_create_capacity_posting":          {agent.EgressInternal},
-		"carrier_update_capacity_posting":          {agent.EgressInternal},
-		"carrier_delete_capacity_posting":          {agent.EgressInternal},
-		"carrier_set_status":                       {agent.EgressInternal},
-		"customer_create":                          {agent.EgressInternal, agent.EgressExternalRecipient},
-		"customer_update":                          {agent.EgressInternal, agent.EgressExternalRecipient},
+		"carrier_create":                  {agent.EgressInternal, agent.EgressMoney},
+		"carrier_update":                  {agent.EgressInternal, agent.EgressMoney},
+		"carrier_create_capacity_posting": {agent.EgressInternal},
+		"carrier_update_capacity_posting": {agent.EgressInternal},
+		"carrier_delete_capacity_posting": {agent.EgressInternal},
+		"carrier_set_status":              {agent.EgressInternal},
+		"customer_create": {
+			agent.EgressInternal,
+			agent.EgressExternalRecipient,
+		},
+		"customer_update": {
+			agent.EgressInternal,
+			agent.EgressExternalRecipient,
+		},
 		"customer_set_status":                      {agent.EgressInternal},
 		"masterdata_create_commodity":              {agent.EgressInternal},
 		"masterdata_update_commodity":              {agent.EgressInternal},
@@ -640,7 +656,7 @@ func TestRuntimeToolsStayInside(t *testing.T) {
 	t.Parallel()
 
 	effects := map[string]agent.EgressClass{}
-	for _, policy := range agentruntime.RuntimePolicies() {
+	for _, policy := range runtimetools.Policies() {
 		effects[policy.Name] = policy.Egress[0]
 	}
 
@@ -690,15 +706,20 @@ func TestScriptsCallOnlyReads(t *testing.T) {
 	runners := 0
 	for _, tool := range tools.Queries {
 		policy := tool.Policy()
-		if policy.Script == agentports.ScriptRunner {
+		if policy.Script == agenttoolports.ScriptRunner {
 			runners++
-			assert.False(t, policy.CallableFromScript(), "%s never runs inside a script", tool.Name())
+			assert.False(
+				t,
+				policy.CallableFromScript(),
+				"%s never runs inside a script",
+				tool.Name(),
+			)
 		}
 		if !policy.CallableFromScript() {
 			continue
 		}
-		assert.Equal(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
-		assert.NotEqual(t, agent.ToolScopeSelf, policy.Scope, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.NotEqual(t, agenttooltrust.ToolScopeSelf, policy.Scope, tool.Name())
 	}
 	assert.Equal(t, 1, runners, "analysis_run is the one tool that runs scripts")
 	for _, tool := range tools.Actions {
@@ -717,18 +738,18 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 	tools := buildRegistered(t)
 	preparable := 0
 	for _, tool := range tools.Actions {
-		if !agentports.PreparableFromScript(tool) {
+		if !agenttoolports.PreparableFromScript(tool) {
 			continue
 		}
 		preparable++
 		policy := tool.Policy()
-		assert.Equal(t, agent.ToolScopeTenant, policy.Scope, tool.Name())
+		assert.Equal(t, agenttooltrust.ToolScopeTenant, policy.Scope, tool.Name())
 		assert.False(t, policy.Escalates, tool.Name())
 		assert.Nil(t, policy.TaintHold, tool.Name())
-		assert.NotEqual(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
+		assert.NotEqual(t, agenttooltrust.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
 		assert.False(t, strings.HasPrefix(tool.Name(), "agent_"), tool.Name())
-		_, previews := tool.(agentports.ToolPreviewer)
-		_, targeted := tool.(agentports.TargetedTool)
+		_, previews := tool.(agenttoolports.ToolPreviewer)
+		_, targeted := tool.(agenttoolports.TargetedTool)
 		assert.True(t, previews && targeted, "%s names and previews its record", tool.Name())
 	}
 	assert.Positive(t, preparable, "scripts have writes they may prepare")
@@ -739,7 +760,12 @@ func TestScriptsPrepareOnlyWritesThatNameAndPreviewTheirRecord(t *testing.T) {
 	} {
 		for _, tool := range tools.Actions {
 			if tool.Name() == name {
-				assert.False(t, agentports.PreparableFromScript(tool), "%s is the agent's own work", name)
+				assert.False(
+					t,
+					agenttoolports.PreparableFromScript(tool),
+					"%s is the agent's own work",
+					name,
+				)
 			}
 		}
 	}

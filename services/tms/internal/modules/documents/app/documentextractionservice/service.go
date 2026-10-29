@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	workflowstarterservice "github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -38,25 +39,26 @@ import (
 type Params struct {
 	fx.In
 
-	Logger              *zap.Logger
-	Config              *config.Config
-	Metrics             *metrics.Registry
-	DocumentControlRepo tenantports.DocumentControlRepository
-	DocumentRepo        documentports.DocumentRepository
-	ContentRepo         documentcontentports.DocumentContentRepository
-	DraftRepo           documentshipmentdraftports.DocumentShipmentDraftRepository
-	SearchRepo          customerports.SearchRepository
-	SearchProjection    documentsearchprojectionports.DocumentSearchProjectionService
-	WorkflowStarter     kernelports.WorkflowStarter
-	Plans               platformplanports.PlanService               `optional:"true"`
-	AIDocuments         documentaiextractionports.AIDocumentService `optional:"true"`
+	Logger                   *zap.Logger
+	DocumentConversionConfig *documentconversionconfig.Config
+	SearchConfig             *searchconfig.Config
+	Metrics                  *metrics.Registry
+	DocumentControlRepo      tenantports.DocumentControlRepository
+	DocumentRepo             documentports.DocumentRepository
+	ContentRepo              documentcontentports.DocumentContentRepository
+	DraftRepo                documentshipmentdraftports.DocumentShipmentDraftRepository
+	SearchRepo               customerports.SearchRepository
+	SearchProjection         documentsearchprojectionports.DocumentSearchProjectionService
+	WorkflowStarter          kernelports.WorkflowStarter
+	Plans                    platformplanports.PlanService               `optional:"true"`
+	AIDocuments              documentaiextractionports.AIDocumentService `optional:"true"`
 }
 
 type Service struct {
 	logger              *zap.Logger
 	metrics             *metrics.Registry
-	searchConfig        *config.SearchConfig
-	conversionConfig    *config.DocumentConversionConfig
+	searchConfig        *searchconfig.Config
+	conversionConfig    *documentconversionconfig.Config
 	documentControlRepo tenantports.DocumentControlRepository
 	documentRepo        documentports.DocumentRepository
 	contentRepo         documentcontentports.DocumentContentRepository
@@ -86,8 +88,8 @@ func New(p Params) *Service {
 
 	return &Service{
 		logger:              p.Logger.Named("service.document-extraction"),
-		searchConfig:        p.Config.GetSearchConfig(),
-		conversionConfig:    p.Config.GetDocumentConversionConfig(),
+		searchConfig:        p.SearchConfig,
+		conversionConfig:    p.DocumentConversionConfig,
 		metrics:             p.Metrics,
 		documentControlRepo: p.DocumentControlRepo,
 		documentRepo:        p.DocumentRepo,

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
-
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -308,11 +308,11 @@ func ReconcileZombieReportRunsWorkflow(
 
 func CheckReportDefinitionsAgainstCatalogWorkflow(
 	ctx workflow.Context,
-) (*CheckCatalogResult, error) {
+) (*reportcatalogjobs.CheckCatalogResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, cleanupActivityOptions)
 
-	var a *Activities
-	var result *CheckCatalogResult
+	var a *reportcatalogjobs.Activities
+	var result *reportcatalogjobs.CheckCatalogResult
 	if err := workflow.ExecuteActivity(
 		ctx, a.CheckDefinitionsAgainstCatalogActivity,
 	).Get(ctx, &result); err != nil {

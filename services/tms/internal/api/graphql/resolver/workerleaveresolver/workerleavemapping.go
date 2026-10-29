@@ -2,9 +2,11 @@ package workerleaveresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -13,7 +15,7 @@ import (
 func leaveCaseFromInput(
 	input *gqlmodel.OpenLeaveCaseInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -22,7 +24,7 @@ func leaveCaseFromInput(
 			"Worker is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -31,17 +33,17 @@ func leaveCaseFromInput(
 		)
 	}
 
-	entity := &worker.WorkerLeaveCase{
+	entity := &workerleave.WorkerLeaveCase{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,
-		Reason:            base.StringValue(input.Reason),
-		MilitaryCaregiver: base.BoolValue(input.MilitaryCaregiver),
-		RequestedAt:       base.Int64Value(input.RequestedAt),
+		Reason:            gqlscalar.StringValue(input.Reason),
+		MilitaryCaregiver: gqlscalar.BoolValue(input.MilitaryCaregiver),
+		RequestedAt:       gqlscalar.Int64Value(input.RequestedAt),
 		StartsAt:          int64(input.StartsAt),
-		EndsAt:            base.Int64Ptr(input.EndsAt),
+		EndsAt:            gqlscalar.Int64Ptr(input.EndsAt),
 		DocumentID:        documentID,
-		Notes:             base.StringValue(input.Notes),
+		Notes:             gqlscalar.StringValue(input.Notes),
 	}
 	if input.LeaveType != nil {
 		entity.LeaveType = *input.LeaveType
@@ -70,7 +72,7 @@ func leaveCaseUpdateRequest(
 			"Case is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -86,8 +88,8 @@ func leaveCaseUpdateRequest(
 		Frequency:         input.Frequency,
 		Reason:            input.Reason,
 		MilitaryCaregiver: input.MilitaryCaregiver,
-		StartsAt:          base.Int64Ptr(input.StartsAt),
-		EndsAt:            base.Int64Ptr(input.EndsAt),
+		StartsAt:          gqlscalar.Int64Ptr(input.StartsAt),
+		EndsAt:            gqlscalar.Int64Ptr(input.EndsAt),
 		DocumentID:        documentID,
 		Notes:             input.Notes,
 		UserID:            userID,
@@ -113,7 +115,7 @@ func leaveCertificationRequest(
 			"Case is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -126,8 +128,8 @@ func leaveCertificationRequest(
 		TenantInfo:           tenantInfo,
 		CaseID:               caseID,
 		Status:               input.Status,
-		ReceivedAt:           base.Int64Ptr(input.ReceivedAt),
-		RecertificationDueAt: base.Int64Ptr(input.RecertificationDueAt),
+		ReceivedAt:           gqlscalar.Int64Ptr(input.ReceivedAt),
+		RecertificationDueAt: gqlscalar.Int64Ptr(input.RecertificationDueAt),
 		DocumentID:           documentID,
 		UserID:               userID,
 	}, nil
@@ -146,7 +148,7 @@ func leaveDayRequest(
 			"Case is invalid",
 		)
 	}
-	ptoID, err := base.OptionalID(input.PTOID)
+	ptoID, err := gqlid.OptionalID(input.PTOID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"ptoId",
@@ -154,7 +156,7 @@ func leaveDayRequest(
 			"Time off record is invalid",
 		)
 	}
-	hours, err := base.ParseDecimalField("hours", input.Hours, true)
+	hours, err := gqldecimal.ParseDecimalField("hours", input.Hours, true)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +167,7 @@ func leaveDayRequest(
 		UsedOn:     int64(input.UsedOn),
 		Hours:      hours,
 		PTOID:      ptoID,
-		Notes:      base.StringValue(input.Notes),
+		Notes:      gqlscalar.StringValue(input.Notes),
 		UserID:     userID,
 	}, nil
 }
@@ -183,7 +185,7 @@ func leaveDayUpdateRequest(
 			"Day is invalid",
 		)
 	}
-	ptoID, err := base.OptionalID(input.PTOID)
+	ptoID, err := gqlid.OptionalID(input.PTOID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"ptoId",
@@ -191,7 +193,7 @@ func leaveDayUpdateRequest(
 			"Time off record is invalid",
 		)
 	}
-	hours, err := base.ParseNullDecimalField("hours", input.Hours)
+	hours, err := gqldecimal.ParseNullDecimalField("hours", input.Hours)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +201,7 @@ func leaveDayUpdateRequest(
 	return &workerleaveservice.UpdateDayRequest{
 		TenantInfo: tenantInfo,
 		EntryID:    entryID,
-		Hours:      base.NullDecimalValue(hours),
+		Hours:      gqldecimal.NullDecimalValue(hours),
 		Counts:     input.CountsAgainstEntitlement,
 		PTOID:      ptoID,
 		Notes:      input.Notes,
@@ -212,18 +214,18 @@ func leaveControlRequest(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (*workerleaveservice.UpdateControlRequest, error) {
-	entitlement, err := base.ParseNullDecimalField("entitlementWeeks", input.EntitlementWeeks)
+	entitlement, err := gqldecimal.ParseNullDecimalField("entitlementWeeks", input.EntitlementWeeks)
 	if err != nil {
 		return nil, err
 	}
-	caregiver, err := base.ParseNullDecimalField(
+	caregiver, err := gqldecimal.ParseNullDecimalField(
 		"militaryCaregiverWeeks",
 		input.MilitaryCaregiverWeeks,
 	)
 	if err != nil {
 		return nil, err
 	}
-	workweek, err := base.ParseNullDecimalField("workweekHours", input.WorkweekHours)
+	workweek, err := gqldecimal.ParseNullDecimalField("workweekHours", input.WorkweekHours)
 	if err != nil {
 		return nil, err
 	}
@@ -231,9 +233,9 @@ func leaveControlRequest(
 	req := &workerleaveservice.UpdateControlRequest{
 		TenantInfo:             tenantInfo,
 		MeasurementMethod:      input.MeasurementMethod,
-		EntitlementWeeks:       base.NullDecimalValue(entitlement),
-		MilitaryCaregiverWeeks: base.NullDecimalValue(caregiver),
-		WorkweekHours:          base.NullDecimalValue(workweek),
+		EntitlementWeeks:       gqldecimal.NullDecimalValue(entitlement),
+		MilitaryCaregiverWeeks: gqldecimal.NullDecimalValue(caregiver),
+		WorkweekHours:          gqldecimal.NullDecimalValue(workweek),
 		UserID:                 userID,
 	}
 	if input.EligibilityMonths != nil {

@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func serviceFailureReasonCodeColumns(ctx context.Context, nodePathPrefix string)
 func serviceFailureReasonCodeConnectionToModel(
 	result *pagination.CursorListResult[*servicefailure.ReasonCode],
 ) (*gqlmodel.ServiceFailureReasonCodeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *servicefailure.ReasonCode, cursor string) *gqlmodel.ServiceFailureReasonCodeEdge {
 			return &gqlmodel.ServiceFailureReasonCodeEdge{

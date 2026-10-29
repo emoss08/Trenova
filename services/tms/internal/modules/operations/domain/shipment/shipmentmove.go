@@ -1,9 +1,12 @@
 package shipment
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,30 +19,30 @@ const maxDistanceFieldLength = 50
 type ShipmentMove struct {
 	keel.Table `keel:"shipment_moves,report=Operations"`
 
-	ID                     pulid.ID           `json:"id"                          keel:"id,pk,autoid:sm_"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
-	OrganizationID         pulid.ID           `json:"organizationId"              keel:"organization_id,pk,tenant"`
-	ShipmentID             pulid.ID           `json:"shipmentId"                  keel:"shipment_id"`
-	Status                 MoveStatus         `json:"status"                      keel:"status"`
-	CoverageType           MoveCoverageType   `json:"coverageType"                keel:"coverage_type"`
-	Loaded                 bool               `json:"loaded"                      keel:"loaded"`
-	Sequence               int64              `json:"sequence"                    keel:"sequence,dimension"`
-	Distance               *float64           `json:"distance"                    keel:"distance,label=Miles,format=distance"`
-	DistanceSource         string             `json:"distanceSource"              keel:"distance_source,nullzero"`
-	DistanceProvider       string             `json:"distanceProvider"            keel:"distance_provider,nullzero"`
-	DistanceCalculatedAt   *int64             `json:"distanceCalculatedAt"        keel:"distance_calculated_at"`
-	DistanceRouteSignature string             `json:"distanceRouteSignature"      keel:"distance_route_signature,nullzero"`
-	DistanceDataVersion    string             `json:"distanceDataVersion"         keel:"distance_data_version,nullzero"`
-	DistanceRoutingType    string             `json:"distanceRoutingType"         keel:"distance_routing_type,nullzero"`
-	DistanceUnits          string             `json:"distanceUnits"               keel:"distance_units,nullzero"`
-	DistanceMetadata       map[string]any     `json:"distanceMetadata,omitempty"  keel:"distance_metadata,jsonb,nullzero"`
-	Version                int64              `json:"version"                     keel:"version,version"`
-	CreatedAt              int64              `json:"createdAt"                   keel:"created_at,autocreate"`
-	UpdatedAt              int64              `json:"updatedAt"                   keel:"updated_at,autoupdate"`
-	Stops                  []*Stop            `json:"stops,omitempty"             keel:"many:shipment_move_id"`
-	Assignment             *Assignment        `json:"assignment,omitempty"        keel:"one:shipment_move_id"`
-	CarrierAssignment      *CarrierAssignment `json:"carrierAssignment,omitempty" keel:"one:shipment_move_id,noreport"`
-	Shipment               *Shipment          `json:"shipment,omitempty"          keel:"belongs:shipment_id"`
+	ID                     pulid.ID                       `json:"id"                          keel:"id,pk,autoid:sm_"`
+	BusinessUnitID         pulid.ID                       `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID                       `json:"organizationId"              keel:"organization_id,pk,tenant"`
+	ShipmentID             pulid.ID                       `json:"shipmentId"                  keel:"shipment_id"`
+	Status                 shipmentvocab.MoveStatus       `json:"status"                      keel:"status"`
+	CoverageType           shipmentvocab.MoveCoverageType `json:"coverageType"                keel:"coverage_type"`
+	Loaded                 bool                           `json:"loaded"                      keel:"loaded"`
+	Sequence               int64                          `json:"sequence"                    keel:"sequence,dimension"`
+	Distance               *float64                       `json:"distance"                    keel:"distance,label=Miles,format=distance"`
+	DistanceSource         string                         `json:"distanceSource"              keel:"distance_source,nullzero"`
+	DistanceProvider       string                         `json:"distanceProvider"            keel:"distance_provider,nullzero"`
+	DistanceCalculatedAt   *int64                         `json:"distanceCalculatedAt"        keel:"distance_calculated_at"`
+	DistanceRouteSignature string                         `json:"distanceRouteSignature"      keel:"distance_route_signature,nullzero"`
+	DistanceDataVersion    string                         `json:"distanceDataVersion"         keel:"distance_data_version,nullzero"`
+	DistanceRoutingType    string                         `json:"distanceRoutingType"         keel:"distance_routing_type,nullzero"`
+	DistanceUnits          string                         `json:"distanceUnits"               keel:"distance_units,nullzero"`
+	DistanceMetadata       map[string]any                 `json:"distanceMetadata,omitempty"  keel:"distance_metadata,jsonb,nullzero"`
+	Version                int64                          `json:"version"                     keel:"version,version"`
+	CreatedAt              int64                          `json:"createdAt"                   keel:"created_at,autocreate"`
+	UpdatedAt              int64                          `json:"updatedAt"                   keel:"updated_at,autoupdate"`
+	Stops                  []*Stop                        `json:"stops,omitempty"             keel:"many:shipment_move_id"`
+	Assignment             *Assignment                    `json:"assignment,omitempty"        keel:"one:shipment_move_id"`
+	CarrierAssignment      *CarrierAssignment             `json:"carrierAssignment,omitempty" keel:"one:shipment_move_id,noreport"`
+	Shipment               *Shipment                      `json:"shipment,omitempty"          keel:"belongs:shipment_id"`
 
 	JurisdictionMiles      []*ShipmentMoveJurisdictionMile `json:"jurisdictionMiles,omitempty" keel:"many:shipment_move_id,noreport"`
 	JurisdictionMilesDirty bool                            `json:"-"`
@@ -54,13 +57,15 @@ func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&sm.Status,
 			validation.Required.Error("Status is required"),
-			domainvalidation.ValidEnum[MoveStatus]("Status is invalid"),
+			domainvalidation.ValidEnum[shipmentvocab.MoveStatus]("Status is invalid"),
 		),
 		validation.Field(
 			&sm.CoverageType,
 			validation.When(
 				sm.CoverageType != "",
-				domainvalidation.ValidEnum[MoveCoverageType]("Coverage type is invalid"),
+				domainvalidation.ValidEnum[shipmentvocab.MoveCoverageType](
+					"Coverage type is invalid",
+				),
 			),
 		),
 		validation.Field(
@@ -103,10 +108,10 @@ func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
 
 func (m *ShipmentMove) BeforeCreate(ctx context.Context) error {
 	if m.Status == "" {
-		m.Status = MoveStatusNew
+		m.Status = shipmentvocab.MoveStatusNew
 	}
 	if m.CoverageType == "" {
-		m.CoverageType = MoveCoverageTypeUnassigned
+		m.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	}
 
 	return nil
@@ -114,22 +119,22 @@ func (m *ShipmentMove) BeforeCreate(ctx context.Context) error {
 
 func (m *ShipmentMove) BeforeUpdate(ctx context.Context) error {
 	if m.CoverageType == "" {
-		m.CoverageType = MoveCoverageTypeUnassigned
+		m.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	}
 
 	return nil
 }
 
 func (m *ShipmentMove) IsCompleted() bool {
-	return m.Status == MoveStatusCompleted
+	return m.Status == shipmentvocab.MoveStatusCompleted
 }
 
 func (m *ShipmentMove) IsInTransit() bool {
-	return m.Status == MoveStatusInTransit
+	return m.Status == shipmentvocab.MoveStatusInTransit
 }
 
 func (m *ShipmentMove) IsAssigned() bool {
-	return m.Status == MoveStatusAssigned
+	return m.Status == shipmentvocab.MoveStatusAssigned
 }
 
 func (m *ShipmentMove) HasAssignment() bool {
@@ -147,15 +152,15 @@ func (m *ShipmentMove) HasCoverage() bool {
 }
 
 func (m *ShipmentMove) IsCarrierCovered() bool {
-	return m != nil && m.CoverageType == MoveCoverageTypeCarrier
+	return m != nil && m.CoverageType == shipmentvocab.MoveCoverageTypeCarrier
 }
 
 func (m *ShipmentMove) IsNew() bool {
-	return m.Status == MoveStatusNew
+	return m.Status == shipmentvocab.MoveStatusNew
 }
 
 func (m *ShipmentMove) IsCanceled() bool {
-	return m.Status == MoveStatusCanceled
+	return m.Status == shipmentvocab.MoveStatusCanceled
 }
 
 func (m *ShipmentMove) JurisdictionMilesSumMiles() float64 {
@@ -179,4 +184,18 @@ func (ShipmentMove) Constraints() []keel.Constraint {
 			Message: "Shipment does not exist in your organization",
 		},
 	}
+}
+
+func (m *ShipmentMove) ActiveStopsBySequence() []*Stop {
+	stops := make([]*Stop, 0, len(m.Stops))
+	for _, stop := range m.Stops {
+		if stop != nil && stop.Status != shipmentvocab.StopStatusCanceled {
+			stops = append(stops, stop)
+		}
+	}
+	slices.SortStableFunc(stops, func(a, b *Stop) int {
+		return cmp.Compare(a.Sequence, b.Sequence)
+	})
+
+	return stops
 }

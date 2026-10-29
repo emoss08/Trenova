@@ -48,7 +48,10 @@ func (r *Deps) CarrierIntelProviderInfo(
 		value := provider.String()
 		fallback = &value
 	}
-	provider, descriptor, configured, err := r.CarrierIntelService.ProviderDescriptor(ctx, tenant)
+	provider, descriptor, configured, err := r.CarrierIntelEnrollmentService.ProviderDescriptor(
+		ctx,
+		tenant,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,23 +27,23 @@ func insertRole(
 	tenant *seedtest.TestData,
 	maxSensitivity permission.FieldSensitivity,
 	parents []pulid.ID,
-	grants ...*permission.ResourcePermission,
-) *permission.Role {
+	grants ...*rbac.ResourcePermission,
+) *rbac.Role {
 	t.Helper()
 
 	ctx := tenant.Ctx(t.Context())
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Preview " + pulid.MustNew("rol_").String(),
 		MaxSensitivity: maxSensitivity,
 		ParentRoleIDs:  parents,
 	}
-	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
+	require.NoError(t, rbacdb.Roles.Create(ctx, db, role))
 	for _, rp := range grants {
 		rp.RoleID = role.ID
 		rp.DataScope = permission.DataScopeOrganization
 	}
 	if len(grants) > 0 {
-		require.NoError(t, permissiondb.ResourcePermissions.CreateMany(ctx, db, grants))
+		require.NoError(t, rbacdb.ResourcePermissions.CreateMany(ctx, db, grants))
 	}
 	return role
 }
@@ -56,12 +56,12 @@ func TestPreview_ReadsASavedRoleAndItsAncestorsFromItsOwnOrganization(t *testing
 	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "PA")
 
 	parent := insertRole(t, db, tenantA, permission.SensitivityInternal, nil,
-		&permission.ResourcePermission{
+		&rbac.ResourcePermission{
 			Resource:   permission.ResourceCustomer.String(),
 			Operations: []permission.Operation{permission.OpRead},
 		})
 	child := insertRole(t, db, tenantA, permission.SensitivityPublic, []pulid.ID{parent.ID},
-		&permission.ResourcePermission{
+		&rbac.ResourcePermission{
 			Resource:   permission.ResourceShipment.String(),
 			Operations: []permission.Operation{permission.OpRead},
 		})

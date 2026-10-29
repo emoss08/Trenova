@@ -1,14 +1,14 @@
 package journalreversalservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -62,8 +62,8 @@ func TestResolvePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 		orgID,
 		buID,
 		100,
-		&tenant.AccountingControl{
-			JournalReversalPolicy: tenant.JournalReversalPolicyNextOpenPeriod,
+		&accountingcontrol.AccountingControl{
+			JournalReversalPolicy: accountingcontrol.JournalReversalPolicyNextOpenPeriod,
 		},
 	)
 
@@ -87,7 +87,9 @@ func TestResolvePostingPeriodRejectsClosedPeriodWithoutPolicy(t *testing.T) {
 		pulid.MustNew("org_"),
 		pulid.MustNew("bu_"),
 		100,
-		&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyDisallow},
+		&accountingcontrol.AccountingControl{
+			JournalReversalPolicy: accountingcontrol.JournalReversalPolicyDisallow,
+		},
 	)
 
 	require.Nil(t, period)

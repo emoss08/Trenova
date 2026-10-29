@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptopolicyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,17 +19,17 @@ import (
 )
 
 type fakePolicyRepo struct {
-	workerports.PTOPolicyRepository
-	policies   map[pulid.ID]*worker.PTOPolicy
+	ptopolicyports.PTOPolicyRepository
+	policies   map[pulid.ID]*pto.PTOPolicy
 	codes      map[string]pulid.ID
 	openCounts map[pulid.ID]int
-	updated    []*worker.PTOPolicy
-	created    []*worker.PTOPolicy
+	updated    []*pto.PTOPolicy
+	created    []*pto.PTOPolicy
 }
 
 func newFakePolicyRepo() *fakePolicyRepo {
 	return &fakePolicyRepo{
-		policies:   map[pulid.ID]*worker.PTOPolicy{},
+		policies:   map[pulid.ID]*pto.PTOPolicy{},
 		codes:      map[string]pulid.ID{},
 		openCounts: map[pulid.ID]int{},
 	}
@@ -36,8 +37,8 @@ func newFakePolicyRepo() *fakePolicyRepo {
 
 func (f *fakePolicyRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetPTOPolicyByIDRequest,
-) (*worker.PTOPolicy, error) {
+	req *ptopolicyports.GetPTOPolicyByIDRequest,
+) (*pto.PTOPolicy, error) {
 	policy, ok := f.policies[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("PTOPolicy not found within your organization")
@@ -48,7 +49,7 @@ func (f *fakePolicyRepo) GetByID(
 
 func (f *fakePolicyRepo) CodeExists(
 	_ context.Context,
-	req *workerports.PTOPolicyCodeExistsRequest,
+	req *ptopolicyports.PTOPolicyCodeExistsRequest,
 ) (bool, error) {
 	id, ok := f.codes[req.Code]
 	return ok && id != req.ExcludeID, nil
@@ -56,8 +57,8 @@ func (f *fakePolicyRepo) CodeExists(
 
 func (f *fakePolicyRepo) Create(
 	_ context.Context,
-	entity *worker.PTOPolicy,
-) (*worker.PTOPolicy, error) {
+	entity *pto.PTOPolicy,
+) (*pto.PTOPolicy, error) {
 	entity.ID = pulid.MustNew("ptop_")
 	f.policies[entity.ID] = entity
 	f.codes[entity.Code] = entity.ID
@@ -67,8 +68,8 @@ func (f *fakePolicyRepo) Create(
 
 func (f *fakePolicyRepo) Update(
 	_ context.Context,
-	entity *worker.PTOPolicy,
-) (*worker.PTOPolicy, error) {
+	entity *pto.PTOPolicy,
+) (*pto.PTOPolicy, error) {
 	entity.Version++
 	f.policies[entity.ID] = entity
 	f.updated = append(f.updated, entity)
@@ -77,7 +78,7 @@ func (f *fakePolicyRepo) Update(
 
 func (f *fakePolicyRepo) CountOpenAssignments(
 	_ context.Context,
-	req *workerports.CountOpenPTOAssignmentsRequest,
+	req *ptopolicyports.CountOpenPTOAssignmentsRequest,
 ) (int, error) {
 	return f.openCounts[req.PolicyID], nil
 }
@@ -95,20 +96,20 @@ func (f *fakeAudit) LogAction(
 	return nil
 }
 
-func activePolicy() *worker.PTOPolicy {
-	return &worker.PTOPolicy{
+func activePolicy() *pto.PTOPolicy {
+	return &pto.PTOPolicy{
 		ID:             pulid.MustNew("ptop_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Name:           "Standard",
 		Code:           "STD",
-		Status:         worker.PTOPolicyStatusActive,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		Status:         pto.PTOPolicyStatusActive,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		CountWeekends:  true,
 		Version:        2,
-		Rules: []*worker.PTOPolicyRule{{
+		Rules: []*pto.PTOPolicyRule{{
 			PTOType:           worker.PTOTypeVacation,
-			AccrualMethod:     worker.PTOAccrualMethodMonthly,
+			AccrualMethod:     pto.PTOAccrualMethodMonthly,
 			AccrualAmountDays: decimal.RequireFromString("1"),
 		}},
 	}
@@ -124,7 +125,7 @@ func TestCreateRejectsDuplicateCodeAndDraftDefault(t *testing.T) {
 	policy := activePolicy()
 	policy.ID = pulid.Nil
 	policy.IsDefault = true
-	policy.Status = worker.PTOPolicyStatusDraft
+	policy.Status = pto.PTOPolicyStatusDraft
 
 	_, err := svc.Create(t.Context(), policy, pulid.MustNew("usr_"))
 	require.Error(t, err)
@@ -184,7 +185,7 @@ func TestArchiveClearsDefaultAndAuditsThenRestore(t *testing.T) {
 		ID: policy.ID, TenantInfo: tenant, Version: policy.Version, UserID: pulid.MustNew("usr_"),
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.PTOPolicyStatusInactive, archived.Status)
+	assert.Equal(t, pto.PTOPolicyStatusInactive, archived.Status)
 	assert.False(t, archived.IsDefault, "an archived policy cannot stay the default")
 	assert.Len(t, archived.Rules, 1, "rules survive a status change")
 
@@ -197,7 +198,7 @@ func TestArchiveClearsDefaultAndAuditsThenRestore(t *testing.T) {
 		ID: policy.ID, TenantInfo: tenant, UserID: pulid.MustNew("usr_"),
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.PTOPolicyStatusActive, restored.Status)
+	assert.Equal(t, pto.PTOPolicyStatusActive, restored.Status)
 
 	assert.Equal(t, []permission.Operation{permission.OpArchive, permission.OpRestore}, audit.ops)
 }

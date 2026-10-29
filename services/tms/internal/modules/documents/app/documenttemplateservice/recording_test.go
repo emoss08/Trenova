@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -24,15 +25,15 @@ func TestRecordingAGeneratedDocumentNamesTheVersionThatProducedIt(t *testing.T) 
 
 	h.generated.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(
-			func(entity *documenttemplate.GeneratedDocument) bool {
+			func(entity *generateddocument.GeneratedDocument) bool {
 				return entity.TemplateVersionID != nil &&
 					*entity.TemplateVersionID == versionID &&
 					entity.ContentHash == "hash-abc" &&
-					entity.Status == documenttemplate.GenerationStatusCompleted &&
+					entity.Status == generateddocument.GenerationStatusCompleted &&
 					entity.GeneratedAt != nil
 			},
 		)).
-		Return(&documenttemplate.GeneratedDocument{ID: pulid.MustNew("gd_")}, nil).
+		Return(&generateddocument.GeneratedDocument{ID: pulid.MustNew("gd_")}, nil).
 		Once()
 
 	_, err := h.service.RecordGeneratedDocument(
@@ -66,13 +67,13 @@ func TestRecordingABuiltInRenderKeepsTheContentHash(t *testing.T) {
 
 	h.generated.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(
-			func(entity *documenttemplate.GeneratedDocument) bool {
+			func(entity *generateddocument.GeneratedDocument) bool {
 				return entity.TemplateVersionID == nil &&
 					entity.FromBuiltIn() &&
 					entity.ContentHash == "starter-hash"
 			},
 		)).
-		Return(&documenttemplate.GeneratedDocument{ID: pulid.MustNew("gd_")}, nil).
+		Return(&generateddocument.GeneratedDocument{ID: pulid.MustNew("gd_")}, nil).
 		Once()
 
 	_, err := h.service.RecordGeneratedDocument(

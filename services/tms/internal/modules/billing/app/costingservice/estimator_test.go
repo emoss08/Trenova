@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/costingcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/costingcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -452,7 +452,7 @@ func TestEstimateShipment_CanceledMovesExcluded(t *testing.T) {
 
 	entity := testShipment([]*shipment.ShipmentMove{
 		{Loaded: true, Distance: float64Ptr(250)},
-		{Loaded: true, Distance: float64Ptr(999), Status: shipment.MoveStatusCanceled},
+		{Loaded: true, Distance: float64Ptr(999), Status: shipmentvocab.MoveStatusCanceled},
 	}, "1000")
 
 	svc := newEstimatorService(t, benchmarkControl(), entity)

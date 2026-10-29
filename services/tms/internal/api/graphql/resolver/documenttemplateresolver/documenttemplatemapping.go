@@ -7,11 +7,12 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatediag"
 )
 
 func documentTemplateColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -41,7 +42,7 @@ func documentTemplateAssignmentColumns(ctx context.Context, nodePathPrefix strin
 func documentTemplateConnectionToModel(
 	result *pagination.CursorListResult[*documenttemplate.DocumentTemplate],
 ) (*gqlmodel.DocumentTemplateConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *documenttemplate.DocumentTemplate,
@@ -66,7 +67,7 @@ func documentTemplateConnectionToModel(
 func documentTemplateAssignmentConnectionToModel(
 	result *pagination.CursorListResult[*documenttemplate.DocumentTemplateAssignment],
 ) (*gqlmodel.DocumentTemplateAssignmentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *documenttemplate.DocumentTemplateAssignment,
@@ -92,7 +93,7 @@ func documentTemplateAssignmentConnectionToModel(
 // editor's reference panel and autocomplete, preserving the nesting so a
 // collection's element shape stays discoverable.
 func documentTemplateVariableToModel(
-	variable *documenttemplate.VariableDefinition,
+	variable *templatecatalog.VariableDefinition,
 ) *gqlmodel.DocumentTemplateVariable {
 	out := &gqlmodel.DocumentTemplateVariable{
 		Path:        variable.Path,
@@ -114,7 +115,7 @@ func documentTemplateVariableToModel(
 }
 
 func documentTemplateKindToModel(
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	requiredPaths []string,
 ) *gqlmodel.DocumentTemplateKind {
 	variables := make([]*gqlmodel.DocumentTemplateVariable, 0, len(def.Variables))
@@ -143,7 +144,7 @@ func documentTemplateKindToModel(
 }
 
 func documentTemplateDiagnosticsToModel(
-	diags templateengine.Diagnostics,
+	diags templatediag.Diagnostics,
 ) []*gqlmodel.DocumentTemplateDiagnostic {
 	out := make([]*gqlmodel.DocumentTemplateDiagnostic, 0, len(diags))
 	for _, diag := range diags {

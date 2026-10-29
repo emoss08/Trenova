@@ -6,10 +6,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"go.uber.org/zap"
@@ -20,16 +21,16 @@ const (
 	MaxSimilarMemories     = 200
 )
 
-var _ agentports.MemoryVectorSearcher = (*Searcher)(nil)
+var _ retrievalports.MemoryVectorSearcher = (*Searcher)(nil)
 
-func AsMemoryVectorSearcher(s *Searcher) agentports.MemoryVectorSearcher { return s }
+func AsMemoryVectorSearcher(s *Searcher) retrievalports.MemoryVectorSearcher { return s }
 
 func (s *Searcher) SimilarMemories(
 	ctx context.Context,
-	req *agentports.SimilarMemoriesRequest,
-) (agentports.SimilarMemories, error) {
-	result := agentports.SimilarMemories{
-		Memories: []agentports.MemorySimilarity{},
+	req *retrievalports.SimilarMemoriesRequest,
+) (retrievalports.SimilarMemories, error) {
+	result := retrievalports.SimilarMemories{
+		Memories: []retrievalports.MemorySimilarity{},
 		Floor:    s.tuning.FloorFor(""),
 	}
 	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
@@ -61,7 +62,7 @@ func (s *Searcher) SimilarMemories(
 		limit = DefaultSimilarMemories
 	}
 
-	hits, err := s.repo.Search(ctx, &agentports.VectorSearchRequest{
+	hits, err := s.repo.Search(ctx, &retrievalports.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		ModelKey:    query.ModelKey,
@@ -83,7 +84,7 @@ func (s *Searcher) SimilarMemories(
 	}
 
 	for _, hit := range hits {
-		result.Memories = append(result.Memories, agentports.MemorySimilarity{
+		result.Memories = append(result.Memories, retrievalports.MemorySimilarity{
 			MemoryID:   hit.SourceID,
 			Similarity: hit.Similarity,
 		})
@@ -95,23 +96,23 @@ func (s *Searcher) SimilarMemories(
 
 func (s *Searcher) memoryQuery(
 	ctx context.Context,
-	req *agentports.SimilarMemoriesRequest,
-) (agentports.QueryVector, airetrieval.UnavailableReason) {
+	req *retrievalports.SimilarMemoriesRequest,
+) (retrievalports.QueryVector, airetrieval.UnavailableReason) {
 	if req.Query.Usable() {
 		return req.Query, ""
 	}
 	if s.vectorizer == nil {
-		return agentports.QueryVector{}, airetrieval.UnavailableReasonNoProvider
+		return retrievalports.QueryVector{}, airetrieval.UnavailableReasonNoProvider
 	}
 	if strings.TrimSpace(req.Text) == "" {
 		reason := req.Query.Reason
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return agentports.QueryVector{}, reason
+		return retrievalports.QueryVector{}, reason
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, &agentports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &retrievalports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Text,
 		Attribution: req.Attribution,
@@ -120,31 +121,31 @@ func (s *Searcher) memoryQuery(
 		s.l.Warn("memory query could not be embedded; recalling by words only",
 			zap.String("organizationId", req.TenantInfo.OrgID.String()),
 			zap.Error(err))
-		return agentports.QueryVector{}, airetrieval.UnavailableReasonProviderFailed
+		return retrievalports.QueryVector{}, airetrieval.UnavailableReasonProviderFailed
 	}
 	if !query.Usable() {
 		reason := query.Reason
 		if reason == "" {
 			reason = airetrieval.UnavailableReasonNotIndexed
 		}
-		return agentports.QueryVector{}, reason
+		return retrievalports.QueryVector{}, reason
 	}
 
 	return query, ""
 }
 
 type MemoryRanker struct {
-	searcher agentports.MemoryVectorSearcher
+	searcher retrievalports.MemoryVectorSearcher
 	tuning   SearchTuning
 	l        *zap.Logger
 }
 
-func NewMemoryRanker(searcher *Searcher) agentports.MemoryRanker {
+func NewMemoryRanker(searcher *Searcher) agentmemoryports.MemoryRanker {
 	return &MemoryRanker{searcher: searcher, tuning: searcher.tuning, l: searcher.l}
 }
 
 func NewMemoryRankerFrom(
-	searcher agentports.MemoryVectorSearcher,
+	searcher retrievalports.MemoryVectorSearcher,
 	tuning SearchTuning,
 	logger *zap.Logger,
 ) *MemoryRanker {
@@ -153,19 +154,19 @@ func NewMemoryRankerFrom(
 
 func (r *MemoryRanker) RankMemories(
 	ctx context.Context,
-	req *agentports.RankMemoriesRequest,
-) (agentports.RankedMemories, error) {
+	req *agentmemoryports.RankMemoriesRequest,
+) (agentmemoryports.RankedMemories, error) {
 	if req == nil {
-		return agentports.RankedMemories{Memories: []*agent.Memory{}}, nil
+		return agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{}}, nil
 	}
 
-	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
-	ranked := agentports.RankedMemories{Memories: recency}
+	recency := agentmemoryrank.RankByRecencyAndUse(req.Memories, req.Now)
+	ranked := agentmemoryports.RankedMemories{Memories: recency}
 	if !req.Query.Usable() || len(recency) == 0 {
 		return ranked, nil
 	}
 
-	similar, err := r.searcher.SimilarMemories(ctx, &agentports.SimilarMemoriesRequest{
+	similar, err := r.searcher.SimilarMemories(ctx, &retrievalports.SimilarMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Query:      req.Query,
 		Limit:      MaxSimilarMemories,
@@ -185,8 +186,8 @@ func (r *MemoryRanker) RankMemories(
 }
 
 func similarCandidates(
-	candidates []*agent.Memory,
-	similar []agentports.MemorySimilarity,
+	candidates []*agentmemory.Memory,
+	similar []retrievalports.MemorySimilarity,
 	floor float64,
 ) []pulid.ID {
 
@@ -206,10 +207,10 @@ func similarCandidates(
 }
 
 func FuseMemoryRanking(
-	recency []*agent.Memory,
-	similar []agentports.MemorySimilarity,
+	recency []*agentmemory.Memory,
+	similar []retrievalports.MemorySimilarity,
 	tuning SearchTuning,
-) []*agent.Memory {
+) []*agentmemory.Memory {
 	tuning = tuning.normalized()
 
 	return fuseBySimilarity(
@@ -219,7 +220,11 @@ func FuseMemoryRanking(
 	)
 }
 
-func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int) []*agent.Memory {
+func fuseBySimilarity(
+	recency []*agentmemory.Memory,
+	similarOrder []pulid.ID,
+	rrfk int,
+) []*agentmemory.Memory {
 	if len(similarOrder) == 0 {
 		return recency
 	}
@@ -231,7 +236,7 @@ func fuseBySimilarity(recency []*agent.Memory, similarOrder []pulid.ID, rrfk int
 
 	scores := rankfusion.Reciprocal(rrfk, similarOrder, recencyOrder)
 	ranked := slices.Clone(recency)
-	slices.SortStableFunc(ranked, func(a, b *agent.Memory) int {
+	slices.SortStableFunc(ranked, func(a, b *agentmemory.Memory) int {
 		switch left, right := scores[a.ID], scores[b.ID]; {
 		case left > right:
 			return -1

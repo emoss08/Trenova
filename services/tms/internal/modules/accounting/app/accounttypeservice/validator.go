@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,14 +19,13 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*accounttype.AccountType]
+	validator tenantedvalidation.EntityValidator[*accounttype.AccountType]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, accounttypedb.AccountTypesSchema())
+	checker := keelcheck.NewChecker(p.DB, accounttypedb.AccountTypesSchema())
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*accounttype.AccountType]().
+		validator: tenantedvalidation.NewBuilder[*accounttype.AccountType]().
 			WithModelName("AccountType").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

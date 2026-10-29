@@ -3,7 +3,7 @@ package aicorrectionretention
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,7 +16,7 @@ type Reader interface {
 	Get(
 		ctx context.Context,
 		req tenantports.GetDataRetentionRequest,
-	) (*tenant.DataRetention, error)
+	) (*dataretention.DataRetention, error)
 }
 
 type PurgeFunc func(ctx context.Context, before int64, limit int) (int64, error)
@@ -63,7 +63,7 @@ func (s Sweep) cutoff(
 	switch {
 	case err == nil:
 	case errortypes.IsNotFoundError(err):
-		settings = &tenant.DataRetention{}
+		settings = &dataretention.DataRetention{}
 	default:
 		return 0, err
 	}

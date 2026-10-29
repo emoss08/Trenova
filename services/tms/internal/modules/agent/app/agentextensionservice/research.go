@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -38,13 +38,13 @@ const unknownRefMessage = "Only pages a web_search returned can be read, with th
 const unreadablePageMessage = "The page could not be retrieved. It may have moved, require a " +
 	"login, or block automated readers. Try another result."
 
-const invalidSettingsSuffix = " extension's settings are invalid. An administrator can " +
+const InvalidSettingsSuffix = " extension's settings are invalid. An administrator can " +
 	"correct them under AI Control, Extensions."
 
-type settledCall struct {
-	day    int
-	failed bool
-	cost   decimal.Decimal
+type SettledCall struct {
+	Day    int
+	Failed bool
+	Cost   decimal.Decimal
 }
 
 func (s *Service) SearchWeb(
@@ -54,7 +54,7 @@ func (s *Service) SearchWeb(
 ) (*agentextensionports.WebSearchOutcome, error) {
 	text := strings.TrimSpace(query.Query)
 	if err := agentextension.CheckSearchQuery(text); err != nil {
-		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error())}
+		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error())}
 	}
 
 	research, err := s.webResearch(ctx, tenantInfo)
@@ -69,7 +69,7 @@ func (s *Service) SearchWeb(
 	}
 
 	request := &agentextensionports.WebSearchProviderRequest{
-		Settings:       research.values,
+		Settings:       research.Values,
 		Query:          text,
 		NumResults:     numResults,
 		ExcludeDomains: settings.ExcludedDomains,
@@ -87,19 +87,19 @@ func (s *Service) SearchWeb(
 	}
 
 	call := research.metered(tenantInfo)
-	day, err := s.reserve(ctx, call)
+	day, err := s.Reserve(ctx, call)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := research.provider.Search(ctx, request)
-	settled := settledCall{day: day, failed: err != nil}
+	settled := SettledCall{Day: day, Failed: err != nil}
 	if resp != nil {
-		settled.cost = resp.CostUSD
+		settled.Cost = resp.CostUSD
 	}
-	s.settle(ctx, call, settled)
+	s.Settle(ctx, call, settled)
 	if err != nil {
-		return nil, s.providerError(research.failing(err, "search the web"))
+		return nil, s.ProviderError(research.Failing(err, "search the web"))
 	}
 
 	key := refKey(settings.APIKey)
@@ -141,7 +141,7 @@ func (s *Service) ReadWebPage(
 ) (*agentextensionports.WebPage, error) {
 	target := strings.TrimSpace(query.URL)
 	if _, err := agentextension.ParsePageURL(target); err != nil {
-		return nil, &ToolError{Message: stringutils.CapitalizeFirst(err.Error()) + "."}
+		return nil, &ToolError{Message: textcase.CapitalizeFirst(err.Error()) + "."}
 	}
 
 	part := query.Part
@@ -163,27 +163,27 @@ func (s *Service) ReadWebPage(
 	}
 
 	call := research.metered(tenantInfo)
-	day, err := s.reserve(ctx, call)
+	day, err := s.Reserve(ctx, call)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err := research.provider.Read(ctx, agentextensionports.WebPageProviderRequest{
-		Settings:      research.values,
+		Settings:      research.Values,
 		URL:           target,
 		MaxCharacters: part*PagePartCharacters + 1,
 	})
-	settled := settledCall{day: day, failed: err != nil}
+	settled := SettledCall{Day: day, Failed: err != nil}
 	if resp != nil {
-		settled.cost = resp.CostUSD
+		settled.Cost = resp.CostUSD
 	}
-	s.settle(ctx, call, settled)
+	s.Settle(ctx, call, settled)
 	if err != nil {
-		failure := research.failing(err, "read the page")
+		failure := research.Failing(err, "read the page")
 		if failure.failure.Kind == agentextensionports.ProviderFailureNotFound {
 			return nil, &ToolError{Message: unreadablePageMessage}
 		}
-		return nil, s.providerError(failure)
+		return nil, s.ProviderError(failure)
 	}
 
 	text, hasMore, inRange := pagePart(resp.Text, part)
@@ -228,32 +228,32 @@ func (s *Service) TestConnection(
 		return nil, err
 	}
 
-	extension, err := s.settingsFor(ctx, tenantInfo, typ)
+	extension, err := s.SettingsFor(ctx, tenantInfo, typ)
 	if err != nil {
-		return nil, asBusinessError(err)
+		return nil, AsBusinessError(err)
 	}
 	multiErr := errortypes.NewMultiError()
-	agentextension.ValidateSettings(typ, extension.values, multiErr)
+	agentextension.ValidateSettings(typ, extension.Values, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
 
-	call := meteredCall{tenant: tenantInfo, typ: typ, limit: unlimitedRequests}
-	day, err := s.reserve(ctx, call)
+	call := MeteredCall{Tenant: tenantInfo, Type: typ, Limit: unlimitedRequests}
+	day, err := s.Reserve(ctx, call)
 	if err != nil {
-		return nil, asBusinessError(err)
+		return nil, AsBusinessError(err)
 	}
 
 	started := time.Now()
-	result, err := extension.connector.Test(ctx, extension.values)
+	result, err := extension.connector.Test(ctx, extension.Values)
 	latency := time.Since(started).Milliseconds()
-	settled := settledCall{day: day, failed: err != nil}
+	settled := SettledCall{Day: day, Failed: err != nil}
 	if result != nil {
-		settled.cost = result.CostUSD
+		settled.Cost = result.CostUSD
 	}
-	s.settle(ctx, call, settled)
+	s.Settle(ctx, call, settled)
 	if err != nil {
-		return nil, asBusinessError(s.providerError(extension.failing(err, "run a test")))
+		return nil, AsBusinessError(s.ProviderError(extension.Failing(err, "run a test")))
 	}
 
 	message := def.Vendor + " answered in " + strconv.FormatInt(latency, 10) + " ms."
@@ -271,7 +271,7 @@ func (s *Service) TestConnection(
 }
 
 type webResearchCall struct {
-	*extensionSettings
+	*ExtensionSettings
 	settings agentextension.WebResearchSettings
 	provider agentextensionports.WebSearchProvider
 }
@@ -280,43 +280,43 @@ func (s *Service) webResearch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*webResearchCall, error) {
-	extension, err := s.serving(ctx, tenantInfo, agentextension.CapabilityWebResearch)
+	extension, err := s.Serving(ctx, tenantInfo, agentextension.CapabilityWebResearch)
 	if err != nil {
 		return nil, err
 	}
 
-	provider, ok := s.webSearch[extension.typ]
+	provider, ok := s.webSearch[extension.Type]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
-			"the {0} extension cannot search the web", extension.typ.String(),
+			"the {0} extension cannot search the web", extension.Type.String(),
 		)
 	}
 
 	multiErr := errortypes.NewMultiError()
-	agentextension.ValidateSettings(extension.typ, extension.values, multiErr)
-	settings, err := agentextension.ParseWebResearchSettings(extension.values)
+	agentextension.ValidateSettings(extension.Type, extension.Values, multiErr)
+	settings, err := agentextension.ParseWebResearchSettings(extension.Values)
 	if multiErr.HasErrors() || err != nil {
 		s.l.Error("stored web research settings are invalid",
-			zap.String("type", extension.typ.String()), zap.Error(errors.Join(multiErr, err)))
-		return nil, &ToolError{Message: "The " + extension.def.title() + invalidSettingsSuffix}
+			zap.String("type", extension.Type.String()), zap.Error(errors.Join(multiErr, err)))
+		return nil, &ToolError{Message: "The " + extension.Def.Title() + InvalidSettingsSuffix}
 	}
 
 	return &webResearchCall{
-		extensionSettings: extension,
+		ExtensionSettings: extension,
 		settings:          settings,
 		provider:          provider,
 	}, nil
 }
 
-func (c *webResearchCall) metered(tenantInfo pagination.TenantInfo) meteredCall {
-	return meteredCall{
-		tenant: tenantInfo,
-		typ:    c.typ,
-		limit:  c.settings.DailyRequestLimit,
+func (c *webResearchCall) metered(tenantInfo pagination.TenantInfo) MeteredCall {
+	return MeteredCall{
+		Tenant: tenantInfo,
+		Type:   c.Type,
+		Limit:  c.settings.DailyRequestLimit,
 	}
 }
 
-type providerFailure struct {
+type ProviderFailure struct {
 	err     error
 	vendor  string
 	action  string
@@ -324,20 +324,20 @@ type providerFailure struct {
 	spec    agentextension.CapabilitySpec
 }
 
-func (e *extensionSettings) failing(err error, action string) *providerFailure {
-	spec, _ := agentextension.SpecFor(e.typ)
+func (e *ExtensionSettings) Failing(err error, action string) *ProviderFailure {
+	spec, _ := agentextension.SpecFor(e.Type)
 	capability, _ := agentextension.CapabilitySpecFor(spec.Capability)
 
-	return &providerFailure{
+	return &ProviderFailure{
 		err:     err,
-		vendor:  e.def.Vendor,
+		vendor:  e.Def.Vendor,
 		action:  action,
 		failure: e.connector.Classify(err),
 		spec:    capability,
 	}
 }
 
-func (s *Service) providerError(f *providerFailure) error {
+func (s *Service) ProviderError(f *ProviderFailure) error {
 	var message string
 	switch {
 	case f.failure.Kind == agentextensionports.ProviderFailureUnauthorized:
@@ -367,7 +367,7 @@ func (s *Service) providerError(f *providerFailure) error {
 	return &ToolError{Message: message}
 }
 
-func asBusinessError(err error) error {
+func AsBusinessError(err error) error {
 	var toolErr *ToolError
 	if errors.As(err, &toolErr) {
 		return errortypes.NewBusinessError("{0}", toolErr.Message)

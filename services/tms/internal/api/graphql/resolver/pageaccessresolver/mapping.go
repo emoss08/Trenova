@@ -2,7 +2,7 @@ package pageaccessresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pageaccess"
@@ -14,7 +14,7 @@ func draftFromInput(
 	if input == nil {
 		return nil, nil //nolint:nilnil // no draft: a saved role is previewed
 	}
-	parents, err := base.PulidsFromStrings(input.ParentRoleIds, "parentRoleIds")
+	parents, err := gqlid.PulidsFromStrings(input.ParentRoleIds, "parentRoleIds")
 	if err != nil {
 		return nil, err
 	}

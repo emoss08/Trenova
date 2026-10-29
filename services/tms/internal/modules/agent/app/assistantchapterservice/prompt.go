@@ -4,11 +4,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -75,34 +78,36 @@ type chapterAnswer struct {
 	Title      string `json:"title"`
 }
 
-func baseRequest(turn *agentports.ChapterTurnRequest) *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+func baseRequest(
+	turn *assistantchapterports.ChapterTurnRequest,
+) *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo: turn.TenantInfo,
-		Task:       aiprovider.TaskChapterTitling,
+		Task:       aitask.TaskChapterTitling,
 		MaxTokens:  titleMaxTokens,
 		HedgeAfter: hedgeAfter,
-		Reasoning:  aiprovider.ReasoningOff,
+		Reasoning:  aireasoning.ReasoningOff,
 		Attribution: aiusageports.AIUsageAttribution{
 			UserID:    turn.UserID,
 			ThreadID:  turn.ThreadID,
 			Feature:   aiusage.FeatureConversationChapters,
-			OwnerKind: agentports.RunStepOwnerAssistantTurn,
+			OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
 			OwnerID:   turn.TurnID,
 		},
 	}
 }
 
 func decideRequest(
-	turn *agentports.ChapterTurnRequest,
+	turn *assistantchapterports.ChapterTurnRequest,
 	current string,
 	recent []conversation.Message,
 	question string,
-) *agentports.StructuredCompletionRequest {
+) *llmports.StructuredCompletionRequest {
 	req := baseRequest(turn)
 	req.System = decideSystem
 	req.SchemaName = "chapter_decision"
 	req.OutputSchema = decideSchema()
-	req.Context = agentports.DelimitedContext{Sections: []agentports.ContextSection{
+	req.Context = llmports.DelimitedContext{Sections: []llmports.ContextSection{
 		{Title: "Current chapter title", Content: current},
 		{Title: "The conversation just before", Content: recentLines(recent)},
 		{Title: "The person's new message", Content: clip(question, questionRunes)},
@@ -112,23 +117,23 @@ func decideRequest(
 }
 
 func nameRequest(
-	turn *agentports.ChapterTurnRequest,
+	turn *assistantchapterports.ChapterTurnRequest,
 	question, reply string,
-) *agentports.StructuredCompletionRequest {
+) *llmports.StructuredCompletionRequest {
 	req := baseRequest(turn)
 	req.System = nameSystem
 	req.SchemaName = "chapter_title"
 	req.OutputSchema = nameSchema()
-	sections := []agentports.ContextSection{
+	sections := []llmports.ContextSection{
 		{Title: "The message that opens the chapter", Content: clip(question, questionRunes)},
 	}
 	if strings.TrimSpace(reply) != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "The start of the agent's reply",
 			Content: clip(reply, replyRunes),
 		})
 	}
-	req.Context = agentports.DelimitedContext{Sections: sections}
+	req.Context = llmports.DelimitedContext{Sections: sections}
 
 	return req
 }

@@ -3,7 +3,7 @@ package agentdecisionservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,8 +12,12 @@ import (
 func TestReasonCodeFor_FillsInACodeWhenNoneWasGiven(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "approved_without_reason", reasonCodeFor(agent.DecisionAccepted, ""))
-	assert.Equal(t, "modified_without_reason", reasonCodeFor(agent.DecisionModified, "  "))
-	assert.Equal(t, "rejected_without_reason", reasonCodeFor(agent.DecisionRejected, ""))
-	assert.Equal(t, "Wrong trailer", reasonCodeFor(agent.DecisionRejected, " Wrong trailer "))
+	assert.Equal(t, "approved_without_reason", reasonCodeFor(agentdecision.DecisionAccepted, ""))
+	assert.Equal(t, "modified_without_reason", reasonCodeFor(agentdecision.DecisionModified, "  "))
+	assert.Equal(t, "rejected_without_reason", reasonCodeFor(agentdecision.DecisionRejected, ""))
+	assert.Equal(
+		t,
+		"Wrong trailer",
+		reasonCodeFor(agentdecision.DecisionRejected, " Wrong trailer "),
+	)
 }

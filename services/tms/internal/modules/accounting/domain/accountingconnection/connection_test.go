@@ -1,0 +1,326 @@
+package accountingconnection_test
+
+import (
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+const now = int64(1_790_000_000)
+
+func connected(t *testing.T) *accountingconnection.AccountingConnection {
+	t.Helper()
+	conn := &accountingconnection.AccountingConnection{
+		IntegrationType: integration.TypeQuickBooksOnline,
+		ExternalRealmID: "9341452431742015",
+	}
+	conn.BindApp(accountingconnection.AppIdentity{
+		Source:      accountingconnection.AppSourceInstance,
+		Environment: accountingprovider.AppEnvironmentSandbox,
+		Fingerprint: accountingconnection.AppFingerprint(
+			accountingprovider.AppEnvironmentSandbox,
+			"client",
+		),
+	})
+	conn.Connect(pulid.MustNew("usr_"), accountingconnection.TokenGrant{
+		AccessTokenCiphertext:  "access",
+		AccessTokenExpiresAt:   now + 3600,
+		RefreshTokenCiphertext: "refresh",
+		RefreshTokenExpiresAt:  now + 100*24*3600,
+	}, now)
+	return conn
+}
+
+func TestConnectSetsHealthyStateAndAbsoluteExpiry(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, conn.Status)
+	assert.True(t, conn.IsActive())
+	assert.True(t, conn.HasTokens())
+	assert.Equal(t, now, conn.ConnectedAt)
+	require.NotNil(t, conn.LastSuccessAt)
+	absolute := accountingprovider.MustProfile(conn.IntegrationType).RefreshTokenAbsoluteLifetime
+	assert.Equal(t, now+int64(absolute/time.Second), conn.RefreshTokenAbsoluteExpiresAt)
+
+	multiErr := errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
+}
+
+func TestTransientFailuresDegradeThenFail(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.RecordFailure(accountingsync.ErrorCategoryTransient, "timeout", now+1)
+	assert.Equal(t, accountingconnection.ConnectionStatusDegraded, conn.Status)
+	conn.RecordFailure(accountingsync.ErrorCategoryTransient, "timeout", now+2)
+	assert.Equal(t, accountingconnection.ConnectionStatusDegraded, conn.Status)
+	conn.RecordFailure(accountingsync.ErrorCategoryRateLimited, "429", now+3)
+	assert.Equal(t, accountingconnection.ConnectionStatusFailing, conn.Status)
+	assert.Equal(t, 3, conn.ConsecutiveFailures)
+	assert.True(t, conn.HasTokens())
+
+	conn.RecordSuccess(now + 4)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, conn.Status)
+	assert.Zero(t, conn.ConsecutiveFailures)
+	assert.Empty(t, conn.LastErrorMessage)
+	assert.Empty(t, conn.LastErrorCategory)
+}
+
+func TestRevocationWipesTokensAndStaysRevoked(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.RecordFailure(accountingsync.ErrorCategoryRevoked, "invalid_grant", now+1)
+	assert.Equal(t, accountingconnection.ConnectionStatusRevoked, conn.Status)
+	assert.False(t, conn.IsActive())
+	assert.False(t, conn.HasTokens())
+	assert.Zero(t, conn.AccessTokenExpiresAt)
+}
+
+func TestDisconnectIsTerminalForHealthUpdates(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	userID := pulid.MustNew("usr_")
+	conn.Disconnect(userID, now+10)
+	assert.Equal(t, accountingconnection.ConnectionStatusDisconnected, conn.Status)
+	assert.Equal(t, userID, conn.DisconnectedByID)
+	assert.False(t, conn.HasTokens())
+
+	conn.RecordFailure(accountingsync.ErrorCategoryTransient, "late failure", now+11)
+	assert.Equal(t, accountingconnection.ConnectionStatusDisconnected, conn.Status)
+	conn.RecordSuccess(now + 12)
+	assert.Equal(t, accountingconnection.ConnectionStatusDisconnected, conn.Status)
+}
+
+func TestReconnectAfterDisconnectClearsDisconnectFields(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.Disconnect(pulid.MustNew("usr_"), now+10)
+	conn.Connect(pulid.MustNew("usr_"), accountingconnection.TokenGrant{
+		AccessTokenCiphertext:  "a2",
+		AccessTokenExpiresAt:   now + 7200,
+		RefreshTokenCiphertext: "r2",
+		RefreshTokenExpiresAt:  now + 200,
+	}, now+100)
+	assert.Equal(t, accountingconnection.ConnectionStatusConnected, conn.Status)
+	assert.True(t, conn.DisconnectedByID.IsNil())
+	assert.Nil(t, conn.DisconnectedAt)
+	absolute := accountingprovider.MustProfile(conn.IntegrationType).RefreshTokenAbsoluteLifetime
+	assert.Equal(t, now+100+int64(absolute/time.Second), conn.RefreshTokenAbsoluteExpiresAt)
+}
+
+func TestExpiryWindows(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.False(t, conn.AccessTokenExpiresWithin(now, 60))
+	assert.True(t, conn.AccessTokenExpiresWithin(now, 3600))
+	assert.False(t, conn.RefreshTokenNearAbsoluteExpiry(now))
+	assert.True(t, conn.RefreshTokenNearAbsoluteExpiry(conn.RefreshTokenAbsoluteExpiresAt-60))
+}
+
+func TestErrorMessageIsBounded(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.RecordFailure(accountingsync.ErrorCategoryUnknown, strings.Repeat("é", 5000), now+1)
+	assert.Equal(t, 2000, len([]rune(conn.LastErrorMessage)))
+}
+
+func TestValidateRejectsNonAccountingType(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.IntegrationType = integration.TypeSamsara
+	multiErr := errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	require.True(t, multiErr.HasErrors())
+}
+
+func TestSyncingNeedsSetupCompleteAndAStartDate(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.SetupStep = accountingconnection.SetupStepStartDate
+	assert.False(t, conn.IsSyncing())
+	assert.False(t, conn.CanDispatch())
+
+	start := now - 30*24*3600
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: start, AutoSync: true}, now)
+	assert.Equal(t, accountingconnection.SetupStepComplete, conn.SetupStep)
+	require.NotNil(t, conn.SyncEnabledAt)
+	assert.Equal(t, now, *conn.SyncEnabledAt)
+	assert.True(t, conn.AutoSync)
+	assert.True(t, conn.IsSyncing())
+	assert.True(t, conn.CanDispatch())
+
+	conn.EnableSync(
+		accountingconnection.SyncSettings{StartDate: start + 10, AutoSync: false},
+		now+500,
+	)
+	assert.Equal(t, now, *conn.SyncEnabledAt, "the first enable time bounds the backfill")
+	assert.Equal(t, start+10, *conn.SyncStartDate)
+	assert.False(t, conn.AutoSync)
+
+	conn.RecordFailure(accountingsync.ErrorCategoryRevoked, "revoked", now+600)
+	assert.False(t, conn.IsSyncing())
+}
+
+func TestPauseStopsDispatchUntilResumed(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now, AutoSync: true}, now)
+	user := pulid.MustNew("usr_")
+
+	conn.Pause(user, "  Month-end close  ", now+1)
+	assert.True(t, conn.IsPaused())
+	assert.True(t, conn.IsSyncing())
+	assert.False(t, conn.CanDispatch())
+	assert.Equal(t, user, conn.PausedByID)
+	assert.Equal(t, "Month-end close", conn.PausedReason)
+
+	conn.Resume()
+	assert.False(t, conn.IsPaused())
+	assert.True(t, conn.CanDispatch())
+	assert.Empty(t, conn.PausedReason)
+	assert.True(t, conn.PausedByID.IsNil())
+}
+
+func TestCoversAndBooksClosedOn(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.False(t, conn.Covers(now))
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now, AutoSync: true}, now)
+	assert.True(t, conn.Covers(now))
+	assert.False(t, conn.Covers(now-1))
+
+	assert.False(t, conn.BooksClosedOn(now))
+	closed := now + 100
+	conn.ExternalBooksClosedThrough = &closed
+	assert.True(t, conn.BooksClosedOn(closed))
+	assert.False(t, conn.BooksClosedOn(closed+1))
+}
+
+func TestValidateRequiresAStartDateOnceComplete(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.SetupStep = accountingconnection.SetupStepComplete
+	multiErr := errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	require.True(t, multiErr.HasErrors())
+
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now, AutoSync: true}, now)
+	multiErr = errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
+}
+
+func TestDriftIsCheckedOnlyWhileSendingAndRecordsTheOutcome(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.False(t, conn.ChecksDrift(), "nothing is compared before sync starts")
+	conn.EnableSync(accountingconnection.SyncSettings{StartDate: now, AutoSync: true}, now)
+	assert.True(t, conn.ChecksDrift())
+	conn.Pause(pulid.MustNew("usr_"), "close", now+1)
+	assert.False(t, conn.ChecksDrift(), "a paused connection is not compared")
+	conn.Resume()
+
+	conn.RecordDriftFailure(accountingsync.SyncErrorRateLimited, strings.Repeat("x", 5000))
+	assert.Equal(t, accountingsync.SyncErrorRateLimited, conn.DriftErrorCategory)
+	assert.Len(t, conn.DriftErrorMessage, 2000)
+	assert.Nil(t, conn.DriftCheckedAt, "a failed check does not count as a check")
+
+	conn.FinishDriftCheck(now + 10)
+	require.NotNil(t, conn.DriftCheckedAt)
+	assert.Equal(t, now+10, *conn.DriftCheckedAt)
+	assert.Empty(t, conn.DriftErrorCategory)
+	assert.Empty(t, conn.DriftErrorMessage)
+}
+
+func TestReconnectWarningComesFromTheProviderProfile(t *testing.T) {
+	t.Parallel()
+
+	const day = int64(24 * 60 * 60)
+	tests := []struct {
+		name     string
+		typ      integration.Type
+		left     int64
+		expected bool
+	}{
+		{
+			name:     "quickbooks within 14 days",
+			typ:      integration.TypeQuickBooksOnline,
+			left:     10 * day,
+			expected: true,
+		},
+		{
+			name:     "quickbooks beyond 14 days",
+			typ:      integration.TypeQuickBooksOnline,
+			left:     15 * day,
+			expected: false,
+		},
+		{
+			name:     "netsuite beyond 2 days",
+			typ:      integration.TypeNetSuite,
+			left:     3 * day,
+			expected: false,
+		},
+		{name: "netsuite within 2 days", typ: integration.TypeNetSuite, left: day, expected: true},
+		{
+			name:     "netsuite at exactly 2 days",
+			typ:      integration.TypeNetSuite,
+			left:     2 * day,
+			expected: true,
+		},
+		{
+			name:     "unknown provider uses 14 days",
+			typ:      integration.Type("Unknown"),
+			left:     10 * day,
+			expected: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			conn := &accountingconnection.AccountingConnection{
+				IntegrationType:               tt.typ,
+				RefreshTokenAbsoluteExpiresAt: now + tt.left,
+			}
+			assert.Equal(t, tt.expected, conn.RefreshTokenNearAbsoluteExpiry(now))
+		})
+	}
+}
+
+func TestReconnectWarningIsOffWithoutAnAbsoluteExpiry(t *testing.T) {
+	t.Parallel()
+
+	conn := &accountingconnection.AccountingConnection{IntegrationType: integration.TypeNetSuite}
+	assert.False(t, conn.RefreshTokenNearAbsoluteExpiry(now))
+	assert.Equal(t, int64(2*24*60*60), conn.ReconnectWarningSeconds())
+}
+
+func TestNetSuiteConnectSetsASevenDayAbsoluteExpiry(t *testing.T) {
+	t.Parallel()
+
+	conn := &accountingconnection.AccountingConnection{IntegrationType: integration.TypeNetSuite}
+	conn.Connect(pulid.MustNew("usr_"), accountingconnection.TokenGrant{}, now)
+	assert.Equal(t, now+7*24*60*60, conn.RefreshTokenAbsoluteExpiresAt)
+}

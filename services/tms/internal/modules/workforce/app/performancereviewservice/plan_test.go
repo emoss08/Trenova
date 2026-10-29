@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,7 @@ func TestPlanReview_DraftsWithoutSaving(t *testing.T) {
 			PeriodStart: now - 180*86400, PeriodEnd: now, UserID: h.userID,
 		})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusDraft, planned.Status)
+	assert.Equal(t, workerreview.ReviewStatusDraft, planned.Status)
 	assert.Len(t, planned.Ratings, 2)
 	assert.Equal(t, h.template.Name, planned.Template.Name)
 	assert.Empty(t, h.repo.reviews)
@@ -36,7 +36,7 @@ func TestPlanReview_DraftsWithoutSaving(t *testing.T) {
 		&performancereviewservice.UpdateReviewRequest{
 			TenantInfo: h.tenant,
 			ID:         draft.ID,
-			Ratings:    []worker.ReviewRating{{Key: "safety", Score: &four}},
+			Ratings:    []workerreview.ReviewRating{{Key: "safety", Score: &four}},
 			Summary:    " Solid year ",
 		})
 	require.NoError(t, err)

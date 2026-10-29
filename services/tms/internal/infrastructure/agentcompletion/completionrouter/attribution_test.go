@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestCompleteStructured_RecordsTheFeatureAndSubject(t *testing.T) {
 	healthy, _ := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	usage := &fakeUsage{}
 	svc := newTestService(t, openAIChatProvider("only", healthy.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := generalRequest()
 	req.Attribution = aiusageports.AIUsageAttribution{
@@ -57,7 +57,7 @@ func TestCompleteChat_RecordsTheFeatureAndSubject(t *testing.T) {
 	healthy, _ := chatServer(t, http.StatusOK, "Found Acme Freight.")
 	usage := &fakeUsage{}
 	svc := newTestService(t, chatProvider("only", healthy.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	attribution := aiusageports.AIUsageAttribution{
 		UserID:  pulid.MustNew("usr_"),
@@ -96,7 +96,7 @@ func TestRecord_LeavesOutASubjectTheTableCannotHold(t *testing.T) {
 			healthy, _ := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 			usage := &fakeUsage{}
 			svc := newTestService(t, openAIChatProvider("only", healthy.URL, 10))
-			svc.usage = usage
+			svc.Usage = usage
 
 			req := generalRequest()
 			req.Attribution = aiusageports.AIUsageAttribution{
@@ -121,10 +121,10 @@ func TestSubmitBackground_AnInlineRunKeepsItsAttribution(t *testing.T) {
 
 	inline, _ := chatServer(t, http.StatusOK, `{"documentKind":"RateConfirmation"}`)
 	provider := openAIChatProvider("self-hosted", inline.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 	usage := &fakeUsage{}
 	svc := newTestService(t, provider)
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := extractionRequest()
 	req.Attribution = documentAttribution()
@@ -151,10 +151,10 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 		"usage": map[string]any{"input_tokens": 120, "output_tokens": 44},
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := pollRequest(provider)
-	req.Task = aiprovider.TaskDocumentExtraction
+	req.Task = aitask.TaskDocumentExtraction
 	req.SubmittedAt = time.Now().Add(-90 * time.Second).Unix()
 	req.Attribution = documentAttribution()
 
@@ -166,7 +166,7 @@ func TestPollBackground_RecordsAFinishedCallOnce(t *testing.T) {
 	row := rows[0]
 	assert.True(t, row.Succeeded)
 	assert.Equal(t, aiusage.SurfaceBackground, row.Surface)
-	assert.Equal(t, aiprovider.TaskDocumentExtraction, row.Task)
+	assert.Equal(t, aitask.TaskDocumentExtraction, row.Task)
 	assert.Equal(t, provider.ID, row.ProviderID)
 	assert.Equal(t, "gpt-test", row.Model)
 	assert.Equal(t, 120, row.InputTokens)
@@ -187,7 +187,7 @@ func TestPollBackground_RecordsATerminalFailureWithItsReason(t *testing.T) {
 		"incomplete_details": map[string]any{"reason": "max_output_tokens"},
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	req := pollRequest(provider)
 	req.Attribution = documentAttribution()
@@ -200,7 +200,7 @@ func TestPollBackground_RecordsATerminalFailureWithItsReason(t *testing.T) {
 	assert.False(t, rows[0].Succeeded)
 	assert.Equal(t, "provider_error", rows[0].ErrorClass)
 	assert.Contains(t, rows[0].ErrorMessage, "max_output_tokens")
-	assert.Equal(t, aiprovider.TaskGeneral, rows[0].Task, "an unnamed task prices as general")
+	assert.Equal(t, aitask.TaskGeneral, rows[0].Task, "an unnamed task prices as general")
 	assert.Zero(t, rows[0].LatencyMs, "no submission time means no latency to report")
 	assert.Equal(t, aiusage.FeatureDocumentIntelligenceExtract, rows[0].Feature)
 }
@@ -212,24 +212,13 @@ func TestPollBackground_RecordsNothingWhileTheCallRuns(t *testing.T) {
 		"id": "resp_abc123", "status": "in_progress", "model": "gpt-test",
 	})
 	usage := &fakeUsage{}
-	svc.usage = usage
+	svc.Usage = usage
 
 	outcome, err := svc.PollBackground(t.Context(), pollRequest(provider))
 	require.NoError(t, err)
-	require.Equal(t, agentports.BackgroundPending, outcome.State)
+	require.Equal(t, llmports.BackgroundPending, outcome.State)
 
 	usage.mu.Lock()
 	defer usage.mu.Unlock()
 	assert.Empty(t, usage.rows, "a pending poll is not a call")
-}
-
-func TestBackgroundLatency(t *testing.T) {
-	t.Parallel()
-
-	now := time.Unix(1_700_000_100, 0)
-
-	assert.Equal(t, 100*time.Second, backgroundLatency(1_700_000_000, now))
-	assert.Zero(t, backgroundLatency(0, now))
-	assert.Zero(t, backgroundLatency(1_700_000_200, now),
-		"a clock that ran backwards is not a negative wait")
 }

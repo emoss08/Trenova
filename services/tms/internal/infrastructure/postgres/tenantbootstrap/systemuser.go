@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -24,7 +25,7 @@ var ErrSystemUserPasswordRequired = errors.New(
 )
 
 type SystemUserParams struct {
-	Scope    Scope
+	Scope    tenantscope.Scope
 	Password string
 }
 
@@ -34,7 +35,7 @@ func EnsureSystemUser(
 	params SystemUserParams,
 ) (pulid.ID, bool, error) {
 	u := tenantdb.Users
-	existing, err := scoped(ctx, u.Pick(u.ID).Where(u.Username.Lower().Eq(tenant.SystemUsername))).
+	existing, err := tenantscope.Scoped(ctx, u.Pick(u.ID).Where(u.Username.Lower().Eq(tenant.SystemUsername))).
 		First(ctx, db)
 	switch {
 	case err == nil:
@@ -47,7 +48,7 @@ func EnsureSystemUser(
 		return pulid.Nil, false, ErrSystemUserPasswordRequired
 	}
 
-	now := params.Scope.now()
+	now := params.Scope.NowUnix()
 	user := &tenant.User{
 		BusinessUnitID:        params.Scope.BusinessUnitID,
 		CurrentOrganizationID: params.Scope.OrganizationID,

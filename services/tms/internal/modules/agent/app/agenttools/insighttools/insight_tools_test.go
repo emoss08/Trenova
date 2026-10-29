@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -80,7 +80,10 @@ func TestDismissInsight_RequiresAReasonOfBoundedLength(t *testing.T) {
 	tool := NewDismissInsightTool(insights)
 	id := pulid.MustNew("inst_")
 
-	err := tool.Execute(t.Context(), agenttoolstest.MemoryParams(map[string]any{"insightId": id.String()}))
+	err := tool.Execute(
+		t.Context(),
+		agenttoolstest.MemoryParams(map[string]any{"insightId": id.String()}),
+	)
 	require.Error(t, err)
 
 	err = tool.Execute(t.Context(), agenttoolstest.MemoryParams(map[string]any{
@@ -100,7 +103,7 @@ func TestDismissInsight_IsAnApprovedUpdateOnTheInsight(t *testing.T) {
 	assert.Equal(t, permission.ResourceInsight, tool.Policy().Resource)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
-	targeted, ok := tool.(agentports.TargetedTool)
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	require.True(t, ok)
 	target, ok := targeted.Target(map[string]any{"insightId": id.String()})
 	require.True(t, ok)

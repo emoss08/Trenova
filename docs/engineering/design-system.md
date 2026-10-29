@@ -1010,7 +1010,7 @@ show is `ArtifactNotice`, never a bare grey sentence. Status is a tone
 
 **An artifact shows what a person can reason with, never what the model worked from.** A
 tool's result carries ids, the tenant, a write's version and which way a metric counts as
-worse; the artifact stores a projection of it instead (`assistantservice/artifact_display.go`,
+worse; the artifact stores a projection of it instead (`assistantservice/artifactpayload/artifact_display.go`,
 mirrored for older payloads and the step details in `components/assistant/readable-values.ts`).
 Every column and field has a display type — text, prose, date, date and time, money, number,
 percent, category, status, yes/no, flag, measurements, links — and anything without one is

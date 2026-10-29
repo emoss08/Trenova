@@ -6,18 +6,24 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/proposaloutcomes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/zap"
 )
 
@@ -27,28 +33,28 @@ type TurnRequest struct {
 	Actor      *permissionports.RequestActor
 	History    []conversation.Message
 	Input      string
-	Page       *agentdefinition.PageContext
-	Surface    agent.Surface
+	Page       *agentturn.PageContext
+	Surface    agentpagecontext.Surface
 	// PreferredProviderID is the reader's chosen model for this conversation.
 	PreferredProviderID pulid.ID
 	// ThreadID is the conversation, for attributing what the turn cost.
 	ThreadID pulid.ID
 	// Proposals is what became of the writes earlier turns proposed.
-	Proposals []agentports.ProposalOutcome
+	Proposals []agentruntimeports.ProposalOutcome
 	// Subject is the record the conversation is about, when it was opened
 	// from one.
-	Subject *agentdefinition.RuntimeSubject
+	Subject *agentturn.RuntimeSubject
 	// Attachments and Mentions are what the person handed over with the
 	// message: files, and records named from the composer.
-	Attachments []agentdefinition.RuntimeAttachment
-	Mentions    []agentdefinition.RuntimeMention
+	Attachments []agentturn.RuntimeAttachment
+	Mentions    []agentturn.RuntimeMention
 	// Taint is the outside content the conversation has already read, which
 	// every later turn in it opens with.
 	Taint *agent.RunTaint
 	// Facts are what the person pinned for the agents to keep in mind for
 	// the whole conversation.
 	Facts          []string
-	Anchors        []agentdefinition.RuntimeAnchor
+	Anchors        []agentturn.RuntimeAnchor
 	TrenovaWritten bool
 	EarlierFiles   map[string]string
 	// OutsideText says the turn's input carries text written outside the
@@ -61,7 +67,7 @@ type TurnResult struct {
 	Reply     string
 	Decision  agentguard.Decision
 	Messages  []conversation.Message
-	Actions   []agentports.PendingAction
+	Actions   []agentruntimeports.PendingAction
 	PlanTitle string
 	Model     string
 	Provider  pulid.ID
@@ -79,9 +85,9 @@ type TurnResult struct {
 func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
-) (agentguard.Decision, *agentports.RunRequest) {
+) (agentguard.Decision, *agentruntimeports.RunRequest) {
 	var decision agentguard.Decision
-	var runtimeContext agentdefinition.RuntimeContext
+	var runtimeContext agentturn.RuntimeContext
 	if req.TrenovaWritten {
 		decision = trenovaWrittenDecision()
 		runtimeContext = s.buildContext(ctx, req)
@@ -107,11 +113,11 @@ func (s *Service) admit(
 		}
 	}
 
-	runtimeContext.Frame = agentdefinition.ChatFrame(decision.Goal, decision.Need)
-	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
+	runtimeContext.Frame = agenttaskframe.ChatFrame(decision.Goal, decision.Need)
+	runtimeContext.PendingProposals = proposaloutcomes.Pending(req.Proposals)
 	runtimeContext.Anchors = req.Anchors
 
-	return decision, &agentports.RunRequest{
+	return decision, &agentruntimeports.RunRequest{
 		Definition:          req.Definition,
 		Actor:               req.Actor,
 		Context:             runtimeContext,
@@ -146,7 +152,7 @@ func trenovaWrittenDecision() agentguard.Decision {
 func turnResultOf(
 	input string,
 	decision agentguard.Decision,
-	run *agentports.RunResult,
+	run *agentruntimeports.RunResult,
 	err error,
 ) *TurnResult {
 	if !decision.Allowed {
@@ -190,8 +196,8 @@ func turnResultOf(
 func (s *Service) buildContext(
 	ctx context.Context,
 	req *TurnRequest,
-) agentdefinition.RuntimeContext {
-	bare := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	bare := agentturn.RuntimeContext{
 		Trigger:     agent.RunTriggerChat,
 		Page:        req.Page,
 		Surface:     req.Surface,
@@ -204,7 +210,7 @@ func (s *Service) buildContext(
 		return bare
 	}
 
-	runtimeContext, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition:  req.Definition,
 		Actor:       req.Actor,
 		Trigger:     agent.RunTriggerChat,
@@ -214,7 +220,7 @@ func (s *Service) buildContext(
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
 		Facts:       req.Facts,
-		Query: (&agentports.ContextQuery{
+		Query: (&retrievalports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(req.Definition),
 			ThreadID:     req.ThreadID,
@@ -244,20 +250,20 @@ func (s *Service) describeSubject(
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-) *agentdefinition.RuntimeSubject {
+) *agentturn.RuntimeSubject {
 	if !thread.HasSubject() {
 		return nil
 	}
 
-	bare := &agentdefinition.RuntimeSubject{
+	bare := &agentturn.RuntimeSubject{
 		Type:  thread.SubjectType,
 		ID:    thread.SubjectID.String(),
-		Label: stringutils.HumanizeSnakeCase(string(thread.SubjectType)),
+		Label: textcase.HumanizeSnakeCase(string(thread.SubjectType)),
 	}
 	if s.subjects == nil {
 		return bare
 	}
-	allowed, err := s.mayReadSubject(ctx, actor, thread.SubjectType)
+	allowed, err := s.access().MayReadSubject(ctx, actor, thread.SubjectType)
 	if err != nil || !allowed {
 		s.logger.Info("thread subject withheld from the turn",
 			zap.String("thread", thread.ID.String()),
@@ -337,7 +343,7 @@ func withReason(notice string, err error) string {
 // provider's own message: that message is for the administrator and is
 // kept with the usage record in AI Control.
 func failureReason(err error) string {
-	var failure agentports.ProviderFailure
+	var failure llmports.ProviderFailure
 	if errors.As(err, &failure) {
 		if failure.ProviderRetryable() {
 			return fmt.Sprintf(
@@ -351,7 +357,7 @@ func failureReason(err error) string {
 			failure.ProviderStatus(),
 		)
 	}
-	if errors.Is(err, agentports.ErrProvidersResting) {
+	if errors.Is(err, llmports.ErrProvidersResting) {
 		return "Every model provider is paused after repeated failures."
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -373,11 +379,11 @@ func failureReason(err error) string {
 func interruptedTurn(
 	input string,
 	decision agentguard.Decision,
-	run *agentports.RunResult,
+	run *agentruntimeports.RunResult,
 	err error,
 ) *TurnResult {
 	if run == nil {
-		run = &agentports.RunResult{}
+		run = &agentruntimeports.RunResult{}
 	}
 
 	// The first message is the question; anything after it is what ran.
@@ -417,7 +423,7 @@ func replyFailure(err error, ranAnything bool) *conversation.ReplyFailure {
 	if errors.Is(err, context.Canceled) {
 		return &conversation.ReplyFailure{Kind: conversation.ReplyFailureStopped}
 	}
-	var exhausted *agentports.ChatProvidersFailedError
+	var exhausted *llmports.ChatProvidersFailedError
 	if errors.As(err, &exhausted) && len(exhausted.Failures) > 0 {
 		failure := &conversation.ReplyFailure{Kind: conversation.ReplyFailureNoModel}
 		for _, provider := range exhausted.Failures {
@@ -459,7 +465,7 @@ func scopedMessage(
 // marked as altered with the rule and reason the reply's message carries, so
 // the signal that something upstream let a code request through is kept.
 func outputDecision(
-	run *agentports.RunResult,
+	run *agentruntimeports.RunResult,
 	messages []conversation.Message,
 ) agentguard.Decision {
 	decision := agentguard.Decision{
@@ -484,8 +490,8 @@ func outputDecision(
 
 func refusedEvent(decision agentguard.Decision) kernelports.StreamEvent {
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventRefused,
-		Data: agentports.AssistantRefusedEvent{
+		Event: assistantstreamports.AssistantEventRefused,
+		Data: assistantstreamports.AssistantRefusedEvent{
 			Message:  decision.Message,
 			Stage:    string(decision.Stage),
 			Category: string(decision.Category),
@@ -522,23 +528,6 @@ func recentTurns(history []conversation.Message) []agentguard.Turn {
 	}
 
 	return turns
-}
-
-// pendingProposals names the undecided proposals for the prompt.
-func pendingProposals(outcomes []agentports.ProposalOutcome) []agentdefinition.PendingProposal {
-	pending := make([]agentdefinition.PendingProposal, 0, len(outcomes))
-	for _, outcome := range outcomes {
-		if outcome.Pending() {
-			pending = append(pending, agentdefinition.PendingProposal{
-				ProposalID: outcome.ProposalID,
-				PlanID:     outcome.PlanID,
-				ToolName:   outcome.ToolName,
-				Rationale:  outcome.Rationale,
-			})
-		}
-	}
-
-	return pending
 }
 
 func definitionID(definition *agentdefinition.Definition) pulid.ID {

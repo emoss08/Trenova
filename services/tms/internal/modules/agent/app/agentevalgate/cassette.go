@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
@@ -105,7 +105,7 @@ func withoutMintedIDs(text string) string {
 	return mintedIDs.ReplaceAllString(text, "${1}_minted")
 }
 
-func HashRequest(req *agentports.ChatCompletionRequest) (string, error) {
+func HashRequest(req *llmports.ChatCompletionRequest) (string, error) {
 	hashed := hashedRequest{
 		System:   withoutMintedIDs(req.System),
 		Messages: make([]hashedMessage, 0, len(req.Messages)),
@@ -132,7 +132,7 @@ func HashRequest(req *agentports.ChatCompletionRequest) (string, error) {
 	return hex.EncodeToString(sum[:]), nil
 }
 
-func cassetteCalls(calls []agentports.ToolCall) []CassetteCall {
+func cassetteCalls(calls []llmports.ToolCall) []CassetteCall {
 	if len(calls) == 0 {
 		return nil
 	}
@@ -145,10 +145,10 @@ func cassetteCalls(calls []agentports.ToolCall) []CassetteCall {
 	return out
 }
 
-func (r CassetteResponse) completion() *agentports.ChatCompletionResult {
-	calls := make([]agentports.ToolCall, 0, len(r.ToolCalls))
+func (r CassetteResponse) completion() *llmports.ChatCompletionResult {
+	calls := make([]llmports.ToolCall, 0, len(r.ToolCalls))
 	for _, call := range r.ToolCalls {
-		calls = append(calls, agentports.ToolCall{
+		calls = append(calls, llmports.ToolCall{
 			ID:        call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
@@ -160,14 +160,14 @@ func (r CassetteResponse) completion() *agentports.ChatCompletionResult {
 		model = "cassette"
 	}
 
-	return &agentports.ChatCompletionResult{
+	return &llmports.ChatCompletionResult{
 		Text:            r.Text,
 		ToolCalls:       calls,
 		ModelIdentifier: model,
 	}
 }
 
-func responseOf(result *agentports.ChatCompletionResult) CassetteResponse {
+func responseOf(result *llmports.ChatCompletionResult) CassetteResponse {
 	return CassetteResponse{
 		Text:      result.Text,
 		ToolCalls: cassetteCalls(result.ToolCalls),
@@ -210,8 +210,8 @@ func (p *CassettePlayer) Played() int {
 
 func (p *CassettePlayer) CompleteChat(
 	_ context.Context,
-	req *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	hash, err := HashRequest(req)
 	if err != nil {
 		return nil, err
@@ -235,9 +235,9 @@ func (p *CassettePlayer) CompleteChat(
 
 func (p *CassettePlayer) StreamChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-	sink agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	sink llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	result, err := p.CompleteChat(ctx, req)
 	if err != nil {
 		return nil, err
@@ -251,34 +251,34 @@ func (p *CassettePlayer) StreamChat(
 
 func (*CassettePlayer) CompleteStructured(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	return nil, ErrNotRecordable
 }
 
 func (*CassettePlayer) SubmitBackground(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	*llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	return nil, ErrNotRecordable
 }
 
 func (*CassettePlayer) PollBackground(
 	context.Context,
-	*agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	*llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	return nil, ErrNotRecordable
 }
 
 type CassetteRecorder struct {
-	agentports.CompletionService
+	llmports.CompletionService
 
 	mu       sync.Mutex
 	cassette Cassette
 }
 
 func NewCassetteRecorder(
-	completion agentports.CompletionService,
+	completion llmports.CompletionService,
 	caseName string,
 ) *CassetteRecorder {
 	return &CassetteRecorder{
@@ -299,27 +299,27 @@ func (r *CassetteRecorder) Cassette() *Cassette {
 
 func (r *CassetteRecorder) CompleteChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
-	return r.record(req, func() (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
+	return r.record(req, func() (*llmports.ChatCompletionResult, error) {
 		return r.CompletionService.CompleteChat(ctx, req)
 	})
 }
 
 func (r *CassetteRecorder) StreamChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-	sink agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
-	return r.record(req, func() (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	sink llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
+	return r.record(req, func() (*llmports.ChatCompletionResult, error) {
 		return r.CompletionService.StreamChat(ctx, req, sink)
 	})
 }
 
 func (r *CassetteRecorder) record(
-	req *agentports.ChatCompletionRequest,
-	call func() (*agentports.ChatCompletionResult, error),
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	call func() (*llmports.ChatCompletionResult, error),
+) (*llmports.ChatCompletionResult, error) {
 	hash, err := HashRequest(req)
 	if err != nil {
 		return nil, err

@@ -13,9 +13,9 @@ page explains them.
 ## The rule
 
 Every write calls the service its page calls — `manualjournalservice`,
-`journalreversalservice`, `fiscalperiodservice`, `accountingmappingservice`,
-`accountingsyncservice`, `bankreceiptworkitemservice` — and never writes around it. Each
-service exposes the plan its write runs on (`PlanCreateDraft`, `PlanUpdateDraft`,
+`journalreversalservice`, `fiscalperiodservice`, `accountingmappingdecisions`,
+`accountingsyncactions`, `accountingsyncbackfill`, `bankreceiptworkitemservice` — and never
+writes around it. Each service exposes the plan its write runs on (`PlanCreateDraft`, `PlanUpdateDraft`,
 `PlanSubmit`, `PlanCancel` and `PlanPost` on manual journals; `PlanCreate`, `PlanCancel` and
 `PlanPost` on reversals; `PlanTransition` on fiscal periods; `PlanConfirm` and `PlanReject`
 on mappings; `PlanAssign` and `PlanStartReview` on work items). A tool's preview renders that
@@ -108,7 +108,7 @@ it never writes one.
 
 ## Factoring
 
-`factoringservice.LedgerService` books what a factor does with each invoice on a schedule:
+`factoringledgerservice.LedgerService` books what a factor does with each invoice on a schedule:
 `PlanFunding`/`RecordFunding`, `PlanRelease`/`ReleaseReserve`, `PlanChargeback`/
 `RecordChargeback` and `PlanChargebackReversal`/`ReverseChargeback`. Each plan returns the
 journal's lines by account role and account, the period it books in (the first open day when
@@ -131,7 +131,7 @@ behind it (an API key), because the journal and customer ledger rows name who bo
 The factoring clerk holds the balance read, funding and release; chargebacks and their
 reversals are a person's and sit on no template.
 
-`factoringservice.RemittanceService` reads a factor's funding or reserve report (a CSV or
+`factoringremittanceservice.RemittanceService` reads a factor's funding or reserve report (a CSV or
 spreadsheet by its headers, or a PDF through the `RemittanceExtraction` model task), matches
 each line to the factor's schedule items, and books the matched lines through the same
 `LedgerService` in one transaction: funding and rejection lines become one `RecordFunding`
@@ -189,7 +189,7 @@ outrun the preview's time budget, and a statement dated today is digested by day
 | Receivables assistant | in chat, for the person working receivables | `receivable_record_collection_activity`, `receivable_assign_collector`, `receivable_schedule_follow_up`, `receivable_send_payment_reminder`, `receivable_send_statement`, beside the worklist and statement reads |
 | Factoring clerk | unattended, on factoring readiness, schedule, remittance and chargeback-window events | `factoring_get_reserve_balance`, `factoring_record_funding`, `factoring_release_reserve`, `factoring_list_remittances`, `factoring_get_remittance`, `factoring_resolve_remittance_line`, `factoring_rematch_remittance`, `factoring_apply_remittance` |
 
-The agent permission ceiling (`permission/agent.go`) gains lock and close on fiscal periods
+The agent permission ceiling (`agentceiling/agent.go`) gains lock and close on fiscal periods
 for the books keeper; both tools stop at a proposal and run as the approver. Mapping review and
 releasing sync use grants the books keeper already had.
 

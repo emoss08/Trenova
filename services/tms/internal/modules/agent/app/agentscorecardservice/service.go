@@ -15,9 +15,10 @@ package agentscorecardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,16 +33,16 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Scorecards  agentports.AgentScorecardRepository
-	Trust       agentports.AgentToolTrustRepository
+	Scorecards  agentevaluationports.AgentScorecardRepository
+	Trust       agenttoolports.AgentToolTrustRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Permissions permissionports.PermissionEngine
 }
 
 type Service struct {
 	l           *zap.Logger
-	scorecards  agentports.AgentScorecardRepository
-	trust       agentports.AgentToolTrustRepository
+	scorecards  agentevaluationports.AgentScorecardRepository
+	trust       agenttoolports.AgentToolTrustRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	permissions permissionports.PermissionEngine
 	now         func() int64
@@ -58,7 +59,7 @@ func New(p Params) *Service {
 	}
 }
 
-func AsService(s *Service) agentports.AgentScorecardService { return s }
+func AsService(s *Service) agentevaluationports.AgentScorecardService { return s }
 
 // Get counts one agent's record over the window.
 //
@@ -66,12 +67,12 @@ func AsService(s *Service) agentports.AgentScorecardService { return s }
 // it is a summary of rows the same person could already list one by one.
 func (s *Service) Get(
 	ctx context.Context,
-	req agentports.AgentScorecardRequest,
+	req *agentevaluationports.AgentScorecardRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.AgentScorecardResult, error) {
+) (*agentevaluationports.AgentScorecardResult, error) {
 	window := req.Window
 	if !window.IsValid() {
-		window = agent.ScorecardWindow30d
+		window = agentevaluation.ScorecardWindow30d
 	}
 
 	result, err := s.permissions.Check(ctx, &permissionports.PermissionCheckRequest{
@@ -105,7 +106,7 @@ func (s *Service) Get(
 	}
 
 	since := s.now() - int64(window.Days())*secondsPerDay
-	totals, err := s.scorecards.Aggregate(ctx, agentports.ScorecardRequest{
+	totals, err := s.scorecards.Aggregate(ctx, agentevaluationports.ScorecardRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: definition.ID,
 		Since:             since,
@@ -114,7 +115,7 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	ladder, err := s.trust.ListByDefinition(ctx, agentports.ListToolTrustRequest{
+	ladder, err := s.trust.ListByDefinition(ctx, agenttoolports.ListToolTrustRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: definition.ID,
 	})
@@ -122,8 +123,8 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	return &agentports.AgentScorecardResult{
-		Scorecard: agent.NewScorecard(definition.ID.String(), window, since, totals),
+	return &agentevaluationports.AgentScorecardResult{
+		Scorecard: agentevaluation.NewScorecard(definition.ID.String(), window, since, totals),
 		ToolTrust: ladder,
 	}, nil
 }

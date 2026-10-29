@@ -5,11 +5,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,7 +30,7 @@ func previewedCharge() *detention.DetentionOccurrence {
 		BillableAmount:     decimal.NewFromInt(425),
 		Currency:           "USD",
 		NotificationStatus: detention.NotificationStatusPending,
-		PolicySnapshot:     &detention.PolicySnapshot{Currency: "USD"},
+		PolicySnapshot:     &detentionpolicy.PolicySnapshot{Currency: "USD"},
 		LocationName:       "Memphis DC",
 		ShipmentProNumber:  "SHP-1001",
 		CustomerName:       "Acme Foods",
@@ -44,9 +48,12 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 	sibling.BillableAmount = decimal.NewFromInt(100)
 	sibling.Status = detention.OccurrenceStatusApproved
 	after := *before
-	require.NoError(t, after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10))
+	require.NoError(
+		t,
+		after.Waive(detention.WaiverReasonWeather, "Ice storm", pulid.MustNew("usr_"), 10),
+	)
 
-	det := &agenttoolstest.FakeDetention{Change: &detentionservice.OccurrenceChange{
+	det := &agenttoolstest.FakeDetention{Change: &detentionreview.OccurrenceChange{
 		Before:   before,
 		After:    &after,
 		Shipment: []*detention.DetentionOccurrence{before, sibling},
@@ -58,13 +65,13 @@ func TestWaiveDetentionPreview_ShowsTheRevenueGivenUp(t *testing.T) {
 		"note":         "Ice storm",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.Waived, "a preview must not waive")
 	assert.Contains(t, preview.Summary, "425.00 USD")
 	assert.Contains(t, preview.Summary, "at Memphis DC on SHP-1001")
 
-	change := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	change := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceDetention, change.Resource)
 	assert.Equal(t, before.ID, change.EntityID)
 	assert.Equal(t, int64(4), *change.Version)
@@ -95,12 +102,12 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	after.NoticeSentAt = &sentAt
 	versionID := pulid.MustNew("dtv_")
 
-	det := &agenttoolstest.FakeDetention{Notice: &detentionservice.NoticePreview{
+	det := &agenttoolstest.FakeDetention{Notice: &detentionnoticeservice.NoticePreview{
 		Before:     before,
 		After:      &after,
-		Kind:       detention.NoticeKindStarted,
+		Kind:       detentionnotice.NoticeKindStarted,
 		Recipients: []string{"ap@acme.test"},
-		Content: detentionservice.NoticeContent{
+		Content: detentionnoticerender.NoticeContent{
 			Subject:   "Detention charges started",
 			Text:      "Detention began at 09:00.",
 			VersionID: &versionID,
@@ -116,13 +123,13 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	tool := operationstools.NewSendDetentionNoticeTool(det)
 	params := agenttoolstest.ExecuteParams(map[string]any{"occurrenceId": before.ID.String()})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, det.Noticed, "a preview must not send")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	require.NotNil(t, send.Message)
-	assert.Equal(t, agent.MessageChannelEmail, send.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, send.Message.Channel)
 	assert.Equal(t, "Carrier Billing <notices@carrier.test>", send.Message.From)
 	assert.Equal(t, []string{"ap@acme.test"}, send.Message.To)
 	assert.Equal(t, "Detention charges started", send.Message.Subject)
@@ -132,10 +139,10 @@ func TestSendDetentionNoticePreview_ShowsTheNoticeAsSent(t *testing.T) {
 	assert.Equal(t, permission.ResourceCustomer, send.Resource)
 	assert.Equal(t, "Acme Foods", send.Label)
 
-	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, "Sent", agenttoolstest.FindField(t, status, "notificationStatus").After)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningWouldFail, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, preview.Warnings[0].Code)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, *det.PreviewedNotice, *det.Noticed)

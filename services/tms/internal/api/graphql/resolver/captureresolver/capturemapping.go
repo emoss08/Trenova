@@ -5,8 +5,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,7 +33,7 @@ func batchItemsRequested(ctx context.Context) bool {
 func captureBatchConnection(
 	result *pagination.CursorListResult[*capture.CaptureBatch],
 ) (*gqlmodel.CaptureBatchConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *capture.CaptureBatch, cursor string) *gqlmodel.CaptureBatchEdge {
 			return &gqlmodel.CaptureBatchEdge{Node: node, Cursor: cursor}
@@ -75,7 +78,7 @@ func captureBatchSort(sort *gqlmodel.CaptureBatchSort) []domaintypes.SortField {
 // optionalIDRef parses an optional id into the pointer form the capture
 // domain keeps. Absent and blank are both no id.
 func optionalIDRef(value *string) (*pulid.ID, error) {
-	id, err := base.OptionalID(value)
+	id, err := gqlid.OptionalID(value)
 	if err != nil || id.IsNil() {
 		return nil, err
 	}
@@ -83,8 +86,8 @@ func optionalIDRef(value *string) (*pulid.ID, error) {
 	return &id, nil
 }
 
-func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureservice.ProfileSettings {
-	return captureservice.ProfileSettings{
+func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureprofiles.ProfileSettings {
+	return captureprofiles.ProfileSettings{
 		Name:                input.Name,
 		Description:         stringutils.FromPtr(input.Description),
 		Status:              input.Status,
@@ -103,18 +106,18 @@ func captureProfileSettings(input *gqlmodel.CaptureProfileInput) captureservice.
 
 func captureItemLayouts(
 	input *gqlmodel.EditCaptureItemsInput,
-) ([]captureservice.ItemLayout, error) {
-	layouts := make([]captureservice.ItemLayout, 0, len(input.Items))
+) ([]capturefiling.ItemLayout, error) {
+	layouts := make([]capturefiling.ItemLayout, 0, len(input.Items))
 	for _, item := range input.Items {
 		if item == nil {
 			return nil, errortypes.NewValidationError("items", errortypes.ErrInvalid,
 				"Every document needs its pages")
 		}
-		pageIDs, err := base.ParseIDs(item.PageIds)
+		pageIDs, err := gqlid.ParseIDs(item.PageIds)
 		if err != nil {
 			return nil, err
 		}
-		layouts = append(layouts, captureservice.ItemLayout{PageIDs: pageIDs})
+		layouts = append(layouts, capturefiling.ItemLayout{PageIDs: pageIDs})
 	}
 
 	return layouts, nil
@@ -142,13 +145,13 @@ func capturePageRotations(input []*gqlmodel.CapturePageRotationInput) (map[pulid
 
 func captureCoverSheetSpecs(
 	input []*gqlmodel.CaptureCoverSheetInput,
-) ([]captureservice.CoverSheetSpec, error) {
-	specs := make([]captureservice.CoverSheetSpec, 0, len(input))
+) ([]capturerequests.CoverSheetSpec, error) {
+	specs := make([]capturerequests.CoverSheetSpec, 0, len(input))
 	for _, sheet := range input {
 		if sheet == nil {
 			continue
 		}
-		spec := captureservice.CoverSheetSpec{TargetType: stringutils.FromPtr(sheet.TargetType)}
+		spec := capturerequests.CoverSheetSpec{TargetType: stringutils.FromPtr(sheet.TargetType)}
 
 		var err error
 		if spec.TargetID, err = optionalIDRef(sheet.TargetID); err != nil {
@@ -163,14 +166,14 @@ func captureCoverSheetSpecs(
 	return specs, nil
 }
 
-func issuedCoverSheet(issued *captureservice.IssuedCoverSheet) *gqlmodel.CaptureCoverSheet {
+func issuedCoverSheet(issued *capturerequests.IssuedCoverSheet) *gqlmodel.CaptureCoverSheet {
 	sheet := issued.Sheet
 
 	return &gqlmodel.CaptureCoverSheet{
 		ID:             sheet.ID.String(),
 		TargetType:     sheet.TargetType,
-		TargetID:       base.IDPtrFromPtr(sheet.TargetID),
-		DocumentTypeID: base.IDPtrFromPtr(sheet.DocumentTypeID),
+		TargetID:       gqlid.IDPtrFromPtr(sheet.TargetID),
+		DocumentTypeID: gqlid.IDPtrFromPtr(sheet.DocumentTypeID),
 		Payload:        issued.Payload,
 		QRCode:         issued.QRCode,
 		ExpiresAt:      int(sheet.ExpiresAt),
@@ -184,8 +187,8 @@ func captureFiling(
 	itemID, targetType, targetID string,
 	documentTypeID *string,
 	version int,
-) (captureservice.FileItemInput, error) {
-	var in captureservice.FileItemInput
+) (capturefiling.FileItemInput, error) {
+	var in capturefiling.FileItemInput
 
 	var err error
 	if in.ItemID, err = pulid.MustParse(itemID); err != nil {

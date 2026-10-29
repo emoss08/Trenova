@@ -7,13 +7,16 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,31 +25,37 @@ import (
 	"go.uber.org/zap"
 )
 
-const studioTask = aiprovider.TaskAssistantChat
+const studioTask = aitask.TaskAssistantChat
 
 var errNoProvider = errors.New("no completion service is wired")
 
-type formulaEngine interface {
+type formulaTemplates interface {
 	GetByID(
 		ctx context.Context,
 		req formulatemplateports.GetFormulaTemplateByIDRequest,
 	) (*formulatemplate.FormulaTemplate, error)
+}
+
+type formulaStudio interface {
 	Preview(
 		ctx context.Context,
-		req *formulatemplateservice.PreviewRequest,
+		req *formulatemplatestudioservice.PreviewRequest,
 	) (*formulatemplateports.PreviewResult, error)
 	TestSource(
 		ctx context.Context,
-		req *formulatemplateservice.TestSourceRequest,
-	) (*formulatemplateservice.TestSourceResult, error)
-	ReviewDiff(
-		ctx context.Context,
-		req *formulatemplateservice.ReviewDiffRequest,
-	) (*formulatemplateservice.ReviewDiffResponse, error)
+		req *formulatemplatestudioservice.TestSourceRequest,
+	) (*formulatemplatestudioservice.TestSourceResult, error)
 	Backtest(
 		ctx context.Context,
-		req *formulatemplateservice.BacktestRequest,
-	) (*formulatemplateservice.BacktestResponse, error)
+		req *formulatemplatestudioservice.BacktestRequest,
+	) (*formulatemplatestudioservice.BacktestResponse, error)
+}
+
+type formulaReviews interface {
+	ReviewDiff(
+		ctx context.Context,
+		req *formulatemplatereviewservice.ReviewDiffRequest,
+	) (*formulatemplatereviewservice.ReviewDiffResponse, error)
 }
 
 type agentAccess interface {
@@ -62,25 +71,31 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Templates    *formulatemplateservice.Service
+	Studio       *formulatemplatestudioservice.Service
+	Reviews      *formulatemplatereviewservice.Service
 	Permissions  permissionports.PermissionEngine
 	SystemAgents agentdefinitionports.SystemAgentProvisioner `optional:"true"`
-	Completion   agentports.StructuredCompleter              `optional:"true"`
+	Completion   llmports.StructuredCompleter                `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	engine       formulaEngine
+	templates    formulaTemplates
+	studio       formulaStudio
+	reviews      formulaReviews
 	access       agentAccess
 	systemAgents agentdefinitionports.SystemAgentProvisioner
-	completion   agentports.StructuredCompleter
+	completion   llmports.StructuredCompleter
 }
 
-var _ agentports.FormulaStudioAssist = (*Service)(nil)
+var _ formulastudioports.FormulaStudioAssist = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
 		l:            p.Logger.Named("service.formulastudio"),
-		engine:       p.Templates,
+		templates:    p.Templates,
+		studio:       p.Studio,
+		reviews:      p.Reviews,
 		access:       p.Permissions,
 		systemAgents: p.SystemAgents,
 		completion:   p.Completion,
@@ -147,7 +162,7 @@ type completion struct {
 	definition *agentdefinition.Definition
 	feature    aiusage.Feature
 	system     string
-	sections   []agentports.ContextSection
+	sections   []llmports.ContextSection
 	schema     map[string]any
 	schemaName string
 	maxTokens  int
@@ -159,11 +174,11 @@ func (s *Service) complete(ctx context.Context, call *completion, out any) error
 	}
 
 	version := call.definition.Version
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:          call.tenant,
 		Task:                studioTask,
 		System:              call.system,
-		Context:             agentports.DelimitedContext{Sections: call.sections},
+		Context:             llmports.DelimitedContext{Sections: call.sections},
 		OutputSchema:        call.schema,
 		SchemaName:          call.schemaName,
 		MaxTokens:           call.maxTokens,
@@ -185,14 +200,14 @@ func (s *Service) complete(ctx context.Context, call *completion, out any) error
 			zap.String("model", result.ModelIdentifier),
 			zap.Error(err),
 		)
-		return fmt.Errorf("%w: %w", agentports.ErrModelSchemaValidation, err)
+		return fmt.Errorf("%w: %w", llmports.ErrModelSchemaValidation, err)
 	}
 
 	return nil
 }
 
 func modelFailure(definition *agentdefinition.Definition, err error) error {
-	if errors.Is(err, errNoProvider) || errors.Is(err, agentports.ErrNoProviderConfigured) {
+	if errors.Is(err, errNoProvider) || errors.Is(err, llmports.ErrNoProviderConfigured) {
 		return errortypes.NewBusinessError(
 			"No AI provider is configured for the formula assistant",
 		).WithInternal(err)
@@ -204,5 +219,5 @@ func modelFailure(definition *agentdefinition.Definition, err error) error {
 }
 
 func noProvider(err error) bool {
-	return errors.Is(err, errNoProvider) || errors.Is(err, agentports.ErrNoProviderConfigured)
+	return errors.Is(err, errNoProvider) || errors.Is(err, llmports.ErrNoProviderConfigured)
 }

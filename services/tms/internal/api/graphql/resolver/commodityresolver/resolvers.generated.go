@@ -3,12 +3,12 @@
 package commodityresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CommodityService *commodityservice.Service
 }
 

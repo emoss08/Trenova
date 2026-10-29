@@ -8,7 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,9 +30,9 @@ import (
 // that is not filed has no proposal for its baseline to belong to.
 func (s *Service) Baseline(
 	ctx context.Context,
-	req *agentports.ProposalBaselineRequest,
-) *agentports.ProposalBaselineResult {
-	result := &agentports.ProposalBaselineResult{}
+	req *agentruntimeports.ProposalBaselineRequest,
+) *agentruntimeports.ProposalBaselineResult {
+	result := &agentruntimeports.ProposalBaselineResult{}
 	if req == nil || req.Tool == nil {
 		return result
 	}
@@ -59,7 +63,7 @@ func (s *Service) Baseline(
 	}
 
 	if found.version != nil {
-		result.Target = &agentports.ProposalTarget{
+		result.Target = &agentruntimeports.ProposalTarget{
 			Resource: target.Resource,
 			ID:       target.ID,
 			Version:  *found.version,
@@ -74,11 +78,11 @@ func (s *Service) Baseline(
 		result.Preview = found.preview
 	}
 
-	coverage := agent.PreviewCoverageUnavailable
+	coverage := agentpreview.PreviewCoverageUnavailable
 	if result.Preview != nil {
-		coverage = agent.PreviewCoverageFull
+		coverage = agentpreview.PreviewCoverageFull
 		if result.Preview.Partial {
-			coverage = agent.PreviewCoveragePartial
+			coverage = agentpreview.PreviewCoveragePartial
 		}
 	}
 	aitrace.FinishPreview(span, &aitrace.PreviewResult{
@@ -93,7 +97,7 @@ func (s *Service) Baseline(
 	return result
 }
 
-func previewRecords(preview *agent.ToolPreview) int {
+func previewRecords(preview *agentpreview.ToolPreview) int {
 	if preview == nil {
 		return 0
 	}
@@ -103,14 +107,14 @@ func previewRecords(preview *agent.ToolPreview) int {
 
 func (s *Service) keepBaseline(
 	ctx context.Context,
-	req *agentports.ProposalBaselineRequest,
-	result *agentports.ProposalBaselineResult,
+	req *agentruntimeports.ProposalBaselineRequest,
+	result *agentruntimeports.ProposalBaselineResult,
 ) {
 	if s.baselines == nil || result.Preview == nil || req.ProposalID.IsNil() {
 		return
 	}
 
-	baseline := &agent.ProposalBaseline{
+	baseline := &agentpreview.ProposalBaseline{
 		ProposalID:     req.ProposalID,
 		OrganizationID: req.Params.OrganizationID,
 		BusinessUnitID: req.Params.BusinessUnitID,
@@ -166,17 +170,20 @@ func (s *Service) markChangedSinceProposed(
 	for _, d := range drafts {
 		ids = append(ids, d.proposal.ID)
 	}
-	baselines, err := s.baselines.ListByProposals(ctx, agentports.ListProposalBaselinesRequest{
-		ProposalIDs: ids,
-		TenantInfo:  tenant,
-	})
+	baselines, err := s.baselines.ListByProposals(
+		ctx,
+		agentproposalports.ListProposalBaselinesRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
+	)
 	if err != nil {
 		s.l.Warn("could not read the baselines of proposals being previewed", zap.Error(err))
 
 		return
 	}
 
-	byProposal := make(map[pulid.ID]*agent.ToolPreview, len(baselines))
+	byProposal := make(map[pulid.ID]*agentpreview.ToolPreview, len(baselines))
 	for _, baseline := range baselines {
 		if baseline != nil && baseline.Preview != nil {
 			byProposal[baseline.ProposalID] = baseline.Preview
@@ -190,11 +197,11 @@ func (s *Service) markChangedSinceProposed(
 	}
 }
 
-func markAgainst(preview *agent.ProposalPreview, baseline *agent.ToolPreview) {
+func markAgainst(preview *agentpreview.ProposalPreview, baseline *agentpreview.ToolPreview) {
 	proposed := make(map[valueKey]any, 16)
 	for i := range baseline.Changes {
 		change := &baseline.Changes[i]
-		if change.EntityID.IsNil() || change.Operation == agent.PreviewOperationCreate {
+		if change.EntityID.IsNil() || change.Operation == agentpreview.PreviewOperationCreate {
 			continue
 		}
 		for j := range change.Fields {
@@ -205,7 +212,7 @@ func markAgainst(preview *agent.ProposalPreview, baseline *agent.ToolPreview) {
 
 	for i := range preview.Changes {
 		change := &preview.Changes[i]
-		if change.EntityID.IsNil() || change.Operation == agent.PreviewOperationCreate {
+		if change.EntityID.IsNil() || change.Operation == agentpreview.PreviewOperationCreate {
 			continue
 		}
 		for j := range change.Fields {
@@ -253,11 +260,11 @@ func (s *Service) recordedFor(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
 	a readerAccess,
-) (*agent.ProposalPreview, error) {
+) (*agentpreview.ProposalPreview, error) {
 	if s.decisions != nil {
 		decisions, err := s.decisions.ListByProposals(
 			ctx,
-			agentports.ListAgentDecisionsByProposalsRequest{
+			agentdecisionports.ListAgentDecisionsByProposalsRequest{
 				ProposalIDs: []pulid.ID{proposal.ID},
 				TenantInfo:  tenantOf(proposal),
 			},
@@ -282,19 +289,19 @@ func (s *Service) unrecorded(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
 	a readerAccess,
-) *agent.ProposalPreview {
-	preview := &agent.ProposalPreview{
-		Schema:     agent.PreviewSchemaVersion,
+) *agentpreview.ProposalPreview {
+	preview := &agentpreview.ProposalPreview{
+		Schema:     agentpreview.PreviewSchemaVersion,
 		ProposalID: proposal.ID,
 		Tool:       proposal.ToolName,
-		Coverage:   agent.PreviewCoverageUnavailable,
+		Coverage:   agentpreview.PreviewCoverageUnavailable,
 		Recorded:   true,
 		ComputedAt: s.now(),
 		Summary: "No preview was recorded when this was decided; " +
 			"the parameters it was proposed with are shown.",
 	}
 
-	if tool, ok := s.tools.Get(proposal.ToolName); ok && !agentports.IsSelfScoped(tool) {
+	if tool, ok := s.tools.Get(proposal.ToolName); ok && !agenttoolports.IsSelfScoped(tool) {
 		params := toolpreview.Parameters(
 			proposal.ToolName,
 			tool.Policy().Resource,

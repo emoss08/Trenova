@@ -753,13 +753,15 @@ describe("DataTable column pinning", () => {
     expect(cell?.className).toContain("sticky");
   });
 
-  it("gives a pinned cell the row's field fill when the row is hovered, under the cursor or open", () => {
+  it("gives a pinned cell the row's own fill when the row is hovered, under the cursor, open, formatted or selected", () => {
     renderDataTable({ initialColumnPinning: { left: ["name"], right: [] } });
 
     const className = screen.getByText("Alice").closest("td")?.className ?? "";
-    expect(className).toContain("group-hover/row:bg-field");
-    expect(className).toContain("group-data-cursor/row:bg-field");
-    expect(className).toContain("group-data-expanded/row:bg-field");
+    expect(className).toContain("group-hover/row:bg-inherit");
+    expect(className).toContain("group-data-cursor/row:bg-inherit");
+    expect(className).toContain("group-data-expanded/row:bg-inherit");
+    expect(className).toContain("group-data-formatted/row:bg-inherit");
+    expect(className).toContain("group-data-[state=selected]/row:bg-inherit");
     expect(className).not.toContain("bg-muted");
   });
 

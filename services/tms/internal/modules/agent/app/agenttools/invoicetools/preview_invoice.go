@@ -6,12 +6,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -32,9 +34,9 @@ type journalView struct {
 
 func (t *PostInvoiceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, err := invoiceRequest(t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, err := invoiceRequest(t, params)
 	if err != nil {
 		return nil, err
 	}
@@ -45,15 +47,15 @@ func (t *PostInvoiceTool) Preview(
 	}
 
 	before := post.Before
-	label := common.InvoiceLabel(before)
+	label := invoicepreview.InvoiceLabel(before)
 	total := money.FormatMinor(before.TotalAmountMinor, before.CurrencyCode)
 	if post.Refused() {
-		return common.WarnWouldFail(toolpreview.Build(fmt.Sprintf(
+		return changepreview.WarnWouldFail(toolpreview.Build(fmt.Sprintf(
 			"Would post %s to %s for %s.", label, before.BillToName, total,
 		)), post.Refusal), nil
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(post.Legs)+3)
+	changes := make([]*agentpreview.RecordChange, 0, len(post.Legs)+3)
 	if !post.AlreadyPosted {
 		invoiceChange, changeErr := postedInvoiceChange(post)
 		if changeErr != nil {
@@ -66,8 +68,8 @@ func (t *PostInvoiceTool) Preview(
 			Resource: permission.ResourceShipment,
 			ID:       leg.Before.ID,
 			Label:    leg.Before.ProNumber,
-			Version:  common.PinnedVersion(leg.Before.Version),
-		}, leg.Before, leg.After, toolpreview.Only(common.FieldStatus, "billedAt"),
+			Version:  changepreview.PinnedVersion(leg.Before.Version),
+		}, leg.Before, leg.After, toolpreview.Only(changepreview.FieldStatus, "billedAt"),
 			toolpreview.Volatile("billedAt"))
 		if changeErr != nil {
 			return nil, changeErr
@@ -76,10 +78,10 @@ func (t *PostInvoiceTool) Preview(
 	}
 	if post.QueueAfter != nil {
 		queueChange, changeErr := toolpreview.Changed(
-			common.QueueRecord(post.QueueBefore),
+			billingqueuepreview.QueueRecord(post.QueueBefore),
 			post.QueueBefore,
 			post.QueueAfter,
-			toolpreview.Only(common.FieldStatus),
+			toolpreview.Only(changepreview.FieldStatus),
 		)
 		if changeErr != nil {
 			return nil, changeErr
@@ -90,7 +92,7 @@ func (t *PostInvoiceTool) Preview(
 		journalChange, changeErr := journalEntryChange(
 			post.Journal,
 			post.Before.CurrencyCode,
-			"Journal entry for "+common.InvoiceLabel(post.Before),
+			"Journal entry for "+invoicepreview.InvoiceLabel(post.Before),
 		)
 		if changeErr != nil {
 			return nil, changeErr
@@ -101,13 +103,15 @@ func (t *PostInvoiceTool) Preview(
 	return toolpreview.Build(postSummary(post, label, total), changes...), nil
 }
 
-func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange, error) {
+func postedInvoiceChange(
+	post *invoicepostingservice.PostPreview,
+) (*agentpreview.RecordChange, error) {
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       post.Before.ID,
-		Label:    common.InvoiceLabel(post.Before),
-		Version:  common.PinnedVersion(post.Before.Version),
-	}, post.Before, post.After, toolpreview.Only(common.FieldStatus, "postedAt"),
+		Label:    invoicepreview.InvoiceLabel(post.Before),
+		Version:  changepreview.PinnedVersion(post.Before.Version),
+	}, post.Before, post.After, toolpreview.Only(changepreview.FieldStatus, "postedAt"),
 		toolpreview.Volatile("postedAt"))
 	if err != nil {
 		return nil, err
@@ -115,13 +119,13 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		post.Before.CurrencyCode,
-		agent.MoneyLine{
-			Label: common.MoneyLineFreight,
-			After: common.KnownAmount(post.Before.SubtotalAmount),
+		agentpreview.MoneyLine{
+			Label: billingqueuepreview.MoneyLineFreight,
+			After: changepreview.KnownAmount(post.Before.SubtotalAmount),
 		},
-		agent.MoneyLine{
-			Label: common.MoneyLineAccessorials,
-			After: common.KnownAmount(post.Before.OtherAmount),
+		agentpreview.MoneyLine{
+			Label: billingqueuepreview.MoneyLineAccessorials,
+			After: changepreview.KnownAmount(post.Before.OtherAmount),
 		},
 	), toolpreview.SensitiveAs("totalAmount", "subtotalAmount", "otherAmount"))
 
@@ -132,14 +136,14 @@ func journalEntryChange(
 	journal *kernelports.JournalPreview,
 	currency string,
 	label string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	view := &journalView{
 		AccountingDate:   journal.AccountingDate,
 		FiscalPeriodID:   journal.FiscalPeriodID,
 		EntryStatus:      journal.EntryStatus,
 		RequiresApproval: journal.RequiresApproval,
 	}
-	lines := make([]agent.MoneyLine, 0, len(journal.Lines))
+	lines := make([]agentpreview.MoneyLine, 0, len(journal.Lines))
 	for _, line := range journal.Lines {
 		view.Description = line.Description
 		switch {
@@ -147,9 +151,9 @@ func journalEntryChange(
 			if view.DebitAccountID.IsNil() {
 				view.DebitAccountID = line.GLAccountID
 			}
-			lines = append(lines, agent.MoneyLine{
+			lines = append(lines, agentpreview.MoneyLine{
 				Label: "Debit",
-				After: common.KnownAmount(money.DecimalFromMinor(line.DebitMinor)),
+				After: changepreview.KnownAmount(money.DecimalFromMinor(line.DebitMinor)),
 			})
 		case line.CreditMinor > 0:
 			if view.CreditAccountID.IsNil() {
@@ -182,7 +186,7 @@ func journalEntryChange(
 	return change, nil
 }
 
-func postSummary(post *invoiceservice.PostPreview, label, total string) string {
+func postSummary(post *invoicepostingservice.PostPreview, label, total string) string {
 	if post.AlreadyPosted {
 		return fmt.Sprintf(
 			"%s is already posted; posting it again only settles its billing queue item.",
@@ -194,7 +198,7 @@ func postSummary(post *invoiceservice.PostPreview, label, total string) string {
 		"Would post %s to %s for %s", label, post.Before.BillToName, total,
 	)}
 	if len(post.Legs) > 0 {
-		parts = append(parts, common.CountOf(len(post.Legs), "shipment")+" invoiced")
+		parts = append(parts, changepreview.CountOf(len(post.Legs), "shipment")+" invoiced")
 	}
 	if post.QueueAfter != nil {
 		parts = append(parts, "billing queue item "+post.QueueBefore.Number+" posted")
@@ -208,7 +212,7 @@ func postSummary(post *invoiceservice.PostPreview, label, total string) string {
 	sentences := []string{strings.Join(parts, "; ") + "."}
 	sentences = append(sentences, syncSentence(post.AccountingSync), ediSentence(post.EDI))
 
-	return strings.Join(common.SlicesNonEmpty(sentences), " ")
+	return strings.Join(changepreview.SlicesNonEmpty(sentences), " ")
 }
 
 func syncSentence(destinations []accountingsyncports.AccountingSyncDestination) string {
@@ -246,9 +250,9 @@ func ediSentence(plan *invoiceports.InvoiceEDISendPlan) string {
 
 func (t *SendInvoiceTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	send, err := t.plan(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	send, err := t.plan(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -269,8 +273,8 @@ func (t *SendInvoiceTool) Preview(
 	message := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceInvoice,
 		ID:       plan.InvoiceID,
-	}, &agent.MessagePreview{
-		Channel:     agent.MessageChannelEmail,
+	}, &agentpreview.MessagePreview{
+		Channel:     agentpreview.MessageChannelEmail,
 		From:        plan.FromEmail,
 		To:          plan.Recipients.To,
 		Cc:          plan.Recipients.CC,
@@ -283,7 +287,7 @@ func (t *SendInvoiceTool) Preview(
 	summary := fmt.Sprintf(
 		"Would email the invoice to %s with %s.",
 		strings.Join(plan.Recipients.To, ", "),
-		common.CountOf(len(attachments), "attachment"),
+		changepreview.CountOf(len(attachments), "attachment"),
 	)
 	if len(plan.Parts) > 1 {
 		summary += fmt.Sprintf(" It goes as %d emails, since the attachments are over the "+
@@ -294,5 +298,5 @@ func (t *SendInvoiceTool) Preview(
 		summary += " " + strings.Join(plan.Warnings, " ")
 	}
 
-	return common.WarnWouldFail(toolpreview.Build(summary, message), send.refusal), nil
+	return changepreview.WarnWouldFail(toolpreview.Build(summary, message), send.refusal), nil
 }

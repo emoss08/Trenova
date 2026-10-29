@@ -3,8 +3,9 @@ package billingqueueservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingpayershare"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +15,7 @@ import (
 // attachPayerShare fills the item's view of its own bill. It needs the shipment
 // with charges and allocations already loaded; names for payers the shipment does
 // not already carry are fetched in one lookup.
-func (s *service) attachPayerShare(
+func (s *Service) attachPayerShare(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -28,7 +29,7 @@ func (s *service) attachPayerShare(
 	}
 
 	names := s.payerNames(ctx, item, tenantInfo)
-	share, err := billingqueue.BuildPayerShare(ctx, item.Shipment, payerID, names)
+	share, err := billingpayershare.BuildPayerShare(ctx, item.Shipment, payerID, names)
 	if err != nil {
 		return err
 	}
@@ -37,7 +38,7 @@ func (s *service) attachPayerShare(
 	return nil
 }
 
-func (s *service) payerNames(
+func (s *Service) payerNames(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
@@ -87,7 +88,7 @@ func (s *service) payerNames(
 			)
 			continue
 		}
-		if allocation.ChargeKind != shipment.ChargeAllocationKindOrderCharge {
+		if allocation.ChargeKind != shipmentvocab.ChargeAllocationKindOrderCharge {
 			want(allocation.BillToCustomerID)
 		}
 	}

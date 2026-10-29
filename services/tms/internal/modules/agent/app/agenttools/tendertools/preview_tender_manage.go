@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
@@ -29,9 +30,9 @@ var tenderOfferLabels = map[string]string{
 
 func (t *CancelTenderTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	request, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -39,19 +40,19 @@ func (t *CancelTenderTool) Preview(
 	summary := "Would withdraw this tender. Reason: " + request.Reason
 	plan, err := t.tenders.PreviewCancel(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
 	tenderChange, err := tenderStateChange(plan.Before, plan.After,
-		common.FieldStatus, "cancellationReason", "canceledAt")
+		changepreview.FieldStatus, "cancellationReason", "canceledAt")
 	if err != nil {
 		return nil, err
 	}
-	tenderChange.Operation = agent.PreviewOperationArchive
+	tenderChange.Operation = agentpreview.PreviewOperationArchive
 
 	offers, err := tenderOfferChanges(plan.Before, plan.After)
 	if err != nil {
@@ -76,8 +77,8 @@ func (t *CancelTenderTool) Preview(
 		"Would withdraw the %s tender: %s carriers hold would be withdrawn and their answer "+
 			"links stop working, and %s not yet asked would be skipped. Reason: %s",
 		plan.Before.Mode,
-		common.CountOf(withdrawn, "offer"),
-		common.CountOf(skipped, "carrier"),
+		changepreview.CountOf(withdrawn, "offer"),
+		changepreview.CountOf(skipped, "carrier"),
 		request.Reason,
 	)
 	if plan.Before.Status == tender.StatusNeedsReview {
@@ -86,39 +87,39 @@ func (t *CancelTenderTool) Preview(
 
 	return toolpreview.Build(
 		summary,
-		append([]*agent.RecordChange{tenderChange}, offers...)...), nil
+		append([]*agentpreview.RecordChange{tenderChange}, offers...)...), nil
 }
 
 func (t *RecordTenderResponseTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if bounce, err := t.bounceRequest(&params); bounce != nil || err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if bounce, err := t.bounceRequest(params); bounce != nil || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		return t.previewBounce(ctx, bounce)
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := fmt.Sprintf("Would record the carrier's %s.", responseWord(request.Action))
-	plan, err := t.tenders.PreviewResponse(ctx, request)
+	plan, err := t.responses.PreviewResponse(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.Tender.Offers)+2)
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Tender.Offers)+2)
 	if plan.Tender.Status != plan.TenderAfter.Status {
 		tenderChange, tErr := tenderStateChange(plan.Tender, plan.TenderAfter,
-			common.FieldStatus, "acceptedOfferId", "acceptedAt", "exhaustedAt")
+			changepreview.FieldStatus, "acceptedOfferId", "acceptedAt", "exhaustedAt")
 		if tErr != nil {
 			return nil, tErr
 		}
@@ -191,21 +192,21 @@ func (t *RecordTenderResponseTool) Preview(
 // tender live again for the carriers it had not reached.
 func (t *RecordTenderResponseTool) previewBounce(
 	ctx context.Context,
-	request *tenderservice.BounceTenderRequest,
-) (*agent.ToolPreview, error) {
+	request *tenderbounce.BounceTenderRequest,
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would record that the carrier backed out of its acceptance. Reason: " +
 		request.Reason
-	plan, err := t.tenders.PreviewBounce(ctx, request)
+	plan, err := t.bounces.PreviewBounce(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
 	tenderChange, err := tenderStateChange(plan.Before, plan.After,
-		common.FieldStatus, "acceptedOfferId", "bounceCount")
+		changepreview.FieldStatus, "acceptedOfferId", "bounceCount")
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +214,7 @@ func (t *RecordTenderResponseTool) previewBounce(
 	if err != nil {
 		return nil, err
 	}
-	changes := append([]*agent.RecordChange{tenderChange}, offers...)
+	changes := append([]*agentpreview.RecordChange{tenderChange}, offers...)
 
 	carrier := shipmenttools.CarrierNameOfOffer(plan.Revoked)
 	summary = fmt.Sprintf("Would record that %s backed out of the tender it accepted.", carrier)
@@ -227,14 +228,14 @@ func (t *RecordTenderResponseTool) previewBounce(
 	case plan.Before.Mode.IsSequential():
 		changes = append(changes, tenderOfferSendChange(plan.Reoffers[0]))
 		summary += fmt.Sprintf(" The tender goes on to the %s it had not reached, starting "+
-			"with %s.", common.CountOf(len(plan.Reoffers), "carrier"),
+			"with %s.", changepreview.CountOf(len(plan.Reoffers), "carrier"),
 			shipmenttools.CarrierNameOfOffer(plan.Reoffers[0]))
 	default:
 		for _, offer := range plan.Reoffers {
 			changes = append(changes, tenderOfferSendChange(offer))
 		}
 		summary += fmt.Sprintf(" The load is offered again to the %s whose offers the "+
-			"acceptance cut short.", common.CountOf(len(plan.Reoffers), "carrier"))
+			"acceptance cut short.", changepreview.CountOf(len(plan.Reoffers), "carrier"))
 	}
 	summary += " Reason: " + request.Reason
 
@@ -244,9 +245,9 @@ func (t *RecordTenderResponseTool) previewBounce(
 	return preview, nil
 }
 
-func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
+func rateWords(method shipmentvocab.CarrierRateMethod, rate decimal.Decimal) string {
 	return money.FormatMinor(money.MinorUnits(rate), money.DefaultCurrencyCode) + " " +
-		common.RateMethodWords(method)
+		carrierpreview.RateMethodWords(method)
 }
 
 // tenderStateChange is the tender before and after, limited to the fields
@@ -254,12 +255,12 @@ func rateWords(method shipment.CarrierRateMethod, rate decimal.Decimal) string {
 func tenderStateChange(
 	before, after *tender.Tender,
 	fields ...string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	return toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceTender,
 		ID:       before.ID,
 		Label:    string(before.Mode) + " tender",
-		Version:  common.PreviewVersion(before.Version),
+		Version:  changepreview.PreviewVersion(before.Version),
 	}, before, after,
 		toolpreview.Only(fields...),
 		toolpreview.Volatile("canceledAt", "acceptedAt", "exhaustedAt"),
@@ -271,7 +272,7 @@ func tenderStateChange(
 
 // tenderOfferChanges is every offer the write moves, in rank order, each as
 // its own record; an offer left where it was is left out.
-func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, error) {
+func tenderOfferChanges(before, after *tender.Tender) ([]*agentpreview.RecordChange, error) {
 	previous := make(map[pulid.ID]*tender.TenderOffer, len(before.Offers))
 	for _, offer := range before.Offers {
 		if offer != nil {
@@ -279,7 +280,7 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 		}
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(after.Offers))
+	changes := make([]*agentpreview.RecordChange, 0, len(after.Offers))
 	for _, offer := range after.Offers {
 		prior, ok := previous[offer.ID]
 		if !ok || prior.Status == offer.Status {
@@ -294,12 +295,12 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 					offer.Rank,
 					shipmenttools.CarrierNameOfOffer(prior),
 				),
-				Version: common.PreviewVersion(prior.Version),
+				Version: changepreview.PreviewVersion(prior.Version),
 			},
 			prior,
 			offer,
 			toolpreview.Only(
-				common.FieldStatus,
+				changepreview.FieldStatus,
 				"responseSource",
 				fieldDeclineReason,
 				fieldCounterRate,
@@ -321,16 +322,16 @@ func tenderOfferChanges(before, after *tender.Tender) ([]*agent.RecordChange, er
 
 // tenderOfferSendChange is the offer a sequential tender sends next: by
 // email to the address it was addressed to, or over the carrier's EDI link.
-func tenderOfferSendChange(offer *tender.TenderOffer) *agent.RecordChange {
-	message := &agent.MessagePreview{
-		Channel: agent.MessageChannelEmail,
+func tenderOfferSendChange(offer *tender.TenderOffer) *agentpreview.RecordChange {
+	message := &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEmail,
 		To:      []string{offer.RecipientEmail},
 		Subject: "Load tender offer",
 		Body: money.FormatMinor(money.MinorUnits(offer.Rate), money.DefaultCurrencyCode) +
-			" " + common.RateMethodWords(offer.RateMethod) + " offered.",
+			" " + carrierpreview.RateMethodWords(offer.RateMethod) + " offered.",
 	}
 	if offer.Channel == tender.ChannelEDI {
-		message.Channel = agent.MessageChannelEDI
+		message.Channel = agentpreview.MessageChannelEDI
 		message.To = []string{shipmenttools.CarrierNameOfOffer(offer) + " (EDI 204)"}
 	}
 
@@ -344,8 +345,12 @@ func tenderOfferSendChange(offer *tender.TenderOffer) *agent.RecordChange {
 // attachOfferPay puts a flat offer's rate on the answered offer's change as
 // the pay the acceptance commits. A per-mile rate is not a total, so it is
 // named in the summary instead.
-func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, carrier string) {
-	if offer.RateMethod == shipment.CarrierRateMethodPerMile {
+func attachOfferPay(
+	changes []*agentpreview.RecordChange,
+	offer *tender.TenderOffer,
+	carrier string,
+) {
+	if offer.RateMethod == shipmentvocab.CarrierRateMethodPerMile {
 		return
 	}
 	for _, change := range changes {
@@ -354,9 +359,9 @@ func attachOfferPay(changes []*agent.RecordChange, offer *tender.TenderOffer, ca
 		}
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 			money.DefaultCurrencyCode,
-			agent.MoneyLine{
+			agentpreview.MoneyLine{
 				Label: "Carrier pay to " + carrier,
-				After: common.KnownAmount(offer.AgreedRate()),
+				After: changepreview.KnownAmount(offer.AgreedRate()),
 			},
 		), toolpreview.SensitiveAs("rate"))
 

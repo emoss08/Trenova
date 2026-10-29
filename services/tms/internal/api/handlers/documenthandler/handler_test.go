@@ -15,14 +15,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -32,6 +30,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -214,8 +215,8 @@ func setupHandler(
 	t.Helper()
 
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Storage: config.StorageConfig{
+		App: appconfig.Config{Debug: true},
+		Storage: storageconfig.Config{
 			MaxFileSize: 50 * 1024 * 1024,
 			AllowedMIMETypes: []string{
 				"application/pdf",
@@ -245,7 +246,9 @@ func setupHandlerWithConfig(
 
 	logger := zap.NewNop()
 
-	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
+	validator := documentservice.NewValidator(
+		documentservice.ValidatorParams{StorageConfig: &cfg.Storage},
+	)
 	thumbnailGen := thumbnailservice.NewGenerator(imagingfake.New())
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
@@ -258,14 +261,14 @@ func setupHandlerWithConfig(
 		storageClient,
 		validator,
 		&mocks.NoopAuditService{},
-		cfg.GetStorageConfig(),
+		&cfg.Storage,
 		thumbnailGen,
 		nil,
 	)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
@@ -274,7 +277,12 @@ func setupHandlerWithConfig(
 	})
 
 	return &handlerDeps{
-		handler:     documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg),
+		handler: documenthandler.NewTestHandlerWithConfig(
+			service,
+			errorHandler,
+			pm,
+			&cfg.Storage,
+		),
 		cacheRepo:   cacheRepo,
 		sessionRepo: sessionRepo,
 	}
@@ -1192,8 +1200,8 @@ func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Storage: config.StorageConfig{
+		App: appconfig.Config{Debug: true},
+		Storage: storageconfig.Config{
 			MaxFileSize:        8,
 			MaxFilesPerUpload:  1,
 			AllowedMIMETypes:   []string{"application/pdf"},
@@ -1419,8 +1427,8 @@ func TestDocumentHandler_UploadBulk_TooManyFiles(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Storage: config.StorageConfig{
+		App: appconfig.Config{Debug: true},
+		Storage: storageconfig.Config{
 			MaxFileSize:        50 * 1024 * 1024,
 			MaxFilesPerUpload:  1,
 			AllowedMIMETypes:   []string{"application/pdf"},

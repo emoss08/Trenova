@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -20,22 +21,25 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *detentionservice.Service
+	Review               *detentionreview.Service
+	Simulation           *detentionsimulation.Service
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *detentionservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	review     *detentionreview.Service
+	simulation *detentionsimulation.Service
+	eh         *helpers.ErrorHandler
+	pm         *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		review:     p.Review,
+		simulation: p.Simulation,
+		eh:         p.ErrorHandler,
+		pm:         p.PermissionMiddleware,
 	}
 }
 
@@ -91,14 +95,14 @@ func (h *Handler) tenant(c *gin.Context) pagination.TenantInfo {
 // @ID listDetentionDesk
 // @Tags Detention
 // @Produce json
-// @Success 200 {array} detentionservice.DeskEntry
+// @Success 200 {array} detentionreview.DeskEntry
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /detention/desk/ [get]
 func (h *Handler) desk(c *gin.Context) {
-	entries, err := h.service.ListDesk(c.Request.Context(), h.tenant(c))
+	entries, err := h.review.ListDesk(c.Request.Context(), h.tenant(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -152,7 +156,7 @@ func (h *Handler) list(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*detention.DetentionOccurrence], error) {
-			return h.service.ListOccurrences(
+			return h.review.ListOccurrences(
 				c.Request.Context(),
 				&detentionports.ListDetentionOccurrencesRequest{
 					Filter:     req,
@@ -172,7 +176,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Tags Detention
 // @Produce json
 // @Param occurrenceID path string true "Occurrence ID"
-// @Success 200 {object} detentionservice.OccurrenceDetail
+// @Success 200 {object} detentionreview.OccurrenceDetail
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
@@ -185,7 +189,7 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	detail, err := h.service.GetOccurrenceDetail(
+	detail, err := h.review.GetOccurrenceDetail(
 		c.Request.Context(),
 		&detentionports.GetDetentionOccurrenceByIDRequest{
 			OccurrenceID: occurrenceID,
@@ -205,7 +209,7 @@ func (h *Handler) get(c *gin.Context) {
 // @Tags Detention
 // @Produce json
 // @Param occurrenceID path string true "Occurrence ID"
-// @Success 200 {object} detentionservice.DisputePacket
+// @Success 200 {object} detentionreview.DisputePacket
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
@@ -218,7 +222,7 @@ func (h *Handler) disputePacket(c *gin.Context) {
 		return
 	}
 
-	packet, err := h.service.BuildDisputePacket(
+	packet, err := h.review.BuildDisputePacket(
 		c.Request.Context(), occurrenceID, h.tenant(c),
 	)
 	if err != nil {
@@ -262,7 +266,7 @@ func (h *Handler) waive(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.service.Waive(c.Request.Context(), detentionservice.WaiveParams{
+	occurrence, err := h.review.Waive(c.Request.Context(), &detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		Reason:       req.Reason,
@@ -297,7 +301,7 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.service.Approve(c.Request.Context(), detentionservice.ApproveParams{
+	occurrence, err := h.review.Approve(c.Request.Context(), &detentionreview.ApproveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		UserID:       authCtx.UserID,
@@ -342,7 +346,7 @@ func (h *Handler) dispute(c *gin.Context) {
 		return
 	}
 
-	occurrence, err := h.service.Dispute(c.Request.Context(), detentionservice.DisputeParams{
+	occurrence, err := h.review.Dispute(c.Request.Context(), &detentionreview.DisputeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   h.tenant(c),
 		Note:         req.Note,
@@ -388,8 +392,8 @@ func (h *Handler) statsRequest(c *gin.Context) *detentionports.DetentionStatsReq
 // @Tags Detention
 // @Accept json
 // @Produce json
-// @Param request body detentionservice.BacktestRequest true "Backtest request"
-// @Success 200 {object} detentionservice.BacktestResult
+// @Param request body detentionsimulation.BacktestRequest true "Backtest request"
+// @Success 200 {object} detentionsimulation.BacktestResult
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
@@ -398,7 +402,7 @@ func (h *Handler) statsRequest(c *gin.Context) *detentionports.DetentionStatsReq
 func (h *Handler) backtest(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(detentionservice.BacktestRequest)
+	req := new(detentionsimulation.BacktestRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -408,7 +412,7 @@ func (h *Handler) backtest(c *gin.Context) {
 		authctx.AddContextToRequest(authCtx, req.Policy)
 	}
 
-	result, err := h.service.Backtest(c.Request.Context(), *req, h.tenant(c))
+	result, err := h.simulation.Backtest(c.Request.Context(), *req, h.tenant(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -428,7 +432,7 @@ func (h *Handler) backtest(c *gin.Context) {
 // @Security BearerAuth
 // @Router /detention/facilities/ [get]
 func (h *Handler) facilities(c *gin.Context) {
-	stats, err := h.service.FacilityProfiles(c.Request.Context(), h.statsRequest(c))
+	stats, err := h.simulation.FacilityProfiles(c.Request.Context(), h.statsRequest(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -448,7 +452,7 @@ func (h *Handler) facilities(c *gin.Context) {
 // @Security BearerAuth
 // @Router /detention/customers/ [get]
 func (h *Handler) customers(c *gin.Context) {
-	stats, err := h.service.CustomerProfiles(c.Request.Context(), h.statsRequest(c))
+	stats, err := h.simulation.CustomerProfiles(c.Request.Context(), h.statsRequest(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -468,7 +472,7 @@ func (h *Handler) customers(c *gin.Context) {
 // @Security BearerAuth
 // @Router /detention/waivers/ [get]
 func (h *Handler) waivers(c *gin.Context) {
-	stats, err := h.service.WaiverLeakage(c.Request.Context(), h.statsRequest(c))
+	stats, err := h.simulation.WaiverLeakage(c.Request.Context(), h.statsRequest(c))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

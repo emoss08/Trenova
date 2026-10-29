@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell/ratematrixcelldb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,8 +18,8 @@ import (
 
 func cellsQuery(
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) *keel.Query[*ratematrix.RateMatrixCell] {
-	c := ratematrixdb.RateMatrixCells
+) *keel.Query[*ratematrixcell.RateMatrixCell] {
+	c := ratematrixcelldb.RateMatrixCells
 
 	return c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.VersionNumber))
 }
@@ -25,12 +27,12 @@ func cellsQuery(
 func (r *repository) ListCells(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-			c := ratematrixdb.RateMatrixCells
+		func(ctx context.Context) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
+			c := ratematrixcelldb.RateMatrixCells
 			page := req.Filter.Pagination
 			rows := cellsQuery(req).
 				Order(
@@ -41,7 +43,7 @@ func (r *repository) ListCells(
 				Limit(page.SafeLimit()).
 				Offset(page.SafeOffset())
 
-			var items []*ratematrix.RateMatrixCell
+			var items []*ratematrixcell.RateMatrixCell
 			var total keel.RowCount
 			err := keel.Batch(
 				ctx,
@@ -70,7 +72,7 @@ func (r *repository) ReplaceCells(
 		db := r.db.Keel(ctx)
 		err := deleteVersionCells(ctx, db, req.RateMatrixID, ratematrix.DraftVersion)
 		if err == nil {
-			_, err = ratematrixdb.RateMatrixCells.Copy(ctx, db, draftCells(req))
+			_, err = ratematrixcelldb.RateMatrixCells.Copy(ctx, db, draftCells(req))
 		}
 		if err != nil {
 			r.l.Error("failed to replace rate matrix cells",
@@ -85,8 +87,10 @@ func (r *repository) ReplaceCells(
 	})
 }
 
-func draftCells(req *ratematrixports.ReplaceRateMatrixCellsRequest) []*ratematrix.RateMatrixCell {
-	kept := make([]*ratematrix.RateMatrixCell, 0, len(req.Cells))
+func draftCells(
+	req *ratematrixports.ReplaceRateMatrixCellsRequest,
+) []*ratematrixcell.RateMatrixCell {
+	kept := make([]*ratematrixcell.RateMatrixCell, 0, len(req.Cells))
 	for _, cell := range req.Cells {
 		if cell == nil {
 			continue
@@ -108,7 +112,7 @@ func deleteVersionCells(
 	matrixID pulid.ID,
 	versionNumber int64,
 ) error {
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 	_, err := c.Where(c.RateMatrixID.Eq(matrixID), c.VersionNumber.Eq(versionNumber)).
 		Delete(ctx, db)
 
@@ -191,7 +195,7 @@ func copyCells(
 	db *keel.DB,
 	req *ratematrixports.CopyVersionRequest,
 ) (int64, error) {
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 	src := c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.From)).Pick(
 		copiedID(c.TableRef().Table.IDPrefix), c.RateMatrixID, versionNumber(req.To),
 		c.D0Key, c.D1Key, c.D2Key, c.D3Key,
@@ -218,7 +222,7 @@ type positionColumns struct {
 }
 
 func columnsAt(position int16) positionColumns {
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 	switch position {
 	case 0:
 		return positionColumns{key: c.D0Key, keyTo: c.D0KeyTo, minimum: c.D0Min.Col}
@@ -247,7 +251,7 @@ func misfitAt(position int16, dimension *ratematrix.RateMatrixDimension) keel.Pr
 
 func misfitQuery(
 	req *ratematrixports.CountMisfitCellsRequest,
-) *keel.Query[*ratematrix.RateMatrixCell] {
+) *keel.Query[*ratematrixcell.RateMatrixCell] {
 	byPosition := make(map[int16]*ratematrix.RateMatrixDimension, len(req.Dimensions))
 	for _, dimension := range req.Dimensions {
 		if dimension != nil {
@@ -260,7 +264,7 @@ func misfitQuery(
 		misfits = append(misfits, misfitAt(position, byPosition[position]))
 	}
 
-	c := ratematrixdb.RateMatrixCells
+	c := ratematrixcelldb.RateMatrixCells
 
 	return c.Where(
 		c.RateMatrixID.Eq(req.RateMatrixID),

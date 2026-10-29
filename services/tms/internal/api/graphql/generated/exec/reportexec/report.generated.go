@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -1687,7 +1687,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.ReportFieldProtection)
 					return obj.Group, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐFieldGroup),
+				Marshal: gqlexec.Marshal(marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋprotectedfieldᚐGroup),
 			},
 			{
 				Name:     "held",
@@ -5314,7 +5314,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋpermissionᚐFieldGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v permission.FieldGroup) graphql.Marshaler {
+func marshalNProtectedFieldGroup2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋprotectedfieldᚐGroup(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v protectedfield.Group) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

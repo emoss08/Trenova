@@ -10,6 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,7 +25,7 @@ func TestNewServer_UsesConfiguredHTTPTimeouts(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Server: config.ServerConfig{
+		Server: serverconfig.Config{
 			Host:              "127.0.0.1",
 			Port:              8081,
 			Mode:              "test",
@@ -35,9 +38,10 @@ func TestNewServer_UsesConfiguredHTTPTimeouts(t *testing.T) {
 	}
 
 	server, err := NewServer(Params{
-		Config: cfg,
-		Logger: zap.NewNop(),
-		LC:     fxtest.NewLifecycle(t),
+		AppConfig:    &cfg.App,
+		ServerConfig: &cfg.Server,
+		Logger:       zap.NewNop(),
+		LC:           fxtest.NewLifecycle(t),
 	})
 	require.NoError(t, err)
 
@@ -52,13 +56,12 @@ func TestNewServer_RejectsInvalidTrustedProxies(t *testing.T) {
 	t.Parallel()
 
 	_, err := NewServer(Params{
-		Config: &config.Config{
-			Server: config.ServerConfig{
-				Host:           "127.0.0.1",
-				Port:           8081,
-				Mode:           "test",
-				TrustedProxies: []string{"not-a-cidr"},
-			},
+		AppConfig: &appconfig.Config{},
+		ServerConfig: &serverconfig.Config{
+			Host:           "127.0.0.1",
+			Port:           8081,
+			Mode:           "test",
+			TrustedProxies: []string{"not-a-cidr"},
 		},
 		Logger: zap.NewNop(),
 		LC:     fxtest.NewLifecycle(t),
@@ -73,30 +76,30 @@ func TestClientIPResolution(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		server     config.ServerConfig
+		server     serverconfig.Config
 		remoteAddr string
 		headers    map[string]string
 		want       string
 	}{
 		{
 			name:       "direct client cannot forge its own address",
-			server:     config.ServerConfig{TrustedProxies: config.DefaultTrustedProxies},
+			server:     serverconfig.Config{TrustedProxies: serverconfig.DefaultTrustedProxies},
 			remoteAddr: "203.0.113.7:41000",
 			headers:    map[string]string{"X-Forwarded-For": "198.51.100.99"},
 			want:       "203.0.113.7",
 		},
 		{
 			name:       "trusted proxy forwards the appended client address",
-			server:     config.ServerConfig{TrustedProxies: config.DefaultTrustedProxies},
+			server:     serverconfig.Config{TrustedProxies: serverconfig.DefaultTrustedProxies},
 			remoteAddr: "172.18.0.5:41000",
 			headers:    map[string]string{"X-Forwarded-For": "198.51.100.99, 203.0.113.7"},
 			want:       "203.0.113.7",
 		},
 		{
 			name: "cloudflare platform ignores a forged forwarded-for",
-			server: config.ServerConfig{
-				TrustedProxies:  config.DefaultTrustedProxies,
-				TrustedPlatform: config.TrustedPlatformCloudflare,
+			server: serverconfig.Config{
+				TrustedProxies:  serverconfig.DefaultTrustedProxies,
+				TrustedPlatform: serverconfig.TrustedPlatformCloudflare,
 			},
 			remoteAddr: "172.18.0.5:41000",
 			headers: map[string]string{
@@ -107,7 +110,7 @@ func TestClientIPResolution(t *testing.T) {
 		},
 		{
 			name:       "trusting no proxy always reports the peer",
-			server:     config.ServerConfig{TrustedProxies: []string{}},
+			server:     serverconfig.Config{TrustedProxies: []string{}},
 			remoteAddr: "172.18.0.5:41000",
 			headers:    map[string]string{"X-Forwarded-For": "198.51.100.99, 203.0.113.7"},
 			want:       "172.18.0.5",
@@ -122,7 +125,7 @@ func TestClientIPResolution(t *testing.T) {
 			router := gin.New()
 			require.NoError(
 				t,
-				configureClientIPResolution(router, &config.Config{Server: tt.server}),
+				configureClientIPResolution(router, &tt.server),
 			)
 
 			var got string
@@ -148,31 +151,34 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		Server: config.ServerConfig{
-			TrustedProxies:  config.DefaultTrustedProxies,
-			TrustedPlatform: config.TrustedPlatformCloudflare,
+		Server: serverconfig.Config{
+			TrustedProxies:  serverconfig.DefaultTrustedProxies,
+			TrustedPlatform: serverconfig.TrustedPlatformCloudflare,
 		},
-		Security: config.SecurityConfig{
-			RateLimit: config.RateLimitConfig{
-				Enabled:         true,
-				Anonymous:       config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Security: securityconfig.Config{
+			RateLimit: securityconfig.RateLimitConfig{
+				Enabled: true,
+				Anonymous: securityconfig.RateLimitScopeConfig{
+					RequestsPerMinute: 60,
+					BurstSize:         1,
+				},
 				CleanupInterval: time.Minute,
 			},
 		},
 	}
 
 	limiter := middleware.NewRateLimiter(middleware.RateLimiterParams{
-		Config: cfg,
-		Store:  ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+		SecurityConfig: &cfg.Security,
+		Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		Logger: zap.NewNop(),
 	})
 
 	router := gin.New()
-	require.NoError(t, configureClientIPResolution(router, cfg))
+	require.NoError(t, configureClientIPResolution(router, &cfg.Server))
 	router.GET("/probe", limiter.ByClientIP(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

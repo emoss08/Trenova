@@ -6,9 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
-
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +72,7 @@ func TestBulkApprovalCommitsAfterTheUndoWindow(t *testing.T) {
 	env.OnActivity("ApproveQueueItemActivity", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, p *ApproveItemPayload) (*ApproveItemResult, error) {
 			approved = append(approved, p.ItemID)
-			return &ApproveItemResult{Status: billingqueue.ApprovalItemApproved}, nil
+			return &ApproveItemResult{Status: billingapprovalrun.ApprovalItemApproved}, nil
 		})
 	finalized := captureFinalize(env)
 
@@ -82,9 +81,13 @@ func TestBulkApprovalCommitsAfterTheUndoWindow(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	assert.GreaterOrEqual(t, startedAt.Sub(began), billingqueue.ApprovalUndoWindowSeconds*time.Second)
+	assert.GreaterOrEqual(
+		t,
+		startedAt.Sub(began),
+		billingapprovalrun.ApprovalUndoWindowSeconds*time.Second,
+	)
 	assert.Equal(t, items, approved)
-	assert.Equal(t, billingqueue.ApprovalRunCompleted, finalized.Status)
+	assert.Equal(t, billingapprovalrun.ApprovalRunCompleted, finalized.Status)
 }
 
 // An undo inside the window ends the run without touching a single item.
@@ -100,8 +103,8 @@ func TestBulkApprovalUndoneBeforeItStartsWritesNothing(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	assert.Equal(t, billingqueue.ApprovalRunUndone, finalized.Status)
-	assert.Equal(t, billingqueue.ApprovalFailureUndone, finalized.LeftoverCode)
+	assert.Equal(t, billingapprovalrun.ApprovalRunUndone, finalized.Status)
+	assert.Equal(t, billingapprovalrun.ApprovalFailureUndone, finalized.LeftoverCode)
 	env.AssertNotCalled(t, "StartApprovalRunActivity", mock.Anything, mock.Anything)
 	env.AssertNotCalled(t, "ApproveQueueItemActivity", mock.Anything, mock.Anything)
 }
@@ -117,7 +120,7 @@ func TestBulkApprovalObeysAnUndoWrittenWithoutASignal(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.NoError(t, env.GetWorkflowError())
-	assert.Equal(t, billingqueue.ApprovalRunUndone, finalized.Status)
+	assert.Equal(t, billingapprovalrun.ApprovalRunUndone, finalized.Status)
 	env.AssertNotCalled(t, "ApproveQueueItemActivity", mock.Anything, mock.Anything)
 }
 
@@ -136,7 +139,7 @@ func TestBulkApprovalRecordsAPartialFailureAndCarriesOn(t *testing.T) {
 			if p.ItemID == "bqi_2" {
 				return nil, errors.New("database went away")
 			}
-			return &ApproveItemResult{Status: billingqueue.ApprovalItemApproved}, nil
+			return &ApproveItemResult{Status: billingapprovalrun.ApprovalItemApproved}, nil
 		})
 	var failed *RecordItemFailurePayload
 	env.OnActivity("RecordApprovalItemFailureActivity", mock.Anything, mock.Anything).
@@ -154,7 +157,7 @@ func TestBulkApprovalRecordsAPartialFailureAndCarriesOn(t *testing.T) {
 	assert.Equal(t, 1, attempts["bqi_3"], "the run went on past the failure")
 	require.NotNil(t, failed)
 	assert.Equal(t, pulid.ID("bqi_2"), failed.ItemID)
-	assert.Equal(t, billingqueue.ApprovalRunCompleted, finalized.Status)
+	assert.Equal(t, billingapprovalrun.ApprovalRunCompleted, finalized.Status)
 }
 
 func TestBulkApprovalFinalizesAsFailedWhenItCannotStart(t *testing.T) {
@@ -167,5 +170,5 @@ func TestBulkApprovalFinalizesAsFailedWhenItCannotStart(t *testing.T) {
 
 	require.True(t, env.IsWorkflowCompleted())
 	require.Error(t, env.GetWorkflowError())
-	assert.Equal(t, billingqueue.ApprovalRunFailed, finalized.Status)
+	assert.Equal(t, billingapprovalrun.ApprovalRunFailed, finalized.Status)
 }

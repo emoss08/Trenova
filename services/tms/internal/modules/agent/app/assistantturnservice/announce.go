@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -29,11 +30,11 @@ const announceTimeout = 5 * time.Second
 // rest from the live-turns endpoint, scoped to them. The announcement itself
 // is addressed to the owner, so no one else's stream carries it.
 type TurnAnnouncement struct {
-	TurnID   pulid.ID                         `json:"turnId"`
-	ThreadID pulid.ID                         `json:"threadId"`
-	UserID   pulid.ID                         `json:"userId"`
-	Status   conversation.AssistantTurnStatus `json:"status"`
-	Origin   conversation.AssistantTurnOrigin `json:"origin"`
+	TurnID   pulid.ID                             `json:"turnId"`
+	ThreadID pulid.ID                             `json:"threadId"`
+	UserID   pulid.ID                             `json:"userId"`
+	Status   conversation.AssistantTurnStatus     `json:"status"`
+	Origin   conversationturn.AssistantTurnOrigin `json:"origin"`
 }
 
 // announce tells the person's other tabs a reply started or ended, so none of
@@ -41,7 +42,7 @@ type TurnAnnouncement struct {
 // true, and a lost announcement costs a tab a refresh, never the turn.
 func (s *Service) announce(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
+	turn *conversationturn.AssistantTurn,
 	action string,
 	status conversation.AssistantTurnStatus,
 ) {
@@ -54,7 +55,7 @@ func (s *Service) announce(
 
 	err := s.realtime.PublishResourceInvalidation(
 		publishCtx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: turn.OrganizationID,
 			BusinessUnitID: turn.BusinessUnitID,
 			AudienceUserID: turn.UserID,

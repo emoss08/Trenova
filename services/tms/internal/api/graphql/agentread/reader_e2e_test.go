@@ -5,17 +5,16 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentmanufacturerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,7 +95,7 @@ func seededManufacturers(n int) *manufacturers {
 	return repo
 }
 
-func connectionOf(t *testing.T, result *agentports.GraphQLReadResult) map[string]any {
+func connectionOf(t *testing.T, result *graphqlreadports.GraphQLReadResult) map[string]any {
 	t.Helper()
 
 	require.Empty(t, result.Errors)
@@ -161,8 +160,17 @@ func TestReader_PagesWithTheConnectionsCursorAndNeverRepeatsARow(t *testing.T) {
 		if after != nil {
 			input["after"] = after
 		}
-		result, err := agentreadtest.Read(t.Context(), reader, person, manufacturerTable,
-			map[string]any{"includeTotalCount": false, "input": input}, permission.SensitivityInternal)
+		result, err := agentreadtest.Read(
+			t.Context(),
+			reader,
+			person,
+			manufacturerTable,
+			map[string]any{
+				"includeTotalCount": false,
+				"input":             input,
+			},
+			permission.SensitivityInternal,
+		)
 		require.NoError(t, err)
 
 		return connectionOf(t, result)
@@ -205,7 +213,7 @@ func TestReader_RefusesWhatTheScreenRefuses(t *testing.T) {
 
 				require.NoError(t, err)
 				require.NotEmpty(t, result.Errors)
-				assert.Equal(t, agentports.GraphQLCodeForbidden, result.Errors[0].Code)
+				assert.Equal(t, graphqlreadports.GraphQLCodeForbidden, result.Errors[0].Code)
 			})
 		}
 	})
@@ -220,5 +228,5 @@ func TestReader_RefusesAnOperationNoToolIsBoundTo(t *testing.T) {
 	_, err := agentreadtest.Read(t.Context(), reader, agentreadtest.Person(), "ShipmentBoardTable",
 		map[string]any{}, permission.SensitivityInternal)
 
-	assert.ErrorIs(t, err, agentports.ErrUnknownReadOperation)
+	assert.ErrorIs(t, err, graphqlreadports.ErrUnknownReadOperation)
 }

@@ -88,7 +88,7 @@ describe("getProfile", () => {
   });
 });
 
-// Mirrors moveRemovalRuleFor in services/tms/internal/modules/operations/app/shipmentservice/
+// Mirrors moveRemovalRuleFor in services/tms/internal/modules/operations/app/shipmentvalidator/
 // capability_policy.go: the profile's dispatch.moveRemoval rule decides when it is
 // present, and the org's allowMoveRemovals flag is consulted only as a fallback.
 //

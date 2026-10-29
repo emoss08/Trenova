@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +29,7 @@ type approvalImpactRequest struct {
 // @Produce json
 // @Param templateID path string true "Formula template ID"
 // @Param request body approvalImpactRequest true "Impact request"
-// @Success 200 {object} formulatemplateservice.BacktestResponse
+// @Success 200 {object} formulatemplatestudioservice.BacktestResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
@@ -54,9 +55,9 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.ApprovalImpact(
+	response, err := h.studioService.ApprovalImpact(
 		c.Request.Context(),
-		&formulatemplateservice.ApprovalImpactRequest{
+		&formulatemplatestudioservice.ApprovalImpactRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 			Limit:      req.Limit,
@@ -75,7 +76,7 @@ func (h *Handler) approvalImpact(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {object} formulatemplateservice.ReviewDiffResponse
+// @Success 200 {object} formulatemplatereviewservice.ReviewDiffResponse
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -90,9 +91,9 @@ func (h *Handler) reviewDiff(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.ReviewDiff(
+	response, err := h.reviews.ReviewDiff(
 		c.Request.Context(),
-		&formulatemplateservice.ReviewDiffRequest{
+		&formulatemplatereviewservice.ReviewDiffRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},
@@ -110,7 +111,7 @@ func (h *Handler) reviewDiff(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {object} formulatemplateservice.ReadinessResponse
+// @Success 200 {object} formulatemplatereviewservice.ReadinessResponse
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -125,9 +126,9 @@ func (h *Handler) readiness(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.Readiness(
+	response, err := h.reviews.Readiness(
 		c.Request.Context(),
-		&formulatemplateservice.ReadinessRequest{
+		&formulatemplatereviewservice.ReadinessRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},
@@ -147,7 +148,7 @@ func (h *Handler) readiness(c *gin.Context) {
 // @Produce json
 // @Param templateID path string true "Formula template ID"
 // @Param request body backtestRequest true "Backtest request"
-// @Success 200 {object} formulatemplateservice.BacktestResponse
+// @Success 200 {object} formulatemplatestudioservice.BacktestResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
@@ -173,9 +174,9 @@ func (h *Handler) backtest(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.Backtest(
+	response, err := h.studioService.Backtest(
 		c.Request.Context(),
-		&formulatemplateservice.BacktestRequest{
+		&formulatemplatestudioservice.BacktestRequest{
 			TenantInfo:    pagination.FromAuthAsUser(authCtx),
 			TemplateID:    templateID,
 			Source:        req.Source,

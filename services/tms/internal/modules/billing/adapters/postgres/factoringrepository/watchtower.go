@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
@@ -26,7 +28,7 @@ type watchtowerReader struct {
 	l  *zap.Logger
 }
 
-func NewWatchtowerReader(p Params) factoringports.WatchtowerReader {
+func NewWatchtowerReader(p Params) factoringwatchtowerports.WatchtowerReader {
 	return &watchtowerReader{
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-watchtower"),
@@ -53,18 +55,18 @@ func intoPointers[R any](ctx context.Context, db *keel.DB, p keel.Projection) ([
 
 func (r *watchtowerReader) ListInvoiceLabels(
 	ctx context.Context,
-	req *factoringports.ListInvoiceLabelsRequest,
-) (map[pulid.ID]*factoringports.InvoiceLabel, error) {
+	req *factoringwatchtowerports.ListInvoiceLabelsRequest,
+) (map[pulid.ID]*factoringwatchtowerports.InvoiceLabel, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]*factoringports.InvoiceLabel, error) {
-			result := make(map[pulid.ID]*factoringports.InvoiceLabel, len(req.InvoiceIDs))
+		func(ctx context.Context) (map[pulid.ID]*factoringwatchtowerports.InvoiceLabel, error) {
+			result := make(map[pulid.ID]*factoringwatchtowerports.InvoiceLabel, len(req.InvoiceIDs))
 			if len(req.InvoiceIDs) == 0 {
 				return result, nil
 			}
 
-			rows, err := intoPointers[factoringports.InvoiceLabel](
+			rows, err := intoPointers[factoringwatchtowerports.InvoiceLabel](
 				ctx,
 				r.db.Keel(ctx),
 				invoiceLabels(req.InvoiceIDs),
@@ -94,13 +96,13 @@ func invoiceLabels(invoiceIDs []pulid.ID) *keel.Query[*invoice.Invoice] {
 
 func (r *watchtowerReader) ListCustomersMissingNoa(
 	ctx context.Context,
-	req *factoringports.ListCustomersMissingNoaRequest,
-) ([]*factoringports.CustomerMissingNoa, error) {
+	req *factoringwatchtowerports.ListCustomersMissingNoaRequest,
+) ([]*factoringwatchtowerports.CustomerMissingNoa, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoringports.CustomerMissingNoa, error) {
-			return intoPointers[factoringports.CustomerMissingNoa](
+		func(ctx context.Context) ([]*factoringwatchtowerports.CustomerMissingNoa, error) {
+			return intoPointers[factoringwatchtowerports.CustomerMissingNoa](
 				ctx,
 				r.db.Keel(ctx),
 				customersMissingNoa(req),
@@ -110,7 +112,7 @@ func (r *watchtowerReader) ListCustomersMissingNoa(
 }
 
 func customersMissingNoa(
-	req *factoringports.ListCustomersMissingNoaRequest,
+	req *factoringwatchtowerports.ListCustomersMissingNoaRequest,
 ) *keel.Query[*customer.CustomerBillingProfile] {
 	cbp := customerdb.CustomerBillingProfiles
 	cus := customerdb.Customers
@@ -152,14 +154,24 @@ func customersMissingNoa(
 
 func (r *watchtowerReader) ListNoasExpiringSoon(
 	ctx context.Context,
-	req *factoringports.ListNoasExpiringSoonRequest,
-) ([]*factoringports.ExpiringNoa, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoringports.ExpiringNoa, error) {
-		return intoPointers[factoringports.ExpiringNoa](ctx, r.db.Keel(ctx), noasExpiringSoon(req))
-	})
+	req *factoringwatchtowerports.ListNoasExpiringSoonRequest,
+) ([]*factoringwatchtowerports.ExpiringNoa, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*factoringwatchtowerports.ExpiringNoa, error) {
+			return intoPointers[factoringwatchtowerports.ExpiringNoa](
+				ctx,
+				r.db.Keel(ctx),
+				noasExpiringSoon(req),
+			)
+		},
+	)
 }
 
-func noasExpiringSoon(req *factoringports.ListNoasExpiringSoonRequest) *keel.Query[*factoring.Noa] {
+func noasExpiringSoon(
+	req *factoringwatchtowerports.ListNoasExpiringSoonRequest,
+) *keel.Query[*factoring.Noa] {
 	noa := factoringdb.Noas
 	return noa.Pick(
 		noa.ID,
@@ -182,13 +194,13 @@ func noasExpiringSoon(req *factoringports.ListNoasExpiringSoonRequest) *keel.Que
 
 func (r *watchtowerReader) ListFailedSubmissions(
 	ctx context.Context,
-	req *factoringports.ListFailedSubmissionsRequest,
-) ([]*factoringports.FailedSubmission, error) {
+	req *factoringwatchtowerports.ListFailedSubmissionsRequest,
+) ([]*factoringwatchtowerports.FailedSubmission, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoringports.FailedSubmission, error) {
-			return intoPointers[factoringports.FailedSubmission](
+		func(ctx context.Context) ([]*factoringwatchtowerports.FailedSubmission, error) {
+			return intoPointers[factoringwatchtowerports.FailedSubmission](
 				ctx,
 				r.db.Keel(ctx),
 				failedSubmissions(req.Limit),
@@ -197,8 +209,8 @@ func (r *watchtowerReader) ListFailedSubmissions(
 	)
 }
 
-func failedSubmissions(limit int) *keel.Query[*factoring.Submission] {
-	sub := factoringdb.Submissions
+func failedSubmissions(limit int) *keel.Query[*factoringsubmission.Submission] {
+	sub := factoringsubmissiondb.Submissions
 	return sub.Pick(
 		sub.ID,
 		sub.Number,
@@ -211,20 +223,20 @@ func failedSubmissions(limit int) *keel.Query[*factoring.Submission] {
 		blank(sub.LastError),
 		sub.FailedAt,
 	).
-		Where(sub.Status.Eq(factoring.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
+		Where(sub.Status.Eq(factoringsubmission.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
 		Order(sub.FailedAt.Asc(), sub.ID.Asc()).
 		Limit(boundedLimit(limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListUnfundedSubmissions(
 	ctx context.Context,
-	req *factoringports.ListUnfundedSubmissionsRequest,
-) ([]*factoringports.UnfundedSubmission, error) {
+	req *factoringwatchtowerports.ListUnfundedSubmissionsRequest,
+) ([]*factoringwatchtowerports.UnfundedSubmission, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoringports.UnfundedSubmission, error) {
-			return intoPointers[factoringports.UnfundedSubmission](
+		func(ctx context.Context) ([]*factoringwatchtowerports.UnfundedSubmission, error) {
+			return intoPointers[factoringwatchtowerports.UnfundedSubmission](
 				ctx,
 				r.db.Keel(ctx),
 				unfundedSubmissions(req),
@@ -234,10 +246,10 @@ func (r *watchtowerReader) ListUnfundedSubmissions(
 }
 
 func unfundedSubmissions(
-	req *factoringports.ListUnfundedSubmissionsRequest,
-) *keel.Query[*factoring.Submission] {
-	sub := factoringdb.Submissions
-	item := factoringdb.SubmissionItems
+	req *factoringwatchtowerports.ListUnfundedSubmissionsRequest,
+) *keel.Query[*factoringsubmission.Submission] {
+	sub := factoringsubmissiondb.Submissions
+	item := factoringsubmissiondb.SubmissionItems
 	agr := factoringdb.Agreements
 	fac := sub.FactoringCompany()
 	dueAt := sub.SentAt.Add(agr.FundingDays.Mul(keel.Int64(86400)))
@@ -256,11 +268,11 @@ func unfundedSubmissions(
 	).
 		Join(item,
 			item.SubmissionID.EqCol(sub.ID),
-			item.Status.Eq(factoring.SubmissionItemStatusPending),
+			item.Status.Eq(factoringsubmission.SubmissionItemStatusPending),
 		).
 		Join(agr, agr.ID.EqCol(sub.AgreementID)).
 		Where(
-			sub.Status.In(factoring.AwaitingFundingStatuses()...),
+			sub.Status.In(factoringsubmission.AwaitingFundingStatuses()...),
 			sub.SentAt.IsNotNull(),
 			dueAt.Lt(req.At),
 		).
@@ -271,13 +283,13 @@ func unfundedSubmissions(
 
 func (r *watchtowerReader) ListChargebacksDue(
 	ctx context.Context,
-	req *factoringports.ListChargebacksDueRequest,
-) ([]*factoringports.ChargebackDue, error) {
+	req *factoringwatchtowerports.ListChargebacksDueRequest,
+) ([]*factoringwatchtowerports.ChargebackDue, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*factoringports.ChargebackDue, error) {
-			return intoPointers[factoringports.ChargebackDue](
+		func(ctx context.Context) ([]*factoringwatchtowerports.ChargebackDue, error) {
+			return intoPointers[factoringwatchtowerports.ChargebackDue](
 				ctx,
 				r.db.Keel(ctx),
 				chargebacksDueSoon(req),
@@ -287,9 +299,9 @@ func (r *watchtowerReader) ListChargebacksDue(
 }
 
 func chargebacksDueSoon(
-	req *factoringports.ListChargebacksDueRequest,
-) *keel.Query[*factoring.SubmissionItem] {
-	item := factoringdb.SubmissionItems
+	req *factoringwatchtowerports.ListChargebacksDueRequest,
+) *keel.Query[*factoringsubmission.SubmissionItem] {
+	item := factoringsubmissiondb.SubmissionItems
 	sub := item.Submission()
 	agr := sub.Agreement()
 	deadline := item.FundedOn.Add(agr.ChargebackWindowDays.Mul(keel.Int64(86400)))
@@ -312,7 +324,7 @@ func chargebacksDueSoon(
 	).
 		Where(
 			sub.ID.IsNotNull(),
-			item.Status.Eq(factoring.SubmissionItemStatusFunded),
+			item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
 			deadline.Lte(req.Before),

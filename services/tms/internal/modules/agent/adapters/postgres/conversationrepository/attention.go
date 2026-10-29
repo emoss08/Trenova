@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,17 +30,17 @@ type pendingProposalRunRow struct {
 }
 
 func threadAttentionQuery(
-	req *agentports.ListThreadAttentionRequest,
+	req *conversationports.ListThreadAttentionRequest,
 ) *keel.Query[*conversation.Thread] {
 	th := conversationdb.Threads
-	pl := agentdb.AgentPlans
+	pl := agentplandb.AgentPlans
 	run := agentdb.AgentRuns
-	tr := conversationdb.AssistantTurns
+	tr := conversationturndb.AssistantTurns
 
 	pendingPlans := keel.Scalar(pl.Join(run, run.ID.EqCol(pl.RunID)).
 		Pick(keel.Count()).
 		Where(
-			pl.Status.Eq(agent.PlanStatusPending),
+			pl.Status.Eq(agentplan.PlanStatusPending),
 			run.SubjectType.Eq(agent.SubjectAssistantThread),
 			run.SubjectID.EqCol(th.ID),
 		))
@@ -71,19 +74,19 @@ func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProp
 
 func (r *repository) ListThreadAttention(
 	ctx context.Context,
-	req agentports.ListThreadAttentionRequest,
-) (map[pulid.ID]agentports.ThreadAttentionRow, error) {
+	req *conversationports.ListThreadAttentionRequest,
+) (map[pulid.ID]conversationports.ThreadAttentionRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (map[pulid.ID]agentports.ThreadAttentionRow, error) {
-			out := make(map[pulid.ID]agentports.ThreadAttentionRow, len(req.ThreadIDs))
+		func(ctx context.Context) (map[pulid.ID]conversationports.ThreadAttentionRow, error) {
+			out := make(map[pulid.ID]conversationports.ThreadAttentionRow, len(req.ThreadIDs))
 			if len(req.ThreadIDs) == 0 {
 				return out, nil
 			}
 
 			db := r.db.Keel(ctx)
-			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(&req))
+			rows, err := keel.Into[threadAttentionRow](ctx, db, threadAttentionQuery(req))
 			if err != nil {
 				return nil, fmt.Errorf("list thread attention: %w", err)
 			}
@@ -91,7 +94,7 @@ func (r *repository) ListThreadAttention(
 			owned := make([]pulid.ID, 0, len(rows))
 			for _, row := range rows {
 				owned = append(owned, row.ThreadID)
-				out[row.ThreadID] = agentports.ThreadAttentionRow{
+				out[row.ThreadID] = conversationports.ThreadAttentionRow{
 					PendingPlans:   row.PendingPlans,
 					LastTurnStatus: row.LastTurnStatus,
 				}
@@ -118,7 +121,7 @@ func (r *repository) ListThreadAttention(
 
 func (r *repository) MarkThreadRead(
 	ctx context.Context,
-	req agentports.MarkThreadReadRequest,
+	req *conversationports.MarkThreadReadRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		th := conversationdb.Threads
@@ -139,7 +142,7 @@ func (r *repository) MarkThreadRead(
 
 func (r *repository) WakeThread(
 	ctx context.Context,
-	req *agentports.WakeThreadRequest,
+	req *conversationports.WakeThreadRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
 		th := conversationdb.Threads

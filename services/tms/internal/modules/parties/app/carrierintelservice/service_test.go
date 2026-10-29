@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
+	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,7 +31,7 @@ type fakeUsageRepo struct {
 	carrierintelports.CarrierIntelUsageRepository
 
 	mu         sync.Mutex
-	records    []*carrierintel.CarrierIntelUsageRecord
+	records    []*carrierintelusage.CarrierIntelUsageRecord
 	dedupeKeys map[string]bool
 	cost       decimal.Decimal
 	billable   int
@@ -42,7 +44,7 @@ func newFakeUsageRepo() *fakeUsageRepo {
 
 func (f *fakeUsageRepo) Insert(
 	_ context.Context,
-	entity *carrierintel.CarrierIntelUsageRecord,
+	entity *carrierintelusage.CarrierIntelUsageRecord,
 ) (bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -208,7 +210,7 @@ func (c *fakeClient) lookups() []*carrierintelports.CarrierIntelLookupRequest {
 type fakeConnector struct {
 	typ    integration.Type
 	caps   carrierintel.CapabilitySet
-	prices carrierintel.PriceBook
+	prices carrierintelusage.PriceBook
 	client *fakeClient
 }
 
@@ -218,7 +220,7 @@ func (c *fakeConnector) Descriptor() carrierintel.ProviderDescriptor {
 	return carrierintel.ProviderDescriptor{Capabilities: c.caps}
 }
 
-func (c *fakeConnector) PriceBook() carrierintel.PriceBook { return c.prices }
+func (c *fakeConnector) PriceBook() carrierintelusage.PriceBook { return c.prices }
 
 func (c *fakeConnector) TestConnection(context.Context, map[string]string) error { return nil }
 
@@ -229,18 +231,18 @@ func (c *fakeConnector) Bind(
 	return c.client, nil
 }
 
-func carrierOKPrices() carrierintel.PriceBook {
-	return carrierintel.PriceBook{
-		carrierintel.EndpointProfileFull: {
-			Model:    carrierintel.BillingModelPerDOTMonth,
+func carrierOKPrices() carrierintelusage.PriceBook {
+	return carrierintelusage.PriceBook{
+		carrierintelusage.EndpointProfileFull: {
+			Model:    carrierintelusage.BillingModelPerDOTMonth,
 			UnitCost: decimal.RequireFromString("3"),
 		},
-		carrierintel.EndpointProfileLite: {
-			Model:    carrierintel.BillingModelPerDOTMonth,
+		carrierintelusage.EndpointProfileLite: {
+			Model:    carrierintelusage.BillingModelPerDOTMonth,
 			UnitCost: decimal.RequireFromString("0.5"),
 		},
-		carrierintel.EndpointProfileFMCSA: {
-			Model:    carrierintel.BillingModelPerMatch,
+		carrierintelusage.EndpointProfileFMCSA: {
+			Model:    carrierintelusage.BillingModelPerMatch,
 			UnitCost: decimal.RequireFromString("0.1"),
 		},
 	}
@@ -264,7 +266,7 @@ func newFMCSAConnector() *fakeConnector {
 	return &fakeConnector{
 		typ:    integration.TypeFMCSAQCMobile,
 		caps:   carrierintel.NewCapabilitySet(carrierintel.CapabilityLookupFMCSA),
-		prices: carrierintel.PriceBook{},
+		prices: carrierintelusage.PriceBook{},
 		client: &fakeClient{provider: integration.TypeFMCSAQCMobile},
 	}
 }
@@ -275,7 +277,7 @@ type harness struct {
 	notifications *fakeNotifications
 	integrations  *fakeIntegrations
 	tenant        pagination.TenantInfo
-	control       *carrierintel.CarrierIntelControl
+	control       *carrierintelcontrol.CarrierIntelControl
 	now           int64
 }
 
@@ -292,7 +294,7 @@ func newHarness(t *testing.T, connectors ...*fakeConnector) *harness {
 		notifications: &fakeNotifications{},
 		integrations:  &fakeIntegrations{failures: make(map[integration.Type]error)},
 		tenant:        tenant,
-		control:       carrierintel.NewDefaultControl(tenant.OrgID, tenant.BuID),
+		control:       carrierintelcontrol.NewDefaultControl(tenant.OrgID, tenant.BuID),
 		now:           testNow,
 	}
 
@@ -322,14 +324,14 @@ func (h *harness) setFallback(provider integration.Type) {
 	h.control.FallbackProvider = &provider
 }
 
-func (h *harness) bind(t *testing.T, provider integration.Type, fallback bool) *boundProvider {
+func (h *harness) Bind(t *testing.T, provider integration.Type, fallback bool) *BoundProvider {
 	t.Helper()
-	bound, err := h.svc.bind(t.Context(), h.tenant, provider, fallback)
+	bound, err := h.svc.Bind(t.Context(), h.tenant, provider, fallback)
 	require.NoError(t, err)
 	return bound
 }
 
-func (h *harness) attempt(bound *boundProvider, wanted carrierintel.LookupDepth) *lookupAttempt {
+func (h *harness) attempt(bound *BoundProvider, wanted carrierintel.LookupDepth) *lookupAttempt {
 	return &lookupAttempt{
 		tenant:  h.tenant,
 		control: h.control,
@@ -344,7 +346,10 @@ func (h *harness) attempt(bound *boundProvider, wanted carrierintel.LookupDepth)
 }
 
 func providerError(kind carrierintelports.CarrierIntelErrorKind) error {
-	return &carrierintelports.CarrierIntelProviderError{Provider: integration.TypeCarrierOK, Kind: kind}
+	return &carrierintelports.CarrierIntelProviderError{
+		Provider: integration.TypeCarrierOK,
+		Kind:     kind,
+	}
 }
 
 func TestCircuitBreaker(t *testing.T) {
@@ -373,23 +378,23 @@ func TestCircuitBreaker(t *testing.T) {
 func TestIsBillable(t *testing.T) {
 	t.Parallel()
 
-	perDOT := carrierintel.EndpointPrice{
-		Model:    carrierintel.BillingModelPerDOTMonth,
+	perDOT := carrierintelusage.EndpointPrice{
+		Model:    carrierintelusage.BillingModelPerDOTMonth,
 		UnitCost: decimal.RequireFromString("3"),
 	}
-	perMatch := carrierintel.EndpointPrice{
-		Model:    carrierintel.BillingModelPerMatch,
+	perMatch := carrierintelusage.EndpointPrice{
+		Model:    carrierintelusage.BillingModelPerMatch,
 		UnitCost: decimal.RequireFromString("0.1"),
 	}
-	perRequest := carrierintel.EndpointPrice{
-		Model:    carrierintel.BillingModelPerRequest,
+	perRequest := carrierintelusage.EndpointPrice{
+		Model:    carrierintelusage.BillingModelPerRequest,
 		UnitCost: decimal.RequireFromString("0.003"),
 	}
-	free := carrierintel.EndpointPrice{Model: carrierintel.BillingModelFree}
+	free := carrierintelusage.EndpointPrice{Model: carrierintelusage.BillingModelFree}
 
 	tests := []struct {
 		name      string
-		price     carrierintel.EndpointPrice
+		price     carrierintelusage.EndpointPrice
 		call      carrierintelports.CarrierIntelCall
 		billable  bool
 		wantUnits int
@@ -444,29 +449,48 @@ func TestUsageOutcomeAndOutageClassification(t *testing.T) {
 
 	limited := &restx.RateLimitedError{RetryAfter: time.Second}
 
-	assert.Equal(t, carrierintel.UsageOutcomeSuccess,
-		usageOutcome(carrierintelports.CarrierIntelCall{Found: true}))
-	assert.Equal(t, carrierintel.UsageOutcomeNotFound, usageOutcome(carrierintelports.CarrierIntelCall{}))
-	assert.Equal(t, carrierintel.UsageOutcomeDenied,
-		usageOutcome(carrierintelports.CarrierIntelCall{Err: limited}))
-	assert.Equal(t, carrierintel.UsageOutcomeTransport,
-		usageOutcome(carrierintelports.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
-	assert.Equal(t, carrierintel.UsageOutcomeRateLimited, usageOutcome(carrierintelports.CarrierIntelCall{
-		Err: providerError(carrierintelports.CarrierIntelErrorRateLimited),
-	}))
-	assert.Equal(t, carrierintel.UsageOutcomeServerError, usageOutcome(carrierintelports.CarrierIntelCall{
-		Err: providerError(carrierintelports.CarrierIntelErrorUnavailable),
-	}))
-	assert.Equal(t, carrierintel.UsageOutcomeClientError, usageOutcome(carrierintelports.CarrierIntelCall{
-		Err: providerError(carrierintelports.CarrierIntelErrorUnauthorized),
-	}))
+	assert.Equal(t, carrierintelusage.UsageOutcomeSuccess,
+		usageOutcome(&carrierintelports.CarrierIntelCall{Found: true}))
+	assert.Equal(
+		t,
+		carrierintelusage.UsageOutcomeNotFound,
+		usageOutcome(&carrierintelports.CarrierIntelCall{}),
+	)
+	assert.Equal(t, carrierintelusage.UsageOutcomeDenied,
+		usageOutcome(&carrierintelports.CarrierIntelCall{Err: limited}))
+	assert.Equal(t, carrierintelusage.UsageOutcomeTransport,
+		usageOutcome(&carrierintelports.CarrierIntelCall{Err: errors.New("dial tcp: timeout")}))
+	assert.Equal(
+		t,
+		carrierintelusage.UsageOutcomeRateLimited,
+		usageOutcome(&carrierintelports.CarrierIntelCall{
+			Err: providerError(carrierintelports.CarrierIntelErrorRateLimited),
+		}),
+	)
+	assert.Equal(
+		t,
+		carrierintelusage.UsageOutcomeServerError,
+		usageOutcome(&carrierintelports.CarrierIntelCall{
+			Err: providerError(carrierintelports.CarrierIntelErrorUnavailable),
+		}),
+	)
+	assert.Equal(
+		t,
+		carrierintelusage.UsageOutcomeClientError,
+		usageOutcome(&carrierintelports.CarrierIntelCall{
+			Err: providerError(carrierintelports.CarrierIntelErrorUnauthorized),
+		}),
+	)
 
 	assert.False(t, isOutageError(limited))
 	assert.False(t, isOutageError(context.Canceled))
 	assert.True(t, isOutageError(errors.New("connection reset")))
 	assert.True(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorUnavailable)))
 	assert.False(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorUnauthorized)))
-	assert.False(t, isOutageError(providerError(carrierintelports.CarrierIntelErrorPaymentRequired)))
+	assert.False(
+		t,
+		isOutageError(providerError(carrierintelports.CarrierIntelErrorPaymentRequired)),
+	)
 }
 
 func TestToBusinessError(t *testing.T) {
@@ -474,10 +498,10 @@ func TestToBusinessError(t *testing.T) {
 
 	var business *errortypes.BusinessError
 
-	assert.NoError(t, toBusinessError(integration.TypeCarrierOK, nil))
+	assert.NoError(t, ToBusinessError(integration.TypeCarrierOK, nil))
 
 	existing := errortypes.NewBusinessError("already friendly")
-	assert.Same(t, existing, toBusinessError(integration.TypeCarrierOK, existing))
+	assert.Same(t, existing, ToBusinessError(integration.TypeCarrierOK, existing))
 
 	kinds := []carrierintelports.CarrierIntelErrorKind{
 		carrierintelports.CarrierIntelErrorUnauthorized,
@@ -487,16 +511,19 @@ func TestToBusinessError(t *testing.T) {
 		carrierintelports.CarrierIntelErrorUnavailable,
 	}
 	for _, kind := range kinds {
-		err := toBusinessError(integration.TypeCarrierOK, providerError(kind))
+		err := ToBusinessError(integration.TypeCarrierOK, providerError(kind))
 		require.ErrorAs(t, err, &business, string(kind))
 		assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, kind), string(kind))
 	}
 
-	limited := toBusinessError(integration.TypeCarrierOK, &carrierintelports.CarrierIntelProviderError{
-		Provider:   integration.TypeCarrierOK,
-		Kind:       carrierintelports.CarrierIntelErrorRateLimited,
-		RetryAfter: 1500 * time.Millisecond,
-	})
+	limited := ToBusinessError(
+		integration.TypeCarrierOK,
+		&carrierintelports.CarrierIntelProviderError{
+			Provider:   integration.TypeCarrierOK,
+			Kind:       carrierintelports.CarrierIntelErrorRateLimited,
+			RetryAfter: 1500 * time.Millisecond,
+		},
+	)
 	require.ErrorAs(t, limited, &business)
 	wait, ok := retryAfter(limited)
 	assert.True(t, ok)
@@ -513,7 +540,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			if calls == 1 {
 				return limitedErr
@@ -529,7 +556,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeMonitor)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			return limitedErr
 		})
@@ -542,7 +569,7 @@ func TestWithRateLimitWait(t *testing.T) {
 		h := newHarness(t)
 		calls := 0
 		ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
-		err := h.svc.withRateLimitWait(ctx, func() error {
+		err := h.svc.WithRateLimitWait(ctx, func() error {
 			calls++
 			return &restx.RateLimitedError{RetryAfter: time.Minute}
 		})
@@ -557,14 +584,17 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("no caps configured never queries spend", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintel.EndpointProfileFull,
-			dotNumber: "818175",
-		})
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileFull,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Zero(t, h.usage.costCalls)
 	})
@@ -572,22 +602,25 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("a DOT already billed this month costs nothing", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("10")
-		price := bound.prices.Price(carrierintel.EndpointProfileFull)
-		h.usage.dedupeKeys[carrierintel.BillingDedupeKey(
-			carrierintel.EndpointProfileFull, price, "818175", h.now,
+		price := bound.prices.Price(carrierintelusage.EndpointProfileFull)
+		h.usage.dedupeKeys[carrierintelusage.BillingDedupeKey(
+			carrierintelusage.EndpointProfileFull, price, "818175", h.now,
 		)] = true
 
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintel.EndpointProfileFull,
-			dotNumber: "818175",
-		})
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileFull,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Zero(t, h.usage.costCalls)
 	})
@@ -595,24 +628,25 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("exceeding the monthly cap is refused and notifies once", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("8")
 
-		check := &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintel.EndpointProfileFull,
-			dotNumber: "818175",
+		check := &BudgetCheck{
+			Tenant:    h.tenant,
+			Control:   h.control,
+			Bound:     bound,
+			Endpoint:  carrierintelusage.EndpointProfileFull,
+			DOTNumber: "818175",
 		}
-		err := h.svc.guardBudget(t.Context(), check)
+
+		err := h.svc.GuardBudget(t.Context(), check)
 		require.ErrorIs(t, err, ErrSpendCapReached)
 		var business *errortypes.BusinessError
 		require.ErrorAs(t, err, &business)
 
-		require.ErrorIs(t, h.svc.guardBudget(t.Context(), check), ErrSpendCapReached)
+		require.ErrorIs(t, h.svc.GuardBudget(t.Context(), check), ErrSpendCapReached)
 		assert.Equal(t, []string{eventSpendHardCap}, h.notifications.eventTypes())
 		assert.Equal(t, 1, h.usage.costCalls)
 	})
@@ -620,19 +654,22 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("crossing the soft cap allows the call and warns", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		limit := decimal.RequireFromString("10")
 		h.control.MonthlySpendCap = &limit
 		h.control.SoftCapPercent = 80
 		h.usage.cost = decimal.RequireFromString("7.6")
 
-		err := h.svc.guardBudget(t.Context(), &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintel.EndpointProfileLite,
-			dotNumber: "818175",
-		})
+		err := h.svc.GuardBudget(
+			t.Context(),
+			&BudgetCheck{
+				Tenant:    h.tenant,
+				Control:   h.control,
+				Bound:     bound,
+				Endpoint:  carrierintelusage.EndpointProfileLite,
+				DOTNumber: "818175",
+			},
+		)
 		require.NoError(t, err)
 		assert.Equal(t, []string{eventSpendSoftCap}, h.notifications.eventTypes())
 	})
@@ -640,22 +677,23 @@ func TestGuardBudget(t *testing.T) {
 	t.Run("daily full profile cap only limits full profiles", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		h.control.DailyFullProfileCap = new(5)
 		h.usage.billable = 5
 
-		full := &budgetCheck{
-			tenant:    h.tenant,
-			control:   h.control,
-			bound:     bound,
-			endpoint:  carrierintel.EndpointProfileFull,
-			dotNumber: "818175",
+		full := &BudgetCheck{
+			Tenant:    h.tenant,
+			Control:   h.control,
+			Bound:     bound,
+			Endpoint:  carrierintelusage.EndpointProfileFull,
+			DOTNumber: "818175",
 		}
-		require.ErrorIs(t, h.svc.guardBudget(t.Context(), full), ErrSpendCapReached)
+
+		require.ErrorIs(t, h.svc.GuardBudget(t.Context(), full), ErrSpendCapReached)
 
 		lite := *full
-		lite.endpoint = carrierintel.EndpointProfileLite
-		require.NoError(t, h.svc.guardBudget(t.Context(), &lite))
+		lite.Endpoint = carrierintelusage.EndpointProfileLite
+		require.NoError(t, h.svc.GuardBudget(t.Context(), &lite))
 	})
 }
 
@@ -663,10 +701,10 @@ func TestRecordCallDedupesMonthlyCharges(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, newCarrierOKConnector())
-	bound := h.bind(t, integration.TypeCarrierOK, false)
+	bound := h.Bind(t, integration.TypeCarrierOK, false)
 	ctx := carrierintel.WithPurpose(t.Context(), carrierintel.PurposeVet)
 	call := carrierintelports.CarrierIntelCall{
-		Endpoint:  carrierintel.EndpointProfileFull,
+		Endpoint:  carrierintelusage.EndpointProfileFull,
 		DOTNumber: "818175",
 		Found:     true,
 	}
@@ -693,10 +731,10 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("upgrades to a full profile already paid for this month", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
-		price := bound.prices.Price(carrierintel.EndpointProfileFull)
-		h.usage.dedupeKeys[carrierintel.BillingDedupeKey(
-			carrierintel.EndpointProfileFull, price, "818175", h.now,
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
+		price := bound.prices.Price(carrierintelusage.EndpointProfileFull)
+		h.usage.dedupeKeys[carrierintelusage.BillingDedupeKey(
+			carrierintelusage.EndpointProfileFull, price, "818175", h.now,
 		)] = true
 
 		depth := h.svc.chooseDepth(
@@ -710,7 +748,7 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("keeps the requested depth when nothing was paid", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newCarrierOKConnector())
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 		depth := h.svc.chooseDepth(
 			t.Context(),
 			h.attempt(bound, carrierintel.LookupDepthLite),
@@ -722,7 +760,7 @@ func TestChooseDepth(t *testing.T) {
 	t.Run("falls back to the deepest depth the provider supports", func(t *testing.T) {
 		t.Parallel()
 		h := newHarness(t, newFMCSAConnector())
-		bound := h.bind(t, integration.TypeFMCSAQCMobile, false)
+		bound := h.Bind(t, integration.TypeFMCSAQCMobile, false)
 		depth := h.svc.chooseDepth(
 			t.Context(),
 			h.attempt(bound, carrierintel.LookupDepthFull),
@@ -741,7 +779,7 @@ func TestLookupWithFallback(t *testing.T) {
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		result, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -761,7 +799,7 @@ func TestLookupWithFallback(t *testing.T) {
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -776,11 +814,13 @@ func TestLookupWithFallback(t *testing.T) {
 	t.Run("rejected credentials never fall back", func(t *testing.T) {
 		t.Parallel()
 		primary, fallback := newCarrierOKConnector(), newFMCSAConnector()
-		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnauthorized)}
+		primary.client.errs = []error{
+			providerError(carrierintelports.CarrierIntelErrorUnauthorized),
+		}
 		h := newHarness(t, primary, fallback)
 		h.setPrimary(integration.TypeCarrierOK)
 		h.setFallback(integration.TypeFMCSAQCMobile)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -789,7 +829,10 @@ func TestLookupWithFallback(t *testing.T) {
 		require.ErrorAs(t, err, &business)
 		assert.True(
 			t,
-			carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnauthorized),
+			carrierintelports.IsCarrierIntelErrorKind(
+				err,
+				carrierintelports.CarrierIntelErrorUnauthorized,
+			),
 		)
 		assert.Empty(t, fallback.client.lookups())
 	})
@@ -803,7 +846,7 @@ func TestLookupWithFallback(t *testing.T) {
 		limit := decimal.RequireFromString("1")
 		h.control.MonthlySpendCap = &limit
 		h.usage.cost = decimal.RequireFromString("1")
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -824,7 +867,7 @@ func TestLookupWithFallback(t *testing.T) {
 		for range breakerFailureThreshold {
 			h.svc.breaker.record(key, true, time.Unix(h.now, 0))
 		}
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, used, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
@@ -840,14 +883,20 @@ func TestLookupWithFallback(t *testing.T) {
 		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorUnavailable)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		_, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
 		)
 		var business *errortypes.BusinessError
 		require.ErrorAs(t, err, &business)
-		assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnavailable))
+		assert.True(
+			t,
+			carrierintelports.IsCarrierIntelErrorKind(
+				err,
+				carrierintelports.CarrierIntelErrorUnavailable,
+			),
+		)
 	})
 
 	t.Run("not found is a result, not an error", func(t *testing.T) {
@@ -856,14 +905,14 @@ func TestLookupWithFallback(t *testing.T) {
 		primary.client.errs = []error{providerError(carrierintelports.CarrierIntelErrorNotFound)}
 		h := newHarness(t, primary)
 		h.setPrimary(integration.TypeCarrierOK)
-		bound := h.bind(t, integration.TypeCarrierOK, false)
+		bound := h.Bind(t, integration.TypeCarrierOK, false)
 
 		result, _, err := h.svc.lookupWithFallback(
 			t.Context(), h.attempt(bound, carrierintel.LookupDepthFull),
 		)
 		require.NoError(t, err)
 		assert.True(t, result.NotFound)
-		assert.Equal(t, carrierintel.EndpointProfileFull, result.Endpoint)
+		assert.Equal(t, carrierintelusage.EndpointProfileFull, result.Endpoint)
 	})
 }
 
@@ -871,7 +920,7 @@ func TestResolvePrimaryRequiresProvider(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, newCarrierOKConnector())
-	_, err := h.svc.resolvePrimary(t.Context(), h.tenant, h.control)
+	_, err := h.svc.ResolvePrimary(t.Context(), h.tenant, h.control)
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
 

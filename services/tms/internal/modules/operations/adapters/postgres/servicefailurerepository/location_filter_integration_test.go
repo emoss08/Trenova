@@ -54,6 +54,23 @@ func recordFailureAt(
 	return id
 }
 
+func atDistinctLocations(stops []*shipment.Stop, n int) []*shipment.Stop {
+	seen := make(map[pulid.ID]bool, n)
+	picked := make([]*shipment.Stop, 0, n)
+	for _, stop := range stops {
+		if seen[stop.LocationID] {
+			continue
+		}
+		seen[stop.LocationID] = true
+		picked = append(picked, stop)
+		if len(picked) == n {
+			break
+		}
+	}
+
+	return picked
+}
+
 func TestListConnection_NarrowsToFailuresAtTheLocationAsked(t *testing.T) {
 	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
@@ -66,11 +83,9 @@ func TestListConnection_NarrowsToFailuresAtTheLocationAsked(t *testing.T) {
 		BusinessUnitID: first.BusinessUnitID,
 	})
 
-	stops, err := st.DistinctOn(st.LocationID).
-		Order(st.LocationID.Asc(), st.ID.Asc()).
-		Limit(2).
-		List(ctx, db)
+	candidates, err := st.Order(st.ID.Asc()).Limit(200).List(ctx, db)
 	require.NoError(t, err)
+	stops := atDistinctLocations(candidates, 2)
 	require.Len(t, stops, 2, "the development seed should hold stops at two locations")
 
 	here := recordFailureAt(ctx, t, db, stops[0])

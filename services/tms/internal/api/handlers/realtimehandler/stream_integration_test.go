@@ -12,18 +12,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/realtimebroker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -95,17 +96,17 @@ func (r *sseReader) next(t *testing.T, event string) sseEvent {
 func TestStreamEndToEnd(t *testing.T) {
 	client := testutil.SetupTestRedis(t)
 	cfg := &config.Config{
-		App:      config.AppConfig{Debug: true},
-		Realtime: config.RealtimeConfig{ShardCount: 4, HeartbeatInterval: time.Hour},
+		App:      appconfig.Config{Debug: true},
+		Realtime: realtimeconfig.Config{ShardCount: 4, HeartbeatInterval: time.Hour},
 	}
 	logger := zap.NewNop()
 
 	lc := fxtest.NewLifecycle(t)
 	publisher := realtimebroker.NewPublisher(realtimebroker.PublisherParams{
-		Client: client, Config: cfg, Logger: logger, LC: lc,
+		Client: client, RealtimeConfig: &cfg.Realtime, Logger: logger, LC: lc,
 	})
 	broker := realtimebroker.NewBroker(realtimebroker.BrokerParams{
-		Publisher: publisher, Client: client, Config: cfg, Logger: logger, LC: lc,
+		Publisher: publisher, Client: client, RealtimeConfig: &cfg.Realtime, Logger: logger, LC: lc,
 	})
 	lc.RequireStart()
 	t.Cleanup(lc.RequireStop)
@@ -115,24 +116,24 @@ func TestStreamEndToEnd(t *testing.T) {
 		Return(&tenant.User{ID: testUserID, Name: "Dana Dispatcher"}, nil)
 
 	gateway := realtimeservice.NewGateway(realtimeservice.GatewayParams{
-		Logger: logger, Config: cfg, Broker: broker, UserRepo: users,
+		Logger: logger, RealtimeConfig: &cfg.Realtime, Broker: broker, UserRepo: users,
 	})
 	publish := realtimeservice.New(realtimeservice.Params{
-		Logger: logger, Config: cfg, Publisher: publisher,
+		Logger: logger, RealtimeConfig: &cfg.Realtime, Publisher: publisher,
 	})
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.Anything).
 		Return(&permissionports.PermissionCheckResult{Allowed: true}, nil).Maybe()
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App})
 	h := New(Params{
 		Gateway:      gateway,
 		ErrorHandler: eh,
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
-		Config: cfg,
-		Logger: logger,
+		RealtimeConfig: &cfg.Realtime,
+		Logger:         logger,
 	})
 
 	gin.SetMode(gin.TestMode)
@@ -160,18 +161,18 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	stream := readSSE(t, bufio.NewReader(resp.Body))
 
-	var ready agentports.RealtimeReadyEvent
+	var ready realtimeports.RealtimeReadyEvent
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "ready").data, &ready))
 	require.NotEmpty(t, ready.ConnectionID)
 
-	var snapshot agentports.RealtimePresenceSnapshot
+	var snapshot realtimeports.RealtimePresenceSnapshot
 	require.NoError(t, sonic.UnmarshalString(stream.next(t, "presence.snapshot").data, &snapshot))
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, "Dana Dispatcher", snapshot.Members[0].Name)
 
 	t.Run("an invalidation arrives with a resumable id", func(t *testing.T) {
 		require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-			&agentports.PublishResourceInvalidationRequest{
+			&realtimeports.PublishResourceInvalidationRequest{
 				OrganizationID: testOrgID,
 				BusinessUnitID: testBUID,
 				Resource:       "shipments",
@@ -206,7 +207,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		_ = typingResp.Body.Close()
 		require.Equal(t, http.StatusNoContent, typingResp.StatusCode)
 
-		var typing agentports.RealtimeTypingEvent
+		var typing realtimeports.RealtimeTypingEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "typing").data, &typing))
 		assert.Equal(t, "shipment-comments:"+shipmentID, typing.Scope)
 		assert.Equal(t, testUserID.String(), typing.UserID)
@@ -223,7 +224,7 @@ func TestStreamEndToEnd(t *testing.T) {
 		started := time.Now()
 		for range n {
 			require.NoError(t, publish.PublishResourceInvalidation(t.Context(),
-				&agentports.PublishResourceInvalidationRequest{
+				&realtimeports.PublishResourceInvalidationRequest{
 					OrganizationID: otherOrg,
 					BusinessUnitID: otherBU,
 					Resource:       "billing_queue",
@@ -241,8 +242,8 @@ func TestStreamEndToEnd(t *testing.T) {
 
 	t.Run("draining ends the stream with a shutdown notice", func(t *testing.T) {
 		gateway.Drain()
-		var closing agentports.RealtimeCloseEvent
+		var closing realtimeports.RealtimeCloseEvent
 		require.NoError(t, sonic.UnmarshalString(stream.next(t, "close").data, &closing))
-		assert.Equal(t, agentports.RealtimeCloseShutdown, closing.Reason)
+		assert.Equal(t, realtimeports.RealtimeCloseShutdown, closing.Reason)
 	})
 }

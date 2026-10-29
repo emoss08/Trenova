@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,11 +43,11 @@ type CheckCallResult struct {
 	Replayed  bool
 }
 
-func StopActualAction(kind checkcall.Kind) shipmentports.StopActualAction {
+func StopActualAction(kind checkcall.Kind) shipmentmoveports.StopActualAction {
 	if kind == checkcall.KindDeparture {
-		return shipmentports.StopActualActionDepart
+		return shipmentmoveports.StopActualActionDepart
 	}
-	return shipmentports.StopActualActionArrive
+	return shipmentmoveports.StopActualActionArrive
 }
 
 type CheckCallPreview struct {

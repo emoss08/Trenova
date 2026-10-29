@@ -3,8 +3,8 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 // validateExempt lists the action tools that do not check a call before it
@@ -36,10 +36,10 @@ func TestEveryActionToolValidatesBeforeFiling(t *testing.T) {
 
 	seen := make(map[string]bool, len(validateExempt))
 	for _, tool := range buildRegistered(t).Actions {
-		if tool.Policy().Kind != agent.ToolKindAction {
+		if tool.Policy().Kind != agenttooltrust.ToolKindAction {
 			continue
 		}
-		_, validates := tool.(agentports.ToolValidator)
+		_, validates := tool.(agenttoolports.ToolValidator)
 		reason, exempt := validateExempt[tool.Name()]
 		seen[tool.Name()] = true
 

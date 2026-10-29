@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -28,8 +28,8 @@ var (
 
 func (s *Service) TenderShipments(
 	ctx context.Context,
-	req *shipmentports.TenderShipmentsRequest,
-) (*shipmentports.TenderShipmentsResult, error) {
+	req *shipmentcapacityports.TenderShipmentsRequest,
+) (*shipmentcapacityports.TenderShipmentsResult, error) {
 	if len(req.Items) == 0 {
 		return nil, errortypes.NewValidationError(
 			"items",
@@ -45,9 +45,9 @@ func (s *Service) TenderShipments(
 		)
 	}
 
-	result := &shipmentports.TenderShipmentsResult{
-		Tendered: make([]*shipmentports.TenderShipmentSuccess, 0, len(req.Items)),
-		Failed:   make([]*shipmentports.TenderShipmentFailure, 0),
+	result := &shipmentcapacityports.TenderShipmentsResult{
+		Tendered: make([]*shipmentcapacityports.TenderShipmentSuccess, 0, len(req.Items)),
+		Failed:   make([]*shipmentcapacityports.TenderShipmentFailure, 0),
 	}
 	for _, item := range req.Items {
 		success, err := s.tenderOne(ctx, req.TenantInfo, item)
@@ -59,7 +59,7 @@ func (s *Service) TenderShipments(
 					zap.Error(err),
 				)
 			}
-			result.Failed = append(result.Failed, &shipmentports.TenderShipmentFailure{
+			result.Failed = append(result.Failed, &shipmentcapacityports.TenderShipmentFailure{
 				ShipmentID: item.ShipmentID,
 				Message:    message,
 			})
@@ -74,8 +74,8 @@ func (s *Service) TenderShipments(
 func (s *Service) tenderOne(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	item shipmentports.TenderShipmentItem,
-) (*shipmentports.TenderShipmentSuccess, error) {
+	item shipmentcapacityports.TenderShipmentItem,
+) (*shipmentcapacityports.TenderShipmentSuccess, error) {
 	sp, err := s.loadShipment(ctx, tenantInfo, item.ShipmentID)
 	if err != nil {
 		return nil, err
@@ -89,14 +89,14 @@ func (s *Service) tenderOne(
 		return s.tenderSpot(ctx, tenantInfo, sp.ID, move.ID, []pulid.ID{item.CarrierID})
 	}
 
-	created, err := s.tenderer.CreateWaterfall(ctx, &tenderservice.CreateWaterfallTenderRequest{
+	created, err := s.tenderer.CreateWaterfall(ctx, &tendercreate.CreateWaterfallTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: move.ID,
 	})
 	if err == nil {
 		return waterfallSuccess(sp.ID, created), nil
 	}
-	if !errors.Is(err, tenderservice.ErrNoRoutingGuideMatch) {
+	if !errors.Is(err, tendercreate.ErrNoRoutingGuideMatch) {
 		return nil, err
 	}
 
@@ -108,7 +108,7 @@ func (s *Service) tenderSpot(
 	tenantInfo pagination.TenantInfo,
 	shipmentID, moveID pulid.ID,
 	carrierIDs []pulid.ID,
-) (*shipmentports.TenderShipmentSuccess, error) {
+) (*shipmentcapacityports.TenderShipmentSuccess, error) {
 	shopped, err := s.shopper.Shop(ctx, &ratequoteservice.ShopRequest{
 		TenantInfo: tenantInfo,
 		ShipmentID: shipmentID,
@@ -123,13 +123,13 @@ func (s *Service) tenderSpot(
 		return nil, errNoPricedRate
 	}
 
-	created, err := s.tenderer.CreateSpot(ctx, &tenderservice.CreateSpotTenderRequest{
+	created, err := s.tenderer.CreateSpot(ctx, &tendercreate.CreateSpotTenderRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 		Mode:           tender.ModeSpotBroadcast,
-		Lines: []tenderservice.SpotTenderLine{{
+		Lines: []tendercreate.SpotTenderLine{{
 			CarrierID:  option.CarrierID,
-			RateMethod: shipment.CarrierRateMethodFlat,
+			RateMethod: shipmentvocab.CarrierRateMethodFlat,
 			Rate:       option.Cost,
 		}},
 	})
@@ -137,7 +137,7 @@ func (s *Service) tenderSpot(
 		return nil, err
 	}
 
-	return &shipmentports.TenderShipmentSuccess{
+	return &shipmentcapacityports.TenderShipmentSuccess{
 		ShipmentID:  shipmentID,
 		TenderID:    created.ID,
 		CarrierID:   option.CarrierID,
@@ -160,9 +160,9 @@ func firstPriced(result *ratequoteports.ShopResult) *ratequoteports.ShopOption {
 
 func waterfallSuccess(
 	shipmentID pulid.ID,
-	created *tenderservice.CreateWaterfallResult,
-) *shipmentports.TenderShipmentSuccess {
-	success := &shipmentports.TenderShipmentSuccess{ShipmentID: shipmentID}
+	created *tendercreate.CreateWaterfallResult,
+) *shipmentcapacityports.TenderShipmentSuccess {
+	success := &shipmentcapacityports.TenderShipmentSuccess{ShipmentID: shipmentID}
 	if created == nil || created.Tender == nil {
 		return success
 	}

@@ -3,8 +3,8 @@ package agentqualityjobs
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
@@ -13,49 +13,49 @@ import (
 type qualityEngine interface {
 	PlanSweep(
 		ctx context.Context,
-		req *agentqualityservice.SweepRequest,
-	) (*agentqualityservice.SweepPlan, error)
+		req *agentqualityengine.SweepRequest,
+	) (*agentqualityengine.SweepPlan, error)
 	OpenSuite(
 		ctx context.Context,
-		req *agentqualityservice.OpenSuiteRequest,
-	) (*agentqualityservice.OpenedSuite, error)
+		req *agentqualityengine.OpenSuiteRequest,
+	) (*agentqualityengine.OpenedSuite, error)
 	RecordSkipped(
 		ctx context.Context,
-		req *agentqualityservice.RecordSkippedRequest,
-	) (*agentqualityservice.OpenedSuite, error)
+		req *agentqualityengine.RecordSkippedRequest,
+	) (*agentqualityengine.OpenedSuite, error)
 	ListSuiteCases(
 		ctx context.Context,
-		req *agentqualityservice.ListSuiteCasesRequest,
-	) ([]agentqualityservice.SuiteCase, error)
+		req *agentqualityengine.ListSuiteCasesRequest,
+	) ([]agentqualityengine.SuiteCase, error)
 	CheckBudget(
 		ctx context.Context,
-		req *agentqualityservice.CheckBudgetRequest,
-	) (*agentquality.BudgetDecision, error)
+		req *agentqualityengine.CheckBudgetRequest,
+	) (*agentqualitysuite.BudgetDecision, error)
 	ScoreSuite(
 		ctx context.Context,
-		req *agentqualityservice.ScoreSuiteRequest,
-	) (*agentqualityservice.ScoredSuite, error)
+		req *agentqualityengine.ScoreSuiteRequest,
+	) (*agentqualityengine.ScoredSuite, error)
 	JudgeCase(
 		ctx context.Context,
-		req *agentqualityservice.JudgeCaseRequest,
-	) (*agentqualityservice.JudgedCase, error)
+		req *agentqualityengine.JudgeCaseRequest,
+	) (*agentqualityengine.JudgedCase, error)
 	SubmitJudgeBatch(
 		ctx context.Context,
-		req *agentqualityservice.SubmitJudgeBatchRequest,
-	) (*agentqualityservice.JudgeBatch, error)
+		req *agentqualityengine.SubmitJudgeBatchRequest,
+	) (*agentqualityengine.JudgeBatch, error)
 	CheckJudgeBatch(
 		ctx context.Context,
-		req *agentqualityservice.CheckJudgeBatchRequest,
-	) (*agentqualityservice.JudgeBatchStatus, error)
+		req *agentqualityengine.CheckJudgeBatchRequest,
+	) (*agentqualityengine.JudgeBatchStatus, error)
 	CollectJudgeBatch(
 		ctx context.Context,
-		req *agentqualityservice.CollectJudgeBatchRequest,
-	) (*agentqualityservice.CollectedJudgeBatch, error)
+		req *agentqualityengine.CollectJudgeBatchRequest,
+	) (*agentqualityengine.CollectedJudgeBatch, error)
 	FinalizeSuite(
 		ctx context.Context,
-		req *agentqualityservice.FinalizeSuiteRequest,
-	) (*agentqualityservice.FinalizedSuite, error)
-	FailSuite(ctx context.Context, req *agentqualityservice.FailSuiteRequest) error
+		req *agentqualityengine.FinalizeSuiteRequest,
+	) (*agentqualityengine.FinalizedSuite, error)
+	FailSuite(ctx context.Context, req *agentqualityengine.FailSuiteRequest) error
 }
 
 type scheduleReconciler interface {
@@ -65,7 +65,7 @@ type scheduleReconciler interface {
 type ActivitiesParams struct {
 	fx.In
 
-	Quality   *agentqualityservice.Service
+	Quality   *agentqualityengine.Engine
 	Schedules *QualitySchedules
 }
 
@@ -92,8 +92,8 @@ func nonRetryable(err error) error {
 
 func (a *Activities) PlanSweepActivity(
 	ctx context.Context,
-	req *agentqualityservice.SweepRequest,
-) (*agentqualityservice.SweepPlan, error) {
+	req *agentqualityengine.SweepRequest,
+) (*agentqualityengine.SweepPlan, error) {
 	plan, err := a.quality.PlanSweep(ctx, req)
 
 	return plan, nonRetryable(err)
@@ -101,8 +101,8 @@ func (a *Activities) PlanSweepActivity(
 
 func (a *Activities) OpenSuiteActivity(
 	ctx context.Context,
-	req *agentqualityservice.OpenSuiteRequest,
-) (*agentqualityservice.OpenedSuite, error) {
+	req *agentqualityengine.OpenSuiteRequest,
+) (*agentqualityengine.OpenedSuite, error) {
 	opened, err := a.quality.OpenSuite(ctx, req)
 
 	return opened, nonRetryable(err)
@@ -110,8 +110,8 @@ func (a *Activities) OpenSuiteActivity(
 
 func (a *Activities) RecordSkippedSuiteActivity(
 	ctx context.Context,
-	req *agentqualityservice.RecordSkippedRequest,
-) (*agentqualityservice.OpenedSuite, error) {
+	req *agentqualityengine.RecordSkippedRequest,
+) (*agentqualityengine.OpenedSuite, error) {
 	recorded, err := a.quality.RecordSkipped(ctx, req)
 
 	return recorded, nonRetryable(err)
@@ -119,8 +119,8 @@ func (a *Activities) RecordSkippedSuiteActivity(
 
 func (a *Activities) ListSuiteCasesActivity(
 	ctx context.Context,
-	req *agentqualityservice.ListSuiteCasesRequest,
-) ([]agentqualityservice.SuiteCase, error) {
+	req *agentqualityengine.ListSuiteCasesRequest,
+) ([]agentqualityengine.SuiteCase, error) {
 	cases, err := a.quality.ListSuiteCases(ctx, req)
 
 	return cases, nonRetryable(err)
@@ -128,8 +128,8 @@ func (a *Activities) ListSuiteCasesActivity(
 
 func (a *Activities) CheckEvalBudgetActivity(
 	ctx context.Context,
-	req *agentqualityservice.CheckBudgetRequest,
-) (*agentquality.BudgetDecision, error) {
+	req *agentqualityengine.CheckBudgetRequest,
+) (*agentqualitysuite.BudgetDecision, error) {
 	decision, err := a.quality.CheckBudget(ctx, req)
 
 	return decision, nonRetryable(err)
@@ -137,8 +137,8 @@ func (a *Activities) CheckEvalBudgetActivity(
 
 func (a *Activities) ScoreSuiteActivity(
 	ctx context.Context,
-	req *agentqualityservice.ScoreSuiteRequest,
-) (*agentqualityservice.ScoredSuite, error) {
+	req *agentqualityengine.ScoreSuiteRequest,
+) (*agentqualityengine.ScoredSuite, error) {
 	scored, err := a.quality.ScoreSuite(ctx, req)
 
 	return scored, nonRetryable(err)
@@ -146,8 +146,8 @@ func (a *Activities) ScoreSuiteActivity(
 
 func (a *Activities) JudgeCaseActivity(
 	ctx context.Context,
-	req *agentqualityservice.JudgeCaseRequest,
-) (*agentqualityservice.JudgedCase, error) {
+	req *agentqualityengine.JudgeCaseRequest,
+) (*agentqualityengine.JudgedCase, error) {
 	judged, err := a.quality.JudgeCase(ctx, req)
 
 	return judged, nonRetryable(err)
@@ -155,8 +155,8 @@ func (a *Activities) JudgeCaseActivity(
 
 func (a *Activities) SubmitJudgeBatchActivity(
 	ctx context.Context,
-	req *agentqualityservice.SubmitJudgeBatchRequest,
-) (*agentqualityservice.JudgeBatch, error) {
+	req *agentqualityengine.SubmitJudgeBatchRequest,
+) (*agentqualityengine.JudgeBatch, error) {
 	batch, err := a.quality.SubmitJudgeBatch(ctx, req)
 
 	return batch, nonRetryable(err)
@@ -164,8 +164,8 @@ func (a *Activities) SubmitJudgeBatchActivity(
 
 func (a *Activities) CheckJudgeBatchActivity(
 	ctx context.Context,
-	req *agentqualityservice.CheckJudgeBatchRequest,
-) (*agentqualityservice.JudgeBatchStatus, error) {
+	req *agentqualityengine.CheckJudgeBatchRequest,
+) (*agentqualityengine.JudgeBatchStatus, error) {
 	status, err := a.quality.CheckJudgeBatch(ctx, req)
 
 	return status, nonRetryable(err)
@@ -173,8 +173,8 @@ func (a *Activities) CheckJudgeBatchActivity(
 
 func (a *Activities) CollectJudgeBatchActivity(
 	ctx context.Context,
-	req *agentqualityservice.CollectJudgeBatchRequest,
-) (*agentqualityservice.CollectedJudgeBatch, error) {
+	req *agentqualityengine.CollectJudgeBatchRequest,
+) (*agentqualityengine.CollectedJudgeBatch, error) {
 	collected, err := a.quality.CollectJudgeBatch(ctx, req)
 
 	return collected, nonRetryable(err)
@@ -182,8 +182,8 @@ func (a *Activities) CollectJudgeBatchActivity(
 
 func (a *Activities) FinalizeSuiteActivity(
 	ctx context.Context,
-	req *agentqualityservice.FinalizeSuiteRequest,
-) (*agentqualityservice.FinalizedSuite, error) {
+	req *agentqualityengine.FinalizeSuiteRequest,
+) (*agentqualityengine.FinalizedSuite, error) {
 	finalized, err := a.quality.FinalizeSuite(ctx, req)
 
 	return finalized, nonRetryable(err)
@@ -191,7 +191,7 @@ func (a *Activities) FinalizeSuiteActivity(
 
 func (a *Activities) FailSuiteActivity(
 	ctx context.Context,
-	req *agentqualityservice.FailSuiteRequest,
+	req *agentqualityengine.FailSuiteRequest,
 ) error {
 	return nonRetryable(a.quality.FailSuite(ctx, req))
 }

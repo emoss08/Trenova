@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -14,9 +14,9 @@ import (
 func TestPlanAssessIsAPreviewThatSaysWhetherTheMemosPost(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{
-		LateChargeAssessmentMode: tenant.LateChargeAssessmentModePreview,
-		InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+	f := newLateChargeFixture(t, &billingcontrol.BillingControl{
+		LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModePreview,
+		InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
 	})
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
@@ -36,8 +36,8 @@ func TestPlanAssessIsAPreviewThatSaysWhetherTheMemosPost(t *testing.T) {
 func TestPlanAssessRefusesWhatARealRunRefuses(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{
-		LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled,
+	f := newLateChargeFixture(t, &billingcontrol.BillingControl{
+		LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeDisabled,
 	})
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf)

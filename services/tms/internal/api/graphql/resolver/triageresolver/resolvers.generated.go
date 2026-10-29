@@ -3,7 +3,7 @@
 package triageresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	triagebriefingservice "github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	triageconflictservice "github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	triagecorrectionservice "github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
@@ -11,7 +11,7 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TriageRuleService       *triageruleservice.Service
 	TriageBriefingService   *triagebriefingservice.Service
 	TriageCorrectionService *triagecorrectionservice.Service

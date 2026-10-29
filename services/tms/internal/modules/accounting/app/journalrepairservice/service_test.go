@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,11 +59,14 @@ func (r *pagedRepo) SetDriverSettlementPaidBatch(
 }
 
 type controlReader struct {
-	control *tenant.AccountingControl
+	control *accountingcontrol.AccountingControl
 	calls   int
 }
 
-func (c *controlReader) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
+func (c *controlReader) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
 	c.calls++
 	return c.control, nil
 }
@@ -106,7 +109,7 @@ func TestRepairSkipsARecordItCannotJournalAndPagesOn(t *testing.T) {
 	first := paidWithoutSnapshot(orgID, "STL-1")
 	second := paidWithoutSnapshot(orgID, "STL-2")
 	repo := &pagedRepo{payments: [][]*driversettlementports.DriverPaymentRepair{{first}, {second}}}
-	controls := &controlReader{control: &tenant.AccountingControl{
+	controls := &controlReader{control: &accountingcontrol.AccountingControl{
 		OrganizationID:       orgID,
 		DefaultCashAccountID: pulid.MustNew("gla_"),
 	}}

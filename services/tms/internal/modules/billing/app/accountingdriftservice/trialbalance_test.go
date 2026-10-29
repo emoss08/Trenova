@@ -7,9 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -24,8 +31,8 @@ import (
 
 func (f *fakeReader) ReadTrialBalance(
 	_ context.Context,
-	req *accountingsyncports.ReadTrialBalanceRequest,
-) ([]accountingsyncports.AccountingTrialBalanceRow, error) {
+	req *accountingconnectorports.ReadTrialBalanceRequest,
+) ([]accountingconnectorports.AccountingTrialBalanceRow, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.trialReq = append(f.trialReq, *req)
@@ -35,7 +42,7 @@ func (f *fakeReader) ReadTrialBalance(
 	return slices.Clone(f.trial), nil
 }
 
-func (f *fakeReader) trialRequests() []accountingsyncports.ReadTrialBalanceRequest {
+func (f *fakeReader) trialRequests() []accountingconnectorports.ReadTrialBalanceRequest {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.trialReq)
@@ -53,7 +60,10 @@ func (f *fakeRecords) CountByStatus(
 	}
 	out := make([]accountingsyncports.AccountingSyncStatusCount, 0, len(counts))
 	for status, count := range counts {
-		out = append(out, accountingsyncports.AccountingSyncStatusCount{Status: status, Count: count})
+		out = append(
+			out,
+			accountingsyncports.AccountingSyncStatusCount{Status: status, Count: count},
+		)
 	}
 	return out, nil
 }
@@ -119,15 +129,15 @@ func (f *trialLedger) sums() []journalentryports.SumLedgerRequest {
 }
 
 type trialMappings struct {
-	accountingsyncports.AccountingMappingRepository
-	rows []*accountingsync.AccountingMapping
+	accountingmappingports.AccountingMappingRepository
+	rows []*accountingmapping.AccountingMapping
 }
 
 func (f *trialMappings) ListByConnection(
 	_ context.Context,
-	req *accountingsyncports.ListAccountingMappingsQuery,
-) ([]*accountingsync.AccountingMapping, error) {
-	out := []*accountingsync.AccountingMapping{}
+	req *accountingmappingports.ListAccountingMappingsQuery,
+) ([]*accountingmapping.AccountingMapping, error) {
+	out := []*accountingmapping.AccountingMapping{}
 	for _, row := range f.rows {
 		if slices.Contains(req.TargetTypes, row.TargetType) {
 			out = append(out, row)
@@ -137,15 +147,15 @@ func (f *trialMappings) ListByConnection(
 }
 
 type trialReferences struct {
-	accountingsyncports.AccountingReferenceObjectRepository
-	rows []*accountingsync.AccountingReferenceObject
+	accountingmappingports.AccountingReferenceObjectRepository
+	rows []*accountingmapping.AccountingReferenceObject
 }
 
 func (f *trialReferences) GetByExternalIDs(
 	_ context.Context,
-	req *accountingsyncports.GetAccountingReferenceObjectsRequest,
-) ([]*accountingsync.AccountingReferenceObject, error) {
-	out := []*accountingsync.AccountingReferenceObject{}
+	req *accountingmappingports.GetAccountingReferenceObjectsRequest,
+) ([]*accountingmapping.AccountingReferenceObject, error) {
+	out := []*accountingmapping.AccountingReferenceObject{}
 	for _, row := range f.rows {
 		if row.Kind == req.Kind && slices.Contains(req.ExternalIDs, row.ExternalID) {
 			out = append(out, row)
@@ -178,7 +188,12 @@ type trialFixture struct {
 	retained pulid.ID
 }
 
-func balance(id pulid.ID, code, name string, category accounttype.Category, net int64) journalentryports.LedgerAccountBalance {
+func balance(
+	id pulid.ID,
+	code, name string,
+	category accounttype.Category,
+	net int64,
+) journalentryports.LedgerAccountBalance {
 	out := journalentryports.LedgerAccountBalance{
 		AccountID:   id,
 		AccountCode: code,
@@ -196,8 +211,8 @@ func balance(id pulid.ID, code, name string, category accounttype.Category, net 
 func glMapping(
 	connectionID, accountID pulid.ID,
 	label, externalID, externalName string,
-) *accountingsync.AccountingMapping {
-	return &accountingsync.AccountingMapping{
+) *accountingmapping.AccountingMapping {
+	return &accountingmapping.AccountingMapping{
 		ID:              pulid.MustNew("acctm_"),
 		ConnectionID:    connectionID,
 		TargetType:      accountingsync.TargetGLAccount,
@@ -205,12 +220,17 @@ func glMapping(
 		TargetLabel:     label,
 		ExternalID:      externalID,
 		ExternalName:    externalName,
-		State:           accountingsync.MappingStateConfirmed,
+		State:           accountingmapping.MappingStateConfirmed,
 	}
 }
 
-func providerRow(externalID, name, debit, credit string) accountingsyncports.AccountingTrialBalanceRow {
-	row := accountingsyncports.AccountingTrialBalanceRow{AccountExternalID: externalID, AccountName: name}
+func providerRow(
+	externalID, name, debit, credit string,
+) accountingconnectorports.AccountingTrialBalanceRow {
+	row := accountingconnectorports.AccountingTrialBalanceRow{
+		AccountExternalID: externalID,
+		AccountName:       name,
+	}
 	if debit != "" {
 		row.Debit = decimal.RequireFromString(debit)
 	}
@@ -223,8 +243,8 @@ func providerRow(externalID, name, debit, credit string) accountingsyncports.Acc
 func newTrialFixture(t *testing.T) *trialFixture {
 	t.Helper()
 	h := newHarness(t)
-	h.conns.conn.SyncMode = accountingsync.SyncModeLedger
-	h.conns.conn.LedgerGranularity = accountingsync.LedgerDetailed
+	h.conns.conn.SyncMode = accountingprovider.SyncModeLedger
+	h.conns.conn.LedgerGranularity = accountingconnection.LedgerDetailed
 	h.conns.conn.ExternalFiscalYearStartMonth = 1
 
 	f := &trialFixture{
@@ -249,8 +269,14 @@ func newTrialFixture(t *testing.T) *trialFixture {
 		balance(f.fuel, "4010", "Fuel surcharge revenue", accounttype.CategoryRevenue, -80_000),
 		balance(f.ar, "1100", "Accounts receivable", accounttype.CategoryAsset, 999_999),
 	}
-	f.mappings = &trialMappings{rows: []*accountingsync.AccountingMapping{
-		glMapping(h.conn.ID, f.ar, "GL account 1100 Accounts receivable", "qb-ar", "Accounts Receivable (A/R)"),
+	f.mappings = &trialMappings{rows: []*accountingmapping.AccountingMapping{
+		glMapping(
+			h.conn.ID,
+			f.ar,
+			"GL account 1100 Accounts receivable",
+			"qb-ar",
+			"Accounts Receivable (A/R)",
+		),
 		{
 			ID:           pulid.MustNew("acctm_"),
 			ConnectionID: h.conn.ID,
@@ -259,7 +285,7 @@ func newTrialFixture(t *testing.T) *trialFixture {
 			TargetLabel:  "Deposit account",
 			ExternalID:   "qb-bank",
 			ExternalName: "Checking (renamed since)",
-			State:        accountingsync.MappingStateConfirmed,
+			State:        accountingmapping.MappingStateConfirmed,
 		},
 		{
 			ID:              pulid.MustNew("acctm_"),
@@ -269,21 +295,45 @@ func newTrialFixture(t *testing.T) *trialFixture {
 			TargetLabel:     "GL account 5000 Fuel expense",
 			ExternalID:      "qb-fuel",
 			ExternalName:    "Fuel",
-			State:           accountingsync.MappingStateProposed,
+			State:           accountingmapping.MappingStateProposed,
 		},
-		glMapping(h.conn.ID, f.prepaid, "GL account 1200 Prepaid expenses", "qb-prepaid", "Prepaid"),
-		glMapping(h.conn.ID, f.revenue, "GL account 4000 Freight revenue", "qb-income", "Freight income"),
-		glMapping(h.conn.ID, f.fuel, "GL account 4010 Fuel surcharge revenue", "qb-income", "Freight income"),
-		glMapping(h.conn.ID, f.retained, "GL account 3000 Retained earnings", "qb-re", "Retained Earnings"),
+		glMapping(
+			h.conn.ID,
+			f.prepaid,
+			"GL account 1200 Prepaid expenses",
+			"qb-prepaid",
+			"Prepaid",
+		),
+		glMapping(
+			h.conn.ID,
+			f.revenue,
+			"GL account 4000 Freight revenue",
+			"qb-income",
+			"Freight income",
+		),
+		glMapping(
+			h.conn.ID,
+			f.fuel,
+			"GL account 4010 Fuel surcharge revenue",
+			"qb-income",
+			"Freight income",
+		),
+		glMapping(
+			h.conn.ID,
+			f.retained,
+			"GL account 3000 Retained earnings",
+			"qb-re",
+			"Retained Earnings",
+		),
 		{
 			ID:           pulid.MustNew("acctm_"),
 			ConnectionID: h.conn.ID,
 			TargetType:   accountingsync.TargetCustomer,
 			ExternalID:   "qb-cust",
-			State:        accountingsync.MappingStateConfirmed,
+			State:        accountingmapping.MappingStateConfirmed,
 		},
 	}}
-	h.reader.trial = []accountingsyncports.AccountingTrialBalanceRow{
+	h.reader.trial = []accountingconnectorports.AccountingTrialBalanceRow{
 		providerRow("qb-ar", "Accounts Receivable (A/R)", "1500.00", ""),
 		providerRow("qb-bank", "Checking", "400.00", ""),
 		providerRow("qb-income", "Freight income", "", "2000.00"),
@@ -291,48 +341,57 @@ func newTrialFixture(t *testing.T) *trialFixture {
 		providerRow("qb-re", "Retained Earnings", "", "999.00"),
 		providerRow("qb-fuel", "Fuel", "10.00", ""),
 	}
-	references := &trialReferences{rows: []*accountingsync.AccountingReferenceObject{
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "qb-re", AccountType: "Equity", AccountSubType: "RetainedEarnings"},
-		{Kind: accountingsync.ReferenceKindAccount, ExternalID: "qb-bank", AccountType: "Bank"},
+	references := &trialReferences{rows: []*accountingmapping.AccountingReferenceObject{
+		{
+			Kind:           accountingprovider.ReferenceKindAccount,
+			ExternalID:     "qb-re",
+			AccountType:    "Equity",
+			AccountSubType: "RetainedEarnings",
+		},
+		{Kind: accountingprovider.ReferenceKindAccount, ExternalID: "qb-bank", AccountType: "Bank"},
 	}}
 	h.svc = New(Params{
-		Logger:            zap.NewNop(),
-		DB:                dbtest.NopConnection{},
-		Connections:       h.conns,
-		ConnectionService: h.connSvc,
-		Records:           h.records,
-		Findings:          h.findings,
-		Source:            h.source,
-		Ledger:            f.ledger,
-		Mappings:          f.mappings,
-		References:        references,
-		Organizations:     trialOrganizations{timezone: "UTC"},
-		InvoiceRepo:       h.invRepo,
-		Controls:          h.controls,
-		Invoices:          h.invoices,
-		Payments:          h.payments,
-		Permissions:       h.perms,
-		AuditService:      h.audit,
-		Dispatcher:        h.kicks,
-		Publisher:         h.events,
+		Logger:        zap.NewNop(),
+		DB:            dbtest.NopConnection{},
+		Connections:   h.conns,
+		Sessions:      h.connSvc,
+		Records:       h.records,
+		Findings:      h.findings,
+		Source:        h.source,
+		Ledger:        f.ledger,
+		Mappings:      f.mappings,
+		References:    references,
+		Organizations: trialOrganizations{timezone: "UTC"},
+		InvoiceRepo:   h.invRepo,
+		Controls:      h.controls,
+		Memos:         h.invoices,
+		Voids:         h.invoices,
+		Payments:      h.payments,
+		Permissions:   h.perms,
+		AuditService:  h.audit,
+		Dispatcher:    h.kicks,
+		Publisher:     h.events,
 	})
 	h.svc.now = func() time.Time { return h.now }
 	return f
 }
 
-func (f *trialFixture) reconcile(t *testing.T) *accountingsyncports.AccountingDriftBalanceResult {
+func (f *trialFixture) reconcile(t *testing.T) *accountingdriftports.AccountingDriftBalanceResult {
 	t.Helper()
-	result, err := f.h.svc.ReconcileBalances(t.Context(), &accountingsyncports.ReconcileAccountingDriftBalancesRequest{
-		TenantInfo:   f.h.tenant,
-		ConnectionID: f.h.conn.ID,
-		EventBudget:  20,
-	})
+	result, err := f.h.svc.ReconcileBalances(
+		t.Context(),
+		&accountingdriftports.ReconcileAccountingDriftBalancesRequest{
+			TenantInfo:   f.h.tenant,
+			ConnectionID: f.h.conn.ID,
+			EventBudget:  20,
+		},
+	)
 	require.NoError(t, err)
 	return result
 }
 
-func openByObject(h *harness) map[pulid.ID]*accountingsync.AccountingDriftFinding {
-	out := map[pulid.ID]*accountingsync.AccountingDriftFinding{}
+func openByObject(h *harness) map[pulid.ID]*accountingdrift.AccountingDriftFinding {
+	out := map[pulid.ID]*accountingdrift.AccountingDriftFinding{}
 	for _, finding := range h.findings.open() {
 		out[finding.ObjectID] = finding
 	}
@@ -347,7 +406,12 @@ func TestTrialBalanceComparesEveryMappedProviderAccount(t *testing.T) {
 	result := f.reconcile(t)
 
 	assert.False(t, result.More)
-	assert.Equal(t, 4, result.Customers, "receivables, cash, prepaid and income; retained earnings is left out")
+	assert.Equal(
+		t,
+		4,
+		result.Customers,
+		"receivables, cash, prepaid and income; retained earnings is left out",
+	)
 	assert.Equal(t, 2, result.Opened)
 
 	requests := f.h.reader.trialRequests()
@@ -360,7 +424,7 @@ func TestTrialBalanceComparesEveryMappedProviderAccount(t *testing.T) {
 	require.Len(t, open, 2)
 	cash := open[f.cash]
 	require.NotNil(t, cash)
-	assert.Equal(t, accountingsync.DriftTrialBalanceMismatch, cash.Kind)
+	assert.Equal(t, accountingdrift.DriftTrialBalanceMismatch, cash.Kind)
 	assert.Equal(t, accountingsync.DriftObjectGLAccount, cash.ObjectType)
 	assert.Equal(t, "Checking", cash.ObjectNumber, "the provider's own name for the account wins")
 	assert.Equal(t, "qb-bank", cash.ExternalID)
@@ -371,13 +435,22 @@ func TestTrialBalanceComparesEveryMappedProviderAccount(t *testing.T) {
 	assert.Equal(t, "1000 Operating cash", cash.Detail[0].ObjectNumber)
 
 	prepaid := open[f.prepaid]
-	require.NotNil(t, prepaid, "an account Trenova never touched still counts when the provider holds a balance")
+	require.NotNil(
+		t,
+		prepaid,
+		"an account Trenova never touched still counts when the provider holds a balance",
+	)
 	assert.Equal(t, int64(0), *prepaid.TrenovaMinor)
 	assert.Equal(t, int64(2_500), *prepaid.ProviderMinor)
 	assert.Equal(t, "Prepaid", prepaid.ObjectNumber)
 
 	assert.NotContains(t, open, f.ar)
-	assert.NotContains(t, open, f.revenue, "income sums from the fiscal year start and two accounts share one")
+	assert.NotContains(
+		t,
+		open,
+		f.revenue,
+		"income sums from the fiscal year start and two accounts share one",
+	)
 	assert.NotContains(t, open, f.fuel)
 	assert.NotContains(t, open, f.retained)
 	for _, finding := range open {
@@ -503,7 +576,7 @@ func TestDocumentConnectionsNeverReadTheTrialBalance(t *testing.T) {
 	t.Parallel()
 
 	f := newTrialFixture(t)
-	f.h.conns.conn.SyncMode = accountingsync.SyncModeDocument
+	f.h.conns.conn.SyncMode = accountingprovider.SyncModeDocument
 	f.h.conns.conn.LedgerGranularity = ""
 
 	f.reconcile(t)

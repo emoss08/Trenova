@@ -6,15 +6,15 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/lading"
-
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -42,17 +42,17 @@ var (
 
 func (t *ApplyConnectionDraftTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
 	summary := "Would set up an EDI connection from the partner's guide."
-	input, plan, err := t.plan(ctx, &params)
+	input, plan, err := t.plan(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (t *ApplyConnectionDraftTool) Preview(
 	}
 	preview := toolpreview.Build(draftSummary(plan.Draft), changes...)
 	if readyErr := readiness(input, plan.Draft); readyErr != nil {
-		return common.WarnWouldFail(preview, readyErr), nil
+		return changepreview.WarnWouldFail(preview, readyErr), nil
 	}
 	return preview, nil
 }
@@ -72,12 +72,14 @@ func pinned(id pulid.ID, version int64) *int64 {
 	if id.IsNil() {
 		return nil
 	}
-	return common.PinnedVersion(version)
+	return changepreview.PinnedVersion(version)
 }
 
-func draftChanges(plan *ediports.ConnectionDraftPlan) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, 3+len(plan.Mappings))
-	add := func(change *agent.RecordChange, err error) error {
+func draftChanges(
+	plan *ediconnectiondraftports.ConnectionDraftPlan,
+) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, 3+len(plan.Mappings))
+	add := func(change *agentpreview.RecordChange, err error) error {
 		if err != nil {
 			return err
 		}
@@ -186,14 +188,14 @@ func writeChange[T any](
 	record toolpreview.Record,
 	before, after *T,
 	fields []string,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	if before == nil {
 		return toolpreview.Create(record, after, toolpreview.Only(fields...))
 	}
 	return toolpreview.Changed(record, before, after, toolpreview.Only(fields...))
 }
 
-func draftPartnerName(draft *ediports.ConnectionDraft) string {
+func draftPartnerName(draft *ediconnectiondraftports.ConnectionDraft) string {
 	for index := range draft.Partner.Fields {
 		if draft.Partner.Fields[index].Field == "partner.name" &&
 			draft.Partner.Fields[index].Value != "" {
@@ -203,7 +205,7 @@ func draftPartnerName(draft *ediports.ConnectionDraft) string {
 	return draft.FileName
 }
 
-func draftSummary(draft *ediports.ConnectionDraft) string {
+func draftSummary(draft *ediconnectiondraftports.ConnectionDraft) string {
 	name := draftPartnerName(draft)
 	sets := make([]string, 0, len(draft.Connection.Sets))
 	for _, set := range draft.Connection.Sets {
@@ -213,7 +215,7 @@ func draftSummary(draft *ediports.ConnectionDraft) string {
 		)
 	}
 	verb := "Would set up"
-	if draft.Partner.Match == ediports.PartnerMatchExisting {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchExisting {
 		verb = "Would update"
 	}
 	summary := fmt.Sprintf(
@@ -224,13 +226,13 @@ func draftSummary(draft *ediports.ConnectionDraft) string {
 	if len(sets) > 0 {
 		summary += " It exchanges " + strings.Join(sets, ", ") + "."
 	}
-	if draft.Partner.Match == ediports.PartnerMatchNew {
+	if draft.Partner.Match == ediconnectiondraftports.PartnerMatchNew {
 		summary += " Everything new is inactive until a person enters its credentials and turns it on."
 	}
 	return summary + outstanding(draft)
 }
 
-func outstanding(draft *ediports.ConnectionDraft) string {
+func outstanding(draft *ediconnectiondraftports.ConnectionDraft) string {
 	notes := make([]string, 0, 3)
 	if missing := draft.CredentialsToEnter(); len(missing) > 0 {
 		notes = append(notes, "Before turning it on, enter: "+strings.Join(missing, ", ")+".")

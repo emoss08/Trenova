@@ -56,13 +56,15 @@ func TestStreamChat_RecordsTheTimeToTheFirstPieceOfTheReply(t *testing.T) {
 
 			frames := []string{first}
 			if name == "thinking" {
-				frames = append(frames,
-					`{"model":"m","choices":[{"index":0,"delta":{"content":"Friday."},"finish_reason":"stop"}]}`)
+				frames = append(
+					frames,
+					`{"model":"m","choices":[{"index":0,"delta":{"content":"Friday."},"finish_reason":"stop"}]}`,
+				)
 			}
 			server := slowStartServer(t, frames)
 			usage := &fakeUsage{}
 			svc := newTestService(t, chatProvider("only", server.URL, 10))
-			svc.usage = usage
+			svc.Usage = usage
 
 			_, err := svc.StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
 			require.NoError(t, err)
@@ -85,7 +87,7 @@ func TestStreamChat_LeavesTheFirstTokenUnsetForAToolCallOnly(t *testing.T) {
 	})
 	usage := &fakeUsage{}
 	svc := newTestService(t, chatProvider("only", server.URL, 10))
-	svc.usage = usage
+	svc.Usage = usage
 
 	_, err := svc.StreamChat(t.Context(), chatRequest(pulid.Nil), func(string) {})
 	require.NoError(t, err)

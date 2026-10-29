@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,17 +51,17 @@ func RoleCeiling(maxSensitivity permission.FieldSensitivity) permission.FieldSen
 	return maxSensitivity
 }
 
-var defaultRegistry = sync.OnceValue(permission.NewRegistry)
+var defaultRegistry = sync.OnceValue(permissioncatalog.NewRegistry)
 
 // DefaultRegistry is the resource registry built once for the process, for
 // code that classifies fields without a registry of its own to hand.
-func DefaultRegistry() *permission.Registry {
+func DefaultRegistry() *permissioncatalog.Registry {
 	return defaultRegistry()
 }
 
 // Level is the sensitivity the registry gives one field of a resource.
 func Level(
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	resource permission.Resource,
 	field string,
 ) permission.FieldSensitivity {
@@ -74,7 +75,7 @@ func Level(
 // Visible reports whether one field of a resource may be shown under a
 // ceiling. Confidential is refused outright.
 func Visible(
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	resource permission.Resource,
 	field string,
 	ceiling permission.FieldSensitivity,

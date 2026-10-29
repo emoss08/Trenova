@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -163,7 +164,7 @@ func (s *Service) act(
 	case aituneup.KindReorderProviders:
 		return s.putAhead(ctx, tenantInfo, tuneUp.ProviderID, tuneUp.OtherProviderID, actor)
 	case aituneup.KindAssignTask:
-		_, err := s.providerService.AssignTask(ctx, &agentports.AssignAIProviderTaskRequest{
+		_, err := s.providerService.AssignTask(ctx, &aiproviderports.AssignAIProviderTaskRequest{
 			TenantInfo: tenantInfo,
 			ProviderID: tuneUp.ProviderID,
 			Task:       tuneUp.Task,
@@ -184,8 +185,8 @@ func (s *Service) raiseToolTier(
 	if err != nil {
 		return err
 	}
-	_, err = s.trust.PromoteTool(ctx, &agentports.PromoteToolRequest{
-		PromoteReadyRequest: agentports.PromoteReadyRequest{
+	_, err = s.trust.PromoteTool(ctx, &agenttrustports.PromoteToolRequest{
+		PromoteReadyRequest: agenttrustports.PromoteReadyRequest{
 			TenantInfo: tenantInfo,
 			Threshold:  control.PromotionThreshold,
 			DecidedBy:  actor.AuditActor().UserID,
@@ -231,7 +232,7 @@ func (s *Service) putAhead(
 	if !ok {
 		return errortypes.NewBusinessError("A provider in this tune-up no longer exists")
 	}
-	_, err = s.providerService.Reorder(ctx, &agentports.ReorderAIProvidersRequest{
+	_, err = s.providerService.Reorder(ctx, &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  tenantInfo,
 		ProviderIDs: next,
 	}, actor)

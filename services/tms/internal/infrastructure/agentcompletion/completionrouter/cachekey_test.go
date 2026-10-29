@@ -3,8 +3,9 @@ package completionrouter
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionchat"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,7 +17,7 @@ func TestPromptCacheKey(t *testing.T) {
 
 	agent := pulid.MustNew("agd_")
 	one, two := int64(1), int64(2)
-	request := func(user pulid.ID, version *int64) *agentports.ChatCompletionRequest {
+	request := func(user pulid.ID, version *int64) *llmports.ChatCompletionRequest {
 		req := chatRequest(pulid.Nil)
 		req.Attribution = aiusageports.AIUsageAttribution{
 			UserID:            user,
@@ -30,15 +31,30 @@ func TestPromptCacheKey(t *testing.T) {
 	second := request(pulid.MustNew("usr_"), &one)
 	second.TenantInfo = first.TenantInfo
 
-	key := promptCacheKey(first)
+	key := completionchat.PromptCacheKey(first)
 	assert.Len(t, key, 32)
-	assert.Equal(t, key, promptCacheKey(second), "people asking the same agent share it")
+	assert.Equal(
+		t,
+		key,
+		completionchat.PromptCacheKey(second),
+		"people asking the same agent share it",
+	)
 	assert.NotContains(t, key, agent.String(), "no identifier of ours reaches the provider")
 
 	newer := request(pulid.MustNew("usr_"), &two)
 	newer.TenantInfo = first.TenantInfo
-	assert.NotEqual(t, key, promptCacheKey(newer), "a new version of the agent is a new prompt")
+	assert.NotEqual(
+		t,
+		key,
+		completionchat.PromptCacheKey(newer),
+		"a new version of the agent is a new prompt",
+	)
 
 	elsewhere := request(pulid.MustNew("usr_"), &one)
-	assert.NotEqual(t, key, promptCacheKey(elsewhere), "another organization is another prompt")
+	assert.NotEqual(
+		t,
+		key,
+		completionchat.PromptCacheKey(elsewhere),
+		"another organization is another prompt",
+	)
 }

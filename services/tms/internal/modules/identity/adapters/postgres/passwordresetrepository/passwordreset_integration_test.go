@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
@@ -24,17 +24,17 @@ func TestInviteTokensKeepTheirPurposeAndStayOutOfTheResetAllowance(t *testing.T)
 	ctx = data.Ctx(ctx)
 	now := timeutils.NowUnix()
 
-	invite := &tenant.PasswordResetToken{
+	invite := &passwordreset.PasswordResetToken{
 		UserID:         data.User.ID,
 		BusinessUnitID: data.BusinessUnit.ID,
 		OrganizationID: data.Organization.ID,
 		TokenHash:      tokenutils.Hash("invite-token"),
-		Purpose:        tenant.PasswordResetPurposeInvite,
+		Purpose:        passwordreset.PasswordResetPurposeInvite,
 		ExpiresAt:      now + 3_600,
 	}
 	require.NoError(t, repo.Create(ctx, invite))
 
-	reset := &tenant.PasswordResetToken{
+	reset := &passwordreset.PasswordResetToken{
 		UserID:         data.User.ID,
 		BusinessUnitID: data.BusinessUnit.ID,
 		OrganizationID: data.Organization.ID,
@@ -45,13 +45,13 @@ func TestInviteTokensKeepTheirPurposeAndStayOutOfTheResetAllowance(t *testing.T)
 
 	found, err := repo.FindRedeemableByHash(ctx, tokenutils.Hash("invite-token"), now)
 	require.NoError(t, err)
-	assert.Equal(t, tenant.PasswordResetPurposeInvite, found.Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeInvite, found.Purpose)
 	require.NotNil(t, found.User)
 	assert.Equal(t, data.User.ID, found.User.ID)
 
 	found, err = repo.FindRedeemableByHash(ctx, tokenutils.Hash("reset-token"), now)
 	require.NoError(t, err)
-	assert.Equal(t, tenant.PasswordResetPurposeReset, found.Purpose)
+	assert.Equal(t, passwordreset.PasswordResetPurposeReset, found.Purpose)
 
 	issued, err := repo.CountSince(ctx, data.User.ID, now-60)
 	require.NoError(t, err)

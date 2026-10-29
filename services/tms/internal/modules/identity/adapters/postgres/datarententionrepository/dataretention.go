@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention/dataretentiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -40,7 +40,7 @@ func New(p Params) tenantports.DataRetentionRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-) (*pagination.ListResult[*tenant.DataRetention], error) {
+) (*pagination.ListResult[*dataretention.DataRetention], error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"read every organization's retention settings for retention sweeps",
@@ -48,14 +48,14 @@ func (r *repository) List(
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error) {
-			entities, err := tenantdb.DataRetentions.AllTenants().All(ctx, r.db.Keel(ctx))
+		func(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error) {
+			entities, err := dataretentiondb.DataRetentions.AllTenants().All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list data retentions", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*tenant.DataRetention]{
+			return &pagination.ListResult[*dataretention.DataRetention]{
 				Items:      entities,
 				Total:      len(entities),
 				TotalExact: true,
@@ -67,9 +67,9 @@ func (r *repository) List(
 func (r *repository) Get(
 	ctx context.Context,
 	_ tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
-		entity, err := tenantdb.DataRetentions.Cache(resultcache.Settings()...).
+) (*dataretention.DataRetention, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dataretention.DataRetention, error) {
+		entity, err := dataretentiondb.DataRetentions.Cache(resultcache.Settings()...).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, dataRetentionErrors.Map(err, "")
@@ -81,10 +81,10 @@ func (r *repository) Get(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
-		if err := tenantdb.DataRetentions.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dataretention.DataRetention, error) {
+		if err := dataretentiondb.DataRetentions.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error(
 				"failed to update data retention",
 				zap.String("orgID", entity.OrganizationID.String()),
@@ -99,9 +99,9 @@ func (r *repository) Update(
 
 func (r *repository) Upsert(
 	ctx context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dataretention.DataRetention, error) {
 		existing, err := r.Get(ctx, tenantports.GetDataRetentionRequest{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -120,11 +120,11 @@ func (r *repository) Upsert(
 			return nil, err
 		}
 
-		dr := tenantdb.DataRetentions
+		dr := dataretentiondb.DataRetentions
 		if _, err = dr.Upsert(
 			ctx,
 			r.db.Keel(ctx),
-			[]*tenant.DataRetention{entity},
+			[]*dataretention.DataRetention{entity},
 			keel.OnConflict(dr.OrganizationID).Update(
 				dr.AuditRetentionPeriod,
 				dr.EDIInboundFileRetentionPeriod,

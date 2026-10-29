@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,7 +31,7 @@ type StartRunRequest struct {
 	ShipmentIDs []pulid.ID
 	SearchQuery string
 
-	ShipmentStatus              shipment.Status
+	ShipmentStatus              shipmentvocab.Status
 	BillType                    billingqueue.BillType
 	MarkCompletedReadyToInvoice bool
 }

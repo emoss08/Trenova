@@ -2,16 +2,18 @@ package aianalyticsrepository
 
 import (
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
@@ -209,8 +211,8 @@ func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.Wo
 		Group(keys...)
 }
 
-func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agent.AgentDecision] {
-	d := agentdb.AgentDecisions
+func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agentdecision.AgentDecision] {
+	d := agentdecisiondb.AgentDecisions
 	p := agentdb.AgentProposals
 	w := aianalyticsdb.WorkUnits
 	keys := deploymentColumns(w)
@@ -218,9 +220,9 @@ func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agent.AgentDec
 	return d.Join(p, p.ID.EqCol(d.ProposalID)).
 		Join(w, w.DecisionRunID.EqCol(p.RunID)).
 		Pick(append(append([]keel.Expr{}, keys...),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionAccepted)),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionModified)),
-			keel.Count().Filter(d.Decision.Eq(agent.DecisionRejected)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionAccepted)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionModified)),
+			keel.Count().Filter(d.Decision.Eq(agentdecision.DecisionRejected)),
 		)...).
 		Where(append(unitScope(w, filter),
 			d.CreatedAt.Gte(filter.Since),
@@ -359,7 +361,7 @@ func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*aian
 func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*keel.Row] {
 	t := aianalyticsdb.UnitTools
 	w := aianalyticsdb.WorkUnits
-	s := agentdb.AgentRunSteps
+	s := agentrunstepdb.AgentRunSteps
 	latest := t.FinishedAt.Max()
 	candidates := keel.CTE("candidates", []string{colUnitID, "finished_at"}, t.
 		Pick(t.UnitID, latest).
@@ -389,8 +391,8 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 			s.SettledAtMs.Div(keel.Int64(1000)).Coalesce(s.UpdatedAt),
 		).
 		Where(
-			s.Kind.Eq(string(agentports.RunStepTool)),
-			s.Status.Eq(string(agentports.RunStepFailed)),
+			s.Kind.Eq(string(agentruntimeports.RunStepTool)),
+			s.Status.Eq(string(agentruntimeports.RunStepFailed)),
 			s.ToolName.Eq(req.ToolName),
 		).
 		Order(s.UpdatedAt.Desc(), s.ID.Desc()).

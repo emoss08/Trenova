@@ -4,10 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
@@ -30,15 +34,15 @@ type Params struct {
 
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
-	Repo         agentports.AIProviderRepository
-	Keys         agentports.AIProviderKeyRepository `optional:"true"`
+	Repo         aiproviderports.AIProviderRepository
+	Keys         aiproviderports.AIProviderKeyRepository `optional:"true"`
 	Versions     settingversionports.SettingVersionRepository
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
 	AuditService auditports.AuditService
 	// Tester runs a test on a worker, which calls back into RunTest.
-	Tester    agentports.AIProviderTester
-	Config    *config.Config
+	Tester    aiproviderports.AIProviderTester
+	AIConfig  *aiconfig.Config
 	Analytics aianalyticsports.AnalyticsCache `optional:"true"`
 }
 
@@ -48,39 +52,34 @@ type EndpointProber interface {
 		ctx context.Context,
 		provider *aiprovider.Provider,
 		apiKey string,
-	) *agentports.TestAIProviderResult
+	) *aiproviderports.TestAIProviderResult
 	ListModels(
 		ctx context.Context,
 		provider *aiprovider.Provider,
 		apiKey string,
-	) ([]agentports.AIProviderModelOption, error)
+	) ([]aiproviderports.AIProviderModelOption, error)
 }
 
 type Service struct {
 	l          *zap.Logger
 	db         kernelports.Transactor
-	repo       agentports.AIProviderRepository
-	keys       agentports.AIProviderKeyRepository
+	repo       aiproviderports.AIProviderRepository
+	keys       aiproviderports.AIProviderKeyRepository
 	versions   settingversionports.SettingVersionRepository
 	encryption *encryptionservice.Service
 	prober     EndpointProber
 	audit      auditports.AuditService
-	tester     agentports.AIProviderTester
-	ai         *config.AIConfig
+	tester     aiproviderports.AIProviderTester
+	ai         *aiconfig.Config
 	analytics  aianalyticsports.AnalyticsCache
 }
 
 var (
-	_ agentports.AIProviderService = (*Service)(nil)
-	_ agentports.AIProviderProbe   = (*Service)(nil)
+	_ aiproviderports.AIProviderService = (*Service)(nil)
+	_ aiproviderports.AIProviderProbe   = (*Service)(nil)
 )
 
 func New(p Params) *Service {
-	var ai *config.AIConfig
-	if p.Config != nil {
-		ai = p.Config.GetAIConfig()
-	}
-
 	return &Service{
 		l:          p.Logger.Named("service.aiprovider"),
 		db:         p.DB,
@@ -91,7 +90,7 @@ func New(p Params) *Service {
 		prober:     p.Prober,
 		audit:      p.AuditService,
 		tester:     p.Tester,
-		ai:         ai,
+		ai:         p.AIConfig,
 		analytics:  p.Analytics,
 	}
 }
@@ -107,7 +106,7 @@ func (s *Service) analyticsChanged(ctx context.Context, tenant pagination.Tenant
 
 func (s *Service) List(
 	ctx context.Context,
-	req *agentports.ListAIProviderRequest,
+	req *aiproviderports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.List(ctx, req)
 	if err != nil {
@@ -123,7 +122,7 @@ func (s *Service) List(
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAIProviderConnectionRequest,
+	req *aiproviderports.ListAIProviderConnectionRequest,
 ) (*pagination.CursorListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.ListConnection(ctx, req)
 	if err != nil {
@@ -139,7 +138,7 @@ func (s *Service) ListConnection(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *agentports.AIProviderSelectOptionsRequest,
+	req *aiproviderports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	result, err := s.repo.SelectOptions(ctx, req)
 	if err != nil {
@@ -155,7 +154,7 @@ func (s *Service) SelectOptions(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	provider, err := s.repo.GetByID(ctx, req)
 	if err != nil {
@@ -165,9 +164,26 @@ func (s *Service) GetByID(
 	return provider.Redacted(), nil
 }
 
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req aiproviderports.GetAIProvidersByIDsRequest,
+) ([]*aiprovider.Provider, error) {
+	providers, err := s.repo.GetByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	redacted := make([]*aiprovider.Provider, 0, len(providers))
+	for _, provider := range providers {
+		redacted = append(redacted, provider.Redacted())
+	}
+
+	return redacted, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
-	req *agentports.SaveAIProviderRequest,
+	req *aiproviderports.SaveAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
 	provider := &aiprovider.Provider{
@@ -209,10 +225,10 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.SaveAIProviderRequest,
+	req *aiproviderports.SaveAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) (*aiprovider.Provider, error) {
-	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	existing, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -227,7 +243,7 @@ func (s *Service) Update(
 	if err = s.apply(&updated, req, actor); err != nil {
 		return nil, err
 	}
-	updated.ForgetExpiredPreviousKey(timeutils.NowUnix())
+	aiproviderkey.ForgetExpiredPreviousKey(&updated, timeutils.NowUnix())
 
 	multiErr := errortypes.NewMultiError()
 	if keptKeyForNewEndpoint(existing, &updated, req) {
@@ -247,7 +263,7 @@ func (s *Service) Update(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if aiprovider.AdvisorSettingsChanged(existing, &updated) {
+	if aiproviderchange.AdvisorSettingsChanged(existing, &updated) {
 		updated.AdvisorRefusal = nil
 	}
 
@@ -277,10 +293,10 @@ func (s *Service) Update(
 
 func (s *Service) Delete(
 	ctx context.Context,
-	req agentports.DeleteAIProviderRequest,
+	req aiproviderports.DeleteAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) error {
-	existing, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest(req))
+	existing, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest(req))
 	if err != nil {
 		return err
 	}
@@ -306,8 +322,8 @@ func (s *Service) Delete(
 // reported as such rather than as a failed test.
 func (s *Service) Test(
 	ctx context.Context,
-	req agentports.GetAIProviderByIDRequest,
-) (*agentports.TestAIProviderResult, error) {
+	req aiproviderports.GetAIProviderByIDRequest,
+) (*aiproviderports.TestAIProviderResult, error) {
 	if _, err := s.repo.GetByID(ctx, req); err != nil {
 		return nil, err
 	}
@@ -319,8 +335,8 @@ func (s *Service) Test(
 // worker runs for Test.
 func (s *Service) RunTest(
 	ctx context.Context,
-	req agentports.GetAIProviderByIDRequest,
-) (*agentports.TestAIProviderResult, error) {
+	req aiproviderports.GetAIProviderByIDRequest,
+) (*aiproviderports.TestAIProviderResult, error) {
 	provider, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
@@ -334,7 +350,7 @@ func (s *Service) RunTest(
 	s.tidyKey(ctx, provider, apiKey, req.TenantInfo)
 	result := s.prober.Probe(ctx, provider, apiKey)
 
-	if err = s.repo.MarkTested(ctx, agentports.MarkAIProviderTestedRequest{
+	if err = s.repo.MarkTested(ctx, aiproviderports.MarkAIProviderTestedRequest{
 		ID:         provider.ID,
 		TenantInfo: req.TenantInfo,
 		Outcome: &aiprovider.TestOutcome{
@@ -366,22 +382,28 @@ func (s *Service) tidyKey(
 	if s.keys == nil {
 		return
 	}
-	if provider.NeedsKeyFingerprint() && apiKey != "" {
+	if aiproviderkey.NeedsKeyFingerprint(provider) && apiKey != "" {
 		fingerprint := secretutils.FingerprintOf(provider.CredentialFingerprintSubject(apiKey))
-		if err := s.keys.RecordFingerprint(ctx, agentports.RecordAIProviderKeyFingerprintRequest{
-			ID:         provider.ID,
-			TenantInfo: tenantInfo,
-			Prefix:     fingerprint.Prefix,
-			LastFour:   fingerprint.LastFour,
-		}); err != nil {
+		if err := s.keys.RecordFingerprint(
+			ctx,
+			&aiproviderports.RecordAIProviderKeyFingerprintRequest{
+				ID:         provider.ID,
+				TenantInfo: tenantInfo,
+				Prefix:     fingerprint.Prefix,
+				LastFour:   fingerprint.LastFour,
+			},
+		); err != nil {
 			s.l.Warn("failed to record ai provider key fingerprint", zap.Error(err))
 		}
 	}
 	if provider.PreviousKeyExpired(timeutils.NowUnix()) {
-		if _, err := s.keys.ClearExpiredPrevious(ctx, agentports.ClearExpiredAIProviderKeysRequest{
-			TenantInfo: tenantInfo,
-			Now:        timeutils.NowUnix(),
-		}); err != nil {
+		if _, err := s.keys.ClearExpiredPrevious(
+			ctx,
+			aiproviderports.ClearExpiredAIProviderKeysRequest{
+				TenantInfo: tenantInfo,
+				Now:        timeutils.NowUnix(),
+			},
+		); err != nil {
 			s.l.Warn("failed to clear expired ai provider keys", zap.Error(err))
 		}
 	}
@@ -391,7 +413,7 @@ func (s *Service) tidyKey(
 // defaulting the fields an administrator can reasonably leave blank.
 func (s *Service) apply(
 	provider *aiprovider.Provider,
-	req *agentports.SaveAIProviderRequest,
+	req *aiproviderports.SaveAIProviderRequest,
 	actor *permissionports.RequestActor,
 ) error {
 	before := provider.ConnectionSnapshot()
@@ -407,7 +429,7 @@ func (s *Service) apply(
 	}
 	// A replaced key is kept as a fallback only for the place and identity it
 	// was entered for; kept across a move, it would be sent somewhere new.
-	sameEndpoint := aiprovider.SameCredentialTarget(before, provider)
+	sameEndpoint := aiproviderchange.SameCredentialTarget(before, provider)
 	provider.Model = strings.TrimSpace(req.Model)
 	if err := s.checkPrivateNetwork(req.AllowPrivateNetwork); err != nil {
 		return err
@@ -426,11 +448,11 @@ func (s *Service) apply(
 	}
 	provider.ReasoningEffort = req.ReasoningEffort
 	if provider.ReasoningEffort == "" {
-		provider.ReasoningEffort = aiprovider.ReasoningOff
+		provider.ReasoningEffort = aireasoning.ReasoningOff
 	}
 	provider.ThinkingStyle = req.ThinkingStyle
 	if provider.ThinkingStyle == "" {
-		provider.ThinkingStyle = aiprovider.ThinkingStyleAuto
+		provider.ThinkingStyle = aireasoning.ThinkingStyleAuto
 	}
 	provider.AdvisorEnabled = req.AdvisorEnabled
 	provider.AdvisorModel = strings.TrimSpace(req.AdvisorModel)
@@ -462,7 +484,7 @@ func (s *Service) apply(
 	})
 }
 
-func clonePlatformSettings(settings *aiprovider.PlatformSettings) *aiprovider.PlatformSettings {
+func clonePlatformSettings(settings *aiplatform.PlatformSettings) *aiplatform.PlatformSettings {
 	if settings == nil {
 		return nil
 	}
@@ -472,7 +494,7 @@ func clonePlatformSettings(settings *aiprovider.PlatformSettings) *aiprovider.Pl
 }
 
 // applyLimits copies the limits, taking the default for one left at zero.
-func applyLimits(provider *aiprovider.Provider, req *agentports.SaveAIProviderRequest) {
+func applyLimits(provider *aiprovider.Provider, req *aiproviderports.SaveAIProviderRequest) {
 	provider.TimeoutSeconds = req.TimeoutSeconds
 	if provider.TimeoutSeconds == 0 {
 		provider.TimeoutSeconds = aiprovider.DefaultTimeoutSeconds
@@ -526,16 +548,16 @@ func (s *Service) replaceKey(provider *aiprovider.Provider, change *keyChange) e
 	if err != nil {
 		return err
 	}
-	provider.ReplaceAPIKey(replacement)
+	aiproviderkey.ReplaceAPIKey(provider, &replacement)
 
 	return nil
 }
 
 // keyReplacement encrypts a new credential. Only its ends are kept in the
 // clear, to tell two keys apart.
-func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, error) {
+func (s *Service) keyReplacement(change *keyChange) (aiproviderkey.KeyReplacement, error) {
 	incoming := strings.TrimSpace(change.incoming)
-	replacement := aiprovider.KeyReplacement{
+	replacement := aiproviderkey.KeyReplacement{
 		AddedByID:    change.actor.PersonUserID(),
 		Now:          timeutils.NowUnix(),
 		KeepPrevious: change.keepPrevious,
@@ -573,13 +595,13 @@ func (s *Service) keyReplacement(change *keyChange) (aiprovider.KeyReplacement, 
 // key in place.
 func keptKeyForNewEndpoint(
 	existing, updated *aiprovider.Provider,
-	req *agentports.SaveAIProviderRequest,
+	req *aiproviderports.SaveAIProviderRequest,
 ) bool {
 	if req.APIKey != nil || !existing.HasStoredAPIKey() {
 		return false
 	}
 
-	return !aiprovider.SameCredentialTarget(existing, updated)
+	return !aiproviderchange.SameCredentialTarget(existing, updated)
 }
 
 func credentialAAD(provider *aiprovider.Provider) encryptionservice.AAD {
@@ -621,7 +643,7 @@ func (s *Service) persistRebound(
 	if rebound == "" || s.keys == nil {
 		return
 	}
-	if err := s.keys.RebindSealedKey(ctx, &agentports.RebindAIProviderKeyRequest{
+	if err := s.keys.RebindSealedKey(ctx, &aiproviderports.RebindAIProviderKeyRequest{
 		ID: provider.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: provider.OrganizationID,

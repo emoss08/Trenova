@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -22,20 +23,20 @@ type moveStatusView struct {
 
 func (t *UnassignMovesTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	requests, err := t.requests(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	requests, err := t.requests(params)
 	if err != nil {
 		return nil, err
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(requests)*3)
+	changes := make([]*agentpreview.RecordChange, 0, len(requests)*3)
 	shipments := make([]string, 0, len(requests))
 	refusals := make([]string, 0)
 	for _, request := range requests {
 		plan, pErr := t.assignments.PreviewUnassign(ctx, request)
 		if pErr != nil {
-			if !common.IsRefusal(pErr) && !errortypes.IsNotFoundError(pErr) {
+			if !changepreview.IsRefusal(pErr) && !errortypes.IsNotFoundError(pErr) {
 				return nil, pErr
 			}
 			refusals = append(refusals,
@@ -46,11 +47,11 @@ func (t *UnassignMovesTool) Preview(
 		removed, rErr := toolpreview.Delete(toolpreview.Record{
 			Resource: permission.ResourceShipmentMove,
 			Label:    "Assignment on " + plan.ShipmentBefore.ProNumber,
-		}, plan.Assignment, masterdatatools.AssignmentOptions()...)
+		}, plan.Assignment, movetools.AssignmentOptions()...)
 		if rErr != nil {
 			return nil, rErr
 		}
-		coverage, cErr := common.CoverageChanges(
+		coverage, cErr := shipmentpreview.CoverageChanges(
 			plan.ShipmentBefore,
 			plan.ShipmentAfter,
 			request.ShipmentMoveID,
@@ -68,14 +69,14 @@ func (t *UnassignMovesTool) Preview(
 		summary = fmt.Sprintf(
 			"Would take the driver and equipment off %s (%s), leaving each uncovered. "+
 				"The drivers are told the load was taken off them.",
-			common.CountOf(len(shipments), "move"),
+			changepreview.CountOf(len(shipments), "move"),
 			strings.Join(shipments, ", "),
 		)
 	}
 
 	preview := toolpreview.Build(summary, changes...)
 	if len(refusals) > 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"These moves would be refused and left as they are: "+strings.Join(refusals, "; "))
 	}
 
@@ -84,19 +85,19 @@ func (t *UnassignMovesTool) Preview(
 
 func (t *UpdateMoveStatusTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	request, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
 
 	summary := fmt.Sprintf("Would set %s to %s.",
-		common.CountOf(len(request.MoveIDs), "move"), request.Status)
+		changepreview.CountOf(len(request.MoveIDs), "move"), request.Status)
 	plan, err := t.moves.PreviewUpdateStatus(ctx, request)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -107,13 +108,17 @@ func (t *UpdateMoveStatusTool) Preview(
 		pros[entity.ID] = entity.ProNumber
 	}
 
-	changes := make([]*agent.RecordChange, 0, len(plan.MovesBefore)+len(plan.ShipmentsBefore))
+	changes := make(
+		[]*agentpreview.RecordChange,
+		0,
+		len(plan.MovesBefore)+len(plan.ShipmentsBefore),
+	)
 	for idx, before := range plan.MovesBefore {
 		change, cErr := toolpreview.Changed(toolpreview.Record{
 			Resource: permission.ResourceShipmentMove,
 			ID:       before.ID,
 			Label:    "Move on " + pros[before.ShipmentID],
-			Version:  common.PreviewVersion(before.Version),
+			Version:  changepreview.PreviewVersion(before.Version),
 		}, &moveStatusView{Status: string(before.Status)},
 			&moveStatusView{Status: string(plan.MovesAfter[idx].Status)},
 		)
@@ -125,7 +130,7 @@ func (t *UpdateMoveStatusTool) Preview(
 
 	moved := make([]string, 0, len(plan.ShipmentsBefore))
 	for idx, before := range plan.ShipmentsBefore {
-		change, sErr := common.ShipmentStatusChange(before, plan.ShipmentsAfter[idx])
+		change, sErr := shipmentpreview.ShipmentStatusChange(before, plan.ShipmentsAfter[idx])
 		if sErr != nil {
 			return nil, sErr
 		}
@@ -145,13 +150,13 @@ func (t *UpdateMoveStatusTool) Preview(
 	return toolpreview.Build(summary, changes...), nil
 }
 
-func moveStatusConsequences(status shipment.MoveStatus, moved []string) string {
+func moveStatusConsequences(status shipmentvocab.MoveStatus, moved []string) string {
 	out := ""
 	if len(moved) > 0 {
 		out = ", which moves " + strings.Join(moved, " and ")
 	}
 	out += "."
-	if status == shipment.MoveStatusCompleted {
+	if status == shipmentvocab.MoveStatusCompleted {
 		out += " Completing a move releases its tractor and trailer for their next move."
 	}
 

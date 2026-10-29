@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 )
 
 var (
-	_ accountingsyncports.AccountingJournalWriter = (*Connector)(nil)
-	_ accountingsyncports.AccountingLedgerReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingJournalWriter = (*Connector)(nil)
+	_ accountingconnectorports.AccountingLedgerReader  = (*Connector)(nil)
 )
 
 var (
@@ -22,8 +23,8 @@ var (
 
 func (c *Connector) CreateJournalEntry(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingJournalDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingJournalDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsLedger() {
 		return nil, errDocumentKind
 	}
@@ -35,7 +36,7 @@ func (c *Connector) CreateJournalEntry(
 	if err != nil {
 		return nil, err
 	}
-	created, err := client.CreateJournalEntry(ctx, doc.RequestID, txn)
+	created, err := quickbookstxn.CreateJournalEntry(ctx, client, doc.RequestID, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +45,8 @@ func (c *Connector) CreateJournalEntry(
 
 func (c *Connector) UpdateJournalEntry(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingJournalDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingJournalDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsLedger() {
 		return nil, errDocumentKind
 	}
@@ -61,7 +62,7 @@ func (c *Connector) UpdateJournalEntry(
 	if err != nil {
 		return nil, err
 	}
-	saved, err := client.UpdateJournalEntry(ctx, doc.RequestID, id, txn)
+	saved, err := quickbookstxn.UpdateJournalEntry(ctx, client, doc.RequestID, id, txn)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +71,8 @@ func (c *Connector) UpdateJournalEntry(
 
 func (c *Connector) DeleteJournalEntry(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsLedger() {
 		return nil, errDocumentKind
 	}
@@ -83,23 +84,23 @@ func (c *Connector) DeleteJournalEntry(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = client.DeleteJournalEntry(ctx, ref.RequestID, id); err != nil {
+	if _, err = quickbookstxn.DeleteJournalEntry(ctx, client, ref.RequestID, id); err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{ExternalID: id}, nil
+	return &accountingconnectorports.AccountingDocumentResult{ExternalID: id}, nil
 }
 
 func (c *Connector) journalResult(
-	saved *quickbooks.TxnResult,
-) *accountingsyncports.AccountingDocumentResult {
-	return &accountingsyncports.AccountingDocumentResult{
+	saved *quickbookstxn.TxnResult,
+) *accountingconnectorports.AccountingDocumentResult {
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.DocNumber,
 		Refs: map[string]string{
 			accountingsync.ExternalRefDocument:     saved.ID,
-			accountingsync.ExternalRefDocumentType: string(quickbooks.TxnJournalEntry),
+			accountingsync.ExternalRefDocumentType: string(quickbookstxn.TxnJournalEntry),
 			accountingsync.ExternalRefURL: c.appURL(
-				quickbooks.TxnJournalEntry.AppPath(),
+				quickbookstxn.TxnJournalEntry.AppPath(),
 				saved.ID,
 			),
 		},
@@ -107,15 +108,15 @@ func (c *Connector) journalResult(
 }
 
 func journalTxnOf(
-	doc *accountingsyncports.AccountingJournalDocument,
-) (*quickbooks.JournalTxn, error) {
-	txn := &quickbooks.JournalTxn{
+	doc *accountingconnectorports.AccountingJournalDocument,
+) (*quickbookstxn.JournalTxn, error) {
+	txn := &quickbookstxn.JournalTxn{
 		DocNumber:    doc.DocNumber,
 		TxnDate:      doc.TxnDate,
 		CurrencyCode: doc.CurrencyCode,
 		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  doc.PrivateNote,
-		Lines:        make([]quickbooks.JournalLine, 0, len(doc.Lines)),
+		Lines:        make([]quickbookstxn.JournalLine, 0, len(doc.Lines)),
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
@@ -127,7 +128,7 @@ func journalTxnOf(
 		if err != nil {
 			return nil, err
 		}
-		txn.Lines = append(txn.Lines, quickbooks.JournalLine{
+		txn.Lines = append(txn.Lines, quickbookstxn.JournalLine{
 			PostingType: posting,
 			AccountID:   line.AccountExternalID,
 			Amount:      line.Amount,
@@ -140,28 +141,28 @@ func journalTxnOf(
 }
 
 func postingOf(
-	posting accountingsyncports.AccountingJournalPosting,
-) (quickbooks.PostingType, error) {
+	posting accountingconnectorports.AccountingJournalPosting,
+) (quickbookstxn.PostingType, error) {
 	switch posting {
-	case accountingsyncports.AccountingJournalDebit:
-		return quickbooks.PostingDebit, nil
-	case accountingsyncports.AccountingJournalCredit:
-		return quickbooks.PostingCredit, nil
+	case accountingconnectorports.AccountingJournalDebit:
+		return quickbookstxn.PostingDebit, nil
+	case accountingconnectorports.AccountingJournalCredit:
+		return quickbookstxn.PostingCredit, nil
 	default:
 		return "", errJournalPosting
 	}
 }
 
 func journalEntityOf(
-	line *accountingsyncports.AccountingJournalLine,
-) (quickbooks.JournalEntityType, error) {
+	line *accountingconnectorports.AccountingJournalLine,
+) (quickbookstxn.JournalEntityType, error) {
 	switch line.PartyKind {
 	case "":
 		return "", nil
-	case accountingsyncports.AccountingJournalCustomer:
-		return quickbooks.JournalEntityCustomer, nil
-	case accountingsyncports.AccountingJournalVendor:
-		return quickbooks.JournalEntityVendor, nil
+	case accountingconnectorports.AccountingJournalCustomer:
+		return quickbookstxn.JournalEntityCustomer, nil
+	case accountingconnectorports.AccountingJournalVendor:
+		return quickbookstxn.JournalEntityVendor, nil
 	default:
 		return "", errJournalParty
 	}
@@ -169,8 +170,8 @@ func journalEntityOf(
 
 func (c *Connector) ReadTrialBalance(
 	ctx context.Context,
-	req *accountingsyncports.ReadTrialBalanceRequest,
-) ([]accountingsyncports.AccountingTrialBalanceRow, error) {
+	req *accountingconnectorports.ReadTrialBalanceRequest,
+) ([]accountingconnectorports.AccountingTrialBalanceRow, error) {
 	client, err := c.client(req.Auth)
 	if err != nil {
 		return nil, err
@@ -182,9 +183,9 @@ func (c *Connector) ReadTrialBalance(
 	if err != nil {
 		return nil, err
 	}
-	out := make([]accountingsyncports.AccountingTrialBalanceRow, 0, len(rows))
+	out := make([]accountingconnectorports.AccountingTrialBalanceRow, 0, len(rows))
 	for idx := range rows {
-		out = append(out, accountingsyncports.AccountingTrialBalanceRow{
+		out = append(out, accountingconnectorports.AccountingTrialBalanceRow{
 			AccountExternalID: rows[idx].AccountID,
 			AccountName:       rows[idx].AccountName,
 			Debit:             rows[idx].Debit,

@@ -13,7 +13,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -96,7 +96,7 @@ func (n Numberer) invoiceNumber(ctx context.Context, req *Request) (string, erro
 	}
 
 	return n.generator.Generate(ctx, &seqgen.GenerateRequest{
-		Type:   tenant.SequenceTypeInvoice,
+		Type:   sequenceconfig.SequenceTypeInvoice,
 		OrgID:  req.TenantInfo.OrgID,
 		BuID:   req.TenantInfo.BuID,
 		Format: format,
@@ -139,7 +139,7 @@ func (n Numberer) customerFormat(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	profile *customer.CustomerBillingProfile,
-) *tenant.SequenceFormat {
+) *sequenceconfig.SequenceFormat {
 	if n.formats == nil || profile == nil ||
 		profile.InvoiceNumberFormat != customer.InvoiceNumberFormatCustomPrefix ||
 		profile.CustomerInvoicePrefix == "" {
@@ -148,7 +148,7 @@ func (n Numberer) customerFormat(
 
 	base, err := n.formats.GetFormat(
 		ctx,
-		tenant.SequenceTypeInvoice,
+		sequenceconfig.SequenceTypeInvoice,
 		tenantInfo.OrgID,
 		tenantInfo.BuID,
 	)

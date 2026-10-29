@@ -1,0 +1,235 @@
+package accountingconnectorports
+
+import (
+	"context"
+	"errors"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+)
+
+type AccountingTokenGrant struct {
+	AccessToken     string
+	RefreshToken    string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+}
+
+type AccountingCompany struct {
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	ConnectionID string `json:"connectionId"`
+}
+
+var ErrAccountingAppRejected = errors.New(
+	"the accounting system did not accept the app's client id or secret",
+)
+
+type AccountingApp struct {
+	Source               accountingconnection.AppSource
+	Environment          accountingprovider.AppEnvironment
+	ClientID             string
+	ClientSecret         string
+	WebhookVerifierToken string
+}
+
+func (a *AccountingApp) Identity() accountingconnection.AppIdentity {
+	return accountingconnection.AppIdentity{
+		Source:      a.Source,
+		Environment: a.Environment,
+		Fingerprint: accountingconnection.AppFingerprint(a.Environment, a.ClientID),
+	}
+}
+
+type AccountingAuthorizeRequest struct {
+	State         string
+	CodeChallenge string
+}
+
+type AccountingCodeExchange struct {
+	Code            string
+	CallbackRealmID string
+	CodeVerifier    string
+}
+
+type AccountingRefreshRequest struct {
+	RefreshToken string
+	RealmID      string
+}
+
+type AccountingRevokeRequest struct {
+	Token   string
+	RealmID string
+}
+
+type AccountingConnector interface {
+	IntegrationType() integration.Type
+	AuthorizeURL(req AccountingAuthorizeRequest) (string, error)
+	ExchangeCode(ctx context.Context, req *AccountingCodeExchange) (*AccountingTokenGrant, error)
+	Refresh(ctx context.Context, req *AccountingRefreshRequest) (*AccountingTokenGrant, error)
+	Revoke(ctx context.Context, req *AccountingRevokeRequest) error
+	Companies(
+		ctx context.Context,
+		grant *AccountingTokenGrant,
+		callbackRealmID string,
+	) ([]AccountingCompany, error)
+	ReleaseCompanies(
+		ctx context.Context,
+		grant *AccountingTokenGrant,
+		companies []AccountingCompany,
+	) error
+	CompanyFacts(
+		ctx context.Context,
+		realmID, accessToken string,
+	) (*accountingconnection.CompanyFacts, error)
+	VerifyApp(ctx context.Context) error
+	VerifyWebhook(signature string, body []byte) error
+	ClassifyError(err error) accountingsync.ErrorCategory
+}
+
+type AccountingCertificate struct {
+	PrivateKeyPEM  []byte
+	CertificatePEM []byte
+	ExpiresAt      time.Time
+}
+
+type AccountingCertificateGrant struct {
+	RealmID       string
+	CertificateID string
+	PrivateKeyPEM []byte
+}
+
+type AccountingClientCredentialsConnector interface {
+	NormalizeAccountID(raw string) (string, error)
+	PrepareCertificate(subject string) (*AccountingCertificate, error)
+	TokenFromCertificate(
+		ctx context.Context,
+		grant *AccountingCertificateGrant,
+	) (*AccountingTokenGrant, error)
+}
+
+type AccountingProvider interface {
+	IntegrationType() integration.Type
+	InstanceApp() (*AccountingApp, bool)
+	RedirectURL() string
+	Bind(app *AccountingApp) (AccountingConnector, error)
+	WebhookRealmIDs(body []byte) ([]string, error)
+	WebhookSignatureHeader() string
+	ClassifyError(err error) accountingsync.ErrorCategory
+}
+
+type AccountingConnectorRegistry interface {
+	For(typ integration.Type) (AccountingProvider, bool)
+}
+
+type AccountingReferencePageRequest struct {
+	RealmID       string
+	AccessToken   string
+	Kind          accountingprovider.ReferenceKind
+	StartPosition int
+	PageSize      int
+}
+
+type AccountingReferencePage struct {
+	Objects   []*accountingmapping.AccountingReferenceObject
+	NextStart int
+}
+
+type AccountingItemDraft struct {
+	Name            string
+	Description     string
+	Sku             string
+	IncomeAccountID string
+}
+
+type AccountingPartyDraft struct {
+	DisplayName  string
+	CompanyName  string
+	Email        string
+	AddressLine1 string
+	City         string
+	State        string
+	PostalCode   string
+	Country      string
+	Is1099       bool
+}
+
+type AccountingCreateReferenceRequest struct {
+	RealmID     string
+	AccessToken string
+	RequestID   string
+	Kind        accountingprovider.ReferenceKind
+	Item        *AccountingItemDraft
+	Party       *AccountingPartyDraft
+}
+
+type AccountingReferenceReader interface {
+	ListReference(
+		ctx context.Context,
+		req *AccountingReferencePageRequest,
+	) (*AccountingReferencePage, error)
+	MaxReferencePageSize() int
+}
+
+type AccountingReferenceCreator interface {
+	CreateReference(
+		ctx context.Context,
+		req *AccountingCreateReferenceRequest,
+	) (*accountingmapping.AccountingReferenceObject, error)
+	IsDuplicateName(err error) bool
+	SanitizeName(kind accountingprovider.ReferenceKind, name string) string
+}
+
+type AccountingSubscribeRequest struct {
+	Auth            AccountingDocumentAuth
+	Resource        string
+	NotificationURL string
+	ClientState     string
+}
+
+type AccountingRenewSubscriptionRequest struct {
+	Auth            AccountingDocumentAuth
+	Resource        string
+	ExternalID      string
+	NotificationURL string
+	ClientState     string
+	ETag            string
+}
+
+type AccountingUnsubscribeRequest struct {
+	Auth       AccountingDocumentAuth
+	ExternalID string
+	ETag       string
+}
+
+type AccountingWebhookNotification struct {
+	SubscriptionID string
+	ClientState    string
+	Resource       string
+	ChangeType     string
+}
+
+type AccountingWebhookSubscriber interface {
+	SubscriptionResources() []string
+	SubscriptionRenewWindow() time.Duration
+	Subscribe(
+		ctx context.Context,
+		req *AccountingSubscribeRequest,
+	) (*accountingconnection.WebhookSubscriptionGrant, error)
+	RenewSubscription(
+		ctx context.Context,
+		req *AccountingRenewSubscriptionRequest,
+	) (*accountingconnection.WebhookSubscriptionGrant, error)
+	Unsubscribe(ctx context.Context, req *AccountingUnsubscribeRequest) error
+	IsSubscriptionGone(err error) bool
+}
+
+type AccountingSubscriptionProvider interface {
+	NotificationBaseURL() string
+	ParseNotifications(body []byte) ([]AccountingWebhookNotification, error)
+	ValidationToken(raw string) (string, bool)
+}

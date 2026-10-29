@@ -5,7 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralpay"
+	"github.com/emoss08/trenova/shared/businesscentralref"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,10 +21,15 @@ func TestPaymentJournalsByCode(t *testing.T) {
 		_, _ = w.Write(fixture(t, "payment_journals.json"))
 	})
 
-	journals, err := client.PaymentJournals(t.Context(), businesscentral.PartyCustomer, "trenova")
+	journals, err := businesscentralpay.PaymentJournals(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		"trenova",
+	)
 	require.NoError(t, err)
 	require.Len(t, journals, 1)
-	assert.Equal(t, businesscentral.PaymentJournal{
+	assert.Equal(t, businesscentralpay.PaymentJournal{
 		ID:                     testJournal,
 		Code:                   "TRENOVA",
 		DisplayName:            "Trenova receipts",
@@ -31,8 +38,13 @@ func TestPaymentJournalsByCode(t *testing.T) {
 		LastModified:           journals[0].LastModified,
 	}, journals[0])
 
-	_, err = client.PaymentJournals(t.Context(), businesscentral.PartyCustomer, "TOO-LONG-CODE")
-	require.ErrorIs(t, err, businesscentral.ErrJournalCodeInvalid)
+	_, err = businesscentralpay.PaymentJournals(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		"TOO-LONG-CODE",
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrJournalCodeInvalid)
 }
 
 func TestCreateVendorPaymentJournal(t *testing.T) {
@@ -47,16 +59,24 @@ func TestCreateVendorPaymentJournal(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_payment_journal.json"))
 	})
 
-	journal, err := client.CreatePaymentJournal(t.Context(), businesscentral.PartyVendor,
-		&businesscentral.PaymentJournalInput{
+	journal, err := businesscentralpay.CreatePaymentJournal(
+		t.Context(),
+		client,
+		businesscentralref.PartyVendor,
+		&businesscentralpay.PaymentJournalInput{
 			Code: "trnpay", DisplayName: "Trenova payments", BalancingAccountID: testAccount,
-		})
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "eeeeeeee-ffff-4000-8111-222222222222", journal.ID)
 
-	_, err = client.CreatePaymentJournal(t.Context(), businesscentral.PartyVendor,
-		&businesscentral.PaymentJournalInput{Code: " "})
-	require.ErrorIs(t, err, businesscentral.ErrJournalCodeInvalid)
+	_, err = businesscentralpay.CreatePaymentJournal(
+		t.Context(),
+		client,
+		businesscentralref.PartyVendor,
+		&businesscentralpay.PaymentJournalInput{Code: " "},
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrJournalCodeInvalid)
 }
 
 func TestCustomerPaymentsByDocumentNumber(t *testing.T) {
@@ -72,8 +92,13 @@ func TestCustomerPaymentsByDocumentNumber(t *testing.T) {
 		_, _ = w.Write(fixture(t, "customer_payments.json"))
 	})
 
-	payments, err := client.Payments(t.Context(), businesscentral.PartyCustomer, testJournal,
-		"TRNRCPT-0001")
+	payments, err := businesscentralpay.Payments(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		testJournal,
+		"TRNRCPT-0001",
+	)
 	require.NoError(t, err)
 	require.Len(t, payments, 1)
 	payment := payments[0]
@@ -87,15 +112,20 @@ func TestCustomerPaymentsByDocumentNumber(t *testing.T) {
 	assert.Equal(t, testInvoice, payment.AppliesToInvoiceID)
 	assert.Equal(t, "PS-INV103001", payment.AppliesToInvoiceNumber)
 
-	_, err = client.Payments(t.Context(), businesscentral.PartyCustomer, testJournal,
-		strings.Repeat("9", 21))
-	require.ErrorIs(t, err, businesscentral.ErrInvalidFilter)
+	_, err = businesscentralpay.Payments(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		testJournal,
+		strings.Repeat("9", 21),
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidFilter)
 }
 
 func TestCustomerPaymentAmountIsTheNegatedReceipt(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, dec("-250.50").Equal(businesscentral.CustomerPaymentAmount(dec("250.50"))))
+	assert.True(t, dec("-250.50").Equal(businesscentralpay.CustomerPaymentAmount(dec("250.50"))))
 }
 
 func TestCreateCustomerPayment(t *testing.T) {
@@ -117,16 +147,21 @@ func TestCreateCustomerPayment(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_customer_payment.json"))
 	})
 
-	payment, err := client.CreatePayment(t.Context(), businesscentral.PartyCustomer, testJournal,
-		&businesscentral.PaymentInput{
+	payment, err := businesscentralpay.CreatePayment(
+		t.Context(),
+		client,
+		businesscentralref.PartyCustomer,
+		testJournal,
+		&businesscentralpay.PaymentInput{
 			PartyID:                testCustomer,
 			PostingDate:            "2026-10-01",
 			DocumentNumber:         "TRNRCPT-0002",
 			ExternalDocumentNumber: "ACH 9001",
-			Amount:                 businesscentral.CustomerPaymentAmount(dec("250.50")),
+			Amount:                 businesscentralpay.CustomerPaymentAmount(dec("250.50")),
 			AppliesToInvoiceID:     testInvoice,
 			Description:            "Receipt for TRN-1001",
-		})
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 20000, payment.LineNumber)
 	assert.Equal(t, `W/"JzI4OzI="`, payment.ETag)
@@ -147,12 +182,17 @@ func TestCreateVendorPayment(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_vendor_payment.json"))
 	})
 
-	payment, err := client.CreatePayment(t.Context(), businesscentral.PartyVendor, journal,
-		&businesscentral.PaymentInput{
+	payment, err := businesscentralpay.CreatePayment(
+		t.Context(),
+		client,
+		businesscentralref.PartyVendor,
+		journal,
+		&businesscentralpay.PaymentInput{
 			PartyID: testVendor, PostingDate: "2026-10-02", DocumentNumber: "TRNPAY-0001",
 			Amount: dec("900"), AppliesToInvoiceID: "cccccccc-dddd-4eee-8fff-000000000001",
 			Description: "Settlement",
-		})
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testVendor, payment.PartyID)
 	assert.Equal(t, "V00010", payment.PartyNumber)
@@ -164,44 +204,50 @@ func TestCreatePaymentValidatesInput(t *testing.T) {
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) {
 		t.Error("invalid input is never sent")
 	})
-	valid := func() businesscentral.PaymentInput {
-		return businesscentral.PaymentInput{
+	valid := func() businesscentralpay.PaymentInput {
+		return businesscentralpay.PaymentInput{
 			PartyID: testVendor, PostingDate: "2026-10-02", Amount: dec("10"),
 		}
 	}
 	cases := map[string]struct {
-		kind   businesscentral.PartyKind
-		mutate func(*businesscentral.PaymentInput)
+		kind   businesscentralref.PartyKind
+		mutate func(*businesscentralpay.PaymentInput)
 		want   error
 	}{
-		"negative vendor amount": {businesscentral.PartyVendor,
-			func(in *businesscentral.PaymentInput) { in.Amount = dec("-10") },
-			businesscentral.ErrAmountInvalid},
-		"zero amount": {businesscentral.PartyCustomer,
-			func(in *businesscentral.PaymentInput) { in.Amount = dec("0") },
-			businesscentral.ErrAmountInvalid},
-		"no posting date": {businesscentral.PartyVendor,
-			func(in *businesscentral.PaymentInput) { in.PostingDate = "" },
-			businesscentral.ErrDateRequired},
-		"no party": {businesscentral.PartyVendor,
-			func(in *businesscentral.PaymentInput) { in.PartyID = "" },
-			businesscentral.ErrPartyRequired},
-		"long document number": {businesscentral.PartyVendor,
-			func(in *businesscentral.PaymentInput) { in.DocumentNumber = strings.Repeat("9", 21) },
-			businesscentral.ErrFieldTooLong},
-		"control characters": {businesscentral.PartyVendor,
-			func(in *businesscentral.PaymentInput) { in.Description = "a\x00b" },
-			businesscentral.ErrInvalidText},
+		"negative vendor amount": {businesscentralref.PartyVendor,
+			func(in *businesscentralpay.PaymentInput) { in.Amount = dec("-10") },
+			businesscentralerrors.ErrAmountInvalid},
+		"zero amount": {businesscentralref.PartyCustomer,
+			func(in *businesscentralpay.PaymentInput) { in.Amount = dec("0") },
+			businesscentralerrors.ErrAmountInvalid},
+		"no posting date": {businesscentralref.PartyVendor,
+			func(in *businesscentralpay.PaymentInput) { in.PostingDate = "" },
+			businesscentralerrors.ErrDateRequired},
+		"no party": {businesscentralref.PartyVendor,
+			func(in *businesscentralpay.PaymentInput) { in.PartyID = "" },
+			businesscentralerrors.ErrPartyRequired},
+		"long document number": {businesscentralref.PartyVendor,
+			func(in *businesscentralpay.PaymentInput) { in.DocumentNumber = strings.Repeat("9", 21) },
+			businesscentralerrors.ErrFieldTooLong},
+		"control characters": {businesscentralref.PartyVendor,
+			func(in *businesscentralpay.PaymentInput) { in.Description = "a\x00b" },
+			businesscentralerrors.ErrInvalidText},
 	}
 	for name, tc := range cases {
 		in := valid()
 		tc.mutate(&in)
-		_, err := client.CreatePayment(t.Context(), tc.kind, testJournal, &in)
+		_, err := businesscentralpay.CreatePayment(t.Context(), client, tc.kind, testJournal, &in)
 		require.ErrorIs(t, err, tc.want, name)
 	}
 	in := valid()
-	_, err := client.CreatePayment(t.Context(), businesscentral.PartyVendor, "journal", &in)
-	require.ErrorIs(t, err, businesscentral.ErrInvalidID)
+	_, err := businesscentralpay.CreatePayment(
+		t.Context(),
+		client,
+		businesscentralref.PartyVendor,
+		"journal",
+		&in,
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidID)
 }
 
 func TestDeletePayment(t *testing.T) {
@@ -220,9 +266,12 @@ func TestDeletePayment(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	require.NoError(t, client.DeletePayment(t.Context(), &businesscentral.PaymentRef{
-		Kind: businesscentral.PartyCustomer, JournalID: testJournal, PaymentID: payment,
-	}))
+	require.NoError(
+		t,
+		businesscentralpay.DeletePayment(t.Context(), client, &businesscentralpay.PaymentRef{
+			Kind: businesscentralref.PartyCustomer, JournalID: testJournal, PaymentID: payment,
+		}),
+	)
 }
 
 func TestPostJournal(t *testing.T) {
@@ -233,8 +282,12 @@ func TestPostJournal(t *testing.T) {
 			testCompanyPath+"/journals("+testJournal+")/Microsoft.NAV.post")
 		w.WriteHeader(http.StatusNoContent)
 	})
-	require.NoError(t, client.PostJournal(t.Context(), testJournal))
-	require.ErrorIs(t, client.PostJournal(t.Context(), ""), businesscentral.ErrIDRequired)
+	require.NoError(t, businesscentralpay.PostJournal(t.Context(), client, testJournal))
+	require.ErrorIs(
+		t,
+		businesscentralpay.PostJournal(t.Context(), client, ""),
+		businesscentralerrors.ErrIDRequired,
+	)
 }
 
 func TestGeneralLedgerEntriesByDocumentNumber(t *testing.T) {
@@ -246,7 +299,7 @@ func TestGeneralLedgerEntriesByDocumentNumber(t *testing.T) {
 		_, _ = w.Write(fixture(t, "general_ledger_entries.json"))
 	})
 
-	entries, err := client.GeneralLedgerEntries(t.Context(), "TRNRCPT-0001")
+	entries, err := businesscentralpay.GeneralLedgerEntries(t.Context(), client, "TRNRCPT-0001")
 	require.NoError(t, err)
 	require.Len(t, entries, 2)
 	assert.Equal(t, int64(2771), entries[0].EntryNumber)
@@ -255,6 +308,6 @@ func TestGeneralLedgerEntriesByDocumentNumber(t *testing.T) {
 	assert.True(t, dec("1000").Equal(entries[0].DebitAmount))
 	assert.True(t, dec("1000").Equal(entries[1].CreditAmount))
 
-	_, err = client.GeneralLedgerEntries(t.Context(), "")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidFilter)
+	_, err = businesscentralpay.GeneralLedgerEntries(t.Context(), client, "")
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidFilter)
 }

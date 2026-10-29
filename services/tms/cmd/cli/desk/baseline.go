@@ -9,7 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/deskbench"
+	"github.com/emoss08/trenova/internal/deskbench/benchbaseline"
+	"github.com/emoss08/trenova/internal/deskbench/benchrun"
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/spf13/cobra"
 )
 
@@ -75,13 +77,13 @@ func initBaseline() {
 		"only scenarios of these splits: development, held-out, adversarial")
 }
 
-func loadScenarioArgs(args []string) ([]*deskbench.Scenario, error) {
+func loadScenarioArgs(args []string) ([]*benchscenario.Scenario, error) {
 	paths := args
 	if len(paths) == 0 {
 		paths = []string{defaultScenario}
 	}
 
-	scenarios, err := deskbench.LoadScenarios(paths)
+	scenarios, err := benchscenario.LoadScenarios(paths)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func stampedDirectory(kind string) (string, error) {
 }
 
 func runBaseline(cmd *cobra.Command, args []string) error {
-	spec, err := deskbench.LoadBaselineSpec(flags.spec)
+	spec, err := benchbaseline.LoadBaselineSpec(flags.spec)
 	if err != nil {
 		return err
 	}
@@ -124,7 +126,7 @@ func runBaseline(cmd *cobra.Command, args []string) error {
 		passK:  spec.PassK,
 		label:  "baseline",
 		outDir: outDir,
-	}, deskbench.RunOptions{
+	}, benchrun.RunOptions{
 		Scenarios: scenarios,
 		User:      flags.user,
 		Agent:     flags.agent,
@@ -139,7 +141,7 @@ func runBaseline(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	baseline := deskbench.BaselineOf(report)
+	baseline := benchbaseline.BaselineOf(report)
 	if writeErr := baseline.Write(outDir); writeErr != nil {
 		return errors.Join(err, writeErr)
 	}
@@ -152,15 +154,15 @@ func runBaseline(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func sweepModes(spec *deskbench.BaselineSpec) ([]deskbench.SweepMode, error) {
+func sweepModes(spec *benchbaseline.BaselineSpec) ([]benchscenario.SweepMode, error) {
 	if len(flags.modes) == 0 {
 		return spec.Sweep.Modes, nil
 	}
 
-	modes := make([]deskbench.SweepMode, 0, len(flags.modes))
+	modes := make([]benchscenario.SweepMode, 0, len(flags.modes))
 	for _, raw := range flags.modes {
-		mode := deskbench.SweepMode(strings.ToLower(strings.TrimSpace(raw)))
-		if mode != deskbench.SweepAll && mode != deskbench.SweepDisclosed {
+		mode := benchscenario.SweepMode(strings.ToLower(strings.TrimSpace(raw)))
+		if mode != benchscenario.SweepAll && mode != benchscenario.SweepDisclosed {
 			return nil, fmt.Errorf("--mode is all or disclosed, not %q", raw)
 		}
 		modes = append(modes, mode)
@@ -170,7 +172,7 @@ func sweepModes(spec *deskbench.BaselineSpec) ([]deskbench.SweepMode, error) {
 }
 
 func runSweep(cmd *cobra.Command, args []string) error {
-	spec, err := deskbench.LoadBaselineSpec(flags.spec)
+	spec, err := benchbaseline.LoadBaselineSpec(flags.spec)
 	if err != nil {
 		return err
 	}
@@ -198,13 +200,13 @@ func runSweep(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	sweep := &deskbench.SweepReport{StartedAt: time.Now(), Commit: commit(), PassK: spec.PassK}
+	sweep := &benchbaseline.SweepReport{StartedAt: time.Now(), Commit: commit(), PassK: spec.PassK}
 
 	var runErrs []error
 	for _, mode := range modes {
 		threshold := mode.Threshold()
 		for _, count := range held {
-			point := &deskbench.Sweep{Held: count, Mode: mode}
+			point := &benchscenario.Sweep{Held: count, Mode: mode}
 			dir := filepath.Join(root, string(mode)+"-"+strconv.Itoa(count))
 			if err = os.MkdirAll(dir, dirMode); err != nil {
 				return fmt.Errorf("create %s: %w", dir, err)
@@ -215,7 +217,7 @@ func runSweep(cmd *cobra.Command, args []string) error {
 				threshold: &threshold,
 				label:     "sweep " + point.Label(),
 				outDir:    dir,
-			}, deskbench.RunOptions{
+			}, benchrun.RunOptions{
 				Scenarios: scenarios,
 				User:      flags.user,
 				Agent:     flags.agent,
@@ -231,7 +233,7 @@ func runSweep(cmd *cobra.Command, args []string) error {
 			if report == nil {
 				continue
 			}
-			sweep.Add(&deskbench.SweepPoint{
+			sweep.Add(&benchbaseline.SweepPoint{
 				Held:      count,
 				Mode:      mode,
 				Threshold: threshold,
@@ -252,7 +254,11 @@ func runSweep(cmd *cobra.Command, args []string) error {
 	}
 	fmt.Println()
 	fmt.Print(sweep.Render())
-	fmt.Fprintf(os.Stderr, "\nsweep written to %s (sweep.md, sweep.json, one run per point)\n", root)
+	fmt.Fprintf(
+		os.Stderr,
+		"\nsweep written to %s (sweep.md, sweep.json, one run per point)\n",
+		root,
+	)
 
 	return errors.Join(runErrs...)
 }

@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchconsolerepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,7 +27,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.In(shipment.MoveStatusNew, shipment.MoveStatusAssigned)).
+		Where(sm.Status.In(shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned)).
 		Order(sm.ID.Asc()).
 		First(dbscope.WithSystem(ctx, "test"), db)
 	require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	stp := shipmentdb.Stops
-	last, err := stp.Where(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipment.StopStatusCanceled)).
+	last, err := stp.Where(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipmentvocab.StopStatusCanceled)).
 		Order(stp.Sequence.Desc()).
 		First(ctx, db)
 	require.NoError(t, err)
@@ -47,7 +47,7 @@ func TestListBoardMoves_ReadsWhetherTheLoadArrivedAtItsDelivery(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	moves, err := repo.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
+	moves, err := repo.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenant,
 		WindowStart:    0,
 		WindowEnd:      time.Now().Unix() + 365*86_400,
@@ -76,7 +76,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.In(shipment.MoveStatusNew, shipment.MoveStatusAssigned)).
+		Where(sm.Status.In(shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned)).
 		Order(sm.ID.Asc()).
 		First(dbscope.WithSystem(ctx, "test"), db)
 	require.NoError(t, err)
@@ -84,7 +84,10 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
 	stp := shipmentdb.Stops
-	live := keel.And(stp.ShipmentMoveID.Eq(move.ID), stp.Status.Ne(shipment.StopStatusCanceled))
+	live := keel.And(
+		stp.ShipmentMoveID.Eq(move.ID),
+		stp.Status.Ne(shipmentvocab.StopStatusCanceled),
+	)
 	first, err := stp.Where(live).Order(stp.Sequence.Asc()).First(ctx, db)
 	require.NoError(t, err)
 	last, err := stp.Where(live).Order(stp.Sequence.Desc()).First(ctx, db)
@@ -103,7 +106,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	summaryWithDelivery := func(opens, closes int64) *shipmentports.BoardSummary {
+	summaryWithDelivery := func(opens, closes int64) *dispatchboardports.BoardSummary {
 		t.Helper()
 		_, updateErr := stp.Where(stp.ID.Eq(last.ID)).Update(ctx, db,
 			stp.ScheduledWindowStart.To(opens),
@@ -111,7 +114,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 		)
 		require.NoError(t, updateErr)
 
-		summary, summaryErr := repo.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+		summary, summaryErr := repo.GetBoardSummary(ctx, &dispatchboardports.DispatchBoardFilter{
 			TenantInfo:     tenant,
 			WindowStart:    now,
 			WindowEnd:      now + 86_400,
@@ -135,4 +138,25 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	later := summaryWithDelivery(now+10*3600, now+11*3600)
 	assert.Equal(t, [3]int{0, 0, 1},
 		[3]int{later.OverdueMoves, later.DueNowMoves, later.DueTodayMoves})
+
+	// Not picked up, the pickup's window decides, by the same rule: due now
+	// while it is open, overdue once it has closed.
+	pickup := func(opens, closes int64) *dispatchboardports.BoardSummary {
+		t.Helper()
+		_, updateErr := stp.Where(stp.ID.Eq(first.ID)).Update(ctx, db,
+			stp.ScheduledWindowStart.To(opens),
+			stp.ScheduledWindowEnd.To(closes),
+			stp.ActualArrival.To(0),
+		)
+		require.NoError(t, updateErr)
+
+		return summaryWithDelivery(now+10*3600, now+11*3600)
+	}
+	openPickup := pickup(now-3600, now+3600)
+	assert.Equal(t, [3]int{0, 1, 0},
+		[3]int{openPickup.OverdueMoves, openPickup.DueNowMoves, openPickup.DueTodayMoves},
+		"a pickup window already open is due now, not late")
+	closedPickup := pickup(now-7200, now-3600)
+	assert.Equal(t, [3]int{1, 0, 0},
+		[3]int{closedPickup.OverdueMoves, closedPickup.DueNowMoves, closedPickup.DueTodayMoves})
 }

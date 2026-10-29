@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -132,7 +132,7 @@ func (a *Activities) AssessTenantLateChargesActivity(
 	if err != nil {
 		return nil, err
 	}
-	preview := control.LateChargeAssessmentMode != tenant.LateChargeAssessmentModeAutomatic
+	preview := control.LateChargeAssessmentMode != billingcontrol.LateChargeAssessmentModeAutomatic
 	assessed, err := a.lateChargeService.Assess(ctx, &latechargeports.LateChargeAssessmentRequest{
 		TenantInfo: tenantInfo,
 		AsOfDate:   timeutils.NowUnix(),

@@ -7,10 +7,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -54,8 +58,8 @@ type reportDefinitionWriter interface {
 	NewCannedFork(entry *canned.Entry, req *reporting.ForkCannedRequest) *report.ReportDefinition
 }
 
-func reportingRequestFrom(params agentports.ToolExecuteParams) reporting.Request {
-	tenant := common.TenantFrom(params)
+func reportingRequestFrom(params *agenttoolports.ToolExecuteParams) reporting.Request {
+	tenant := toolparams.TenantFrom(params)
 	tenant.UserID = params.Actor.PersonUserID()
 
 	return reporting.Request{
@@ -92,10 +96,13 @@ func reportMetadataProperties() map[string]any {
 			"items":       map[string]any{"type": "string"},
 			"description": "Optional short labels, at most ten.",
 		},
-		common.FieldVisibility: agenttoolschema.Enum(reportVisibilityNote, reportVisibilities),
+		changepreview.FieldVisibility: agenttoolschema.Enum(
+			reportVisibilityNote,
+			reportVisibilities,
+		),
 		"defaultFormat": agenttoolschema.Enum(
 			"The file format a run produces unless one is asked for. Default csv.",
-			common.ReportFormats,
+			toolparams.ReportFormats,
 		),
 	}
 }
@@ -124,13 +131,13 @@ func readReportMetadata(params map[string]any) (reportMetadata, error) {
 		}
 	}
 
-	meta.Name = strings.TrimSpace(common.OptionalString(params, paramReportName))
-	meta.Description = strings.TrimSpace(common.OptionalString(params, "description"))
-	meta.Category = strings.TrimSpace(common.OptionalString(params, "category"))
+	meta.Name = strings.TrimSpace(toolparams.OptionalString(params, paramReportName))
+	meta.Description = strings.TrimSpace(toolparams.OptionalString(params, "description"))
+	meta.Category = strings.TrimSpace(toolparams.OptionalString(params, "category"))
 
 	if meta.given["visibility"] {
 		meta.Visibility = report.Visibility(
-			strings.TrimSpace(common.OptionalString(params, "visibility")),
+			strings.TrimSpace(toolparams.OptionalString(params, "visibility")),
 		)
 		if !meta.Visibility.IsValid() {
 			return meta, fmt.Errorf(
@@ -142,7 +149,7 @@ func readReportMetadata(params map[string]any) (reportMetadata, error) {
 
 	if meta.given["defaultFormat"] {
 		meta.DefaultFormat = report.Format(
-			strings.TrimSpace(common.OptionalString(params, "defaultFormat")),
+			strings.TrimSpace(toolparams.OptionalString(params, "defaultFormat")),
 		)
 		if !meta.DefaultFormat.IsValid() {
 			return meta, errors.New(
@@ -246,7 +253,7 @@ type CreateReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func NewCreateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
+func NewCreateReportTool(reports reportDefinitionWriter) agenttoolports.AgentTool {
 	return &CreateReportTool{reports: reports}
 }
 
@@ -316,22 +323,22 @@ func (t *CreateReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *CreateReportTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateReportTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:                t.Name(),
-		Kind:                agent.ToolKindAction,
+		Kind:                agenttooltrust.ToolKindAction,
 		Resource:            permission.ResourceReport,
 		Operation:           permission.OpCreate,
-		Scope:               agent.ToolScopeTenant,
+		Scope:               agenttooltrust.ToolScopeTenant,
 		DefaultTier:         agent.TierAutoExecute,
 		MaxTier:             agent.TierAutoExecute,
 		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
 		Classify:            classifyReportVisibility,
 		PersonalRunsUnasked: true,
-		Effect:              agent.ToolEffectChange,
+		Effect:              agenttooltrust.ToolEffectChange,
 		Artifact:            reportRecordEntity,
 		Reversible:          true,
-		ReadsExternal:       agent.ExternalReadNever,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
 		Rationale: "A private report is a saved query on the caller's own list; a " +
 			"shared one appears on every colleague's Reports page and waits for approval.",
 	}
@@ -339,7 +346,7 @@ func (t *CreateReportTool) Policy() agentports.ToolPolicy {
 
 func (t *CreateReportTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -352,7 +359,7 @@ func (t *CreateReportTool) Execute(
 // person approved it.
 func (t *CreateReportTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	save, err := t.prepare(params)
 	if err != nil {
@@ -363,13 +370,13 @@ func (t *CreateReportTool) Validate(
 }
 
 func (t *CreateReportTool) prepare(
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	name, err := common.RequireString(params.Params, paramReportName)
+	name, err := toolparams.RequireString(params.Params, paramReportName)
 	if err != nil {
 		return nil, err
 	}
@@ -401,7 +408,7 @@ type UpdateReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func NewUpdateReportTool(reports reportDefinitionWriter) agentports.AgentTool {
+func NewUpdateReportTool(reports reportDefinitionWriter) agenttoolports.AgentTool {
 	return &UpdateReportTool{reports: reports}
 }
 
@@ -443,31 +450,31 @@ func (t *UpdateReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *UpdateReportTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UpdateReportTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Changes a saved report colleagues may open; nothing leaves the " +
 			"organization.",
 	}
 }
 
-func (t *UpdateReportTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "definitionId", permission.ResourceReport)
+func (t *UpdateReportTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "definitionId", permission.ResourceReport)
 }
 
 func (t *UpdateReportTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	save, _, err := t.prepare(ctx, params)
 	if err != nil {
@@ -484,7 +491,7 @@ func (t *UpdateReportTool) Execute(
 // to approve it.
 func (t *UpdateReportTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	save, _, err := t.prepare(ctx, params)
 	if err != nil {
@@ -499,13 +506,13 @@ func (t *UpdateReportTool) Validate(
 
 func (t *UpdateReportTool) prepare(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.SaveDefinitionRequest, *report.ReportDefinition, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, nil, err
 	}
 
-	definitionID, err := common.RequirePulid(params.Params, "definitionId")
+	definitionID, err := toolparams.RequirePulid(params.Params, "definitionId")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -601,7 +608,7 @@ func (t *UpdateReportTool) prepare(
 }
 
 func readDefinitionStatus(params map[string]any) (report.DefinitionStatus, error) {
-	raw := strings.TrimSpace(common.OptionalString(params, "status"))
+	raw := strings.TrimSpace(toolparams.OptionalString(params, "status"))
 	if raw == "" {
 		return "", nil
 	}
@@ -621,7 +628,7 @@ type ForkReportTool struct {
 	reports reportDefinitionWriter
 }
 
-func NewForkReportTool(reports reportDefinitionWriter) agentports.AgentTool {
+func NewForkReportTool(reports reportDefinitionWriter) agenttoolports.AgentTool {
 	return &ForkReportTool{reports: reports}
 }
 
@@ -653,27 +660,27 @@ func (t *ForkReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ForkReportTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ForkReportTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Artifact:      reportRecordEntity,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Saves a copy of a report inside Trenova; nothing leaves the organization.",
 	}
 }
 
 func (t *ForkReportTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -684,13 +691,13 @@ func (t *ForkReportTool) Execute(
 // report_get, report_run and report_update take.
 func (t *ForkReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	request, _, err := t.request(&params)
+	request, _, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -701,8 +708,8 @@ func (t *ForkReportTool) ExecuteWithResult(
 	}
 
 	if forked == nil {
-		return &agent.ToolExecutionResult{
-			Action: common.ResultCreated,
+		return &agentrecord.ToolExecutionResult{
+			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil
 	}

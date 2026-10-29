@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editenderrecipientrepository"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange/editenderchangedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -23,7 +24,10 @@ import (
 
 func TestGetTenderRecipientByID_UnderRowLevelSecurityOnlyTheTwoPartiesSeeIt(t *testing.T) {
 	tender := editest.SeedInternalTender(t)
-	recipient := tender.NewRecipient(t, tender.NewTransfer(t, edi.TransferStatusPendingApproval))
+	recipient := tender.NewRecipient(
+		t,
+		tender.NewTransfer(t, editransfer.TransferStatusPendingApproval),
+	)
 
 	bystanderOrg := seedtest.NewOrganization(tender.Source.Info.BuID, tender.StateID).
 		WithName("Bystander Carrier").
@@ -42,11 +46,14 @@ func TestGetTenderRecipientByID_UnderRowLevelSecurityOnlyTheTwoPartiesSeeIt(t *t
 		DB:     dbtest.NewRLSConnection(t, tender.Admin, tender.DSN),
 		Logger: zap.NewNop(),
 	})
-	read := func(scope editest.Tenant, claimed pagination.TenantInfo) (*edi.TenderRecipient, error) {
-		return repo.GetTenderRecipientByID(scope.Ctx, ediports.GetEDITenderRecipientByIDRequest{
-			ID:         recipient.ID,
-			TenantInfo: claimed,
-		})
+	read := func(scope editest.Tenant, claimed pagination.TenantInfo) (*editenderchange.TenderRecipient, error) {
+		return repo.GetTenderRecipientByID(
+			scope.Ctx,
+			editenderports.GetEDITenderRecipientByIDRequest{
+				ID:         recipient.ID,
+				TenantInfo: claimed,
+			},
+		)
 	}
 
 	for name, party := range map[string]editest.Tenant{
@@ -86,13 +93,13 @@ func TestGetTenderRecipientByID_UnderRowLevelSecurityOnlyTheTwoPartiesSeeIt(t *t
 
 func TestTenderRecipients_LiveInTheirSourceShipmentsBusinessUnit(t *testing.T) {
 	tender := editest.SeedInternalTender(t)
-	transfer := tender.NewTransfer(t, edi.TransferStatusPendingApproval)
+	transfer := tender.NewTransfer(t, editransfer.TransferStatusPendingApproval)
 	elsewhere := seedtest.SeedAdditionalTenant(t, tender.Ctx, tender.Admin, "XB")
 	systemCtx := dbscope.WithSystem(tender.Ctx, "test a tender recipient's business unit")
 
 	misplaced := tender.Recipient(transfer)
 	misplaced.BusinessUnitID = elsewhere.BusinessUnit.ID
-	err := edidb.TenderRecipients.Create(systemCtx, tender.Admin, misplaced)
+	err := editenderchangedb.TenderRecipients.Create(systemCtx, tender.Admin, misplaced)
 	require.Error(t, err)
 	assert.Equal(
 		t,
@@ -103,14 +110,17 @@ func TestTenderRecipients_LiveInTheirSourceShipmentsBusinessUnit(t *testing.T) {
 
 	foreign := tender.Recipient(transfer)
 	foreign.RecipientOrganizationID = elsewhere.Organization.ID
-	require.NoError(t, edidb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, foreign))
+	require.NoError(
+		t,
+		editenderchangedb.TenderRecipients.Create(tender.Source.Ctx, tender.Admin, foreign),
+	)
 
 	repo := editenderrecipientrepository.New(editenderrecipientrepository.Params{
 		DB:     dbtest.NewRLSConnection(t, tender.Admin, tender.DSN),
 		Logger: zap.NewNop(),
 	})
 	other := editest.TenantOf(tender.Ctx, elsewhere.Info())
-	_, err = repo.GetTenderRecipientByID(other.Ctx, ediports.GetEDITenderRecipientByIDRequest{
+	_, err = repo.GetTenderRecipientByID(other.Ctx, editenderports.GetEDITenderRecipientByIDRequest{
 		ID:         foreign.ID,
 		TenantInfo: other.Info,
 	})

@@ -9,13 +9,16 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -140,12 +143,15 @@ type integrationEnv struct {
 func (env *integrationEnv) addMembership(t *testing.T, userID pulid.ID) {
 	t.Helper()
 
-	require.NoError(t, tenantdb.OrganizationMemberships.Create(env.ctx, env.db, &tenant.OrganizationMembership{
-		UserID:         userID,
-		BusinessUnitID: env.data.BusinessUnit.ID,
-		OrganizationID: env.data.Organization.ID,
-		IsDefault:      true,
-	}))
+	require.NoError(
+		t,
+		tenantdb.OrganizationMemberships.Create(env.ctx, env.db, &tenant.OrganizationMembership{
+			UserID:         userID,
+			BusinessUnitID: env.data.BusinessUnit.ID,
+			OrganizationID: env.data.Organization.ID,
+			IsDefault:      true,
+		}),
+	)
 }
 
 func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData {
@@ -154,23 +160,29 @@ func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData
 	userID := env.data.User.ID
 	env.addMembership(t, userID)
 
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Test Role",
 		MaxSensitivity: permission.SensitivityInternal,
 	}
-	require.NoError(t, permissiondb.Roles.Create(env.ctx, env.db, role))
-	require.NoError(t, permissiondb.ResourcePermissions.Create(env.ctx, env.db, &permission.ResourcePermission{
-		RoleID:     role.ID,
-		Resource:   "shipment",
-		Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
-		DataScope:  permission.DataScopeOrganization,
-	}))
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(env.ctx, env.db, &permission.UserRoleAssignment{
-		UserID:         userID,
-		OrganizationID: env.data.Organization.ID,
-		RoleID:         role.ID,
-		AssignedAt:     timeutils.NowUnix(),
-	}))
+	require.NoError(t, rbacdb.Roles.Create(env.ctx, env.db, role))
+	require.NoError(
+		t,
+		rbacdb.ResourcePermissions.Create(env.ctx, env.db, &rbac.ResourcePermission{
+			RoleID:     role.ID,
+			Resource:   "shipment",
+			Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
+			DataScope:  permission.DataScopeOrganization,
+		}),
+	)
+	require.NoError(
+		t,
+		rbacdb.UserRoleAssignments.Create(env.ctx, env.db, &rbac.UserRoleAssignment{
+			UserID:         userID,
+			OrganizationID: env.data.Organization.ID,
+			RoleID:         role.ID,
+			AssignedAt:     timeutils.NowUnix(),
+		}),
+	)
 
 	return &integrationTestData{
 		ctx:    env.ctx,
@@ -192,15 +204,15 @@ func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Clie
 	conn := postgres.NewTestConnection(db)
 	cacheRepo := &testPermCacheRepo{client: redisClient}
 
-	metricsRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricsRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	eng := &engine{
 		roleRepo:      rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
 		cacheRepo:     cacheRepo,
 		userRepo:      userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
-		registry:      permission.NewRegistry(),
-		routeRegistry: permission.NewRouteRegistry(),
+		registry:      permissioncatalog.NewRegistry(),
+		routeRegistry: routeaccess.NewRouteRegistry(),
 		metrics:       metricsRegistry,
 		l:             zap.NewNop().Named("test.permission-engine"),
 	}

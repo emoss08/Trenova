@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -17,7 +18,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*tenant.User]
+	validator tenantedvalidation.EntityValidator[*tenant.User]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -25,8 +26,7 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 func newValidator(users tenantports.UserRepository) *Validator {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*tenant.User]().
+	builder := tenantedvalidation.NewBuilder[*tenant.User]().
 		WithModelName("User")
 
 	if users != nil {

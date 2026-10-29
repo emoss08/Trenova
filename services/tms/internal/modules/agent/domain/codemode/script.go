@@ -128,3 +128,13 @@ const (
 type Continuable interface {
 	ScriptContinuation() Continuation
 }
+
+// Unread is what the tool that ran a script answers with, saying whether the
+// script stopped on an error before it read anything: a typo in a read's
+// name, which a corrected script makes good. Such a script is not one of the
+// turn's ScriptsPerTurn, up to as many again: three scripts that named a read
+// wrongly once spent the turn's budget, and the fourth, which only asked what
+// it could read, was refused.
+type Unread interface {
+	ScriptReadNothing() bool
+}

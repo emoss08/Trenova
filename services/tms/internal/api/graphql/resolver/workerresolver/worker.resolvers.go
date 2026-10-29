@@ -12,11 +12,17 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptomapping"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -36,7 +42,7 @@ func (r *MutationResolver) PatchWorker(ctx context.Context, id string, input gql
 
 	existing, err := r.WorkerService.Get(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		IncludeProfile: true,
 	})
 	if err != nil {
@@ -66,7 +72,7 @@ func (r *MutationResolver) CreateWorkerPTO(ctx context.Context, input gqlmodel.C
 		return nil, err
 	}
 
-	info := base.TenantInfo(authCtx)
+	info := resolvercore.TenantInfo(authCtx)
 	entity := &worker.WorkerPTO{
 		OrganizationID: info.OrgID,
 		BusinessUnitID: info.BuID,
@@ -92,7 +98,7 @@ func (r *MutationResolver) UpdateWorkerPTO(ctx context.Context, input gqlmodel.U
 		return nil, err
 	}
 
-	info := base.TenantInfo(authCtx)
+	info := resolvercore.TenantInfo(authCtx)
 	entity := &worker.WorkerPTO{
 		ID:             ptoID,
 		OrganizationID: info.OrgID,
@@ -118,9 +124,9 @@ func (r *MutationResolver) ApproveWorkerPTO(ctx context.Context, id string) (*wo
 		return nil, err
 	}
 
-	return r.WorkerPTOService.Approve(ctx, &workerports.UpdatePTOStatusRequest{
+	return r.WorkerPTOService.Approve(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         ptoID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Status:     worker.PTOStatusApproved,
 		UserID:     authCtx.UserID,
 		OnBehalfOf: onBehalfOf,
@@ -138,9 +144,9 @@ func (r *MutationResolver) RejectWorkerPTO(ctx context.Context, id string, reaso
 		return nil, err
 	}
 
-	return r.WorkerPTOService.Reject(ctx, &workerports.UpdatePTOStatusRequest{
+	return r.WorkerPTOService.Reject(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         ptoID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Status:     worker.PTOStatusRejected,
 		UserID:     authCtx.UserID,
 		Reason:     reason,
@@ -159,17 +165,17 @@ func (r *MutationResolver) CancelWorkerPTO(ctx context.Context, id string, reaso
 		return nil, err
 	}
 
-	return r.WorkerPTOService.Cancel(ctx, &workerports.UpdatePTOStatusRequest{
+	return r.WorkerPTOService.Cancel(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         ptoID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Status:     worker.PTOStatusCancelled,
 		UserID:     authCtx.UserID,
-		Reason:     base.StringValue(reason),
+		Reason:     gqlscalar.StringValue(reason),
 		OnBehalfOf: onBehalfOf,
 	})
 }
 
-func (r *MutationResolver) BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error) {
+func (r *MutationResolver) BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerptoports.PTOBulkActionPayload, error) {
 	operation, err := ptoBulkActionOperation(input.Action)
 	if err != nil {
 		return nil, err
@@ -180,7 +186,7 @@ func (r *MutationResolver) BulkWorkerPTOAction(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	ptoIDs, err := base.ParseIDs(input.PTOIds)
+	ptoIDs, err := gqlid.ParseIDs(input.PTOIds)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"ptoIds",
@@ -189,16 +195,16 @@ func (r *MutationResolver) BulkWorkerPTOAction(ctx context.Context, input gqlmod
 		)
 	}
 
-	return r.WorkerPTOService.BulkAction(ctx, &workerports.PTOBulkActionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.WorkerPTOService.BulkAction(ctx, &workerptoports.PTOBulkActionRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		PTOIDs:     ptoIDs,
 		Action:     input.Action,
-		Reason:     base.StringValue(input.Reason),
+		Reason:     gqlscalar.StringValue(input.Reason),
 		UserID:     authCtx.UserID,
 	})
 }
 
-func (r *PTOChartDataPointResolver) Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error) {
+func (r *PTOChartDataPointResolver) Workers(ctx context.Context, obj *workerptoports.PTOChartDataPoint) (map[string]any, error) {
 	workers := make(map[string]any, len(obj.Workers))
 	for ptoType, entries := range obj.Workers {
 		workers[ptoType] = entries
@@ -211,8 +217,14 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 	if err != nil {
 		return nil, err
 	}
+	missing := strings.TrimSpace(gqlscalar.StringValue(withoutCredential))
+	if missing != "" {
+		if _, err = r.RequirePermission(ctx, permission.ResourceWorkerCredential, permission.OpRead); err != nil {
+			return nil, err
+		}
+	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +232,7 @@ func (r *QueryResolver) Workers(ctx context.Context, input gqlmodel.DataTableCon
 	result, err := r.WorkerService.List(ctx, &workerports.ListWorkersRequest{
 		Filter:            connection.Filter,
 		Cursor:            connection.Cursor,
-		WithoutCredential: strings.TrimSpace(base.StringValue(withoutCredential)),
+		WithoutCredential: missing,
 	})
 	if err != nil {
 		return nil, err
@@ -235,33 +247,33 @@ func (r *QueryResolver) WorkerPTOEntries(ctx context.Context, input gqlmodel.Wor
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Query,
 		FieldFilters: input.FieldFilters,
 		FilterGroups: input.FilterGroups,
 		Sort:         input.Sort,
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	workerIDValue, err := base.OptionalID(input.WorkerID)
+	workerIDValue, err := gqlid.OptionalID(input.WorkerID)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := r.WorkerPTOService.List(ctx, &workerports.ListPTORequest{
+	result, err := r.WorkerPTOService.List(ctx, &workerptoports.ListPTORequest{
 		Filter:        connection.Filter,
 		Cursor:        connection.Cursor,
 		Status:        ptoStatusString(input.Status),
-		Type:          base.PtoTypeString(input.Type),
-		StartDateFrom: base.Int64Value(input.StartDateFrom),
-		StartDateTo:   base.Int64Value(input.StartDateTo),
-		Overlapping:   base.BoolValue(input.Overlapping),
+		Type:          ptomapping.PtoTypeString(input.Type),
+		StartDateFrom: gqlscalar.Int64Value(input.StartDateFrom),
+		StartDateTo:   gqlscalar.Int64Value(input.StartDateTo),
+		Overlapping:   gqlscalar.BoolValue(input.Overlapping),
 		WorkerID:      workerIDValue,
-		IncludeWorker: base.BoolValue(input.IncludeWorker),
+		IncludeWorker: gqlscalar.BoolValue(input.IncludeWorker),
 	})
 	if err != nil {
 		return nil, err
@@ -276,7 +288,7 @@ func (r *QueryResolver) UpcomingWorkerPTO(ctx context.Context, input gqlmodel.Up
 		return nil, err
 	}
 
-	page, err := base.EntityCursorPageFromGraphQL(ctx, base.GqlCursorPageInput{
+	page, err := gqlconnection.EntityCursorPageFromGraphQL(ctx, gqlconnection.GqlCursorPageInput{
 		First: input.First,
 		After: input.After,
 	})
@@ -284,21 +296,21 @@ func (r *QueryResolver) UpcomingWorkerPTO(ctx context.Context, input gqlmodel.Up
 		return nil, err
 	}
 
-	filter := base.QueryOptionsFromGraphQL(&base.GqlListOptions{
-		TenantInfo: base.TenantInfo(authCtx),
+	filter := gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Limit:      page.Cursor.Limit,
 	})
-	result, err := r.WorkerPTOService.ListUpcoming(ctx, &workerports.ListUpcomingPTORequest{
+	result, err := r.WorkerPTOService.ListUpcoming(ctx, &workerptoports.ListUpcomingPTORequest{
 		Filter: filter,
 		Cursor: page.Cursor,
-		ListWorkerPTOFilterOptions: workerports.ListWorkerPTOFilterOptions{
+		ListWorkerPTOFilterOptions: workerptoports.ListWorkerPTOFilterOptions{
 			Status:      ptoStatusString(input.Status),
-			Type:        base.PtoTypeString(input.Type),
-			StartDate:   base.Int64Value(input.StartDate),
-			EndDate:     base.Int64Value(input.EndDate),
-			WorkerID:    base.StringValue(input.WorkerID),
-			FleetCodeID: base.StringValue(input.FleetCodeID),
-			Timezone:    base.StringValue(input.Timezone),
+			Type:        ptomapping.PtoTypeString(input.Type),
+			StartDate:   gqlscalar.Int64Value(input.StartDate),
+			EndDate:     gqlscalar.Int64Value(input.EndDate),
+			WorkerID:    gqlscalar.StringValue(input.WorkerID),
+			FleetCodeID: gqlscalar.StringValue(input.FleetCodeID),
+			Timezone:    gqlscalar.StringValue(input.Timezone),
 		},
 	})
 	if err != nil {
@@ -308,44 +320,44 @@ func (r *QueryResolver) UpcomingWorkerPTO(ctx context.Context, input gqlmodel.Up
 	return workerPTOCursorConnectionToModel(result)
 }
 
-func (r *QueryResolver) WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error) {
+func (r *QueryResolver) WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	filter := base.QueryOptionsFromGraphQL(&base.GqlListOptions{
-		TenantInfo: base.TenantInfo(authCtx),
+	filter := gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Limit:      pagination.DefaultLimit,
 	})
-	return r.WorkerPTOService.GetChartData(ctx, &workerports.PTOChartRequest{
+	return r.WorkerPTOService.GetChartData(ctx, &workerptoports.PTOChartRequest{
 		Filter:        filter,
 		StartDateFrom: int64(input.StartDateFrom),
 		StartDateTo:   int64(input.StartDateTo),
-		Type:          base.PtoTypeString(input.Type),
-		WorkerID:      base.StringValue(input.WorkerID),
-		Timezone:      base.StringValue(input.Timezone),
+		Type:          ptomapping.PtoTypeString(input.Type),
+		WorkerID:      gqlscalar.StringValue(input.WorkerID),
+		Timezone:      gqlscalar.StringValue(input.Timezone),
 	})
 }
 
 func (r *WorkerResolver) FleetCodeID(ctx context.Context, obj *worker.Worker) (*string, error) {
-	return base.IDPtr(obj.FleetCodeID), nil
+	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
 func (r *WorkerResolver) ManagerID(ctx context.Context, obj *worker.Worker) (*string, error) {
-	return base.IDPtr(obj.ManagerID), nil
+	return gqlid.IDPtr(obj.ManagerID), nil
 }
 
 func (r *WorkerPTOResolver) ApproverID(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return base.IDPtr(obj.ApproverID), nil
+	return gqlid.IDPtr(obj.ApproverID), nil
 }
 
 func (r *WorkerPTOResolver) RejectorID(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return base.IDPtr(obj.RejectorID), nil
+	return gqlid.IDPtr(obj.RejectorID), nil
 }
 
 func (r *WorkerPTOResolver) CancelledByID(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return base.IDPtr(obj.CancelledByID), nil
+	return gqlid.IDPtr(obj.CancelledByID), nil
 }
 
 func (r *WorkerPTOResolver) RejectionReason(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
@@ -357,15 +369,15 @@ func (r *WorkerPTOResolver) CancellationReason(ctx context.Context, obj *worker.
 }
 
 func (r *WorkerPTOResolver) Days(ctx context.Context, obj *worker.WorkerPTO) (string, error) {
-	return base.DecimalString(obj.Days), nil
+	return gqldecimal.DecimalString(obj.Days), nil
 }
 
 func (r *WorkerPTOResolver) BalanceAfterDays(ctx context.Context, obj *worker.WorkerPTO) (*string, error) {
-	return base.NullDecimalStringPtr(obj.BalanceAfterDays), nil
+	return gqldecimal.NullDecimalStringPtr(obj.BalanceAfterDays), nil
 }
 
 func (r *WorkerProfileResolver) LicenseStateID(ctx context.Context, obj *worker.WorkerProfile) (*string, error) {
-	return base.IDPtr(obj.LicenseStateID), nil
+	return gqlid.IDPtr(obj.LicenseStateID), nil
 }
 
 func (r *QueryResolver) Worker(ctx context.Context, id string) (*worker.Worker, error) {
@@ -382,6 +394,6 @@ func (r *QueryResolver) Worker(ctx context.Context, id string) (*worker.Worker, 
 	return r.WorkerService.Get(ctx, workerByIDRequest(
 		func(path string) bool { return graphql.FieldRequested(ctx, path) },
 		workerID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	))
 }

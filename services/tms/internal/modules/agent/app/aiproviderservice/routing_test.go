@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,10 @@ type routingRepo struct {
 	enabled []*aiprovider.Provider
 }
 
-func (r *routingRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (r *routingRepo) ListEnabled(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	return r.enabled, nil
 }
 
@@ -26,17 +30,20 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	svc := newTestService(&fakeProviderRepo{}, &fakeProber{})
 	stored := testProvider(t, svc)
 	stored.Enabled = true
-	stored.Tasks = []aiprovider.Task{aiprovider.TaskAssistantChat}
+	stored.Tasks = []aitask.Task{aitask.TaskAssistantChat}
 	dims := 1536
 	stored.EmbeddingDimensions = &dims
-	svc.repo = &routingRepo{fakeProviderRepo: fakeProviderRepo{provider: stored}, enabled: []*aiprovider.Provider{stored}}
+	svc.repo = &routingRepo{
+		fakeProviderRepo: fakeProviderRepo{provider: stored},
+		enabled:          []*aiprovider.Provider{stored},
+	}
 
-	routes, err := svc.RoutePreview(t.Context(), &agentports.AIProviderRoutePreviewRequest{
-		Draft: agentports.AIProviderRoutingDraft{
+	routes, err := svc.RoutePreview(t.Context(), &aiproviderports.AIProviderRoutePreviewRequest{
+		Draft: aiproviderports.AIProviderRoutingDraft{
 			ID:      stored.ID,
 			Name:    stored.Name,
 			Kind:    stored.Kind,
-			Tasks:   []aiprovider.Task{aiprovider.TaskDailyBriefing},
+			Tasks:   []aitask.Task{aitask.TaskDailyBriefing},
 			Enabled: true,
 		},
 	})
@@ -44,10 +51,10 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 	require.NoError(t, err)
 	for _, route := range routes {
 		switch route.Task {
-		case aiprovider.TaskAssistantChat:
+		case aitask.TaskAssistantChat:
 			require.NotNil(t, route.Before)
 			assert.Nil(t, route.After, "the edit takes chat away from the only provider")
-		case aiprovider.TaskDailyBriefing:
+		case aitask.TaskDailyBriefing:
 			assert.Nil(t, route.Before)
 			require.NotNil(t, route.After)
 			assert.True(t, route.After.Draft)
@@ -55,5 +62,5 @@ func TestRoutePreviewEditsTheStoredProvider(t *testing.T) {
 		}
 	}
 	assert.NotEmpty(t, stored.APIKey, "the stored provider is not changed")
-	assert.Equal(t, []aiprovider.Task{aiprovider.TaskAssistantChat}, stored.Tasks)
+	assert.Equal(t, []aitask.Task{aitask.TaskAssistantChat}, stored.Tasks)
 }

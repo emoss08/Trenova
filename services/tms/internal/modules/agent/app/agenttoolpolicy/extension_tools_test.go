@@ -3,7 +3,7 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +34,7 @@ func TestEveryExtensionToolIsRegistered(t *testing.T) {
 			}
 			assert.Equal(t, spec.ReturnsOutsideContent(name), isRead && capsLater,
 				"%s: whether it holds later writes must match its capability", name)
-			assert.Equal(t, spec.ReturnsOutsideContent(name), agentruntime.ReadsExternalContent(name),
+			assert.Equal(t, spec.ReturnsOutsideContent(name), toolaccess.ReadsExternalContent(name),
 				"%s: the runtime must hold later writes exactly when the capability says", name)
 		}
 	}

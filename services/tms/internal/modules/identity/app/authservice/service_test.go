@@ -7,16 +7,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/portalaccessportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -31,7 +32,7 @@ import (
 type testDeps struct {
 	userRepo    *tenantportsmock.MockUserRepository
 	sessionRepo *sessionportsmock.MockSessionRepository
-	portalRepo  *workerportsmock.MockPortalAccessRepository
+	portalRepo  *portalaccessportsmock.MockPortalAccessRepository
 	authEvents  *recordingAuthEvents
 	svc         *Service
 }
@@ -42,7 +43,7 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	ur := tenantportsmock.NewMockUserRepository(t)
 	sr := sessionportsmock.NewMockSessionRepository(t)
-	pr := workerportsmock.NewMockPortalAccessRepository(t)
+	pr := portalaccessportsmock.NewMockPortalAccessRepository(t)
 	events := &recordingAuthEvents{}
 	svc := &Service{
 		ur:         ur,
@@ -93,10 +94,10 @@ func TestDecryptSSOSecretSupportsIAMSlugAAD(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	plaintext := decryptSSOSecret(enc, &tenant.SSOConfig{
+	plaintext := decryptSSOSecret(enc, &sso.SSOConfig{
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
-		Provider:         tenant.SSOProviderAzureAD,
+		Provider:         sso.SSOProviderAzureAD,
 		OIDCClientSecret: ciphertext,
 	})
 
@@ -139,7 +140,7 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	usr := newTestUser(t)
 	roleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{
 				ID:          roleID,
 				Name:        "Dispatcher",
@@ -288,7 +289,7 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{
 				ID:          roleID,
 				Name:        "Billing Manager",
@@ -335,7 +336,7 @@ func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
 	authorizedRoleID := pulid.MustNew("rol_")
 	unauthorizedRoleID := pulid.MustNew("rol_")
 	deps.svc.rbacRepo = &rbactest.Repository{
-		AuthorizedRoles: []*permission.Role{
+		AuthorizedRoles: []*rbac.Role{
 			{ID: authorizedRoleID, Name: "Dispatcher"},
 		},
 	}
@@ -404,7 +405,8 @@ func TestLogout_Success(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
-	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(nil)
 
 	err := deps.svc.Logout(ctx, sessionID)
@@ -419,7 +421,8 @@ func TestLogout_Error(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
-	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).
+		Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(errors.New("delete failed"))
 
 	err := deps.svc.Logout(ctx, sessionID)
@@ -469,26 +472,25 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	stateRepo := tenantportsmock.NewMockSSOLoginStateRepository(t)
 	svc := &Service{
-		or:        orgRepo,
-		ssoRepo:   ssoRepo,
-		stateRepo: stateRepo,
-		cfg: &config.Config{
-			Server: config.ServerConfig{
-				CORS: config.CORSConfig{
-					AllowedOrigins: []string{"https://app.test"},
-				},
+		or:             orgRepo,
+		ssoRepo:        ssoRepo,
+		stateRepo:      stateRepo,
+		securityConfig: &securityconfig.Config{},
+		serverConfig: &serverconfig.Config{
+			CORS: serverconfig.CORSConfig{
+				AllowedOrigins: []string{"https://app.test"},
 			},
 		},
 		oidc: newTestOIDCProviders(providerServer),
 		l:    zap.NewNop(),
 	}
-	ssoConfig := &tenant.SSOConfig{
+	ssoConfig := &sso.SSOConfig{
 		ID:               providerID,
 		OrganizationID:   orgID,
 		BusinessUnitID:   buID,
 		Name:             "Corporate SSO",
-		Provider:         tenant.SSOProviderOkta,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderOkta,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          true,
 		OIDCIssuerURL:    providerServer.URL,
 		OIDCClientID:     "client-id",
@@ -509,7 +511,7 @@ func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
 		mock.Anything,
 		mock.MatchedBy(func(state *tenantports.SSOLoginState) bool {
 			return state.ProviderID == providerID &&
-				state.Provider == tenant.SSOProviderOkta &&
+				state.Provider == sso.SSOProviderOkta &&
 				state.OrganizationID == orgID &&
 				state.BusinessUnitID == buID &&
 				state.OrganizationSlug == "acme" &&
@@ -541,16 +543,16 @@ func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
 	providerID := pulid.MustNew("sso_")
 	ssoRepo := tenantportsmock.NewMockSSOConfigRepository(t)
 	svc := &Service{ssoRepo: ssoRepo}
-	expectedConfig := &tenant.SSOConfig{
+	expectedConfig := &sso.SSOConfig{
 		ID:             providerID,
 		OrganizationID: orgID,
-		Provider:       tenant.SSOProviderOkta,
+		Provider:       sso.SSOProviderOkta,
 	}
 
 	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(expectedConfig, nil)
 
 	cfg, err := svc.resolveSSOConfigForCallback(ctx, &tenantports.SSOLoginState{
-		Provider:       tenant.SSOProviderAzureAD,
+		Provider:       sso.SSOProviderAzureAD,
 		ProviderID:     providerID,
 		OrganizationID: orgID,
 	})
@@ -614,15 +616,14 @@ func TestNew(t *testing.T) {
 	svc := New(Params{
 		UserRepository:    userRepo,
 		SessionRepository: sessionRepo,
-		Config: &config.Config{
-			Security: config.SecurityConfig{
-				Session: config.SessionConfig{
-					MaxAge:      12 * time.Hour,
-					IdleTimeout: 30 * time.Minute,
-				},
+		SecurityConfig: &securityconfig.Config{
+			Session: securityconfig.SessionConfig{
+				MaxAge:      12 * time.Hour,
+				IdleTimeout: 30 * time.Minute,
 			},
 		},
-		Logger: zap.NewNop(),
+		ServerConfig: &serverconfig.Config{},
+		Logger:       zap.NewNop(),
 	})
 
 	require.NotNil(t, svc)

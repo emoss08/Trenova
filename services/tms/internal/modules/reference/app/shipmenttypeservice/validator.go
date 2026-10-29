@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,15 +19,14 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*shipmenttype.ShipmentType]
+	validator tenantedvalidation.EntityValidator[*shipmenttype.ShipmentType]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, shipmenttypedb.ShipmentTypesSchema())
+	checker := keelcheck.NewChecker(p.DB, shipmenttypedb.ShipmentTypesSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*shipmenttype.ShipmentType]().
+		validator: tenantedvalidation.NewBuilder[*shipmenttype.ShipmentType]().
 			WithModelName("ShipmentType").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

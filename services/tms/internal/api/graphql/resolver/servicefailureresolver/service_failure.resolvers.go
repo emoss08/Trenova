@@ -9,8 +9,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -26,16 +29,16 @@ func (r *QueryResolver) ServiceFailures(ctx context.Context, input gqlmodel.Data
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	shipmentFilter, err := base.OptionalPulid(shipmentID)
+	shipmentFilter, err := gqlid.OptionalPulid(shipmentID)
 	if err != nil {
 		return nil, err
 	}
-	locationFilter, err := base.OptionalPulid(locationID)
+	locationFilter, err := gqlid.OptionalPulid(locationID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +72,7 @@ func (r *QueryResolver) ServiceFailure(ctx context.Context, id string) (*service
 
 	return r.ServiceFailureSvc.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
 		ID:         failureID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -113,9 +116,9 @@ func (r *ServiceFailureShipmentResolver) Customer(ctx context.Context, obj *ship
 		return obj.Customer, nil
 	}
 
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.CustomerByID(ctx, obj.CustomerID.String()))
+	return loaderfields.OptionalMatch(partiesloaders.CustomerByID(ctx, obj.CustomerID.String()))
 }

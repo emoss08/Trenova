@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteldiff"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,9 +27,9 @@ func fixture(t *testing.T, name string) []byte {
 	return data
 }
 
-func fixtureProfile(t *testing.T, name string) *carrierok.Profile {
+func fixtureProfile(t *testing.T, name string) *carrierokpayload.Profile {
 	t.Helper()
-	profile, err := carrierok.DecodeProfile(fixture(t, name))
+	profile, err := carrierokpayload.DecodeProfile(fixture(t, name))
 	require.NoError(t, err)
 	return profile
 }
@@ -194,7 +196,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 	assert.Equal(t, "Compliance Review", safety.LatestReviewType)
 	assert.Equal(t, unixDate(t, "1996-03-05"), *safety.LatestReviewAt)
 
-	require.Len(t, profile.Basics, len(worker.AllCSABasics()))
+	require.Len(t, profile.Basics, len(fleetsafety.AllCSABasics()))
 	for idx := range profile.Basics {
 		basic := &profile.Basics[idx]
 		assert.False(t, basic.Alert, basic.Basic)
@@ -202,7 +204,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 		assert.Nil(t, basic.Threshold, basic.Basic)
 	}
 
-	unsafe := profile.Basic(worker.BasicUnsafeDriving)
+	unsafe := profile.Basic(fleetsafety.BasicUnsafeDriving)
 	require.NotNil(t, unsafe)
 	require.NotNil(t, unsafe.Measure)
 	assert.InDelta(t, 0.13, *unsafe.Measure, 0.0001)
@@ -212,12 +214,12 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 	require.NotNil(t, unsafe.MeasuredAt)
 	assert.Equal(t, unixDate(t, "2024-12-31"), *unsafe.MeasuredAt)
 
-	maintenance := profile.Basic(worker.BasicVehicleMaintenance)
+	maintenance := profile.Basic(fleetsafety.BasicVehicleMaintenance)
 	require.NotNil(t, maintenance)
 	require.NotNil(t, maintenance.Measure)
 	assert.InDelta(t, 3.11, *maintenance.Measure, 0.0001)
 
-	crash := profile.Basic(worker.BasicCrashIndicator)
+	crash := profile.Basic(fleetsafety.BasicCrashIndicator)
 	require.NotNil(t, crash)
 	assert.Nil(t, crash.Measure)
 	assert.Nil(t, crash.Violations)
@@ -227,7 +229,7 @@ func TestNormalizeProfile_SafetyAndBasics(t *testing.T) {
 func TestNormalizeProfile_BasicAlerts(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "42",
 		"basic_alert_hours_of_service": true,
 		"violations_hours_of_service": "9",
@@ -236,12 +238,12 @@ func TestNormalizeProfile_BasicAlerts(t *testing.T) {
 	require.NoError(t, err)
 	profile := normalizeProfile(sdk)
 
-	hos := profile.Basic(worker.BasicHOSCompliance)
+	hos := profile.Basic(fleetsafety.BasicHOSCompliance)
 	require.NotNil(t, hos)
 	assert.True(t, hos.Alert)
 	assert.Equal(t, 9, *hos.Violations)
-	require.NotNil(t, profile.Basic(worker.BasicVehicleMaintenance))
-	assert.Nil(t, profile.Basic(worker.BasicDriverFitness))
+	require.NotNil(t, profile.Basic(fleetsafety.BasicVehicleMaintenance))
+	assert.Nil(t, profile.Basic(fleetsafety.BasicDriverFitness))
 }
 
 func TestNormalizeProfile_OperationalSections(t *testing.T) {
@@ -357,7 +359,7 @@ func TestNormalizeProfile_NetworkLinksCarryOtherCarriersDOTs(t *testing.T) {
 func TestNormalizeProfile_NetworkExcludesOwnDOTAndFallsBackToCounts(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "100",
 		"network_graph_physical_address": ["100", "200"],
 		"network_graph_equipment_ext": ["300"],
@@ -381,7 +383,7 @@ func TestNormalizeProfile_NetworkExcludesOwnDOTAndFallsBackToCounts(t *testing.T
 func TestNormalizeProfile_PreferredStates(t *testing.T) {
 	t.Parallel()
 
-	sdk, err := carrierok.DecodeProfile([]byte(`{
+	sdk, err := carrierokpayload.DecodeProfile([]byte(`{
 		"dot_number": "42",
 		"preferred_lanes": [{"state": "tx"}, {"state": ""}],
 		"preferred_states": "IL, TX"
@@ -442,7 +444,7 @@ func TestNormalizeProfile_CoverageIsHonest(t *testing.T) {
 	require.NotNil(t, lite.Operations.BOC3OnFile)
 	assert.True(t, *lite.Operations.BOC3OnFile)
 
-	minimal, err := carrierok.DecodeProfile(
+	minimal, err := carrierokpayload.DecodeProfile(
 		[]byte(`{"dot_number": 42, "legal_name": "LITE CO", "authority_common": "A"}`),
 	)
 	require.NoError(t, err)
@@ -472,7 +474,7 @@ func TestNormalizeProfile_AuthorityVocabulary(t *testing.T) {
 		"docket": "FF123456",
 		"risk_score": "Very High"
 	}`)
-	sdk, err := carrierok.DecodeProfile(raw)
+	sdk, err := carrierokpayload.DecodeProfile(raw)
 	require.NoError(t, err)
 	profile := normalizeProfile(sdk)
 
@@ -493,29 +495,29 @@ func TestFullProfileRuleMessages(t *testing.T) {
 	t.Parallel()
 
 	profile := normalizeProfile(fixtureProfile(t, fullProfileFixture))
-	findings := carrierintel.EvaluateFindings(&carrierintel.EvaluateInput{
+	findings := carrierintelrule.EvaluateFindings(&carrierintelrule.EvaluateInput{
 		Profile: profile,
 		Now:     unixDate(t, "2026-09-16"),
 		Subject: carrierintel.SubjectTypeCarrier,
 	})
 
-	messages := make(map[carrierintel.RuleCode]string, len(findings))
+	messages := make(map[carrierintelrule.RuleCode]string, len(findings))
 	for idx := range findings {
 		messages[findings[idx].Code] = findings[idx].Message
 	}
 	assert.Equal(
 		t,
 		"BIPD liability coverage on file ($0) is below the required $5,000,000",
-		messages[carrierintel.RuleInsuranceBIPDBelow],
+		messages[carrierintelrule.RuleInsuranceBIPDBelow],
 	)
 	assert.Equal(
 		t,
 		"Shares identifiers with other USDOT numbers: address (4), phone (2), email (1), ein (1)",
-		messages[carrierintel.RuleFraudNetworkSharing],
+		messages[carrierintelrule.RuleFraudNetworkSharing],
 	)
-	assert.NotContains(t, messages, carrierintel.RuleIdentityNewEntrant)
-	assert.NotContains(t, messages, carrierintel.RuleInsurancePendingCancel)
-	assert.NotContains(t, messages, carrierintel.RuleInspectionsOOSHigh)
+	assert.NotContains(t, messages, carrierintelrule.RuleIdentityNewEntrant)
+	assert.NotContains(t, messages, carrierintelrule.RuleInsurancePendingCancel)
+	assert.NotContains(t, messages, carrierintelrule.RuleInspectionsOOSHigh)
 }
 
 func TestFilingType(t *testing.T) {
@@ -567,7 +569,7 @@ func TestVendorFieldPath(t *testing.T) {
 func TestVendorFieldPath_MatchesFlattenedProfile(t *testing.T) {
 	t.Parallel()
 
-	flat, err := carrierintel.FlattenProfile(
+	flat, err := carrierinteldiff.FlattenProfile(
 		normalizeProfile(fixtureProfile(t, fullProfileFixture)),
 	)
 	require.NoError(t, err)

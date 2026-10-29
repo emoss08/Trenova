@@ -36,7 +36,9 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Engine and renderer ports | `internal/modules/workspace/ports/reportports/reporting.go` |
 | Repository ports | `reportports/report.go` |
 | Access policy: entity kinds, decisions, refusals | `internal/modules/workspace/app/reporting/reportaccess/` |
-| Reporting service: prepare, preview, drill, runs, downloads, rows, schedules, views, dashboards, canned reports | `internal/modules/workspace/app/reporting/` |
+| Reporting service: definitions, prepare, preview, drill, runs, downloads, rows, canned reports | `internal/modules/workspace/app/reporting/` |
+| Saved views, schedules and dashboards (tiles, export), each built on the reporting service | `app/reportviewservice/`, `app/reportscheduleservice/`, `app/reportdashboardservice/` |
+| Test kit: an engine that compiles and never executes, permission and organization fakes | `app/reportingtest/` |
 | Canned reports (embedded JSON) | `app/reporting/canned/reports/*.json` |
 | Table export as a report | `internal/modules/workspace/app/tableexportservice/` |
 | Models: definitions, revisions, runs, schedules, views, dashboards | `internal/modules/workspace/domain/report/` |
@@ -44,10 +46,10 @@ GraphQL / REST / agent tool ──▶ reporting.Service.Prepare ──▶ report
 | Run workflow, schedule dispatch, delivery, cleanup | `internal/modules/workspace/jobs/reportjobs/` |
 | Renderers: CSV, JSON, XLSX (keel), PDF (Gotenberg), dashboard workbook (excelize) | `internal/infrastructure/reporting/render/` |
 | Reporting connection pool | `postgres.ReportingConnection` (`internal/infrastructure/postgres/connection.go`) |
-| Configuration and defaults | `reporting:` in config, `config.ReportingConfig` |
+| Configuration and defaults | `reporting:` in config, `reportingconfig.Config` |
 | GraphQL | `internal/api/graphql/schema/report.graphqls`, `resolver/reportresolver/` |
 | REST: download, dashboard export | `internal/api/handlers/reporthandler/` |
-| Agent tools | `agent/app/agentquerytoolservice/report*.go`, `agent/app/agenttools/{reporttools,alerttools,masterdatatools}` |
+| Agent tools | `agent/app/querytools/reportquerytools/`, `agent/app/agenttools/{reporttools,alerttools,dashboardtools}` |
 | Client: generated IR module, builder, grid, dashboards | `client/packages/shared/src/generated/keel-analytics.ts`, `client/apps/web/src/routes/reports/`, `lib/report-definition.ts` |
 
 ## The catalog
@@ -464,14 +466,15 @@ is in `writecoverage.yml` ([agent-write-coverage.md](agent-write-coverage.md)).
 
 ## Agent tools
 
-The tools are a schema over `reporting.Service`; none of them builds a query or decides access.
+The tools are a schema over `reporting.Service` and the view, schedule and dashboard services;
+none of them builds a query or decides access.
 
 | Tools | Where |
 |---|---|
-| `report_list`, `report_get`, `report_list_datasets`, `report_get_dataset`, `report_preview`, `report_run`, `report_get_run`, `report_compare_runs`, `report_list_runs`, `report_list_schedules`, `report_list_dashboards`, `report_compose_table_view` | `agentquerytoolservice` |
+| `report_list`, `report_get`, `report_list_datasets`, `report_get_dataset`, `report_preview`, `report_run`, `report_get_run`, `report_compare_runs`, `report_list_runs`, `report_list_schedules`, `report_list_dashboards`, `report_compose_table_view` | `querytools/reportquerytools`, `querytools/tableviewquerytools` |
 | `report_create`, `report_update`, `report_fork`, `report_delete`, `report_reset_fork`, `report_cancel_run`, `report_update_schedule`, `report_delete_schedule`, `report_delete_dashboard` | `agenttools/reporttools` |
 | `report_create_schedule` | `agenttools/alerttools` |
-| `report_create_dashboard`, `report_add_dashboard_tile`, `report_save_table_view` | `agenttools/masterdatatools` |
+| `report_create_dashboard`, `report_add_dashboard_tile`, `report_save_table_view` | `agenttools/dashboardtools` |
 | Analysis of a run's rows (`analysis_run` with `datasets`) | [agent-code-mode.md](agent-code-mode.md) |
 
 - **Definitions.** `report_create` and `report_update` take the definition as JSON constrained by
@@ -519,7 +522,8 @@ From `services/tms/`:
 task keel-gen                                          # <domain>db packages, internal/keeltables, pkg/keelkinds
 go generate ./internal/infrastructure/reportengine/... # analytics.messages.json, client/.../generated/keel-analytics.ts
 GOFLAGS=-tags=nomsgpack go test ./internal/infrastructure/reportengine/... \
-  ./internal/modules/workspace/app/reporting/... ./internal/modules/workspace/jobs/reportjobs/... \
+  ./internal/modules/workspace/app/reporting/... ./internal/modules/workspace/app/report{view,schedule,dashboard}service/... \
+  ./internal/modules/workspace/jobs/reportjobs/... \
   ./internal/infrastructure/reporting/render/... ./internal/api/graphql/resolver/reportresolver/...
 ```
 

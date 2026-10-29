@@ -10,9 +10,9 @@ export const analysisRunStatusSchema = z.enum([
   "Failed",
 ]);
 
-export const analysisDatasetSourceSchema = z.enum(["ReportRun", "Attachment"]);
+export const analysisDatasetSourceSchema = z.enum(["ReportRun", "Attachment", "ReportDefinition"]);
 
-/** A report run or attached file a script read, by the name it read it by. */
+/** A report run, an attached file or a report run from its definition that a script read, by the name it read it by. */
 export const analysisDatasetSchema = z.object({
   name: z.string(),
   source: analysisDatasetSourceSchema.catch("ReportRun"),

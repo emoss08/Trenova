@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -2041,8 +2041,8 @@ func (t *SCIMGroupRoleMappingsTable) As(alias string) *SCIMGroupRoleMappingsTabl
 }
 
 // Role is the belongs relation.
-func (t *SCIMGroupRoleMappingsTable) Role() *permissiondb.RolesTable {
-	return keel.Path(t.Ref, 0, permissiondb.BuildRoles)
+func (t *SCIMGroupRoleMappingsTable) Role() *rbacdb.RolesTable {
+	return keel.Path(t.Ref, 0, rbacdb.BuildRoles)
 }
 
 // Get returns the scim_group_role_mappings row with the given key, or keel.ErrNotFound.
@@ -2122,7 +2122,7 @@ func attachSCIMGroupRoleMapping(p unsafe.Pointer, rel int32, child unsafe.Pointe
 	r := (*iam.SCIMGroupRoleMapping)(p)
 	switch rel {
 	case 0:
-		r.Role = (*permission.Role)(child)
+		r.Role = (*rbac.Role)(child)
 	}
 }
 
@@ -2301,7 +2301,7 @@ func valueSCIMToken(p unsafe.Pointer, c int32) any {
 }
 
 func init() {
-	sCIMGroupRoleMappingsTable.Relations[0].Target = permissiondb.RolesSchema()
+	sCIMGroupRoleMappingsTable.Relations[0].Target = rbacdb.RolesSchema()
 }
 
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.

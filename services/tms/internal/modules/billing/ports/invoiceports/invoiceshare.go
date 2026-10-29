@@ -3,7 +3,7 @@ package invoiceports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -14,9 +14,9 @@ type ListInvoiceSharesRequest struct {
 }
 
 type InvoiceShareRepository interface {
-	Upsert(ctx context.Context, shares []*invoice.InvoiceShare) error
+	Upsert(ctx context.Context, shares []*invoiceshare.InvoiceShare) error
 	ListByInvoiceID(
 		ctx context.Context,
 		req *ListInvoiceSharesRequest,
-	) ([]*invoice.InvoiceShare, error)
+	) ([]*invoiceshare.InvoiceShare, error)
 }

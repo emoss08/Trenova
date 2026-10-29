@@ -5,10 +5,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -27,23 +29,23 @@ type Params struct {
 
 	Logger   *zap.Logger
 	Repo     apikeyports.APIKeyRepository
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 	Auditor  permissionports.SecurityAuditor
 	Engine   permissionports.PermissionEngine
 	Scopes   permissionports.ScopePolicy
 
-	Config *config.Config
-	Plans  platformplanports.PlanService `optional:"true"`
+	SecurityConfig *securityconfig.Config
+	Plans          platformplanports.PlanService `optional:"true"`
 }
 
 type Service struct {
 	l        *zap.Logger
 	repo     apikeyports.APIKeyRepository
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	auditor  permissionports.SecurityAuditor
 	engine   permissionports.PermissionEngine
 	scopes   permissionports.ScopePolicy
-	cfg      *config.Config
+	cfg      *securityconfig.Config
 	plans    platformplanports.PlanService
 }
 
@@ -55,7 +57,7 @@ func New(p Params) *Service {
 		auditor:  p.Auditor,
 		engine:   p.Engine,
 		scopes:   p.Scopes,
-		cfg:      p.Config,
+		cfg:      p.SecurityConfig,
 		plans:    p.Plans,
 	}
 }
@@ -335,12 +337,12 @@ func (s *Service) RevokeAPIKey(
 }
 
 type AllowedResourceCategory struct {
-	Category  string                           `json:"category"`
-	Resources []*permission.ResourceDefinition `json:"resources"`
+	Category  string                               `json:"category"`
+	Resources []*permissionspec.ResourceDefinition `json:"resources"`
 }
 
 func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCategory {
-	categoryMap := make(map[string][]*permission.ResourceDefinition)
+	categoryMap := make(map[string][]*permissionspec.ResourceDefinition)
 
 	for resource, allowedOps := range runtimePolicy {
 		def, ok := s.registry.Get(resource)
@@ -348,7 +350,7 @@ func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCate
 			continue
 		}
 
-		filtered := &permission.ResourceDefinition{
+		filtered := &permissionspec.ResourceDefinition{
 			Resource:           def.Resource,
 			DisplayName:        i18n.T(ctx, def.DisplayName),
 			Description:        i18n.T(ctx, def.Description),
@@ -378,7 +380,7 @@ func (s *Service) GetAllowedResources(ctx context.Context) []AllowedResourceCate
 	result := make([]AllowedResourceCategory, 0, len(categories))
 	for _, cat := range categories {
 		resources := categoryMap[cat]
-		slices.SortFunc(resources, func(a, b *permission.ResourceDefinition) int {
+		slices.SortFunc(resources, func(a, b *permissionspec.ResourceDefinition) int {
 			return strings.Compare(a.DisplayName, b.DisplayName)
 		})
 		result = append(result, AllowedResourceCategory{
@@ -585,7 +587,7 @@ func (s *Service) validateWithinActor(
 }
 
 func resourceSupportsOperation(
-	def *permission.ResourceDefinition,
+	def *permissionspec.ResourceDefinition,
 	operation permission.Operation,
 ) bool {
 	for _, opDef := range def.Operations {
@@ -602,7 +604,7 @@ func (s *Service) enforceCreatorKeyLimit(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) error {
-	limit := s.cfg.Security.APIToken.MaxTokensPerUser
+	limit := s.cfg.APIToken.MaxTokensPerUser
 	if limit <= 0 {
 		return nil
 	}
@@ -621,8 +623,8 @@ func (s *Service) enforceCreatorKeyLimit(
 
 func (s *Service) resolveCreateExpiry(expiresAt int64) (int64, error) {
 	now := timeutils.NowUnix()
-	if expiresAt == 0 && s.cfg.Security.APIToken.DefaultExpiry > 0 {
-		expiresAt = now + int64(s.cfg.Security.APIToken.DefaultExpiry.Seconds())
+	if expiresAt == 0 && s.cfg.APIToken.DefaultExpiry > 0 {
+		expiresAt = now + int64(s.cfg.APIToken.DefaultExpiry.Seconds())
 	}
 
 	return s.validateExpiry(expiresAt)
@@ -646,7 +648,7 @@ func (s *Service) validateExpiry(expiresAt int64) (int64, error) {
 		)
 	}
 
-	maxExpiry := s.cfg.Security.APIToken.MaxExpiry
+	maxExpiry := s.cfg.APIToken.MaxExpiry
 	if maxExpiry > 0 && expiresAt > now+int64(maxExpiry.Seconds()) {
 		return 0, errortypes.NewValidationError(
 			"expiresAt",

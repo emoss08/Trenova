@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -63,13 +63,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 type listSharesResponse struct {
-	Shares []*invoice.InvoiceShare `json:"shares"`
+	Shares []*invoiceshare.InvoiceShare `json:"shares"`
 }
 
 type shareRequest struct {
-	UserIDs []pulid.ID       `json:"userIds"`
-	Note    string           `json:"note"`
-	Tab     invoice.ShareTab `json:"tab"`
+	UserIDs []pulid.ID            `json:"userIds"`
+	Note    string                `json:"note"`
+	Tab     invoiceshare.ShareTab `json:"tab"`
 }
 
 func (h *Handler) list(c *gin.Context) {

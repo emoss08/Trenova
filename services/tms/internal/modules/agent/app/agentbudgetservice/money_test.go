@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,18 +18,18 @@ import (
 )
 
 type fakeMoney struct {
-	day, run agent.MoneyUse
-	asked    []*agentports.SumAutomaticMoneyRequest
+	day, run agenttooltrust.MoneyUse
+	asked    []*agentproposalports.SumAutomaticMoneyRequest
 	err      error
 }
 
 func (f *fakeMoney) SumAutomaticMoney(
 	_ context.Context,
-	req *agentports.SumAutomaticMoneyRequest,
-) (agent.MoneyUse, error) {
+	req *agentproposalports.SumAutomaticMoneyRequest,
+) (agenttooltrust.MoneyUse, error) {
 	f.asked = append(f.asked, req)
 	if f.err != nil {
-		return agent.MoneyUse{}, f.err
+		return agenttooltrust.MoneyUse{}, f.err
 	}
 	if req.RunID.IsNotNil() {
 		return f.run, nil
@@ -38,27 +40,36 @@ func (f *fakeMoney) SumAutomaticMoney(
 
 type fixedBooks string
 
-func (b fixedBooks) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
-	return &tenant.AccountingControl{FunctionalCurrencyCode: string(b)}, nil
+func (b fixedBooks) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
+	return &accountingcontrol.AccountingControl{FunctionalCurrencyCode: string(b)}, nil
 }
 
 type unreadableBooks struct{}
 
-func (unreadableBooks) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
+func (unreadableBooks) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
 	return nil, errors.New("books unavailable")
 }
 
 type fakeControls struct {
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 	err     error
 }
 
-func (f fakeControls) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (f fakeControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentcontrol.AgentControl, error) {
 	return f.control, f.err
 }
 
-func moneyControl() *tenant.AgentControl {
-	control := &tenant.AgentControl{}
+func moneyControl() *agentcontrol.AgentControl {
+	control := &agentcontrol.AgentControl{}
 	control.ApplyAgentMoneyDefaults()
 
 	return control
@@ -68,30 +79,30 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 	t.Parallel()
 
 	counter := &fakeMoney{
-		day: agent.MoneyUse{Calls: 7, AmountMinor: 70_000},
-		run: agent.MoneyUse{Calls: 2, AmountMinor: 20_000},
+		day: agenttooltrust.MoneyUse{Calls: 7, AmountMinor: 70_000},
+		run: agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 20_000},
 	}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
 	svc.controls = fakeControls{control: moneyControl()}
 
 	runID := pulid.MustNew("arun_")
-	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	allowance, err := svc.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 		RunID:      runID,
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 5_000},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 5_000},
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.MoneyLimits{
-		CallCeilingMinor: tenant.DefaultAgentMoneyCallCeilingMinor,
-		RunCalls:         tenant.DefaultAgentMoneyRunCalls,
-		RunAmountMinor:   tenant.DefaultAgentMoneyRunAmountMinor,
-		DayCalls:         tenant.DefaultAgentMoneyDayCalls,
-		DayAmountMinor:   tenant.DefaultAgentMoneyDayAmountMinor,
+	assert.Equal(t, agenttooltrust.MoneyLimits{
+		CallCeilingMinor: agentcontrol.DefaultAgentMoneyCallCeilingMinor,
+		RunCalls:         agentcontrol.DefaultAgentMoneyRunCalls,
+		RunAmountMinor:   agentcontrol.DefaultAgentMoneyRunAmountMinor,
+		DayCalls:         agentcontrol.DefaultAgentMoneyDayCalls,
+		DayAmountMinor:   agentcontrol.DefaultAgentMoneyDayAmountMinor,
 	}, allowance.Limits)
-	assert.Equal(t, agent.MoneyUse{Calls: 3, AmountMinor: 25_000}, allowance.Run)
-	assert.Equal(t, agent.MoneyUse{Calls: 8, AmountMinor: 75_000}, allowance.Day)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 25_000}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 8, AmountMinor: 75_000}, allowance.Day)
 	assert.Equal(t, "USD", allowance.Currency)
 
 	require.Len(t, counter.asked, 2)
@@ -108,17 +119,17 @@ func TestMoneyAllowance_CountsTheRunTheDayAndWhatTheTurnHasNotRecorded(t *testin
 func TestMoneyAllowance_ATurnWithNoRunCountsOnlyItself(t *testing.T) {
 	t.Parallel()
 
-	counter := &fakeMoney{day: agent.MoneyUse{Calls: 1, AmountMinor: 100}}
+	counter := &fakeMoney{day: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 100}}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
 	svc.controls = fakeControls{control: moneyControl()}
 
-	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	allowance, err := svc.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 50},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 50},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.MoneyUse{Calls: 1, AmountMinor: 50}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 50}, allowance.Run)
 	assert.Len(t, counter.asked, 1)
 }
 
@@ -128,7 +139,7 @@ func TestMoneyAllowance_FailsWhenAnythingCannotBeRead(t *testing.T) {
 	unreadable := newService(nil, nil, nil)
 	unreadable.money = &fakeMoney{}
 	unreadable.controls = fakeControls{err: errors.New("down")}
-	_, err := unreadable.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err := unreadable.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
 	require.Error(t, err)
@@ -136,12 +147,12 @@ func TestMoneyAllowance_FailsWhenAnythingCannotBeRead(t *testing.T) {
 	uncounted := newService(nil, nil, nil)
 	uncounted.money = &fakeMoney{err: errors.New("down")}
 	uncounted.controls = fakeControls{control: moneyControl()}
-	_, err = uncounted.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err = uncounted.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
 	require.Error(t, err)
 
-	_, err = uncounted.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{})
+	_, err = uncounted.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{})
 	require.Error(t, err)
 }
 
@@ -149,8 +160,8 @@ func TestMoneyAllowance_ASimulatedRunCountsItsSimulatedWritesAgainstTheRunAndThe
 	t.Parallel()
 
 	counter := &fakeMoney{
-		day: agent.MoneyUse{Calls: 4, AmountMinor: 40_000},
-		run: agent.MoneyUse{Calls: 2, AmountMinor: 3_000},
+		day: agenttooltrust.MoneyUse{Calls: 4, AmountMinor: 40_000},
+		run: agenttooltrust.MoneyUse{Calls: 2, AmountMinor: 3_000},
 	}
 	svc := newService(nil, nil, nil)
 	svc.money = counter
@@ -158,18 +169,18 @@ func TestMoneyAllowance_ASimulatedRunCountsItsSimulatedWritesAgainstTheRunAndThe
 
 	simulated := definition()
 	simulated.SimulationMode = true
-	allowance, err := svc.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	allowance, err := svc.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: simulated,
 		RunID:      pulid.MustNew("arun_"),
-		Unrecorded: agent.MoneyUse{Calls: 1, AmountMinor: 500},
+		Unrecorded: agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 500},
 	})
 	require.NoError(t, err)
 
 	require.Len(t, counter.asked, 2)
 	assert.False(t, counter.asked[0].Simulated, "the day is the organization's real writes")
 	assert.True(t, counter.asked[1].Simulated, "the run is its own simulated writes")
-	assert.Equal(t, agent.MoneyUse{Calls: 3, AmountMinor: 3_500}, allowance.Run)
-	assert.Equal(t, agent.MoneyUse{Calls: 7, AmountMinor: 43_500}, allowance.Day,
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 3, AmountMinor: 3_500}, allowance.Run)
+	assert.Equal(t, agenttooltrust.MoneyUse{Calls: 7, AmountMinor: 43_500}, allowance.Day,
 		"a simulation holds where the real run would")
 }
 
@@ -180,16 +191,21 @@ func TestMoneyAllowance_FailsWhenTheDayOrTheCurrencyCannotBePlaced(t *testing.T)
 	noZone.money = &fakeMoney{}
 	noZone.controls = fakeControls{control: moneyControl()}
 	noZone.zones = unreadableZone{}
-	_, err := noZone.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err := noZone.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
-	require.ErrorIs(t, err, errNoTimezone, "a day drawn in UTC instead is not the organization's day")
+	require.ErrorIs(
+		t,
+		err,
+		errNoTimezone,
+		"a day drawn in UTC instead is not the organization's day",
+	)
 
 	badZone := newService(nil, nil, nil)
 	badZone.money = &fakeMoney{}
 	badZone.controls = fakeControls{control: moneyControl()}
 	badZone.zones = fixedZone("Not/AZone")
-	_, err = badZone.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err = badZone.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
 	require.ErrorIs(t, err, errNoTimezone)
@@ -198,7 +214,7 @@ func TestMoneyAllowance_FailsWhenTheDayOrTheCurrencyCannotBePlaced(t *testing.T)
 	noBooks.money = &fakeMoney{}
 	noBooks.controls = fakeControls{control: moneyControl()}
 	noBooks.books = unreadableBooks{}
-	_, err = noBooks.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err = noBooks.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
 	require.Error(t, err)
@@ -207,7 +223,7 @@ func TestMoneyAllowance_FailsWhenTheDayOrTheCurrencyCannotBePlaced(t *testing.T)
 	blankCurrency.money = &fakeMoney{}
 	blankCurrency.controls = fakeControls{control: moneyControl()}
 	blankCurrency.books = fixedBooks(" ")
-	_, err = blankCurrency.MoneyAllowance(t.Context(), agentports.MoneyAllowanceRequest{
+	_, err = blankCurrency.MoneyAllowance(t.Context(), agentbudgetports.MoneyAllowanceRequest{
 		Definition: definition(),
 	})
 	require.ErrorIs(t, err, errNoCurrency)

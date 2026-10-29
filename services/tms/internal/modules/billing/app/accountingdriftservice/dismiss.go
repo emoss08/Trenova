@@ -3,8 +3,8 @@ package accountingdriftservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -43,15 +43,15 @@ func (s *Service) toleranceMinor(ctx context.Context, tenant pagination.TenantIn
 
 func (s *Service) checkDismiss(
 	ctx context.Context,
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 	note string,
 	actor *permissionports.RequestActor,
 ) (int64, error) {
 	if !finding.IsOpen() {
-		return 0, fixError(accountingsync.ErrDriftClosed)
+		return 0, fixError(accountingdrift.ErrDriftClosed)
 	}
 	if stringutils.CollapseWhitespace(note) == "" {
-		return 0, fixError(accountingsync.ErrDriftNoteRequired)
+		return 0, fixError(accountingdrift.ErrDriftNoteRequired)
 	}
 	tolerance, err := s.toleranceMinor(ctx, finding.TenantInfo())
 	if err != nil {
@@ -68,9 +68,9 @@ func (s *Service) checkDismiss(
 
 func (s *Service) PreviewDismiss(
 	ctx context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (s *Service) PreviewDismiss(
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDriftFixPreview{
+	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding:         finding,
 		CurrencyCode:    finding.CurrencyCode,
 		ToleranceMinor:  tolerance,
@@ -95,14 +95,14 @@ func (s *Service) PreviewDismiss(
 
 func (s *Service) Dismiss(
 	ctx context.Context,
-	req *accountingsyncports.DismissAccountingDriftRequest,
+	req *accountingdriftports.DismissAccountingDriftRequest,
 	actor *permissionports.RequestActor,
-) (*accountingsync.AccountingDriftFinding, error) {
+) (*accountingdrift.AccountingDriftFinding, error) {
 	if err := s.authorize(ctx, actor, dismissPermissions); err != nil {
 		return nil, err
 	}
 
-	var updated *accountingsync.AccountingDriftFinding
+	var updated *accountingdrift.AccountingDriftFinding
 	var previous map[string]any
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		finding, txErr := s.findingByID(txCtx, req.TenantInfo, req.ID, true)
@@ -130,7 +130,7 @@ func (s *Service) Dismiss(
 }
 
 func (s *Service) logAudit(
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 	userID pulid.ID,
 	previous map[string]any,
 	comment string,

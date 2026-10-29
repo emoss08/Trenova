@@ -9,7 +9,7 @@ related:
 ---
 
 ## What it's for
-The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. The strip at the top shows **Needs coverage**, **Late**, **At risk**, **Open drivers**, **Utilization** and **Assigned today**. The center shows open moves either as a **Board** grouped by urgency (Late, Next 4 hours, Today, Tomorrow, Planned) or as a **Timeline**; the **Capacity** rail lists drivers by availability (Open, Finishing, Working, Blocked, Time off); and the inspector on the right ranks drivers for the selected move or finds work for the selected driver.
+The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. The strip at the top shows **Needs coverage**, **Late**, **At risk**, **Open drivers**, **Utilization** and **Assigned today**. The center shows open moves either as a **Board** grouped by urgency (Late, Next 4 hours, Today, Tomorrow, Planned: a move is Late once its next stop's window has closed with no arrival, and in Next 4 hours while that window is open) or as a **Timeline**; the **Capacity** rail lists drivers by availability (Open, Finishing, Working, Blocked, Time off); and the inspector on the right ranks drivers for the selected move or finds work for the selected driver.
 
 ## Tasks
 

@@ -1,7 +1,7 @@
 package agenttoolcatalog
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 // maxFamilySize bounds a family. A find_tools answer is kept short on
@@ -164,8 +164,8 @@ func indexFamilies() map[string][]string {
 // from the catalog, is skipped: the family widens the answer, never the grant.
 func (c *Catalog) withFamilies(
 	allowed map[string]struct{},
-	found []agentports.AgentToolDescriptor,
-) []agentports.AgentToolDescriptor {
+	found []agenttoolports.AgentToolDescriptor,
+) []agenttoolports.AgentToolDescriptor {
 	if len(found) == 0 {
 		return found
 	}

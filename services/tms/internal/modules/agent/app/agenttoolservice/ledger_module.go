@@ -1,12 +1,11 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingreviewtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ledgertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 func ledgerToolProviders() []any {
@@ -19,39 +18,41 @@ func ledgerToolProviders() []any {
 		ledgertools.ProvideRequestJournalReversalTool,
 		ledgertools.ProvideCancelJournalReversalTool,
 		ledgertools.ProvidePostJournalReversalTool,
-		receivabletools.ProvideCloseFiscalPeriodTool,
-		receivabletools.ProvideLockFiscalPeriodTool,
-		receivabletools.ProvideUnlockFiscalPeriodTool,
-		receivabletools.ProvideReopenFiscalPeriodTool,
-		receivabletools.ProvideOpenFiscalPeriodTool,
+		ledgertools.ProvideCloseFiscalPeriodTool,
+		ledgertools.ProvideLockFiscalPeriodTool,
+		ledgertools.ProvideUnlockFiscalPeriodTool,
+		ledgertools.ProvideReopenFiscalPeriodTool,
+		ledgertools.ProvideOpenFiscalPeriodTool,
 		provideConfirmAccountingMappingProposalsTool,
 		provideRejectAccountingMappingProposalTool,
 		provideReleaseAccountingSyncTool,
 		provideChangeAccountingBackfillTool,
-		receivabletools.ProvideTriageBankReceiptWorkItemTool,
+		ledgertools.ProvideTriageBankReceiptWorkItemTool,
 	}
 }
 
 func provideConfirmAccountingMappingProposalsTool(
-	mappings *accountingmappingservice.Service,
-) agentports.AgentTool {
-	return accountingtools.NewConfirmAccountingMappingProposalsTool(mappings)
+	mappings accountingmappingports.AccountingMappingDecisionService,
+) agenttoolports.AgentTool {
+	return accountingreviewtools.NewConfirmAccountingMappingProposalsTool(mappings)
 }
 
 func provideRejectAccountingMappingProposalTool(
-	mappings *accountingmappingservice.Service,
-) agentports.AgentTool {
-	return accountingtools.NewRejectAccountingMappingProposalTool(mappings)
+	mappings accountingmappingports.AccountingMappingDecisionService,
+) agenttoolports.AgentTool {
+	return accountingreviewtools.NewRejectAccountingMappingProposalTool(mappings)
 }
 
 func provideReleaseAccountingSyncTool(
-	sync *accountingsyncservice.Service,
-) agentports.AgentTool {
-	return accountingtools.NewReleaseAccountingSyncTool(sync)
+	reads accountingsyncports.AccountingSyncReader,
+	actions accountingsyncports.AccountingSyncActionService,
+) agenttoolports.AgentTool {
+	return accountingreviewtools.NewReleaseAccountingSyncTool(reads, actions)
 }
 
 func provideChangeAccountingBackfillTool(
-	sync *accountingsyncservice.Service,
-) agentports.AgentTool {
-	return accountingtools.NewChangeAccountingBackfillTool(sync)
+	reads accountingsyncports.AccountingSyncReader,
+	backfills accountingsyncports.AccountingBackfillService,
+) agenttoolports.AgentTool {
+	return accountingreviewtools.NewChangeAccountingBackfillTool(reads, backfills)
 }

@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/zap"
 )
 
 // RelayRequest asks to follow one turn from a position in it.
 type RelayRequest struct {
-	Turn *conversation.AssistantTurn
+	Turn *conversationturn.AssistantTurn
 	// Cursor is the last frame the reader applied. Empty replays the turn
 	// from its beginning, which is what a fresh tab attaching to a reply
 	// already in progress wants.
@@ -35,7 +37,7 @@ type RelayRequest struct {
 func (s *Service) Relay(
 	ctx context.Context,
 	req RelayRequest,
-	onFrame agentports.TurnFrameFunc,
+	onFrame assistantstreamports.TurnFrameFunc,
 ) error {
 	turn := req.Turn
 
@@ -61,10 +63,10 @@ func (s *Service) Relay(
 	attached := time.Now()
 	spoke := false
 	sawTerminal := false
-	err := s.reader.Read(ctx, agentports.ReadTurnStreamRequest{
+	err := s.reader.Read(ctx, &assistantstreamports.ReadTurnStreamRequest{
 		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
-		OnFrame: func(frame agentports.TurnStreamFrame) error {
+		OnFrame: func(frame assistantstreamports.TurnStreamFrame) error {
 			if fresh && !spoke {
 				spoke = true
 				s.metrics.RecordFirstEvent(time.Since(attached).Seconds())
@@ -108,9 +110,9 @@ func (s *Service) Relay(
 // way, and a failed read is no reason to tell them anything worse.
 func (s *Service) current(
 	ctx context.Context,
-	turn *conversation.AssistantTurn,
-) *conversation.AssistantTurn {
-	current, err := s.turns.GetByID(ctx, agentports.GetAssistantTurnRequest{
+	turn *conversationturn.AssistantTurn,
+) *conversationturn.AssistantTurn {
+	current, err := s.turns.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})
@@ -129,10 +131,10 @@ func (s *Service) current(
 // ClosingEvent is the ending a reader gets when the turn's own ending cannot
 // be given to them: it names the turn, so the client refetches the thread
 // rather than trusting whatever half a reply it has on screen.
-func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
+func ClosingEvent(turn *conversationturn.AssistantTurn) kernelports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
 		return kernelports.StreamEvent{
-			Event: agentports.AssistantEventError,
+			Event: assistantstreamports.AssistantEventError,
 			Data: map[string]any{
 				"message": "This reply did not finish. What ran has been kept in the conversation.",
 			},
@@ -140,7 +142,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	}
 
 	return kernelports.StreamEvent{
-		Event: agentports.AssistantEventDone,
+		Event: assistantstreamports.AssistantEventDone,
 		Data: map[string]any{
 			"turnId":   turn.ID.String(),
 			"threadId": turn.ThreadID.String(),
@@ -153,7 +155,7 @@ func ClosingEvent(turn *conversation.AssistantTurn) kernelports.StreamEvent {
 	}
 }
 
-func closingFrame(turn *conversation.AssistantTurn) agentports.TurnStreamFrame {
+func closingFrame(turn *conversationturn.AssistantTurn) assistantstreamports.TurnStreamFrame {
 	event := ClosingEvent(turn)
 
 	return frameOf(event.Event, event.Data)

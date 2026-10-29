@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -64,7 +65,7 @@ func AdvanceForCompletedMove(
 func lastDeliveryStop(move *shipment.ShipmentMove) *shipment.Stop {
 	var candidate *shipment.Stop
 	for _, stop := range move.Stops {
-		if stop == nil || stop.Type != shipment.StopTypeDelivery {
+		if stop == nil || stop.Type != shipmentvocab.StopTypeDelivery {
 			continue
 		}
 		if candidate == nil || stop.Sequence > candidate.Sequence {

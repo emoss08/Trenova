@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -202,11 +203,15 @@ func conditionalAccessorials(
 	if agreement == nil {
 		return nil
 	}
-	scoped := agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
-		At:             rateCtx.AsOf,
-		ServiceTypeID:  rateCtx.ServiceTypeID,
-		ShipmentTypeID: rateCtx.ShipmentTypeID,
-	})
+	scoped := rateagreementmatch.AutoApplyAccessorials(
+		agreement,
+		rateagreementmatch.AccessorialFacts{
+			At:             rateCtx.AsOf,
+			ServiceTypeID:  rateCtx.ServiceTypeID,
+			ShipmentTypeID: rateCtx.ShipmentTypeID,
+		},
+	)
+
 	out := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 	for _, accessorial := range scoped {
 		if strings.TrimSpace(accessorial.Condition) != "" {

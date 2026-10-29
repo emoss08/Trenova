@@ -1,0 +1,570 @@
+package payrolltools
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcekit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const paramExpenseID = "expenseId"
+
+const paramDecision = "decision"
+
+const paramResolutionNote = "resolutionNote"
+
+const paramAdjustmentAmountMoney = "adjustmentAmount"
+
+const paramAdjustmentLabel = "adjustmentDescription"
+
+const kindSettlementDispute = "pay dispute"
+
+const kindDriverExpense = "driver expense"
+
+const decisionApprove = "Approve"
+
+const decisionDeny = "Deny"
+
+const decisionReject = "Reject"
+
+const maxDisputeResolution = 2000
+
+const defaultPayCurrency = "USD"
+
+var payDisputeFields = []string{
+	changepreview.FieldStatus,
+	changepreview.FieldCategory,
+	"resolutionNote",
+	workforcekit.FieldResolvedByID,
+	changepreview.FieldResolvedAt,
+}
+
+var expenseFields = []string{
+	changepreview.FieldStatus,
+	changepreview.FieldDescription,
+	"reviewNote",
+	"reviewedById",
+	changepreview.FieldReviewedAt,
+}
+
+var disputeDecisions = agenttoolschema.Source("settlementDispute.decision",
+	[]string{decisionApprove, decisionDeny})
+
+var expenseDecisions = agenttoolschema.Source("driverExpense.decision",
+	[]string{decisionApprove, decisionReject})
+
+type DriverPayReviewer interface {
+	PlanStartDisputeReview(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		disputeID pulid.ID,
+		actor *permissionports.RequestActor,
+	) (*driversettlementreviewservice.DisputeChange, error)
+	StartDisputeReview(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		disputeID pulid.ID,
+		actor *permissionports.RequestActor,
+	) (*driversettlement.Dispute, error)
+	PlanResolveDispute(
+		ctx context.Context,
+		req *driversettlementreviewservice.ResolveDisputeRequest,
+		actor *permissionports.RequestActor,
+	) (*driversettlementreviewservice.ResolveDisputePlan, error)
+	ResolveDispute(
+		ctx context.Context,
+		req *driversettlementreviewservice.ResolveDisputeRequest,
+		actor *permissionports.RequestActor,
+	) (*driversettlement.Dispute, error)
+	PlanReviewExpense(
+		ctx context.Context,
+		req *driversettlementreviewservice.ReviewExpenseRequest,
+		actor *permissionports.RequestActor,
+	) (*driversettlementreviewservice.ReviewExpensePlan, error)
+	ReviewExpense(
+		ctx context.Context,
+		req *driversettlementreviewservice.ReviewExpenseRequest,
+		actor *permissionports.RequestActor,
+	) (*payexpense.Expense, error)
+}
+
+func DriverPayReviewToolProviders() []any {
+	return []any{
+		provideStartSettlementDisputeReviewTool,
+		provideResolveSettlementDisputeTool,
+		provideReviewDriverExpenseTool,
+	}
+}
+
+func classifyDriverPayDecision(moneyMoves func(params map[string]any) bool) func(
+	*agenttoolports.ToolExecuteParams,
+) agenttoolports.CallPolicy {
+	return func(params *agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+		if moneyMoves(params.Params) {
+			return agenttoolports.CallPolicy{Egress: agent.EgressMoney}
+		}
+		return agenttoolports.CallPolicy{Egress: agent.EgressDriverVisible}
+	}
+}
+
+func approves(params map[string]any) bool {
+	return strings.TrimSpace(toolparams.OptionalString(params, paramDecision)) == decisionApprove
+}
+
+func disputeMovesMoney(params map[string]any) bool {
+	raw, given := params[paramAdjustmentAmountMoney]
+	return approves(params) && given && raw != nil
+}
+
+func payDisputeIDProperty() map[string]any {
+	return agenttoolschema.RecordID(permission.ResourceSettlementDispute, "The pay dispute",
+		"settlement_get_driver's disputes, settlement_get_dispute or the page you are on")
+}
+
+func disputeRecord(dispute *driversettlement.Dispute) toolpreview.Record {
+	return workforcekit.Record(permission.ResourceSettlementDispute, dispute.ID,
+		fmt.Sprintf("%s pay dispute", dispute.Category), dispute.Version)
+}
+
+func expenseRecord(expense *payexpense.Expense) toolpreview.Record {
+	return workforcekit.Record(permission.ResourceDriverExpense, expense.ID,
+		"Expense: "+expense.Description, expense.Version)
+}
+
+func settlementCurrency(target *driversettlement.Settlement) string {
+	if target == nil || target.CurrencyCode == "" {
+		return defaultPayCurrency
+	}
+	return target.CurrencyCode
+}
+
+func settlementTargetText(target *driversettlement.Settlement) string {
+	if target == nil {
+		return "a new off-cycle settlement"
+	}
+	return "settlement " + target.SettlementNumber
+}
+
+type disputeStart struct {
+	tenant    pagination.TenantInfo
+	disputeID pulid.ID
+}
+
+func newStartSettlementDisputeReviewTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
+	spec := workforcekit.Targeting(workforcekit.WithSchema(workforcekit.Spec(
+		"settlement_start_dispute_review",
+		"Move an open pay dispute a driver raised to under review, so the driver and the "+
+			"team see someone is looking into it. It decides nothing; "+
+			"settlement_resolve_dispute does.",
+		"Marks the dispute as being worked inside Trenova; the driver sees its status in "+
+			"Dash, and resolving it moves it on.",
+		permission.ResourceSettlementDispute,
+		permission.OpUpdate,
+	), map[string]any{toolparams.ParamDisputeID: payDisputeIDProperty()}, toolparams.ParamDisputeID), toolparams.ParamDisputeID,
+		permission.ResourceSettlementDispute)
+	spec.Egress = agent.EgressDriverVisible
+	spec.Reversible = false
+	spec.SearchTerms = []string{
+		"pay dispute", "settlement dispute", "driver complaint", "under review",
+		"mark under review", "investigate dispute",
+	}
+
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
+		*disputeStart, *driversettlementreviewservice.DisputeChange,
+	]{
+		Request: func(params *agenttoolports.ToolExecuteParams) (*disputeStart, error) {
+			id, err := toolparams.RequirePulid(params.Params, toolparams.ParamDisputeID)
+			if err != nil {
+				return nil, err
+			}
+			return &disputeStart{tenant: toolparams.TenantFrom(params), disputeID: id}, nil
+		},
+		Plan: func(
+			ctx context.Context,
+			req *disputeStart,
+			params *agenttoolports.ToolExecuteParams,
+		) (*driversettlementreviewservice.DisputeChange, error) {
+			return reviewer.PlanStartDisputeReview(ctx, req.tenant, req.disputeID, params.Actor)
+		},
+		Refused: func(*disputeStart) string { return "Would move a pay dispute to review." },
+		Render: func(
+			_ *disputeStart,
+			change *driversettlementreviewservice.DisputeChange,
+		) (*agentpreview.ToolPreview, error) {
+			recorded, err := toolpreview.Changed(disputeRecord(change.Before), change.Before,
+				change.After, workforcekit.Options(changepreview.FieldStatus)...)
+			if err != nil {
+				return nil, err
+			}
+			return toolpreview.Build("Would move the pay dispute to under review.",
+				recorded), nil
+		},
+		Run: func(
+			ctx context.Context,
+			req *disputeStart,
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			updated, err := reviewer.StartDisputeReview(ctx, req.tenant, req.disputeID,
+				params.Actor)
+			if err != nil {
+				return nil, err
+			}
+			return workforcekit.Result(
+				"moved to review",
+				kindSettlementDispute,
+				toolparams.ParamDisputeID,
+				updated.ID,
+				updated.WorkerID,
+			), nil
+		},
+	})
+}
+
+func resolvePayDisputeRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*driversettlementreviewservice.ResolveDisputeRequest, error) {
+	id, err := toolparams.RequirePulid(params.Params, toolparams.ParamDisputeID)
+	if err != nil {
+		return nil, err
+	}
+	decision, err := toolparams.RequireEnum(params.Params, paramDecision, disputeDecisions.Values)
+	if err != nil {
+		return nil, err
+	}
+	note, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramResolutionNote,
+		maxDisputeResolution,
+	)
+	if err != nil {
+		return nil, err
+	}
+	req := &driversettlementreviewservice.ResolveDisputeRequest{
+		TenantInfo:     toolparams.TenantFrom(params),
+		DisputeID:      id,
+		Approve:        decision == decisionApprove,
+		ResolutionNote: note,
+	}
+	if raw, given := params.Params[paramAdjustmentAmountMoney]; !given || raw == nil {
+		return req, nil
+	}
+	amount, err := toolparams.RequireSignedMoney(params.Params, paramAdjustmentAmountMoney)
+	if err != nil {
+		return nil, err
+	}
+	description, err := toolparams.RequireBoundedText(params.Params, paramAdjustmentLabel,
+		toolparams.MaxAdjustmentDescription)
+	if err != nil {
+		return nil, err
+	}
+	payCodeID, err := toolparams.OptionalPulidParam(params.Params, toolparams.ParamPayCodeID)
+	if err != nil {
+		return nil, err
+	}
+	req.Adjustment = &driversettlementservice.AdjustmentLineInput{
+		Description: description,
+		AmountMinor: amount,
+		PayCodeID:   payCodeID,
+		ByAgent:     true,
+	}
+	return req, nil
+}
+
+func newResolveSettlementDisputeTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
+	spec := workforcekit.Targeting(
+		workforcekit.PersonOnly(workforcekit.WithSchema(workforcekit.Spec(
+			"settlement_resolve_dispute",
+			"Draft the decision on a driver's pay dispute for a person to approve. Approve or "+
+				"deny it with a resolution note the driver reads, and for an approval, an "+
+				"optional adjustment that pays the driver back on their open draft settlement, "+
+				"or on a new off-cycle one when they have none. A denial carries no adjustment.",
+			"Decides a driver's pay complaint, tells the driver, and can add pay to a "+
+				"settlement, so a person approves it and it runs as them; a decided dispute "+
+				"stays decided.",
+			permission.ResourceSettlementDispute,
+			permission.OpApprove,
+		), map[string]any{
+			toolparams.ParamDisputeID: payDisputeIDProperty(),
+			paramDecision: agenttoolschema.Enum("Approve to side with the driver, Deny to "+
+				"turn the dispute down.", disputeDecisions),
+			paramResolutionNote: toolparams.StringProperty(
+				"The decision in words the driver reads in "+
+					"Dash. Required either way.",
+				maxDisputeResolution,
+			),
+			paramAdjustmentAmountMoney: toolparams.AmountProperty(
+				"For an approval, what to pay back as a " +
+					"decimal such as 42.50; negative to take money back. Leave it out for none.",
+			),
+			paramAdjustmentLabel: toolparams.StringProperty(
+				"What the adjustment is for, as the driver "+
+					"and payroll read it. Required with an adjustment.",
+				toolparams.MaxAdjustmentDescription,
+			),
+			toolparams.ParamPayCodeID: agenttoolschema.RecordIDText(
+				permission.ResourcePayCode,
+				"The pay code the adjustment posts under, from settlement_list_pay_codes. Leave it out for "+
+					"the default account.",
+			),
+		}, toolparams.ParamDisputeID, paramDecision, paramResolutionNote)),
+		toolparams.ParamDisputeID,
+		permission.ResourceSettlementDispute,
+	)
+	spec.Egress = agent.EgressDriverVisible
+	spec.AlsoEgress = []agent.EgressClass{agent.EgressMoney}
+	spec.Classify = classifyDriverPayDecision(disputeMovesMoney)
+	spec.Reversible = false
+	spec.SearchTerms = []string{"pay dispute", "settlement dispute", "short pay", "resolve"}
+	spec.Recipe = []string{
+		"settlement_get_driver",
+		"settlement_get_dispute",
+		"settlement_resolve_dispute",
+	}
+
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
+		*driversettlementreviewservice.ResolveDisputeRequest, *driversettlementreviewservice.ResolveDisputePlan,
+	]{
+		Request: resolvePayDisputeRequest,
+		Plan: func(
+			ctx context.Context,
+			req *driversettlementreviewservice.ResolveDisputeRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) (*driversettlementreviewservice.ResolveDisputePlan, error) {
+			return reviewer.PlanResolveDispute(ctx, req, params.Actor)
+		},
+		Refused: func(*driversettlementreviewservice.ResolveDisputeRequest) string {
+			return "Would decide a driver's pay dispute."
+		},
+		Render: renderSettlementDisputeResolution,
+		Run: func(
+			ctx context.Context,
+			req *driversettlementreviewservice.ResolveDisputeRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			updated, err := reviewer.ResolveDispute(ctx, req, params.Actor)
+			if err != nil {
+				return nil, err
+			}
+			return workforcekit.Result(
+				string(updated.Status),
+				kindSettlementDispute,
+				toolparams.ParamDisputeID,
+				updated.ID,
+				updated.WorkerID,
+			), nil
+		},
+	})
+}
+
+func renderSettlementDisputeResolution(
+	req *driversettlementreviewservice.ResolveDisputeRequest,
+	plan *driversettlementreviewservice.ResolveDisputePlan,
+) (*agentpreview.ToolPreview, error) {
+	recorded, err := toolpreview.Changed(
+		disputeRecord(plan.Dispute.Before),
+		plan.Dispute.Before,
+		plan.Dispute.After,
+		append(
+			workforcekit.Options(payDisputeFields...),
+			toolpreview.Volatile(changepreview.FieldResolvedAt),
+		)...)
+	if err != nil {
+		return nil, err
+	}
+	changes := []*agentpreview.RecordChange{recorded}
+	verb := "deny"
+	if req.Approve {
+		verb = "approve"
+	}
+	summary := fmt.Sprintf("Would %s the pay dispute and tell the driver.", verb)
+	if req.Adjustment != nil {
+		adjustment := toolpreview.Money(
+			toolpreview.Record{
+				Resource: permission.ResourceDriverSettlement,
+				Label:    req.Adjustment.Description,
+			},
+			toolpreview.MoneyBlock(
+				settlementCurrency(plan.AdjustmentTarget),
+				agentpreview.MoneyLine{
+					Label: "Dispute adjustment",
+					After: changepreview.MinorAmount(req.Adjustment.AmountMinor),
+				},
+			),
+			toolpreview.SensitiveAs("amountMinor"),
+		)
+		adjustment.Operation = agentpreview.PreviewOperationCreate
+		changes = append(changes, adjustment)
+		summary += fmt.Sprintf(" An adjustment of %s lands on %s.",
+			money.FormatMinor(req.Adjustment.AmountMinor,
+				settlementCurrency(plan.AdjustmentTarget)),
+			settlementTargetText(plan.AdjustmentTarget))
+	}
+	return toolpreview.Build(summary, changes...), nil
+}
+
+func reviewExpenseFrom(
+	params *agenttoolports.ToolExecuteParams,
+) (*driversettlementreviewservice.ReviewExpenseRequest, error) {
+	id, err := toolparams.RequirePulid(params.Params, paramExpenseID)
+	if err != nil {
+		return nil, err
+	}
+	decision, err := toolparams.RequireEnum(params.Params, paramDecision, expenseDecisions.Values)
+	if err != nil {
+		return nil, err
+	}
+	note, err := toolparams.BoundedText(
+		params.Params,
+		changepreview.FieldNote,
+		maxDisputeResolution,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &driversettlementreviewservice.ReviewExpenseRequest{
+		TenantInfo: toolparams.TenantFrom(params),
+		ExpenseID:  id,
+		Approve:    decision == decisionApprove,
+		Note:       note,
+	}, nil
+}
+
+func newReviewDriverExpenseTool(reviewer DriverPayReviewer) agenttoolports.AgentTool {
+	spec := workforcekit.Targeting(
+		workforcekit.PersonOnly(workforcekit.WithSchema(workforcekit.Spec(
+			"settlement_review_driver_expense",
+			"Draft the decision on a driver's expense claim for a person to approve. Approve "+
+				"it to reimburse it on the driver's open draft settlement, or a new off-cycle one, "+
+				"or reject it with a note saying why. An "+
+				"organization that requires receipts refuses an approval without one.",
+			"Pays or refuses a driver's out-of-pocket expense and tells the driver, so a "+
+				"person approves it and it runs as them; a reviewed expense stays reviewed.",
+			permission.ResourceDriverExpense,
+			permission.OpApprove,
+		), map[string]any{
+			paramExpenseID: agenttoolschema.RecordIDText(
+				permission.ResourceDriverExpense,
+				"The expense, from settlement_list_driver_expenses or the page you "+
+					"are on. Never guess one.",
+			),
+			paramDecision: agenttoolschema.Enum("Approve to reimburse it, Reject to turn it down.",
+				expenseDecisions),
+			changepreview.FieldNote: toolparams.StringProperty(
+				"What the driver reads with the decision. Required "+
+					"to reject.",
+				maxDisputeResolution,
+			),
+		}, paramExpenseID, paramDecision)),
+		paramExpenseID,
+		permission.ResourceDriverExpense,
+	)
+	spec.Egress = agent.EgressDriverVisible
+	spec.AlsoEgress = []agent.EgressClass{agent.EgressMoney}
+	spec.Classify = classifyDriverPayDecision(approves)
+	spec.Reversible = false
+	spec.SearchTerms = []string{"reimbursement", "expense", "receipt", "lumper"}
+
+	return toolspec.NewReportingReceivableTool(spec, toolspec.ReceivablePlan[
+		*driversettlementreviewservice.ReviewExpenseRequest, *driversettlementreviewservice.ReviewExpensePlan,
+	]{
+		Request: reviewExpenseFrom,
+
+		Plan: func(
+			ctx context.Context,
+			req *driversettlementreviewservice.ReviewExpenseRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) (*driversettlementreviewservice.ReviewExpensePlan, error) {
+			return reviewer.PlanReviewExpense(ctx, req, params.Actor)
+		},
+		Refused: func(*driversettlementreviewservice.ReviewExpenseRequest) string {
+			return "Would review a driver's expense."
+		},
+		Render: func(
+			req *driversettlementreviewservice.ReviewExpenseRequest,
+			plan *driversettlementreviewservice.ReviewExpensePlan,
+		) (*agentpreview.ToolPreview, error) {
+			recorded, err := toolpreview.Changed(
+				expenseRecord(plan.Before),
+				plan.Before,
+				plan.After,
+				append(
+					workforcekit.Options(expenseFields...),
+					toolpreview.Volatile(changepreview.FieldReviewedAt),
+				)...)
+			if err != nil {
+				return nil, err
+			}
+			changes := []*agentpreview.RecordChange{recorded}
+			amount := money.FormatMinor(plan.Before.AmountMinor, plan.Before.CurrencyCode)
+			summary := fmt.Sprintf("Would reject the %s expense and tell the driver why.",
+				amount)
+			if req.Approve {
+				reimbursement := toolpreview.Money(
+					toolpreview.Record{
+						Resource: permission.ResourceDriverSettlement,
+						Label:    plan.Before.Description,
+					},
+					toolpreview.MoneyBlock(plan.Before.CurrencyCode, agentpreview.MoneyLine{
+						Label: "Reimbursement",
+						After: changepreview.MinorAmount(plan.Before.AmountMinor),
+					}),
+					toolpreview.SensitiveAs("amountMinor"),
+				)
+				reimbursement.Operation = agentpreview.PreviewOperationCreate
+				changes = append(changes, reimbursement)
+				summary = fmt.Sprintf("Would reimburse the %s expense on %s and tell the "+
+					"driver.", amount, settlementTargetText(plan.ReimbursementTarget))
+			}
+			return toolpreview.Build(summary, changes...), nil
+		},
+		Run: func(
+			ctx context.Context,
+			req *driversettlementreviewservice.ReviewExpenseRequest,
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
+			updated, err := reviewer.ReviewExpense(ctx, req, params.Actor)
+			if err != nil {
+				return nil, err
+			}
+			return workforcekit.Result(string(updated.Status), kindDriverExpense, paramExpenseID,
+				updated.ID, updated.WorkerID), nil
+		},
+	})
+}
+
+func provideStartSettlementDisputeReviewTool(
+	s *driversettlementreviewservice.Service,
+) agenttoolports.AgentTool {
+	return newStartSettlementDisputeReviewTool(s)
+}
+
+func provideResolveSettlementDisputeTool(
+	s *driversettlementreviewservice.Service,
+) agenttoolports.AgentTool {
+	return newResolveSettlementDisputeTool(s)
+}
+
+func provideReviewDriverExpenseTool(
+	s *driversettlementreviewservice.Service,
+) agenttoolports.AgentTool {
+	return newReviewDriverExpenseTool(s)
+}

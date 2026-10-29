@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -94,45 +95,45 @@ type mockDataRetentionRepository struct {
 
 func (m *mockDataRetentionRepository) Upsert(
 	ctx context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	args := m.Called(ctx, entity)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*tenant.DataRetention), args.Error(1)
+	return args.Get(0).(*dataretention.DataRetention), args.Error(1)
 }
 
 func (m *mockDataRetentionRepository) List(
 	ctx context.Context,
-) (*pagination.ListResult[*tenant.DataRetention], error) {
+) (*pagination.ListResult[*dataretention.DataRetention], error) {
 	args := m.Called(ctx)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*pagination.ListResult[*tenant.DataRetention]), args.Error(1)
+	return args.Get(0).(*pagination.ListResult[*dataretention.DataRetention]), args.Error(1)
 }
 
 func (m *mockDataRetentionRepository) Get(
 	ctx context.Context,
 	req tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*tenant.DataRetention), args.Error(1)
+	return args.Get(0).(*dataretention.DataRetention), args.Error(1)
 }
 
 func (m *mockDataRetentionRepository) Update(
 	ctx context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	args := m.Called(ctx, entity)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*tenant.DataRetention), args.Error(1)
+	return args.Get(0).(*dataretention.DataRetention), args.Error(1)
 }
 
 type mockAuditBufferRepository struct {
@@ -453,8 +454,8 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 	}
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
-		&pagination.ListResult[*tenant.DataRetention]{
-			Items:      []*tenant.DataRetention{},
+		&pagination.ListResult[*dataretention.DataRetention]{
+			Items:      []*dataretention.DataRetention{},
 			Total:      0,
 			TotalExact: true,
 		}, nil)
@@ -501,8 +502,8 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
-		&pagination.ListResult[*tenant.DataRetention]{
-			Items: []*tenant.DataRetention{
+		&pagination.ListResult[*dataretention.DataRetention]{
+			Items: []*dataretention.DataRetention{
 				{
 					OrganizationID:       orgID,
 					BusinessUnitID:       buID,
@@ -947,7 +948,7 @@ func TestRetryDLQEntriesActivity_WithMetrics(t *testing.T) {
 	mockDLQRepo := new(mockAuditDLQRepository)
 
 	promRegistry := prometheus.NewRegistry()
-	auditMetrics := metrics.NewAudit(promRegistry, zap.NewNop(), true)
+	auditMetrics := auditmetrics.NewAudit(promRegistry, zap.NewNop(), true)
 	metricsRegistry := &metrics.Registry{
 		Audit: auditMetrics,
 	}

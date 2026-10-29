@@ -12,18 +12,27 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -41,57 +50,55 @@ type Params struct {
 	fx.In
 
 	Logger              *zap.Logger
-	InboundFileRepo     ediports.EDIInboundFileRepository
-	ProfileRepo         ediports.EDICommunicationProfileRepository
-	PartnerRepo         ediports.EDIPartnerRepository
-	MessageRepo         ediports.EDIMessageRepository
-	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
-	TransferRepo        ediports.EDILoadTenderTransferRepository
-	TenderRecipientRepo ediports.EDITenderRecipientRepository
+	InboundFileRepo     edimessageports.EDIInboundFileRepository
+	PartnerRepo         edipartnerports.EDIPartnerRepository
+	MessageRepo         edimessageports.EDIMessageRepository
+	DocumentTypeRepo    edipartnerports.EDIDocumentTypeRepository
+	TransferRepo        editenderports.EDILoadTenderTransferRepository
+	TenderRecipientRepo editenderports.EDITenderRecipientRepository
 	TenderRepo          tenderports.TenderRepository           `optional:"true"`
 	TenderResponses     tenderports.TenderResponseRecorder     `optional:"true"`
 	InvoiceMatcher      carrierports.CarrierInvoiceAutoMatcher `optional:"true"`
-	EDIService          *ediservice.Service
+	InboundApply        *ediinboundapply.Service
+	Outbound            *edioutbound.Service
+	Alerts              *edialert.Service
 	Lading              *edilading.Runtime
 	Flows               *edilading.Flows
 	Replayer            *edilading.Replayer `optional:"true"`
-	Transport           ediports.EDITransportDispatcher
 	ContentGate         contentscanports.Gate
-	WorkflowStarter     kernelports.WorkflowStarter
 	Metrics             *metrics.Registry `optional:"true"`
 	// Watchtower puts a held-back file on the feed a person reads.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers intake on a file that could
 	// not be turned into shipments or updates.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
 	l                   *zap.Logger
-	inboundFileRepo     ediports.EDIInboundFileRepository
-	profileRepo         ediports.EDICommunicationProfileRepository
-	partnerRepo         ediports.EDIPartnerRepository
-	messageRepo         ediports.EDIMessageRepository
-	documentTypeRepo    ediports.EDIDocumentTypeRepository
-	transferRepo        ediports.EDILoadTenderTransferRepository
-	tenderRecipientRepo ediports.EDITenderRecipientRepository
+	inboundFileRepo     edimessageports.EDIInboundFileRepository
+	partnerRepo         edipartnerports.EDIPartnerRepository
+	messageRepo         edimessageports.EDIMessageRepository
+	documentTypeRepo    edipartnerports.EDIDocumentTypeRepository
+	transferRepo        editenderports.EDILoadTenderTransferRepository
+	tenderRecipientRepo editenderports.EDITenderRecipientRepository
 	tenderRepo          tenderports.TenderRepository
 	tenderResponses     tenderports.TenderResponseRecorder
 	invoiceMatcher      carrierports.CarrierInvoiceAutoMatcher
-	ediService          *ediservice.Service
+	inboundApply        *ediinboundapply.Service
+	outbound            *edioutbound.Service
+	alerts              *edialert.Service
 	lading              *edilading.Runtime
 	flows               *edilading.Flows
 	replayer            *edilading.Replayer
-	transport           ediports.EDITransportDispatcher
-	workflowStarter     kernelports.WorkflowStarter
-	metrics             *metrics.EDI
+	metrics             *documentmetrics.EDI
 	watchtower          watchtowerports.WatchtowerProjector
-	publisher           agentports.AgentEventPublisher
+	publisher           agenteventports.AgentEventPublisher
 	contentGate         contentscanports.Gate
 }
 
 func New(p Params) *Service {
-	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
 	if p.Metrics != nil {
 		ediMetrics = p.Metrics.EDI
 	}
@@ -102,7 +109,6 @@ func New(p Params) *Service {
 		watchtower:          p.Watchtower,
 		publisher:           p.Publisher,
 		inboundFileRepo:     p.InboundFileRepo,
-		profileRepo:         p.ProfileRepo,
 		partnerRepo:         p.PartnerRepo,
 		messageRepo:         p.MessageRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
@@ -111,159 +117,20 @@ func New(p Params) *Service {
 		tenderRepo:          p.TenderRepo,
 		tenderResponses:     p.TenderResponses,
 		invoiceMatcher:      p.InvoiceMatcher,
-		ediService:          p.EDIService,
+		inboundApply:        p.InboundApply,
+		outbound:            p.Outbound,
+		alerts:              p.Alerts,
 		lading:              p.Lading,
 		flows:               p.Flows,
 		replayer:            p.Replayer,
-		transport:           p.Transport,
-		workflowStarter:     p.WorkflowStarter,
 	}
 }
 
-func (s *Service) ListPollableProfiles(ctx context.Context) ([]PollableProfile, error) {
-	profiles, err := s.profileRepo.ListInboundPollingProfiles(ctx)
-	if err != nil {
-		return nil, err
-	}
-	pollable := make([]PollableProfile, 0, len(profiles))
-	for _, profile := range profiles {
-		if profile == nil {
-			continue
-		}
-		pollable = append(pollable, PollableProfile{
-			ProfileID: profile.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: profile.OrganizationID,
-				BuID:  profile.BusinessUnitID,
-			},
-		})
-	}
-	return pollable, nil
-}
-
-func (s *Service) PollMailbox(
-	ctx context.Context,
-	req *PollMailboxRequest,
-) (*PollMailboxResult, error) {
-	if req == nil || req.ProfileID.IsNil() {
-		return nil, errors.New("EDI communication profile ID is required for inbound polling")
-	}
-	profile, err := s.profileRepo.GetProfileByID(
-		ctx,
-		ediports.GetEDICommunicationProfileByIDRequest{
-			ID:         req.ProfileID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if profile.EDIPartnerID.IsNil() {
-		return nil, errors.New(
-			"EDI communication profile requires a partner before inbound polling",
-		)
-	}
-	secrets, err := s.ediService.ProfileTransportSecrets(profile)
-	if err != nil {
-		return nil, err
-	}
-	fetchReq := &ediports.EDIInboundFetchRequest{Profile: profile, Secrets: secrets}
-	remoteFiles, err := s.transport.FetchInbound(ctx, profile.Method, fetchReq)
-	if err != nil {
-		s.metrics.RecordInboundPoll(string(profile.Method), "failed")
-		s.recordPollOutcome(ctx, profile, false, err.Error())
-		return nil, err
-	}
-	s.metrics.RecordInboundPoll(string(profile.Method), "success")
-	s.recordPollOutcome(ctx, profile, true, "")
-
-	result := &PollMailboxResult{ProfileID: profile.ID}
-	for _, remoteFile := range remoteFiles {
-		if remoteFile == nil || strings.TrimSpace(remoteFile.Contents) == "" {
-			result.SkippedFiles++
-			continue
-		}
-		staged, skipped, stageErr := s.stageInboundFile(ctx, profile, remoteFile)
-		if stageErr != nil {
-			return result, stageErr
-		}
-		if skipped {
-			result.SkippedFiles++
-		} else {
-			result.StagedFileIDs = append(result.StagedFileIDs, staged.ID)
-		}
-		if archiveErr := s.transport.ArchiveInbound(
-			ctx,
-			profile.Method,
-			fetchReq,
-			remoteFile.Path,
-		); archiveErr != nil {
-			s.l.Warn(
-				"failed to archive processed inbound EDI file on remote mailbox",
-				zap.String("profileId", profile.ID.String()),
-				zap.String("remotePath", remoteFile.Path),
-				zap.Error(archiveErr),
-			)
-		}
-	}
-	return result, nil
-}
-
-func (s *Service) recordPollOutcome(
+func (s *Service) StageInboundFile(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,
-	success bool,
-	pollErr string,
-) {
-	if err := s.profileRepo.RecordInboundPollOutcome(
-		ctx,
-		ediports.RecordEDIProfilePollOutcomeRequest{
-			ProfileID: profile.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: profile.OrganizationID,
-				BuID:  profile.BusinessUnitID,
-			},
-			PolledAt: timeutils.NowUnix(),
-			Success:  success,
-			Error:    pollErr,
-		},
-	); err != nil {
-		s.l.Warn(
-			"failed to record EDI inbound poll outcome",
-			zap.String("profileId", profile.ID.String()),
-			zap.Error(err),
-		)
-	}
-}
-
-func (s *Service) PollAndProcessMailbox(
-	ctx context.Context,
-	req *PollMailboxRequest,
-) (*PollMailboxResult, error) {
-	result, err := s.PollMailbox(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	for _, fileID := range result.StagedFileIDs {
-		if _, procErr := s.ProcessInboundFile(ctx, &ProcessInboundFileRequest{
-			FileID:     fileID,
-			TenantInfo: req.TenantInfo,
-		}); procErr != nil {
-			s.l.Error(
-				"failed to process staged inbound EDI file during manual poll",
-				zap.String("fileId", fileID.String()),
-				zap.Error(procErr),
-			)
-		}
-	}
-	return result, nil
-}
-
-func (s *Service) stageInboundFile(
-	ctx context.Context,
-	profile *edi.EDICommunicationProfile,
-	remoteFile *ediports.EDIInboundRemoteFile,
-) (*edi.EDIInboundFile, bool, error) {
+	remoteFile *editransportports.EDIInboundRemoteFile,
+) (*ediinboundfile.EDIInboundFile, bool, error) {
 	checksum := sha256.Sum256([]byte(remoteFile.Contents))
 	checksumHex := hex.EncodeToString(checksum[:])
 	tenantInfo := pagination.TenantInfo{
@@ -272,7 +139,7 @@ func (s *Service) stageInboundFile(
 	}
 	exists, err := s.inboundFileRepo.ExistsByChecksum(
 		ctx,
-		ediports.ExistsEDIInboundFileByChecksumRequest{
+		edimessageports.ExistsEDIInboundFileByChecksumRequest{
 			TenantInfo:             tenantInfo,
 			CommunicationProfileID: profile.ID,
 			Checksum:               checksumHex,
@@ -289,7 +156,7 @@ func (s *Service) stageInboundFile(
 		)
 		return nil, true, nil
 	}
-	staged, err := s.inboundFileRepo.CreateInboundFile(ctx, &edi.EDIInboundFile{
+	staged, err := s.inboundFileRepo.CreateInboundFile(ctx, &ediinboundfile.EDIInboundFile{
 		BusinessUnitID:         profile.BusinessUnitID,
 		OrganizationID:         profile.OrganizationID,
 		CommunicationProfileID: profile.ID,
@@ -300,7 +167,7 @@ func (s *Service) stageInboundFile(
 		Checksum:               checksumHex,
 		SizeBytes:              remoteFile.Size,
 		RawContent:             remoteFile.Contents,
-		Status:                 edi.InboundFileStatusReceived,
+		Status:                 ediinboundfile.InboundFileStatusReceived,
 		ReceivedAt:             timeutils.NowUnix(),
 	})
 	if err != nil {
@@ -313,12 +180,12 @@ func (s *Service) stageInboundFile(
 func (s *Service) ProcessInboundFile(
 	ctx context.Context,
 	req *ProcessInboundFileRequest,
-) (*edi.EDIInboundFile, error) {
+) (*ediinboundfile.EDIInboundFile, error) {
 	startedAt := time.Now()
 	updated, err := observability.RunWithSpanReturn(
 		ctx,
 		"edi.process_inbound_file",
-		func(ctx context.Context) (*edi.EDIInboundFile, error) {
+		func(ctx context.Context) (*ediinboundfile.EDIInboundFile, error) {
 			return s.processInboundFile(ctx, req)
 		},
 	)
@@ -334,7 +201,7 @@ func (s *Service) ProcessInboundFile(
 func (s *Service) processInboundFile(
 	ctx context.Context,
 	req *ProcessInboundFileRequest,
-) (*edi.EDIInboundFile, error) {
+) (*ediinboundfile.EDIInboundFile, error) {
 	if req == nil || req.FileID.IsNil() {
 		return nil, errortypes.NewValidationError(
 			"fileId",
@@ -344,7 +211,7 @@ func (s *Service) processInboundFile(
 	}
 	file, err := s.inboundFileRepo.GetInboundFileByID(
 		ctx,
-		ediports.GetEDIInboundFileByIDRequest{ID: req.FileID, TenantInfo: req.TenantInfo},
+		edimessageports.GetEDIInboundFileByIDRequest{ID: req.FileID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
@@ -353,7 +220,7 @@ func (s *Service) processInboundFile(
 		if err = CheckReprocessable(file); err != nil {
 			return nil, err
 		}
-	} else if file.Status != edi.InboundFileStatusReceived {
+	} else if file.Status != ediinboundfile.InboundFileStatusReceived {
 		return file, nil
 	}
 
@@ -387,12 +254,12 @@ func (s *Service) processInboundFile(
 	file.ISAReceiverQualifier = interchange.receiverQualifier
 	file.ISAReceiverID = interchange.receiverID
 	file.TransactionCount = len(interchange.transactions)
-	file.Status = edi.InboundFileStatusParsed
+	file.Status = ediinboundfile.InboundFileStatusParsed
 	file.FailureReason = ""
 	file, err = s.inboundFileRepo.UpdateInboundFile(ctx, file)
 	if err != nil {
 		if dberror.IsUniqueConstraintViolation(err) {
-			file.Status = edi.InboundFileStatusDuplicate
+			file.Status = ediinboundfile.InboundFileStatusDuplicate
 			file.FailureReason = fmt.Sprintf(
 				"interchange control number %s was already processed for this partner",
 				interchange.controlNumber,
@@ -402,7 +269,7 @@ func (s *Service) processInboundFile(
 		return nil, err
 	}
 
-	partner, err := s.partnerRepo.GetByID(ctx, ediports.GetEDIPartnerByIDRequest{
+	partner, err := s.partnerRepo.GetByID(ctx, edipartnerports.GetEDIPartnerByIDRequest{
 		ID:         file.EDIPartnerID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -430,7 +297,7 @@ func (s *Service) processInboundFile(
 	failures := 0
 	processed := 0
 	tendered := false
-	first := map[edi.TransactionSet]*edi.EDIMessage{}
+	first := map[edidocument.TransactionSet]*edimessage.EDIMessage{}
 	for index := range interchange.transactions {
 		transaction := &interchange.transactions[index]
 		outcome := s.processTransaction(ctx, file, partner, interchange, read, transaction)
@@ -461,23 +328,23 @@ func (s *Service) processInboundFile(
 	file.FailureReason = strings.Join(warnings, "; ")
 	switch {
 	case processed == 0 && failures > 0:
-		file.Status = edi.InboundFileStatusQuarantined
+		file.Status = ediinboundfile.InboundFileStatusQuarantined
 	case failures > 0 || len(warnings) > 0:
-		file.Status = edi.InboundFileStatusPartiallyProcessed
+		file.Status = ediinboundfile.InboundFileStatusPartiallyProcessed
 	default:
-		file.Status = edi.InboundFileStatusProcessed
+		file.Status = ediinboundfile.InboundFileStatusProcessed
 	}
 	updated, err := s.inboundFileRepo.UpdateInboundFile(ctx, file)
 	if err != nil {
 		return nil, err
 	}
 	s.metrics.RecordInboundOutcome(updated.EDIPartnerID.String(), string(updated.Status))
-	if updated.Status == edi.InboundFileStatusQuarantined {
+	if updated.Status == ediinboundfile.InboundFileStatusQuarantined {
 		s.notifyQuarantinedFile(ctx, updated)
 	}
 	if tendered {
-		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-			Kind:       agent.EventEDITenderReceived,
+		agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
+			Kind:       agenttrigger.EventEDITenderReceived,
 			SubjectID:  updated.ID,
 			TenantInfo: inboundFileTenant(updated),
 		})
@@ -485,7 +352,7 @@ func (s *Service) processInboundFile(
 	return updated, nil
 }
 
-func inboundFileTenant(file *edi.EDIInboundFile) pagination.TenantInfo {
+func inboundFileTenant(file *ediinboundfile.EDIInboundFile) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID: file.OrganizationID,
 		BuID:  file.BusinessUnitID,
@@ -494,11 +361,11 @@ func inboundFileTenant(file *edi.EDIInboundFile) pagination.TenantInfo {
 
 func (s *Service) quarantineFile(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	reason string,
-) (*edi.EDIInboundFile, error) {
+) (*ediinboundfile.EDIInboundFile, error) {
 	now := timeutils.NowUnix()
-	file.Status = edi.InboundFileStatusQuarantined
+	file.Status = ediinboundfile.InboundFileStatusQuarantined
 	file.FailureReason = reason
 	file.ProcessedAt = &now
 	updated, err := s.inboundFileRepo.UpdateInboundFile(ctx, file)
@@ -510,21 +377,21 @@ func (s *Service) quarantineFile(
 	return updated, nil
 }
 
-func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboundFile) {
+func (s *Service) notifyQuarantinedFile(ctx context.Context, file *ediinboundfile.EDIInboundFile) {
 	if s.watchtower != nil {
 		s.watchtower.Upsert(ctx, watchtowersources.DescribeQuarantinedFile(file))
 	}
 
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-		Kind:       agent.EventEDIFileQuarantined,
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
+		Kind:       agenttrigger.EventEDIFileQuarantined,
 		SubjectID:  file.ID,
 		TenantInfo: inboundFileTenant(file),
 	})
 
-	s.ediService.NotifyOperationalFailure(ctx, &ediservice.EDIOperationalAlert{
+	s.alerts.NotifyOperationalFailure(ctx, &edialert.EDIOperationalAlert{
 		OrganizationID: file.OrganizationID,
 		BusinessUnitID: file.BusinessUnitID,
-		EventType:      ediservice.EDIAlertEventInboundFileQuarantined,
+		EventType:      edialert.EDIAlertEventInboundFileQuarantined,
 		PartnerID:      file.EDIPartnerID,
 		Title:          "EDI inbound file quarantined",
 		Message: fmt.Sprintf(
@@ -546,7 +413,7 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboun
 
 func (s *Service) processTransaction(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	interchange *parsedInterchange,
 	r *reading,
@@ -601,7 +468,7 @@ func (s *Service) processTransaction(
 }
 
 type recordedMessage struct {
-	message    *edi.EDIMessage
+	message    *edimessage.EDIMessage
 	unreadable error
 }
 
@@ -610,7 +477,7 @@ type recordedMessage struct {
 // unreadable.
 func (s *Service) recordInboundMessage(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	transaction *parsedTransaction,
 	read *readTransaction,
 	program *edilading.Program,
@@ -619,7 +486,7 @@ func (s *Service) recordInboundMessage(
 	if err != nil {
 		return nil, err
 	}
-	payload := edi.DocumentPayload{TransactionSet: transaction.set}
+	payload := edipayload.DocumentPayload{TransactionSet: transaction.set}
 	var payloadErr error
 	switch {
 	case transaction.set.IsAcknowledgment():
@@ -634,19 +501,19 @@ func (s *Service) recordInboundMessage(
 			)
 		}
 	}
-	status := edi.MessageStatusGenerated
+	status := edimessage.MessageStatusGenerated
 	if transaction.rejected() || payloadErr != nil {
-		status = edi.MessageStatusFailed
+		status = edimessage.MessageStatusFailed
 	}
-	message := &edi.EDIMessage{
+	message := &edimessage.EDIMessage{
 		BusinessUnitID:  file.BusinessUnitID,
 		OrganizationID:  file.OrganizationID,
 		EDIPartnerID:    file.EDIPartnerID,
 		DocumentTypeID:  documentType.ID,
 		InboundFileID:   file.ID,
 		LadingVersionID: program.Version.ID,
-		Direction:       edi.DocumentDirectionInbound,
-		Standard:        edi.EDIStandardX12,
+		Direction:       edidocument.DocumentDirectionInbound,
+		Standard:        edidocument.EDIStandardX12,
 		TransactionSet:  transaction.set,
 		X12Version: stringutils.FirstNonEmpty(
 			transaction.version,
@@ -659,7 +526,7 @@ func (s *Service) recordInboundMessage(
 		SegmentCount:             int64(len(transaction.segments)),
 		RawX12:                   transaction.raw,
 		PayloadSnapshot:          payload,
-		AckStatus:                edi.MessageAcknowledgmentStatusNotExpected,
+		AckStatus:                edimessage.MessageAcknowledgmentStatusNotExpected,
 	}
 	if read != nil {
 		message.Document = read.result.Document
@@ -668,7 +535,7 @@ func (s *Service) recordInboundMessage(
 	}
 	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
-		ediports.CreateEDIMessageWithDiagnosticsRequest{
+		edimessageports.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
 			Diagnostics: findingDiagnostics(transaction.findings),
 		},
@@ -679,12 +546,12 @@ func (s *Service) recordInboundMessage(
 	return &recordedMessage{message: created, unreadable: payloadErr}, nil
 }
 
-func findingDiagnostics(findings []x12.Finding) []*edi.EDIMessageValidationError {
-	diagnostics := make([]*edi.EDIMessageValidationError, 0, len(findings))
+func findingDiagnostics(findings []x12.Finding) []*edimessage.EDIMessageValidationError {
+	diagnostics := make([]*edimessage.EDIMessageValidationError, 0, len(findings))
 	for index := range findings {
 		finding := &findings[index]
 		diagnostic := edix12inspect.FindingDiagnostic(finding, i18n.Default)
-		diagnostics = append(diagnostics, &edi.EDIMessageValidationError{
+		diagnostics = append(diagnostics, &edimessage.EDIMessageValidationError{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -717,14 +584,14 @@ func rejectedTransactionError(transaction *parsedTransaction) error {
 
 func (s *Service) inboundDocumentType(
 	ctx context.Context,
-	transactionSet edi.TransactionSet,
-) (*edi.EDIDocumentType, error) {
+	transactionSet edidocument.TransactionSet,
+) (*edidocument.EDIDocumentType, error) {
 	documentTypes, err := s.documentTypeRepo.ListDocumentTypes(
 		ctx,
-		ediports.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandardX12,
+		edipartnerports.ListEDIDocumentTypesRequest{
+			Standard:       edidocument.EDIStandardX12,
 			TransactionSet: transactionSet,
-			Direction:      edi.DocumentDirectionInbound,
+			Direction:      edidocument.DocumentDirectionInbound,
 		},
 	)
 	if err != nil {
@@ -733,8 +600,8 @@ func (s *Service) inboundDocumentType(
 	if len(documentTypes) == 0 {
 		documentTypes, err = s.documentTypeRepo.ListDocumentTypes(
 			ctx,
-			ediports.ListEDIDocumentTypesRequest{
-				Standard:       edi.EDIStandardX12,
+			edipartnerports.ListEDIDocumentTypesRequest{
+				Standard:       edidocument.EDIStandardX12,
 				TransactionSet: transactionSet,
 			},
 		)
@@ -753,7 +620,7 @@ func (s *Service) inboundDocumentType(
 
 func (s *Service) generateInboundAcknowledgments(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	partner *edi.EDIPartner,
 	interchange *parsedInterchange,
 	read *reading,
@@ -767,12 +634,12 @@ func (s *Service) generateInboundAcknowledgments(
 			continue
 		}
 		ackType := read.programs.Active.Acknowledgment(set)
-		if ackType == edi.AcknowledgmentTypeNone {
+		if ackType == edidocument.AcknowledgmentTypeNone {
 			continue
 		}
-		_, err := s.ediService.GenerateAcknowledgment(
+		_, err := s.outbound.GenerateAcknowledgment(
 			ctx,
-			&ediservice.GenerateAcknowledgmentRequest{
+			&edioutbound.GenerateAcknowledgmentRequest{
 				TenantInfo:   tenantInfo,
 				EDIPartnerID: partner.ID,
 				Type:         ackType,
@@ -799,13 +666,14 @@ func (s *Service) generateInboundAcknowledgments(
 // acknowledgedSet is the transaction set whose receive clause decides how a group is
 // acknowledged: its first set that is not itself an acknowledgment, since a group of
 // acknowledgments is never acknowledged.
-func acknowledgedSet(interchange *parsedInterchange, group int) edi.TransactionSet {
+func acknowledgedSet(interchange *parsedInterchange, group int) edidocument.TransactionSet {
 	for index := range interchange.transactions {
 		transaction := &interchange.transactions[index]
 		if transaction.group != group {
 			continue
 		}
-		if transaction.set != edi.TransactionSet997 && transaction.set != edi.TransactionSet999 {
+		if transaction.set != edidocument.TransactionSet997 &&
+			transaction.set != edidocument.TransactionSet999 {
 			return transaction.set
 		}
 	}
@@ -814,26 +682,29 @@ func acknowledgedSet(interchange *parsedInterchange, group int) edi.TransactionS
 
 func (s *Service) ListInboundFiles(
 	ctx context.Context,
-	req *ediports.ListEDIInboundFilesRequest,
-) (*pagination.ListResult[*edi.EDIInboundFile], error) {
+	req *edimessageports.ListEDIInboundFilesRequest,
+) (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
 	return s.inboundFileRepo.ListInboundFiles(ctx, req)
 }
 
 func (s *Service) GetInboundFile(
 	ctx context.Context,
-	req ediports.GetEDIInboundFileByIDRequest,
-) (*edi.EDIInboundFile, error) {
+	req edimessageports.GetEDIInboundFileByIDRequest,
+) (*ediinboundfile.EDIInboundFile, error) {
 	return s.inboundFileRepo.GetInboundFileByID(ctx, req)
 }
 
 func (s *Service) InspectInboundFile(
 	ctx context.Context,
-	req ediports.GetEDIInboundFileByIDRequest,
+	req edimessageports.GetEDIInboundFileByIDRequest,
 ) (*edix12inspect.FileInspection, error) {
-	file, err := s.inboundFileRepo.GetInboundFileByID(ctx, ediports.GetEDIInboundFileByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	file, err := s.inboundFileRepo.GetInboundFileByID(
+		ctx,
+		edimessageports.GetEDIInboundFileByIDRequest{
+			ID:         req.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -858,7 +729,7 @@ func (s *Service) InspectInboundFile(
 
 func (s *Service) ListInboundFilesCursor(
 	ctx context.Context,
-	req *ediports.ListEDIInboundFilesRequest,
-) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+	req *edimessageports.ListEDIInboundFilesRequest,
+) (*pagination.CursorListResult[*ediinboundfile.EDIInboundFile], error) {
 	return s.inboundFileRepo.ListInboundFilesCursor(ctx, req)
 }

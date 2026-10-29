@@ -6,8 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +25,7 @@ type resolvingTool struct {
 
 func (r *resolvingTool) ResolveSelection(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	r.asked = append(r.asked, params.Params)
 	if r.err != nil {
@@ -36,23 +39,23 @@ func runSelection(
 	t *testing.T,
 	tool *resolvingTool,
 	auto bool,
-) *agentports.RunResult {
+) *agentruntimeports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("billing_transfer", map[string]any{"allTransferable": true}),
-		textTurn("Done."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("billing_transfer", map[string]any{"allTransferable": true}),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	definition := testDefinition("billing_transfer")
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
+	definition := runtimetest.Definition("billing_transfer")
 	if auto {
-		definition = autoDefinition("billing_transfer")
+		definition = runtimetest.AutoDefinition("billing_transfer")
 	}
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Transfer all of them.",
 	})
 	require.NoError(t, err)
@@ -139,7 +142,7 @@ type pinningTool struct {
 
 func (p *pinningTool) ResolveProposalSelection(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	p.asked = append(p.asked, params.Params)
 	if p.err != nil {
@@ -149,23 +152,26 @@ func (p *pinningTool) ResolveProposalSelection(
 	return p.pinned, nil
 }
 
-func runPinning(t *testing.T, tool *pinningTool, auto bool) *agentports.RunResult {
+func runPinning(t *testing.T, tool *pinningTool, auto bool) *agentruntimeports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("accounting_retry_sync_record", map[string]any{"errorCategories": []any{"Transient"}}),
-		textTurn("Done."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn(
+			"accounting_retry_sync_record",
+			map[string]any{"errorCategories": []any{"Transient"}},
+		),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	definition := testDefinition("accounting_retry_sync_record")
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
+	definition := runtimetest.Definition("accounting_retry_sync_record")
 	if auto {
-		definition = autoDefinition("accounting_retry_sync_record")
+		definition = runtimetest.AutoDefinition("accounting_retry_sync_record")
 	}
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Retry what failed in the outage.",
 	})
 	require.NoError(t, err)

@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -16,41 +18,49 @@ import (
 
 //nolint:exhaustive // the statuses a decision tool moves an item to
 var decisionFields = map[billingqueue.Status][]string{
-	billingqueue.StatusOnHold:        {common.FieldStatus, "reviewNotes"},
-	billingqueue.StatusException:     {common.FieldStatus, "exceptionReasonCode", "exceptionNotes"},
-	billingqueue.StatusSentBackToOps: {common.FieldStatus, "exceptionReasonCode", "exceptionNotes"},
-	billingqueue.StatusApproved:      {common.FieldStatus, "reviewNotes", fieldReviewCompletedAt},
-	billingqueue.StatusCanceled: {
-		common.FieldStatus, common.FieldCancelReason, common.FieldCanceledByID, "canceledAt",
+	billingqueue.StatusOnHold: {changepreview.FieldStatus, "reviewNotes"},
+	billingqueue.StatusException: {
+		changepreview.FieldStatus,
+		"exceptionReasonCode",
+		"exceptionNotes",
 	},
-}
-
-var decisionVolatile = []string{fieldReviewCompletedAt, "canceledAt", fieldReviewStartedAt}
-
-var decisionRefs = map[string]permission.Resource{
-	common.FieldCanceledByID: permission.ResourceUser,
-	"assignedBillerId":       permission.ResourceUser,
+	billingqueue.StatusSentBackToOps: {
+		changepreview.FieldStatus,
+		"exceptionReasonCode",
+		"exceptionNotes",
+	},
+	billingqueue.StatusApproved: {
+		changepreview.FieldStatus,
+		"reviewNotes",
+		billingqueuepreview.FieldReviewCompletedAt,
+	},
+	billingqueue.StatusCanceled: {
+		changepreview.FieldStatus,
+		changepreview.FieldCancelReason,
+		changepreview.FieldCanceledByID,
+		"canceledAt",
+	},
 }
 
 // planned is the item as the decision leaves it, by the plan Validate and
 // the billing queue's UpdateStatus apply.
 func (t *BillingQueueDecisionTool) planned(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (common.PlannedChange, *billingqueue.BillingQueueItem, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (changepreview.PlannedChange, *billingqueue.BillingQueueItem, error) {
 	req, err := t.request(params)
 	if err != nil {
-		return common.PlannedChange{}, nil, err
+		return changepreview.PlannedChange{}, nil, err
 	}
 
 	item, err := t.load(ctx, req)
 	if err != nil {
-		return common.PlannedChange{}, nil, err
+		return changepreview.PlannedChange{}, nil, err
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
-		common.QueueRecord(item),
+	plan, err := changepreview.PlanUpdate(
+		billingqueuepreview.QueueRecord(item),
 		item,
 		func(after *billingqueue.BillingQueueItem) error {
 			if planErr := t.plan(after, req, params.Actor, now); planErr != nil {
@@ -60,11 +70,11 @@ func (t *BillingQueueDecisionTool) planned(
 			return approvalBlock(after, req.NewStatus)
 		},
 		toolpreview.Only(decisionFields[t.decision.status]...),
-		toolpreview.Volatile(decisionVolatile...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.Volatile(billingqueuepreview.DecisionVolatile...),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
-		return common.PlannedChange{}, nil, err
+		return changepreview.PlannedChange{}, nil, err
 	}
 
 	return plan, item, nil
@@ -72,9 +82,9 @@ func (t *BillingQueueDecisionTool) planned(
 
 func (t *BillingQueueDecisionTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	plan, item, err := t.planned(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, item, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -90,15 +100,15 @@ func (t *BillingQueueDecisionTool) Preview(
 	}
 
 	after := *item
-	after.ExceptionReasonCode = t.reasonOf(&params)
-	after.ExceptionNotes = common.OptionalString(params.Params, common.ParamNote)
+	after.ExceptionReasonCode = t.reasonOf(params)
+	after.ExceptionNotes = toolparams.OptionalString(params.Params, toolparams.ParamNote)
 	comment := billingqueueservice.SendBackComment(&after, params.Actor.UserIDOrNil())
 	note := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceShipment,
 		ID:       item.ShipmentID,
-		Label:    common.ShipmentLabel(item),
-	}, &agent.MessagePreview{
-		Channel:    agent.MessageChannelComment,
+		Label:    billingqueuepreview.ShipmentLabel(item),
+	}, &agentpreview.MessagePreview{
+		Channel:    agentpreview.MessageChannelComment,
 		Body:       comment.Comment,
 		Visibility: string(comment.Visibility),
 	})
@@ -108,10 +118,10 @@ func (t *BillingQueueDecisionTool) Preview(
 }
 
 func (t *BillingQueueDecisionTool) reasonOf(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) *billingqueue.ExceptionReasonCode {
 	code := billingqueue.ExceptionReasonCode(
-		common.OptionalString(params.Params, paramExceptionReasonCode),
+		toolparams.OptionalString(params.Params, paramExceptionReasonCode),
 	)
 
 	return &code
@@ -126,7 +136,7 @@ func decisionVerb(status billingqueue.Status) string {
 	case billingqueue.StatusSentBackToOps:
 		return "send back to operations"
 	case billingqueue.StatusApproved:
-		return common.VerbApprove
+		return changepreview.VerbApprove
 	case billingqueue.StatusCanceled:
 		return "cancel, dropping its charge from billing,"
 	default:
@@ -136,9 +146,9 @@ func decisionVerb(status billingqueue.Status) string {
 
 func (t *AssignBillerTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, asker, err := t.request(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, asker, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -149,15 +159,19 @@ func (t *AssignBillerTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := common.PlanUpdate(
-		common.QueueRecord(item),
+	plan, err := changepreview.PlanUpdate(
+		billingqueuepreview.QueueRecord(item),
 		item,
 		func(after *billingqueue.BillingQueueItem) error {
 			return billingqueueservice.PlanAssignBiller(after, req.BillerID, now)
 		},
-		toolpreview.Only("assignedBillerId", common.FieldStatus, fieldReviewStartedAt),
-		toolpreview.Volatile(decisionVolatile...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.Only(
+			"assignedBillerId",
+			changepreview.FieldStatus,
+			billingqueuepreview.FieldReviewStartedAt,
+		),
+		toolpreview.Volatile(billingqueuepreview.DecisionVolatile...),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
 		return nil, err

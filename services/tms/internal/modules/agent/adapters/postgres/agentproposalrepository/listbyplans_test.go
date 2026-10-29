@@ -3,7 +3,7 @@ package agentproposalrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,10 @@ func TestListByPlansAsksNothingForNoPlans(t *testing.T) {
 
 	repo := &repository{l: zap.NewNop()}
 
-	steps, err := repo.ListByPlans(t.Context(), agentports.ListAgentProposalsByPlansRequest{})
+	steps, err := repo.ListByPlans(
+		t.Context(),
+		agentproposalports.ListAgentProposalsByPlansRequest{},
+	)
 
 	require.NoError(t, err)
 	assert.Empty(t, steps)

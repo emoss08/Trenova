@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -46,7 +46,10 @@ type replyNotifications interface {
 // replyThreads is what telling someone their reply is ready needs of their
 // conversations: reading the one the reply is in.
 type replyThreads interface {
-	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(
+		ctx context.Context,
+		req *conversationports.GetThreadRequest,
+	) (*conversation.Thread, error)
 }
 
 // notifiesUnseen reports the endings worth telling someone about when they
@@ -103,7 +106,7 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return nil
 	}
 
-	thread, err := a.threads.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := a.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         payload.ThreadID,
 		UserID:     payload.Actor.UserID,
 		TenantInfo: tenant,

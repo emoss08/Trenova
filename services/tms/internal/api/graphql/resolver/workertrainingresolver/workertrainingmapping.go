@@ -4,9 +4,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -17,23 +21,23 @@ func trainingCourseFromInput(
 	input *gqlmodel.TrainingCourseInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*worker.TrainingCourse, error) {
-	passingScore, err := base.ParseNullDecimalField("passingScore", input.PassingScore)
+) (*workertraining.TrainingCourse, error) {
+	passingScore, err := gqldecimal.ParseNullDecimalField("passingScore", input.PassingScore)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &worker.TrainingCourse{
+	entity := &workertraining.TrainingCourse{
 		ID:             id,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Code:           strings.TrimSpace(input.Code),
 		Name:           strings.TrimSpace(input.Name),
-		Description:    strings.TrimSpace(base.StringValue(input.Description)),
+		Description:    strings.TrimSpace(gqlscalar.StringValue(input.Description)),
 		Category:       input.Category,
 		Status:         input.Status,
 		Delivery:       input.Delivery,
-		ContentURL:     strings.TrimSpace(base.StringValue(input.ContentURL)),
+		ContentURL:     strings.TrimSpace(gqlscalar.StringValue(input.ContentURL)),
 		DurationMinutes: int32(
 			input.DurationMinutes,
 		), //nolint:gosec // bounded by validation
@@ -47,8 +51,8 @@ func trainingCourseFromInput(
 			input.DueDaysAfterAssignment,
 		), //nolint:gosec // bounded by validation
 		RequiresAcknowledgement: input.RequiresAcknowledgement,
-		SortOrder:               intutils.SafeToInt32(base.IntValue(input.SortOrder)),
-		Version:                 int64(base.IntValue(input.Version)),
+		SortOrder:               intutils.SafeToInt32(gqlscalar.IntValue(input.SortOrder)),
+		Version:                 int64(gqlscalar.IntValue(input.Version)),
 	}
 	if entity.RequiredForDriverTypes == nil {
 		entity.RequiredForDriverTypes = []worker.DriverType{}
@@ -68,7 +72,7 @@ func completeTrainingRequestFromInput(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (*workertrainingservice.CompleteRequest, error) {
-	recordID, err := base.OptionalID(input.ID)
+	recordID, err := gqlid.OptionalID(input.ID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"id",
@@ -76,7 +80,7 @@ func completeTrainingRequestFromInput(
 			"Training record is invalid",
 		)
 	}
-	workerID, err := base.OptionalID(input.WorkerID)
+	workerID, err := gqlid.OptionalID(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"workerId",
@@ -84,7 +88,7 @@ func completeTrainingRequestFromInput(
 			"Worker is invalid",
 		)
 	}
-	courseID, err := base.OptionalID(input.CourseID)
+	courseID, err := gqlid.OptionalID(input.CourseID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"courseId",
@@ -92,7 +96,7 @@ func completeTrainingRequestFromInput(
 			"Course is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -100,7 +104,7 @@ func completeTrainingRequestFromInput(
 			"Document is invalid",
 		)
 	}
-	score, err := base.ParseNullDecimalField("score", input.Score)
+	score, err := gqldecimal.ParseNullDecimalField("score", input.Score)
 	if err != nil {
 		return nil, err
 	}
@@ -110,22 +114,22 @@ func completeTrainingRequestFromInput(
 		ID:          recordID,
 		WorkerID:    workerID,
 		CourseID:    courseID,
-		CompletedAt: int64(base.IntValue(input.CompletedAt)),
+		CompletedAt: int64(gqlscalar.IntValue(input.CompletedAt)),
 		Score:       score,
 		DocumentID:  documentID,
-		Notes:       base.StringValue(input.Notes),
-		Version:     int64(base.IntValue(input.Version)),
+		Notes:       gqlscalar.StringValue(input.Notes),
+		Version:     int64(gqlscalar.IntValue(input.Version)),
 		UserID:      userID,
 	}, nil
 }
 
 func trainingCourseCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.TrainingCourse],
+	result *pagination.CursorListResult[*workertraining.TrainingCourse],
 ) (*gqlmodel.TrainingCourseConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.TrainingCourse, cursor string) *gqlmodel.TrainingCourseEdge {
+		func(node *workertraining.TrainingCourse, cursor string) *gqlmodel.TrainingCourseEdge {
 			return &gqlmodel.TrainingCourseEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -135,9 +139,9 @@ func trainingCourseCursorConnectionToModel(
 
 	return &gqlmodel.TrainingCourseConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.TrainingCourseEdge) string { return edge.Cursor },
 			),
@@ -147,7 +151,7 @@ func trainingCourseCursorConnectionToModel(
 	}, nil
 }
 
-func trainingCategoryString(category *worker.TrainingCategory) string {
+func trainingCategoryString(category *workertraining.TrainingCategory) string {
 	if category == nil {
 		return ""
 	}

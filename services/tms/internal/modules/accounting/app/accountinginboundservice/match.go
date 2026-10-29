@@ -5,8 +5,15 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingpayablesports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -24,7 +31,7 @@ type creditPlan struct {
 }
 
 type settlementPlan struct {
-	kind       accountingsyncports.PayableKind
+	kind       accountingpayablesports.PayableKind
 	id         pulid.ID
 	partyID    pulid.ID
 	number     string
@@ -33,9 +40,9 @@ type settlementPlan struct {
 }
 
 type postingPlan struct {
-	change      *accountingsync.AccountingInboundChange
+	change      *accountinginbound.AccountingInboundChange
 	provider    string
-	reason      accountingsync.InboundChangeReason
+	reason      accountinginbound.InboundChangeReason
 	resolution  string
 	paidAt      int64
 	customerID  pulid.ID
@@ -44,11 +51,11 @@ type postingPlan struct {
 	cashMinor   int64
 	credits     []*creditPlan
 	settlements []*settlementPlan
-	lines       []accountingsyncports.AccountingInboundPostingLine
+	lines       []accountinginboundports.AccountingInboundPostingLine
 }
 
 func (p *postingPlan) block(
-	reason accountingsync.InboundChangeReason,
+	reason accountinginbound.InboundChangeReason,
 	resolution string,
 ) *postingPlan {
 	if p.reason == "" {
@@ -63,13 +70,13 @@ func (p *postingPlan) blocked() bool {
 }
 
 func (p *postingPlan) ignorable() bool {
-	return p.reason == accountingsync.InboundReasonNotTrenovaDocument ||
-		p.reason == accountingsync.InboundReasonSentFromTrenova
+	return p.reason == accountinginbound.InboundReasonNotTrenovaDocument ||
+		p.reason == accountinginbound.InboundReasonSentFromTrenova
 }
 
 func (p *postingPlan) objectCount() int {
 	count := len(p.credits) + len(p.settlements)
-	if p.change.Kind == accountingsync.InboundCustomerPayment && p.change.AmountMinor > 0 {
+	if p.change.Kind == accountinginbound.InboundCustomerPayment && p.change.AmountMinor > 0 {
 		count++
 	}
 	return count
@@ -77,12 +84,12 @@ func (p *postingPlan) objectCount() int {
 
 func (s *Service) plan(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
-	change *accountingsync.AccountingInboundChange,
+	conn *accountingconnection.AccountingConnection,
+	change *accountinginbound.AccountingInboundChange,
 ) (*postingPlan, error) {
 	p := &postingPlan{
 		change:   change,
-		provider: accountingsync.ProviderName(conn.IntegrationType),
+		provider: accountingprovider.ProviderName(conn.IntegrationType),
 		paidAt:   change.TxnDate,
 	}
 
@@ -92,13 +99,13 @@ func (s *Service) plan(
 		return nil, err
 	}
 	if echo[change.ExternalID] {
-		return p.block(accountingsync.InboundReasonSentFromTrenova, sentFromTrenovaText(p)), nil
+		return p.block(accountinginbound.InboundReasonSentFromTrenova, sentFromTrenovaText(p)), nil
 	}
 
 	switch change.Kind {
-	case accountingsync.InboundCustomerPayment:
+	case accountinginbound.InboundCustomerPayment:
 		err = s.planCustomerPayment(ctx, conn, p)
-	case accountingsync.InboundBillPayment:
+	case accountinginbound.InboundBillPayment:
 		err = s.planBillPayment(ctx, p)
 	}
 	if err != nil {
@@ -112,10 +119,10 @@ func (s *Service) plan(
 
 func (s *Service) matchLines(
 	ctx context.Context,
-	change *accountingsync.AccountingInboundChange,
+	change *accountinginbound.AccountingInboundChange,
 	objectTypes []accountingsync.SyncObjectType,
-	kinds []accountingsync.InboundDocumentKind,
-) (matched []*accountingsync.InboundLine, unmatched int, err error) {
+	kinds []accountinginbound.InboundDocumentKind,
+) (matched []*accountinginbound.InboundLine, unmatched int, err error) {
 	ids := make([]string, 0, len(change.Document.Lines))
 	for _, line := range change.Document.Lines {
 		if slices.Contains(kinds, line.DocumentKind) && line.DocumentExternalID != "" {
@@ -141,7 +148,7 @@ func (s *Service) matchLines(
 		}
 	}
 
-	matched = make([]*accountingsync.InboundLine, 0, len(change.Document.Lines))
+	matched = make([]*accountinginbound.InboundLine, 0, len(change.Document.Lines))
 	for _, line := range change.Document.Lines {
 		line.ObjectType = ""
 		line.ObjectID = pulid.Nil
@@ -167,25 +174,25 @@ func (s *Service) matchedDocuments(
 	ctx context.Context,
 	p *postingPlan,
 	objectTypes []accountingsync.SyncObjectType,
-	kinds []accountingsync.InboundDocumentKind,
-) ([]*accountingsync.InboundLine, error) {
+	kinds []accountinginbound.InboundDocumentKind,
+) ([]*accountinginbound.InboundLine, error) {
 	matched, unmatched, err := s.matchLines(ctx, p.change, objectTypes, kinds)
 	if err != nil {
 		return nil, err
 	}
 	switch {
 	case len(matched) == 0:
-		p.block(accountingsync.InboundReasonNotTrenovaDocument, notTrenovaText(p))
+		p.block(accountinginbound.InboundReasonNotTrenovaDocument, notTrenovaText(p))
 		return nil, nil
 	case unmatched > 0:
-		p.block(accountingsync.InboundReasonUnknownDocument, unknownDocumentText(p, unmatched))
+		p.block(accountinginbound.InboundReasonUnknownDocument, unknownDocumentText(p, unmatched))
 		return nil, nil
 	default:
 		return matched, nil
 	}
 }
 
-func orderedObjects(matched []*accountingsync.InboundLine) []pulid.ID {
+func orderedObjects(matched []*accountinginbound.InboundLine) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(matched))
 	for _, line := range matched {
 		if !slices.Contains(ids, line.ObjectID) {
@@ -197,7 +204,7 @@ func orderedObjects(matched []*accountingsync.InboundLine) []pulid.ID {
 
 func (s *Service) planCustomerPayment(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	p *postingPlan,
 ) error {
 	change := p.change
@@ -209,10 +216,10 @@ func (s *Service) planCustomerPayment(
 			accountingsync.SyncObjectDebitMemo,
 			accountingsync.SyncObjectCreditMemo,
 		},
-		[]accountingsync.InboundDocumentKind{
-			accountingsync.InboundDocInvoice,
-			accountingsync.InboundDocDebitMemo,
-			accountingsync.InboundDocCreditMemo,
+		[]accountinginbound.InboundDocumentKind{
+			accountinginbound.InboundDocInvoice,
+			accountinginbound.InboundDocDebitMemo,
+			accountinginbound.InboundDocCreditMemo,
 		},
 	)
 	if err != nil || p.blocked() {
@@ -236,11 +243,11 @@ func (s *Service) planCustomerPayment(
 		return nil
 	}
 	if leftover := allocate(p, matched, invoices, credit); leftover > 0 {
-		p.block(accountingsync.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
+		p.block(accountinginbound.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
 		return nil
 	}
 	if p.cashMinor > change.AmountMinor {
-		p.block(accountingsync.InboundReasonOverpayment,
+		p.block(accountinginbound.InboundReasonOverpayment,
 			totalOverText(p.cashMinor, change.AmountMinor, change.CurrencyCode))
 		return nil
 	}
@@ -250,7 +257,7 @@ func (s *Service) planCustomerPayment(
 
 func checkInvoices(
 	p *postingPlan,
-	matched []*accountingsync.InboundLine,
+	matched []*accountinginbound.InboundLine,
 	invoices map[pulid.ID]*invoice.Invoice,
 ) (credit, owed map[pulid.ID]int64) {
 	credit = make(map[pulid.ID]int64, len(matched))
@@ -260,14 +267,14 @@ func checkInvoices(
 		inv, ok := invoices[line.ObjectID]
 		switch {
 		case !ok:
-			p.block(accountingsync.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
+			p.block(accountinginbound.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
 		case !customerID.IsNil() && customerID != inv.CustomerID:
-			p.block(accountingsync.InboundReasonPartyMismatch, partyMismatchText(p))
+			p.block(accountinginbound.InboundReasonPartyMismatch, partyMismatchText(p))
 		case !strings.EqualFold(inv.CurrencyCode, p.change.CurrencyCode):
-			p.block(accountingsync.InboundReasonCurrencyMismatch,
+			p.block(accountinginbound.InboundReasonCurrencyMismatch,
 				currencyMismatchText(p, inv.Number, inv.CurrencyCode))
 		case inv.Status != invoice.StatusPosted:
-			p.block(accountingsync.InboundReasonAlreadyPaid, notOpenText(inv.Number, inv.Status))
+			p.block(accountinginbound.InboundReasonAlreadyPaid, notOpenText(inv.Number, inv.Status))
 		}
 		if p.blocked() {
 			return credit, owed
@@ -295,7 +302,7 @@ func checkBalances(
 	for _, id := range ids {
 		inv := invoices[id]
 		if amount, ok := credit[id]; ok && amount > inv.CreditRemainingMinor() {
-			p.block(accountingsync.InboundReasonOverpayment,
+			p.block(accountinginbound.InboundReasonOverpayment,
 				creditOverText(inv.Number, amount, inv.CreditRemainingMinor(), inv.CurrencyCode))
 			return false
 		}
@@ -305,11 +312,11 @@ func checkBalances(
 		}
 		open := inv.OpenBalanceMinor()
 		if open == 0 {
-			p.block(accountingsync.InboundReasonAlreadyPaid, alreadyPaidText(inv.Number))
+			p.block(accountinginbound.InboundReasonAlreadyPaid, alreadyPaidText(inv.Number))
 			return false
 		}
 		if amount > open {
-			p.block(accountingsync.InboundReasonOverpayment,
+			p.block(accountinginbound.InboundReasonOverpayment,
 				overpaymentText(inv.Number, amount, open, inv.CurrencyCode))
 			return false
 		}
@@ -319,7 +326,7 @@ func checkBalances(
 
 func allocate(
 	p *postingPlan,
-	matched []*accountingsync.InboundLine,
+	matched []*accountinginbound.InboundLine,
 	invoices map[pulid.ID]*invoice.Invoice,
 	credit map[pulid.ID]int64,
 ) int64 {
@@ -372,7 +379,7 @@ func allocate(
 			}
 			cash[inv.ID] += due
 		}
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   line.ObjectType,
 			ObjectID:     inv.ID,
 			ObjectNumber: inv.Number,
@@ -392,7 +399,7 @@ func allocate(
 		if plan := byMemo[memoID]; plan != nil {
 			p.credits = append(p.credits, plan)
 		}
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   accountingsync.SyncObjectCreditMemo,
 			ObjectID:     memoID,
 			ObjectNumber: invoices[memoID].Number,
@@ -410,13 +417,13 @@ func allocate(
 
 func (s *Service) paymentMethod(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
-	change *accountingsync.AccountingInboundChange,
+	conn *accountingconnection.AccountingConnection,
+	change *accountinginbound.AccountingInboundChange,
 ) customerpayment.Method {
 	if change.Document.MethodExternalID != "" {
 		mappings, err := s.mappings.ListByConnection(
 			ctx,
-			&accountingsyncports.ListAccountingMappingsQuery{
+			&accountingmappingports.ListAccountingMappingsQuery{
 				TenantInfo:   change.TenantInfo(),
 				ConnectionID: conn.ID,
 				TargetTypes: []accountingsync.MappingTargetType{
@@ -427,7 +434,7 @@ func (s *Service) paymentMethod(
 		if err == nil {
 			for _, mapping := range mappings {
 				method := customerpayment.Method(mapping.TrenovaKey)
-				if mapping.State == accountingsync.MappingStateConfirmed &&
+				if mapping.State == accountingmapping.MappingStateConfirmed &&
 					mapping.ExternalID == change.Document.MethodExternalID && method.IsValid() {
 					return method
 				}
@@ -452,7 +459,7 @@ func (s *Service) planBillPayment(ctx context.Context, p *postingPlan) error {
 			accountingsync.SyncObjectCarrierBill,
 			accountingsync.SyncObjectDriverBill,
 		},
-		[]accountingsync.InboundDocumentKind{accountingsync.InboundDocBill},
+		[]accountinginbound.InboundDocumentKind{accountinginbound.InboundDocBill},
 	)
 	if err != nil || p.blocked() {
 		return err
@@ -472,12 +479,12 @@ func (s *Service) planBillPayment(ctx context.Context, p *postingPlan) error {
 			return planErr
 		}
 		if !partyID.IsNil() && partyID != settlement.partyID {
-			p.block(accountingsync.InboundReasonPartyMismatch, partyMismatchText(p))
+			p.block(accountinginbound.InboundReasonPartyMismatch, partyMismatchText(p))
 			return nil
 		}
 		partyID = settlement.partyID
 		p.settlements = append(p.settlements, settlement)
-		p.lines = append(p.lines, accountingsyncports.AccountingInboundPostingLine{
+		p.lines = append(p.lines, accountinginboundports.AccountingInboundPostingLine{
 			ObjectType:   kinds[id],
 			ObjectID:     id,
 			ObjectNumber: settlement.number,
@@ -500,15 +507,15 @@ func (s *Service) planSettlement(
 	billType accountingsync.SyncObjectType,
 	paidMinor int64,
 ) (*settlementPlan, bool, error) {
-	kind := accountingsyncports.PayableCarrier
+	kind := accountingpayablesports.PayableCarrier
 	payment := accountingsync.SyncObjectCarrierBillPay
 	if billType == accountingsync.SyncObjectDriverBill {
-		kind = accountingsyncports.PayableDriver
+		kind = accountingpayablesports.PayableDriver
 		payment = accountingsync.SyncObjectDriverBillPay
 	}
 	settlement, err := s.payables.GetSettlement(
 		ctx,
-		&accountingsyncports.GetPayableSettlementRequest{
+		&accountingpayablesports.GetPayableSettlementRequest{
 			TenantInfo: p.change.TenantInfo(),
 			Kind:       kind,
 			ID:         id,
@@ -516,7 +523,7 @@ func (s *Service) planSettlement(
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			p.block(accountingsync.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
+			p.block(accountinginbound.InboundReasonUnknownDocument, unknownDocumentText(p, 1))
 			return nil, false, nil
 		}
 		return nil, false, err
@@ -524,15 +531,15 @@ func (s *Service) planSettlement(
 	switch {
 	case settlement.CurrencyCode != "" &&
 		!strings.EqualFold(settlement.CurrencyCode, p.change.CurrencyCode):
-		p.block(accountingsync.InboundReasonCurrencyMismatch,
+		p.block(accountinginbound.InboundReasonCurrencyMismatch,
 			currencyMismatchText(p, settlement.Number, settlement.CurrencyCode))
 	case settlement.Voided:
-		p.block(accountingsync.InboundReasonAlreadyPaid, settlementVoidedText(settlement.Number))
+		p.block(accountinginbound.InboundReasonAlreadyPaid, settlementVoidedText(settlement.Number))
 	case settlement.PaidAt != nil:
-		p.block(accountingsync.InboundReasonAlreadyPaid, alreadyPaidText(settlement.Number))
+		p.block(accountinginbound.InboundReasonAlreadyPaid, alreadyPaidText(settlement.Number))
 	case paidMinor != settlement.NetMinor:
 		p.block(
-			accountingsync.InboundReasonPartialBillPayment,
+			accountinginbound.InboundReasonPartialBillPayment,
 			partialBillText(
 				settlement.Number,
 				paidMinor,
@@ -563,13 +570,13 @@ func (s *Service) checkPeriod(ctx context.Context, p *postingPlan) error {
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			p.block(accountingsync.InboundReasonPeriodNotOpen, noPeriodText(p))
+			p.block(accountinginbound.InboundReasonPeriodNotOpen, noPeriodText(p))
 			return nil
 		}
 		return err
 	}
 	if period.Status != fiscalperiod.StatusOpen {
-		p.block(accountingsync.InboundReasonPeriodNotOpen, periodNotOpenText(p, period.Status))
+		p.block(accountinginbound.InboundReasonPeriodNotOpen, periodNotOpenText(p, period.Status))
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -289,12 +290,12 @@ type ShipmentEditorParams struct {
 	fx.In
 
 	Repo    shipmentports.ShipmentRepository
-	Service shipmentports.ShipmentService
+	Service shipmentserviceports.ShipmentLifecycleService
 }
 
 type shipmentEditor struct {
 	repo    shipmentports.ShipmentRepository
-	service shipmentports.ShipmentService
+	service shipmentserviceports.ShipmentLifecycleService
 }
 
 func NewShipmentEditor(p ShipmentEditorParams) EditorResult {

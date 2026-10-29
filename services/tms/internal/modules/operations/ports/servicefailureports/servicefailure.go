@@ -3,10 +3,12 @@ package servicefailureports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -279,22 +281,22 @@ type ServiceFailureEvaluationResult struct {
 }
 
 type ServiceFailureEvaluatedStopSummary struct {
-	ShipmentID         pulid.ID          `json:"shipmentId"`
-	ShipmentMoveID     pulid.ID          `json:"shipmentMoveId,omitempty"`
-	StopID             pulid.ID          `json:"stopId,omitempty"`
-	StopSequence       int64             `json:"stopSequence,omitempty"`
-	StopType           shipment.StopType `json:"stopType,omitempty"`
-	LocationID         pulid.ID          `json:"locationId,omitempty"`
-	LocationName       string            `json:"locationName,omitempty"`
-	LocationCode       string            `json:"locationCode,omitempty"`
-	City               string            `json:"city,omitempty"`
-	StateCode          string            `json:"stateCode,omitempty"`
-	ScheduledCutoff    int64             `json:"scheduledCutoff,omitempty"`
-	ActualArrival      int64             `json:"actualArrival,omitempty"`
-	GracePeriodMinutes int               `json:"gracePeriodMinutes,omitempty"`
-	LateMinutes        int64             `json:"lateMinutes,omitempty"`
-	ServiceFailureID   pulid.ID          `json:"serviceFailureId,omitempty"`
-	Reason             string            `json:"reason,omitempty"`
+	ShipmentID         pulid.ID               `json:"shipmentId"`
+	ShipmentMoveID     pulid.ID               `json:"shipmentMoveId,omitempty"`
+	StopID             pulid.ID               `json:"stopId,omitempty"`
+	StopSequence       int64                  `json:"stopSequence,omitempty"`
+	StopType           shipmentvocab.StopType `json:"stopType,omitempty"`
+	LocationID         pulid.ID               `json:"locationId,omitempty"`
+	LocationName       string                 `json:"locationName,omitempty"`
+	LocationCode       string                 `json:"locationCode,omitempty"`
+	City               string                 `json:"city,omitempty"`
+	StateCode          string                 `json:"stateCode,omitempty"`
+	ScheduledCutoff    int64                  `json:"scheduledCutoff,omitempty"`
+	ActualArrival      int64                  `json:"actualArrival,omitempty"`
+	GracePeriodMinutes int                    `json:"gracePeriodMinutes,omitempty"`
+	LateMinutes        int64                  `json:"lateMinutes,omitempty"`
+	ServiceFailureID   pulid.ID               `json:"serviceFailureId,omitempty"`
+	Reason             string                 `json:"reason,omitempty"`
 }
 
 type ServiceFailureSkippedStop = ServiceFailureEvaluatedStopSummary
@@ -312,8 +314,8 @@ type ServiceFailureDetectionPlan struct {
 }
 
 type ServiceFailureEDIPayloadResult struct {
-	Payload     edi.DocumentPayload `json:"payload"`
-	Diagnostics []edi.Diagnostic    `json:"diagnostics"`
+	Payload     edipayload.DocumentPayload `json:"payload"`
+	Diagnostics []edidocument.Diagnostic   `json:"diagnostics"`
 }
 
 type ServiceFailureEvaluator interface {
@@ -431,6 +433,10 @@ type ServiceFailureReasonCodeService interface {
 		ctx context.Context,
 		req GetServiceFailureReasonCodeByIDRequest,
 	) (*servicefailure.ReasonCode, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetServiceFailureReasonCodesByIDsRequest,
+	) ([]*servicefailure.ReasonCode, error)
 	SelectOptions(
 		ctx context.Context,
 		req *ServiceFailureReasonCodeSelectOptionsRequest,

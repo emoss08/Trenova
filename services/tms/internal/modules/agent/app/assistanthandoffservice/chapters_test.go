@@ -5,7 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -15,18 +18,18 @@ import (
 )
 
 type fakeChapterSpans struct {
-	agentports.AssistantChapterService
+	assistantchapterports.AssistantChapterService
 
-	span *agentports.ChapterSpan
+	span *assistantchapterports.ChapterSpan
 	err  error
-	req  *agentports.ChapterSpanRequest
+	req  *assistantchapterports.ChapterSpanRequest
 }
 
 func (f *fakeChapterSpans) Span(
 	_ context.Context,
-	req agentports.ChapterSpanRequest,
-) (*agentports.ChapterSpan, error) {
-	f.req = &req
+	req *assistantchapterports.ChapterSpanRequest,
+) (*assistantchapterports.ChapterSpan, error) {
+	f.req = req
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -36,9 +39,9 @@ func (f *fakeChapterSpans) Span(
 
 func through(sequence int) *int { return &sequence }
 
-func spanOf(title string, from int, last *int) *agentports.ChapterSpan {
-	return &agentports.ChapterSpan{
-		Chapter: &conversation.Chapter{ID: pulid.MustNew("achp_"), Title: title},
+func spanOf(title string, from int, last *int) *assistantchapterports.ChapterSpan {
+	return &assistantchapterports.ChapterSpan{
+		Chapter: &conversationchapter.Chapter{ID: pulid.MustNew("achp_"), Title: title},
 		From:    from,
 		Through: last,
 	}
@@ -52,7 +55,7 @@ func TestHistoryRequest_ReadsTheNewestOfTheWholeConversationWithoutAChapter(t *t
 
 	req := historyRequest(origin, tenant, nil)
 
-	assert.Equal(t, agentports.ListMessagesRequest{
+	assert.Equal(t, conversationports.ListMessagesRequest{
 		ThreadID:     origin.ID,
 		TenantInfo:   tenant,
 		Limit:        120,
@@ -94,16 +97,20 @@ func TestHandoffTitle_NamesTheNewConversationForTheChapter(t *testing.T) {
 	origin := &conversation.Thread{Title: "Monday work"}
 
 	assert.Equal(t, "Monday work", handoffTitle(origin, nil))
-	assert.Equal(t, "Acme invoice dispute", handoffTitle(origin, spanOf("Acme invoice dispute", 5, nil)))
+	assert.Equal(
+		t,
+		"Acme invoice dispute",
+		handoffTitle(origin, spanOf("Acme invoice dispute", 5, nil)),
+	)
 }
 
 func (f *handoffFixture) handoffChapter(
 	t *testing.T,
 	chapterID, agentID pulid.ID,
-) (*agentports.HandoffThreadResult, error) {
+) (*assistantports.HandoffThreadResult, error) {
 	t.Helper()
 
-	return f.svc.Handoff(t.Context(), &agentports.HandoffThreadRequest{
+	return f.svc.Handoff(t.Context(), &assistantports.HandoffThreadRequest{
 		ThreadID:          f.origin.ID,
 		AgentDefinitionID: agentID,
 		ChapterID:         chapterID,

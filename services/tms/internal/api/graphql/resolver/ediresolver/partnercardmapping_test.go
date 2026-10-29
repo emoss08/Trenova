@@ -4,44 +4,50 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/lading"
-	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/smime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func partnerCardFixture() *ediservice.EDIPartnerCard {
+func partnerCardFixture() *edioverview.EDIPartnerCard {
 	partnerID := pulid.MustNew("edip_")
-	return &ediservice.EDIPartnerCard{
+	return &edioverview.EDIPartnerCard{
 		Partner: &edi.EDIPartner{ID: partnerID, Code: "TYSON", Name: "Tyson Foods"},
-		Readiness: &ediservice.EDIPartnerReadiness{
+		Readiness: &edioverview.EDIPartnerReadiness{
 			PartnerID:      partnerID,
 			CompletedCount: 1,
 			TotalCount:     2,
-			Items: []ediservice.EDIPartnerReadinessItem{
+			Items: []edioverview.EDIPartnerReadinessItem{
 				{Key: "details", Label: "Partner details", Complete: true},
 				{Key: "lading-active", Label: "An active Lading version"},
 			},
 		},
-		Mappings: &ediports.EDIMappingSummary{},
-		Activity: &ediservice.EDIPartnerActivity{
+		Mappings: &edipartnerports.EDIMappingSummary{},
+		Activity: &edioverview.EDIPartnerActivity{
 			Since:         100,
 			SeriesSince:   50,
 			BucketSeconds: 3600,
-			Scorecard: &ediports.EDIPartnerScorecardRow{
+			Scorecard: &edimessageports.EDIPartnerScorecardRow{
 				PartnerID:   partnerID,
 				SentCount:   9,
 				FailedCount: 1,
 			},
 			OverdueAckCount: 3,
 		},
-		Attention: &ediservice.EDIPartnerAttention{OverdueAckAge: 14400},
+		Attention: &edioverview.EDIPartnerAttention{OverdueAckAge: 14400},
 	}
 }
 
@@ -50,29 +56,38 @@ func TestEDIPartnerCardToModel_NamesCredentialsWithoutValues(t *testing.T) {
 
 	card := partnerCardFixture()
 	pollAttempt, pollSuccess := int64(1_700_000_100), int64(1_700_000_000)
-	card.Transports = []*ediservice.EDIPartnerTransport{{
+	card.Transports = []*edioverview.EDIPartnerTransport{{
 		Profile: &edi.EDICommunicationProfile{
 			Method:            edi.ConnectionMethodAS2,
 			LastPollAttemptAt: &pollAttempt,
 			LastPollSuccessAt: &pollSuccess,
 		},
 		LastPollError: "password: [redacted] refused",
-		Credentials: []ediports.CredentialRequirement{
-			{Keys: []string{"password", "privateKey"}, Kind: ediports.CredentialKindSecret, Required: true, Missing: true},
-			{Keys: []string{"knownHostKey"}, Kind: ediports.CredentialKindSetting, Required: true},
-			{Keys: nil, Kind: ediports.CredentialKindSecret},
-		},
-		Certificates: []ediservice.EDIPartnerCertificate{
+		Credentials: []ediconnectiondraftports.CredentialRequirement{
 			{
-				Role: ediservice.PartnerCertificateRolePartnerEncryption,
-				Summary: &as2.CertificateSummary{
+				Keys:     []string{"password", "privateKey"},
+				Kind:     ediconnectiondraftports.CredentialKindSecret,
+				Required: true,
+				Missing:  true,
+			},
+			{
+				Keys:     []string{"knownHostKey"},
+				Kind:     ediconnectiondraftports.CredentialKindSetting,
+				Required: true,
+			},
+			{Keys: nil, Kind: ediconnectiondraftports.CredentialKindSecret},
+		},
+		Certificates: []edioverview.EDIPartnerCertificate{
+			{
+				Role: edioverview.PartnerCertificateRolePartnerEncryption,
+				Summary: &smime.CertificateSummary{
 					Subject:   "CN=edi.tyson.example",
 					Issuer:    "CN=Sectigo RSA",
 					NotBefore: 1_690_000_000,
 					NotAfter:  1_800_000_000,
 				},
 			},
-			{Role: ediservice.PartnerCertificateRolePartnerSigning, Unreadable: true},
+			{Role: edioverview.PartnerCertificateRolePartnerSigning, Unreadable: true},
 		},
 	}}
 
@@ -109,8 +124,8 @@ func TestEDIPartnerCardToModel_KeepsCarriersNullWhenNotRead(t *testing.T) {
 	require.NotNil(t, model.Lading, "a partner with no project has an empty Lading block")
 	assert.Nil(t, model.Lading.Project)
 	assert.Nil(t, model.Lading.Active)
-	assert.Equal(t, []*edi.EDIMessage{}, model.Attention.OverdueAcks)
-	assert.Equal(t, []*edi.EDIInboundFile{}, model.Attention.QuarantinedFiles)
+	assert.Equal(t, []*edimessage.EDIMessage{}, model.Attention.OverdueAcks)
+	assert.Equal(t, []*ediinboundfile.EDIInboundFile{}, model.Attention.QuarantinedFiles)
 
 	read := partnerCardFixture()
 	read.Carriers = []*carrier.CarrierEDIChannel{}
@@ -134,16 +149,22 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		},
 		{CarrierID: pulid.MustNew("car_")},
 	}
-	card.Mappings = &ediports.EDIMappingSummary{
+	card.Mappings = &edipartnerports.EDIMappingSummary{
 		ProfileID: pulid.MustNew("edimp_"),
 		UpdatedAt: 1_700_000_000,
-		Counts: []*ediports.EDIMappingEntityCount{
+		Counts: []*edipartnerports.EDIMappingEntityCount{
 			{EntityType: edi.MappingEntityTypeLocation, Count: 41},
 		},
 	}
-	card.Activity.Sets = []*ediports.EDIPartnerSetActivityRow{
-		{TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Count: 1284, FailedCount: 2, LastAt: 1_700_000_500},
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Count: 0},
+	card.Activity.Sets = []*edimessageports.EDIPartnerSetActivityRow{
+		{
+			TransactionSet: "214",
+			Direction:      edidocument.DocumentDirectionOutbound,
+			Count:          1284,
+			FailedCount:    2,
+			LastAt:         1_700_000_500,
+		},
+		{TransactionSet: "204", Direction: edidocument.DocumentDirectionInbound, Count: 0},
 	}
 
 	model := ediPartnerCardToModel(card)
@@ -166,8 +187,14 @@ func TestEDIPartnerCardToModel_ReadsTheLinksAndFigures(t *testing.T) {
 		},
 	}, model.Mappings)
 	assert.Equal(t, []*gqlmodel.EDIPartnerSetActivity{
-		{TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Count: 1284, FailedCount: 2, LastAt: new(1_700_000_500)},
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound},
+		{
+			TransactionSet: "214",
+			Direction:      edidocument.DocumentDirectionOutbound,
+			Count:          1284,
+			FailedCount:    2,
+			LastAt:         new(1_700_000_500),
+		},
+		{TransactionSet: "204", Direction: edidocument.DocumentDirectionInbound},
 	}, model.Activity.Sets)
 	assert.Equal(t, 3, model.Activity.Scorecard.OverdueAckCount,
 		"overdue is counted once, by the attention's own read")
@@ -190,10 +217,13 @@ func TestEDIPartnerCardToModel_CarriesTheLadingVersionsRunning(t *testing.T) {
 	t.Parallel()
 
 	card := partnerCardFixture()
-	card.Lading = &ediservice.EDIPartnerLading{
-		Project: &edi.LadingProject{ID: pulid.MustNew("ldp_"), EDIPartnerID: card.Partner.ID},
-		Active:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
-		Shadow:  &edi.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
+	card.Lading = &edioverview.EDIPartnerLading{
+		Project: &ladingproject.LadingProject{
+			ID:           pulid.MustNew("ldp_"),
+			EDIPartnerID: card.Partner.ID,
+		},
+		Active: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 3},
+		Shadow: &ladingproject.LadingVersion{ID: pulid.MustNew("ldv_"), Number: 4},
 	}
 
 	model := ediPartnerCardToModel(card)
@@ -241,13 +271,18 @@ func TestLadingVersionModel_ReadsTheEnvelopeAndSetsFromTheManifest(t *testing.T)
 
 	ack, within := "997", 1800
 	assert.Equal(t, []*gqlmodel.EDILadingExchange{
-		{TransactionSet: "204", Direction: edi.DocumentDirectionInbound, Map: "tenderIn", Acknowledgment: &ack},
 		{
-			TransactionSet: "214", Direction: edi.DocumentDirectionOutbound, Map: "statusOut",
+			TransactionSet: "204",
+			Direction:      edidocument.DocumentDirectionInbound,
+			Map:            "tenderIn",
+			Acknowledgment: &ack,
+		},
+		{
+			TransactionSet: "214", Direction: edidocument.DocumentDirectionOutbound, Map: "statusOut",
 			Acknowledgment: &ack, AcknowledgmentWithin: &within,
 		},
 		{
-			TransactionSet: "990", Direction: edi.DocumentDirectionOutbound, Map: "answerOut",
+			TransactionSet: "990", Direction: edidocument.DocumentDirectionOutbound, Map: "answerOut",
 			Acknowledgment: &ack, AcknowledgmentWithin: &within,
 		},
 	}, ladingExchangesToModel(manifest), "a map that reads no X12 set is not an exchange")

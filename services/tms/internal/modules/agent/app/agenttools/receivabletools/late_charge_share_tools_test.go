@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +58,7 @@ func (f *fakeLateCharges) PlanAssess(
 func lateChargePlan() *latechargeports.LateChargeAssessmentResult {
 	return &latechargeports.LateChargeAssessmentResult{
 		Preview:          true,
-		Mode:             tenant.LateChargeAssessmentModeAutomatic,
+		Mode:             billingcontrol.LateChargeAssessmentModeAutomatic,
 		AutoPost:         true,
 		TotalChargeMinor: 1500,
 		Customers: []*latechargeports.LateChargeCustomerResult{
@@ -87,19 +89,23 @@ func TestAssessLateCharges_PreviewsEachMemoAndOnlyAPersonAssesses(t *testing.T) 
 	tool := NewAssessLateChargesTool(charges)
 	params := agenttoolstest.ExecuteParams(map[string]any{paramAsOfDate: "2026-09-25"})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, charges.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		charges.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would raise 1 late charge debit memo for 15.00")
 	assert.Contains(t, preview.Summary, "posted as it is raised")
 	assert.Contains(t, preview.Summary, "Beta Farms is skipped")
 	require.Len(t, preview.Changes, 1)
 	memo := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceInvoice, memo.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, memo.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, memo.Operation)
 	require.NotNil(t, memo.Money)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, charges.assessed)
@@ -121,17 +127,17 @@ func TestAssessLateCharges_RefusesARunThatChargesNothing(t *testing.T) {
 	tool := NewAssessLateChargesTool(&fakeLateCharges{plan: plan})
 	params := agenttoolstest.ExecuteParams(map[string]any{paramAsOfDate: "2026-09-25"})
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "nothing to charge")
 
 	disabled := &fakeLateCharges{refusal: errortypes.NewValidationError(
 		"mode", errortypes.ErrInvalidOperation, "Late charge assessment is disabled",
 	)}
-	preview, err := NewAssessLateChargesTool(disabled).(agentports.ToolPreviewer).
+	preview, err := NewAssessLateChargesTool(disabled).(agenttoolports.ToolPreviewer).
 		Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeSharer struct {
@@ -171,40 +177,47 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 
 	inv := agenttoolstest.ReceivableInvoice("INV-2026-1042", 100000, 0)
 	dana := pulid.MustNew("usr_")
-	sharer := &fakeSharer{guard: &agenttoolstest.WriteGuard{}, plan: &invoiceports.InvoiceSharePreview{
-		Invoice:         inv,
-		SharedByName:    "Marcus Bell",
-		Note:            "Check the detention line",
-		Tab:             invoice.ShareTabCharges,
-		EmailConfigured: true,
-		Recipients: []invoiceports.InvoiceShareRecipientPreview{{
-			UserID: dana, Name: "Dana Whitfield", EmailAddress: "dana@example.com",
-			Emailed: true, Subject: "Marcus shared an invoice", Body: "Check the detention line",
-		}},
-	}}
+	sharer := &fakeSharer{
+		guard: &agenttoolstest.WriteGuard{},
+		plan: &invoiceports.InvoiceSharePreview{
+			Invoice:         inv,
+			SharedByName:    "Marcus Bell",
+			Note:            "Check the detention line",
+			Tab:             invoiceshare.ShareTabCharges,
+			EmailConfigured: true,
+			Recipients: []invoiceports.InvoiceShareRecipientPreview{{
+				UserID: dana, Name: "Dana Whitfield", EmailAddress: "dana@example.com",
+				Emailed: true, Subject: "Marcus shared an invoice", Body: "Check the detention line",
+			}},
+		},
+	}
 	tool := NewShareInvoiceTool(sharer)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamInvoiceID: inv.ID.String(),
-		paramUserIDs:          []any{dana.String()},
-		paramShareNote:        "Check the detention line",
-		paramShareTab:         string(invoice.ShareTabCharges),
+		toolparams.ParamInvoiceID: inv.ID.String(),
+		paramUserIDs:              []any{dana.String()},
+		paramShareNote:            "Check the detention line",
+		paramShareTab:             string(invoiceshare.ShareTabCharges),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, sharer.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		sharer.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Would share Invoice INV-2026-1042 with Dana Whitfield")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Message)
 	assert.Equal(t, []string{"dana@example.com"}, change.Message.To)
 	assert.Equal(t, "Marcus shared an invoice", change.Message.Subject)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sharer.shared)
 	assert.Equal(t, []pulid.ID{dana}, sharer.shared.UserIDs)
-	assert.Equal(t, invoice.ShareTabCharges, sharer.shared.Tab)
+	assert.Equal(t, invoiceshare.ShareTabCharges, sharer.shared.Tab)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceInvoice, policy.Resource)

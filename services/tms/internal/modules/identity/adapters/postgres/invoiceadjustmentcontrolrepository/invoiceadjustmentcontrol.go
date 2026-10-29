@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
@@ -39,12 +39,12 @@ func New(p Params) tenantports.InvoiceAdjustmentControlRepository {
 func (r *repository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
-) (*tenant.InvoiceAdjustmentControl, error) {
+) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*tenant.InvoiceAdjustmentControl, error) {
-			iac := tenantdb.InvoiceAdjustmentControls
+		func(ctx context.Context) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+			iac := invoiceadjustmentcontroldb.InvoiceAdjustmentControls
 			entity, err := iac.Where(iac.OrganizationID.Eq(orgID)).
 				Cache(resultcache.Settings()...).
 				One(ctx, r.db.Keel(ctx))
@@ -64,13 +64,13 @@ func (r *repository) GetByOrgID(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.InvoiceAdjustmentControl,
-) (*tenant.InvoiceAdjustmentControl, error) {
+	entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*tenant.InvoiceAdjustmentControl, error) {
-			if err := tenantdb.InvoiceAdjustmentControls.Save(
+		func(ctx context.Context) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
+			if err := invoiceadjustmentcontroldb.InvoiceAdjustmentControls.Save(
 				ctx,
 				r.db.Keel(ctx),
 				entity,

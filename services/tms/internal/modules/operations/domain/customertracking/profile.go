@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
@@ -95,7 +95,7 @@ func (p *Profile) LinkTTLSeconds() int64 {
 }
 
 func (p *Profile) RecipientList() []string {
-	return stringutils.SplitEmailList(p.Recipients)
+	return mailtext.SplitEmailList(p.Recipients)
 }
 
 // Normalize puts the profile in its canonical form before it is validated and

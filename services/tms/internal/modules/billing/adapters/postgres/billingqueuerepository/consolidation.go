@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
@@ -23,7 +24,7 @@ const defaultCandidateLimit = 5000
 func endpointStop(
 	sp *shipmentdb.ShipmentsTable,
 	alias string,
-	types []shipment.StopType,
+	types []shipmentvocab.StopType,
 	first bool,
 ) (*keel.Query[*shipment.Stop], keel.Expr) {
 	stop := shipmentdb.Stops.As(alias)
@@ -55,20 +56,23 @@ func consolidationCandidates(
 	origin, originKey := endpointStop(
 		sp,
 		"origin",
-		[]shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
+		[]shipmentvocab.StopType{shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup},
 		true,
 	)
 	dest, destKey := endpointStop(
 		sp,
 		"dest",
-		[]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
+		[]shipmentvocab.StopType{
+			shipmentvocab.StopTypeDelivery,
+			shipmentvocab.StopTypeSplitDelivery,
+		},
 		false,
 	)
 	totalLegs := keel.CaseInt64().
 		When(sp.OrderID.IsNull(), keel.Int64(0)).
 		Else(keel.Int64Of(keel.Scalar(sib.
 			Pick(keel.Count()).
-			Where(sib.OrderID.EqCol(sp.OrderID), sib.Status.Ne(shipment.StatusCanceled)))))
+			Where(sib.OrderID.EqCol(sp.OrderID), sib.Status.Ne(shipmentvocab.StatusCanceled)))))
 
 	return bqi.
 		Join(sp, sp.ID.EqCol(bqi.ShipmentID)).
@@ -105,7 +109,7 @@ func consolidationCandidates(
 		).
 		Where(
 			bqi.Status.Eq(billingqueue.StatusApproved),
-			sp.Status.In(shipment.StatusReadyToInvoice, shipment.StatusCompleted),
+			sp.Status.In(shipmentvocab.StatusReadyToInvoice, shipmentvocab.StatusCompleted),
 			unbilledInvoiceFreight(bqi, sp, req.CustomerIDs, req.PeriodEnd),
 		).
 		Order(

@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,10 +23,10 @@ func ruleFromInput(input *gqlmodel.TriageRuleInput) (*triage.Rule, error) {
 	}
 
 	var err error
-	if rule.MailboxID, err = base.OptionalScopedID("mailboxId", input.MailboxID); err != nil {
+	if rule.MailboxID, err = gqlid.OptionalScopedID("mailboxId", input.MailboxID); err != nil {
 		return nil, err
 	}
-	if rule.AssigneeID, err = base.OptionalScopedID("assigneeId", input.AssigneeID); err != nil {
+	if rule.AssigneeID, err = gqlid.OptionalScopedID("assigneeId", input.AssigneeID); err != nil {
 		return nil, err
 	}
 
@@ -36,11 +37,11 @@ func userByID(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 	if id.IsNil() {
 		return nil, nil //nolint:nilnil // no one is named, which is not a failure
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.UserByID(ctx, id.String()))
+	return loaderfields.OptionalMatch(identityloaders.UserByID(ctx, id.String()))
 }
 
 func timestampPtr(value int64) *int {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -54,7 +55,7 @@ func (s *Service) ingestFormSubmission(
 	assignment, err := s.resolveActiveAssignment(ctx, tenantInfo, pulid.Nil, workerID)
 	if err == nil && assignment != nil {
 		record.ShipmentMoveID = assignment.ShipmentMoveID
-		if move, moveErr := s.shipmentMoveRepo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		if move, moveErr := s.shipmentMoveRepo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:     assignment.ShipmentMoveID,
 			TenantInfo: tenantInfo,
 		}); moveErr == nil && move != nil {

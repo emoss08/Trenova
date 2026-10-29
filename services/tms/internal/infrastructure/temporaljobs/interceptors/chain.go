@@ -1,16 +1,16 @@
 package interceptors
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"go.temporal.io/sdk/interceptor"
 	"go.uber.org/zap"
 )
 
 type ChainParams struct {
-	Config         *config.Config
+	TemporalConfig *temporalconfig.Config
 	Logger         *zap.Logger
-	MetricsHandler *metrics.Temporal
+	MetricsHandler *platformmetrics.Temporal
 }
 
 func BuildWorkerInterceptorChain(p ChainParams) []interceptor.WorkerInterceptor {
@@ -22,7 +22,7 @@ func BuildWorkerInterceptorChain(p ChainParams) []interceptor.WorkerInterceptor 
 		p.Logger.Debug("metrics interceptor enabled")
 	}
 
-	cfg := p.Config.Temporal.Interceptors
+	cfg := p.TemporalConfig.Interceptors
 	if cfg.EnableLogging {
 		loggingInterceptor := NewLoggingInterceptor(p.Logger, cfg.GetLogLevel())
 		workerInterceptors = append(workerInterceptors, loggingInterceptor)

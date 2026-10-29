@@ -7,14 +7,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,8 +53,8 @@ func (s *Service) RequestMyPTO(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowPtoRequests },
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowPtoRequests },
 		"Your carrier handles time-off requests outside Dash — talk to your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -78,7 +80,7 @@ func (s *Service) RequestMyPTO(
 	if err != nil {
 		return nil, err
 	}
-	s.notifyDispatch(
+	s.NotifyDispatch(
 		ctx,
 		tenantInfo,
 		"dash.pto_requested",
@@ -125,7 +127,7 @@ func (s *Service) CancelMyPTO(
 		return nil, err
 	}
 
-	pto, err := s.ptoRepo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	pto, err := s.ptoRepo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 	})
@@ -143,7 +145,7 @@ func (s *Service) CancelMyPTO(
 		)
 	}
 
-	return s.ptoService.CancelRequested(ctx, &workerports.UpdatePTOStatusRequest{
+	return s.ptoService.CancelRequested(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         ptoID,
 		TenantInfo: tenantInfo,
 		Status:     worker.PTOStatusCancelled,
@@ -164,12 +166,12 @@ type SubmitMyExpenseRequest struct {
 func (s *Service) MyExpenses(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*driverpay.Expense, error) {
+) ([]*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.ListExpensesForWorker(
+	return s.expenseService.ListExpensesForWorker(
 		ctx,
 		&driverpayports.ListDriverExpensesForWorkerRequest{
 			TenantInfo: tenantInfo,
@@ -182,13 +184,13 @@ func (s *Service) SubmitMyExpense(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	req *SubmitMyExpenseRequest,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowExpenseSubmission },
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowExpenseSubmission },
 		"Your carrier handles expense reimbursements outside Dash — see your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -208,7 +210,7 @@ func (s *Service) SubmitMyExpense(
 		}
 	}
 
-	return s.settlementService.SubmitExpense(ctx, &driversettlementservice.SubmitExpenseRequest{
+	return s.expenseService.SubmitExpense(ctx, &driversettlementreviewservice.SubmitExpenseRequest{
 		TenantInfo:        tenantInfo,
 		WorkerID:          wrk.ID,
 		SubmittedByUserID: tenantInfo.UserID,
@@ -224,12 +226,12 @@ func (s *Service) CancelMyExpense(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	expenseID pulid.ID,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.CancelExpense(ctx, tenantInfo, expenseID, wrk.ID)
+	return s.expenseService.CancelExpense(ctx, tenantInfo, expenseID, wrk.ID)
 }
 
 // UploadMyExpenseReceipt stores a receipt image against the driver's own
@@ -240,7 +242,7 @@ func (s *Service) UploadMyExpenseReceipt(
 	expenseID pulid.ID,
 	file *multipart.FileHeader,
 	actor *permissionports.RequestActor,
-) (*driverpay.Expense, error) {
+) (*payexpense.Expense, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -251,7 +253,7 @@ func (s *Service) UploadMyExpenseReceipt(
 		)
 	}
 
-	expense, err := s.settlementService.GetExpense(
+	expense, err := s.expenseService.GetExpense(
 		ctx,
 		driverpayports.GetDriverExpenseByIDRequest{ID: expenseID, TenantInfo: tenantInfo},
 	)
@@ -272,7 +274,7 @@ func (s *Service) UploadMyExpenseReceipt(
 	if err != nil {
 		return nil, err
 	}
-	return s.settlementService.SetExpenseReceipt(
+	return s.expenseService.SetExpenseReceipt(
 		ctx,
 		tenantInfo,
 		expenseID,
@@ -298,15 +300,15 @@ func (s *Service) RespondToMyAssignment(
 	if err != nil {
 		return err
 	}
-	control, err := s.requireFeature(ctx, tenantInfo,
-		func(dc *tenant.DashControl) bool { return dc.RequireLoadAcknowledgment },
+	control, err := s.RequireFeature(ctx, tenantInfo,
+		func(dc *dashcontrol.DashControl) bool { return dc.RequireLoadAcknowledgment },
 		"Your carrier doesn't use load acceptance in Dash.",
 	)
 	if err != nil {
 		return err
 	}
 
-	ack := shipment.AssignmentAckAccepted
+	ack := shipmentvocab.AssignmentAckAccepted
 	if !req.Accept {
 		if !control.AllowLoadRefusals {
 			return errortypes.NewValidationError(
@@ -315,7 +317,7 @@ func (s *Service) RespondToMyAssignment(
 				"Your carrier doesn't allow declining loads in Dash — call your dispatcher instead.",
 			)
 		}
-		ack = shipment.AssignmentAckDeclined
+		ack = shipmentvocab.AssignmentAckDeclined
 		if strings.TrimSpace(req.Reason) == "" {
 			return errortypes.NewValidationError(
 				"reason",
@@ -338,7 +340,7 @@ func (s *Service) RespondToMyAssignment(
 	}
 
 	if !req.Accept {
-		s.notifyDispatch(
+		s.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"dash.load_declined",
@@ -362,13 +364,13 @@ func (s *Service) MyLoadPayEstimate(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 	moveID pulid.ID,
-) (*driversettlementservice.MovePayEstimate, error) {
+) (*driversettlementaccrualservice.MovePayEstimate, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool {
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool {
 			return control.ShowLoadPay && control.ShowPayEstimates
 		},
 		"Pay estimates aren't enabled for your carrier.",
@@ -382,19 +384,19 @@ func (s *Service) MyLoadPayEstimate(
 	if !assigned {
 		return nil, errortypes.NewNotFoundError("Load not found")
 	}
-	return s.settlementService.EstimateWorkerMovePay(ctx, tenantInfo, wrk.ID, shipmentID, moveID)
+	return s.payEstimator.EstimateWorkerMovePay(ctx, tenantInfo, wrk.ID, shipmentID, moveID)
 }
 
 func (s *Service) MyYtdPay(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	year int,
-) (*driversettlementservice.WorkerYTDPaySummary, error) {
+) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error) {
 	wrk, err := s.ResolveWorker(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	summaries, err := s.settlementService.GetYTDPaySummaries(ctx, tenantInfo, year, "")
+	summaries, err := s.payHistory.GetYTDPaySummaries(ctx, tenantInfo, year, "")
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +410,7 @@ func (s *Service) MyYtdPay(
 
 // --- shared helpers ---
 
-func (s *Service) notifyDispatch(
+func (s *Service) NotifyDispatch(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	eventType, title, message, link string,

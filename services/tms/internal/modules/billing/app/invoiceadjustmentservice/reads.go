@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -31,7 +30,7 @@ func (s *Service) Approve(
 			if guardErr := s.refuseSelfApproval(txCtx, req, actor); guardErr != nil {
 				return guardErr
 			}
-			executed, execErr := s.executeApprovedAdjustment(
+			executed, execErr := s.engine.ExecuteApprovedAdjustment(
 				txCtx,
 				req.AdjustmentID,
 				&invoiceadjustmentports.InvoiceAdjustmentRequest{
@@ -51,8 +50,8 @@ func (s *Service) Approve(
 	}
 
 	if result != nil {
-		s.logAdjustmentEvent("invoice adjustment approved", result, zap.InfoLevel)
-		s.logAudit(result, actor, permission.OpApprove, "Invoice adjustment approved")
+		s.engine.LogAdjustmentEvent("invoice adjustment approved", result, zap.InfoLevel)
+		s.engine.LogAudit(result, actor, permission.OpApprove, "Invoice adjustment approved")
 	}
 	return result, nil
 }
@@ -101,9 +100,9 @@ func (s *Service) Reject(
 		return nil, err
 	}
 
-	s.logAdjustmentEvent("invoice adjustment rejected", updated, zap.InfoLevel)
-	s.logAudit(updated, actor, permission.OpReject, "Invoice adjustment rejected")
-	s.publishAdjustedInvoices(ctx, actor, restored)
+	s.engine.LogAdjustmentEvent("invoice adjustment rejected", updated, zap.InfoLevel)
+	s.engine.LogAudit(updated, actor, permission.OpReject, "Invoice adjustment rejected")
+	s.engine.PublishAdjustedInvoices(ctx, actor, restored)
 	return updated, nil
 }
 
@@ -209,34 +208,6 @@ func (s *Service) withdrawVoidRequest(
 	return s.invoiceRepo.Update(ctx, entity)
 }
 
-func (s *Service) GetDetail(
-	ctx context.Context,
-	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
-) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, err := s.repo.GetByID(ctx, invoiceadjustmentports.GetInvoiceAdjustmentRequest{
-		ID:         req.AdjustmentID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	adjustmentDocs, err := s.documentRepo.GetByResourceID(
-		ctx,
-		&documentports.GetDocumentsByResourceRequest{
-			TenantInfo:          req.TenantInfo,
-			ResourceID:          req.AdjustmentID.String(),
-			ResourceType:        adjustmentDocumentResourceType,
-			IncludeDocumentType: true,
-		},
-	)
-	if err == nil {
-		entity.AdjustmentDocuments = adjustmentDocs
-	}
-
-	return entity, nil
-}
-
 func (s *Service) GetLineage(
 	ctx context.Context,
 	req *invoiceadjustmentports.GetInvoiceAdjustmentLineageRequest,
@@ -292,4 +263,19 @@ func (s *Service) GetOperationsSummary(
 	tenantInfo pagination.TenantInfo,
 ) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error) {
 	return s.repo.GetOperationsSummary(ctx, tenantInfo)
+}
+
+func (s *Service) GetDetail(
+	ctx context.Context,
+	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
+) (*invoiceadjustment.InvoiceAdjustment, error) {
+	return s.engine.GetDetail(ctx, req)
+}
+
+func (s *Service) Preview(
+	ctx context.Context,
+	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
+	actor *permissionports.RequestActor,
+) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
+	return s.engine.Preview(ctx, req, actor)
 }

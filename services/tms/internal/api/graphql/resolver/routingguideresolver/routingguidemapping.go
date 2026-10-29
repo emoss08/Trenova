@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func routingGuideColumns(ctx context.Context, nodePathPrefix string) []string {
 func routingGuideConnectionToModel(
 	result *pagination.CursorListResult[*tender.RoutingGuide],
 ) (*gqlmodel.RoutingGuideConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *tender.RoutingGuide, cursor string) *gqlmodel.RoutingGuideEdge {
 			return &gqlmodel.RoutingGuideEdge{

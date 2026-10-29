@@ -21,9 +21,8 @@ caught here rather than by a run that never wakes.
 */
 
 const (
-	eventsSource = "events.go"
-	enumsSource  = "enums.go"
-	subjectEnum  = "agent_subject_type_enum"
+	enumsSource = "enums.go"
+	subjectEnum = "agent_subject_type_enum"
 )
 
 func readSource(t *testing.T, name string) string {
@@ -33,28 +32,6 @@ func readSource(t *testing.T, name string) string {
 	require.NoError(t, err)
 
 	return string(contents)
-}
-
-func TestEveryDeclaredEventKindIsRegistered(t *testing.T) {
-	t.Parallel()
-
-	pattern := regexp.MustCompile(`Event\w+\s+=\s+EventKind\("([^"]+)"\)`)
-	matches := pattern.FindAllStringSubmatch(readSource(t, eventsSource), -1)
-	require.NotEmpty(t, matches)
-
-	registered := make(map[agent.EventKind]agent.SubjectType, len(matches))
-	for _, event := range agent.KnownEvents() {
-		registered[event.Kind] = event.SubjectType
-	}
-
-	for _, match := range matches {
-		kind := agent.EventKind(match[1])
-		subject, ok := registered[kind]
-		require.Truef(t, ok, "event kind %q is declared but missing from knownEvents", kind)
-		require.Truef(t, subject.IsValid(), "event kind %q resolves an unknown subject", kind)
-		require.True(t, kind.IsValid(), kind)
-	}
-	require.Len(t, registered, len(matches))
 }
 
 func declaredSubjectTypes(t *testing.T) []agent.SubjectType {

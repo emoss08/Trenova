@@ -7,10 +7,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,15 +20,15 @@ import (
 )
 
 type recordingRunService struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 
-	lists []*agentports.ListAgentRunConnectionRequest
-	gets  []agentports.GetAgentRunByIDRequest
+	lists []*agentruntimeports.ListAgentRunConnectionRequest
+	gets  []agentruntimeports.GetAgentRunByIDRequest
 }
 
 func (s *recordingRunService) ListConnection(
 	_ context.Context,
-	req *agentports.ListAgentRunConnectionRequest,
+	req *agentruntimeports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
 	s.lists = append(s.lists, req)
 
@@ -37,7 +37,7 @@ func (s *recordingRunService) ListConnection(
 
 func (s *recordingRunService) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	s.gets = append(s.gets, req)
 
@@ -60,7 +60,7 @@ func TestAgentRunQueries_ReadForThePersonAsking(t *testing.T) {
 		}}
 		runs := &recordingRunService{}
 		resolver := &QueryResolver{Deps: &Deps{
-			Core:            &base.Core{PermissionEngine: engine},
+			Core:            &resolvercore.Core{PermissionEngine: engine},
 			AgentRunService: runs,
 		}}
 
@@ -79,7 +79,7 @@ func TestAgentRunQueries_ReadForThePersonAsking(t *testing.T) {
 		_, err = resolver.AgentRun(ctx, pulid.MustNew("ar_").String())
 		require.NoError(t, err, name)
 
-		want := agentports.PersonRunRead(principal.userID)
+		want := agentruntimeports.PersonRunRead(principal.userID)
 		require.Len(t, runs.lists, 1, name)
 		assert.Equal(t, want, runs.lists[0].Reader, name)
 		require.Len(t, runs.gets, 1, name)

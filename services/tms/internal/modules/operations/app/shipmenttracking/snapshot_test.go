@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -35,16 +36,16 @@ func inTransitShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 	move := &shipment.ShipmentMove{
 		ID:           pulid.MustNew("smv_"),
 		Sequence:     0,
-		Status:       shipment.MoveStatusInTransit,
+		Status:       shipmentvocab.MoveStatusInTransit,
 		Loaded:       true,
-		CoverageType: shipment.MoveCoverageTypeDriver,
+		CoverageType: shipmentvocab.MoveCoverageTypeDriver,
 		Distance:     ptr(240.0),
 		Stops: []*shipment.Stop{
 			{
 				ID:                   pulid.MustNew("stp_"),
 				Sequence:             1,
-				Type:                 shipment.StopTypeDelivery,
-				Status:               shipment.StopStatusNew,
+				Type:                 shipmentvocab.StopTypeDelivery,
+				Status:               shipmentvocab.StopStatusNew,
 				ScheduledWindowStart: now + 2*3600,
 				ScheduledWindowEnd:   ptr(now + 3*3600),
 				Location:             place("Houston DC", "Houston", "TX", 29.7604, -95.3698),
@@ -52,8 +53,8 @@ func inTransitShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 			{
 				ID:                   pulid.MustNew("stp_"),
 				Sequence:             0,
-				Type:                 shipment.StopTypePickup,
-				Status:               shipment.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypePickup,
+				Status:               shipmentvocab.StopStatusCompleted,
 				ScheduledWindowStart: now - 5*3600,
 				ScheduledWindowEnd:   ptr(now - 4*3600),
 				ActualArrival:        ptr(now - 3*3600),
@@ -66,7 +67,7 @@ func inTransitShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "S12345",
-		Status:    shipment.StatusInTransit,
+		Status:    shipmentvocab.StatusInTransit,
 		Customer:  &customer.Customer{Name: "Acme"},
 		Moves:     []*shipment.ShipmentMove{move},
 	}, move
@@ -109,7 +110,7 @@ func TestBuild_EstimatesArrivalFromTheTractorsPosition(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {
 				AssignedWorkerID:    workerID,
 				AssignedWorkerName:  "Maria Ortiz",
@@ -174,7 +175,7 @@ func TestBuild_ReadsTheStoredProjectionAndAStalePositionStale(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {AssignedTractorID: tractorID, CoverageType: "driver"},
 		},
 		Positions: map[pulid.ID]*telematics.VehiclePosition{
@@ -232,7 +233,7 @@ func TestBuild_SaysWhenThereIsNothingToEstimateFrom(t *testing.T) {
 		Shipment: sp,
 		Now:      now,
 		Timezone: "UTC",
-		Assignments: map[pulid.ID]*shipmentports.BoardMove{
+		Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 			move.ID: {AssignedTractorID: pulid.MustNew("trc_"), CoverageType: "driver"},
 		},
 	})
@@ -248,7 +249,7 @@ func TestBuild_FlagsAnOverdueStopAndAnUncoveredMove(t *testing.T) {
 	t.Parallel()
 
 	sp, _ := inTransitShipment()
-	sp.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	sp.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	sp.Moves[0].Stops[0].ScheduledWindowEnd = ptr(now - 45*60)
 
 	snapshot := Build(Input{Shipment: sp, Now: now, Timezone: "UTC"})
@@ -278,10 +279,10 @@ func TestBuild_ADeliveredShipmentHasNoNextStop(t *testing.T) {
 
 	sp, _ := inTransitShipment()
 	for _, stop := range sp.Moves[0].Stops {
-		stop.Status = shipment.StopStatusCompleted
+		stop.Status = shipmentvocab.StopStatusCompleted
 		stop.ActualArrival = ptr(now - 7200)
 	}
-	sp.Status = shipment.StatusCompleted
+	sp.Status = shipmentvocab.StatusCompleted
 
 	snapshot := Build(Input{Shipment: sp, Now: now, Timezone: "UTC"})
 

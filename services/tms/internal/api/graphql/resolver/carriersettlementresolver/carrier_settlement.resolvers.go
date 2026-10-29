@@ -11,14 +11,22 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
@@ -29,26 +37,26 @@ import (
 )
 
 func (r *CarrierSettlementResolver) ExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error) {
-	return base.NullDecimalStringPtr(obj.ExchangeRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.ExchangeRate), nil
 }
 
 func (r *CarrierSettlementResolver) PaidExchangeRate(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*string, error) {
-	return base.NullDecimalStringPtr(obj.PaidExchangeRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.PaidExchangeRate), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
-	return base.NullDecimalStringPtr(obj.TotalAmount), nil
+func (r *EdiCarrierInvoiceResolver) TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.TotalAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
-	return base.NullDecimalStringPtr(obj.ExpectedAmount), nil
+func (r *EdiCarrierInvoiceResolver) ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.ExpectedAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error) {
-	return base.NullDecimalStringPtr(obj.VarianceAmount), nil
+func (r *EdiCarrierInvoiceResolver) VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error) {
+	return gqldecimal.NullDecimalStringPtr(obj.VarianceAmount), nil
 }
 
-func (r *EdiCarrierInvoiceResolver) ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error) {
+func (r *EdiCarrierInvoiceResolver) ReconciliationStatus(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (string, error) {
 	return string(obj.ReconciliationStatus), nil
 }
 
@@ -58,7 +66,7 @@ func (r *MutationResolver) GenerateCarrierSettlementBatch(ctx context.Context, i
 		return nil, err
 	}
 	req := &carriersettlementservice.GenerateBatchRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}
 	if input.PeriodStart != nil {
 		req.PeriodStart = int64(*input.PeriodStart)
@@ -82,7 +90,7 @@ func (r *MutationResolver) SubmitCarrierSettlement(ctx context.Context, input gq
 	}
 	return r.CarrierSettlementService.SubmitForApproval(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -95,7 +103,7 @@ func (r *MutationResolver) ApproveCarrierSettlement(ctx context.Context, input g
 	}
 	return r.CarrierSettlementService.Approve(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -108,9 +116,9 @@ func (r *MutationResolver) RejectCarrierSettlement(ctx context.Context, input gq
 	}
 	return r.CarrierSettlementService.Reject(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
-		base.StringValue(input.Reason),
+		gqlscalar.StringValue(input.Reason),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -122,7 +130,7 @@ func (r *MutationResolver) PostCarrierSettlement(ctx context.Context, input gqlm
 	}
 	return r.CarrierSettlementService.Post(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -134,10 +142,10 @@ func (r *MutationResolver) MarkCarrierSettlementPaid(ctx context.Context, input 
 		return nil, err
 	}
 	return r.CarrierSettlementService.MarkPaid(ctx, &carriersettlementports.MarkSettlementPaidRequest{
-		TenantInfo:       base.TenantInfo(authCtx),
+		TenantInfo:       resolvercore.TenantInfo(authCtx),
 		SettlementID:     settlementID,
 		PaymentMethod:    input.PaymentMethod,
-		PaymentReference: base.StringValue(input.PaymentReference),
+		PaymentReference: gqlscalar.StringValue(input.PaymentReference),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -148,9 +156,9 @@ func (r *MutationResolver) VoidCarrierSettlement(ctx context.Context, input gqlm
 	}
 	return r.CarrierSettlementService.Void(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
-		base.StringValue(input.Reason),
+		gqlscalar.StringValue(input.Reason),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -162,7 +170,7 @@ func (r *MutationResolver) RecalculateCarrierSettlement(ctx context.Context, inp
 	}
 	return r.CarrierSettlementService.Recalculate(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -173,7 +181,7 @@ func (r *MutationResolver) AddCarrierSettlementAdjustment(ctx context.Context, i
 	if err != nil {
 		return nil, err
 	}
-	glAccountID, err := base.OptionalPulid(input.GlAccountID)
+	glAccountID, err := gqlid.OptionalPulid(input.GlAccountID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"glAccountId",
@@ -183,7 +191,7 @@ func (r *MutationResolver) AddCarrierSettlementAdjustment(ctx context.Context, i
 	}
 	return r.CarrierSettlementService.AddAdjustmentLine(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		&carriersettlementservice.AdjustmentLineInput{
 			Description: input.Description,
@@ -205,33 +213,33 @@ func (r *MutationResolver) RemoveCarrierSettlementAdjustment(ctx context.Context
 	}
 	return r.CarrierSettlementService.RemoveAdjustmentLine(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		settlementID,
 		lineID,
 		actorutil.FromAuthContext(authCtx),
 	)
 }
 
-func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error) {
+func (r *MutationResolver) UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlementControl, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
-	entity, err := carrierSettlementControlFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := carrierSettlementControlFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 	if input.HoldUntilInvoiceMatched == nil {
-		current, currentErr := r.CarrierSettlementService.GetControl(ctx, base.TenantInfo(authCtx))
+		current, currentErr := r.CarrierSettlementWorkspaceService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 		if currentErr != nil {
 			return nil, currentErr
 		}
 		entity.HoldUntilInvoiceMatched = current.HoldUntilInvoiceMatched
 	}
-	return r.CarrierSettlementService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
+	return r.CarrierSettlementWorkspaceService.UpdateControl(ctx, entity, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edi.CarrierInvoice, error) {
+func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierInvoiceMatch, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -244,9 +252,9 @@ func (r *MutationResolver) LinkEDICarrierInvoiceToCarrier(ctx context.Context, i
 	if err != nil {
 		return nil, errortypes.NewValidationError("carrierId", errortypes.ErrInvalid, "Invalid carrier")
 	}
-	return r.CarrierSettlementService.LinkInvoiceToCarrier(
+	return r.CarrierSettlementCostService.LinkInvoiceToCarrier(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		parsedInvoiceID,
 		parsedCarrierID,
 		actorutil.FromAuthContext(authCtx),
@@ -258,11 +266,11 @@ func (r *MutationResolver) CreateCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	req, err := createCarrierInvoiceMatchRequest(&input, base.TenantInfo(authCtx))
+	req, err := createCarrierInvoiceMatchRequest(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.CreateMatch(ctx, req, actorutil.FromAuthContext(authCtx))
+	return r.CarrierSettlementCostService.CreateMatch(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *MutationResolver) AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error) {
@@ -270,11 +278,11 @@ func (r *MutationResolver) AcceptCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.AcceptMatch(
+	return r.CarrierSettlementCostService.AcceptMatch(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		matchID,
-		base.StringValue(input.Note),
+		gqlscalar.StringValue(input.Note),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -284,11 +292,11 @@ func (r *MutationResolver) AcceptCarrierInvoiceMatchWithVariance(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.AcceptWithVariance(
+	return r.CarrierSettlementCostService.AcceptWithVariance(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		matchID,
-		base.StringValue(input.Note),
+		gqlscalar.StringValue(input.Note),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -298,11 +306,11 @@ func (r *MutationResolver) RejectCarrierInvoiceMatch(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.RejectMatch(
+	return r.CarrierSettlementCostService.RejectMatch(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		matchID,
-		base.StringValue(input.Note),
+		gqlscalar.StringValue(input.Note),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -312,7 +320,7 @@ func (r *QueryResolver) CarrierSettlements(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -337,7 +345,7 @@ func (r *QueryResolver) CarrierSettlement(ctx context.Context, id string) (*carr
 	}
 	return r.CarrierSettlementService.Get(ctx, carriersettlementports.GetCarrierSettlementByIDRequest{
 		ID:           settlementID,
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		IncludeLines: true,
 	})
 }
@@ -347,7 +355,7 @@ func (r *QueryResolver) CarrierSettlementBatches(ctx context.Context, input gqlm
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -372,7 +380,7 @@ func (r *QueryResolver) CarrierSettlementBatch(ctx context.Context, id string) (
 	}
 	return r.CarrierSettlementService.GetBatch(ctx, carriersettlementports.GetCarrierSettlementBatchByIDRequest{
 		ID:                 batchID,
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		IncludeSettlements: true,
 	})
 }
@@ -382,7 +390,7 @@ func (r *QueryResolver) CarrierCostEvents(ctx context.Context, input gqlmodel.Da
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -396,12 +404,12 @@ func (r *QueryResolver) CarrierCostEvents(ctx context.Context, input gqlmodel.Da
 	return carrierCostEventConnectionToModel(result)
 }
 
-func (r *QueryResolver) CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
+func (r *QueryResolver) CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlementControl, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.GetControl(ctx, base.TenantInfo(authCtx))
+	return r.CarrierSettlementWorkspaceService.GetControl(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error) {
@@ -409,10 +417,10 @@ func (r *QueryResolver) CurrentCarrierSettlementPeriod(ctx context.Context) (*se
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierSettlementService.GetCurrentPeriod(ctx, base.TenantInfo(authCtx))
+	return r.CarrierSettlementWorkspaceService.GetCurrentPeriod(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error) {
+func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementworkspaceservice.WorkspaceSummary, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSettlement, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -424,7 +432,7 @@ func (r *QueryResolver) CarrierSettlementWorkspaceSummary(ctx context.Context, p
 	if periodEnd != nil {
 		end = int64(*periodEnd)
 	}
-	return r.CarrierSettlementService.GetWorkspaceSummary(ctx, base.TenantInfo(authCtx), start, end)
+	return r.CarrierSettlementWorkspaceService.GetWorkspaceSummary(ctx, resolvercore.TenantInfo(authCtx), start, end)
 }
 
 func (r *QueryResolver) CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error) {
@@ -437,7 +445,7 @@ func (r *QueryResolver) CarrierLedgerEntries(ctx context.Context, carrierID stri
 		return nil, errortypes.NewValidationError("carrierId", errortypes.ErrInvalid, "Invalid carrier")
 	}
 	req := &carriersettlementports.ListCarrierLedgerEntriesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  parsedCarrierID,
 	}
 	if limit != nil {
@@ -452,19 +460,19 @@ func (r *QueryResolver) CarrierInvoiceMatches(ctx context.Context, status *carri
 		return nil, err
 	}
 	req := &carriersettlementports.ListCarrierInvoiceMatchesRequest{
-		Filter: listFilterOptions(base.TenantInfo(authCtx), limit, offset),
+		Filter: listFilterOptions(resolvercore.TenantInfo(authCtx), limit, offset),
 	}
 	if status != nil {
 		req.Status = *status
 	}
-	parsedCarrierID, err := base.OptionalPulid(carrierID)
+	parsedCarrierID, err := gqlid.OptionalPulid(carrierID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("carrierId", errortypes.ErrInvalid, "Invalid carrier")
 	}
 	if parsedCarrierID != nil {
 		req.CarrierID = *parsedCarrierID
 	}
-	result, err := r.CarrierSettlementService.ListInvoiceMatches(ctx, req)
+	result, err := r.CarrierSettlementCostService.ListInvoiceMatches(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -481,16 +489,16 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 		return nil, err
 	}
 	req := &ediports.ListEDICarrierInvoicesRequest{
-		Filter: listFilterOptions(base.TenantInfo(authCtx), limit, offset),
+		Filter: listFilterOptions(resolvercore.TenantInfo(authCtx), limit, offset),
 	}
 	if reconciliationStatus != nil && *reconciliationStatus != "" {
-		req.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatus(*reconciliationStatus)
+		req.ReconciliationStatus = edicarrierinvoice.CarrierInvoiceReconciliationStatus(*reconciliationStatus)
 		if !req.ReconciliationStatus.IsValid() {
 			return nil, errortypes.NewValidationError("reconciliationStatus", errortypes.ErrInvalid,
 				"Reconciliation status must be Unmatched, MappingRequired, Matched or Variance")
 		}
 	}
-	result, err := r.CarrierSettlementService.ListUnmatchedEDIInvoices(ctx, req)
+	result, err := r.CarrierSettlementCostService.ListUnmatchedEDIInvoices(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +518,7 @@ func (r *QueryResolver) SuggestCarrierForEDIInvoice(ctx context.Context, invoice
 	if err != nil {
 		return nil, errortypes.NewValidationError("invoiceId", errortypes.ErrInvalid, "Invalid invoice")
 	}
-	return r.CarrierSettlementService.SuggestCarrierForInvoice(ctx, base.TenantInfo(authCtx), parsedInvoiceID)
+	return r.CarrierSettlementCostService.SuggestCarrierForInvoice(ctx, resolvercore.TenantInfo(authCtx), parsedInvoiceID)
 }
 
 func (r *QueryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, batchID string) (string, error) {
@@ -522,9 +530,9 @@ func (r *QueryResolver) ExportCarrierSettlementBatchCSV(ctx context.Context, bat
 	if err != nil {
 		return "", errortypes.NewValidationError("batchId", errortypes.ErrInvalid, "Invalid batch")
 	}
-	return r.CarrierSettlementService.ExportBatchRemittanceCSV(
+	return r.CarrierSettlementWorkspaceService.ExportBatchRemittanceCSV(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		parsedBatchID,
 	)
 }
@@ -549,8 +557,8 @@ func (r *CarrierSettlementResolver) MoveInvoices(ctx context.Context, obj *carri
 	}
 	moveIDs := carriersettlement.MoveIDs(obj.Lines)
 	matchesByMove := make(map[pulid.ID][]*carriersettlement.InvoiceMatch, len(moveIDs))
-	if len(moveIDs) > 0 && loaders.Available(ctx) {
-		groups, err := loaders.CarrierInvoiceMatchesByMoveIDs(ctx, sliceutils.Strings(moveIDs))
+	if len(moveIDs) > 0 && loadercore.Available(ctx) {
+		groups, err := settlementloaders.CarrierInvoiceMatchesByMoveIDs(ctx, sliceutils.Strings(moveIDs))
 		if err != nil {
 			return nil, err
 		}
@@ -562,30 +570,30 @@ func (r *CarrierSettlementResolver) MoveInvoices(ctx context.Context, obj *carri
 }
 
 func (r *CarrierSettlementResolver) SubmittedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.SubmittedByID)
+	return loaderfields.LoadUser(ctx, obj.SubmittedByID)
 }
 
 func (r *CarrierSettlementResolver) ApprovedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.ApprovedByID)
+	return loaderfields.LoadUser(ctx, obj.ApprovedByID)
 }
 
 func (r *CarrierSettlementResolver) PostedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.PostedByID)
+	return loaderfields.LoadUser(ctx, obj.PostedByID)
 }
 
 func (r *CarrierSettlementResolver) PaidBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.PaidByID)
+	return loaderfields.LoadUser(ctx, obj.PaidByID)
 }
 
 func (r *CarrierSettlementResolver) VoidedBy(ctx context.Context, obj *carriersettlement.CarrierSettlement) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.VoidedByID)
+	return loaderfields.LoadUser(ctx, obj.VoidedByID)
 }
 
-func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error) {
+func (r *EdiCarrierInvoiceResolver) SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error) {
 	authCtx, ok := gqlctx.AuthContext(ctx)
 	if !ok || authCtx == nil || obj.CarrierID.IsNotNil() {
 		return nil, nil
 	}
 
-	return r.CarrierSettlementService.SuggestCarrierFor(ctx, base.TenantInfo(authCtx), obj)
+	return r.CarrierSettlementCostService.SuggestCarrierFor(ctx, resolvercore.TenantInfo(authCtx), obj)
 }

@@ -4,13 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +47,10 @@ func period(number int, status fiscalperiod.Status, start int64) *fiscalperiod.F
 	}
 }
 
-func periodsReturning(t *testing.T, found *fiscalperiod.FiscalPeriod) *fiscalperiodportsmock.MockFiscalPeriodRepository {
+func periodsReturning(
+	t *testing.T,
+	found *fiscalperiod.FiscalPeriod,
+) *fiscalperiodportsmock.MockFiscalPeriodRepository {
 	t.Helper()
 	periods := fiscalperiodportsmock.NewMockFiscalPeriodRepository(t)
 	periods.EXPECT().
@@ -65,7 +67,7 @@ func periodsReturning(t *testing.T, found *fiscalperiod.FiscalPeriod) *fiscalper
 func resolve(
 	t *testing.T,
 	periods PeriodReader,
-	policy tenant.ClosedPeriodPostingPolicy,
+	policy accountingcontrol.ClosedPeriodPostingPolicy,
 ) (*ResolvedPeriod, error) {
 	t.Helper()
 	return ResolvePeriod(t.Context(), periods, &ResolvePeriodRequest{
@@ -82,7 +84,11 @@ func TestResolvePeriodKeepsTheDateInAnOpenOrLockedPeriod(t *testing.T) {
 
 	for _, status := range []fiscalperiod.Status{fiscalperiod.StatusOpen, fiscalperiod.StatusLocked} {
 		found := period(3, status, 900)
-		resolved, err := resolve(t, periodsReturning(t, found), tenant.ClosedPeriodPostingPolicyRequireReopen)
+		resolved, err := resolve(
+			t,
+			periodsReturning(t, found),
+			accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		)
 		require.NoError(t, err)
 		assert.Equal(t, found.ID, resolved.Period.ID)
 		assert.Equal(t, int64(1_000), resolved.AccountingDate)
@@ -93,7 +99,11 @@ func TestResolvePeriodRefusesAClosedPeriodUnlessThePolicyMovesIt(t *testing.T) {
 	t.Parallel()
 
 	for _, status := range []fiscalperiod.Status{fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed} {
-		_, err := resolve(t, periodsReturning(t, period(3, status, 900)), tenant.ClosedPeriodPostingPolicyRequireReopen)
+		_, err := resolve(
+			t,
+			periodsReturning(t, period(3, status, 900)),
+			accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+		)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
 		assert.Contains(t, err.Error(), "closed fiscal period")
@@ -121,7 +131,7 @@ func TestResolvePeriodMovesToTheEarliestLaterOpenPeriod(t *testing.T) {
 		}, nil).
 		Once()
 
-	resolved, err := resolve(t, periods, tenant.ClosedPeriodPostingPolicyPostToNextOpen)
+	resolved, err := resolve(t, periods, accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen)
 	require.NoError(t, err)
 	assert.Equal(t, next.ID, resolved.Period.ID)
 	assert.Equal(t, int64(5_000), resolved.AccountingDate)
@@ -136,7 +146,7 @@ func TestResolvePeriodFailsWhenNoLaterPeriodIsOpen(t *testing.T) {
 		Return([]*fiscalperiod.FiscalPeriod{period(4, fiscalperiod.StatusClosed, 4_000)}, nil).
 		Once()
 
-	_, err := resolve(t, periods, tenant.ClosedPeriodPostingPolicyPostToNextOpen)
+	_, err := resolve(t, periods, accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "No next open fiscal period")
 }
@@ -145,7 +155,7 @@ func TestResolvePeriodRefusesAnInactivePeriodAndAMissingOne(t *testing.T) {
 	t.Parallel()
 
 	_, err := resolve(t, periodsReturning(t, period(3, fiscalperiod.StatusInactive, 900)),
-		tenant.ClosedPeriodPostingPolicyPostToNextOpen)
+		accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "inactive fiscal period")
 	var localized interface {
@@ -161,7 +171,7 @@ func TestResolvePeriodRefusesAnInactivePeriodAndAMissingOne(t *testing.T) {
 		GetPeriodByDate(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("fiscal period not found")).
 		Once()
-	_, err = resolve(t, missing, tenant.ClosedPeriodPostingPolicyPostToNextOpen)
+	_, err = resolve(t, missing, accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen)
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
@@ -174,16 +184,16 @@ func TestResolveWorkflowFollowsThePostingMode(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	const now = int64(42)
 
-	automatic := ResolveWorkflow(&tenant.AccountingControl{
-		JournalPostingMode: tenant.JournalPostingModeAutomatic,
+	automatic := ResolveWorkflow(&accountingcontrol.AccountingControl{
+		JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic,
 	}, userID, now)
 	assert.Equal(t, StatusPosted, automatic.EntryStatus)
 	require.True(t, automatic.Posted())
 	assert.Equal(t, now, *automatic.PostedAt)
 	assert.Equal(t, userID, automatic.PostedByID)
 
-	review := ResolveWorkflow(&tenant.AccountingControl{
-		JournalPostingMode:      tenant.JournalPostingModeManual,
+	review := ResolveWorkflow(&accountingcontrol.AccountingControl{
+		JournalPostingMode:      accountingcontrol.JournalPostingModeManual,
 		RequireManualJEApproval: true,
 	}, userID, now)
 	assert.Equal(t, StatusPending, review.EntryStatus)
@@ -192,8 +202,8 @@ func TestResolveWorkflowFollowsThePostingMode(t *testing.T) {
 	assert.False(t, review.IsApproved)
 	assert.True(t, review.ApprovedByID.IsNil())
 
-	approved := ResolveWorkflow(&tenant.AccountingControl{
-		JournalPostingMode: tenant.JournalPostingModeManual,
+	approved := ResolveWorkflow(&accountingcontrol.AccountingControl{
+		JournalPostingMode: accountingcontrol.JournalPostingModeManual,
 	}, userID, now)
 	assert.Equal(t, StatusApproved, approved.EntryStatus)
 	assert.False(t, approved.Posted())
@@ -201,7 +211,7 @@ func TestResolveWorkflowFollowsThePostingMode(t *testing.T) {
 	assert.Equal(t, userID, approved.ApprovedByID)
 }
 
-func writeRequest(control *tenant.AccountingControl, lines ...Line) *WriteRequest {
+func writeRequest(control *accountingcontrol.AccountingControl, lines ...Line) *WriteRequest {
 	return &WriteRequest{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
@@ -215,7 +225,7 @@ func writeRequest(control *tenant.AccountingControl, lines ...Line) *WriteReques
 			ObjectType:     "DriverSettlement",
 			ObjectID:       pulid.MustNew("dstl_"),
 			DocumentNumber: "DS-1",
-			Event:          tenant.JournalSourceEventDriverSettlementPaid,
+			Event:          accountingcontrol.JournalSourceEventDriverSettlementPaid,
 			IdempotencyKey: "driver-settlement-paid:1",
 		},
 		Lines: lines,
@@ -237,12 +247,22 @@ func TestWriterPostsABalancedJournalInTheResolvedPeriod(t *testing.T) {
 		}).
 		Once()
 
-	req := writeRequest(&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeAutomatic},
+	req := writeRequest(
+		&accountingcontrol.AccountingControl{
+			JournalPostingMode: accountingcontrol.JournalPostingModeAutomatic,
+		},
 		Line{AccountID: payable, Debit: 700},
 		Line{AccountID: cash, Credit: 700},
 	)
-	result, err := Writer{Periods: periodsReturning(t, open), Numbers: fixedNumbers{}, Journals: journals}.
-		Write(t.Context(), req)
+	result, err := Writer{
+		Periods:  periodsReturning(t, open),
+		Numbers:  fixedNumbers{},
+		Journals: journals,
+	}.
+		Write(
+			t.Context(),
+			req,
+		)
 	require.NoError(t, err)
 
 	assert.Equal(t, result.BatchID, written.BatchID)
@@ -278,8 +298,8 @@ func TestWriterLeavesAManualModeJournalUnposted(t *testing.T) {
 		}).
 		Once()
 
-	req := writeRequest(&tenant.AccountingControl{
-		JournalPostingMode:      tenant.JournalPostingModeManual,
+	req := writeRequest(&accountingcontrol.AccountingControl{
+		JournalPostingMode:      accountingcontrol.JournalPostingModeManual,
 		RequireManualJEApproval: true,
 	},
 		Line{AccountID: pulid.MustNew("gla_"), Debit: 10},
@@ -304,11 +324,18 @@ func TestWriterRefusesJournalsThatDoNotBalanceOrHaveBadLines(t *testing.T) {
 
 	account := pulid.MustNew("gla_")
 	cases := map[string][]Line{
-		"unbalanced":   {{AccountID: account, Debit: 10}, {AccountID: account, Credit: 9}},
-		"one line":     {{AccountID: account, Debit: 10}},
-		"no account":   {{Debit: 10}, {AccountID: account, Credit: 10}},
-		"both sides":   {{AccountID: account, Debit: 10, Credit: 10}, {AccountID: account, Credit: 0}},
-		"zero line":    {{AccountID: account}, {AccountID: account, Debit: 5}, {AccountID: account, Credit: 5}},
+		"unbalanced": {{AccountID: account, Debit: 10}, {AccountID: account, Credit: 9}},
+		"one line":   {{AccountID: account, Debit: 10}},
+		"no account": {{Debit: 10}, {AccountID: account, Credit: 10}},
+		"both sides": {
+			{AccountID: account, Debit: 10, Credit: 10},
+			{AccountID: account, Credit: 0},
+		},
+		"zero line": {
+			{AccountID: account},
+			{AccountID: account, Debit: 5},
+			{AccountID: account, Credit: 5},
+		},
 		"negative leg": {{AccountID: account, Debit: -10}, {AccountID: account, Credit: -10}},
 	}
 	for name, lines := range cases {
@@ -319,7 +346,7 @@ func TestWriterRefusesJournalsThatDoNotBalanceOrHaveBadLines(t *testing.T) {
 				Periods:  fiscalperiodportsmock.NewMockFiscalPeriodRepository(t),
 				Numbers:  fixedNumbers{},
 				Journals: journalentryportsmock.NewMockJournalPostingRepository(t),
-			}.Write(t.Context(), writeRequest(&tenant.AccountingControl{}, lines...))
+			}.Write(t.Context(), writeRequest(&accountingcontrol.AccountingControl{}, lines...))
 			require.Error(t, err)
 			assert.True(t, errortypes.IsBusinessError(err))
 		})

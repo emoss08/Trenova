@@ -4,10 +4,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,19 +27,19 @@ const (
 )
 
 type PrepareRunResult struct {
-	Definition             *agentdefinition.Definition     `json:"definition"`
-	Subject                *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	ShadowMode             bool                            `json:"shadowMode"`
-	DecisionTimeoutSeconds int                             `json:"decisionTimeoutSeconds"`
-	RunTimeoutSeconds      int                             `json:"runTimeoutSeconds"`
+	Definition             *agentdefinition.Definition `json:"definition"`
+	Subject                *agentturn.RuntimeSubject   `json:"subject,omitempty"`
+	ShadowMode             bool                        `json:"shadowMode"`
+	DecisionTimeoutSeconds int                         `json:"decisionTimeoutSeconds"`
+	RunTimeoutSeconds      int                         `json:"runTimeoutSeconds"`
 }
 
 // OpenRunInput is a prepared run, to be opened as a turn.
 type OpenRunInput struct {
-	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
-	Definition *agentdefinition.Definition     `json:"definition"`
-	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	Shadow     bool                            `json:"shadow"`
+	Payload    *agentcontract.AgentRunPayload `json:"payload"`
+	Definition *agentdefinition.Definition    `json:"definition"`
+	Subject    *agentturn.RuntimeSubject      `json:"subject,omitempty"`
+	Shadow     bool                           `json:"shadow"`
 }
 
 // OpenRunResult is the run as the workflow drives it.
@@ -48,12 +50,12 @@ type OpenRunResult struct {
 
 // FinishRunInput is what a run's loop came to.
 type FinishRunInput struct {
-	Payload    *agentcontract.AgentRunPayload  `json:"payload"`
-	Definition *agentdefinition.Definition     `json:"definition"`
-	Subject    *agentdefinition.RuntimeSubject `json:"subject,omitempty"`
-	Run        *agentports.RunResult           `json:"run,omitempty"`
-	Failure    *modelcallcontract.Failure      `json:"failure,omitempty"`
-	Events     []temporaltype.StreamItem       `json:"events,omitempty"`
+	Payload    *agentcontract.AgentRunPayload `json:"payload"`
+	Definition *agentdefinition.Definition    `json:"definition"`
+	Subject    *agentturn.RuntimeSubject      `json:"subject,omitempty"`
+	Run        *agentruntimeports.RunResult   `json:"run,omitempty"`
+	Failure    *modelcallcontract.Failure     `json:"failure,omitempty"`
+	Events     []temporaltype.StreamItem      `json:"events,omitempty"`
 }
 
 // FinishRunResult is what a finished run left for a person to decide.
@@ -122,17 +124,17 @@ type RemindPendingProposalsResult struct {
 // OpenReplayResult is an evaluation's replay as the workflow drives it. Done
 // is set for an evaluation that had already finished.
 type OpenReplayResult struct {
-	Done      bool                     `json:"done"`
-	Run       agentflow.RunContext     `json:"run"`
-	Turn      agentruntime.TurnState   `json:"turn"`
-	Originals []agent.OriginalProposal `json:"originals,omitempty"`
+	Done      bool                           `json:"done"`
+	Run       agentflow.RunContext           `json:"run"`
+	Turn      agentruntime.TurnState         `json:"turn"`
+	Originals []agentreplay.OriginalProposal `json:"originals,omitempty"`
 }
 
 // FinishReplayInput is what a replay's loop came to.
 type FinishReplayInput struct {
 	Payload   *agentcontract.AgentEvaluationPayload `json:"payload"`
-	Originals []agent.OriginalProposal              `json:"originals,omitempty"`
-	Run       *agentports.RunResult                 `json:"run,omitempty"`
+	Originals []agentreplay.OriginalProposal        `json:"originals,omitempty"`
+	Run       *agentruntimeports.RunResult          `json:"run,omitempty"`
 }
 
 type ReplayRunResult struct {

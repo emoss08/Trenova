@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/invoiceadjustmentjobs/invoiceadjustmentcontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
@@ -19,120 +20,6 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
-
-func (s *Service) SubmitDraft(
-	ctx context.Context,
-	req *invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
-	actor *permissionports.RequestActor,
-) (*invoiceadjustment.InvoiceAdjustment, error) {
-	entity, draftReq, err := s.loadDraftRequest(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	if entity.Status != invoiceadjustment.StatusDraft {
-		return nil, errortypes.NewValidationError(
-			"adjustmentId",
-			errortypes.ErrInvalidOperation,
-			"Only draft adjustments may be submitted",
-		)
-	}
-
-	if multiErr := s.validator.ValidateRequest(ctx, draftReq); multiErr != nil {
-		return nil, multiErr
-	}
-
-	computation, err := s.computePreview(ctx, draftReq, entity.ID)
-	if err != nil {
-		return nil, err
-	}
-	if len(computation.preview.Errors) > 0 {
-		return nil, previewErrorsToMultiError(computation.preview.Errors)
-	}
-
-	now := timeutils.NowUnix()
-	entity.Kind = draftReq.Kind
-	entity.RebillStrategy = draftReq.RebillStrategy
-	entity.Reason = draftReq.Reason
-	entity.PolicyReason = strings.Join(computation.preview.Warnings, " | ")
-	entity.AccountingDate = computation.preview.AccountingDate
-	entity.CreditTotalAmount = computation.preview.CreditTotalAmount
-	entity.RebillTotalAmount = computation.preview.RebillTotalAmount
-	entity.NetDeltaAmount = computation.preview.NetDeltaAmount
-	entity.RerateVariancePercent = computation.preview.RerateVariancePercent
-	entity.WouldCreateUnappliedCredit = computation.preview.WouldCreateUnappliedCredit
-	entity.RequiresReconciliationException = computation.preview.RequiresReconciliationException
-	entity.ApprovalRequired = computation.preview.RequiresApproval
-	entity.ReplacementReviewStatus = replacementReviewStatus(
-		computation.preview.RequiresReplacementInvoiceReview,
-	)
-	entity.SubmittedByID = actor.UserID
-	entity.SubmittedAt = &now
-	if entity.Metadata == nil {
-		entity.Metadata = make(map[string]any, 2)
-	}
-	entity.Metadata["draft"] = false
-	entity.Metadata["attachmentIds"] = draftReq.AttachmentIDs
-	entity.Status = invoiceadjustment.StatusApproved
-	entity.ApprovalStatus = invoiceadjustment.ApprovalStatusNotRequired
-	if computation.preview.RequiresApproval {
-		entity.Status = invoiceadjustment.StatusPendingApproval
-		entity.ApprovalStatus = invoiceadjustment.ApprovalStatusPending
-	}
-
-	snapshots := []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		AdjustmentID:   entity.ID,
-		InvoiceID:      computation.invoice.ID,
-		Kind:           invoiceadjustment.SnapshotKindSubmission,
-		Payload:        s.snapshotPayload(computation.invoice),
-		CreatedByID:    actor.UserID,
-	}}
-
-	var executed *invoiceadjustment.InvoiceAdjustment
-	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
-			return txErr
-		}
-		if txErr := s.repo.CreateAdjustmentArtifacts(
-			txCtx,
-			invoiceadjustmentports.CreateAdjustmentArtifactsParams{Snapshots: snapshots},
-		); txErr != nil {
-			return txErr
-		}
-		if entity.Status == invoiceadjustment.StatusPendingApproval {
-			return nil
-		}
-		var txErr error
-		executed, txErr = s.executeApprovedAdjustment(txCtx, entity.ID, draftReq, actor)
-		return txErr
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if entity.Status == invoiceadjustment.StatusPendingApproval {
-		return s.GetDetail(ctx, req)
-	}
-	return executed, nil
-}
-
-func (s *Service) Preview(
-	ctx context.Context,
-	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
-	_ *permissionports.RequestActor,
-) (*invoiceadjustmentports.InvoiceAdjustmentPreview, error) {
-	if multiErr := s.validator.ValidateRequest(ctx, req); multiErr != nil {
-		return nil, multiErr
-	}
-
-	computation, err := s.computePreview(ctx, req, pulid.ID(""))
-	if err != nil {
-		return nil, err
-	}
-
-	return computation.preview, nil
-}
 
 func (s *Service) Submit( //nolint:funlen // legacy workflow
 	ctx context.Context,
@@ -154,12 +41,12 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 		return existing, nil
 	}
 
-	computation, err := s.computePreview(ctx, req, pulid.ID(""))
+	computation, err := s.engine.ComputePreview(ctx, req, pulid.ID(""))
 	if err != nil {
 		return nil, err
 	}
-	if len(computation.preview.Errors) > 0 {
-		return nil, previewErrorsToMultiError(computation.preview.Errors)
+	if len(computation.Preview.Errors) > 0 {
+		return nil, invoiceadjustmentengine.PreviewErrorsToMultiError(computation.Preview.Errors)
 	}
 
 	var result *invoiceadjustment.InvoiceAdjustment
@@ -167,13 +54,13 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
 		func(txCtx context.Context) error {
-			group, groupErr := s.ensureCorrectionGroup(txCtx, computation.invoice)
+			group, groupErr := s.engine.EnsureCorrectionGroup(txCtx, computation.Invoice)
 			if groupErr != nil {
 				return groupErr
 			}
-			if computation.invoice.CorrectionGroupID.IsNil() {
-				computation.invoice.CorrectionGroupID = group.ID
-				if _, groupErr = s.invoiceRepo.Update(txCtx, computation.invoice); groupErr != nil {
+			if computation.Invoice.CorrectionGroupID.IsNil() {
+				computation.Invoice.CorrectionGroupID = group.ID
+				if _, groupErr = s.invoiceRepo.Update(txCtx, computation.Invoice); groupErr != nil {
 					return groupErr
 				}
 			}
@@ -184,38 +71,38 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 				OrganizationID:    req.TenantInfo.OrgID,
 				BusinessUnitID:    req.TenantInfo.BuID,
 				CorrectionGroupID: group.ID,
-				OriginalInvoiceID: computation.invoice.ID,
+				OriginalInvoiceID: computation.Invoice.ID,
 				Kind:              req.Kind,
 				Status:            invoiceadjustment.StatusApproved,
 				ApprovalStatus:    invoiceadjustment.ApprovalStatusNotRequired,
-				ReplacementReviewStatus: replacementReviewStatus(
-					computation.preview.RequiresReplacementInvoiceReview,
+				ReplacementReviewStatus: invoiceadjustmentengine.ReplacementReviewStatus(
+					computation.Preview.RequiresReplacementInvoiceReview,
 				),
 				RebillStrategy:                  req.RebillStrategy,
 				Reason:                          req.Reason,
-				PolicyReason:                    strings.Join(computation.preview.Warnings, " | "),
+				PolicyReason:                    strings.Join(computation.Preview.Warnings, " | "),
 				IdempotencyKey:                  req.IdempotencyKey,
-				AccountingDate:                  computation.preview.AccountingDate,
-				CreditTotalAmount:               computation.preview.CreditTotalAmount,
-				RebillTotalAmount:               computation.preview.RebillTotalAmount,
-				NetDeltaAmount:                  computation.preview.NetDeltaAmount,
-				RerateVariancePercent:           computation.preview.RerateVariancePercent,
-				WouldCreateUnappliedCredit:      computation.preview.WouldCreateUnappliedCredit,
-				RequiresReconciliationException: computation.preview.RequiresReconciliationException,
-				ApprovalRequired:                computation.preview.RequiresApproval,
+				AccountingDate:                  computation.Preview.AccountingDate,
+				CreditTotalAmount:               computation.Preview.CreditTotalAmount,
+				RebillTotalAmount:               computation.Preview.RebillTotalAmount,
+				NetDeltaAmount:                  computation.Preview.NetDeltaAmount,
+				RerateVariancePercent:           computation.Preview.RerateVariancePercent,
+				WouldCreateUnappliedCredit:      computation.Preview.WouldCreateUnappliedCredit,
+				RequiresReconciliationException: computation.Preview.RequiresReconciliationException,
+				ApprovalRequired:                computation.Preview.RequiresApproval,
 				SubmittedByID:                   actor.UserID,
 				SubmittedAt:                     &now,
-				Metadata:                        adjustmentMetadata(req),
+				Metadata:                        invoiceadjustmentengine.AdjustmentMetadata(req),
 			}
-			if computation.preview.RequiresApproval {
+			if computation.Preview.RequiresApproval {
 				adjustment.Status = invoiceadjustment.StatusPendingApproval
 				adjustment.ApprovalStatus = invoiceadjustment.ApprovalStatusPending
 			}
-			references, refErr := s.buildDocumentReferences(
+			references, refErr := s.engine.BuildDocumentReferences(
 				txCtx,
 				adjustment.ID,
 				req.AttachmentIDs,
-				computation.invoice,
+				computation.Invoice,
 				req.TenantInfo,
 				actor,
 				"attachmentIds",
@@ -227,13 +114,13 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 			snapshots := []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,
-				InvoiceID:      computation.invoice.ID,
+				InvoiceID:      computation.Invoice.ID,
 				Kind:           invoiceadjustment.SnapshotKindSubmission,
-				Payload:        s.snapshotPayload(computation.invoice),
+				Payload:        s.engine.SnapshotPayload(computation.Invoice),
 				CreatedByID:    actor.UserID,
 			}}
 
-			for _, line := range computation.lines {
+			for _, line := range computation.Lines {
 				line.OrganizationID = req.TenantInfo.OrgID
 				line.BusinessUnitID = req.TenantInfo.BuID
 				line.AdjustmentID = adjustment.ID
@@ -248,7 +135,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 				txCtx,
 				invoiceadjustmentports.CreateAdjustmentArtifactsParams{
 					Adjustment:         adjustment,
-					Lines:              computation.lines,
+					Lines:              computation.Lines,
 					Snapshots:          snapshots,
 					DocumentReferences: references,
 				},
@@ -256,7 +143,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 				return err
 			}
 
-			if computation.preview.RequiresApproval {
+			if computation.Preview.RequiresApproval {
 				result, err = s.repo.GetByID(
 					txCtx,
 					invoiceadjustmentports.GetInvoiceAdjustmentRequest{
@@ -267,7 +154,12 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 				return err
 			}
 
-			executed, execErr := s.executeApprovedAdjustment(txCtx, adjustment.ID, req, actor)
+			executed, execErr := s.engine.ExecuteApprovedAdjustment(
+				txCtx,
+				adjustment.ID,
+				req,
+				actor,
+			)
 			if execErr != nil {
 				return execErr
 			}
@@ -280,8 +172,8 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 	}
 
 	if result != nil {
-		s.logAdjustmentEvent("invoice adjustment submitted", result, zap.InfoLevel)
-		s.logAudit(result, actor, permission.OpCreate, "Invoice adjustment submitted")
+		s.engine.LogAdjustmentEvent("invoice adjustment submitted", result, zap.InfoLevel)
+		s.engine.LogAudit(result, actor, permission.OpCreate, "Invoice adjustment submitted")
 	}
 	return result, nil
 }
@@ -294,7 +186,7 @@ func (s *Service) BulkPreview(
 	previews := make([]*invoiceadjustmentports.InvoiceAdjustmentPreview, 0, len(req.Items))
 	for _, item := range req.Items {
 		item.TenantInfo = req.TenantInfo
-		preview, err := s.Preview(ctx, item, actor)
+		preview, err := s.engine.Preview(ctx, item, actor)
 		if err != nil {
 			return nil, err
 		}
@@ -491,9 +383,16 @@ func validateBulkRequest(req *invoiceadjustmentports.InvoiceAdjustmentBulkReques
 	return nil
 }
 
-func replacementReviewStatus(required bool) invoiceadjustment.ReplacementReviewStatus {
-	if required {
-		return invoiceadjustment.ReplacementReviewStatusRequired
+// batchInlineThreshold is how many lines a bulk request may carry before it is
+// worth processing each adjustment on its own rather than in one transaction.
+const batchInlineThreshold = 25
+
+func collectBatchItemIDs(items []*invoiceadjustment.InvoiceAdjustmentBatchItem) []pulid.ID {
+	ids := make([]pulid.ID, 0, len(items))
+	for _, item := range items {
+		if item != nil {
+			ids = append(ids, item.ID)
+		}
 	}
-	return invoiceadjustment.ReplacementReviewStatusNotRequired
+	return ids
 }

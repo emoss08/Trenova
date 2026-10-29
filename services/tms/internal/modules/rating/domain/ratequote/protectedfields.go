@@ -1,18 +1,18 @@
 package ratequote
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/shopspring/decimal"
 )
 
 // WithholdFields clears the quote's margin and the cost that, beside its
 // total, gives the margin away, along with the same figures in its trace.
-func (q *RateQuote) WithholdFields(visible permission.FieldGroupSet) {
+func (q *RateQuote) WithholdFields(visible protectedfield.GroupSet) {
 	if q == nil {
 		return
 	}
 	q.Agreement.WithholdFields(visible)
-	if visible.Has(permission.FieldGroupMargins) {
+	if visible.Has(protectedfield.Margins) {
 		return
 	}
 	q.CostAmount = decimal.NullDecimal{}

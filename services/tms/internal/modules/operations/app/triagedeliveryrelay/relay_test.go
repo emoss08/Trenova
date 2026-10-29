@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +34,7 @@ func (s *recordingSink) DocumentAttached(
 func (s *recordingSink) InvoicePaid(context.Context, pagination.TenantInfo, pulid.ID) {}
 
 type stubShipments struct {
-	status shipment.Status
+	status shipmentvocab.Status
 	err    error
 }
 
@@ -48,7 +49,7 @@ func (s stubShipments) GetByID(
 	return &shipment.Shipment{ID: req.ID, Status: s.status}, nil
 }
 
-func statusEvent(previous, next shipment.Status) *shipmentevent.Event {
+func statusEvent(previous, next shipmentvocab.Status) *shipmentevent.Event {
 	return &shipmentevent.Event{
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -66,14 +67,29 @@ func TestOnShipmentEvent_WakesTriageOnlyWhenTheShipmentFirstDelivers(t *testing.
 
 	cases := []struct {
 		name     string
-		previous shipment.Status
-		next     shipment.Status
+		previous shipmentvocab.Status
+		next     shipmentvocab.Status
 		wakes    bool
 	}{
-		{"in transit to completed", shipment.StatusInTransit, shipment.StatusCompleted, true},
-		{"new to ready to invoice", shipment.StatusNew, shipment.StatusReadyToInvoice, true},
-		{"completed to invoiced", shipment.StatusCompleted, shipment.StatusInvoiced, false},
-		{"new to in transit", shipment.StatusNew, shipment.StatusInTransit, false},
+		{
+			"in transit to completed",
+			shipmentvocab.StatusInTransit,
+			shipmentvocab.StatusCompleted,
+			true,
+		},
+		{
+			"new to ready to invoice",
+			shipmentvocab.StatusNew,
+			shipmentvocab.StatusReadyToInvoice,
+			true,
+		},
+		{
+			"completed to invoiced",
+			shipmentvocab.StatusCompleted,
+			shipmentvocab.StatusInvoiced,
+			false,
+		},
+		{"new to in transit", shipmentvocab.StatusNew, shipmentvocab.StatusInTransit, false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -97,13 +113,13 @@ func TestOnShipmentEvent_IgnoresOtherEventsAndAMissingSink(t *testing.T) {
 	t.Parallel()
 
 	sink := &recordingSink{}
-	event := statusEvent(shipment.StatusInTransit, shipment.StatusCompleted)
+	event := statusEvent(shipmentvocab.StatusInTransit, shipmentvocab.StatusCompleted)
 	event.Type = shipmentevent.TypeMoveArrived
 	require.NoError(t, (&Relay{sink: sink}).OnShipmentEvent(t.Context(), event))
 	assert.Empty(t, sink.delivered)
 
 	require.NoError(t, (&Relay{}).OnShipmentEvent(t.Context(),
-		statusEvent(shipment.StatusInTransit, shipment.StatusCompleted)))
+		statusEvent(shipmentvocab.StatusInTransit, shipmentvocab.StatusCompleted)))
 }
 
 func TestAfterMoveStatusChange_WakesWhenTheLastMoveDeliversTheShipment(t *testing.T) {
@@ -112,33 +128,33 @@ func TestAfterMoveStatusChange_WakesWhenTheLastMoveDeliversTheShipment(t *testin
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	move := &shipment.ShipmentMove{
 		ShipmentID: pulid.MustNew("shp_"),
-		Status:     shipment.MoveStatusCompleted,
+		Status:     shipmentvocab.MoveStatusCompleted,
 	}
 
 	sink := &recordingSink{}
-	relay := &Relay{sink: sink, shipments: stubShipments{status: shipment.StatusCompleted}}
+	relay := &Relay{sink: sink, shipments: stubShipments{status: shipmentvocab.StatusCompleted}}
 	require.NoError(t, relay.AfterMoveStatusChange(
-		t.Context(), tenant, move, shipment.MoveStatusInTransit,
+		t.Context(), tenant, move, shipmentvocab.MoveStatusInTransit,
 	))
 	assert.Equal(t, []pulid.ID{move.ShipmentID}, sink.delivered)
 
 	sink = &recordingSink{}
-	relay = &Relay{sink: sink, shipments: stubShipments{status: shipment.StatusInTransit}}
+	relay = &Relay{sink: sink, shipments: stubShipments{status: shipmentvocab.StatusInTransit}}
 	require.NoError(t, relay.AfterMoveStatusChange(
-		t.Context(), tenant, move, shipment.MoveStatusInTransit,
+		t.Context(), tenant, move, shipmentvocab.MoveStatusInTransit,
 	))
 	assert.Empty(t, sink.delivered, "one move of several finishing does not deliver the shipment")
 
 	sink = &recordingSink{}
-	relay = &Relay{sink: sink, shipments: stubShipments{status: shipment.StatusCompleted}}
+	relay = &Relay{sink: sink, shipments: stubShipments{status: shipmentvocab.StatusCompleted}}
 	require.NoError(t, relay.AfterMoveStatusChange(
-		t.Context(), tenant, move, shipment.MoveStatusCompleted,
+		t.Context(), tenant, move, shipmentvocab.MoveStatusCompleted,
 	))
 	assert.Empty(t, sink.delivered, "a move already complete is not a new delivery")
 
 	failure := errors.New("read failed")
 	relay = &Relay{sink: &recordingSink{}, shipments: stubShipments{err: failure}}
 	assert.ErrorIs(t, relay.AfterMoveStatusChange(
-		t.Context(), tenant, move, shipment.MoveStatusInTransit,
+		t.Context(), tenant, move, shipmentvocab.MoveStatusInTransit,
 	), failure)
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury/workerinjurydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
@@ -25,11 +25,11 @@ var injuryErrors = dberror.Mapping{Entity: "WorkerInjury"}
 
 var summaryErrors = dberror.Mapping{Entity: "OSHAAnnualSummary"}
 
-var recordableClassifications = []worker.OSHACaseClassification{
-	worker.CaseOtherRecordable,
-	worker.CaseJobTransferOrRestriction,
-	worker.CaseDaysAway,
-	worker.CaseDeath,
+var recordableClassifications = []workerinjury.OSHACaseClassification{
+	workerinjury.CaseOtherRecordable,
+	workerinjury.CaseJobTransferOrRestriction,
+	workerinjury.CaseDaysAway,
+	workerinjury.CaseDeath,
 }
 
 type Params struct {
@@ -44,7 +44,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerInjuryRepository {
+func New(p Params) workersafetyports.WorkerInjuryRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-injury-repository"),
@@ -59,7 +59,7 @@ func limitOr(requested, fallback int) int {
 }
 
 func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loader {
-	i := workerdb.WorkerInjuries
+	i := workerinjurydb.WorkerInjuries
 	loads := make([]keel.Loader, 0, 3)
 	loads = append(loads, listquery.When(includeWorker, i.Worker())...)
 	loads = append(loads, listquery.When(includeDocument, i.Document())...)
@@ -67,14 +67,16 @@ func injuryLoads(includeWorker, includeDocument, includeEvent bool) []keel.Loade
 	return append(loads, listquery.When(includeEvent, i.SafetyEvent())...)
 }
 
-func injuriesQuery(req *workerports.ListWorkerInjuriesRequest) *keel.Query[*worker.WorkerInjury] {
-	i := workerdb.WorkerInjuries
+func injuriesQuery(
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) *keel.Query[*workerinjury.WorkerInjury] {
+	i := workerinjurydb.WorkerInjuries
 
 	return i.Where(
 		keel.When(req.WorkerID.IsNotNil(), i.WorkerID.Eq(req.WorkerID)),
 		keel.When(req.CaseYear > 0, i.CaseYear.Eq(req.CaseYear)),
 		keel.When(req.RecordableOnly, i.Classification.In(recordableClassifications...)),
-		keel.When(req.OpenOnly, i.Status.Eq(worker.InjuryCaseOpen)),
+		keel.When(req.OpenOnly, i.Status.Eq(workerinjury.InjuryCaseOpen)),
 	).
 		Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
 		Order(i.CaseYear.Desc(), i.CaseNumber.Desc()).
@@ -83,9 +85,9 @@ func injuriesQuery(req *workerports.ListWorkerInjuriesRequest) *keel.Query[*work
 
 func (r *repository) ListInjuries(
 	ctx context.Context,
-	req *workerports.ListWorkerInjuriesRequest,
-) ([]*worker.WorkerInjury, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerInjury, error) {
+	req *workersafetyports.ListWorkerInjuriesRequest,
+) ([]*workerinjury.WorkerInjury, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*workerinjury.WorkerInjury, error) {
 		entities, err := injuriesQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list injuries", zap.Error(err))
@@ -98,10 +100,10 @@ func (r *repository) ListInjuries(
 
 func (r *repository) GetInjuryByID(
 	ctx context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
-) (*worker.WorkerInjury, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		i := workerdb.WorkerInjuries
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
+) (*workerinjury.WorkerInjury, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerinjury.WorkerInjury, error) {
+		i := workerinjurydb.WorkerInjuries
 		entity, err := i.Where(i.ID.Eq(req.ID)).
 			Load(injuryLoads(req.IncludeWorker, req.IncludeDocument, req.IncludeEvent)...).
 			One(ctx, r.db.Keel(ctx))
@@ -115,10 +117,10 @@ func (r *repository) GetInjuryByID(
 
 func (r *repository) CreateInjury(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
-) (*worker.WorkerInjury, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		if err := workerdb.WorkerInjuries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *workerinjury.WorkerInjury,
+) (*workerinjury.WorkerInjury, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerinjury.WorkerInjury, error) {
+		if err := workerinjurydb.WorkerInjuries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create injury", zap.Error(err))
 			return nil, injuryErrors.Map(err, entity.ID.String())
 		}
@@ -129,10 +131,10 @@ func (r *repository) CreateInjury(
 
 func (r *repository) UpdateInjury(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
-) (*worker.WorkerInjury, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerInjury, error) {
-		if err := workerdb.WorkerInjuries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *workerinjury.WorkerInjury,
+) (*workerinjury.WorkerInjury, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workerinjury.WorkerInjury, error) {
+		if err := workerinjurydb.WorkerInjuries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update injury", zap.Error(err))
 			return nil, injuryErrors.Map(err, entity.ID.String())
 		}
@@ -143,13 +145,13 @@ func (r *repository) UpdateInjury(
 
 func (r *repository) DeleteInjury(
 	ctx context.Context,
-	req *workerports.GetWorkerInjuryByIDRequest,
+	req *workersafetyports.GetWorkerInjuryByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := workerdb.WorkerInjuries.DeleteRow(
+		err := workerinjurydb.WorkerInjuries.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
-			&worker.WorkerInjury{ID: req.ID},
+			&workerinjury.WorkerInjury{ID: req.ID},
 		)
 		if err != nil {
 			r.l.Error("failed to delete injury", zap.Error(err))
@@ -166,10 +168,10 @@ func (r *repository) DeleteInjury(
 // case 4s has no way to tell which is which.
 func (r *repository) NextCaseNumber(
 	ctx context.Context,
-	req *workerports.NextCaseNumberRequest,
+	req *workersafetyports.NextCaseNumberRequest,
 ) (int32, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int32, error) {
-		i := workerdb.WorkerInjuries
+		i := workerinjurydb.WorkerInjuries
 		highest, err := keel.IntoOne[int32](ctx, r.db.Keel(ctx), i.
 			Pick(keel.Int32Of(i.CaseNumber.Max()).Coalesce(0)).
 			Where(i.CaseYear.Eq(req.CaseYear)))
@@ -184,10 +186,10 @@ func (r *repository) NextCaseNumber(
 
 func (r *repository) GetSummary(
 	ctx context.Context,
-	req *workerports.GetOSHASummaryRequest,
-) (*worker.OSHAAnnualSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		s := workerdb.OSHAAnnualSummaries
+	req *workersafetyports.GetOSHASummaryRequest,
+) (*workerinjury.OSHAAnnualSummary, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workerinjury.OSHAAnnualSummary, error) {
+		s := workerinjurydb.OSHAAnnualSummaries
 		entity, err := s.Where(s.Year.Eq(req.Year)).
 			Load(s.CertifiedBy()).
 			One(ctx, r.db.Keel(ctx))
@@ -205,47 +207,67 @@ func (r *repository) GetSummary(
 
 func (r *repository) ListSummaries(
 	ctx context.Context,
-	req *workerports.ListOSHASummariesRequest,
-) ([]*worker.OSHAAnnualSummary, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OSHAAnnualSummary, error) {
-		s := workerdb.OSHAAnnualSummaries
-		entities, err := s.Query().
-			Order(s.Year.Desc()).
-			Limit(limitOr(req.Limit, defaultSummaryPageSize)).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list osha summaries", zap.Error(err))
-			return nil, fmt.Errorf("list osha summaries: %w", err)
-		}
+	req *workersafetyports.ListOSHASummariesRequest,
+) ([]*workerinjury.OSHAAnnualSummary, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error) {
+			s := workerinjurydb.OSHAAnnualSummaries
+			entities, err := s.Query().
+				Order(s.Year.Desc()).
+				Limit(limitOr(req.Limit, defaultSummaryPageSize)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list osha summaries", zap.Error(err))
+				return nil, fmt.Errorf("list osha summaries: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) CreateSummary(
 	ctx context.Context,
-	entity *worker.OSHAAnnualSummary,
-) (*worker.OSHAAnnualSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		if err := workerdb.OSHAAnnualSummaries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create osha summary", zap.Error(err))
-			return nil, summaryErrors.Map(err, entity.ID.String())
-		}
+	entity *workerinjury.OSHAAnnualSummary,
+) (*workerinjury.OSHAAnnualSummary, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerinjury.OSHAAnnualSummary, error) {
+			if err := workerinjurydb.OSHAAnnualSummaries.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to create osha summary", zap.Error(err))
+				return nil, summaryErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateSummary(
 	ctx context.Context,
-	entity *worker.OSHAAnnualSummary,
-) (*worker.OSHAAnnualSummary, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OSHAAnnualSummary, error) {
-		if err := workerdb.OSHAAnnualSummaries.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update osha summary", zap.Error(err))
-			return nil, summaryErrors.Map(err, entity.ID.String())
-		}
+	entity *workerinjury.OSHAAnnualSummary,
+) (*workerinjury.OSHAAnnualSummary, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workerinjury.OSHAAnnualSummary, error) {
+			if err := workerinjurydb.OSHAAnnualSummaries.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to update osha summary", zap.Error(err))
+				return nil, summaryErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }

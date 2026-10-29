@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-const maxFiguresNamed = 4
-
 var (
 	fixedMoment = regexp.MustCompile(`(?i)` +
 		`\b\d{1,2}:\d{2}(?:\s?[ap]\.?m\.?)?|` +

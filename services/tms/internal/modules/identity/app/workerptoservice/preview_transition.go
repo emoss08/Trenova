@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,8 +18,8 @@ import (
 // would leave it, and what the driver would be told and texted.
 func (s *Service) PreviewReject(
 	ctx context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	if err := requireRejectionReason(req); err != nil {
 		return nil, err
 	}
@@ -33,8 +34,8 @@ func (s *Service) PreviewReject(
 // PreviewCancel is Cancel without the write.
 func (s *Service) PreviewCancel(
 	ctx context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	return s.previewTransition(ctx, transitionParams{
 		req:          req,
 		target:       worker.PTOStatusCancelled,
@@ -42,7 +43,7 @@ func (s *Service) PreviewCancel(
 	})
 }
 
-func requireRejectionReason(req *workerports.UpdatePTOStatusRequest) error {
+func requireRejectionReason(req *workerptoports.UpdatePTOStatusRequest) error {
 	if strings.TrimSpace(req.Reason) == "" {
 		return errortypes.NewValidationError(
 			"reason",
@@ -57,7 +58,7 @@ func requireRejectionReason(req *workerports.UpdatePTOStatusRequest) error {
 func (s *Service) previewTransition(
 	ctx context.Context,
 	params transitionParams,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	request := *params.req
 	params.req = &request
 
@@ -67,7 +68,7 @@ func (s *Service) previewTransition(
 	}
 
 	after := projectTransition(current, params.req)
-	preview := &workerports.WorkerPTOTransitionPreview{
+	preview := &workerptoports.WorkerPTOTransitionPreview{
 		Before:        current,
 		After:         after,
 		ReturnsLedger: releasesUsage(current, params.target),
@@ -117,7 +118,7 @@ func (s *Service) planTransition(
 	current := params.current
 	if current == nil {
 		var err error
-		current, err = s.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+		current, err = s.repo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -155,7 +156,7 @@ func (s *Service) planTransition(
 // who made the decision, and the reason recorded against it.
 func projectTransition(
 	current *worker.WorkerPTO,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) *worker.WorkerPTO {
 	after := *current
 	after.Status = req.Status
@@ -202,7 +203,7 @@ func (s *Service) sendsSMS() bool {
 // sent none, and neither is a decision with no wording.
 func (s *Service) transitionSMS(
 	ctx context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 	updated *worker.WorkerPTO,
 	target worker.PTOStatus,
 ) (*notificationports.DriverSMSPreview, error) {

@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,10 +37,10 @@ func TestReadDocumentsReadsTotalsBalancesAndVoids(t *testing.T) {
 	assert.Equal(t, 500, conn.DocumentReadLimits().MaxPerRead)
 	states, err := conn.ReadDocuments(
 		t.Context(),
-		&accountingsyncports.ReadAccountingDocumentsRequest{
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
 			Auth: testAuth(),
 			Kind: accountingsync.SyncObjectInvoice,
-			Targets: []accountingsyncports.AccountingDocumentTarget{
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
 				{ExternalID: testInvoice},
 				{ExternalID: "1205"},
 				{ExternalID: "1299"},
@@ -85,10 +86,10 @@ func TestReadDocumentsNamesTheLastEditorFromSystemNotes(t *testing.T) {
 	conn := testConnector(t, fake)
 	states, err := conn.ReadDocuments(
 		t.Context(),
-		&accountingsyncports.ReadAccountingDocumentsRequest{
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
 			Auth: testAuth(),
 			Kind: accountingsync.SyncObjectInvoice,
-			Targets: []accountingsyncports.AccountingDocumentTarget{
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
 				{ExternalID: testInvoice},
 				{ExternalID: "1205"},
 				{ExternalID: "1299"},
@@ -116,17 +117,20 @@ func TestReadDocumentsLeavesTheEditorEmptyWhenSystemNotesAreUnreadable(t *testin
 				readFixture(t, "error_unsupported_table.json"), "'subsidiary'", "'systemnote'",
 			)}
 		case call.queries("t.id IN ("):
-			return reply{status: http.StatusOK, body: rowsJSON(t, false, stateRow(testInvoice, nil))}
+			return reply{
+				status: http.StatusOK,
+				body:   rowsJSON(t, false, stateRow(testInvoice, nil)),
+			}
 		}
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
 	states, err := conn.ReadDocuments(
 		t.Context(),
-		&accountingsyncports.ReadAccountingDocumentsRequest{
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
 			Auth:    testAuth(),
 			Kind:    accountingsync.SyncObjectInvoice,
-			Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: testInvoice}},
+			Targets: []accountingconnectorports.AccountingDocumentTarget{{ExternalID: testInvoice}},
 		},
 	)
 	require.NoError(t, err)
@@ -140,15 +144,15 @@ func TestReadDocumentsBatchesFiveHundredIDsAQuery(t *testing.T) {
 
 	fake := &fakeNS{}
 	conn := testConnector(t, fake)
-	targets := make([]accountingsyncports.AccountingDocumentTarget, 0, 650)
+	targets := make([]accountingconnectorports.AccountingDocumentTarget, 0, 650)
 	for idx := range 650 {
-		targets = append(targets, accountingsyncports.AccountingDocumentTarget{
+		targets = append(targets, accountingconnectorports.AccountingDocumentTarget{
 			ExternalID: strconv.Itoa(1000 + idx),
 		})
 	}
 	states, err := conn.ReadDocuments(
 		t.Context(),
-		&accountingsyncports.ReadAccountingDocumentsRequest{
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
 			Auth:    testAuth(),
 			Kind:    accountingsync.SyncObjectCarrierBill,
 			Targets: targets,
@@ -170,10 +174,12 @@ func TestReadDocumentsSkipsCreditApplications(t *testing.T) {
 	conn := testConnector(t, fake)
 	states, err := conn.ReadDocuments(
 		t.Context(),
-		&accountingsyncports.ReadAccountingDocumentsRequest{
-			Auth:    testAuth(),
-			Kind:    accountingsync.SyncObjectCreditApplication,
-			Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: testCreditMemo}},
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectCreditApplication,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{ExternalID: testCreditMemo},
+			},
 		},
 	)
 	require.NoError(t, err)
@@ -181,9 +187,12 @@ func TestReadDocumentsSkipsCreditApplications(t *testing.T) {
 	assert.False(t, states[0].Found)
 	assert.Empty(t, fake.all())
 
-	_, err = conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(),
-		Kind: accountingsync.SyncObjectJournalEntry,
-	})
-	require.ErrorIs(t, err, errDocumentKind)
+	_, err = conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(),
+			Kind: accountingsync.SyncObjectJournalEntry,
+		},
+	)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 }

@@ -3,12 +3,12 @@
 package auditlogresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	auditports "github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AuditService auditports.AuditService
 }
 

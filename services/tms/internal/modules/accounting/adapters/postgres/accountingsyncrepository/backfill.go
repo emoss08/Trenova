@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill/accountingbackfilldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/intutils"
@@ -42,9 +42,9 @@ func NewBackfillRepository(p BackfillParams) accountingsyncports.AccountingBackf
 	}
 }
 
-func inProgressBackfillStatuses() []accountingsync.BackfillStatus {
-	statuses := make([]accountingsync.BackfillStatus, 0, 3)
-	for _, status := range accountingsync.AllBackfillStatuses() {
+func inProgressBackfillStatuses() []accountingbackfill.BackfillStatus {
+	statuses := make([]accountingbackfill.BackfillStatus, 0, 3)
+	for _, status := range accountingbackfill.AllBackfillStatuses() {
 		if status.InProgress() {
 			statuses = append(statuses, status)
 		}
@@ -54,13 +54,13 @@ func inProgressBackfillStatuses() []accountingsync.BackfillStatus {
 
 func (r *backfillRepository) Create(
 	ctx context.Context,
-	entity *accountingsync.AccountingBackfill,
-) (*accountingsync.AccountingBackfill, error) {
+	entity *accountingbackfill.AccountingBackfill,
+) (*accountingbackfill.AccountingBackfill, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			err := accountingsyncdb.AccountingBackfills.Create(ctx, r.db.Keel(ctx), entity)
+		func(ctx context.Context) (*accountingbackfill.AccountingBackfill, error) {
+			err := accountingbackfilldb.AccountingBackfills.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, accountingsyncports.ErrAccountingBackfillActive
@@ -76,12 +76,12 @@ func (r *backfillRepository) Create(
 func (r *backfillRepository) GetByID(
 	ctx context.Context,
 	req accountingsyncports.GetAccountingBackfillRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			entity, err := accountingsyncdb.AccountingBackfills.Get(ctx, r.db.Keel(ctx), req.ID)
+		func(ctx context.Context) (*accountingbackfill.AccountingBackfill, error) {
+			entity, err := accountingbackfilldb.AccountingBackfills.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
 				return nil, backfillErrors.Map(err, req.ID.String())
 			}
@@ -94,12 +94,12 @@ func (r *backfillRepository) GetByID(
 func (r *backfillRepository) GetActive(
 	ctx context.Context,
 	req accountingsyncports.AccountingSyncConnectionRequest,
-) (*accountingsync.AccountingBackfill, error) {
+) (*accountingbackfill.AccountingBackfill, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
-			ab := accountingsyncdb.AccountingBackfills
+		func(ctx context.Context) (*accountingbackfill.AccountingBackfill, error) {
+			ab := accountingbackfilldb.AccountingBackfills
 			entity, err := ab.Where(
 				ab.ConnectionID.Eq(req.ConnectionID),
 				ab.Status.In(inProgressBackfillStatuses()...),
@@ -116,18 +116,18 @@ func (r *backfillRepository) GetActive(
 func (r *backfillRepository) ListByConnection(
 	ctx context.Context,
 	req accountingsyncports.ListAccountingBackfillsRequest,
-) ([]*accountingsync.AccountingBackfill, error) {
+) ([]*accountingbackfill.AccountingBackfill, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*accountingsync.AccountingBackfill, error) {
+		func(ctx context.Context) ([]*accountingbackfill.AccountingBackfill, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultBackfillListLimit
 			}
 			limit = intutils.Clamp(limit, 1, maxBackfillListLimit)
 
-			ab := accountingsyncdb.AccountingBackfills
+			ab := accountingbackfilldb.AccountingBackfills
 			return ab.Where(ab.ConnectionID.Eq(req.ConnectionID)).
 				Order(ab.CreatedAt.Desc(), ab.ID.Desc()).
 				Limit(limit).
@@ -138,14 +138,14 @@ func (r *backfillRepository) ListByConnection(
 
 func (r *backfillRepository) Update(
 	ctx context.Context,
-	entity *accountingsync.AccountingBackfill,
-) (*accountingsync.AccountingBackfill, error) {
+	entity *accountingbackfill.AccountingBackfill,
+) (*accountingbackfill.AccountingBackfill, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*accountingsync.AccountingBackfill, error) {
+		func(ctx context.Context) (*accountingbackfill.AccountingBackfill, error) {
 			ov := entity.Version
-			err := accountingsyncdb.AccountingBackfills.Save(ctx, r.db.Keel(ctx), entity)
+			err := accountingbackfilldb.AccountingBackfills.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
 				if dberror.IsUniqueConstraintViolation(err) {

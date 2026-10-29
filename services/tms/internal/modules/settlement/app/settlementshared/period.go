@@ -3,12 +3,12 @@ package settlementshared
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 type PeriodSchedule struct {
-	Frequency    tenant.PayPeriodFrequency
+	Frequency    settlementcontrol.PayPeriodFrequency
 	EndDayOfWeek int
 	PayDelayDays int
 }
@@ -50,7 +50,7 @@ type PeriodBounds struct {
 // it is the midnight (UTC) after the most recent occurrence of the configured
 // end day.
 func ResolvePeriod(
-	frequency tenant.PayPeriodFrequency,
+	frequency settlementcontrol.PayPeriodFrequency,
 	endDayOfWeek, payDelayDays int,
 	now int64,
 ) PeriodBounds {
@@ -68,11 +68,11 @@ func ResolvePeriod(
 
 	var periodStartDate time.Time
 	switch frequency {
-	case tenant.PayPeriodFrequencyWeekly:
+	case settlementcontrol.PayPeriodFrequencyWeekly:
 		periodStartDate = periodEndDate.AddDate(0, 0, -7)
-	case tenant.PayPeriodFrequencyBiweekly:
+	case settlementcontrol.PayPeriodFrequencyBiweekly:
 		periodStartDate = periodEndDate.AddDate(0, 0, -14)
-	case tenant.PayPeriodFrequencyMonthly:
+	case settlementcontrol.PayPeriodFrequencyMonthly:
 		periodStartDate = periodEndDate.AddDate(0, -1, 0)
 	default:
 		periodStartDate = periodEndDate.AddDate(0, 0, -7)

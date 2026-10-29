@@ -5,12 +5,13 @@ package edimessagerepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -28,7 +29,13 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 	scope := tenantWithoutPartners(t, ctx, db)
 	ctx = scope.Ctx
 	org := scope.Info
-	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	documentType := findDocumentType(
+		t,
+		ctx,
+		db,
+		edidocument.TransactionSet204,
+		edidocument.DocumentDirectionOutbound,
+	)
 	tenantInfo := org
 
 	partner := &edi.EDIPartner{
@@ -44,56 +51,71 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	newMessage := func(key, control string) *edi.EDIMessage {
-		return &edi.EDIMessage{
+	newMessage := func(key, control string) *edimessage.EDIMessage {
+		return &edimessage.EDIMessage{
 			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
-			Direction:                edi.DocumentDirectionOutbound,
-			Standard:                 edi.EDIStandardX12,
-			TransactionSet:           edi.TransactionSet204,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			Direction:                edidocument.DocumentDirectionOutbound,
+			Standard:                 edidocument.EDIStandardX12,
+			TransactionSet:           edidocument.TransactionSet204,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: "00000" + control,
 			GroupControlNumber:       control,
 			TransactionControlNumber: control,
-			AckStatus:                edi.MessageAcknowledgmentStatusNotExpected,
+			AckStatus:                edimessage.MessageAcknowledgmentStatusNotExpected,
 			GeneratedAt:              timeutils.NowUnix(),
 			IdempotencyKey:           key,
 		}
 	}
 
-	first, err := repo.CreateMessageWithDiagnostics(ctx, ediports.CreateEDIMessageWithDiagnosticsRequest{
-		Message: newMessage("tender-offer-204-tof_1", "1001"),
-	})
+	first, err := repo.CreateMessageWithDiagnostics(
+		ctx,
+		edimessageports.CreateEDIMessageWithDiagnosticsRequest{
+			Message: newMessage("tender-offer-204-tof_1", "1001"),
+		},
+	)
 	require.NoError(t, err)
 
-	found, err := repo.GetMessageByIdempotencyKey(ctx, ediports.GetEDIMessageByIdempotencyKeyRequest{
-		TenantInfo:     tenantInfo,
-		IdempotencyKey: "tender-offer-204-tof_1",
-	})
+	found, err := repo.GetMessageByIdempotencyKey(
+		ctx,
+		edimessageports.GetEDIMessageByIdempotencyKeyRequest{
+			TenantInfo:     tenantInfo,
+			IdempotencyKey: "tender-offer-204-tof_1",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, found.ID)
 	assert.Equal(t, "tender-offer-204-tof_1", found.IdempotencyKey)
 
-	_, err = repo.CreateMessageWithDiagnostics(ctx, ediports.CreateEDIMessageWithDiagnosticsRequest{
-		Message: newMessage("tender-offer-204-tof_1", "1002"),
-	})
+	_, err = repo.CreateMessageWithDiagnostics(
+		ctx,
+		edimessageports.CreateEDIMessageWithDiagnosticsRequest{
+			Message: newMessage("tender-offer-204-tof_1", "1002"),
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 
 	for _, control := range []string{"1003", "1004"} {
-		_, err = repo.CreateMessageWithDiagnostics(ctx, ediports.CreateEDIMessageWithDiagnosticsRequest{
-			Message: newMessage("", control),
-		})
+		_, err = repo.CreateMessageWithDiagnostics(
+			ctx,
+			edimessageports.CreateEDIMessageWithDiagnosticsRequest{
+				Message: newMessage("", control),
+			},
+		)
 		require.NoError(t, err, "messages without a key never collide")
 	}
 
-	_, err = repo.GetMessageByIdempotencyKey(ctx, ediports.GetEDIMessageByIdempotencyKeyRequest{
-		TenantInfo:     tenantInfo,
-		IdempotencyKey: "tender-offer-204-unknown",
-	})
+	_, err = repo.GetMessageByIdempotencyKey(
+		ctx,
+		edimessageports.GetEDIMessageByIdempotencyKeyRequest{
+			TenantInfo:     tenantInfo,
+			IdempotencyKey: "tender-offer-204-unknown",
+		},
+	)
 	assert.True(t, errortypes.IsNotFoundError(err))
 }

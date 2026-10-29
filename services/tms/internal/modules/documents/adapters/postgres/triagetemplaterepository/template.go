@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,7 +28,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) inboundmessageports.TriageReplyTemplateRepository {
+func New(p Params) inboundreplyports.TriageReplyTemplateRepository {
 	return &repository{db: p.DB}
 }
 
@@ -62,7 +62,7 @@ func (r *repository) Count(ctx context.Context, _ pagination.TenantInfo) (int, e
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) (*triage.ReplyTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.ReplyTemplate, error) {
 		entity, err := triagedb.ReplyTemplates.Get(ctx, r.db.Keel(ctx), req.ID)
@@ -117,7 +117,7 @@ func (r *repository) Update(
 
 func (r *repository) Delete(
 	ctx context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		err := triagedb.ReplyTemplates.DeleteRow(

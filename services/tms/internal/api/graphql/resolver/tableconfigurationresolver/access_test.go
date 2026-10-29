@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -32,7 +32,7 @@ func viewResolver(
 
 	repo := tableconfigurationportsmock.NewMockTableConfigurationRepository(t)
 	deps := &Deps{
-		Core: &base.Core{L: zap.NewNop(), PermissionEngine: engine},
+		Core: &resolvercore.Core{L: zap.NewNop(), PermissionEngine: engine},
 		TableConfigurationService: tableconfigurationservice.New(tableconfigurationservice.Params{
 			Logger: zap.NewNop(),
 			Repo:   repo,
@@ -90,11 +90,13 @@ func TestTableConfigurationHidesAViewOfATableTheReaderCannotRead(t *testing.T) {
 		Denied: []string{permission.ResourceWorker.String()},
 	})
 	id := pulid.MustNew("tc_")
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tableconfiguration.TableConfiguration{
-		ID:         id,
-		Resource:   permission.ResourceWorker.String(),
-		Visibility: tableconfiguration.VisibilityPublic,
-	}, nil)
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&tableconfiguration.TableConfiguration{
+			ID:         id,
+			Resource:   permission.ResourceWorker.String(),
+			Visibility: tableconfiguration.VisibilityPublic,
+		}, nil)
 
 	entity, err := resolver.TableConfiguration(ctx, id.String())
 

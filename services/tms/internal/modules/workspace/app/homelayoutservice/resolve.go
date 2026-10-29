@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
@@ -43,7 +44,7 @@ func (s *Service) resolveWith(
 	ctx context.Context,
 	req *Request,
 	document *homelayout.Document,
-	roles []*permission.Role,
+	roles []*rbac.Role,
 	presets []*homelayout.Preset,
 ) (*EffectiveLayout, error) {
 	assigned, source := pickPreset(presets, roles)
@@ -93,7 +94,7 @@ func (s *Service) resolveWith(
 func (s *Service) loadPresetContext(
 	ctx context.Context,
 	req *Request,
-) ([]*permission.Role, []*homelayout.Preset, error) {
+) ([]*rbac.Role, []*homelayout.Preset, error) {
 	roles, err := s.rbac.GetAuthorizedRoles(ctx, req.TenantInfo.UserID, req.TenantInfo.OrgID)
 	if err != nil {
 		s.l.Error("failed to load roles for home layout", zap.Error(err))
@@ -118,7 +119,7 @@ func (s *Service) loadPresetContext(
 // competitor — an explicit role assignment always outranks it.
 func pickPreset(
 	presets []*homelayout.Preset,
-	roles []*permission.Role,
+	roles []*rbac.Role,
 ) (*homelayout.Preset, Source) {
 	var orgDefault *homelayout.Preset
 
@@ -145,7 +146,7 @@ func pickPreset(
 // shipped layout a user lands on. Roles arrive ordered by the RBAC repository,
 // so the first one carrying a responsibility wins and a user with none falls
 // through to the general-purpose layout.
-func primaryResponsibility(roles []*permission.Role) permission.CoreResponsibility {
+func primaryResponsibility(roles []*rbac.Role) rbac.CoreResponsibility {
 	for _, role := range roles {
 		if role.CoreResponsibility != "" {
 			return role.CoreResponsibility

@@ -3,18 +3,20 @@ package assignmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +33,7 @@ func brokerageOnlyService(
 ) (*service, *tenantportsmock.MockOrganizationRepository) {
 	t.Helper()
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -39,8 +41,8 @@ func brokerageOnlyService(
 			ShipmentID:     pulid.MustNew("shp_"),
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 
@@ -57,7 +59,7 @@ func brokerageOnlyService(
 		repo:         repo,
 		orgRepo:      orgRepo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
-		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
 			RateEngine:      ratingtest.NewEngine(t),
@@ -97,7 +99,7 @@ func TestAssignToMove_RefusedWhenAssetOperationsDisabled(t *testing.T) {
 
 	svc, _ := brokerageOnlyService(t, tenantInfo, moveID)
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -119,7 +121,7 @@ func TestReassign_RefusedWhenAssetOperationsDisabled(t *testing.T) {
 
 	svc, _ := brokerageOnlyService(t, tenantInfo, moveID)
 
-	entity, err := svc.Reassign(t.Context(), &shipmentports.ReassignShipmentMoveRequest{
+	entity, err := svc.Reassign(t.Context(), &assignmentports.ReassignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -148,7 +150,7 @@ func TestUnassign_PermittedWhenAssetOperationsDisabled(t *testing.T) {
 		OrgRepo:    orgRepo,
 	})
 
-	err := svc.Unassign(t.Context(), &shipmentports.UnassignShipmentMoveRequest{
+	err := svc.Unassign(t.Context(), &assignmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})

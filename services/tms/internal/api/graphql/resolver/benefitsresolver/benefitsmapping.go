@@ -1,8 +1,8 @@
 package benefitsresolver
 
 import (
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,7 +14,7 @@ type benefitPlanFields struct {
 	code              string
 	name              string
 	description       *string
-	planType          driverpay.BenefitPlanType
+	planType          paybenefit.BenefitPlanType
 	carrier           *string
 	policyNumber      *string
 	payCodeID         string
@@ -28,7 +28,7 @@ type benefitPlanFields struct {
 func benefitPlanFromInput(
 	f *benefitPlanFields,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.BenefitPlan, error) {
+) (*paybenefit.BenefitPlan, error) {
 	payCodeID, err := pulid.MustParse(f.payCodeID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -38,20 +38,20 @@ func benefitPlanFromInput(
 		)
 	}
 
-	entity := &driverpay.BenefitPlan{
+	entity := &paybenefit.BenefitPlan{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		Code:              f.code,
 		Name:              f.name,
-		Description:       base.StringValue(f.description),
+		Description:       gqlscalar.StringValue(f.description),
 		PlanType:          f.planType,
-		Carrier:           base.StringValue(f.carrier),
-		PolicyNumber:      base.StringValue(f.policyNumber),
+		Carrier:           gqlscalar.StringValue(f.carrier),
+		PolicyNumber:      gqlscalar.StringValue(f.policyNumber),
 		PayCodeID:         payCodeID,
 		PlanYear:          int16(f.planYear), //nolint:gosec // a calendar year
 		EmployeeCostMinor: int64(f.employeeCostMinor),
 		EmployerCostMinor: int64(f.employerCostMinor),
-		WaitingPeriodDays: intutils.SafeToInt32(base.IntValue(f.waitingPeriodDays)),
+		WaitingPeriodDays: intutils.SafeToInt32(gqlscalar.IntValue(f.waitingPeriodDays)),
 	}
 	if f.status != nil {
 		entity.Status = *f.status

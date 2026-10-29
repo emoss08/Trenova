@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"go.uber.org/fx"
 )
 
@@ -22,13 +22,13 @@ type keyRepository struct {
 	db *postgres.Connection
 }
 
-func NewKeyRepository(p KeyParams) agentports.AIProviderKeyRepository {
+func NewKeyRepository(p KeyParams) aiproviderports.AIProviderKeyRepository {
 	return &keyRepository{db: p.DB}
 }
 
 func (r *keyRepository) RecordFingerprint(
 	ctx context.Context,
-	req agentports.RecordAIProviderKeyFingerprintRequest,
+	req *aiproviderports.RecordAIProviderKeyFingerprintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers
@@ -50,7 +50,7 @@ func (r *keyRepository) RecordFingerprint(
 
 func (r *keyRepository) TouchUsed(
 	ctx context.Context,
-	req agentports.TouchAIProviderKeyRequest,
+	req aiproviderports.TouchAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers
@@ -70,7 +70,7 @@ func (r *keyRepository) TouchUsed(
 
 func (r *keyRepository) ClearExpiredPrevious(
 	ctx context.Context,
-	req agentports.ClearExpiredAIProviderKeysRequest,
+	req aiproviderports.ClearExpiredAIProviderKeysRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
 		p := aiproviderdb.Providers
@@ -91,7 +91,7 @@ func (r *keyRepository) ClearExpiredPrevious(
 
 func (r *keyRepository) RebindSealedKey(
 	ctx context.Context,
-	req *agentports.RebindAIProviderKeyRequest,
+	req *aiproviderports.RebindAIProviderKeyRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := aiproviderdb.Providers

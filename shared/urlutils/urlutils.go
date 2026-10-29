@@ -2,6 +2,7 @@ package urlutils
 
 import (
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -40,4 +41,12 @@ func HostMatches(host string, patterns []string) bool {
 		}
 	}
 	return false
+}
+
+var hostPattern = regexp.MustCompile(
+	`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$`,
+)
+
+func IsHostPattern(domain string) bool {
+	return hostPattern.MatchString(domain)
 }

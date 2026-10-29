@@ -3,12 +3,12 @@ package agentqualityservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/stretchr/testify/assert"
 )
 
-func scored(score, baseline float64, regression bool) *agentquality.SuiteRun {
-	return &agentquality.SuiteRun{
+func scored(score, baseline float64, regression bool) *agentqualitysuite.SuiteRun {
+	return &agentqualitysuite.SuiteRun{
 		QualityScore:  &score,
 		BaselineScore: &baseline,
 		Regression:    regression,
@@ -22,16 +22,20 @@ func TestWorstRegressionIsTheOpenOneThatFellFurthest(t *testing.T) {
 	large := scored(0.60, 0.90, true)
 	fellButNotRegressed := scored(0.10, 0.95, false)
 
-	assert.Same(t, large, worstRegression([]*agentquality.SuiteRun{small, fellButNotRegressed, large}))
+	assert.Same(
+		t,
+		large,
+		worstRegression([]*agentqualitysuite.SuiteRun{small, fellButNotRegressed, large}),
+	)
 }
 
 func TestWorstRegressionTakesOneWithoutABaselineWhenItIsTheOnlyOne(t *testing.T) {
 	t.Parallel()
 
 	score := 0.5
-	unmeasured := &agentquality.SuiteRun{QualityScore: &score, Regression: true}
+	unmeasured := &agentqualitysuite.SuiteRun{QualityScore: &score, Regression: true}
 
-	assert.Same(t, unmeasured, worstRegression([]*agentquality.SuiteRun{nil, unmeasured}))
-	assert.Nil(t, worstRegression([]*agentquality.SuiteRun{scored(0.9, 0.8, false)}))
+	assert.Same(t, unmeasured, worstRegression([]*agentqualitysuite.SuiteRun{nil, unmeasured}))
+	assert.Nil(t, worstRegression([]*agentqualitysuite.SuiteRun{scored(0.9, 0.8, false)}))
 	assert.Nil(t, worstRegression(nil))
 }

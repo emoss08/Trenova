@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 )
 
@@ -28,7 +27,7 @@ var providerHoursTable = schema.Table{
 		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Provider ID`, JSON: `providerId`},
 		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Model`, JSON: `model`},
 		{Name: "model_key", Quoted: `"model_key"`, Field: "ModelKey", Kind: schema.KindString, Flags: 0, Label: `Model Key`, JSON: `modelKey`},
-		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Task`, JSON: `task`, Enum: enumAiproviderTask[:]},
+		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Task`, JSON: `task`, Enum: enumAitaskTask[:]},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
 		{Name: "error_class", Quoted: `"error_class"`, Field: "ErrorClass", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Error Class`, JSON: `errorClass`, Enum: enumProviderError[:]},
 		{Name: "calls", Quoted: `"calls"`, Field: "Calls", Kind: schema.KindInt64, Flags: 0, Label: `Calls`, JSON: `calls`},
@@ -64,7 +63,7 @@ type ProviderHoursTable struct {
 	ProviderID        keel.StringCol
 	Model             keel.StringCol
 	ModelKey          keel.StringCol
-	Task              aiproviderdb.TaskCol
+	Task              keelkinds.AitaskTaskCol
 	AgentDefinitionID keel.StringCol
 	ErrorClass        ProviderErrorCol
 	Calls             keel.Int64Col
@@ -81,7 +80,7 @@ var ProviderHours = &ProviderHoursTable{
 	ProviderID:        keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 3}},
 	Model:             keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 4}},
 	ModelKey:          keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 5}},
-	Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 6}}},
+	Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 6}}},
 	AgentDefinitionID: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 7}},
 	ErrorClass:        ProviderErrorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &providerHoursRef, Index: 8}}},
 	Calls:             keel.Int64Col{Col: keel.Col{Ref: &providerHoursRef, Index: 9}},
@@ -99,7 +98,7 @@ func BuildProviderHours(r *keel.Ref) *ProviderHoursTable {
 		ProviderID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ModelKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		AgentDefinitionID: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ErrorClass:        ProviderErrorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Calls:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -312,7 +311,7 @@ var unitToolsTable = schema.Table{
 		{Name: "model_key", Quoted: `"model_key"`, Field: "ModelKey", Kind: schema.KindString, Flags: 0, Label: `Model Key`, JSON: `modelKey`},
 		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: 0, Label: `Provider ID`, JSON: `providerId`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
-		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAiproviderTask[:]},
+		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAitaskTask[:]},
 		{Name: "calls", Quoted: `"calls"`, Field: "Calls", Kind: schema.KindInt64, Flags: 0, Label: `Calls`, JSON: `calls`},
 	},
 	PK:         []int32{0, 1, 2, 3, 4},
@@ -347,7 +346,7 @@ type UnitToolsTable struct {
 	ModelKey          keel.StringCol
 	ProviderID        keel.StringCol
 	AgentDefinitionID keel.StringCol
-	Task              aiproviderdb.TaskCol
+	Task              keelkinds.AitaskTaskCol
 	Calls             keel.Int64Col
 }
 
@@ -363,7 +362,7 @@ var UnitTools = &UnitToolsTable{
 	ModelKey:          keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 6}},
 	ProviderID:        keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 7}},
 	AgentDefinitionID: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 8}},
-	Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 9}}},
+	Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &unitToolsRef, Index: 9}}},
 	Calls:             keel.Int64Col{Col: keel.Col{Ref: &unitToolsRef, Index: 10}},
 }
 
@@ -380,7 +379,7 @@ func BuildUnitTools(r *keel.Ref) *UnitToolsTable {
 		ModelKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ProviderID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		AgentDefinitionID: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Task:              aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Task:              keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Calls:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
 }
@@ -474,7 +473,7 @@ var workUnitsTable = schema.Table{
 		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Provider ID`, JSON: `providerId`},
 		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: 0, Label: `Model`, JSON: `model`},
 		{Name: "model_key", Quoted: `"model_key"`, Field: "ModelKey", Kind: schema.KindString, Flags: 0, Label: `Model Key`, JSON: `modelKey`},
-		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAiproviderTask[:]},
+		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAitaskTask[:]},
 		{Name: "outcome", Quoted: `"outcome"`, Field: "Outcome", Kind: schema.KindString, Flags: 0, Label: `Outcome`, JSON: `outcome`, Enum: enumOutcome[:]},
 		{Name: "decision_run_id", Quoted: `"decision_run_id"`, Field: "DecisionRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Decision Run ID`, JSON: `decisionRunId`},
 		{Name: "started_at_ms", Quoted: `"started_at_ms"`, Field: "StartedAtMs", Kind: schema.KindInt64, Flags: 0, Label: `Started At Ms`, JSON: `startedAtMs`},
@@ -529,7 +528,7 @@ type WorkUnitsTable struct {
 	ProviderID          keelkinds.PulidIDCol
 	Model               keel.StringCol
 	ModelKey            keel.StringCol
-	Task                aiproviderdb.TaskCol
+	Task                keelkinds.AitaskTaskCol
 	Outcome             OutcomeCol
 	DecisionRunID       keelkinds.PulidIDCol
 	StartedAtMs         keel.Int64Col
@@ -565,7 +564,7 @@ var WorkUnits = &WorkUnitsTable{
 	ProviderID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 5}}},
 	Model:               keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 6}},
 	ModelKey:            keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 7}},
-	Task:                aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 8}}},
+	Task:                keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 8}}},
 	Outcome:             OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 9}}},
 	DecisionRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workUnitsRef, Index: 10}}},
 	StartedAtMs:         keel.Int64Col{Col: keel.Col{Ref: &workUnitsRef, Index: 11}},
@@ -602,7 +601,7 @@ func BuildWorkUnits(r *keel.Ref) *WorkUnitsTable {
 		ProviderID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Model:               keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ModelKey:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Task:                aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Task:                keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Outcome:             OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DecisionRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		StartedAtMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -806,7 +805,7 @@ func valueWorkUnit(p unsafe.Pointer, c int32) any {
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
-var enumAiproviderTask = [...]schema.EnumValue{
+var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `DocumentClassification`, Label: `Document Classification`},
 	{Value: `DocumentExtraction`, Label: `Document Extraction`},
 	{Value: `BillingDiagnosis`, Label: `Billing Diagnosis`},

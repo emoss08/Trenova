@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -74,9 +77,9 @@ func (c *Calculator) syncAgreementAccessorials(
 	}
 
 	applicable := applicableAccessorials(contract, entity, ratingDate(entity, c.now), pass)
-	charges, err := shipment.PriceAgreementAccessorials(
+	charges, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		entity.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(entity),
 		applicable,
 		freightOf(entity),
 	)
@@ -93,11 +96,14 @@ func applicableAccessorials(
 	ratedAt int64,
 	pass *ratingPass,
 ) []*rateagreement.RateAgreementAccessorial {
-	scoped := contract.Agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
-		At:             ratedAt,
-		ServiceTypeID:  entity.ServiceTypeID,
-		ShipmentTypeID: entity.ShipmentTypeID,
-	})
+	scoped := rateagreementmatch.AutoApplyAccessorials(
+		contract.Agreement,
+		rateagreementmatch.AccessorialFacts{
+			At:             ratedAt,
+			ServiceTypeID:  entity.ServiceTypeID,
+			ShipmentTypeID: entity.ShipmentTypeID,
+		},
+	)
 
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 	for _, accessorial := range scoped {
@@ -114,7 +120,7 @@ func applicableAccessorials(
 
 func reconcileAgreementCharges(
 	entity *shipment.Shipment,
-	priced []shipment.PricedAgreementAccessorial,
+	priced []shipmentrating.PricedAgreementAccessorial,
 ) {
 	existing := make(map[pulid.ID]*shipment.AdditionalCharge, len(priced))
 	filtered := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges)+len(priced))
@@ -124,7 +130,7 @@ func reconcileAgreementCharges(
 			continue
 		}
 
-		if charge.Owner() != shipment.SystemOwnerAgreement {
+		if charge.Owner() != shipmentvocab.SystemOwnerAgreement {
 			filtered = append(filtered, charge)
 			continue
 		}
@@ -143,7 +149,7 @@ func reconcileAgreementCharges(
 
 func agreementCharge(
 	entity *shipment.Shipment,
-	entry shipment.PricedAgreementAccessorial,
+	entry shipmentrating.PricedAgreementAccessorial,
 	existing *shipment.AdditionalCharge,
 ) *shipment.AdditionalCharge {
 	accessorialID := entry.Accessorial.ID
@@ -181,7 +187,7 @@ func (p *ratingPass) dropBilledAgreementCharges(entity *shipment.Shipment) {
 	}
 	kept := entity.AdditionalCharges[:0]
 	for _, charge := range entity.AdditionalCharges {
-		if charge != nil && charge.Owner() == shipment.SystemOwnerAgreement &&
+		if charge != nil && charge.Owner() == shipmentvocab.SystemOwnerAgreement &&
 			p.skips(charge.AccessorialChargeID, skipSourceAgreement) {
 			continue
 		}
@@ -197,7 +203,7 @@ func removeAgreementCharges(entity *shipment.Shipment) {
 		if charge == nil {
 			continue
 		}
-		if charge.Owner() == shipment.SystemOwnerAgreement {
+		if charge.Owner() == shipmentvocab.SystemOwnerAgreement {
 			continue
 		}
 		filtered = append(filtered, charge)

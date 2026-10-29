@@ -22,13 +22,20 @@ package agentflow
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -107,23 +114,23 @@ type RunContext struct {
 	Input      string                        `json:"input"`
 	// Timezone is the organization's, which is what a tool reads a bare date
 	// in.
-	Timezone            string                       `json:"timezone,omitempty"`
-	RunID               pulid.ID                     `json:"runId,omitzero"`
-	ThreadID            pulid.ID                     `json:"threadId,omitzero"`
-	Unattended          bool                         `json:"unattended"`
-	Proposals           []agentports.ProposalOutcome `json:"proposals,omitempty"`
-	StepOwner           agentports.RunStepOwner      `json:"stepOwner"`
-	PreferredProviderID pulid.ID                     `json:"preferredProviderId,omitzero"`
-	PinProvider         bool                         `json:"pinProvider"`
+	Timezone            string                              `json:"timezone,omitempty"`
+	RunID               pulid.ID                            `json:"runId,omitzero"`
+	ThreadID            pulid.ID                            `json:"threadId,omitzero"`
+	Unattended          bool                                `json:"unattended"`
+	Proposals           []agentruntimeports.ProposalOutcome `json:"proposals,omitempty"`
+	StepOwner           agentruntimeports.RunStepOwner      `json:"stepOwner"`
+	PreferredProviderID pulid.ID                            `json:"preferredProviderId,omitzero"`
+	PinProvider         bool                                `json:"pinProvider"`
 	// PriorityKey orders this run's work against other kinds of work on the
 	// same queue. The organization is its fairness key.
 	PriorityKey int `json:"priorityKey"`
 	// Delegation is set on the turn of an agent working on a task the run's
 	// own agent handed it.
-	Delegation *agentports.Delegation `json:"delegation,omitempty"`
+	Delegation *agentruntimeports.Delegation `json:"delegation,omitempty"`
 	// Records are the records the turn is about, so an agent it hands a task
 	// to reads their memories too.
-	Records []agent.EntityRef `json:"records,omitempty"`
+	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// Inline says the reply is read with nothing beside it, so no tool result
 	// is kept as an artifact.
 	Inline bool `json:"inline,omitempty"`
@@ -134,9 +141,9 @@ type RunContext struct {
 // Scope is how the run's events are tagged for its reader: empty for the
 // run's own agent, the agent and the delegate call for one working on a task
 // it was handed.
-func (rc *RunContext) Scope() agentports.DelegateScope {
+func (rc *RunContext) Scope() assistantstreamports.DelegateScope {
 	if rc.Delegation == nil || rc.Definition == nil {
-		return agentports.DelegateScope{}
+		return assistantstreamports.DelegateScope{}
 	}
 
 	return rc.Delegation.Scope(rc.Definition.ID)
@@ -145,7 +152,7 @@ func (rc *RunContext) Scope() agentports.DelegateScope {
 // NewRunContext is a run request as the data a run's activities carry. The
 // services on the request stay behind: whichever activity needs one supplies
 // its own.
-func NewRunContext(req *agentports.RunRequest, priorityKey int) RunContext {
+func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContext {
 	return RunContext{
 		Definition:          req.Definition,
 		Actor:               req.Actor,
@@ -169,11 +176,11 @@ func NewRunContext(req *agentports.RunRequest, priorityKey int) RunContext {
 // request is the run as the runtime reads it. The ledger and the observer are
 // deliberately absent: they are services, and whichever activity needs one
 // supplies its own.
-func (rc *RunContext) request() *agentports.RunRequest {
-	return &agentports.RunRequest{
+func (rc *RunContext) request() *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition:          rc.Definition,
 		Actor:               rc.Actor,
-		Context:             agentdefinition.RuntimeContext{Timezone: rc.Timezone},
+		Context:             agentturn.RuntimeContext{Timezone: rc.Timezone},
 		Input:               rc.Input,
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,
@@ -190,21 +197,22 @@ func (rc *RunContext) request() *agentports.RunRequest {
 }
 
 type ModelCallInput struct {
-	Request *agentports.ChatCompletionRequest `json:"request"`
+	Request *llmports.ChatCompletionRequest `json:"request"`
 	// Stream says somebody is reading the run live, so the reply is
 	// published as it arrives. A run nobody watches is not streamed: every
 	// publish is a signal in the run's history.
 	Stream bool `json:"stream"`
 	// Scope tags what is streamed when the reply is another agent's, on a
 	// task the run's own agent handed it.
-	Scope agentports.DelegateScope `json:"scope,omitzero"`
+	Scope assistantstreamports.DelegateScope `json:"scope,omitzero"`
+	Step  *replystep.Call                    `json:"step,omitempty"`
 }
 
 // OpenDelegateInput asks for another agent's turn on a task the run's agent
 // handed it.
 type OpenDelegateInput struct {
-	Run  RunContext                `json:"run"`
-	Call agentruntime.DelegateCall `json:"call"`
+	Run  RunContext      `json:"run"`
+	Call delegation.Call `json:"call"`
 }
 
 // DelegateOpening is the other agent's turn, ready to drive: its run as data
@@ -215,9 +223,9 @@ type DelegateOpening struct {
 }
 
 type FindToolsInput struct {
-	Run       RunContext                `json:"run"`
-	Tools     agentruntime.ToolSetState `json:"tools"`
-	Arguments map[string]any            `json:"arguments"`
+	Run       RunContext              `json:"run"`
+	Tools     toolaccess.ToolSetState `json:"tools"`
+	Arguments map[string]any          `json:"arguments"`
 }
 
 type FindToolsResult struct {
@@ -230,18 +238,18 @@ type FindToolsResult struct {
 // ToolInput is one tool call. The activity running it is named for the tool,
 // so each tool reads as itself in the Temporal UI.
 type ToolInput struct {
-	Run  RunContext                `json:"run"`
-	Call agentruntime.DispatchCall `json:"call"`
+	Run  RunContext    `json:"run"`
+	Call toolcall.Call `json:"call"`
 }
 
 // PublishInput is a document the model asked to publish, as its call.
 type PublishInput struct {
-	Run  RunContext          `json:"run"`
-	Call agentports.ToolCall `json:"call"`
+	Run  RunContext        `json:"run"`
+	Call llmports.ToolCall `json:"call"`
 }
 
 type ToolResult struct {
-	Outcome agentruntime.ToolOutcome `json:"outcome"`
+	Outcome toolcall.Outcome `json:"outcome"`
 	// Artifacts are what the call produced for a person to see beside the
 	// run. They are made where the call ran, since only there does the
 	// tool's raw result exist.
@@ -250,7 +258,7 @@ type ToolResult struct {
 
 // Outcome is what one driven turn came to.
 type Outcome struct {
-	Result *agentports.RunResult `json:"result"`
+	Result *agentruntimeports.RunResult `json:"result"`
 	// Artifacts are everything the turn's tool calls produced.
 	Artifacts []*assistantartifact.Artifact `json:"artifacts,omitempty"`
 	// Events are what the turn said, for its durable account. The reply's
@@ -266,7 +274,7 @@ const (
 )
 
 type WorldCheckInput struct {
-	OrganizationID pulid.ID                `json:"organizationId"`
-	BusinessUnitID pulid.ID                `json:"businessUnitId"`
-	Check          agentruntime.WorldCheck `json:"check"`
+	OrganizationID pulid.ID         `json:"organizationId"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId"`
+	Check          worldwatch.Check `json:"check"`
 }

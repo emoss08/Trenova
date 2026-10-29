@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,84 +26,11 @@ type liveTenderReader interface {
 	) ([]*tender.Tender, error)
 }
 
-func (t *AddShipmentCommentTool) Preview(
-	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	entity, err := t.comment(&params)
-	if err != nil {
-		return nil, err
-	}
-
-	created, err := toolpreview.Create(
-		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
-		entity,
-		toolpreview.Only(
-			common.PreviewFieldShipmentID,
-			"comment",
-			"type",
-			"visibility",
-			"priority",
-		),
-		toolpreview.WithRefs(map[string]permission.Resource{
-			common.PreviewFieldShipmentID: permission.ResourceShipment,
-		}),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	shared := toolpreview.Send(
-		toolpreview.Record{
-			Resource: permission.ResourceShipment,
-			ID:       entity.ShipmentID,
-			Label:    commentAudience(entity.Visibility),
-		},
-		&agent.MessagePreview{
-			Channel:    agent.MessageChannelComment,
-			To:         []string{commentAudience(entity.Visibility)},
-			Body:       entity.Comment,
-			Visibility: string(entity.Visibility),
-		},
-	)
-
-	preview := toolpreview.Build(
-		fmt.Sprintf("Would leave a %s note on the shipment, read by %s.",
-			strings.ToLower(string(entity.Priority)),
-			strings.ToLower(commentAudience(entity.Visibility))),
-		created,
-		shared,
-	)
-	if entity.Visibility == shipment.CommentVisibilityCustomer ||
-		entity.Visibility == shipment.CommentVisibilityDriver {
-		common.WarnSensitiveContent(preview, entity.Comment)
-	}
-
-	return preview, nil
-}
-
-func commentAudience(visibility shipment.CommentVisibility) string {
-	switch visibility {
-	case shipment.CommentVisibilityCustomer:
-		return "The customer"
-	case shipment.CommentVisibilityDriver:
-		return "The driver"
-	case shipment.CommentVisibilityAccounting:
-		return "Accounting"
-	case shipment.CommentVisibilityOperations:
-		return "Operations"
-	case shipment.CommentVisibilityInternal:
-		return "Internal staff"
-	default:
-		return "Internal staff"
-	}
-}
-
 func (t *CancelShipmentTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	request, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +41,7 @@ func (t *CancelShipmentTool) Preview(
 	}
 
 	change, err := toolpreview.Changed(
-		common.ShipmentRecord(cancelled.Before),
+		shipmentpreview.ShipmentRecord(cancelled.Before),
 		cancelled.Before,
 		cancelled.After,
 		toolpreview.Only("status", "cancelReason", "canceledById", "canceledAt"),
@@ -126,7 +53,7 @@ func (t *CancelShipmentTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	changes := []*agent.RecordChange{change}
+	changes := []*agentpreview.RecordChange{change}
 
 	if t.partners != nil {
 		notices, nErr := t.partners.PreviewCancelNotices(
@@ -138,7 +65,10 @@ func (t *CancelShipmentTool) Preview(
 			return nil, nErr
 		}
 		for _, notice := range notices {
-			changes = append(changes, common.PartnerNoticeSend(notice, request.CancelReason))
+			changes = append(
+				changes,
+				shipmentpreview.PartnerNoticeSend(notice, request.CancelReason),
+			)
 		}
 	}
 
@@ -165,7 +95,7 @@ func (t *CancelShipmentTool) Preview(
 	)
 	if withdrawn > 0 {
 		summary += fmt.Sprintf(" %s would be withdrawn from carriers.",
-			common.CountOf(withdrawn, "live tender"))
+			changepreview.CountOf(withdrawn, "live tender"))
 	}
 
 	return toolpreview.Build(summary, changes...), nil
@@ -173,8 +103,8 @@ func (t *CancelShipmentTool) Preview(
 
 // tenderWithdrawalChanges is a live tender cancelled with the shipment: the
 // tender itself, and a withdrawal for every carrier holding an offer.
-func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, len(entity.Offers)+1)
+func tenderWithdrawalChanges(entity *tender.Tender) ([]*agentpreview.RecordChange, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(entity.Offers)+1)
 	canceled := *entity
 	canceled.Status = tender.StatusCanceled
 	record, err := toolpreview.Changed(
@@ -190,21 +120,21 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, erro
 	if err != nil {
 		return nil, err
 	}
-	record.Operation = agent.PreviewOperationArchive
+	record.Operation = agentpreview.PreviewOperationArchive
 	changes = append(changes, record)
 
 	for _, offer := range entity.Offers {
 		if offer == nil {
 			continue
 		}
-		next, moves := tenderservice.WithdrawnOfferStatus(offer.Status)
+		next, moves := tendercancel.WithdrawnOfferStatus(offer.Status)
 		if !moves || next != tender.OfferStatusWithdrawn {
 			continue
 		}
-		channel := agent.MessageChannelEmail
+		channel := agentpreview.MessageChannelEmail
 		to := offer.RecipientEmail
 		if offer.Channel == tender.ChannelEDI {
-			channel = agent.MessageChannelEDI
+			channel = agentpreview.MessageChannelEDI
 			to = CarrierNameOfOffer(offer) + " (EDI)"
 		}
 		changes = append(changes, toolpreview.Send(
@@ -213,7 +143,7 @@ func tenderWithdrawalChanges(entity *tender.Tender) ([]*agent.RecordChange, erro
 				ID:       offer.CarrierID,
 				Label:    CarrierNameOfOffer(offer),
 			},
-			&agent.MessagePreview{
+			&agentpreview.MessagePreview{
 				Channel: channel,
 				To:      []string{to},
 				Subject: "Tender offer withdrawn",
@@ -230,5 +160,5 @@ func CarrierNameOfOffer(offer *tender.TenderOffer) string {
 		return offer.Carrier.Name
 	}
 
-	return common.LabelCarrier
+	return changepreview.LabelCarrier
 }

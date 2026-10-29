@@ -8,7 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/scriptoutbox"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,18 +18,18 @@ import (
 
 const scriptStep = "script-step"
 
-func intent(tool string, id string) (scriptoutbox.Call, *agentports.PendingAction) {
+func intent(tool string, id string) (scriptoutbox.Call, *agentruntimeports.PendingAction) {
 	args := map[string]any{"invoiceIds": []any{id}}
 	call := scriptoutbox.Call{
 		Tool:      tool,
 		Arguments: args,
-		Target: &agentports.ToolTarget{
+		Target: &agenttoolports.ToolTarget{
 			Resource: permission.ResourceInvoice,
 			ID:       pulid.ID("inv_" + id),
 		},
 	}
 
-	return call, &agentports.PendingAction{
+	return call, &agentruntimeports.PendingAction{
 		ToolName:  tool,
 		Arguments: args,
 		Tier:      agent.TierActWithApproval,
@@ -57,7 +58,7 @@ func settled(
 	t *testing.T,
 	outbox *scriptoutbox.Outbox,
 	settlement scriptoutbox.Settlement,
-) []agentports.PendingAction {
+) []agentruntimeports.PendingAction {
 	t.Helper()
 
 	filed, err := outbox.Settle(settlement)
@@ -134,7 +135,12 @@ func TestOutbox_RefusesTheBatchForTwoDifferentChangesToOneRecord(t *testing.T) {
 
 	call, _ = intent("invoice_post", "inv_9")
 	_, err = outbox.Admit(call)
-	require.ErrorIs(t, err, scriptoutbox.ErrConflictingIntents, "a refused batch takes nothing more")
+	require.ErrorIs(
+		t,
+		err,
+		scriptoutbox.ErrConflictingIntents,
+		"a refused batch takes nothing more",
+	)
 
 	filed, err := outbox.Settle(completed())
 	require.ErrorIs(t, err, scriptoutbox.ErrConflictingIntents)
@@ -171,10 +177,10 @@ func TestOutbox_HoldsTheAgentsChangeLimitWhenItIsSmaller(t *testing.T) {
 func TestOutbox_RefusesACallThatRanOrWouldRun(t *testing.T) {
 	t.Parallel()
 
-	for name, mutate := range map[string]func(*agentports.PendingAction){
-		"executed":  func(a *agentports.PendingAction) { a.Executed = true },
-		"simulated": func(a *agentports.PendingAction) { a.Simulated = true },
-		"automatic": func(a *agentports.PendingAction) { a.Tier = agent.TierAutoExecute },
+	for name, mutate := range map[string]func(*agentruntimeports.PendingAction){
+		"executed":  func(a *agentruntimeports.PendingAction) { a.Executed = true },
+		"simulated": func(a *agentruntimeports.PendingAction) { a.Simulated = true },
+		"automatic": func(a *agentruntimeports.PendingAction) { a.Tier = agent.TierAutoExecute },
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -225,7 +231,7 @@ func TestOutbox_DecidesEveryIntentAgainWithTheScriptsWholeTaint(t *testing.T) {
 	filed := settled(t, outbox, scriptoutbox.Settlement{
 		Completed: true,
 		Tainted:   true,
-		Redecide: func(*agentports.PendingAction) agenttoolpolicy.Decision {
+		Redecide: func(*agentruntimeports.PendingAction) agenttoolpolicy.Decision {
 			redecided++
 
 			return agenttoolpolicy.Decision{
@@ -268,7 +274,7 @@ func TestOutbox_NeverFilesAnIntentThatRunsOnItsOwn(t *testing.T) {
 
 	filed := settled(t, outbox, scriptoutbox.Settlement{
 		Completed: true,
-		Redecide: func(*agentports.PendingAction) agenttoolpolicy.Decision {
+		Redecide: func(*agentruntimeports.PendingAction) agenttoolpolicy.Decision {
 			return agenttoolpolicy.Decision{Tier: agent.TierAutoExecute}
 		},
 	})
@@ -298,7 +304,7 @@ func TestOutbox_AdmitsConcurrentCallsWithoutLosingOrRepeatingOne(t *testing.T) {
 }
 
 type splittingTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 }
 
 func (splittingTool) SplitRecords(params map[string]any) ([]map[string]any, error) {

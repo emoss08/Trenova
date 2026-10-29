@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,15 +18,15 @@ func TestNewRegistry_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 	logger := zap.NewNop()
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 
 	require.NoError(t, err)
 	assert.False(t, registry.IsEnabled())
@@ -42,14 +43,14 @@ func TestRegistry_IsEnabled(t *testing.T) {
 	t.Run("returns false when disabled", func(t *testing.T) {
 		t.Parallel()
 		cfg := &config.Config{
-			Monitoring: config.MonitoringConfig{
-				Metrics: config.MetricsConfig{
+			Monitoring: monitoringconfig.Config{
+				Metrics: monitoringconfig.MetricsConfig{
 					Enabled: false,
 				},
 			},
 		}
 
-		registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+		registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 		require.NoError(t, err)
 
 		assert.False(t, registry.IsEnabled())
@@ -60,14 +61,14 @@ func TestRegistry_Handler_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	handler := registry.Handler()
@@ -84,14 +85,14 @@ func TestRegistry_RecordError_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -103,14 +104,14 @@ func TestRegistry_RecordPanicRecovery_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -122,14 +123,14 @@ func TestRegistry_IncrementActiveRequests_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -141,14 +142,14 @@ func TestRegistry_DecrementActiveRequests_Disabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: false,
 			},
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	assert.NotPanics(t, func() {
@@ -160,8 +161,8 @@ func TestNewRegistry_Enabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: true,
 				Port:    9090,
 				Path:    "/metrics",
@@ -170,7 +171,7 @@ func TestNewRegistry_Enabled(t *testing.T) {
 	}
 	logger := zap.NewNop()
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 
 	require.NoError(t, err)
 	assert.True(t, registry.IsEnabled())
@@ -191,8 +192,8 @@ func TestRegistry_Handler_Enabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: true,
 				Port:    9090,
 				Path:    "/metrics",
@@ -200,7 +201,7 @@ func TestRegistry_Handler_Enabled(t *testing.T) {
 		},
 	}
 
-	registry, err := metrics.NewRegistry(cfg, zap.NewNop())
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	handler := registry.Handler()

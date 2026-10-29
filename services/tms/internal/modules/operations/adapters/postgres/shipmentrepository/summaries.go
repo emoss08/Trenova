@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -29,20 +30,20 @@ func (r *repository) ListSummariesByIDs(
 
 			sp := shipmentdb.Shipments
 			ord := orderdb.Orders.As(summaryOrderAlias)
-			origin := firstPickupPlace()
-			dest := lastDeliveryPlace()
+			origin := shipmentpredicate.FirstPickupPlace()
+			dest := shipmentpredicate.LastDeliveryPlace()
 
-			q := dest.join(origin.join(sp.LeftJoin(ord, ord.ID.EqCol(sp.OrderID)))).
+			q := dest.Join(origin.Join(sp.LeftJoin(ord, ord.ID.EqCol(sp.OrderID)))).
 				Pick(
 					sp.ID,
 					sp.ProNumber.Coalesce(""),
 					sp.BOL.Coalesce(""),
 					ord.PONumber.Coalesce(""),
 					sp.ActualDeliveryDate,
-					origin.city(),
-					origin.stateCode(),
-					dest.city(),
-					dest.stateCode(),
+					origin.City(),
+					origin.StateCode(),
+					dest.City(),
+					dest.StateCode(),
 					sp.TotalChargeAmount,
 				).
 				Where(sp.ID.In(req.ShipmentIDs...)).

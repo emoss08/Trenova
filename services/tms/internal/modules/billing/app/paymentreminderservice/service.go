@@ -18,8 +18,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/paymentreminderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/invoicetemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -117,7 +118,7 @@ type sender struct {
 // email are reported back so someone can add a recipient.
 func (s *Service) SendDue(
 	ctx context.Context,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	now int64,
 ) (*paymentreminderports.SweepResult, error) {
 	result := new(paymentreminderports.SweepResult)
@@ -469,7 +470,7 @@ func (s *Service) logActivity(
 func (s *Service) senderFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *tenant.BillingControl,
+	control *billingcontrol.BillingControl,
 	actorID pulid.ID,
 ) (*sender, error) {
 	org, err := s.organizations.GetByID(
@@ -609,8 +610,8 @@ func records(from *sender, rem *reminder, sentTo string) []*paymentreminder.Remi
 	return rows
 }
 
-func templateContext(from *sender, rem *reminder) *documenttemplate.PaymentReminderEmailContext {
-	ctx := &documenttemplate.PaymentReminderEmailContext{
+func templateContext(from *sender, rem *reminder) *invoicetemplate.PaymentReminderEmailContext {
+	ctx := &invoicetemplate.PaymentReminderEmailContext{
 		CustomerName:           rem.customer.Name,
 		CustomerCode:           rem.customer.Code,
 		CompanyName:            from.companyName,
@@ -620,12 +621,12 @@ func templateContext(from *sender, rem *reminder) *documenttemplate.PaymentRemin
 		TotalOverdue:           money.FormatMinor(openTotal(rem.listed), rem.currency),
 		RemittanceInstructions: from.remittance,
 		Note:                   rem.note,
-		Invoices:               make([]documenttemplate.PaymentReminderInvoice, 0, len(rem.listed)),
+		Invoices:               make([]invoicetemplate.PaymentReminderInvoice, 0, len(rem.listed)),
 	}
 	for _, inv := range rem.listed {
 		days := paymentreminder.DaysPastDue(inv.DueDate, rem.asOf)
 		ctx.OldestDaysPastDue = max(ctx.OldestDaysPastDue, days)
-		ctx.Invoices = append(ctx.Invoices, documenttemplate.PaymentReminderInvoice{
+		ctx.Invoices = append(ctx.Invoices, invoicetemplate.PaymentReminderInvoice{
 			InvoiceNumber: inv.InvoiceNumber,
 			InvoiceDate:   timeutils.FormatUnixDateIn(inv.InvoiceDate, from.timezone),
 			DueDate:       timeutils.FormatUnixDateIn(inv.DueDate, from.timezone),

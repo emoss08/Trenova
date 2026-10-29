@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -24,7 +24,7 @@ var exceptionLabels = map[inboundmessage.ExceptionKind]string{
 
 func (s *Service) LogException(
 	ctx context.Context,
-	req *inboundmessageports.LogTriageExceptionRequest,
+	req *triageworkports.LogTriageExceptionRequest,
 ) error {
 	reasonID, err := s.lookup.HoldReasonByCode(ctx, req.TenantInfo, ExceptionHoldReasonCode)
 	if err != nil {
@@ -39,7 +39,7 @@ func (s *Service) LogException(
 	}
 
 	blocksBilling := true
-	_, err = s.holds.Create(ctx, &shipmentports.CreateShipmentHoldRequest{
+	_, err = s.holds.Create(ctx, &shipmentholdports.CreateShipmentHoldRequest{
 		TenantInfo:    req.TenantInfo,
 		ShipmentID:    req.ShipmentID,
 		HoldReasonID:  reasonID,
@@ -50,7 +50,7 @@ func (s *Service) LogException(
 	return err
 }
 
-func holdNote(req *inboundmessageports.LogTriageExceptionRequest) string {
+func holdNote(req *triageworkports.LogTriageExceptionRequest) string {
 	lines := []string{
 		fmt.Sprintf(
 			"%s: %d %s",

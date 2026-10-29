@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -33,7 +35,7 @@ func (s *Service) EnsureSystem(
 	}
 
 	for attempt := range maxSystemNameAttempts {
-		definition, _ := agentdefinition.NewPageAgent(
+		definition, _ := agentpreset.NewPageAgent(
 			req.SystemKey,
 			req.TenantInfo,
 			systemAgentName(template, attempt),
@@ -95,7 +97,7 @@ func (s *Service) systemAgent(
 	return nil, fmt.Errorf("read system agent %s: %w", req.SystemKey, err)
 }
 
-func systemAgentName(template agentdefinition.Template, attempt int) string {
+func systemAgentName(template agenttemplate.Template, attempt int) string {
 	switch attempt {
 	case 0:
 		return template.Label()

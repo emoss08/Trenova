@@ -5,10 +5,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,22 +23,22 @@ import (
 // a whole turn rather than one tool set.
 func wideRun(
 	t *testing.T,
-	turns ...*agentports.ChatCompletionResult,
+	turns ...*llmports.ChatCompletionResult,
 ) (*Service, *scriptedCompletion, []string) {
 	t.Helper()
 
 	service, names := wideRuntime(t)
 	completion := &scriptedCompletion{Turns: turns}
-	service.completion = completion
+	rewire(service, func(p *Params) { p.Completion = completion })
 
 	return service, completion, names
 }
 
-func requestTools(req *agentports.ChatCompletionRequest) []string {
+func requestTools(req *llmports.ChatCompletionRequest) []string {
 	return specNames(req.Tools)
 }
 
-func loadedIn(req *agentports.ChatCompletionRequest) []string {
+func loadedIn(req *llmports.ChatCompletionRequest) []string {
 	loaded := make([]string, 0, len(req.Tools))
 	for _, spec := range req.Tools {
 		if !spec.Deferred {
@@ -57,15 +63,19 @@ it, so the request's tools stay as they were.
 func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	t.Parallel()
 
-	service, completion, names := wideRun(t,
-		toolTurn(findToolsName, map[string]any{"need": "trailers due inspection"}),
-		toolTurn("equipment_list_trailers", map[string]any{}),
-		textTurn("Two trailers are due."),
+	service, completion, names := wideRun(
+		t,
+		runtimetest.ToolTurn(
+			runtimetools.FindToolsName,
+			map[string]any{"need": "trailers due inspection"},
+		),
+		runtimetest.ToolTurn("equipment_list_trailers", map[string]any{}),
+		runtimetest.TextTurn("Two trailers are due."),
 	)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(names...),
-		Actor:      testActor(),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 	require.NoError(t, err)
@@ -78,7 +88,7 @@ func TestRun_FindToolsLoadsAToolIntoTheNextRequest(t *testing.T) {
 	assert.Contains(t, loadedIn(completion.Requests[1]), "equipment_list_trailers",
 		"what find_tools loaded is loaded on the next request")
 	found := completion.Requests[1].Messages[len(completion.Requests[1].Messages)-1]
-	assert.Equal(t, findToolsName, found.ToolName)
+	assert.Equal(t, runtimetools.FindToolsName, found.ToolName)
 	assert.Contains(t, found.ToolReferences, "equipment_list_trailers", "the find result names it")
 	assert.Equal(t, completion.Requests[0].Tools, completion.Requests[1].Tools)
 	assert.Equal(t, "Two trailers are due.", result.Reply)
@@ -102,7 +112,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		{Role: conversation.RoleAssistant, ToolCalls: []conversation.ToolCallRecord{
 			{
 				ID:        "c1",
-				Name:      findToolsName,
+				Name:      runtimetools.FindToolsName,
 				Arguments: map[string]any{"need": "driver medical card expiry"},
 			},
 		}},
@@ -114,15 +124,15 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Shall I list them?"},
 	}
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "yes, do that",
-		history:    history,
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "yes, do that",
+		History:    history,
 	})
 
-	require.True(t, set.disclosed)
-	sent := specNames(set.specs)
+	require.True(t, set.Disclosed)
+	sent := specNames(set.Specs)
 	assert.Contains(t, sent, "worker_list_credentials", "what find_tools found last turn")
 	assert.Contains(t, sent, "report_run", "what the model called last turn")
 }
@@ -137,14 +147,14 @@ func TestNewToolSet_RanksAFollowUpWithTheMessageItAnswers(t *testing.T) {
 		{Role: conversation.RoleAssistant, Content: "Do you want the whole fleet or one terminal?"},
 	}
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(names...),
-		actor:      testActor(),
-		input:      "the whole fleet",
-		history:    history,
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(names...),
+		Actor:      runtimetest.Actor(),
+		Input:      "the whole fleet",
+		History:    history,
 	})
 
-	assert.Contains(t, specNames(set.specs), "equipment_list_tractors")
+	assert.Contains(t, specNames(set.Specs), "equipment_list_tractors")
 }
 
 // A run nobody is watching has nobody to ask. The spec is withheld, but a model
@@ -153,20 +163,24 @@ func TestNewToolSet_RanksAFollowUpWithTheMessageItAnswers(t *testing.T) {
 func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 	t.Parallel()
 
-	service, completion, names := wideRun(t,
-		toolTurn(askUserName, map[string]any{"question": "Which terminal?", "allowOther": true}),
-		textTurn("Raised it for a person."),
+	service, completion, names := wideRun(
+		t,
+		runtimetest.ToolTurn(
+			askuser.Name,
+			map[string]any{"question": "Which terminal?", "allowOther": true},
+		),
+		runtimetest.TextTurn("Raised it for a person."),
 	)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(names[:3]...),
-		Actor:      testActor(),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(names[:3]...),
+		Actor:      runtimetest.Actor(),
 		Input:      "check the fleet",
 		Unattended: true,
 	})
 	require.NoError(t, err)
 
-	assert.NotContains(t, requestTools(completion.Requests[0]), askUserName)
+	assert.NotContains(t, requestTools(completion.Requests[0]), askuser.Name)
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "agent_raise_exception")
 }
@@ -176,18 +190,21 @@ func TestRun_RefusesAQuestionInARunNobodyIsWatching(t *testing.T) {
 func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 	t.Parallel()
 
-	turns := make([]*agentports.ChatCompletionResult, 0, maxFindCalls+2)
-	for range maxFindCalls + 1 {
-		turns = append(turns, toolTurn(findToolsName, map[string]any{"need": "tractors"}))
+	turns := make([]*llmports.ChatCompletionResult, 0, toolaccess.MaxFindCalls+2)
+	for range toolaccess.MaxFindCalls + 1 {
+		turns = append(
+			turns,
+			runtimetest.ToolTurn(runtimetools.FindToolsName, map[string]any{"need": "tractors"}),
+		)
 	}
-	turns = append(turns, textTurn("done"))
+	turns = append(turns, runtimetest.TextTurn("done"))
 	service, _, names := wideRun(t, turns...)
-	definition := testDefinition(names...)
+	definition := runtimetest.Definition(names...)
 	definition.MaxToolCalls = 1
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 	require.NoError(t, err)
@@ -203,7 +220,12 @@ func TestRun_FindToolsIsNotChargedUntilTheCap(t *testing.T) {
 			assert.Contains(t, message.Content, "searched for tools")
 		}
 	}
-	assert.Equal(t, maxFindCalls+1, searches, "the cap is reached before the budget of one")
+	assert.Equal(
+		t,
+		toolaccess.MaxFindCalls+1,
+		searches,
+		"the cap is reached before the budget of one",
+	)
 	assert.Equal(t, 1, refused)
 	assert.Equal(t, 1, result.ToolCallsUsed)
 }
@@ -212,8 +234,8 @@ func TestResolveFind_WithoutACatalogSaysSoRatherThanPanicking(t *testing.T) {
 	t.Parallel()
 
 	service, _ := wideRuntime(t)
-	service.catalog = nil
-	set := &toolSet{loaded: map[string]struct{}{}, disclosed: true}
+	rewire(service, func(p *Params) { p.Catalog = nil })
+	set := &toolaccess.ToolSet{Loaded: map[string]struct{}{}, Disclosed: true}
 
 	assert.Contains(t, findContent(t, service, set, map[string]any{"need": "tractors"}),
 		"No other tools")
@@ -239,28 +261,30 @@ func TestRun_HoldsTheReadsAHeldToolTakesItsArgumentsFrom(t *testing.T) {
 	t.Parallel()
 
 	reports := queryTool("report_list", []map[string]any{{"id": "rpt_1"}}, nil)
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{reports}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{reports}}
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&dependentTool{
 			StubActionTool: actionTool("report_create_dashboard", agent.TierPropose, nil),
 			needs:          []string{"report_list", "report_delete"},
 		},
 		actionTool("report_delete", agent.TierPropose, nil),
 	}}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_list", map[string]any{}),
-		toolTurn("report_delete", map[string]any{}),
-		textTurn("Found one report."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_list", map[string]any{}),
+		runtimetest.ToolTurn("report_delete", map[string]any{}),
+		runtimetest.TextTurn("Found one report."),
 	}}
 	service := newRuntime(completion, query, action, nil)
-	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-		QueryTools:  query,
-		ActionTools: action,
+	rewire(service, func(p *Params) {
+		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: action,
+		})
 	})
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("report_create_dashboard"),
-		Actor:      testActor(),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_create_dashboard"),
+		Actor:      runtimetest.Actor(),
 		Input:      "build me a dashboard",
 	})
 	require.NoError(t, err)
@@ -292,8 +316,8 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 	t.Parallel()
 
 	categories := queryTool("location_list_categories", []map[string]any{}, nil)
-	query := &stubQueryRegistry{Tools: []agentports.AgentQueryTool{categories}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	query := &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{categories}}
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		&companionTool{
 			StubActionTool: actionTool("shipment_create", agent.TierPropose, nil),
 			brings:         []string{"customer_create", "location_create"},
@@ -306,31 +330,36 @@ func TestRun_HoldsTheWritesAHeldToolNamesAsCompanions(t *testing.T) {
 		actionTool("delete_customer", agent.TierPropose, nil),
 	}}
 	service := newRuntime(&scriptedCompletion{}, query, action, nil)
-	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-		QueryTools:  query,
-		ActionTools: action,
+	rewire(service, func(p *Params) {
+		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: action,
+		})
 	})
 
-	held := service.heldTools(testDefinition("shipment_create"))
+	held := service.access.HeldTools(runtimetest.Definition("shipment_create"))
 	assert.Contains(t, held, "customer_create")
 	assert.Contains(t, held, "location_create")
 	assert.Contains(t, held, "location_list_categories",
 		"a companion's own reads come with it")
 	assert.NotContains(t, held, "delete_customer")
 
-	definition := testDefinition("shipment_create")
+	definition := runtimetest.Definition("shipment_create")
 	definition.DisabledToolNames = []string{"customer_create"}
-	held = service.heldTools(definition)
+	held = service.access.HeldTools(definition)
 	assert.NotContains(t, held, "customer_create", "a companion switched off stays off")
 	assert.Contains(t, held, "location_create")
 
-	set := &toolSet{loaded: map[string]struct{}{}, allowed: service.heldTools(testDefinition(
-		"shipment_create",
-	))}
-	require.True(t, service.load(set, "shipment_create"))
-	assert.True(t, set.offers("customer_create"), "a companion is loaded with its tool")
-	assert.True(t, set.offers("location_create"))
-	assert.True(t, set.offers("location_list_categories"))
+	set := &toolaccess.ToolSet{
+		Loaded: map[string]struct{}{},
+		Allowed: service.access.HeldTools(runtimetest.Definition(
+			"shipment_create",
+		)),
+	}
+	require.True(t, service.access.Load(set, "shipment_create"))
+	assert.True(t, set.Offers("customer_create"), "a companion is loaded with its tool")
+	assert.True(t, set.Offers("location_create"))
+	assert.True(t, set.Offers("location_list_categories"))
 }
 
 /*
@@ -341,8 +370,8 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 	t.Parallel()
 
 	service, completion, names := wideRun(t,
-		toolTurn("search_trailers", map[string]any{"query": "53"}),
-		textTurn("done"),
+		runtimetest.ToolTurn("search_trailers", map[string]any{"query": "53"}),
+		runtimetest.TextTurn("done"),
 	)
 	held := make([]string, 0, len(names))
 	for _, name := range names {
@@ -351,9 +380,9 @@ func TestRun_RefusalLoadsTheNearestToolsTheAgentHolds(t *testing.T) {
 		}
 	}
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(held...),
-		Actor:      testActor(),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(held...),
+		Actor:      runtimetest.Actor(),
 		Input:      "say hello",
 	})
 	require.NoError(t, err)
@@ -369,12 +398,12 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 
 	const input = "which drivers have a medical card expiring soon"
 	probe, names := wideRuntime(t)
-	definition := testDefinition(names...)
-	opening := specNames(probe.newToolSet(t.Context(), toolSetRequest{
-		definition: definition,
-		actor:      testActor(),
-		input:      input,
-	}).specs)
+	definition := runtimetest.Definition(names...)
+	opening := specNames(probe.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+		Definition: definition,
+		Actor:      runtimetest.Actor(),
+		Input:      input,
+	}).Specs)
 	unsent := slices.DeleteFunc(slices.Clone(names), func(name string) bool {
 		return slices.Contains(opening, name)
 	})
@@ -382,14 +411,14 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	found, called := unsent[0], unsent[1]
 
 	service, completion, _ := wideRun(t,
-		toolTurn(findToolsName, map[string]any{"need": found}),
-		toolTurn(called, map[string]any{}),
-		toolTurn("list_trailer_inspection_dates", map[string]any{}),
-		textTurn("Done."),
+		runtimetest.ToolTurn(runtimetools.FindToolsName, map[string]any{"need": found}),
+		runtimetest.ToolTurn(called, map[string]any{}),
+		runtimetest.ToolTurn("list_trailer_inspection_dates", map[string]any{}),
+		runtimetest.TextTurn("Done."),
 	)
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      input,
 	})
 	require.NoError(t, err)

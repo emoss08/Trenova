@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol/dashcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,9 +41,9 @@ func New(p Params) tenantports.DashControlRepository {
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DashControl, error) {
-	newDefault := func() *tenant.DashControl {
-		return &tenant.DashControl{
+) (*dashcontrol.DashControl, error) {
+	newDefault := func() *dashcontrol.DashControl {
+		return &dashcontrol.DashControl{
 			ID:                             pulid.MustNew("dashc_"),
 			BusinessUnitID:                 tenantInfo.BuID,
 			OrganizationID:                 tenantInfo.OrgID,
@@ -65,14 +65,14 @@ func (r *repository) GetOrCreate(
 		}
 	}
 
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DashControl]{
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*dashcontrol.DashControl]{
 		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			dc := tenantdb.DashControls
+			dc := dashcontroldb.DashControls
 			if _, err := dc.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
-				[]*tenant.DashControl{newDefault()},
+				[]*dashcontrol.DashControl{newDefault()},
 				dc.OrganizationID,
 				dc.BusinessUnitID,
 			); err != nil {
@@ -88,18 +88,18 @@ func (r *repository) GetOrCreate(
 	})
 }
 
-func (r *repository) selectControl(ctx context.Context) (*tenant.DashControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		return tenantdb.DashControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
+func (r *repository) selectControl(ctx context.Context) (*dashcontrol.DashControl, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*dashcontrol.DashControl, error) {
+		return dashcontroldb.DashControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.DashControl,
-) (*tenant.DashControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DashControl, error) {
-		dc := tenantdb.DashControls
+	entity *dashcontrol.DashControl,
+) (*dashcontrol.DashControl, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*dashcontrol.DashControl, error) {
+		dc := dashcontroldb.DashControls
 		if err := dc.Save(
 			ctx,
 			r.db.Keel(ctx),

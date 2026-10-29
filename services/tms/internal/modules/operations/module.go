@@ -1,9 +1,9 @@
 package operations
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/assignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/carrierassignmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/checkcallrepository"
@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/documentshipmentdraftrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/ratingreviewrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/routingguiderepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurereasoncoderepository"
@@ -23,9 +24,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenteventrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentholdrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentinsightrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentlistreadrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmovejurisdictionmilerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsearchcardrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentsuggestionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmenttrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/stopetarepository"
@@ -39,8 +43,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerstatustrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customertrackingservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticerender"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcontrolservice"
@@ -52,21 +61,37 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentautorate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingreadiness"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentbillingtransfer"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentboardservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcapacityservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteffects"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentetaservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentlifecycle"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentloading"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentquickfilterservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentread"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentsuggestionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwatchlistservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderescalation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendernegotiation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/app/trackingeventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/triagedeliveryrelay"
 	"github.com/emoss08/trenova/internal/modules/operations/app/triageshipmentservice"
@@ -78,9 +103,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
@@ -104,7 +131,7 @@ func SharedOptions() fx.Option {
 			shipmentcommentservice.New,
 			shipmentholdservice.New,
 			shipmentratingreviewservice.New,
-			func(s *shipmentratingreviewservice.Service) shipmentports.RatingReviewService { return s },
+			func(s *shipmentratingreviewservice.Service) ratingreviewports.RatingReviewService { return s },
 			routingguideservice.NewValidator,
 			routingguideservice.New,
 			detentionpolicyservice.New,
@@ -114,11 +141,11 @@ func SharedOptions() fx.Option {
 			shipmentcapacityservice.NewCapacityReader,
 			shipmentcapacityservice.NewCoverageSuggester,
 			shipmentcapacityservice.NewTenderer,
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardCapabilitiesReader { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentStageSummaryReader { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentBoardGroupSummarizer { return s },
-			func(s *shipmentboardservice.Service) shipmentports.ShipmentQuickFilterCounter { return s },
-			shipmentrepository.NewInsightSource,
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentBoardCapabilitiesReader { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentStageSummaryReader { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentBoardGroupSummarizer { return s },
+			func(s *shipmentboardservice.Service) shipmentboardports.ShipmentQuickFilterCounter { return s },
+			shipmentinsightrepository.NewInsightSource,
 			weatheralertrepository.New,
 			dispatchcontrolrepository.New,
 			documentshipmentdraftrepository.New,
@@ -135,11 +162,11 @@ func SharedOptions() fx.Option {
 			shipmentholdrepository.New,
 			shipmentmoverepository.New,
 			shipmentrepository.New,
-			shipmentrepository.NewRatingReviewRepository,
-			shipmentrepository.NewSearchCardReader,
-			shipmentrepository.NewOrderReferenceMatcher,
-			shipmentrepository.NewActiveHoldReader,
-			shipmentrepository.NewNewestCommentReader,
+			ratingreviewrepository.NewRatingReviewRepository,
+			shipmentsearchcardrepository.NewSearchCardReader,
+			shipmentlistreadrepository.NewOrderReferenceMatcher,
+			shipmentlistreadrepository.NewActiveHoldReader,
+			shipmentlistreadrepository.NewNewestCommentReader,
 			shipmentboardrepository.New,
 			shipmentboardrepository.NewBoardRepository,
 			shipmentboardrepository.NewWatchlistRepository,
@@ -166,25 +193,25 @@ func SharedOptions() fx.Option {
 			detentionrepository.NewNoticeRepository,
 			detentionrepository.NewAnalyticsRepository,
 			orderservice.NewValidator,
-			shipmentservice.NewValidator,
+			shipmentvalidator.New,
 			recurringshipmentservice.NewValidator,
 			dispatchcontrolservice.NewValidator,
 			shipmentstate.NewCoordinator,
 			assignmentservice.New,
 			fx.Annotate(
 				dispatchconsoleservice.New,
-				fx.As(new(agentports.DispatchConsoleService)),
+				fx.As(new(dispatchconsoleports.DispatchConsoleService)),
 			),
 			orderservice.New,
 			shipmenteventservice.New,
 			triagedeliveryrelay.New,
 			triageshipmentservice.New,
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageShipmentPeeker { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageStopTimesReader { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageLoadCreator { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageExceptionLogger { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionSettler { return s },
-			func(s *triageshipmentservice.Service) inboundmessageports.TriageDetentionEvidenceSource {
+			func(s *triageshipmentservice.Service) triageworkports.TriageShipmentPeeker { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageStopTimesReader { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageLoadCreator { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageExceptionLogger { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageDetentionSettler { return s },
+			func(s *triageshipmentservice.Service) triageworkports.TriageDetentionEvidenceSource {
 				return s
 			},
 			fx.Annotate(
@@ -192,7 +219,7 @@ func SharedOptions() fx.Option {
 				fx.ResultTags(`group:"shipment_event_observers"`),
 			),
 			fx.Annotate(
-				func(r *triagedeliveryrelay.Relay) shipmentports.MoveStatusObserver { return r },
+				func(r *triagedeliveryrelay.Relay) shipmentserviceports.MoveStatusObserver { return r },
 				fx.ResultTags(`group:"move_status_observers"`),
 			),
 			fx.Annotate(
@@ -216,21 +243,82 @@ func SharedOptions() fx.Option {
 				fx.As(new(telematicsports.StopVisitRecorder)),
 				fx.As(new(driverportalports.StopReporter)),
 			),
+			shipmenteffects.New,
 			fx.Annotate(
-				shipmentservice.New,
-				fx.As(new(shipmentports.ShipmentService)),
-				fx.As(new(shipmentservice.MutationObserverSetter)),
+				shipmentread.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentReader)),
 			),
-			tenderservice.New,
-			func(s *tenderservice.Service) tenderports.TenderGuard { return s },
-			func(s *tenderservice.Service) tenderports.TenderResponseRecorder { return s },
-			func(s *tenderservice.Service) tenderports.TenderLifecycle { return s },
+			fx.Annotate(
+				shipmentwrite.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentWriter)),
+			),
+			fx.Annotate(
+				shipmentlifecycle.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentLifecycleService)),
+			),
+			fx.Annotate(
+				shipmentbillingreadiness.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentBillingReadinessReader)),
+			),
+			fx.Annotate(
+				shipmentbillingtransfer.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentBillingTransferService)),
+			),
+			fx.Annotate(
+				shipmentautorate.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentAutoRater)),
+			),
+			fx.Annotate(
+				shipmentloading.New,
+				fx.As(fx.Self()),
+				fx.As(new(shipmentserviceports.ShipmentLoadingPlanner)),
+			),
+			tendereffects.New,
+			tendercreate.New,
+			tenderbounce.New,
+			tenderescalation.New,
+			fx.Annotate(
+				tendercancel.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderGuard)),
+			),
+			fx.Annotate(
+				tenderresponse.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderResponseRecorder)),
+				fx.As(new(tenderports.TenderLateResponseRecorder)),
+			),
+			fx.Annotate(
+				tenderlifecycle.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderLifecycle)),
+			),
+			fx.Annotate(
+				tenderdispatch.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderOfferDispatcher)),
+			),
+			fx.Annotate(
+				tendernegotiation.New,
+				fx.As(fx.Self()),
+				fx.As(new(tenderports.TenderCounterRecorder)),
+			),
 			fx.Annotate(
 				weatheralertservice.New,
 				fx.As(new(weatheralertports.WeatherAlertService)),
 			),
 			recurringshipmentservice.New,
-			detentionservice.New,
+			detentioneffects.New,
+			detentionsync.New,
+			detentionsimulation.New,
+			detentionnoticeservice.New,
+			detentionreview.New,
 			shipmentquickfilterservice.New,
 			shipmentsuggestionservice.New,
 			shipmentsuggestionservice.NewReader,
@@ -268,14 +356,14 @@ func SharedOptions() fx.Option {
 			),
 			shipmentwatchlistservice.New,
 			dispatchcontrolservice.New,
-			func(s *detentionservice.Service) detentionports.DetentionNoticeService { return s },
-			detentionservice.NewContextBuilder,
+			func(s *detentionnoticeservice.Service) detentionports.DetentionNoticeService { return s },
+			detentionnoticerender.NewContextBuilder,
 			fx.Annotate(
-				func(b *detentionservice.ContextBuilder) documenttemplateports.ContextBuilder { return b },
+				func(b *detentionnoticerender.ContextBuilder) documenttemplateports.ContextBuilder { return b },
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 			fx.Annotate(
-				detentionservice.NewPDFContextBuilder,
+				detentionnoticerender.NewPDFContextBuilder,
 				fx.ResultTags(documenttemplateports.ContextBuilderGroup),
 			),
 		),

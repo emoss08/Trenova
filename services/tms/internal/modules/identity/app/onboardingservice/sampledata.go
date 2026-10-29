@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/rules"
-	"github.com/emoss08/trenova/pkg/tarifftypes"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
@@ -21,7 +18,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
@@ -29,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
@@ -41,6 +39,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -74,7 +74,7 @@ type formulaTemplates interface {
 	InstallStandards(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*formulatemplateservice.InstallStandardsResponse, error)
+	) (*formulatemplateimportservice.InstallStandardsResponse, error)
 }
 
 type stateFinder interface {
@@ -101,10 +101,10 @@ type SampleDataParams struct {
 	Manufacturers    *equipmentmanufacturerservice.Service
 	ServiceTypes     *servicetypeservice.Service
 	ShipmentTypes    *shipmenttypeservice.Service
-	FormulaTemplates *formulatemplateservice.Service
+	FormulaTemplates *formulatemplateimportservice.Service
 	TemplateFinder   formulatemplateports.FormulaTemplateRepository
 	States           usstateports.UsStateRepository
-	Shipments        shipmentports.ShipmentService
+	Shipments        shipmentserviceports.ShipmentWriter
 }
 
 type SampleData struct {
@@ -563,9 +563,9 @@ func (d *SampleData) createShipments(
 			OrganizationID:    req.TenantInfo.OrgID,
 			BusinessUnitID:    req.TenantInfo.BuID,
 			EnteredByID:       req.TenantInfo.UserID,
-			Status:            shipment.StatusNew,
-			EntryMethod:       shipment.EntryMethodManual,
-			FreightTerms:      shipment.FreightTermsPrepaid,
+			Status:            shipmentvocab.StatusNew,
+			EntryMethod:       shipmentvocab.EntryMethodManual,
+			FreightTerms:      shipmentvocab.FreightTermsPrepaid,
 			CustomerID:        plan.customer.ID,
 			ServiceTypeID:     refs.serviceTypeID,
 			ShipmentTypeID:    refs.shipmentTypeID,
@@ -581,21 +581,21 @@ func (d *SampleData) createShipments(
 			Moves: []*shipment.ShipmentMove{{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,
-				Status:         shipment.MoveStatusNew,
+				Status:         shipmentvocab.MoveStatusNew,
 				Loaded:         true,
 				Sequence:       0,
 				Stops: []*shipment.Stop{
 					sampleStop(
 						req.TenantInfo,
 						plan.pickup.ID,
-						shipment.StopTypePickup,
+						shipmentvocab.StopTypePickup,
 						0,
 						pickupAt,
 					),
 					sampleStop(
 						req.TenantInfo,
 						plan.delivery.ID,
-						shipment.StopTypeDelivery,
+						shipmentvocab.StopTypeDelivery,
 						1,
 						deliveryAt,
 					),
@@ -612,7 +612,7 @@ func (d *SampleData) createShipments(
 func sampleStop(
 	tenantInfo pagination.TenantInfo,
 	locationID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 	at time.Time,
 ) *shipment.Stop {
@@ -622,9 +622,9 @@ func sampleStop(
 		OrganizationID:       tenantInfo.OrgID,
 		BusinessUnitID:       tenantInfo.BuID,
 		LocationID:           locationID,
-		Status:               shipment.StopStatusNew,
+		Status:               shipmentvocab.StopStatusNew,
 		Type:                 stopType,
-		ScheduleType:         shipment.StopScheduleTypeAppointment,
+		ScheduleType:         shipmentvocab.StopScheduleTypeAppointment,
 		Sequence:             sequence,
 		ScheduledWindowStart: at.Unix(),
 		ScheduledWindowEnd:   &end,

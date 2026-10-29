@@ -5,13 +5,15 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 )
 
 const (
 	ApplicationFamilyBusinessCentral = "BusinessCentral"
 	EnvironmentTypeProduction        = "Production"
 	EnvironmentTypeSandbox           = "Sandbox"
-	companiesEntity                  = "companies"
+	CompaniesEntity                  = "companies"
 )
 
 type Environment struct {
@@ -40,7 +42,7 @@ type Company struct {
 }
 
 type DiscoveryClient struct {
-	core *core
+	core *Core
 }
 
 type wireEnvironment struct {
@@ -60,8 +62,8 @@ type wireCompany struct {
 	Name              string   `json:"name"`
 	DisplayName       string   `json:"displayName"`
 	BusinessProfileID string   `json:"businessProfileId"`
-	SystemCreatedAt   wireTime `json:"systemCreatedAt"`
-	SystemModifiedAt  wireTime `json:"systemModifiedAt"`
+	SystemCreatedAt   WireTime `json:"systemCreatedAt"`
+	SystemModifiedAt  WireTime `json:"systemModifiedAt"`
 }
 
 func (w *wireCompany) company() Company {
@@ -72,15 +74,15 @@ func (w *wireCompany) company() Company {
 		Name:              w.Name,
 		DisplayName:       w.DisplayName,
 		BusinessProfileID: w.BusinessProfileID,
-		CreatedAt:         w.SystemCreatedAt.time(),
-		ModifiedAt:        w.SystemModifiedAt.time(),
+		CreatedAt:         w.SystemCreatedAt.Time(),
+		ModifiedAt:        w.SystemModifiedAt.Time(),
 	}
 }
 
 func NewDiscoveryClient(accessToken string, opts ...Option) (*DiscoveryClient, error) {
 	token := strings.TrimSpace(accessToken)
 	if token == "" {
-		return nil, ErrAccessTokenRequired
+		return nil, businesscentralerrors.ErrAccessTokenRequired
 	}
 	settings := resolveOptions(opts)
 	c, err := newCore(&settings, token, nil)
@@ -92,11 +94,11 @@ func NewDiscoveryClient(accessToken string, opts ...Option) (*DiscoveryClient, e
 
 func (c *DiscoveryClient) Environments(ctx context.Context) ([]Environment, error) {
 	var out collection[wireEnvironment]
-	if _, err := c.core.do(ctx, &call{
-		endpoint: "environments",
-		method:   http.MethodGet,
-		path:     environmentsPath,
-		out:      &out,
+	if _, err := c.core.do(ctx, &Call{
+		Endpoint: "environments",
+		Method:   http.MethodGet,
+		Path:     environmentsPath,
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
@@ -125,16 +127,16 @@ func (c *DiscoveryClient) Companies(
 	ctx context.Context,
 	tenantID, environment string,
 ) ([]Company, error) {
-	tenant, err := guid(tenantID)
+	tenant, err := GUID(tenantID)
 	if err != nil {
 		return nil, err
 	}
 	env := strings.TrimSpace(environment)
 	if !ValidEnvironmentName(env) {
-		return nil, ErrInvalidEnvironment
+		return nil, businesscentralerrors.ErrInvalidEnvironment
 	}
-	return collect(ctx, c.core, &listCall{
-		endpoint: "companies",
-		path:     environmentPath(tenant, env) + "/" + companiesEntity,
+	return Collect(ctx, c.core, &ListCall{
+		Endpoint: "companies",
+		Path:     environmentPath(tenant, env) + "/" + CompaniesEntity,
 	}, (*wireCompany).company)
 }

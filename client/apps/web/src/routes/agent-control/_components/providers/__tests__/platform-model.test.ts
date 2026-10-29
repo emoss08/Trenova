@@ -28,7 +28,7 @@ import {
   type ProviderEditorValues,
 } from "../provider-editor-model";
 
-const PLATFORM_FILE = "services/tms/internal/modules/agent/domain/aiprovider/platform.go";
+const PLATFORM_FILE = "services/tms/internal/modules/agent/domain/aiplatform/platform.go";
 
 /**
  * The catalog's platforms as the server builds them (aiproviderhandler.platformDescriptors):

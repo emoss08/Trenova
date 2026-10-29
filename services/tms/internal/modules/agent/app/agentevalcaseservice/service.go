@@ -6,16 +6,23 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -30,7 +37,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const promptVersion = agentdefinition.PromptVersion
+const promptVersion = agentprompt.PromptVersion
 
 type caseStore interface {
 	Create(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
@@ -68,19 +75,22 @@ type caseStore interface {
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentProposalByIDRequest,
+		req agentproposalports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type decisionReader interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
+	) ([]*agentdecision.AgentDecision, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
@@ -93,11 +103,11 @@ type definitionReader interface {
 type conversationReader interface {
 	GetThreadOwned(
 		ctx context.Context,
-		req agentports.GetThreadOwnedRequest,
+		req conversationports.GetThreadOwnedRequest,
 	) (*conversation.Thread, error)
 	ListMessages(
 		ctx context.Context,
-		req agentports.ListMessagesRequest,
+		req *conversationports.ListMessagesRequest,
 	) ([]conversation.Message, error)
 }
 
@@ -110,7 +120,7 @@ type feedbackStore interface {
 }
 
 type retentionReader interface {
-	List(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error)
+	List(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error)
 }
 
 type Params struct {
@@ -118,17 +128,17 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Cases         agentqualityports.AgentEvalCaseRepository
-	Proposals     agentports.AgentProposalRepository
-	Decisions     agentports.AgentDecisionRepository
-	Runs          agentports.AgentRunRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Decisions     agentdecisionports.AgentDecisionRepository
+	Runs          agentruntimeports.AgentRunRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Conversations agentports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
 	Retention     tenantports.DataRetentionRepository
-	Registry      *permission.Registry
-	QueryTools    agentports.AgentQueryToolRegistry
-	ActionTools   agentports.AgentToolRegistry
-	Subjects      agentports.AgentSubjectDescriber `optional:"true"`
+	Registry      *permissioncatalog.Registry
+	QueryTools    agenttoolports.AgentQueryToolRegistry
+	ActionTools   agenttoolports.AgentToolRegistry
+	Subjects      agentruntimeports.AgentSubjectDescriber `optional:"true"`
 	AuditService  auditports.AuditService
 }
 
@@ -143,12 +153,13 @@ type Service struct {
 	feedback      feedbackStore
 	retention     retentionReader
 	redactor      *Redactor
-	subjects      agentports.AgentSubjectDescriber
+	subjects      agentruntimeports.AgentSubjectDescriber
 	audit         auditports.AuditService
 	now           func() int64
 }
 
-func New(p Params) agentports.AgentEvalCaseService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentqualityports.AgentEvalCaseService {
 	return &Service{
 		l:             p.Logger.Named("service.agentevalcase"),
 		cases:         p.Cases,
@@ -182,9 +193,9 @@ func (s *Service) ListConnection(
 
 func (s *Service) CreateCurated(
 	ctx context.Context,
-	req *agentports.CreateCuratedEvalCaseRequest,
+	req *agentqualityports.CreateCuratedEvalCaseRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	definition, err := s.definitions.GetByID(
 		ctx,
 		agentdefinitionports.GetAgentDefinitionByIDRequest{
@@ -230,7 +241,7 @@ func (s *Service) CreateCurated(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateEvalCaseRequest,
+	req *agentqualityports.UpdateEvalCaseRequest,
 	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
 	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
@@ -283,7 +294,7 @@ func (s *Service) Update(
 
 func (s *Service) SetStatus(
 	ctx context.Context,
-	req *agentports.SetEvalCaseStatusRequest,
+	req *agentqualityports.SetEvalCaseStatusRequest,
 	actor *permissionports.RequestActor,
 ) (*agentquality.EvalCase, error) {
 	if !req.Status.IsValid() {
@@ -353,7 +364,7 @@ func (s *Service) save(
 	ctx context.Context,
 	evalCase *agentquality.EvalCase,
 	actor *permissionports.RequestActor,
-) (*agentports.EvalCaseCapture, error) {
+) (*agentqualityports.EvalCaseCapture, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		userID := actor.UserID
 		evalCase.CreatedByUserID = &userID
@@ -367,7 +378,7 @@ func (s *Service) save(
 		BuID:  evalCase.BusinessUnitID,
 	}
 	if existing, found, err := s.byContent(ctx, evalCase, tenantInfo); err != nil || found {
-		return &agentports.EvalCaseCapture{Case: existing, Duplicate: found}, err
+		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: found}, err
 	}
 
 	created, err := s.cases.Create(ctx, evalCase)
@@ -396,13 +407,13 @@ func (s *Service) save(
 			return nil, err
 		}
 
-		return &agentports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
+		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	}
 
 	s.log(created, nil, actor, permission.OpCreate,
 		fmt.Sprintf("Evaluation case captured from %s", created.Source))
 
-	return &agentports.EvalCaseCapture{Case: created}, nil
+	return &agentqualityports.EvalCaseCapture{Case: created}, nil
 }
 
 func (s *Service) byContent(

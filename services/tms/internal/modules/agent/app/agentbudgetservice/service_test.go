@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +40,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) CountSince(
 	_ context.Context,
-	req agentports.CountAgentRunsSinceRequest,
+	req agentruntimeports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	f.since = req.Since
 
@@ -51,7 +53,7 @@ type fakeTools struct {
 
 func (f *fakeTools) CountExecutedTool(
 	_ context.Context,
-	req agentports.CountExecutedToolRequest,
+	req *agentproposalports.CountExecutedToolRequest,
 ) (int, error) {
 	return f.used[req.ToolName], nil
 }
@@ -127,7 +129,7 @@ func TestCheckRun_RefusesWhenTheMonthlyBudgetIsSpent(t *testing.T) {
 	refusal, err := svc.CheckRun(t.Context(), d)
 	require.NoError(t, err)
 
-	assert.Equal(t, agentports.BudgetCapMonthly, refusal.Cap)
+	assert.Equal(t, agentbudgetports.BudgetCapMonthly, refusal.Cap)
 	assert.Equal(t, "25.50", refusal.Spent)
 	assert.Equal(t, "25.00", refusal.Limit)
 	assert.Contains(
@@ -166,23 +168,33 @@ func TestCheckRun_RefusesTheRunPastTheDailyLimit(t *testing.T) {
 	refusal, err := svc.CheckRun(t.Context(), d)
 	require.NoError(t, err)
 
-	assert.Equal(t, agentports.BudgetCapDailyRuns, refusal.Cap)
+	assert.Equal(t, agentbudgetports.BudgetCapDailyRuns, refusal.Cap)
 	assert.Contains(t, refusal.Message("Night desk"), "started its 3 runs for today")
 }
 
 func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 5}})
+	svc := newService(
+		&fakeCost{},
+		&fakeRuns{},
+		&fakeTools{used: map[string]int{"dispatch_assign_move": 5}},
+	)
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "dispatch_assign_move"})
+	refusal, err := svc.CheckTool(
+		t.Context(),
+		agentbudgetports.CheckToolBudgetRequest{Definition: d, ToolName: "dispatch_assign_move"},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
+	assert.Equal(t, agentbudgetports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "dispatch_assign_move", refusal.Tool)
 
-	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"})
+	refusal, err = svc.CheckTool(
+		t.Context(),
+		agentbudgetports.CheckToolBudgetRequest{Definition: d, ToolName: "shipment_cancel"},
+	)
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused())
 }
@@ -192,21 +204,25 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 func TestCheckTool_CountsWritesThisTurnHasNotRecordedYet(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"dispatch_assign_move": 3}})
+	svc := newService(
+		&fakeCost{},
+		&fakeRuns{},
+		&fakeTools{used: map[string]int{"dispatch_assign_move": 3}},
+	)
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"dispatch_assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
+	refusal, err := svc.CheckTool(t.Context(), agentbudgetports.CheckToolBudgetRequest{
 		Definition: d, ToolName: "dispatch_assign_move", Unrecorded: 1,
 	})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused(), "four of five")
 
-	refusal, err = svc.CheckTool(t.Context(), agentports.CheckToolBudgetRequest{
+	refusal, err = svc.CheckTool(t.Context(), agentbudgetports.CheckToolBudgetRequest{
 		Definition: d, ToolName: "dispatch_assign_move", Unrecorded: 2,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agentports.BudgetCapTool, refusal.Cap)
+	assert.Equal(t, agentbudgetports.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "5", refusal.Spent)
 }
 
@@ -236,7 +252,7 @@ func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
 	assert.Equal(t, 1, status.RunsToday)
 	assert.Equal(
 		t,
-		[]agentports.ToolBudgetUse{{Tool: "dispatch_assign_move", Used: 2, Limit: 8}},
+		[]agentbudgetports.ToolBudgetUse{{Tool: "dispatch_assign_move", Used: 2, Limit: 8}},
 		status.Tools,
 	)
 	assert.True(t, status.SimulationMode)

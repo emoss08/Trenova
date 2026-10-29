@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,12 +17,12 @@ import (
 type stubRuns struct {
 	run  *agent.AgentRun
 	err  error
-	asks []agentports.GetAgentRunByIDRequest
+	asks []agentruntimeports.GetAgentRunByIDRequest
 }
 
 func (r *stubRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	r.asks = append(r.asks, req)
 
@@ -34,7 +35,10 @@ type conversationTool struct {
 	validatedFor pulid.ID
 }
 
-func (t *conversationTool) Validate(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *conversationTool) Validate(
+	_ context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) error {
 	t.validatedFor = params.ThreadID
 
 	return nil

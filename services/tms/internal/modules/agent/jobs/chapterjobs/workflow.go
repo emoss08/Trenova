@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/chapterjobs/chaptercontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantchapterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -52,8 +53,8 @@ type ChaptersResult struct {
 }
 
 type ApplyInput struct {
-	Plan   *agentports.ChapterPlan                `json:"plan"`
-	Result *agentports.StructuredCompletionResult `json:"result,omitempty"`
+	Plan   *assistantchapterports.ChapterPlan   `json:"plan"`
+	Result *llmports.StructuredCompletionResult `json:"result,omitempty"`
 }
 
 func Workflows() []registry.WorkflowDefinition {
@@ -72,7 +73,7 @@ func ThreadChaptersWorkflow(
 	result := &ChaptersResult{}
 
 	for {
-		var next agentports.ChapterTurnRequest
+		var next assistantchapterports.ChapterTurnRequest
 		if !signals.ReceiveAsync(&next) {
 			received, _ := signals.ReceiveWithTimeout(ctx, chaptercontract.IdleWait, &next)
 			if !received {
@@ -94,13 +95,13 @@ func ThreadChaptersWorkflow(
 func handle(
 	ctx workflow.Context,
 	tenant pagination.TenantInfo,
-	req *agentports.ChapterTurnRequest,
+	req *assistantchapterports.ChapterTurnRequest,
 	result *ChaptersResult,
 ) {
 	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	var plan agentports.ChapterPlan
+	var plan assistantchapterports.ChapterPlan
 	if err := workflow.ExecuteActivity(
 		withPriority(ctx, planOptions, tenant), a.PlanChapterActivity, req,
 	).Get(ctx, &plan); err != nil {
@@ -116,7 +117,7 @@ func handle(
 
 	input := &ApplyInput{Plan: &plan}
 	if plan.NeedsModel() {
-		var completion agentports.StructuredCompletionResult
+		var completion llmports.StructuredCompletionResult
 		if err := workflow.ExecuteActivity(
 			withPriority(ctx, modelOptions, tenant), a.ChapterModelActivity, &plan,
 		).Get(ctx, &completion); err != nil {
@@ -127,7 +128,7 @@ func handle(
 		}
 	}
 
-	var outcome agentports.ChapterOutcome
+	var outcome assistantchapterports.ChapterOutcome
 	if err := workflow.ExecuteActivity(
 		withPriority(ctx, applyOptions, tenant), a.ApplyChapterActivity, input,
 	).Get(ctx, &outcome); err != nil {
@@ -140,7 +141,7 @@ func handle(
 	result.absorb(&outcome)
 }
 
-func (r *ChaptersResult) absorb(outcome *agentports.ChapterOutcome) {
+func (r *ChaptersResult) absorb(outcome *assistantchapterports.ChapterOutcome) {
 	if outcome.Opened {
 		r.Opened++
 	}

@@ -5,6 +5,7 @@
 package ratematrixportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -502,23 +503,23 @@ func (_c *MockRateMatrixRepository_List_Call) RunAndReturn(run func(ctx context.
 }
 
 // ListCells provides a mock function for the type MockRateMatrixRepository
-func (_mock *MockRateMatrixRepository) ListCells(ctx context.Context, req *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+func (_mock *MockRateMatrixRepository) ListCells(ctx context.Context, req *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCells")
 	}
 
-	var r0 *pagination.ListResult[*ratematrix.RateMatrixCell]
+	var r0 *pagination.ListResult[*ratematrixcell.RateMatrixCell]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListRateMatrixCellsRequest) *pagination.ListResult[*ratematrix.RateMatrixCell]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.ListRateMatrixCellsRequest) *pagination.ListResult[*ratematrixcell.RateMatrixCell]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*ratematrix.RateMatrixCell])
+			r0 = ret.Get(0).(*pagination.ListResult[*ratematrixcell.RateMatrixCell])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.ListRateMatrixCellsRequest) error); ok {
@@ -559,12 +560,12 @@ func (_c *MockRateMatrixRepository_ListCells_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockRateMatrixRepository_ListCells_Call) Return(listResult *pagination.ListResult[*ratematrix.RateMatrixCell], err error) *MockRateMatrixRepository_ListCells_Call {
+func (_c *MockRateMatrixRepository_ListCells_Call) Return(listResult *pagination.ListResult[*ratematrixcell.RateMatrixCell], err error) *MockRateMatrixRepository_ListCells_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockRateMatrixRepository_ListCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)) *MockRateMatrixRepository_ListCells_Call {
+func (_c *MockRateMatrixRepository_ListCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.ListRateMatrixCellsRequest) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error)) *MockRateMatrixRepository_ListCells_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -9,11 +9,13 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
@@ -1602,7 +1604,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1612,7 +1614,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1622,7 +1624,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1632,27 +1634,27 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.PayTrigger, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayTrigger),
+				Marshal: gqlexec.Marshal(marshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayTrigger),
 			},
 			{
 				Name:     "payPeriodFrequency",
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.PayPeriodFrequency, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayPeriodFrequency),
+				Marshal: gqlexec.Marshal(marshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayPeriodFrequency),
 			},
 			{
 				Name:     "periodEndDayOfWeek",
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.PeriodEndDayOfWeek, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1662,7 +1664,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.PayDelayDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1672,7 +1674,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.AutoGenerateBatches, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1682,7 +1684,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.AutoPostOnApprove, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1692,7 +1694,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.VarianceToleranceMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1702,7 +1704,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.AutoMatchInboundInvoices, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1712,7 +1714,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.AutoAcceptWithinTolerance, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1722,7 +1724,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.HoldUntilInvoiceMatched, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1731,7 +1733,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "defaultApAccountId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.DefaultAPAccountID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1740,7 +1742,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "defaultPurchasedTransportationAccountId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.DefaultPurchasedTransportationAccountID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -1750,7 +1752,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1760,7 +1762,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1770,7 +1772,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*tenant.CarrierSettlementControl)
+					obj := o.(*carriersettlementcontrol.CarrierSettlementControl)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2058,7 +2060,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PeriodStart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2068,7 +2070,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PeriodEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2078,7 +2080,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PayDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2088,7 +2090,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.DraftCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2098,7 +2100,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PendingApprovalCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2108,7 +2110,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.ApprovedCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2118,7 +2120,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PostedCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2128,7 +2130,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PaidCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2138,7 +2140,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.TotalNetMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2148,7 +2150,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.TotalGrossMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2158,7 +2160,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PendingEventCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2168,7 +2170,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PendingAmountMinor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2178,7 +2180,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.PendingCarrierCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -2187,7 +2189,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "openBatchId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*carriersettlementservice.WorkspaceSummary)
+					obj := o.(*carriersettlementworkspaceservice.WorkspaceSummary)
 					return obj.OpenBatchID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2199,7 +2201,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2209,7 +2211,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2219,7 +2221,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2228,7 +2230,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "carrierId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.CarrierID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2237,7 +2239,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "shipmentId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.ShipmentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2247,7 +2249,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.InvoiceNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2256,7 +2258,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "invoiceDate",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.InvoiceDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2265,7 +2267,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "deliveryDate",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.DeliveryDate, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -2275,7 +2277,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.ShipmentReference, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2285,7 +2287,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.BOL, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2295,7 +2297,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.ProNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2305,7 +2307,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.BillToName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2315,7 +2317,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.CurrencyCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2326,7 +2328,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").TotalAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -2337,7 +2339,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").ExpectedAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -2348,7 +2350,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").VarianceAmount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
@@ -2360,7 +2362,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").ReconciliationStatus(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2370,7 +2372,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.ReconciliationNotes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2379,7 +2381,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "duplicateOfId",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.DuplicateOfID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -2389,7 +2391,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2399,7 +2401,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2409,7 +2411,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2421,7 +2423,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "Carrier",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*edi.CarrierInvoice)
+					obj := o.(*edicarrierinvoice.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").SuggestedCarrier(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOCarrier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋpartiesᚋdomainᚋcarrierᚐCarrier),
@@ -2437,7 +2439,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.EDICarrierInvoiceList)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCarrierInvoiceᚄ),
+				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoiceᚄ),
 			},
 			{
 				Name:     "totalCount",
@@ -2602,7 +2604,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateCarrierSettlementControl(ctx, fc.Args["input"].(gqlmodel.UpdateCarrierSettlementControlInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐCarrierSettlementControl),
+				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋcarriersettlementcontrolᚐCarrierSettlementControl),
 			},
 			{
 				Name:       "linkEdiCarrierInvoiceToCarrier",
@@ -2615,7 +2617,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").LinkEDICarrierInvoiceToCarrier(ctx, fc.Args["invoiceId"].(string), fc.Args["carrierId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCarrierInvoice),
+				Marshal: gqlexec.Marshal(marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoice),
 			},
 			{
 				Name:       "createCarrierInvoiceMatch",
@@ -2749,7 +2751,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementControl(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐCarrierSettlementControl),
+				Marshal: gqlexec.Marshal(marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋcarriersettlementcontrolᚐCarrierSettlementControl),
 			},
 			{
 				Name:       "currentCarrierSettlementPeriod",
@@ -2775,7 +2777,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").CarrierSettlementWorkspaceSummary(ctx, fc.Args["periodStart"].(*int), fc.Args["periodEnd"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋcarriersettlementserviceᚐWorkspaceSummary),
+				Marshal: gqlexec.Marshal(marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋcarriersettlementworkspaceserviceᚐWorkspaceSummary),
 			},
 			{
 				Name:       "carrierLedgerEntries",
@@ -2879,11 +2881,11 @@ type resolverCarrierSettlement interface {
 }
 
 type resolverEdiCarrierInvoice interface {
-	TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error)
-	SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error)
+	TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ReconciliationStatus(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (string, error)
+	SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error)
 }
 
 type resolverMutation interface {
@@ -2897,8 +2899,8 @@ type resolverMutation interface {
 	RecalculateCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	AddCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.AddCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
 	RemoveCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
-	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error)
-	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edi.CarrierInvoice, error)
+	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*carriersettlementcontrol.CarrierSettlementControl, error)
+	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error)
 	CreateCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CreateCarrierInvoiceMatchInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatchWithVariance(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
@@ -2911,9 +2913,9 @@ type resolverQuery interface {
 	CarrierSettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementBatchConnection, error)
 	CarrierSettlementBatch(ctx context.Context, id string) (*carriersettlement.CarrierSettlementBatch, error)
 	CarrierCostEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierCostEventConnection, error)
-	CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error)
+	CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error)
 	CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
-	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error)
+	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementworkspaceservice.WorkspaceSummary, error)
 	CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error)
 	CarrierInvoiceMatches(ctx context.Context, status *carriersettlement.InvoiceMatchStatus, carrierID *string, limit *int, offset *int) (*gqlmodel.CarrierInvoiceMatchList, error)
 	EDICarrierInvoices(ctx context.Context, reconciliationStatus *string, limit *int, offset *int) (*gqlmodel.EDICarrierInvoiceList, error)
@@ -3717,14 +3719,14 @@ func unmarshalInputUpdateCarrierSettlementControlInput(ctx context.Context, ec *
 			it.Version = data
 		case "payTrigger":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("payTrigger"))
-			data, err := unmarshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayTrigger(ctx, ec, v)
+			data, err := unmarshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayTrigger(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.PayTrigger = data
 		case "payPeriodFrequency":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("payPeriodFrequency"))
-			data, err := unmarshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayPeriodFrequency(ctx, ec, v)
+			data, err := unmarshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayPeriodFrequency(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -3858,9 +3860,9 @@ func unmarshalNMarkCarrierSettlementPaidInput2githubᚗcomᚋemoss08ᚋtrenova�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayPeriodFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (tenant.PayPeriodFrequency, error) {
+func unmarshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayPeriodFrequency(ctx context.Context, ec *gqlexec.Exec, v any) (settlementcontrol.PayPeriodFrequency, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := tenant.PayPeriodFrequency(tmp)
+	res := settlementcontrol.PayPeriodFrequency(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -3869,9 +3871,9 @@ func unmarshalNRemoveCarrierSettlementAdjustmentInput2githubᚗcomᚋemoss08ᚋt
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (tenant.PayTrigger, error) {
+func unmarshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayTrigger(ctx context.Context, ec *gqlexec.Exec, v any) (settlementcontrol.PayTrigger, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := tenant.PayTrigger(tmp)
+	res := settlementcontrol.PayTrigger(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -4110,7 +4112,7 @@ func marshalNCarrierSettlementConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "CarrierSettlementConnection", v)
 }
 
-func marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐCarrierSettlementControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *tenant.CarrierSettlementControl) graphql.Marshaler {
+func marshalNCarrierSettlementControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋcarriersettlementcontrolᚐCarrierSettlementControl(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlementcontrol.CarrierSettlementControl) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4174,7 +4176,7 @@ func marshalNCarrierSettlementStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return res
 }
 
-func marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋcarriersettlementserviceᚐWorkspaceSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlementservice.WorkspaceSummary) graphql.Marshaler {
+func marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋsettlementᚋappᚋcarriersettlementworkspaceserviceᚐWorkspaceSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *carriersettlementworkspaceservice.WorkspaceSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4182,15 +4184,15 @@ func marshalNCarrierSettlementWorkspaceSummary2ᚖgithubᚗcomᚋemoss08ᚋtreno
 	return ec.MarshalType(ctx, sel, "CarrierSettlementWorkspaceSummary", v)
 }
 
-func marshalNEdiCarrierInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCarrierInvoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edi.CarrierInvoice) graphql.Marshaler {
-	return gqlexec.List[*edi.CarrierInvoice]{
-		Elem:        marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCarrierInvoice,
+func marshalNEdiCarrierInvoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*edicarrierinvoice.CarrierInvoice) graphql.Marshaler {
+	return gqlexec.List[*edicarrierinvoice.CarrierInvoice]{
+		Elem:        marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoice,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋediᚐCarrierInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edi.CarrierInvoice) graphql.Marshaler {
+func marshalNEdiCarrierInvoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋediᚋdomainᚋedicarrierinvoiceᚐCarrierInvoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *edicarrierinvoice.CarrierInvoice) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -4238,7 +4240,7 @@ func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgra
 	return ec.MarshalType(ctx, sel, "PageInfo", v)
 }
 
-func marshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayPeriodFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.PayPeriodFrequency) graphql.Marshaler {
+func marshalNPayPeriodFrequency2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayPeriodFrequency(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v settlementcontrol.PayPeriodFrequency) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -4254,7 +4256,7 @@ func marshalNSettlementLoadShare2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "SettlementLoadShare", v)
 }
 
-func marshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐPayTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v tenant.PayTrigger) graphql.Marshaler {
+func marshalNSettlementPayTrigger2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋsettlementcontrolᚐPayTrigger(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v settlementcontrol.PayTrigger) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

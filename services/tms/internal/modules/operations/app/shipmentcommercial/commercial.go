@@ -5,12 +5,16 @@ import (
 	"context"
 	"math"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsync"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -46,7 +50,7 @@ type Params struct {
 	QuoteRepo          ratequoteports.RateQuoteRepository
 	BillingControlRepo tenantports.BillingControlRepository
 	FuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
-	DetentionEngine    *detentionservice.Service
+	DetentionEngine    *detentionsync.Service
 	Hydrator           ratequoteports.ShipmentRatingHydrator
 }
 
@@ -58,7 +62,7 @@ type Calculator struct {
 	quoteRepo          ratequoteports.RateQuoteRepository
 	billingControlRepo tenantports.BillingControlRepository
 	fuelSurcharge      fuelsurchargeports.FuelSurchargeResolver
-	detentionEngine    *detentionservice.Service
+	detentionEngine    *detentionsync.Service
 	hydrator           ratequoteports.ShipmentRatingHydrator
 	now                func() int64
 }
@@ -95,7 +99,7 @@ type commercialTotals struct {
 func (c *Calculator) Recalculate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) error {
 	_, err := c.recalculate(
@@ -111,7 +115,7 @@ func (c *Calculator) Recalculate(
 func (c *Calculator) recalculate(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (*commercialTotals, error) {
@@ -130,7 +134,7 @@ func (c *Calculator) recalculate(
 func (c *Calculator) CalculateTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 ) (*shipmentports.ShipmentTotalsResponse, error) {
 	totals, err := c.calculateCommercialTotals(
@@ -178,7 +182,7 @@ func findGeneratedFuelSurchargeCharge(entity *shipment.Shipment) *shipment.Addit
 func (c *Calculator) calculateCommercialTotals(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	userID pulid.ID,
 	sync chargeSyncOptions,
 ) (*commercialTotals, error) {
@@ -203,7 +207,9 @@ func (c *Calculator) calculateCommercialTotals(
 			return nil, err
 		}
 	} else if len(entity.FreightLines) == 0 {
-		entity.SetFreightLines(entity.ManualFreightLines(i18n.T(ctx, "Freight charge")))
+		entity.SetFreightLines(
+			shipmentrating.ManualFreightLines(entity, i18n.T(ctx, "Freight charge")),
+		)
 	}
 
 	contract := sync.contract
@@ -232,7 +238,7 @@ func (c *Calculator) calculateCommercialTotals(
 		}
 	}
 
-	other, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
+	other, err := chargeallocation.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +316,7 @@ func (c *Calculator) ratingDetail(
 	detail := ratingDetailFromQuote(own)
 	detail.Skipped = pass.skipped
 	carryContractProvenance(entity, detail)
-	detail.CarryReviewApproval(entity.RatingDetail)
+	shipmentrating.CarryReviewApproval(detail, entity.RatingDetail)
 	return detail
 }
 
@@ -353,7 +359,7 @@ func (c *Calculator) applyQuote(
 	entity.TariffInputs = rated.TariffInputs.Clone()
 
 	detail := ratingDetailFromQuote(rated)
-	detail.CarryReviewApproval(entity.RatingDetail)
+	shipmentrating.CarryReviewApproval(detail, entity.RatingDetail)
 	entity.RatingDetail = detail
 }
 
@@ -430,7 +436,7 @@ func ratingTrace(trace *ratetypes.Trace) *shipment.RatingTrace {
 func (c *Calculator) billingControl(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) *tenant.BillingControl {
+) *billingcontrol.BillingControl {
 	if c.billingControlRepo == nil {
 		return nil
 	}
@@ -456,7 +462,7 @@ func ratingDate(entity *shipment.Shipment, now func() int64) int64 {
 func (c *Calculator) syncDetentionCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 	pass *ratingPass,
 ) error {
 	if entity == nil || control == nil {
@@ -525,7 +531,7 @@ func detentionExposure(
 		}
 
 		for _, stop := range move.Stops {
-			if stop == nil || stop.Status == shipment.StopStatusCanceled ||
+			if stop == nil || stop.Status == shipmentvocab.StopStatusCanceled ||
 				stop.ActualArrival == nil {
 				continue
 			}
@@ -626,7 +632,7 @@ func nonFuelSurchargeChargeTotal(
 		charges = append(charges, charge)
 	}
 
-	totals, err := shipment.AdditionalChargeTotals(ctx, charges, baseCharge)
+	totals, err := chargeallocation.AdditionalChargeTotals(ctx, charges, baseCharge)
 	if err != nil {
 		return decimal.Zero, err
 	}
@@ -699,7 +705,7 @@ func isDetentionChargeFor(charge *shipment.AdditionalCharge, accessorialID pulid
 
 	owner := charge.Owner()
 
-	return owner == shipment.SystemOwnerDetention || owner == shipment.SystemOwnerNone
+	return owner == shipmentvocab.SystemOwnerDetention || owner == shipmentvocab.SystemOwnerNone
 }
 
 func preferDetentionCharge(candidate, current *shipment.AdditionalCharge) bool {
@@ -817,7 +823,7 @@ func reconcileDetentionOccurrenceCharges(
 
 	kept := make([]*shipment.AdditionalCharge, 0, len(rest)+len(generated))
 	for _, charge := range rest {
-		if charge == nil || charge.Owner() == shipment.SystemOwnerDetention {
+		if charge == nil || charge.Owner() == shipmentvocab.SystemOwnerDetention {
 			continue
 		}
 		kept = append(kept, charge)

@@ -9,11 +9,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
@@ -23,7 +22,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -36,16 +38,20 @@ const (
 
 func productionSeedConfig() *config.Config {
 	return &config.Config{
-		App:    config.AppConfig{Env: config.EnvProduction},
-		System: config.SystemConfig{SystemUserPassword: integrationSystemPassword},
+		App:    appconfig.Config{Env: appconfig.EnvProduction},
+		System: systemconfig.Config{SystemUserPassword: integrationSystemPassword},
 	}
 }
 
-func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *bytes.Buffer) bootstrapDeps {
+func integrationBootstrapDeps(
+	t *testing.T,
+	conn *postgres.Connection,
+	out *bytes.Buffer,
+) bootstrapDeps {
 	t.Helper()
 
 	logger := zap.NewNop()
-	registry := &metrics.Registry{Audit: metrics.NewAudit(nil, logger, false)}
+	registry := &metrics.Registry{Audit: auditmetrics.NewAudit(nil, logger, false)}
 	appCfg := productionSeedConfig()
 
 	return bootstrapDeps{
@@ -55,10 +61,13 @@ func integrationBootstrapDeps(t *testing.T, conn *postgres.Connection, out *byte
 			conn *postgres.Connection,
 		) (permissionports.SecurityAuditor, func(), error) {
 			audits := auditservice.New(auditservice.Params{
-				AuditRepository:       auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
+				AuditRepository: auditrepository.New(
+					auditrepository.Params{DB: conn, Logger: logger},
+				),
 				AuditBufferRepository: auditportsmock.NewMockAuditBufferRepository(t),
 				Logger:                logger,
-				Config:                appCfg,
+				AppConfig:             &appCfg.App,
+				SecurityConfig:        &appCfg.Security,
 				Metrics:               registry,
 			})
 			return auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{
@@ -117,7 +126,16 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
 
-	require.NoError(t, bootstrapInstance(ctx, deps, integrationInputs(), fixedPassword(integrationAdminPassword), false))
+	require.NoError(
+		t,
+		bootstrapInstance(
+			ctx,
+			deps,
+			integrationInputs(),
+			fixedPassword(integrationAdminPassword),
+			false,
+		),
+	)
 	assert.Contains(t, out.String(), `Created organization "Acme Freight"`)
 
 	users := userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()})
@@ -141,13 +159,24 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 		"SELECT id FROM roles WHERE organization_id = $1 AND name = $2",
 		orgID.String(), tenantbootstrap.AdministratorRoleName)
 	require.NoError(t, err)
-	assert.Equal(t, int64(1), countRows(t, ctx, db,
+	assert.Equal(t, int64(1), countRows(
+		t,
+		ctx,
+		db,
 		"SELECT count(*) FROM user_role_assignments WHERE user_id = $1 AND role_id = $2 AND organization_id = $3",
-		admin.ID.String(), roleID, orgID.String()))
+		admin.ID.String(),
+		roleID,
+		orgID.String(),
+	))
 
-	assert.Equal(t, int64(1), countRows(t, ctx, db,
+	assert.Equal(t, int64(1), countRows(
+		t,
+		ctx,
+		db,
 		"SELECT count(*) FROM user_organization_memberships WHERE user_id = $1 AND organization_id = $2",
-		admin.ID.String(), orgID.String()))
+		admin.ID.String(),
+		orgID.String(),
+	))
 
 	systemUser, err := users.GetSystemUser(ctx)
 	require.NoError(t, err)
@@ -156,8 +185,13 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 
 	assert.Positive(t, countRows(t, ctx, db,
 		"SELECT count(*) FROM tca_allowlisted_tables WHERE organization_id = $1", orgID.String()))
-	assert.Equal(t, int64(4), countRows(t, ctx, db,
-		"SELECT count(*) FROM audit_entries WHERE organization_id = $1 AND critical", orgID.String()))
+	assert.Equal(t, int64(4), countRows(
+		t,
+		ctx,
+		db,
+		"SELECT count(*) FROM audit_entries WHERE organization_id = $1 AND critical",
+		orgID.String(),
+	))
 
 	var record struct {
 		OrganizationID pulid.ID
@@ -194,7 +228,16 @@ func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
 
-	require.NoError(t, bootstrapInstance(ctx, deps, integrationInputs(), fixedPassword(integrationAdminPassword), false))
+	require.NoError(
+		t,
+		bootstrapInstance(
+			ctx,
+			deps,
+			integrationInputs(),
+			fixedPassword(integrationAdminPassword),
+			false,
+		),
+	)
 
 	_, err := keel.Exec(ctx, db, "DELETE FROM instance_bootstraps")
 	require.NoError(t, err)

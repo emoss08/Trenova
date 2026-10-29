@@ -7,12 +7,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -29,30 +37,30 @@ type scriptedOpener struct {
 
 	mu     sync.Mutex
 	opened int
-	calls  []agentruntime.DelegateCall
+	calls  []delegation.Call
 }
 
 func (o *scriptedOpener) OpenDelegate(
 	ctx context.Context,
 	run RunContext,
-	call agentruntime.DelegateCall,
+	call *delegation.Call,
 ) (*DelegateOpening, error) {
 	o.mu.Lock()
 	o.opened++
-	o.calls = append(o.calls, call)
+	o.calls = append(o.calls, *call)
 	o.mu.Unlock()
 
 	if o.declined != "" {
 		return nil, &DelegateDeclinedError{Reason: o.declined}
 	}
 
-	req := &agentports.RunRequest{
+	req := &agentruntimeports.RunRequest{
 		Definition: o.definition,
 		Actor:      run.Actor,
 		Input:      call.Task,
 		ThreadID:   run.ThreadID,
 		StepOwner:  run.StepOwner,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   run.Definition.ID,
 			ParentAgentName: run.Definition.Name,
 			CallID:          call.Call.ID,
@@ -91,12 +99,12 @@ func (h *harness) delegatingRun(
 	rc := runContext()
 	rc.Definition.ID = pulid.MustNew("agdef_")
 	rc.ThreadID = pulid.MustNew("athr_")
-	rc.StepOwner = agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAssistantTurn,
+	rc.StepOwner = agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("atrn_"),
 	}
 	req := rc.request()
-	req.Context.Delegates = []agentdefinition.RuntimeDelegate{{
+	req.Context.Delegates = []agentturn.RuntimeDelegate{{
 		ID:    delegate.ID,
 		Name:  delegate.Name,
 		Tools: delegate.ToolNames,
@@ -108,11 +116,11 @@ func (h *harness) delegatingRun(
 // scopedReplies scripts the model for the calls in one scope, in order.
 func (h *harness) scopedReplies(
 	scope func(*ModelCallInput) bool,
-	replies ...*agentports.ChatCompletionResult,
+	replies ...*llmports.ChatCompletionResult,
 ) {
 	for _, reply := range replies {
 		h.env.OnActivity(h.activities.ModelCallActivity, mock.Anything, mock.MatchedBy(scope)).
-			Return(&agentruntime.ModelReply{Completion: reply}, nil).Once()
+			Return(&modelstream.Reply{Completion: reply}, nil).Once()
 	}
 }
 
@@ -150,7 +158,7 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	delegate := delegateDefinition("shipment_get")
 	opener := &scriptedOpener{definition: delegate}
 	h := newHarness(t, harnessParams{
-		query:     []agentports.AgentQueryTool{lookup},
+		query:     []agenttoolports.AgentQueryTool{lookup},
 		delegates: opener,
 	})
 	opener.runtime = h.runtime
@@ -181,14 +189,14 @@ func TestRunDrivesADelegatesTurnInTheSameWorkflow(t *testing.T) {
 	assert.Equal(t, "The Shipment Desk found it in Memphis.", result.Outcome.Result.Reply)
 
 	assert.Equal(t, []string{
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventDelegateStarted,
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventToolFinished,
-		agentports.AssistantEventDelegateFinished,
-		agentports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventDelegateStarted,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelegateFinished,
+		assistantstreamports.AssistantEventToolFinished,
 	}, eventNames(result.Outcome))
 	nested, ok := result.Outcome.Events[4].Data.(map[string]any)
 	require.True(t, ok)
@@ -263,20 +271,20 @@ func TestRunPassesOnADelegatesRefusal(t *testing.T) {
 func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 	t.Parallel()
 
-	call := agentruntime.DelegateCall{
-		Delegate: agentdefinition.RuntimeDelegate{Name: "Shipment Desk"},
+	call := delegation.Call{
+		Delegate: agentturn.RuntimeDelegate{Name: "Shipment Desk"},
 	}
 
-	stopped := declinedDelegate(call, temporal.NewCanceledError())
+	stopped := declinedDelegate(&call, temporal.NewCanceledError())
 	assert.True(t, stopped.Stopped)
 	assert.Empty(t, stopped.Declined)
 
-	refused := declinedDelegate(call, temporal.NewNonRetryableApplicationError(
+	refused := declinedDelegate(&call, temporal.NewNonRetryableApplicationError(
 		"Shipment Desk is disabled.", ErrTypeDelegateDeclined, nil,
 	))
 	assert.Equal(t, "Shipment Desk is disabled.", refused.Declined)
 
-	lost := declinedDelegate(call, temporal.NewApplicationError("worker lost", "Lost"))
+	lost := declinedDelegate(&call, temporal.NewApplicationError("worker lost", "Lost"))
 	assert.Contains(t, lost.Declined, "could not be started")
 
 	assert.Contains(t,
@@ -290,11 +298,11 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
 	t.Parallel()
 
-	records := []agent.EntityRef{
+	records := []agentpagecontext.EntityRef{
 		{Type: "customer", ID: pulid.MustNew("cus_").String()},
 		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
 	}
-	run := NewRunContext(&agentports.RunRequest{
+	run := NewRunContext(&agentruntimeports.RunRequest{
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
 		Records:    records,
 	}, agentflowcontract.PriorityInteractive)
@@ -337,6 +345,6 @@ func TestRunHandsTheDelegateTheRecordsTheTaskIsAbout(t *testing.T) {
 	require.Empty(t, result.Err)
 	require.Len(t, opener.calls, 1)
 	require.NotNil(t, opener.calls[0].Context)
-	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
+	assert.Equal(t, []agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_1"}},
 		opener.calls[0].Context.Records)
 }

@@ -29,46 +29,60 @@ or runtime and [generated-artifacts.md](../generated-artifacts.md) before changi
 ## Resolvers
 
 One package per schema file, `resolver/<file>resolver/`, with a generated `Deps` holding
-`*base.Core` and only the services its code names. To add a dependency, add it to `Params`,
+`*resolvercore.Core` and only the services its code names. To add a dependency, add it to `Params`,
 `Services` and `newServices` in `resolver/services.go`, use it as `r.X` and run `task gqlgen`.
-Resolver packages never import each other; shared code goes in `base` only when it needs nothing
-but `Core`.
+Resolver packages never import each other; shared code goes in `resolvercore` only when it is a
+`Core` method or what one needs, and otherwise in a small package named for what it provides
+(`gqlid`, `gqlscalar`, `gqldecimal`, `gqlconnection`, `shipmentmapping`).
 
 - **Authorize first.** A root resolver starts with
   `authCtx, err := r.RequirePermission(ctx, permission.ResourceX, permission.OpY)` and scopes with
-  `base.TenantInfo(authCtx)`. `authzlint` (`TestEveryRootResolverIsAuthorized`) fails a root
+  `resolvercore.TenantInfo(authCtx)`. `authzlint` (`TestEveryRootResolverIsAuthorized`) fails a root
   resolver that does not reach a check; an authentication-only one is listed in
   `authOnlyAllowlist` with a reason. Self-scoped operations are named `My<Thing>` and listed in
   `selfscoped.Resolvers` under the reason they touch only the caller's records.
-- **Lists are connections.** `base.DataTableConnectionFromGraphQL` → the service's
-  `ListConnection` with `projection.Select(...)` columns → `base.EntityCursorConnection`
+- **Lists are connections.** `gqlconnection.DataTableConnectionFromGraphQL` → the service's
+  `ListConnection` with `projection.Select(...)` columns → `gqlconnection.EntityCursorConnection`
   (`commodityresolver/commodity.resolvers.go`). `IncludeTotalCount` is set only when `totalCount`
-  or `totalCountExact` is selected (`base.ConnectionTotalRequested`), and every connection type
+  or `totalCountExact` is selected (`gqlconnection.ConnectionTotalRequested`), and every connection type
   declares `totalCountExact: Boolean!` beside `totalCount`.
 - **Mutations** map input to the domain with the generated mappers, take the actor from
   `actorutil.FromAuthContext(authCtx)`, and call the same service method an agent tool calls
   (`trailerresolver/trailer.resolvers.go`).
 - **Per-parent reads go through a dataloader**, never a single-ID getter from an object-type
-  resolver. Loaders live in `internal/api/graphql/loaders` (`batchByIDFunc`, `batchCountFunc`,
-  `batchGroupFunc`) over a repository `...ByIDs` method. Register the factory in
-  `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its
-  accessor and `Attach` to `loaders/access.go`; resolvers read through the accessors
-  (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`). No exported type or function in
-  `loaders` mentions `dataloadgen.Loader`. A per-parent count goes through one too, and every field that shows it
+  resolver. A loader lives in the package of the module that owns what it reads
+  (`internal/api/graphql/loaders/<module>loaders`: `agentloaders`, `billingloaders`,
+  `partiesloaders`, …) and batches through `loadercore` (`BatchByIDFunc`, `BatchCountFunc`,
+  `BatchGroupFunc`) over a repository `...ByIDs` method. Loaders are built lazily, per request:
+  the request holds only the factories (`loadercore.Registry.Attach` in the handler and the
+  agent reader), and a loader is built the first time a resolver of that request asks for it, so
+  a request builds only the loaders it uses and no package names every loader. A loader file
+  holds the factory (its fx constructor names the ports it reads through), the constructor
+  `newXLoader(f, tenantInfo)`, a package-level `var xKey = loadercore.NewKey(newXLoader)`, the
+  accessor (`func XByID(ctx, key) (T, error) { return loadercore.Load(ctx, xKey, key) }`, or
+  `LoadAll`/`LoadThunk`) and the factory's `Attach` (`loadercore.Attach(ctx, tenantInfo, f)`,
+  which tests use to attach just that loader). Register the factory constructor in
+  `loaderSources(...)` in `bootstrap/modules/api/graphql.go`, which puts it in the
+  `loadercore.SourceGroup` fx group the registry reads; a factory missing there answers
+  `loadercore.ErrNotAttached` at runtime. Resolvers read through the accessors
+  (`loadercore.Available(ctx)`, `partiesloaders.CustomerByID(ctx, id)`), and no exported type
+  or function mentions `dataloadgen.Loader`. A per-request value that is not a loader (the
+  reader's field ceilings, `agentloaders.FieldCeilings`) uses the same key with
+  `loadercore.Get`. A per-parent count goes through one too, and every field that shows it
   (`laneCount`, `laneCountExact`) reads the same loader, so they share one read: the repository
   counts every requested parent in one statement, a lateral `LIMIT` capping each at its share of
   `pagination.ExactTotalUpTo` (`ExactTotalUpTo / parents`, at least 100), and estimates only the
   parents past their cap (`rateagreementrepository.CountLiveLanes`). A stored count suits only a
   figure that does not depend on the clock; lane liveness does, so lanes are counted at read. A
-  per-parent list with an argument (`lanes(first:)`) loads through `batchFirstFunc`: the key
-  carries the argument (`firstKey(id, first)`), each distinct `first` is one read for every parent
+  per-parent list with an argument (`lanes(first:)`) loads through `BatchFirstFunc`: the key
+  carries the argument (`FirstKey(id, first)`), each distinct `first` is one read for every parent
   asking it, and the repository reads them in one statement, `id IN (SELECT child.id FROM parents
   CROSS JOIN LATERAL (… ORDER BY … LIMIT first))`, bounded by parents times `first`
   (`rateagreementrepository.ListFirstLanes`). It counts nothing; a total is its own field on the
   count loader.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
-- Tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.
+- Tests build `&QueryResolver{&Deps{Core: &resolvercore.Core{...}, ...}}`.
 
 ## Transport limits
 

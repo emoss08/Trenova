@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -114,6 +115,39 @@ func TestGetByIDNotFoundForWrongTenant(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestGetByIDsReturnsOnlyTheTenantsWorkers(t *testing.T) {
+	f, cleanup := setupFixture(t)
+	t.Cleanup(cleanup)
+	ctx := f.data.Ctx(t.Context())
+
+	first, err := f.repo.Create(ctx, newTestWorker(f.data))
+	require.NoError(t, err)
+	secondWorker := newTestWorker(f.data)
+	secondWorker.FirstName = "Jane"
+	second, err := f.repo.Create(ctx, secondWorker)
+	require.NoError(t, err)
+
+	other := seedtest.SeedAdditionalTenant(t, f.ctx, f.db, "WI")
+	foreign, err := f.repo.Create(other.Ctx(t.Context()), newTestWorker(other))
+	require.NoError(t, err)
+
+	workers, err := f.repo.GetByIDs(ctx, workerports.GetWorkersByIDsRequest{
+		TenantInfo: f.data.Info(),
+		WorkerIDs:  []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("wrk_")},
+	})
+	require.NoError(t, err)
+
+	names := make(map[pulid.ID]string, len(workers))
+	for _, w := range workers {
+		names[w.ID] = w.FirstName
+	}
+	assert.Equal(t, map[pulid.ID]string{first.ID: "John", second.ID: "Jane"}, names)
+
+	none, err := f.repo.GetByIDs(ctx, workerports.GetWorkersByIDsRequest{TenantInfo: f.data.Info()})
+	require.NoError(t, err)
+	assert.Empty(t, none)
 }
 
 func TestUpdateReturnsVersionMismatchForStaleEntity(t *testing.T) {

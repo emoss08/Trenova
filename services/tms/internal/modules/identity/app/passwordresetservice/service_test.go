@@ -5,8 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,8 +21,8 @@ import (
 )
 
 type stubTokenRepo struct {
-	created      []*tenant.PasswordResetToken
-	redeemable   *tenant.PasswordResetToken
+	created      []*passwordreset.PasswordResetToken
+	redeemable   *passwordreset.PasswordResetToken
 	findErr      error
 	markUsedOK   bool
 	markUsedErr  error
@@ -31,7 +32,7 @@ type stubTokenRepo struct {
 	markUsedCall int
 }
 
-func (r *stubTokenRepo) Create(_ context.Context, token *tenant.PasswordResetToken) error {
+func (r *stubTokenRepo) Create(_ context.Context, token *passwordreset.PasswordResetToken) error {
 	r.created = append(r.created, token)
 	return nil
 }
@@ -40,7 +41,7 @@ func (r *stubTokenRepo) FindRedeemableByHash(
 	_ context.Context,
 	_ string,
 	_ int64,
-) (*tenant.PasswordResetToken, error) {
+) (*passwordreset.PasswordResetToken, error) {
 	if r.findErr != nil {
 		return nil, r.findErr
 	}
@@ -148,7 +149,7 @@ func newService(
 		ur:       users,
 		tokens:   tokens,
 		sessions: sessions,
-		cfg:      cfg,
+		cfg:      &cfg.Security,
 		l:        zap.NewNop(),
 	}
 }
@@ -241,8 +242,8 @@ func TestRequestReset_IgnoresABlankAddress(t *testing.T) {
 	assert.Zero(t, users.findCalled)
 }
 
-func redeemableToken(user *tenant.User) *tenant.PasswordResetToken {
-	return &tenant.PasswordResetToken{
+func redeemableToken(user *tenant.User) *passwordreset.PasswordResetToken {
+	return &passwordreset.PasswordResetToken{
 		ID:             pulid.MustNew("prt_"),
 		UserID:         user.ID,
 		BusinessUnitID: user.BusinessUnitID,
@@ -352,9 +353,9 @@ func TestResetURL_RefusesToGuessTheOrigin(t *testing.T) {
 	t.Parallel()
 
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
-	svc.cfg.Security.PasswordReset.BaseURL = ""
+	svc.cfg.PasswordReset.BaseURL = ""
 
-	_, err := svc.linkURL("raw-token", tenant.PasswordResetPurposeReset)
+	_, err := svc.linkURL("raw-token", passwordreset.PasswordResetPurposeReset)
 
 	require.ErrorIs(t, err, errNoResetBaseURL)
 }
@@ -364,7 +365,7 @@ func TestResetURL_BuildsTheLinkFromTheConfiguredOrigin(t *testing.T) {
 
 	svc := newService(t, &stubUserRepo{}, &stubTokenRepo{}, &stubSessionRepo{})
 
-	url, err := svc.linkURL("raw-token", tenant.PasswordResetPurposeReset)
+	url, err := svc.linkURL("raw-token", passwordreset.PasswordResetPurposeReset)
 
 	require.NoError(t, err)
 	assert.Equal(t, "https://app.example.com/auth/reset?token=raw-token", url)

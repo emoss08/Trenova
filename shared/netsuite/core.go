@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -53,7 +54,7 @@ func newCore(params *coreParams) (*core, error) {
 		},
 		Retry:        settings.retry,
 		Observer:     settings.observer,
-		ErrorDecoder: decodeAPIError,
+		ErrorDecoder: netsuiteerrors.DecodeAPIError,
 	}
 	if settings.limiter != nil {
 		bucket := params.bucket
@@ -97,36 +98,36 @@ func (c *core) do(ctx context.Context, req *call) (*restx.Response, error) {
 			ExpectedStatus: expected,
 		})
 	if err != nil {
-		redactAPIError(err, transport.Redact)
+		netsuiteerrors.RedactAPIError(err, transport.Redact)
 	}
 	return resp, err
 }
 
 func (c *core) locationID(resp *restx.Response, recordType string) (string, error) {
 	if resp == nil {
-		return "", ErrUnexpectedPayload
+		return "", netsuiteerrors.ErrUnexpectedPayload
 	}
 	raw := strings.TrimSpace(resp.Header.Get(locationHeader))
 	if raw == "" {
-		return "", ErrUnexpectedPayload
+		return "", netsuiteerrors.ErrUnexpectedPayload
 	}
 	ref, err := url.Parse(raw)
 	if err != nil {
-		return "", ErrUnexpectedPayload
+		return "", netsuiteerrors.ErrUnexpectedPayload
 	}
 	link := c.base.ResolveReference(ref)
 	if link.User != nil || !strings.EqualFold(link.Scheme, c.base.Scheme) ||
 		!strings.EqualFold(link.Host, c.base.Host) {
-		return "", ErrForeignLocation
+		return "", netsuiteerrors.ErrForeignLocation
 	}
 	prefix := strings.TrimRight(c.base.EscapedPath(), "/") + recordPath + "/"
 	rest, ok := strings.CutPrefix(link.EscapedPath(), prefix)
 	if !ok {
-		return "", ErrForeignLocation
+		return "", netsuiteerrors.ErrForeignLocation
 	}
 	segment, id, found := strings.Cut(rest, "/")
 	if !found || !strings.EqualFold(segment, recordType) || !isInternalID(id) {
-		return "", ErrUnexpectedPayload
+		return "", netsuiteerrors.ErrUnexpectedPayload
 	}
 	return id, nil
 }

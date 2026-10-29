@@ -4,11 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -64,12 +63,12 @@ func (m *memoryRepo) Delete(
 }
 
 type recordingInvalidator struct {
-	calls []*shipmentports.ShipmentInvalidation
+	calls []*shipmentinvalidationports.ShipmentInvalidation
 }
 
 func (r *recordingInvalidator) InvalidateShipments(
 	_ context.Context,
-	req *shipmentports.ShipmentInvalidation,
+	req *shipmentinvalidationports.ShipmentInvalidation,
 ) {
 	r.calls = append(r.calls, req)
 }
@@ -123,6 +122,10 @@ func TestDeleteAuditsAndInvalidates(t *testing.T) {
 	assert.Equal(t, org, invalidator.calls[0].OrganizationID)
 	assert.Equal(t, invalidationAction, invalidator.calls[0].Action)
 
-	err = svc.Delete(t.Context(), &carriercapacityports.DeleteCarrierCapacityPostingRequest{ID: id}, nil)
+	err = svc.Delete(
+		t.Context(),
+		&carriercapacityports.DeleteCarrierCapacityPostingRequest{ID: id},
+		nil,
+	)
 	require.Error(t, err)
 }

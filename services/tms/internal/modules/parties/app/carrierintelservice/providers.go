@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -49,18 +51,26 @@ type NotificationSender interface {
 	) (bool, error)
 }
 
-type boundProvider struct {
+type BoundProvider struct {
 	provider   integration.Type
 	connector  carrierintelports.CarrierIntelConnector
 	client     carrierintelports.CarrierIntelClient
 	descriptor carrierintel.ProviderDescriptor
-	prices     carrierintel.PriceBook
+	prices     carrierintelusage.PriceBook
 	fallback   bool
 	tenant     pagination.TenantInfo
 }
 
-func (b *boundProvider) capabilities() carrierintel.CapabilitySet {
+func (b *BoundProvider) Capabilities() carrierintel.CapabilitySet {
 	return b.descriptor.Capabilities
+}
+
+func (b *BoundProvider) Client() carrierintelports.CarrierIntelClient {
+	return b.client
+}
+
+func (b *BoundProvider) Provider() integration.Type {
+	return b.provider
 }
 
 type breakerState struct {
@@ -107,12 +117,12 @@ func (b *circuitBreaker) record(key string, failed bool, now time.Time) {
 	}
 }
 
-func (s *Service) bind(
+func (s *Service) Bind(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	provider integration.Type,
 	fallback bool,
-) (*boundProvider, error) {
+) (*BoundProvider, error) {
 	connector, ok := s.connectors[provider]
 	if !ok {
 		return nil, errortypes.NewBusinessError(
@@ -125,7 +135,7 @@ func (s *Service) bind(
 		return nil, err
 	}
 
-	bound := &boundProvider{
+	bound := &BoundProvider{
 		provider:   provider,
 		connector:  connector,
 		descriptor: connector.Descriptor(),
@@ -149,30 +159,30 @@ func (s *Service) bind(
 	return bound, nil
 }
 
-func (s *Service) resolvePrimary(
+func (s *Service) ResolvePrimary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *carrierintel.CarrierIntelControl,
-) (*boundProvider, error) {
+	control *carrierintelcontrol.CarrierIntelControl,
+) (*BoundProvider, error) {
 	provider, ok := control.PrimaryType()
 	if !ok {
 		return nil, errortypes.NewBusinessError(
 			"No carrier intelligence provider is enabled. Enable CarrierOk or FMCSA QCMobile in Integrations",
 		)
 	}
-	return s.bind(ctx, tenantInfo, provider, false)
+	return s.Bind(ctx, tenantInfo, provider, false)
 }
 
 func (s *Service) resolveFallback(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	control *carrierintel.CarrierIntelControl,
-) (*boundProvider, bool) {
+	control *carrierintelcontrol.CarrierIntelControl,
+) (*BoundProvider, bool) {
 	provider, ok := control.FallbackType()
 	if !ok {
 		return nil, false
 	}
-	bound, err := s.bind(ctx, tenantInfo, provider, true)
+	bound, err := s.Bind(ctx, tenantInfo, provider, true)
 	if err != nil {
 		s.l.Warn("carrier intelligence fallback provider unavailable",
 			zap.String("provider", provider.String()), zap.Error(err))
@@ -181,7 +191,7 @@ func (s *Service) resolveFallback(
 	return bound, true
 }
 
-func (s *Service) recorderFor(bound *boundProvider) carrierintelports.CarrierIntelCallRecorder {
+func (s *Service) recorderFor(bound *BoundProvider) carrierintelports.CarrierIntelCallRecorder {
 	return func(ctx context.Context, call carrierintelports.CarrierIntelCall) {
 		s.recordCall(ctx, bound, call)
 	}
@@ -189,7 +199,7 @@ func (s *Service) recorderFor(bound *boundProvider) carrierintelports.CarrierInt
 
 func (s *Service) recordCall(
 	ctx context.Context,
-	bound *boundProvider,
+	bound *BoundProvider,
 	call carrierintelports.CarrierIntelCall,
 ) {
 	now := s.now()
@@ -199,7 +209,7 @@ func (s *Service) recordCall(
 		purpose = carrierintel.PurposeRefresh
 	}
 
-	record := &carrierintel.CarrierIntelUsageRecord{
+	record := &carrierintelusage.CarrierIntelUsageRecord{
 		OrganizationID: bound.tenant.OrgID,
 		BusinessUnitID: bound.tenant.BuID,
 		Provider:       bound.provider,
@@ -207,7 +217,7 @@ func (s *Service) recordCall(
 		Purpose:        purpose,
 		DOTNumber:      call.DOTNumber,
 		StatusCode:     call.StatusCode,
-		Outcome:        usageOutcome(call),
+		Outcome:        usageOutcome(&call),
 		LatencyMS:      int(call.Latency / time.Millisecond),
 		CreatedAt:      now,
 	}
@@ -220,7 +230,12 @@ func (s *Service) recordCall(
 		record.Billable = true
 		record.BillableUnits = units
 		record.EstimatedCost = price.UnitCost.Mul(decimalFromInt(units))
-		record.DedupeKey = carrierintel.BillingDedupeKey(call.Endpoint, price, call.DOTNumber, now)
+		record.DedupeKey = carrierintelusage.BillingDedupeKey(
+			call.Endpoint,
+			price,
+			call.DOTNumber,
+			now,
+		)
 	}
 
 	inserted, err := s.usageRepo.Insert(context.WithoutCancel(ctx), record)
@@ -248,10 +263,10 @@ func (s *Service) recordCall(
 }
 
 func isBillable(
-	price carrierintel.EndpointPrice,
+	price carrierintelusage.EndpointPrice,
 	call carrierintelports.CarrierIntelCall,
 ) (billable bool, units int) {
-	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
+	if price.Model == carrierintelusage.BillingModelFree || !price.UnitCost.IsPositive() {
 		return false, 0
 	}
 	if call.Err != nil && !call.Found {
@@ -259,37 +274,37 @@ func isBillable(
 	}
 	units = max(call.Units, 1)
 	switch price.Model {
-	case carrierintel.BillingModelPerMatch, carrierintel.BillingModelPerDOTMonth:
+	case carrierintelusage.BillingModelPerMatch, carrierintelusage.BillingModelPerDOTMonth:
 		return call.Found, units
-	case carrierintel.BillingModelPerRequest:
+	case carrierintelusage.BillingModelPerRequest:
 		return call.Err == nil, units
 	default:
 		return false, 0
 	}
 }
 
-func usageOutcome(call carrierintelports.CarrierIntelCall) carrierintel.UsageOutcome {
+func usageOutcome(call *carrierintelports.CarrierIntelCall) carrierintelusage.UsageOutcome {
 	if call.Err == nil {
 		if call.Found {
-			return carrierintel.UsageOutcomeSuccess
+			return carrierintelusage.UsageOutcomeSuccess
 		}
-		return carrierintel.UsageOutcomeNotFound
+		return carrierintelusage.UsageOutcomeNotFound
 	}
 	kind, ok := carrierintelports.CarrierIntelErrorKindOf(call.Err)
 	var limited *restx.RateLimitedError
 	switch {
 	case errors.As(call.Err, &limited):
-		return carrierintel.UsageOutcomeDenied
+		return carrierintelusage.UsageOutcomeDenied
 	case !ok:
-		return carrierintel.UsageOutcomeTransport
+		return carrierintelusage.UsageOutcomeTransport
 	case kind == carrierintelports.CarrierIntelErrorNotFound:
-		return carrierintel.UsageOutcomeNotFound
+		return carrierintelusage.UsageOutcomeNotFound
 	case kind == carrierintelports.CarrierIntelErrorRateLimited:
-		return carrierintel.UsageOutcomeRateLimited
+		return carrierintelusage.UsageOutcomeRateLimited
 	case kind == carrierintelports.CarrierIntelErrorUnavailable:
-		return carrierintel.UsageOutcomeServerError
+		return carrierintelusage.UsageOutcomeServerError
 	default:
-		return carrierintel.UsageOutcomeClientError
+		return carrierintelusage.UsageOutcomeClientError
 	}
 }
 
@@ -305,11 +320,11 @@ func isOutageError(err error) bool {
 	return kind == carrierintelports.CarrierIntelErrorUnavailable
 }
 
-func (s *Service) providerAvailable(bound *boundProvider) bool {
+func (s *Service) providerAvailable(bound *BoundProvider) bool {
 	return !s.breaker.isOpen(breakerKey(bound.tenant, bound.provider), time.Unix(s.now(), 0))
 }
 
-func (s *Service) withRateLimitWait(ctx context.Context, fn func() error) error {
+func (s *Service) WithRateLimitWait(ctx context.Context, fn func() error) error {
 	err := fn()
 	if err == nil || !carrierintel.IsInteractiveContext(ctx) {
 		return err
@@ -341,7 +356,7 @@ func retryAfter(err error) (time.Duration, bool) {
 	return 0, false
 }
 
-func toBusinessError(provider integration.Type, err error) error {
+func ToBusinessError(provider integration.Type, err error) error {
 	if err == nil {
 		return nil
 	}

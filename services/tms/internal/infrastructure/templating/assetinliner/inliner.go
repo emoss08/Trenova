@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/imageutils"
 	"go.uber.org/zap"
@@ -104,7 +104,7 @@ type Request struct {
 // Result is the rewritten document plus whatever had to be dropped.
 type Result struct {
 	HTML  string
-	Diags templateengine.Diagnostics
+	Diags templatediag.Diagnostics
 	// Inlined counts the assets that made it in, for logging and metrics.
 	Inlined int
 	// Bytes is the total decoded size of the inlined assets.
@@ -177,9 +177,9 @@ func (i *Inliner) rewriteImage(
 	}
 
 	if result.Inlined >= i.limits.MaxAssets {
-		result.Diags = append(result.Diags, templateengine.Diagnostic{
-			Severity: templateengine.SeverityWarning,
-			Code:     templateengine.CodeAssetBudgetExceeded,
+		result.Diags = append(result.Diags, templatediag.Diagnostic{
+			Severity: templatediag.SeverityWarning,
+			Code:     templatediag.CodeAssetBudgetExceeded,
 			Field:    field,
 			Message: fmt.Sprintf(
 				"this document already inlines %d images, which is the limit; the rest were dropped",
@@ -191,9 +191,9 @@ func (i *Inliner) rewriteImage(
 
 	img, err := i.resolve(ctx, src)
 	if err != nil {
-		result.Diags = append(result.Diags, templateengine.Diagnostic{
-			Severity: templateengine.SeverityWarning,
-			Code:     templateengine.CodeRemoteAssetBlocked,
+		result.Diags = append(result.Diags, templatediag.Diagnostic{
+			Severity: templatediag.SeverityWarning,
+			Code:     templatediag.CodeRemoteAssetBlocked,
 			Field:    field,
 			Message:  fmt.Sprintf("an image was dropped from this document: %s", err.Error()),
 		})
@@ -202,9 +202,9 @@ func (i *Inliner) rewriteImage(
 	}
 
 	if result.Bytes+int64(len(img.Data)) > i.limits.MaxTotalBytes {
-		result.Diags = append(result.Diags, templateengine.Diagnostic{
-			Severity: templateengine.SeverityWarning,
-			Code:     templateengine.CodeAssetBudgetExceeded,
+		result.Diags = append(result.Diags, templatediag.Diagnostic{
+			Severity: templatediag.SeverityWarning,
+			Code:     templatediag.CodeAssetBudgetExceeded,
 			Field:    field,
 			Message:  "this document exceeded its total image size budget; the rest were dropped",
 		})

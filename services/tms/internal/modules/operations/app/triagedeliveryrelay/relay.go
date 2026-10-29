@@ -6,15 +6,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
 
 var (
 	_ shipmenteventports.ShipmentEventObserver = (*Relay)(nil)
-	_ shipmentports.MoveStatusObserver         = (*Relay)(nil)
+	_ shipmentserviceports.MoveStatusObserver  = (*Relay)(nil)
 )
 
 type shipmentReader interface {
@@ -40,17 +42,19 @@ func New(p Params) *Relay {
 	return &Relay{shipments: p.Shipments, sink: p.Sink}
 }
 
-func Delivered(status shipment.Status) bool {
+func Delivered(status shipmentvocab.Status) bool {
 	switch status {
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return true
-	case shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
-		shipment.StatusCanceled:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
+		shipmentvocab.StatusCanceled:
 		return false
 	default:
 		return false
@@ -80,10 +84,10 @@ func (r *Relay) AfterMoveStatusChange(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 ) error {
-	if r.sink == nil || move == nil || move.Status != shipment.MoveStatusCompleted ||
-		previous == shipment.MoveStatusCompleted {
+	if r.sink == nil || move == nil || move.Status != shipmentvocab.MoveStatusCompleted ||
+		previous == shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 
@@ -103,11 +107,11 @@ func (r *Relay) AfterMoveStatusChange(
 	return nil
 }
 
-func statusIn(metadata map[string]any, key string) shipment.Status {
+func statusIn(metadata map[string]any, key string) shipmentvocab.Status {
 	value, ok := metadata[key].(string)
 	if !ok {
 		return ""
 	}
 
-	return shipment.Status(value)
+	return shipmentvocab.Status(value)
 }

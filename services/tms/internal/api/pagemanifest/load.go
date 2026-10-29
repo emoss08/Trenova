@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/api/permissionlint"
 	"github.com/emoss08/trenova/internal/api/routelint"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/vektah/gqlparser/v2/ast"
 	"github.com/vektah/gqlparser/v2/parser"
 )
@@ -25,7 +25,7 @@ const (
 )
 
 // FromRepository reads every input from the repository at root.
-func FromRepository(root string, registry *permission.Registry) (*Inputs, error) {
+func FromRepository(root string, registry *permissioncatalog.Registry) (*Inputs, error) {
 	in := &Inputs{Registry: registry}
 
 	raw, err := os.ReadFile(filepath.Join(root, ScreensPath))

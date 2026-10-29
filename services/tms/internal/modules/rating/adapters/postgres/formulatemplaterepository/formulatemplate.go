@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
@@ -363,7 +363,7 @@ func (r *repository) usageQuery(
 ) *keel.Query[*formulatemplate.FormulaTemplate] {
 	ft := formulatemplatedb.FormulaTemplates
 	rr := rateagreementdb.RateAgreementRules
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 
 	return ft.Pick(
 		r.shipmentUsage(ft),

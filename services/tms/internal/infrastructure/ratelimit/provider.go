@@ -3,7 +3,7 @@ package ratelimit
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/redis/go-redis/v9"
@@ -14,23 +14,23 @@ import (
 type StoreParams struct {
 	fx.In
 
-	Config  *config.Config
-	Client  *redis.Client     `optional:"true"`
-	Metrics *metrics.Registry `optional:"true"`
-	Logger  *zap.Logger
+	SecurityConfig *securityconfig.Config
+	Client         *redis.Client     `optional:"true"`
+	Metrics        *metrics.Registry `optional:"true"`
+	Logger         *zap.Logger
 }
 
 func NewStore(p StoreParams) (kernelports.RateLimitStore, error) {
-	cfg := p.Config.Security.RateLimit
+	cfg := p.SecurityConfig.RateLimit
 	memory := NewMemoryStore(MemoryStoreOptions{CleanupInterval: cfg.GetCleanupInterval()})
 
 	switch cfg.GetStore() {
-	case config.RateLimitStoreMemory:
+	case securityconfig.RateLimitStoreMemory:
 		p.Logger.Named("ratelimit").Warn(
 			"rate limiting is using the in-process store; limits apply per replica",
 		)
 		return memory, nil
-	case config.RateLimitStoreRedis:
+	case securityconfig.RateLimitStoreRedis:
 		if p.Client == nil {
 			return nil, ErrMissingClient
 		}

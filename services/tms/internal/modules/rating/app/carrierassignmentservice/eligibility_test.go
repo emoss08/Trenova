@@ -3,9 +3,10 @@ package carrierassignmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,22 +77,22 @@ func TestCarrierCoverageDrivesMoveStatusDerivation(t *testing.T) {
 
 	buildShipment := func(coverage *shipment.CarrierAssignment) *shipment.Shipment {
 		return &shipment.Shipment{
-			Status: shipment.StatusNew,
+			Status: shipmentvocab.StatusNew,
 			Moves: []*shipment.ShipmentMove{
 				{
-					Status:            shipment.MoveStatusNew,
-					CoverageType:      shipment.MoveCoverageTypeDriver,
+					Status:            shipmentvocab.MoveStatusNew,
+					CoverageType:      shipmentvocab.MoveCoverageTypeDriver,
 					CarrierAssignment: coverage,
 					Stops: []*shipment.Stop{
 						{
-							Type:                 shipment.StopTypePickup,
-							Status:               shipment.StopStatusNew,
+							Type:                 shipmentvocab.StopTypePickup,
+							Status:               shipmentvocab.StopStatusNew,
 							Sequence:             0,
 							ScheduledWindowStart: 100,
 						},
 						{
-							Type:                 shipment.StopTypeDelivery,
-							Status:               shipment.StopStatusNew,
+							Type:                 shipmentvocab.StopTypeDelivery,
+							Status:               shipmentvocab.StopStatusNew,
 							Sequence:             1,
 							ScheduledWindowStart: 200,
 						},
@@ -103,26 +104,26 @@ func TestCarrierCoverageDrivesMoveStatusDerivation(t *testing.T) {
 
 	original := buildShipment(nil)
 	updated := buildShipment(&shipment.CarrierAssignment{
-		Status: shipment.CarrierAssignmentStatusPending,
+		Status: shipmentvocab.CarrierAssignmentStatusPending,
 	})
-	updated.Moves[0].CoverageType = shipment.MoveCoverageTypeCarrier
+	updated.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 
 	multiErr := coordinator.PrepareForUpdate(original, updated)
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.MoveStatusAssigned, updated.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, updated.Moves[0].Status)
 
 	reverted := buildShipment(nil)
-	reverted.Moves[0].Status = shipment.MoveStatusNew
+	reverted.Moves[0].Status = shipmentvocab.MoveStatusNew
 	multiErr = coordinator.PrepareForUpdate(updated, reverted)
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.MoveStatusNew, reverted.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, reverted.Moves[0].Status)
 
 	canceledCoverage := buildShipment(&shipment.CarrierAssignment{
-		Status: shipment.CarrierAssignmentStatusCanceled,
+		Status: shipmentvocab.CarrierAssignmentStatusCanceled,
 	})
 	multiErr = coordinator.PrepareForUpdate(original, canceledCoverage)
 	require.Nil(t, multiErr)
-	assert.Equal(t, shipment.MoveStatusNew, canceledCoverage.Moves[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusNew, canceledCoverage.Moves[0].Status)
 }
 
 func eligibilityError(

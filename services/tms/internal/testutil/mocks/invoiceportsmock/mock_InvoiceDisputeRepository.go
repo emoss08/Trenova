@@ -5,9 +5,9 @@
 package invoiceportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
@@ -41,26 +41,26 @@ func (_m *MockInvoiceDisputeRepository) EXPECT() *MockInvoiceDisputeRepository_E
 }
 
 // Create provides a mock function for the type MockInvoiceDisputeRepository
-func (_mock *MockInvoiceDisputeRepository) Create(ctx context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeRepository) Create(ctx context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.InvoiceDispute) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoicedispute.InvoiceDispute) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoice.InvoiceDispute) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoicedispute.InvoiceDispute) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockInvoiceDisputeRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *invoice.InvoiceDispute
+//   - entity *invoicedispute.InvoiceDispute
 func (_e *MockInvoiceDisputeRepository_Expecter) Create(ctx any, entity any) *MockInvoiceDisputeRepository_Create_Call {
 	return &MockInvoiceDisputeRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockInvoiceDisputeRepository_Create_Call) Run(run func(ctx context.Context, entity *invoice.InvoiceDispute)) *MockInvoiceDisputeRepository_Create_Call {
+func (_c *MockInvoiceDisputeRepository_Create_Call) Run(run func(ctx context.Context, entity *invoicedispute.InvoiceDispute)) *MockInvoiceDisputeRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoice.InvoiceDispute
+		var arg1 *invoicedispute.InvoiceDispute
 		if args[1] != nil {
-			arg1 = args[1].(*invoice.InvoiceDispute)
+			arg1 = args[1].(*invoicedispute.InvoiceDispute)
 		}
 		run(
 			arg0,
@@ -98,34 +98,34 @@ func (_c *MockInvoiceDisputeRepository_Create_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_Create_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeRepository_Create_Call {
+func (_c *MockInvoiceDisputeRepository_Create_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeRepository_Create_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeRepository_Create_Call {
+func (_c *MockInvoiceDisputeRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockInvoiceDisputeRepository
-func (_mock *MockInvoiceDisputeRepository) GetByID(ctx context.Context, req invoiceports.GetInvoiceDisputeByIDRequest) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeRepository) GetByID(ctx context.Context, req invoiceports.GetInvoiceDisputeByIDRequest) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetInvoiceDisputeByIDRequest) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetInvoiceDisputeByIDRequest) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetInvoiceDisputeByIDRequest) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetInvoiceDisputeByIDRequest) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, invoiceports.GetInvoiceDisputeByIDRequest) error); ok {
@@ -166,34 +166,34 @@ func (_c *MockInvoiceDisputeRepository_GetByID_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_GetByID_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeRepository_GetByID_Call {
+func (_c *MockInvoiceDisputeRepository_GetByID_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeRepository_GetByID_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req invoiceports.GetInvoiceDisputeByIDRequest) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeRepository_GetByID_Call {
+func (_c *MockInvoiceDisputeRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req invoiceports.GetInvoiceDisputeByIDRequest) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOpenByInvoiceID provides a mock function for the type MockInvoiceDisputeRepository
-func (_mock *MockInvoiceDisputeRepository) GetOpenByInvoiceID(ctx context.Context, req invoiceports.GetOpenInvoiceDisputeRequest) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeRepository) GetOpenByInvoiceID(ctx context.Context, req invoiceports.GetOpenInvoiceDisputeRequest) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOpenByInvoiceID")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetOpenInvoiceDisputeRequest) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetOpenInvoiceDisputeRequest) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetOpenInvoiceDisputeRequest) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceports.GetOpenInvoiceDisputeRequest) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, invoiceports.GetOpenInvoiceDisputeRequest) error); ok {
@@ -234,34 +234,34 @@ func (_c *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call {
+func (_c *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call) RunAndReturn(run func(ctx context.Context, req invoiceports.GetOpenInvoiceDisputeRequest) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call {
+func (_c *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call) RunAndReturn(run func(ctx context.Context, req invoiceports.GetOpenInvoiceDisputeRequest) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeRepository_GetOpenByInvoiceID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListByInvoiceIDs provides a mock function for the type MockInvoiceDisputeRepository
-func (_mock *MockInvoiceDisputeRepository) ListByInvoiceIDs(ctx context.Context, req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeRepository) ListByInvoiceIDs(ctx context.Context, req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByInvoiceIDs")
 	}
 
-	var r0 map[pulid.ID][]*invoice.InvoiceDispute
+	var r0 map[pulid.ID][]*invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) map[pulid.ID][]*invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) map[pulid.ID][]*invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[pulid.ID][]*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(map[pulid.ID][]*invoicedispute.InvoiceDispute)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) error); ok {
@@ -302,37 +302,37 @@ func (_c *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call) Return(v0 map[pulid.ID][]*invoice.InvoiceDispute, err error) *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call {
+func (_c *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call) Return(v0 map[pulid.ID][]*invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoice.InvoiceDispute, error)) *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call {
+func (_c *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call) RunAndReturn(run func(ctx context.Context, req *invoiceports.ListInvoiceDisputesByInvoiceIDsRequest) (map[pulid.ID][]*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeRepository_ListByInvoiceIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockInvoiceDisputeRepository
-func (_mock *MockInvoiceDisputeRepository) Update(ctx context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error) {
+func (_mock *MockInvoiceDisputeRepository) Update(ctx context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *invoice.InvoiceDispute
+	var r0 *invoicedispute.InvoiceDispute
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.InvoiceDispute) *invoice.InvoiceDispute); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoicedispute.InvoiceDispute) *invoicedispute.InvoiceDispute); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoice.InvoiceDispute)
+			r0 = ret.Get(0).(*invoicedispute.InvoiceDispute)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoice.InvoiceDispute) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoicedispute.InvoiceDispute) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -347,20 +347,20 @@ type MockInvoiceDisputeRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *invoice.InvoiceDispute
+//   - entity *invoicedispute.InvoiceDispute
 func (_e *MockInvoiceDisputeRepository_Expecter) Update(ctx any, entity any) *MockInvoiceDisputeRepository_Update_Call {
 	return &MockInvoiceDisputeRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockInvoiceDisputeRepository_Update_Call) Run(run func(ctx context.Context, entity *invoice.InvoiceDispute)) *MockInvoiceDisputeRepository_Update_Call {
+func (_c *MockInvoiceDisputeRepository_Update_Call) Run(run func(ctx context.Context, entity *invoicedispute.InvoiceDispute)) *MockInvoiceDisputeRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoice.InvoiceDispute
+		var arg1 *invoicedispute.InvoiceDispute
 		if args[1] != nil {
-			arg1 = args[1].(*invoice.InvoiceDispute)
+			arg1 = args[1].(*invoicedispute.InvoiceDispute)
 		}
 		run(
 			arg0,
@@ -370,12 +370,12 @@ func (_c *MockInvoiceDisputeRepository_Update_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_Update_Call) Return(v0 *invoice.InvoiceDispute, err error) *MockInvoiceDisputeRepository_Update_Call {
+func (_c *MockInvoiceDisputeRepository_Update_Call) Return(v0 *invoicedispute.InvoiceDispute, err error) *MockInvoiceDisputeRepository_Update_Call {
 	_c.Call.Return(v0, err)
 	return _c
 }
 
-func (_c *MockInvoiceDisputeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *invoice.InvoiceDispute) (*invoice.InvoiceDispute, error)) *MockInvoiceDisputeRepository_Update_Call {
+func (_c *MockInvoiceDisputeRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *invoicedispute.InvoiceDispute) (*invoicedispute.InvoiceDispute, error)) *MockInvoiceDisputeRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

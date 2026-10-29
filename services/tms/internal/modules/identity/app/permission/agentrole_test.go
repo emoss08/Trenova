@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
@@ -26,7 +27,11 @@ func (r agentRoles) UnattendedRoleID(
 	return r[agentID], nil
 }
 
-func agentCheck(agentID, orgID pulid.ID, resource string, op permission.Operation) *permissionports.PermissionCheckRequest {
+func agentCheck(
+	agentID, orgID pulid.ID,
+	resource string,
+	op permission.Operation,
+) *permissionports.PermissionCheckRequest {
 	return &permissionports.PermissionCheckRequest{
 		PrincipalType:  permissionports.PrincipalTypeAgent,
 		PrincipalID:    agentID,
@@ -45,12 +50,14 @@ func TestCheck_AnUnattendedAgentIsHeldToItsRole(t *testing.T) {
 	eng.agentRoles = agentRoles{agentID: roleID}
 
 	cacheRepo.On("Get", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*permission.Role{
+	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID:             roleID,
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{Resource: "shipment", Operations: []permission.Operation{permission.OpRead}},
 			},
 		},
@@ -60,7 +67,10 @@ func TestCheck_AnUnattendedAgentIsHeldToItsRole(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, read.Allowed)
 
-	create, err := eng.Check(t.Context(), agentCheck(agentID, orgID, "shipment", permission.OpCreate))
+	create, err := eng.Check(
+		t.Context(),
+		agentCheck(agentID, orgID, "shipment", permission.OpCreate),
+	)
 	require.NoError(t, err)
 	assert.False(t, create.Allowed, "the agent ceiling allows it, the agent's role does not")
 	assert.Equal(t, "agent_role_denied", create.Reason)
@@ -74,7 +84,9 @@ func TestCheck_AnAgentWithoutARoleKeepsTheCeiling(t *testing.T) {
 	eng.agentRoles = agentRoles{}
 
 	cacheRepo.On("Get", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
 
 	result, err := eng.Check(t.Context(), agentCheck(agentID, orgID, "shipment", permission.OpRead))
 
@@ -91,11 +103,13 @@ func TestCheck_AnAgentRoleNeverWidensTheCeiling(t *testing.T) {
 	eng.agentRoles = agentRoles{agentID: roleID}
 
 	cacheRepo.On("Get", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*permission.Role{
+	cacheRepo.On("Set", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*rbac.Role{
 		{
 			ID: roleID,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				{Resource: "role", Operations: []permission.Operation{permission.OpDelete}},
 			},
 		},
@@ -124,12 +138,14 @@ func TestCheck_AccessPoliciesBindAgents(t *testing.T) {
 		}).
 		Return([]*iam.AccessPolicy{
 			{
-				ID:         pulid.MustNew("ap_"),
-				Resource:   "shipment",
-				Operation:  string(permission.OpRead),
-				Effect:     iam.PolicyEffectDeny,
-				Enabled:    true,
-				Conditions: map[string]string{"principalType": string(permissionports.PrincipalTypeAgent)},
+				ID:        pulid.MustNew("ap_"),
+				Resource:  "shipment",
+				Operation: string(permission.OpRead),
+				Effect:    iam.PolicyEffectDeny,
+				Enabled:   true,
+				Conditions: map[string]string{
+					"principalType": string(permissionports.PrincipalTypeAgent),
+				},
 			},
 		}, nil).
 		Once()

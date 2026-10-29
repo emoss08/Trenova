@@ -6,12 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,15 +22,15 @@ import (
 )
 
 type fakeVectorizer struct {
-	vector agentports.QueryVector
+	vector retrievalports.QueryVector
 	err    error
 	texts  []string
 }
 
 func (f *fakeVectorizer) Vectorize(
 	_ context.Context,
-	req *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	req *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	f.texts = append(f.texts, req.Text)
 
 	return f.vector, f.err
@@ -41,8 +43,8 @@ func (f *fakeVectorizer) Availability(
 	return airetrieval.Availability{Available: true}, nil
 }
 
-func usableVector() agentports.QueryVector {
-	return agentports.QueryVector{
+func usableVector() retrievalports.QueryVector {
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     make([]float32, 768),
 		ModelKey:   activeKey,
@@ -107,22 +109,22 @@ func (f *fakeAccess) ShowsRecordText(_ context.Context, resource permission.Reso
 func newTestSearcher(
 	repo *fakeRetrievalRepo,
 	sources *fakeSources,
-	vectorizer agentports.QueryVectorizer,
+	vectorizer retrievalports.QueryVectorizer,
 ) *Searcher {
 	return NewSearcher(SearcherParams{
 		Logger:     zap.NewNop(),
 		Repo:       repo,
 		Sources:    sources,
-		Registry:   permission.NewRegistry(),
+		Registry:   permissioncatalog.NewRegistry(),
 		Vectorizer: vectorizer,
 	})
 }
 
 func searchRequest(
 	query string,
-	access agentports.RetrievalAccess,
-) *agentports.RetrievalSearchRequest {
-	return &agentports.RetrievalSearchRequest{
+	access retrievalports.RetrievalAccess,
+) *retrievalports.RetrievalSearchRequest {
+	return &retrievalports.RetrievalSearchRequest{
 		TenantInfo: testTenant,
 		Query:      query,
 		Limit:      5,
@@ -141,13 +143,13 @@ func TestSearchDocumentsFusesBothLegsAndLabelsTheMatch(t *testing.T) {
 	)
 
 	repo := newFakeRetrievalRepo(activeSettings())
-	repo.search = []agentports.VectorSearchHit{
+	repo.search = []retrievalports.VectorSearchHit{
 		{SourceID: meaning.Document.ID, ChunkIndex: 1, Similarity: 0.82},
 		{SourceID: both.Document.ID, ChunkIndex: 0, Similarity: 0.71},
 	}
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{both, words, meaning},
-		keyword: []agentports.RetrievalKeywordHit{
+		documents: []*retrievalports.RetrievalDocumentSource{both, words, meaning},
+		keyword: []retrievalports.RetrievalKeywordHit{
 			{SourceID: both.Document.ID, Rank: 0.4},
 			{SourceID: words.Document.ID, Rank: 0.3},
 		},
@@ -161,16 +163,16 @@ func TestSearchDocumentsFusesBothLegsAndLabelsTheMatch(t *testing.T) {
 	require.Len(t, result.Hits, 3)
 
 	assert.Equal(t, both.Document.ID, result.Hits[0].Document.ID)
-	assert.Equal(t, agentports.RetrievalMatchBoth, result.Hits[0].Match)
+	assert.Equal(t, retrievalports.RetrievalMatchBoth, result.Hits[0].Match)
 	assert.Equal(t, 1, result.Hits[0].Page)
 	assert.Contains(t, result.Hits[0].Snippet, "Lumper fee")
 
-	byID := make(map[pulid.ID]agentports.DocumentSearchHit, len(result.Hits))
+	byID := make(map[pulid.ID]retrievalports.DocumentSearchHit, len(result.Hits))
 	for _, hit := range result.Hits {
 		byID[hit.Document.ID] = hit
 	}
-	assert.Equal(t, agentports.RetrievalMatchWords, byID[words.Document.ID].Match)
-	assert.Equal(t, agentports.RetrievalMatchMeaning, byID[meaning.Document.ID].Match)
+	assert.Equal(t, retrievalports.RetrievalMatchWords, byID[words.Document.ID].Match)
+	assert.Equal(t, retrievalports.RetrievalMatchMeaning, byID[meaning.Document.ID].Match)
 	assert.Equal(t, 2, byID[meaning.Document.ID].Page, "a meaning match shows the chunk it matched")
 	assert.Contains(t, byID[meaning.Document.ID].Snippet, "Capstone")
 
@@ -193,8 +195,8 @@ func TestSearchDocumentsDropsWhatTheCallerMayNotRead(t *testing.T) {
 	rejected.Document.Status = "Rejected"
 
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{shipment, worker, mystery, rejected},
-		keyword: []agentports.RetrievalKeywordHit{
+		documents: []*retrievalports.RetrievalDocumentSource{shipment, worker, mystery, rejected},
+		keyword: []retrievalports.RetrievalKeywordHit{
 			{SourceID: worker.Document.ID}, {SourceID: mystery.Document.ID},
 			{SourceID: rejected.Document.ID}, {SourceID: shipment.Document.ID},
 			{SourceID: pulid.MustNew("doc_")},
@@ -218,8 +220,8 @@ func TestSearchDocumentsFailsClosedWhenAccessCannotBeChecked(t *testing.T) {
 
 	shipment := documentSource("Linehaul rate for load 4471.")
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{shipment},
-		keyword:   []agentports.RetrievalKeywordHit{{SourceID: shipment.Document.ID}},
+		documents: []*retrievalports.RetrievalDocumentSource{shipment},
+		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: shipment.Document.ID}},
 	}
 	access := &fakeAccess{readErr: errors.New("thread owners unavailable")}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
@@ -234,8 +236,8 @@ func TestSearchDocumentsBuildsSnippetsOnlyFromVisibleFields(t *testing.T) {
 
 	doc := documentSource("Hourly detention after two hours of free time.")
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{doc},
-		keyword:   []agentports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
+		documents: []*retrievalports.RetrievalDocumentSource{doc},
+		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
 	}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
 
@@ -261,8 +263,8 @@ func TestSearchDocumentsWithoutDocumentAccessFindsNothing(t *testing.T) {
 
 	doc := documentSource("Anything.")
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{doc},
-		keyword:   []agentports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
+		documents: []*retrievalports.RetrievalDocumentSource{doc},
+		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
 	}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
 
@@ -283,8 +285,8 @@ func TestSearchFallsBackToWordsWhenMeaningIsUnavailable(t *testing.T) {
 
 	doc := documentSource("Detention after two hours.")
 	sources := &fakeSources{
-		documents: []*agentports.RetrievalDocumentSource{doc},
-		keyword:   []agentports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
+		documents: []*retrievalports.RetrievalDocumentSource{doc},
+		keyword:   []retrievalports.RetrievalKeywordHit{{SourceID: doc.Document.ID}},
 	}
 
 	cases := []struct {
@@ -302,7 +304,7 @@ func TestSearchFallsBackToWordsWhenMeaningIsUnavailable(t *testing.T) {
 		},
 		{
 			name: "the query timed out",
-			vectorizer: &fakeVectorizer{vector: agentports.UnavailableQueryVector(
+			vectorizer: &fakeVectorizer{vector: retrievalports.UnavailableQueryVector(
 				airetrieval.UnavailableReasonQueryTimeout)},
 			reason: airetrieval.UnavailableReasonQueryTimeout,
 		},
@@ -338,7 +340,7 @@ func TestSearchFallsBackToWordsWhenMeaningIsUnavailable(t *testing.T) {
 			assert.False(t, result.Semantics.Used)
 			assert.Equal(t, tc.reason, result.Semantics.Reason)
 			require.Len(t, result.Hits, 1)
-			assert.Equal(t, agentports.RetrievalMatchWords, result.Hits[0].Match)
+			assert.Equal(t, retrievalports.RetrievalMatchWords, result.Hits[0].Match)
 		})
 	}
 }
@@ -356,7 +358,7 @@ func TestSearchInboundMessagesRespectsFieldVisibility(t *testing.T) {
 	}
 	sources := &fakeSources{
 		messages: []*inboundmessage.InboundMessage{message},
-		keyword:  []agentports.RetrievalKeywordHit{{SourceID: message.ID}},
+		keyword:  []retrievalports.RetrievalKeywordHit{{SourceID: message.ID}},
 	}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
 
@@ -415,13 +417,13 @@ func TestSearchInboundMessagesKeepsOnlyMailInsideTheFilter(t *testing.T) {
 	}
 	sources := &fakeSources{
 		messages: []*inboundmessage.InboundMessage{waiting, handled},
-		keyword: []agentports.RetrievalKeywordHit{
+		keyword: []retrievalports.RetrievalKeywordHit{
 			{SourceID: handled.ID, Rank: 0.9},
 			{SourceID: waiting.ID, Rank: 0.5},
 		},
 	}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
-	filter := agentports.InboundMessageFilter{
+	filter := retrievalports.InboundMessageFilter{
 		Statuses:       []inboundmessage.Status{inboundmessage.StatusInReview},
 		Classification: inboundmessage.ClassificationTender,
 		MailboxID:      mailboxID,
@@ -487,23 +489,23 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 
 	repo := newFakeRetrievalRepo(activeSettings())
 	id := pulid.MustNew("amem_")
-	repo.search = []agentports.VectorSearchHit{{SourceID: id, Similarity: 0.7}}
+	repo.search = []retrievalports.VectorSearchHit{{SourceID: id, Similarity: 0.7}}
 	vectorizer := &fakeVectorizer{vector: usableVector()}
 	searcher := newTestSearcher(repo, &fakeSources{}, vectorizer)
 
-	similar, err := searcher.SimilarMemories(t.Context(), &agentports.SimilarMemoriesRequest{
+	similar, err := searcher.SimilarMemories(t.Context(), &retrievalports.SimilarMemoriesRequest{
 		TenantInfo: testTenant,
 		Text:       "free time at Globex",
 	})
 	require.NoError(t, err)
 	assert.True(t, similar.Semantics.Used)
-	assert.Equal(t, []agentports.MemorySimilarity{{MemoryID: id, Similarity: 0.7}},
+	assert.Equal(t, []retrievalports.MemorySimilarity{{MemoryID: id, Similarity: 0.7}},
 		similar.Memories)
 	assert.Equal(t, DefaultSimilarityFloor, similar.Floor)
 	assert.Equal(t, []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		repo.searches[0].SourceTypes)
 
-	_, err = searcher.SimilarMemories(t.Context(), &agentports.SimilarMemoriesRequest{
+	_, err = searcher.SimilarMemories(t.Context(), &retrievalports.SimilarMemoriesRequest{
 		TenantInfo: testTenant,
 		Query:      usableVector(),
 	})
@@ -513,7 +515,7 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	settings := activeSettings()
 	settings.MemoryEnabled = false
 	off, err := newTestSearcher(newFakeRetrievalRepo(settings), &fakeSources{}, vectorizer).
-		SimilarMemories(t.Context(), &agentports.SimilarMemoriesRequest{
+		SimilarMemories(t.Context(), &retrievalports.SimilarMemoriesRequest{
 			TenantInfo: testTenant,
 			Text:       "anything",
 		})
@@ -521,12 +523,12 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	assert.Equal(t, airetrieval.UnavailableReasonDisabled, off.Semantics.Reason)
 }
 
-func memoriesByAge(count int) []*agent.Memory {
-	memories := make([]*agent.Memory, 0, count)
+func memoriesByAge(count int) []*agentmemory.Memory {
+	memories := make([]*agentmemory.Memory, 0, count)
 	for idx := range count {
-		memories = append(memories, &agent.Memory{
+		memories = append(memories, &agentmemory.Memory{
 			ID:        pulid.MustNew("amem_"),
-			Kind:      agent.MemoryKindFact,
+			Kind:      agentmemory.MemoryKindFact,
 			Content:   "memory",
 			CreatedAt: int64(1_000 + idx*100),
 			UpdatedAt: int64(1_000 + idx*100),
@@ -544,13 +546,13 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	require.Equal(t, memories[3].ID, recency[0].ID)
 
 	repo := newFakeRetrievalRepo(activeSettings())
-	repo.search = []agentports.VectorSearchHit{
+	repo.search = []retrievalports.VectorSearchHit{
 		{SourceID: memories[0].ID, Similarity: 0.91},
 		{SourceID: memories[1].ID, Similarity: 0.2},
 	}
 	ranker := NewMemoryRanker(newTestSearcher(repo, &fakeSources{}, nil))
 
-	ranked, err := ranker.RankMemories(t.Context(), &agentports.RankMemoriesRequest{
+	ranked, err := ranker.RankMemories(t.Context(), &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: testTenant,
 		Now:        2_000,
 		Memories:   memories,
@@ -563,7 +565,7 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	assert.Equal(t, []pulid.ID{memories[0].ID}, ranked.Similar,
 		"only a memory at or above the floor bears on the query")
 
-	unranked, err := ranker.RankMemories(t.Context(), &agentports.RankMemoriesRequest{
+	unranked, err := ranker.RankMemories(t.Context(), &agentmemoryports.RankMemoriesRequest{
 		TenantInfo: testTenant,
 		Now:        2_000,
 		Memories:   memories,
@@ -571,14 +573,19 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, unranked.Semantic)
 	assert.Empty(t, unranked.Similar)
-	assert.Equal(t, memories[3].ID, unranked.Memories[0].ID, "without a vector the order is recency")
+	assert.Equal(
+		t,
+		memories[3].ID,
+		unranked.Memories[0].ID,
+		"without a vector the order is recency",
+	)
 }
 
-func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
+func recencyOrder(t *testing.T, memories []*agentmemory.Memory) []*agentmemory.Memory {
 	t.Helper()
 
 	ranked, err := NewMemoryRankerFrom(nil, DefaultSearchTuning(), zap.NewNop()).
-		RankMemories(t.Context(), &agentports.RankMemoriesRequest{
+		RankMemories(t.Context(), &agentmemoryports.RankMemoriesRequest{
 			Now:      2_000,
 			Memories: memories,
 		})
@@ -587,7 +594,7 @@ func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
 	return ranked.Memories
 }
 
-func nomicVector() agentports.QueryVector {
+func nomicVector() retrievalports.QueryVector {
 	vector := usableVector()
 	vector.ModelKey = "localhost:11434/nomic-embed-text@768"
 
@@ -598,12 +605,12 @@ func TestSearchDocumentsHoldsAMeaningMatchToTheEmbeddingModelsFloor(t *testing.T
 	t.Parallel()
 
 	meaning := documentSource("Unloading service paid in cash.")
-	search := func(vector agentports.QueryVector) []agentports.DocumentSearchHit {
+	search := func(vector retrievalports.QueryVector) []retrievalports.DocumentSearchHit {
 		repo := newFakeRetrievalRepo(activeSettings())
-		repo.search = []agentports.VectorSearchHit{
+		repo.search = []retrievalports.VectorSearchHit{
 			{SourceID: meaning.Document.ID, ChunkIndex: 0, Similarity: 0.55},
 		}
-		sources := &fakeSources{documents: []*agentports.RetrievalDocumentSource{meaning}}
+		sources := &fakeSources{documents: []*retrievalports.RetrievalDocumentSource{meaning}}
 		searcher := newTestSearcher(repo, sources, &fakeVectorizer{vector: vector})
 		result, err := searcher.SearchDocuments(t.Context(), searchRequest("cash", &fakeAccess{}))
 		require.NoError(t, err)
@@ -622,7 +629,7 @@ func TestSimilarMemoriesReportsTheEmbeddingModelsFloor(t *testing.T) {
 	repo := newFakeRetrievalRepo(activeSettings())
 	searcher := newTestSearcher(repo, &fakeSources{}, &fakeVectorizer{vector: nomicVector()})
 
-	similar, err := searcher.SimilarMemories(t.Context(), &agentports.SimilarMemoriesRequest{
+	similar, err := searcher.SimilarMemories(t.Context(), &retrievalports.SimilarMemoriesRequest{
 		TenantInfo: testTenant,
 		Text:       "free time at Globex",
 	})

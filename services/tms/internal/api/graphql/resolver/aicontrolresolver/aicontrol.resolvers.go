@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
@@ -64,7 +64,7 @@ func (r *AIControlSummaryResolver) VisibleFailures(
 	visible, err := r.AiControlSummaryService.VisibleFailures(
 		ctx,
 		&aicontrolsummaryports.VisibleFailuresRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			UserID:     authCtx.UserID,
 			Failing:    obj.Facts.Failing,
 		},
@@ -98,7 +98,7 @@ func (r *MutationResolver) DismissAIProviderFailure(
 	if err = r.AiControlSummaryService.DismissFailure(
 		ctx,
 		&aicontrolsummaryports.ProviderFailureDismissal{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			UserID:     authCtx.UserID,
 			ProviderID: id,
 			FailureAt:  int64(lastFailureAt),
@@ -126,7 +126,7 @@ func (r *MutationResolver) RestoreAIProviderFailure(
 	if err = r.AiControlSummaryService.RestoreFailure(
 		ctx,
 		&aicontrolsummaryports.ProviderFailureDismissal{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			UserID:     authCtx.UserID,
 			ProviderID: id,
 		},
@@ -146,7 +146,7 @@ func (r *QueryResolver) AiControlSummary(
 	}
 
 	return r.AiControlSummaryService.Summary(ctx, &aicontrolsummaryports.AIControlSummaryRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Tab:        tab,
 	})
 }
@@ -166,7 +166,7 @@ func (r *MutationResolver) ApplyAITuneUp(
 		return nil, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	tuneUp, err := r.AiTuneUpService.Get(
 		ctx,
 		aituneupports.GetAITuneUpRequest{TenantInfo: tenantInfo, ID: tuneUpID},
@@ -206,7 +206,7 @@ func (r *MutationResolver) DismissAITuneUp(
 	}
 
 	request := &aituneupports.AITuneUpDecisionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         tuneUpID,
 		Version:    int64(version),
 	}
@@ -237,7 +237,7 @@ func (r *MutationResolver) RestoreAITuneUp(
 	}
 
 	view, err := r.AiTuneUpService.Restore(ctx, &aituneupports.AITuneUpDecisionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         tuneUpID,
 		Version:    int64(version),
 	}, actorutil.FromAuthContext(authCtx))
@@ -253,7 +253,7 @@ func (r *QueryResolver) AiTuneUps(ctx context.Context) (*gqlmodel.AITuneUps, err
 		return nil, err
 	}
 
-	list, err := r.AiTuneUpService.List(ctx, base.TenantInfo(authCtx))
+	list, err := r.AiTuneUpService.List(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func (r *QueryResolver) AiAgentRoster(ctx context.Context) ([]*gqlmodel.AIAgentR
 		return nil, err
 	}
 
-	stats, err := r.AgentRosterService.Roster(ctx, base.TenantInfo(authCtx))
+	stats, err := r.AgentRosterService.Roster(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}

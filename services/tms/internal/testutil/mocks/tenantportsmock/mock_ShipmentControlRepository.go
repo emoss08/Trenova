@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -41,23 +41,23 @@ func (_m *MockShipmentControlRepository) EXPECT() *MockShipmentControlRepository
 }
 
 // Get provides a mock function for the type MockShipmentControlRepository
-func (_mock *MockShipmentControlRepository) Get(ctx context.Context, req tenantports.GetShipmentControlRequest) (*tenant.ShipmentControl, error) {
+func (_mock *MockShipmentControlRepository) Get(ctx context.Context, req tenantports.GetShipmentControlRequest) (*shipmentcontrol.ShipmentControl, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *tenant.ShipmentControl
+	var r0 *shipmentcontrol.ShipmentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetShipmentControlRequest) (*tenant.ShipmentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetShipmentControlRequest) (*shipmentcontrol.ShipmentControl, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetShipmentControlRequest) *tenant.ShipmentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetShipmentControlRequest) *shipmentcontrol.ShipmentControl); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.ShipmentControl)
+			r0 = ret.Get(0).(*shipmentcontrol.ShipmentControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetShipmentControlRequest) error); ok {
@@ -98,12 +98,12 @@ func (_c *MockShipmentControlRepository_Get_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockShipmentControlRepository_Get_Call) Return(shipmentControl *tenant.ShipmentControl, err error) *MockShipmentControlRepository_Get_Call {
+func (_c *MockShipmentControlRepository_Get_Call) Return(shipmentControl *shipmentcontrol.ShipmentControl, err error) *MockShipmentControlRepository_Get_Call {
 	_c.Call.Return(shipmentControl, err)
 	return _c
 }
 
-func (_c *MockShipmentControlRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetShipmentControlRequest) (*tenant.ShipmentControl, error)) *MockShipmentControlRepository_Get_Call {
+func (_c *MockShipmentControlRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetShipmentControlRequest) (*shipmentcontrol.ShipmentControl, error)) *MockShipmentControlRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -177,26 +177,26 @@ func (_c *MockShipmentControlRepository_ListDetentionEngineTenants_Call) RunAndR
 }
 
 // Update provides a mock function for the type MockShipmentControlRepository
-func (_mock *MockShipmentControlRepository) Update(ctx context.Context, sc *tenant.ShipmentControl) (*tenant.ShipmentControl, error) {
+func (_mock *MockShipmentControlRepository) Update(ctx context.Context, sc *shipmentcontrol.ShipmentControl) (*shipmentcontrol.ShipmentControl, error) {
 	ret := _mock.Called(ctx, sc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.ShipmentControl
+	var r0 *shipmentcontrol.ShipmentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.ShipmentControl) (*tenant.ShipmentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentcontrol.ShipmentControl) (*shipmentcontrol.ShipmentControl, error)); ok {
 		return returnFunc(ctx, sc)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.ShipmentControl) *tenant.ShipmentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipmentcontrol.ShipmentControl) *shipmentcontrol.ShipmentControl); ok {
 		r0 = returnFunc(ctx, sc)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.ShipmentControl)
+			r0 = ret.Get(0).(*shipmentcontrol.ShipmentControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.ShipmentControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipmentcontrol.ShipmentControl) error); ok {
 		r1 = returnFunc(ctx, sc)
 	} else {
 		r1 = ret.Error(1)
@@ -211,20 +211,20 @@ type MockShipmentControlRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sc *tenant.ShipmentControl
+//   - sc *shipmentcontrol.ShipmentControl
 func (_e *MockShipmentControlRepository_Expecter) Update(ctx any, sc any) *MockShipmentControlRepository_Update_Call {
 	return &MockShipmentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, sc)}
 }
 
-func (_c *MockShipmentControlRepository_Update_Call) Run(run func(ctx context.Context, sc *tenant.ShipmentControl)) *MockShipmentControlRepository_Update_Call {
+func (_c *MockShipmentControlRepository_Update_Call) Run(run func(ctx context.Context, sc *shipmentcontrol.ShipmentControl)) *MockShipmentControlRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.ShipmentControl
+		var arg1 *shipmentcontrol.ShipmentControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.ShipmentControl)
+			arg1 = args[1].(*shipmentcontrol.ShipmentControl)
 		}
 		run(
 			arg0,
@@ -234,12 +234,12 @@ func (_c *MockShipmentControlRepository_Update_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockShipmentControlRepository_Update_Call) Return(shipmentControl *tenant.ShipmentControl, err error) *MockShipmentControlRepository_Update_Call {
+func (_c *MockShipmentControlRepository_Update_Call) Return(shipmentControl *shipmentcontrol.ShipmentControl, err error) *MockShipmentControlRepository_Update_Call {
 	_c.Call.Return(shipmentControl, err)
 	return _c
 }
 
-func (_c *MockShipmentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, sc *tenant.ShipmentControl) (*tenant.ShipmentControl, error)) *MockShipmentControlRepository_Update_Call {
+func (_c *MockShipmentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, sc *shipmentcontrol.ShipmentControl) (*shipmentcontrol.ShipmentControl, error)) *MockShipmentControlRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

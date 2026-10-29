@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -22,13 +24,13 @@ import (
 var sharedCatalog = sync.OnceValues(reportengine.NewCatalog)
 
 type groupAccess struct {
-	visible permission.FieldGroupSet
+	visible protectedfield.GroupSet
 }
 
 func (g groupAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	return g.visible
 }
 
@@ -63,12 +65,12 @@ type fixture struct {
 	resolver *reportaccess.Resolver
 }
 
-func newFixture(t *testing.T, groups permission.FieldGroupSet) *fixture {
+func newFixture(t *testing.T, groups protectedfield.GroupSet) *fixture {
 	t.Helper()
 	catalog, err := sharedCatalog()
 	require.NoError(t, err)
 	engine := &countingEngine{Engine: permtest.AllowAll()}
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resolver, err := reportaccess.New(reportaccess.Params{
 		Catalog:  catalog,
 		Engine:   engine,
@@ -110,7 +112,7 @@ func (f *fixture) edge(t *testing.T, entity, name string) *analytics.Edge {
 func TestNew_RefusesACatalogEntityWithoutAKind(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	for _, entity := range f.catalog.Entities() {
 		assert.NotEmptyf(t, f.resolver.Resource(entity), "%s has no resource", entity.Key)
 	}
@@ -121,7 +123,7 @@ func TestNew_RefusesACatalogEntityWithoutAKind(t *testing.T) {
 func TestFor_ReadsThePermissionsInOneBatch(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	access := f.access(t, reportaccess.ModeRead)
 
 	for _, entity := range f.catalog.Entities() {
@@ -136,7 +138,7 @@ func TestFor_ReadsThePermissionsInOneBatch(t *testing.T) {
 func TestField_AKindTheCallerCannotReadOffersOnlyItsReferenceView(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	f.engine.Overrides[permission.ResourceCustomer.String()] = permtest.Grant{}
 	access := f.access(t, reportaccess.ModeRead)
 
@@ -165,7 +167,7 @@ func TestField_AKindTheCallerCannotReadOffersOnlyItsReferenceView(t *testing.T) 
 func TestField_TheCeilingAppliesOnAReadableKind(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
 		Operations:     []permission.Operation{permission.OpRead},
 		MaxSensitivity: permission.SensitivityPublic,
@@ -188,7 +190,7 @@ func TestField_AProtectedFieldNeedsItsGroup(t *testing.T) {
 	t.Parallel()
 
 	without := newFixture(t, 0)
-	with := newFixture(t, permission.AllFieldGroups())
+	with := newFixture(t, protectedfield.AllGroups())
 	denied := without.access(t, reportaccess.ModeRead)
 	granted := with.access(t, reportaccess.ModeRead)
 
@@ -222,7 +224,7 @@ func TestField_AProtectedFieldNeedsItsGroup(t *testing.T) {
 func TestExport_NeedsTheKindsExport(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
 		Operations:     []permission.Operation{permission.OpRead},
 		MaxSensitivity: permission.SensitivityConfidential,
@@ -249,7 +251,7 @@ func TestExport_NeedsTheKindsExport(t *testing.T) {
 func TestEdge_APickEdgeNeedsReadOnTheRowsItPicksFrom(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	pick := f.edge(t, "shipment", "originStop")
 	require.True(t, pick.Pick)
 	via := f.resolver.PickVia(pick)
@@ -271,7 +273,7 @@ func TestEdge_APickEdgeNeedsReadOnTheRowsItPicksFrom(t *testing.T) {
 func TestRows_AnOwnScopeGrantNarrowsToTheCallersRecords(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	f.engine.Overrides[permission.ResourceShipment.String()] = permtest.Grant{
 		Operations:     []permission.Operation{permission.OpRead},
 		DataScope:      permission.DataScopeOwn,
@@ -299,7 +301,7 @@ func TestRows_AnOwnScopeGrantNarrowsToTheCallersRecords(t *testing.T) {
 func TestRefusal_NamesWhatTheCallerLacks(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(t, permission.AllFieldGroups())
+	f := newFixture(t, protectedfield.AllGroups())
 	f.engine.Overrides[permission.ResourceCustomer.String()] = permtest.Grant{}
 	access := f.access(t, reportaccess.ModeRead)
 

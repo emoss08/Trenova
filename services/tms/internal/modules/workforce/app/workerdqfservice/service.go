@@ -13,12 +13,16 @@ package workerdqfservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -44,7 +48,7 @@ type CredentialSummarizer interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (*worker.WorkerCredentialSummary, error)
+	) (*workercredential.WorkerCredentialSummary, error)
 }
 
 // PacketSummarizer is the slice of the document service this needs: which
@@ -64,33 +68,33 @@ type DrugAlcoholStander interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		workerID pulid.ID,
-	) (worker.DrugAlcoholStanding, error)
+	) (workerdot.DrugAlcoholStanding, error)
 }
 
 type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Repo          workerports.WorkerDQFRepository
+	Repo          workerdqfports.WorkerDQFRepository
 	WorkerRepo    workerports.WorkerRepository
 	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
 	Documents     PacketSummarizer
 	DrugAlcohol   DrugAlcoholStander
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
-	repo          workerports.WorkerDQFRepository
+	repo          workerdqfports.WorkerDQFRepository
 	workerRepo    workerports.WorkerRepository
 	retentionRepo tenantports.DataRetentionRepository
 	credentials   CredentialSummarizer
 	documents     PacketSummarizer
 	drugAlcohol   DrugAlcoholStander
 	auditService  auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -110,7 +114,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger        *zap.Logger
-	Repo          workerports.WorkerDQFRepository
+	Repo          workerdqfports.WorkerDQFRepository
 	WorkerRepo    workerports.WorkerRepository
 	RetentionRepo tenantports.DataRetentionRepository
 	Credentials   CredentialSummarizer
@@ -148,7 +152,7 @@ func (s *Service) File(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.DQFFile, error) {
+) (*workercompliance.DQFFile, error) {
 	wrk, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
 		ID:             workerID,
 		TenantInfo:     tenantInfo,
@@ -159,10 +163,10 @@ func (s *Service) File(
 	}
 
 	var (
-		credentials   *worker.WorkerCredentialSummary
+		credentials   *workercredential.WorkerCredentialSummary
 		documents     *documentpacketrule.PacketSummary
-		verifications []*worker.WorkerEmploymentVerification
-		standing      worker.DrugAlcoholStanding
+		verifications []*employment.WorkerEmploymentVerification
+		standing      workerdot.DrugAlcoholStanding
 	)
 
 	group, groupCtx := errgroup.WithContext(ctx)
@@ -189,7 +193,7 @@ func (s *Service) File(
 		var gErr error
 		verifications, gErr = s.repo.ListVerifications(
 			groupCtx,
-			&workerports.ListEmploymentVerificationsRequest{
+			&workerdqfports.ListEmploymentVerificationsRequest{
 				TenantInfo: tenantInfo,
 				WorkerID:   workerID,
 			},
@@ -208,7 +212,7 @@ func (s *Service) File(
 		return nil, err
 	}
 
-	in := worker.DQFInput{
+	in := workercompliance.DQFInput{
 		WorkerID:      workerID,
 		Credentials:   credentials,
 		Documents:     documents,
@@ -224,7 +228,7 @@ func (s *Service) File(
 		in.TerminationDate = wrk.Profile.TerminationDate
 	}
 
-	return worker.BuildDQF(in), nil
+	return workercompliance.BuildDQF(in), nil
 }
 
 // retentionDays reads the organisation's hold period. A tenant with no
@@ -235,7 +239,7 @@ func (s *Service) retentionDays(
 	tenantInfo pagination.TenantInfo,
 ) int {
 	if s.retentionRepo == nil {
-		return worker.DefaultDQFRetentionDays
+		return workercompliance.DefaultDQFRetentionDays
 	}
 	retention, err := s.retentionRepo.Get(ctx, tenantports.GetDataRetentionRequest{
 		OrgID: tenantInfo.OrgID,
@@ -245,7 +249,7 @@ func (s *Service) retentionDays(
 		if err != nil {
 			s.l.Warn("failed to read data retention settings", zap.Error(err))
 		}
-		return worker.DefaultDQFRetentionDays
+		return workercompliance.DefaultDQFRetentionDays
 	}
 	return retention.DriverQualificationRetentionPeriod
 }
@@ -257,9 +261,9 @@ func (s *Service) RetentionCandidates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	limit int,
-) ([]workerports.DQFRetentionCandidate, error) {
+) ([]workerdqfports.DQFRetentionCandidate, error) {
 	days := s.retentionDays(ctx, tenantInfo)
-	return s.repo.ListRetentionCandidates(ctx, &workerports.ListDQFRetentionCandidatesRequest{
+	return s.repo.ListRetentionCandidates(ctx, &workerdqfports.ListDQFRetentionCandidatesRequest{
 		TenantInfo:       tenantInfo,
 		RetentionSeconds: int64(days) * secondsPerDay,
 		AsOf:             timeutils.NowUnix(),
@@ -325,7 +329,7 @@ func (s *Service) publish(
 }
 
 func verificationTenant(
-	entity *worker.WorkerEmploymentVerification,
+	entity *employment.WorkerEmploymentVerification,
 ) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

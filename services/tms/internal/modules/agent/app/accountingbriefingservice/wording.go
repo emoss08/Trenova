@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/money"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -38,23 +38,23 @@ func tenths(value int64) string {
 }
 
 func invoices(count int) string {
-	return stringutils.CountNoun(count, "invoice", "invoices")
+	return inflect.CountNoun(count, "invoice", "invoices")
 }
 
 func payments(count int) string {
-	return stringutils.CountNoun(count, "payment", "payments")
+	return inflect.CountNoun(count, "payment", "payments")
 }
 
 func customers(count int) string {
-	return stringutils.CountNoun(count, "customer", "customers")
+	return inflect.CountNoun(count, "customer", "customers")
 }
 
 func days(count int) string {
-	return stringutils.CountNoun(count, "day", "days")
+	return inflect.CountNoun(count, "day", "days")
 }
 
 func verb(singular, plural string, count int) string {
-	return stringutils.Pluralize(singular, plural, count)
+	return inflect.Pluralize(singular, plural, count)
 }
 
 func sentence(clauses []clause) []accountingbriefports.AccountingBriefingSegment {
@@ -126,7 +126,7 @@ func todayClauses(f accountingbrief.Facts) []clause {
 			)})
 		} else {
 			clauses = append(clauses, clause{linked(
-				stringutils.CountNoun(f.BrokenPromises, "promise", "promises")+" to pay "+
+				inflect.CountNoun(f.BrokenPromises, "promise", "promises")+" to pay "+
 					dollars(f.BrokenPromiseMinor)+" "+verb("has", "have", f.BrokenPromises)+
 					" lapsed unpaid",
 				accountingbrief.LinkBrokenPromise,
@@ -166,7 +166,7 @@ func todayClauses(f accountingbrief.Facts) []clause {
 	}
 	if f.FollowUpsDue > 0 {
 		clauses = append(clauses, clause{linked(
-			stringutils.CountNoun(f.FollowUpsDue, "follow-up", "follow-ups")+" "+
+			inflect.CountNoun(f.FollowUpsDue, "follow-up", "follow-ups")+" "+
 				verb("is", "are", f.FollowUpsDue)+" due",
 			accountingbrief.LinkFollowUpsDue,
 		)})
@@ -180,7 +180,7 @@ func aheadClauses(f accountingbrief.Facts) []clause {
 
 	if f.PromisesDue > 0 {
 		clauses = append(clauses, clause{linked(
-			stringutils.CountNoun(f.PromisesDue, "promise", "promises")+" to pay "+
+			inflect.CountNoun(f.PromisesDue, "promise", "promises")+" to pay "+
 				dollars(f.PromisesDueMinor)+" "+verb("comes", "come", f.PromisesDue)+
 				" due in the next "+days(accountingbrief.PromiseLookaheadDays),
 			accountingbrief.LinkPromisesDue,
@@ -221,7 +221,7 @@ func aheadClauses(f accountingbrief.Facts) []clause {
 	}
 	if f.ShortPayRemainders > 0 {
 		clauses = append(clauses, clause{linked(
-			stringutils.CountNoun(f.ShortPayRemainders, "short payment", "short payments")+" "+
+			inflect.CountNoun(f.ShortPayRemainders, "short payment", "short payments")+" "+
 				verb("leaves", "leave", f.ShortPayRemainders)+" "+dollars(f.ShortPayRemainderMinor)+
 				" open in balances under "+dollars(accountingbrief.ShortPayRemainderMaxMinor)+
 				" that could be written off",

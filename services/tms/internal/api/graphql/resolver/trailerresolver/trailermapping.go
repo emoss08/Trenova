@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -83,7 +83,7 @@ func trailerRelationIncludesForFields(
 func trailerConnectionToModel(
 	result *pagination.CursorListResult[*trailer.Trailer],
 ) (*gqlmodel.TrailerConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *trailer.Trailer, cursor string) *gqlmodel.TrailerEdge {
@@ -96,14 +96,14 @@ func trailerConnectionToModel(
 	if err != nil {
 		return nil, err
 	}
-	endCursor := base.LastEdgeCursor(
+	endCursor := gqlconnection.LastEdgeCursor(
 		edges,
 		func(edge *gqlmodel.TrailerEdge) string { return edge.Cursor },
 	)
 
 	return &gqlmodel.TrailerConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
 			endCursor,
 		),

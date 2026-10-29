@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIShipmentTenderRepository {
+func New(p Params) editenderports.EDIShipmentTenderRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-shipment-tender-repository"),
@@ -39,7 +39,7 @@ func New(p Params) ediports.EDIShipmentTenderRepository {
 
 func (r *repository) LockShipment(
 	ctx context.Context,
-	req ediports.LockEDITenderShipmentRequest,
+	req editenderports.LockEDITenderShipmentRequest,
 ) (*shipment.Shipment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Shipment, error) {
 		sp := shipmentdb.Shipments
@@ -56,7 +56,7 @@ func (r *repository) LockShipment(
 
 func (r *repository) SetShipmentTenderStatus(
 	ctx context.Context,
-	req ediports.SetEDIShipmentTenderStatusRequest,
+	req editenderports.SetEDIShipmentTenderStatusRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		sp := shipmentdb.Shipments

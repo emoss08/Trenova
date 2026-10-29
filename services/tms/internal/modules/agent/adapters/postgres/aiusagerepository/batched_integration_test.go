@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
@@ -51,7 +52,7 @@ func TestCreateOrSkip_CountsABatchReadTwiceOnce(t *testing.T) {
 				BusinessUnitID:    row.BusinessUnitID,
 				ProviderKind:      aiprovider.KindAnthropicMessages,
 				Model:             "claude-sonnet-5-5",
-				Task:              aiprovider.TaskEvaluationJudge,
+				Task:              aitask.TaskEvaluationJudge,
 				Surface:           aiusage.SurfaceEvaluation,
 				AgentDefinitionID: row.ID,
 				RunID:             pulid.MustNew("aeval_"),

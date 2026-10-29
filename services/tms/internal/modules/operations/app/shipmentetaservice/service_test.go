@@ -9,7 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -37,13 +39,13 @@ func (s *stubShipments) ListTrackingShipments(
 }
 
 type stubBoard struct {
-	moves []*shipmentports.BoardMove
+	moves []*dispatchboardports.BoardMove
 }
 
 func (s *stubBoard) ListBoardMoves(
 	context.Context,
-	*shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
+	*dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
 	return s.moves, nil
 }
 
@@ -208,7 +210,7 @@ func (m *memoryEtas) ListTrackedShipmentIDs(
 
 func (m *memoryEtas) ListActiveTenants(
 	context.Context,
-	[]shipment.Status,
+	[]shipmentvocab.Status,
 ) ([]pagination.TenantInfo, error) {
 	return nil, nil
 }
@@ -250,8 +252,8 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 	windowEnd := now.Add(windowEndFromNow).Unix()
 	delivery := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
-		Type:                 shipment.StopTypeDelivery,
-		Status:               shipment.StopStatusNew,
+		Type:                 shipmentvocab.StopTypeDelivery,
+		Status:               shipmentvocab.StopStatusNew,
 		Sequence:             2,
 		ScheduledWindowStart: windowEnd - 3600,
 		ScheduledWindowEnd:   ptr(windowEnd),
@@ -261,17 +263,17 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 		ID:             pulid.MustNew("shp_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
-		Status:         shipment.StatusInTransit,
+		Status:         shipmentvocab.StatusInTransit,
 		Customer:       &customer.Customer{},
 		Moves: []*shipment.ShipmentMove{{
 			ID:           moveID,
-			Status:       shipment.MoveStatusInTransit,
-			CoverageType: shipment.MoveCoverageTypeDriver,
+			Status:       shipmentvocab.MoveStatusInTransit,
+			CoverageType: shipmentvocab.MoveCoverageTypeDriver,
 			Stops: []*shipment.Stop{
 				{
 					ID:                   pulid.MustNew("stp_"),
-					Type:                 shipment.StopTypePickup,
-					Status:               shipment.StopStatusCompleted,
+					Type:                 shipmentvocab.StopTypePickup,
+					Status:               shipmentvocab.StopStatusCompleted,
 					Sequence:             1,
 					ScheduledWindowStart: now.Unix() - 7200,
 					ActualArrival:        ptr(now.Unix() - 7000),
@@ -302,11 +304,11 @@ func newFixture(windowEndFromNow time.Duration) *fixture {
 	}
 	f.svc = NewWithDependencies(&Dependencies{
 		Shipments: &stubShipments{entities: []*shipment.Shipment{entity}},
-		Board: &stubBoard{moves: []*shipmentports.BoardMove{{
+		Board: &stubBoard{moves: []*dispatchboardports.BoardMove{{
 			MoveID:            moveID,
 			AssignedTractorID: tractor,
 			AssignedWorkerID:  workerID,
-			CoverageType:      string(shipment.MoveCoverageTypeDriver),
+			CoverageType:      string(shipmentvocab.MoveCoverageTypeDriver),
 		}}},
 		Workers: &stubWorkers{},
 		Telematics: &stubTelematics{positions: []*telematics.VehiclePosition{{
@@ -377,7 +379,7 @@ func TestRefreshShipments_FinishedShipmentClearsRows(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, f.etas.rows, 1)
 
-	f.entity.Status = shipment.StatusCompleted
+	f.entity.Status = shipmentvocab.StatusCompleted
 	_, err = f.svc.RefreshShipments(t.Context(), f.tenant, []pulid.ID{f.entity.ID})
 	require.NoError(t, err)
 	assert.Empty(t, f.etas.rows)

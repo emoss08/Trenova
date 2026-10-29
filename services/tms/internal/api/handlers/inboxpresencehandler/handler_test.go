@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -25,32 +26,35 @@ import (
 )
 
 type stubGateway struct {
-	joined   *agentports.RealtimeScopeRequest
-	left     *agentports.RealtimeScopeRequest
-	snapshot *agentports.RealtimePresenceSnapshot
+	joined   *realtimeports.RealtimeScopeRequest
+	left     *realtimeports.RealtimeScopeRequest
+	snapshot *realtimeports.RealtimePresenceSnapshot
 }
 
 func (g *stubGateway) Open(
 	context.Context,
-	*agentports.OpenRealtimeStreamRequest,
-) (agentports.RealtimeStream, error) {
+	*realtimeports.OpenRealtimeStreamRequest,
+) (realtimeports.RealtimeStream, error) {
 	return nil, nil
 }
 
 func (g *stubGateway) JoinPresence(
 	_ context.Context,
-	req *agentports.RealtimeScopeRequest,
-) (*agentports.RealtimePresenceSnapshot, error) {
+	req *realtimeports.RealtimeScopeRequest,
+) (*realtimeports.RealtimePresenceSnapshot, error) {
 	g.joined = req
 	return g.snapshot, nil
 }
 
-func (g *stubGateway) LeavePresence(_ context.Context, req *agentports.RealtimeScopeRequest) error {
+func (g *stubGateway) LeavePresence(
+	_ context.Context,
+	req *realtimeports.RealtimeScopeRequest,
+) error {
 	g.left = req
 	return nil
 }
 
-func (g *stubGateway) SignalTyping(context.Context, *agentports.RealtimeTypingRequest) error {
+func (g *stubGateway) SignalTyping(context.Context, *realtimeports.RealtimeTypingRequest) error {
 	return nil
 }
 
@@ -66,14 +70,18 @@ func newRouter(t *testing.T, gateway *stubGateway, allowed bool) *gin.Engine {
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	eh := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
+	)
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.MatchedBy(func(req *permissionports.PermissionCheckRequest) bool {
 		return req.Resource == permission.ResourceInboundMessage.String() &&
 			req.Operation == permission.OpRead
-	})).Return(&permissionports.PermissionCheckResult{Allowed: allowed}, nil).Maybe()
+	})).
+		Return(&permissionports.PermissionCheckResult{Allowed: allowed}, nil).
+		Maybe()
 
 	h := New(Params{
 		Gateway:      gateway,
@@ -97,14 +105,14 @@ func newRouter(t *testing.T, gateway *stubGateway, allowed bool) *gin.Engine {
 func TestJoinCarriesWhatTheCallerIsDoing(t *testing.T) {
 	t.Parallel()
 
-	gateway := &stubGateway{snapshot: &agentports.RealtimePresenceSnapshot{
+	gateway := &stubGateway{snapshot: &realtimeports.RealtimePresenceSnapshot{
 		Scope: Scope,
-		Members: []agentports.RealtimePresenceMember{{
+		Members: []realtimeports.RealtimePresenceMember{{
 			UserID:       testUserID.String(),
 			ConnectionID: "rtc_01J00000000000000000000000",
 			Name:         "Dana",
 			MessageID:    "imsg_01J00000000000000000000000",
-			Activity:     agentports.RealtimeActivityWriting,
+			Activity:     realtimeports.RealtimeActivityWriting,
 		}},
 	}}
 	r := newRouter(t, gateway, true)
@@ -125,9 +133,9 @@ func TestJoinCarriesWhatTheCallerIsDoing(t *testing.T) {
 	assert.Equal(t, testOrgID, gateway.joined.OrganizationID)
 	assert.Equal(t, "rtc_01J00000000000000000000000", gateway.joined.ConnectionID)
 	assert.Equal(t, "imsg_01J00000000000000000000000", gateway.joined.State.MessageID)
-	assert.Equal(t, agentports.RealtimeActivityWriting, gateway.joined.State.Activity)
+	assert.Equal(t, realtimeports.RealtimeActivityWriting, gateway.joined.State.Activity)
 
-	var snapshot agentports.RealtimePresenceSnapshot
+	var snapshot realtimeports.RealtimePresenceSnapshot
 	require.NoError(t, sonic.Unmarshal(rec.Body.Bytes(), &snapshot))
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, "writing", snapshot.Members[0].Activity)
@@ -137,7 +145,7 @@ func TestJoinCarriesWhatTheCallerIsDoing(t *testing.T) {
 func TestJoinWithNullsClearsTheState(t *testing.T) {
 	t.Parallel()
 
-	gateway := &stubGateway{snapshot: &agentports.RealtimePresenceSnapshot{Scope: Scope}}
+	gateway := &stubGateway{snapshot: &realtimeports.RealtimePresenceSnapshot{Scope: Scope}}
 	r := newRouter(t, gateway, true)
 
 	body := `{"connectionId":"rtc_01J00000000000000000000000","messageId":null,"activity":null}`
@@ -150,7 +158,7 @@ func TestJoinWithNullsClearsTheState(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.NotNil(t, gateway.joined)
-	assert.Equal(t, agentports.RealtimePresenceState{}, gateway.joined.State)
+	assert.Equal(t, realtimeports.RealtimePresenceState{}, gateway.joined.State)
 }
 
 func TestLeave(t *testing.T) {

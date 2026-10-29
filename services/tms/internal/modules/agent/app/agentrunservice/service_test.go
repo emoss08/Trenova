@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,7 +23,7 @@ import (
 )
 
 type fakeAgentRunRepo struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	create func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	update func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 }
@@ -130,8 +130,10 @@ func definitionRepoFor(def *agentdefinition.Definition) *fakeDefinitionRepo {
 	}
 }
 
-func startRequest(def *agentdefinition.Definition) *agentports.StartAgentRunForDefinitionRequest {
-	return &agentports.StartAgentRunForDefinitionRequest{
+func startRequest(
+	def *agentdefinition.Definition,
+) *agentruntimeports.StartAgentRunForDefinitionRequest {
+	return &agentruntimeports.StartAgentRunForDefinitionRequest{
 		DefinitionID: def.ID,
 		SubjectType:  agent.SubjectBillingQueueItem,
 		SubjectID:    pulid.MustNew("bqi_"),
@@ -331,7 +333,7 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		audit: &fakeAuditService{},
 	}
 
-	req := &agentports.StartAgentRunForDefinitionRequest{
+	req := &agentruntimeports.StartAgentRunForDefinitionRequest{
 		SystemKey:  def.SystemKey,
 		Trigger:    agent.RunTriggerScheduled,
 		Slot:       1_700_000_000,
@@ -433,7 +435,7 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 	}
 
 	_, err := svc.StartForDefinition(t.Context(), startRequest(def), nil)
-	if !errors.Is(err, agentports.ErrAgentRunAlreadyOpen) {
+	if !errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen) {
 		t.Fatalf("expected the open run to refuse the start, got %v", err)
 	}
 	if created {
@@ -463,9 +465,13 @@ func TestStartForDefinitionRequiresIDOrSystemKey(t *testing.T) {
 		definitions: &fakeDefinitionRepo{},
 	}
 
-	_, err := svc.StartForDefinition(t.Context(), &agentports.StartAgentRunForDefinitionRequest{
-		TenantInfo: testTenant,
-	}, nil)
+	_, err := svc.StartForDefinition(
+		t.Context(),
+		&agentruntimeports.StartAgentRunForDefinitionRequest{
+			TenantInfo: testTenant,
+		},
+		nil,
+	)
 	if err == nil {
 		t.Fatalf("expected a validation error without an id or system key")
 	}

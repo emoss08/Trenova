@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -47,7 +47,7 @@ type harness struct {
 
 func newHarness(
 	t *testing.T,
-	session config.SessionConfig,
+	session securityconfig.SessionConfig,
 	allowed ...permission.Resource,
 ) *harness {
 	t.Helper()
@@ -76,11 +76,13 @@ func newHarness(
 	repo := iamportsmock.NewMockSecurityBriefingRepository(t)
 	iamRepo := iamportsmock.NewMockIAMRepository(t)
 	service := New(Params{
-		Repo:           repo,
-		IAM:            iamRepo,
-		AccessSettings: &fakeAccessSettings{settings: &iam.AccessSettings{RequireRoleActivation: true}},
+		Repo: repo,
+		IAM:  iamRepo,
+		AccessSettings: &fakeAccessSettings{
+			settings: &iam.AccessSettings{RequireRoleActivation: true},
+		},
 		Permissions:    engine,
-		Config:         &config.Config{Security: config.SecurityConfig{Session: session}},
+		SecurityConfig: &securityconfig.Config{Session: session},
 		Logger:         zap.NewNop(),
 	})
 
@@ -98,8 +100,8 @@ func newHarness(
 	}
 }
 
-func idleSession() config.SessionConfig {
-	return config.SessionConfig{
+func idleSession() securityconfig.SessionConfig {
+	return securityconfig.SessionConfig{
 		MaxAge:      12 * time.Hour,
 		IdleTimeout: 30 * time.Minute,
 		IdleWarning: 2 * time.Minute,
@@ -134,7 +136,10 @@ func TestGet_LeavesEverySectionNullWithoutReadPermission(t *testing.T) {
 func TestGet_ReportsNoIdleTimeoutWhenTheDeploymentHasNone(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness(t, config.SessionConfig{MaxAge: 12 * time.Hour, IdleWarning: 2 * time.Minute})
+	h := newHarness(
+		t,
+		securityconfig.SessionConfig{MaxAge: 12 * time.Hour, IdleWarning: 2 * time.Minute},
+	)
 
 	briefing, err := h.service.Get(t.Context(), h.actor)
 	require.NoError(t, err)
@@ -291,8 +296,8 @@ func TestGet_RefusesWithoutAnActor(t *testing.T) {
 	t.Parallel()
 
 	service := New(Params{
-		Config: &config.Config{},
-		Logger: zap.NewNop(),
+		SecurityConfig: &securityconfig.Config{},
+		Logger:         zap.NewNop(),
 	})
 
 	_, err := service.Get(t.Context(), nil)

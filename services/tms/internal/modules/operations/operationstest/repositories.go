@@ -3,23 +3,22 @@ package operationstest
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/stretchr/testify/mock"
 )
 
-func NewAssignmentRepository(t testing.TB) *shipmentportsmock.MockAssignmentRepository {
+func NewAssignmentRepository(t testing.TB) *assignmentportsmock.MockAssignmentRepository {
 	t.Helper()
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		FindNearestActualEventByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("assignmentports.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil).
@@ -27,7 +26,7 @@ func NewAssignmentRepository(t testing.TB) *shipmentportsmock.MockAssignmentRepo
 	repo.EXPECT().
 		FindNearestActualEventByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindNearestActualTimelineEventRequest"),
+			mock.AnythingOfType("assignmentports.FindNearestActualTimelineEventRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil).
@@ -35,7 +34,7 @@ func NewAssignmentRepository(t testing.TB) *shipmentportsmock.MockAssignmentRepo
 	repo.EXPECT().
 		FindOverlappingActualWindowByTractorID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("assignmentports.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil).
@@ -43,7 +42,7 @@ func NewAssignmentRepository(t testing.TB) *shipmentportsmock.MockAssignmentRepo
 	repo.EXPECT().
 		FindOverlappingActualWindowByPrimaryWorkerID(
 			mock.Anything,
-			mock.AnythingOfType("shipmentports.FindOverlappingActualTimelineWindowRequest"),
+			mock.AnythingOfType("assignmentports.FindOverlappingActualTimelineWindowRequest"),
 			mock.AnythingOfType("pulid.ID"),
 		).
 		Return(nil, nil).
@@ -58,7 +57,7 @@ func NewControlRepository(t testing.TB) *tenantportsmock.MockShipmentControlRepo
 	repo := tenantportsmock.NewMockShipmentControlRepository(t)
 	repo.EXPECT().
 		Get(mock.Anything, mock.Anything).
-		Return(&tenant.ShipmentControl{
+		Return(&shipmentcontrol.ShipmentControl{
 			AllowMoveRemovals:      true,
 			MaxShipmentWeightLimit: 1000000,
 		}, nil).

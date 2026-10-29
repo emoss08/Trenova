@@ -6,7 +6,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerstatement"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -126,7 +126,7 @@ type Service interface {
 	) (*SendPreview, error)
 	SendMonthly(
 		ctx context.Context,
-		control *tenant.BillingControl,
+		control *billingcontrol.BillingControl,
 		now int64,
 	) (*SweepResult, error)
 	ListSent(ctx context.Context, req ListSentRequest) ([]*SentStatement, error)

@@ -15,9 +15,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -30,21 +36,21 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Runs          agentports.AgentRunRepository
-	Conversations agentports.ConversationRepository
+	Runs          agentruntimeports.AgentRunRepository
+	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Permissions   permissionports.PermissionEngine
 	Turns         *assistantturnservice.Service
 	Workflows     kernelports.WorkflowStarter
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository
-	Decisions     agentports.AgentDecisionRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository
+	Decisions     agentdecisionports.AgentDecisionRepository
 }
 
 type Service struct {
 	l             *zap.Logger
-	runs          agentports.AgentRunRepository
-	conversations agentports.ConversationRepository
+	runs          agentruntimeports.AgentRunRepository
+	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	permissions   permissionports.PermissionEngine
 	turns         turnStarter
@@ -57,17 +63,20 @@ type turnStarter interface {
 	StartTurn(
 		ctx context.Context,
 		req assistantturnservice.StartRequest,
-		start func(turn *conversation.AssistantTurn) (string, error),
-	) (*conversation.AssistantTurn, error)
+		start func(turn *conversationturn.AssistantTurn) (string, error),
+	) (*conversationturn.AssistantTurn, error)
 }
 
-func New(p Params) agentports.DecisionFollowUps {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) assistantports.DecisionFollowUps {
 	return newService(p)
 }
 
 // NewResumer is the same service, as what a turn that ended asks to start the
 // follow-ups it kept out.
-func NewResumer(p Params) agentports.DecisionFollowUpResumer {
+//
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func NewResumer(p Params) assistantports.DecisionFollowUpResumer {
 	return newService(p)
 }
 
@@ -91,7 +100,7 @@ func newService(p Params) *Service {
 // FollowUp starts the turn in which the agent reports a decision, when the
 // decision was on something a conversation raised. Anything else, a
 // background run's proposal most often, is not a conversation's to answer.
-func (s *Service) FollowUp(ctx context.Context, req agentports.DecisionFollowUpRequest) {
+func (s *Service) FollowUp(ctx context.Context, req *assistantports.DecisionFollowUpRequest) {
 	if req.ProposalID.IsNil() == req.PlanID.IsNil() {
 		s.l.Error("a decision follow-up must name one proposal or one plan",
 			zap.String("proposal", req.ProposalID.String()),
@@ -133,26 +142,30 @@ func (s *Service) FollowUp(ctx context.Context, req agentports.DecisionFollowUpR
 		ThreadID:   thread.ID,
 		UserID:     thread.UserID,
 		TenantInfo: req.TenantInfo,
-		Origin:     conversation.AssistantTurnOriginDecisionFollowUp,
+		Origin:     conversationturn.AssistantTurnOriginDecisionFollowUp,
 	}
 
 	// A worker answers it like any other turn, so the report survives the
 	// request that decided and can be watched and stopped like any reply.
-	_, err = s.turns.StartTurn(ctx, start, func(turn *conversation.AssistantTurn) (string, error) {
-		run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
-			assistantcontract.TurnStart{
-				Actor: actor,
-				Request: assistantcontract.AssistantTurnRequest{
-					FollowUpProposalID: req.ProposalID,
-					FollowUpPlanID:     req.PlanID,
-				},
-			})
-		if startErr != nil {
-			return "", startErr
-		}
+	_, err = s.turns.StartTurn(
+		ctx,
+		start,
+		func(turn *conversationturn.AssistantTurn) (string, error) {
+			run, startErr := assistantcontract.StartTurnWorkflow(ctx, s.workflows, turn,
+				assistantcontract.TurnStart{
+					Actor: actor,
+					Request: assistantcontract.AssistantTurnRequest{
+						FollowUpProposalID: req.ProposalID,
+						FollowUpPlanID:     req.PlanID,
+					},
+				})
+			if startErr != nil {
+				return "", startErr
+			}
 
-		return run.GetID(), nil
-	})
+			return run.GetID(), nil
+		},
+	)
 	if err != nil {
 		s.logStartFailure(start, err)
 	}
@@ -162,10 +175,10 @@ func (s *Service) FollowUp(ctx context.Context, req agentports.DecisionFollowUpR
 // a conversation did not raise it.
 func (s *Service) threadFor(
 	ctx context.Context,
-	req agentports.DecisionFollowUpRequest,
+	req *assistantports.DecisionFollowUpRequest,
 ) (*conversation.Thread, error) {
 	tenant := req.TenantInfo
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: &tenant,
 	})
@@ -176,7 +189,7 @@ func (s *Service) threadFor(
 		return nil, nil
 	}
 
-	return s.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	return s.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         run.SubjectID,
 		TenantInfo: tenant,
 	})

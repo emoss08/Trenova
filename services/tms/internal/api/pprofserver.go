@@ -8,7 +8,7 @@ import (
 	"net/http/pprof"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -16,20 +16,20 @@ import (
 type PprofServerParams struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
-	LC     fx.Lifecycle
+	MonitoringConfig *monitoringconfig.Config
+	Logger           *zap.Logger
+	LC               fx.Lifecycle
 }
 
 type PprofServer struct {
 	server *http.Server
-	cfg    *config.Config
+	cfg    *monitoringconfig.Config
 	logger *zap.Logger
 }
 
 func NewPprofServer(p PprofServerParams) *PprofServer {
 	s := &PprofServer{
-		cfg:    p.Config,
+		cfg:    p.MonitoringConfig,
 		logger: p.Logger.Named("pprof-server"),
 	}
 
@@ -48,8 +48,8 @@ func NewPprofServer(p PprofServerParams) *PprofServer {
 	s.server = &http.Server{
 		Addr: fmt.Sprintf(
 			"%s:%d",
-			p.Config.Monitoring.Pprof.GetHost(),
-			p.Config.Monitoring.Pprof.GetPort(),
+			p.MonitoringConfig.Pprof.GetHost(),
+			p.MonitoringConfig.Pprof.GetPort(),
 		),
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
@@ -68,7 +68,7 @@ func NewPprofServer(p PprofServerParams) *PprofServer {
 }
 
 func (s *PprofServer) Start(_ context.Context) error {
-	if !s.cfg.Monitoring.Pprof.Enabled {
+	if !s.cfg.Pprof.Enabled {
 		s.logger.Info("pprof server disabled")
 		return nil
 	}
@@ -88,7 +88,7 @@ func (s *PprofServer) Start(_ context.Context) error {
 }
 
 func (s *PprofServer) Stop(ctx context.Context) error {
-	if !s.cfg.Monitoring.Pprof.Enabled {
+	if !s.cfg.Pprof.Enabled {
 		return nil
 	}
 

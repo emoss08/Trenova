@@ -5,8 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/routeestimateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
@@ -38,8 +39,8 @@ func newFixture() *fixture {
 	pickup := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
 		Sequence:             0,
-		Type:                 shipment.StopTypePickup,
-		Status:               shipment.StopStatusNew,
+		Type:                 shipmentvocab.StopTypePickup,
+		Status:               shipmentvocab.StopStatusNew,
 		ScheduledWindowStart: now + 2*hour,
 		ScheduledWindowEnd:   ptr(now + 4*hour),
 		Location:             &location.Location{Latitude: ptr(41.0), Longitude: ptr(-87.0)},
@@ -47,15 +48,15 @@ func newFixture() *fixture {
 	delivery := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
 		Sequence:             1,
-		Type:                 shipment.StopTypeDelivery,
-		Status:               shipment.StopStatusNew,
+		Type:                 shipmentvocab.StopTypeDelivery,
+		Status:               shipmentvocab.StopStatusNew,
 		ScheduledWindowStart: now + 8*hour,
 		ScheduledWindowEnd:   ptr(now + 10*hour),
 		Location:             &location.Location{Latitude: ptr(40.0), Longitude: ptr(-83.0)},
 	}
 	move := &shipment.ShipmentMove{
 		ID:       pulid.MustNew("smv_"),
-		Status:   shipment.MoveStatusAssigned,
+		Status:   shipmentvocab.MoveStatusAssigned,
 		Sequence: 0,
 		Stops:    []*shipment.Stop{delivery, pickup},
 	}
@@ -63,7 +64,7 @@ func newFixture() *fixture {
 		ID:             pulid.MustNew("shp_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Status:         shipment.StatusAssigned,
+		Status:         shipmentvocab.StatusAssigned,
 		Moves:          []*shipment.ShipmentMove{move},
 	}
 
@@ -77,12 +78,12 @@ func newFixture() *fixture {
 		input: &Input{
 			Now:      now,
 			Shipment: sp,
-			Assignments: map[pulid.ID]*shipmentports.BoardMove{
+			Assignments: map[pulid.ID]*dispatchboardports.BoardMove{
 				move.ID: {
 					MoveID:            move.ID,
 					AssignedWorkerID:  worker,
 					AssignedTractorID: tractor,
-					CoverageType:      string(shipment.MoveCoverageTypeDriver),
+					CoverageType:      string(shipmentvocab.MoveCoverageTypeDriver),
 				},
 			},
 			Positions:  map[pulid.ID]*telematics.VehiclePosition{},
@@ -229,7 +230,7 @@ func TestProject_TruckAtStopDepartsAfterDwell(t *testing.T) {
 	f := newFixture()
 	f.pickup.ScheduledWindowStart = now - hour
 	f.pickup.ActualArrival = ptr(now - 30*60)
-	f.pickup.Status = shipment.StopStatusInTransit
+	f.pickup.Status = shipmentvocab.StopStatusInTransit
 
 	rows := project(t, f.input, legs(5))
 	require.Len(t, rows, 2)
@@ -246,9 +247,9 @@ func TestProject_CarrierReportedArrival(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.input.Assignments[f.move.ID] = &shipmentports.BoardMove{
+	f.input.Assignments[f.move.ID] = &dispatchboardports.BoardMove{
 		MoveID:            f.move.ID,
-		CoverageType:      string(shipment.MoveCoverageTypeCarrier),
+		CoverageType:      string(shipmentvocab.MoveCoverageTypeCarrier),
 		AssignedCarrierID: pulid.MustNew("car_"),
 	}
 	f.input.CheckCalls[f.move.ID] = &checkcall.CheckCall{
@@ -301,7 +302,7 @@ func TestProject_LastDepartureClampsToNow(t *testing.T) {
 	origin := &shipment.Stop{
 		ID:                   pulid.MustNew("stp_"),
 		Sequence:             0,
-		Status:               shipment.StopStatusCompleted,
+		Status:               shipmentvocab.StopStatusCompleted,
 		ScheduledWindowStart: now - 10*hour,
 		ActualArrival:        ptr(now - 9*hour),
 		ActualDeparture:      ptr(now - 8*hour),
@@ -336,12 +337,12 @@ func TestPrepare_SkipsFinishedShipmentsAndStops(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.shipment.Status = shipment.StatusCompleted
+	f.shipment.Status = shipmentvocab.StatusCompleted
 	assert.Empty(t, Prepare(f.input).Project(nil))
 
 	f = newFixture()
 	f.withPosition(now - 60)
-	f.pickup.Status = shipment.StopStatusCompleted
+	f.pickup.Status = shipmentvocab.StopStatusCompleted
 	f.pickup.ActualDeparture = ptr(now - 600)
 	rows := project(t, f.input, legs(4))
 	require.Len(t, rows, 1)

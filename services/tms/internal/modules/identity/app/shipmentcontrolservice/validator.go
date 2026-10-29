@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -19,29 +20,28 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*tenant.ShipmentControl]
+	validator tenantedvalidation.EntityValidator[*shipmentcontrol.ShipmentControl]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, tenantdb.ShipmentControlsSchema())
+	checker := keelcheck.NewChecker(p.DB, shipmentcontroldb.ShipmentControlsSchema())
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.ShipmentControl]().
+		validator: tenantedvalidation.NewBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
 			WithOptionalCustomReferenceCheck(
 				"detentionChargeId",
 				"Detention charge does not exist in your organization",
-				func(sc *tenant.ShipmentControl) pulid.ID {
+				func(sc *shipmentcontrol.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
 						return ""
 					}
 
 					return *sc.DetentionChargeID
 				},
-				validationframework.KeelTableReferenceCheck(p.DB, "accessorial_charges"),
+				keelcheck.TableReferenceCheck(p.DB, "accessorial_charges"),
 			).
 			Build(),
 	}
@@ -49,7 +49,7 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
-	entity *tenant.ShipmentControl,
+	entity *shipmentcontrol.ShipmentControl,
 ) *errortypes.MultiError {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

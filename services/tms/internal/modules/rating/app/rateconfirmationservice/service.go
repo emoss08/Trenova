@@ -7,8 +7,10 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -16,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -42,7 +45,7 @@ type Params struct {
 	Logger                *zap.Logger
 	DB                    kernelports.Transactor
 	Repo                  rateconfirmationports.RateConfirmationRepository
-	CarrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	CarrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	CarrierRepo           carrierports.CarrierRepository
 	ShipmentRepo          shipmentports.ShipmentRepository
 	OrgRepo               tenantports.OrganizationRepository
@@ -52,14 +55,15 @@ type Params struct {
 	UploadService         documentuploadports.DocumentUploadService
 	Inliner               documenttemplateports.AssetInliner
 	AuditService          auditports.AuditService
-	Config                *config.Config
+	AppConfig             *appconfig.Config
+	TenderingConfig       *tenderingconfig.Config
 }
 
 type Service struct {
 	l                     *zap.Logger
 	db                    kernelports.Transactor
 	repo                  rateconfirmationports.RateConfirmationRepository
-	carrierAssignmentRepo shipmentports.CarrierAssignmentRepository
+	carrierAssignmentRepo carrierassignmentports.CarrierAssignmentRepository
 	carrierRepo           carrierports.CarrierRepository
 	shipmentRepo          shipmentports.ShipmentRepository
 	orgRepo               tenantports.OrganizationRepository
@@ -69,7 +73,8 @@ type Service struct {
 	uploadService         documentuploadports.DocumentUploadService
 	inliner               documenttemplateports.AssetInliner
 	auditService          auditports.AuditService
-	cfg                   *config.Config
+	appConfig             *appconfig.Config
+	tenderingConfig       *tenderingconfig.Config
 }
 
 func New(p Params) *Service {
@@ -87,7 +92,8 @@ func New(p Params) *Service {
 		uploadService:         p.UploadService,
 		inliner:               p.Inliner,
 		auditService:          p.AuditService,
-		cfg:                   p.Config,
+		appConfig:             p.AppConfig,
+		tenderingConfig:       p.TenderingConfig,
 	}
 }
 
@@ -514,7 +520,7 @@ func (s *Service) confirmAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -539,7 +545,7 @@ func (s *Service) revertAssignmentConfirmation(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: assignmentID,
 		},
@@ -635,7 +641,7 @@ func (s *Service) shipmentIDForMove(
 	if assignment != nil {
 		full, gErr := s.carrierAssignmentRepo.GetByID(
 			ctx,
-			&shipmentports.GetCarrierAssignmentByIDRequest{
+			&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 				TenantInfo:          tenantInfo,
 				CarrierAssignmentID: assignment.ID,
 			},
@@ -673,7 +679,7 @@ func (s *Service) companyName(
 func (s *Service) applyLogo(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.RateConfirmationContext,
+	out *rateconfirmationtemplate.RateConfirmationContext,
 ) {
 	if s.orgRepo == nil {
 		return
@@ -814,7 +820,7 @@ func filingActor(
 }
 
 func contextSnapshot(
-	templateContext *documenttemplate.RateConfirmationContext,
+	templateContext *rateconfirmationtemplate.RateConfirmationContext,
 ) (map[string]any, error) {
 	raw, err := sonic.Marshal(templateContext)
 	if err != nil {
@@ -830,13 +836,13 @@ func contextSnapshot(
 
 func contextFromSnapshot(
 	snapshot map[string]any,
-) (*documenttemplate.RateConfirmationContext, error) {
+) (*rateconfirmationtemplate.RateConfirmationContext, error) {
 	raw, err := sonic.Marshal(snapshot)
 	if err != nil {
 		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
 	}
 
-	out := new(documenttemplate.RateConfirmationContext)
+	out := new(rateconfirmationtemplate.RateConfirmationContext)
 	if err = sonic.Unmarshal(raw, out); err != nil {
 		return nil, fmt.Errorf("decode rate confirmation snapshot: %w", err)
 	}

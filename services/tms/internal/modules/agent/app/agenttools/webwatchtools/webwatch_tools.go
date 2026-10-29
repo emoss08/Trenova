@@ -9,14 +9,21 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -36,7 +43,7 @@ const (
 )
 
 var (
-	cadences = agenttoolschema.Source("web_watch_cadences", agentextension.AllWebWatchCadences())
+	cadences = agenttoolschema.Source("web_watch_cadences", extensionwebwatch.AllWebWatchCadences())
 
 	ErrDelegatedWatch = errors.New(
 		"a task another agent handed you cannot set a web watch; tell that agent what to watch",
@@ -48,20 +55,20 @@ var (
 // that goes on: it sends the search to the organization's vendor, spends on
 // its account and reaches nobody, so it runs on its own; a turn that read
 // outside content still proposes it, as every later write.
-func watchPolicy(name, rationale string) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func watchPolicy(name, rationale string) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceWebResearch,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		Artifact:      string(permission.KindWebWatch),
-		ReadsExternal: agent.ExternalReadNever,
+		Artifact:      string(recordkind.WebWatch),
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		Rationale:     rationale,
 	}
@@ -77,7 +84,7 @@ func NewWatchWebTool(
 	watches agentextensionports.WebWatcher,
 	waits agentextensionports.WebWatchWaits,
 	logger *zap.Logger,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -106,34 +113,34 @@ func (t *WatchWebTool) ParamSchema() map[string]any {
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "What the person wants to hear about, in their terms, " +
 				"such as \"FMCSA finalizing the broker transparency rule\".",
-			toolschema.KeyMaxLength: agentextension.MaxWebWatchPurposeRunes,
+			toolschema.KeyMaxLength: extensionwebwatch.MaxWebWatchPurposeRunes,
 		},
 		paramQuery: map[string]any{
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "The search to run each time, written as a description " +
 				"of the pages wanted, such as \"FMCSA final rule broker transparency 49 CFR " +
 				"371.3\". Never a Trenova record id.",
-			toolschema.KeyMaxLength: agentextension.MaxWebWatchQueryRunes,
+			toolschema.KeyMaxLength: extensionwebwatch.MaxWebWatchQueryRunes,
 		},
 		paramSites: map[string]any{
 			toolschema.KeyType: "array",
 			toolschema.KeyDescription: "Optional: search only these sites, such as " +
 				"[\"fmcsa.dot.gov\", \"federalregister.gov\"].",
 			toolschema.KeyItems:    map[string]any{toolschema.KeyType: "string"},
-			toolschema.KeyMaxItems: agentextension.MaxWebWatchDomains,
+			toolschema.KeyMaxItems: extensionwebwatch.MaxWebWatchDomains,
 		},
 		paramCadence: agenttoolschema.Enum(
 			"How often to look. Daily unless the person needs to hear sooner or less often.",
 			cadences,
 		),
-		paramDays: common.IntegerProperty(
+		paramDays: toolparams.IntegerProperty(
 			"How many days to keep watching, from 1 to 90. Defaults to 30.",
-			agentextension.MinWebWatchDays, agentextension.MaxWebWatchDays,
+			extensionwebwatch.MinWebWatchDays, extensionwebwatch.MaxWebWatchDays,
 		),
 	}, paramPurpose, paramQuery)
 }
 
-func (t *WatchWebTool) Policy() agentports.ToolPolicy {
+func (t *WatchWebTool) Policy() agenttoolports.ToolPolicy {
 	return watchPolicy(t.Name(), "Sets a scheduled search on the organization's web research "+
 		"vendor for the person; it changes no record, reaches nobody, and ends on its own or "+
 		"when stopped.")
@@ -147,28 +154,30 @@ func (t *WatchWebTool) SearchTerms() []string {
 }
 
 func (t *WatchWebTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.WebWatchRequest, error) {
-	purpose, err := common.RequireString(params.Params, paramPurpose)
+	purpose, err := toolparams.RequireString(params.Params, paramPurpose)
 	if err != nil {
 		return nil, err
 	}
-	query, err := common.RequireString(params.Params, paramQuery)
+	query, err := toolparams.RequireString(params.Params, paramQuery)
 	if err != nil {
 		return nil, err
 	}
-	cadence := agentextension.WebWatchCadence(common.OptionalString(params.Params, paramCadence))
+	cadence := extensionwebwatch.WebWatchCadence(
+		toolparams.OptionalString(params.Params, paramCadence),
+	)
 	if cadence != "" && !cadence.IsValid() {
-		return nil, common.ErrUnknownValue(paramCadence, string(cadence), cadences.Names())
+		return nil, toolparams.ErrUnknownValue(paramCadence, string(cadence), cadences.Names())
 	}
 
 	return &agentextensionports.WebWatchRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		Query:      query,
 		Purpose:    purpose,
-		Sites:      common.StringSliceParam(params.Params, paramSites),
+		Sites:      toolparams.StringSliceParam(params.Params, paramSites),
 		Cadence:    cadence,
-		Days:       int(common.OptionalInt64(params.Params, paramDays)),
+		Days:       int(toolparams.OptionalInt64(params.Params, paramDays)),
 		Owner: agentextensionports.PortalTaskOwner{
 			Actor:        params.Actor,
 			DefinitionID: params.DefinitionID,
@@ -181,15 +190,15 @@ func (t *WatchWebTool) request(
 
 func (t *WatchWebTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if params.Delegated {
 		return ErrDelegatedWatch
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -203,22 +212,22 @@ func (t *WatchWebTool) Validate(
 // vendor.
 func (t *WatchWebTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	summary := "Would keep watching the web."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	plan, err := t.watches.PlanWebWatch(ctx, req)
 	if err != nil {
-		if agentextensionservice.IsToolError(err) || common.IsRefusal(err) ||
+		if agentextensionservice.IsToolError(err) || changepreview.IsRefusal(err) ||
 			errortypes.IsMultiError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 		return nil, err
 	}
@@ -246,7 +255,7 @@ func endDay(at int64) string {
 
 func (t *WatchWebTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -258,9 +267,9 @@ func (t *WatchWebTool) Execute(
 // one, and it would bill for nothing.
 func (t *WatchWebTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if params.Delegated {
@@ -270,7 +279,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, errNoWatcher
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +288,7 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	watch := &agentextension.WebWatch{
+	watch := &extensionwebwatch.WebWatch{
 		ID:             view.ID,
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
@@ -305,13 +314,13 @@ func (t *WatchWebTool) ExecuteWithResult(
 		return nil, fmt.Errorf("park the work on the web watch: %w", err)
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "set",
 		Kind:   resultKind,
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
-		Record: &agent.RecordRef{
-			EntityType: string(permission.KindWebWatch),
+		Record: &agentrecord.RecordRef{
+			EntityType: string(recordkind.WebWatch),
 			ID:         view.ID.String(),
 		},
 		State: fmt.Sprintf("Watching %s until %s. What it finds comes back to this work as it "+
@@ -327,7 +336,7 @@ type StopWebWatchTool struct {
 func NewStopWebWatchTool(
 	watches agentextensionports.WebWatcher,
 	waits agentextensionports.WebWatchWaits,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &StopWebWatchTool{watches: watches, waits: waits}
 }
 
@@ -346,12 +355,12 @@ func (t *StopWebWatchTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramWatchID: agenttoolschema.KindID(
 			"The web watch to stop, from web_list_watches.",
-			permission.KindWebWatch,
+			recordkind.WebWatch,
 		),
 	}, paramWatchID)
 }
 
-func (t *StopWebWatchTool) Policy() agentports.ToolPolicy {
+func (t *StopWebWatchTool) Policy() agenttoolports.ToolPolicy {
 	return watchPolicy(t.Name(), "Stops a scheduled search the person set; it changes no "+
 		"record and reaches nobody.")
 }
@@ -361,15 +370,15 @@ func (t *StopWebWatchTool) SearchTerms() []string {
 }
 
 func (t *StopWebWatchTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.StopWebWatchRequest, error) {
-	watchID, err := common.RequirePulid(params.Params, paramWatchID)
+	watchID, err := toolparams.RequirePulid(params.Params, paramWatchID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &agentextensionports.StopWebWatchRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		WatchID:      watchID,
 		StoppedBy:    params.Actor.PersonUserID(),
 		DefinitionID: params.DefinitionID,
@@ -378,26 +387,26 @@ func (t *StopWebWatchTool) request(
 
 func (t *StopWebWatchTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	_, err := t.request(&params)
+	_, err := t.request(params)
 
 	return err
 }
 
 func (t *StopWebWatchTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	summary := "Would stop a web watch, so the vendor searches and bills for it no more."
-	if _, err := t.request(&params); err != nil {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+	if _, err := t.request(params); err != nil {
+		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 	}
 
 	return toolpreview.Build(summary), nil
@@ -405,7 +414,7 @@ func (t *StopWebWatchTool) Preview(
 
 func (t *StopWebWatchTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -414,12 +423,12 @@ func (t *StopWebWatchTool) Execute(
 
 func (t *StopWebWatchTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -429,19 +438,19 @@ func (t *StopWebWatchTool) ExecuteWithResult(
 		return nil, err
 	}
 	if t.waits != nil {
-		t.waits.EndWebWatchWaits(ctx, req.TenantInfo, &agentextension.WebWatch{
+		t.waits.EndWebWatchWaits(ctx, req.TenantInfo, &extensionwebwatch.WebWatch{
 			ID:     view.ID,
 			Status: view.Status,
 		})
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "stopped",
 		Kind:   resultKind,
 		Name:   view.Purpose,
 		IDs:    map[string]string{resultID: view.ID.String()},
-		Record: &agent.RecordRef{
-			EntityType: string(permission.KindWebWatch),
+		Record: &agentrecord.RecordRef{
+			EntityType: string(recordkind.WebWatch),
 			ID:         view.ID.String(),
 		},
 		State: "The watch is " + view.Status.String() + ".",

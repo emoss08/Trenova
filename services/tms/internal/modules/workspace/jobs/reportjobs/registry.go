@@ -2,6 +2,7 @@ package reportjobs
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportcatalogjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -37,14 +38,15 @@ type RegistryParams struct {
 	fx.In
 
 	Activities *Activities
+	Catalog    *reportcatalogjobs.Activities
 	Logger     *zap.Logger
 }
 
 func NewRegistry(p RegistryParams) registry.WorkerRegistry {
-	return registry.NewDomainRegistry(
-		&DomainConfig,
-		p.Activities,
-		Workflows,
-		p.Logger,
-	)
+	return registry.NewComposedRegistry(registry.ComposedParams{
+		Config:     &DomainConfig,
+		Activities: []any{p.Activities, p.Catalog},
+		Workflows:  Workflows,
+		Logger:     p.Logger,
+	})
 }

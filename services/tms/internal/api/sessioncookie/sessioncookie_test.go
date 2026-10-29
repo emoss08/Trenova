@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 func TestSetAndClear(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.SessionConfig{
+	cfg := &securityconfig.SessionConfig{
 		Name:     "trenova_session",
 		Path:     "/",
 		Secure:   true,

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -42,14 +42,14 @@ func TestSubscribeSendsTheClientStateItIsGiven(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.Subscribe(t.Context(), &accountingsyncports.AccountingSubscribeRequest{
+	grant, err := conn.Subscribe(t.Context(), &accountingconnectorports.AccountingSubscribeRequest{
 		Auth:            testAuth(),
 		Resource:        "salesInvoices",
 		NotificationURL: testNotifyURL,
 		ClientState:     "sealed-by-the-service",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, &accountingsync.WebhookSubscriptionGrant{
+	assert.Equal(t, &accountingconnection.WebhookSubscriptionGrant{
 		ExternalID:      testSubscription,
 		NotificationURL: testNotifyURL,
 		ETag:            `W/"JzE5OzI="`,
@@ -63,7 +63,7 @@ func TestSubscribeSendsTheClientStateItIsGiven(t *testing.T) {
 	assert.Equal(t, "/api/v2.0/companies("+testCompany+")/salesInvoices", call.Body["resource"])
 	assert.Equal(t, "sealed-by-the-service", call.Body["clientState"])
 
-	_, err = conn.Subscribe(t.Context(), &accountingsyncports.AccountingSubscribeRequest{
+	_, err = conn.Subscribe(t.Context(), &accountingconnectorports.AccountingSubscribeRequest{
 		Auth: testAuth(), Resource: "sales invoices", NotificationURL: testNotifyURL,
 	})
 	require.ErrorIs(t, err, errUnknownResource)
@@ -82,14 +82,17 @@ func TestRenewSubscriptionPatchesWithTheETag(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.RenewSubscription(t.Context(), &accountingsyncports.AccountingRenewSubscriptionRequest{
-		Auth:            testAuth(),
-		Resource:        "customers",
-		ExternalID:      testSubscription,
-		NotificationURL: testNotifyURL,
-		ClientState:     "s",
-		ETag:            `W/"JzE5OzI="`,
-	})
+	grant, err := conn.RenewSubscription(
+		t.Context(),
+		&accountingconnectorports.AccountingRenewSubscriptionRequest{
+			Auth:            testAuth(),
+			Resource:        "customers",
+			ExternalID:      testSubscription,
+			NotificationURL: testNotifyURL,
+			ClientState:     "s",
+			ETag:            `W/"JzE5OzI="`,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, `W/"next"`, grant.ETag)
 	assert.Equal(t, testNotifyURL, grant.NotificationURL)
@@ -105,12 +108,15 @@ func TestRenewingAGoneSubscriptionIsReportedAsGone(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeBC{})
-	_, err := conn.RenewSubscription(t.Context(), &accountingsyncports.AccountingRenewSubscriptionRequest{
-		Auth:            testAuth(),
-		Resource:        "items",
-		ExternalID:      testSubscription,
-		NotificationURL: testNotifyURL,
-	})
+	_, err := conn.RenewSubscription(
+		t.Context(),
+		&accountingconnectorports.AccountingRenewSubscriptionRequest{
+			Auth:            testAuth(),
+			Resource:        "items",
+			ExternalID:      testSubscription,
+			NotificationURL: testNotifyURL,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, conn.IsSubscriptionGone(err))
 	assert.False(t, conn.IsSubscriptionGone(errUnknownResource))
@@ -122,9 +128,12 @@ func TestUnsubscribeDeletesAndToleratesAMissingSubscription(t *testing.T) {
 	path := subscriptionsPath + "('" + testSubscription + "')"
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	require.NoError(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
-		Auth: testAuth(), ExternalID: testSubscription, ETag: `W/"e"`,
-	}))
+	require.NoError(
+		t,
+		conn.Unsubscribe(t.Context(), &accountingconnectorports.AccountingUnsubscribeRequest{
+			Auth: testAuth(), ExternalID: testSubscription, ETag: `W/"e"`,
+		}),
+	)
 	call, ok := fake.find(http.MethodDelete, path)
 	require.True(t, ok)
 	assert.Equal(t, `W/"e"`, call.IfMatch)
@@ -133,10 +142,18 @@ func TestUnsubscribeDeletesAndToleratesAMissingSubscription(t *testing.T) {
 		return http.StatusForbidden, readFixture(t, "error_403.json")
 	}}
 	conn = testConnector(t, failing)
-	require.Error(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
-		Auth: testAuth(), ExternalID: testSubscription,
-	}))
-	require.Error(t, conn.Unsubscribe(t.Context(), &accountingsyncports.AccountingUnsubscribeRequest{
-		Auth: accountingsyncports.AccountingDocumentAuth{RealmID: "bad"}, ExternalID: testSubscription,
-	}))
+	require.Error(
+		t,
+		conn.Unsubscribe(t.Context(), &accountingconnectorports.AccountingUnsubscribeRequest{
+			Auth: testAuth(), ExternalID: testSubscription,
+		}),
+	)
+	require.Error(
+		t,
+		conn.Unsubscribe(t.Context(), &accountingconnectorports.AccountingUnsubscribeRequest{
+			Auth: accountingconnectorports.AccountingDocumentAuth{
+				RealmID: "bad",
+			}, ExternalID: testSubscription,
+		}),
+	)
 }

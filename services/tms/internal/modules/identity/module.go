@@ -67,12 +67,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/tenanttimezone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
-	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"go.uber.org/fx"
 )
 
@@ -146,8 +147,8 @@ func SharedOptions() fx.Option {
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },
 			roleservice.New,
 			pageaccessservice.New,
-			permissiondomain.NewRegistry,
-			permissiondomain.NewRouteRegistry,
+			permissioncatalog.NewRegistry,
+			routeaccess.NewRouteRegistry,
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,
@@ -173,7 +174,7 @@ func SharedOptions() fx.Option {
 			func(s *ptoledgerservice.Service) workeroverviewservice.BalanceReader { return s },
 			fx.Annotate(
 				workerptoservice.New,
-				fx.As(new(workerports.WorkerPTOService)),
+				fx.As(new(workerptoports.WorkerPTOService)),
 			),
 			apikeyservice.New,
 			fx.Annotate(

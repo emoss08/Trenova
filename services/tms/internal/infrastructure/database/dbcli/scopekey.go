@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel/seed"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 )
 
-func scopeKeySeed(rls func() config.RLSConfig) seed.Seed {
+func scopeKeySeed(rls func() databaseconfig.RLSConfig) seed.Seed {
 	return seed.Seed{
 		Name:        "rls_scope_key",
 		Kind:        seed.Reference,
@@ -27,7 +27,7 @@ func scopeKeySeed(rls func() config.RLSConfig) seed.Seed {
 	}
 }
 
-func scopeKeyFingerprint(rls config.RLSConfig) string {
+func scopeKeyFingerprint(rls databaseconfig.RLSConfig) string {
 	if !rls.Enabled() {
 		return "disabled"
 	}

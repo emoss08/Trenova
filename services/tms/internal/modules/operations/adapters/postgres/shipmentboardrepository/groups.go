@@ -6,9 +6,11 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"go.uber.org/zap"
 )
 
@@ -23,12 +25,12 @@ const (
 
 func (r *Repository) GroupSummary(
 	ctx context.Context,
-	req *shipmentports.SummarizeShipmentBoardGroupsQuery,
-) ([]*shipmentports.ShipmentBoardGroupRow, error) {
+	req *shipmentboardports.SummarizeShipmentBoardGroupsQuery,
+) ([]*shipmentboardports.ShipmentBoardGroupRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentBoardGroupRow, error) {
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentBoardGroupRow, error) {
 			if req == nil {
 				return nil, ErrScopeMissing
 			}
@@ -43,7 +45,7 @@ func (r *Repository) GroupSummary(
 				return nil, err
 			}
 
-			rows, err := keel.Into[shipmentports.ShipmentBoardGroupRow](ctx, r.db.Keel(ctx), q)
+			rows, err := keel.Into[shipmentboardports.ShipmentBoardGroupRow](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				r.l.Error(
 					"failed to summarize shipment board groups",
@@ -60,24 +62,24 @@ func (r *Repository) GroupSummary(
 
 func groupSummaryQuery(
 	q *keel.Query[*shipment.Shipment],
-	groupBy shipment.BoardGrouping,
+	groupBy boardgrouping.BoardGrouping,
 	timezone string,
 ) (*keel.Query[*shipment.Shipment], error) {
 	switch groupBy {
-	case shipment.BoardGroupingShipDate:
-		return dayGroups(q, shipment.PickupStopTypes(), false, timezone), nil
-	case shipment.BoardGroupingDeliveryDate:
-		return dayGroups(q, shipment.DeliveryStopTypes(), true, timezone), nil
-	case shipment.BoardGroupingCustomer:
+	case boardgrouping.BoardGroupingShipDate:
+		return dayGroups(q, shipmentvocab.PickupStopTypes(), false, timezone), nil
+	case boardgrouping.BoardGroupingDeliveryDate:
+		return dayGroups(q, shipmentvocab.DeliveryStopTypes(), true, timezone), nil
+	case boardgrouping.BoardGroupingCustomer:
 		return customerGroups(q), nil
-	case shipment.BoardGroupingOwner:
+	case boardgrouping.BoardGroupingOwner:
 		return ownerGroups(q), nil
 	default:
 		return nil, ErrUnsupportedGrouping
 	}
 }
 
-func endStopID(types []shipment.StopType, last bool) keel.Expr {
+func endStopID(types []shipmentvocab.StopType, last bool) keel.Expr {
 	sp := shipmentdb.Shipments
 	st := shipmentdb.Stops.As(endStopAlias)
 	sm := shipmentdb.ShipmentMoves.As(endMoveAlias)
@@ -104,7 +106,7 @@ func endStopID(types []shipment.StopType, last bool) keel.Expr {
 
 func dayGroups(
 	q *keel.Query[*shipment.Shipment],
-	types []shipment.StopType,
+	types []shipmentvocab.StopType,
 	last bool,
 	timezone string,
 ) *keel.Query[*shipment.Shipment] {

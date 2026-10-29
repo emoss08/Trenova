@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,13 +17,15 @@ import (
 func TestPort_DecidesALinkedRecordsFieldsByItsView(t *testing.T) {
 	t.Parallel()
 
-	engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{permission.ResourceCustomer.String()}}
+	engine := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceCustomer.String()},
+	}
 	actor := permissionports.UserActor(pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	})
-	port := refview.NewPort(refview.New(permission.NewRegistry()), engine)
+	port := refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine)
 	linked := port.Person(actor, permissionports.PersonGrants{
 		Reads: func(_ context.Context, kind permission.Resource) (bool, error) {
 			return kind != permission.ResourceCustomer, nil
@@ -44,7 +47,7 @@ func TestPort_ReadsAPersonsCeilingFromTheSurfacesDetail(t *testing.T) {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	})
-	port := refview.NewPort(refview.New(permission.NewRegistry()), nil)
+	port := refview.NewPort(refview.New(permissioncatalog.NewRegistry()), nil)
 	asked := 0
 	linked := port.Person(actor, permissionports.PersonGrants{
 		Reads: func(context.Context, permission.Resource) (bool, error) { return false, nil },

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -54,7 +55,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Messages      inboundmessageports.InboundMessageRepository
 	Mailboxes     inboundmessageports.InboundMailboxRepository
-	Work          inboundmessageports.TriageWorkRepository
+	Work          triageworkports.TriageWorkRepository
 	Activities    inboundmessageports.TriageActivityRecorder
 	Notifier      inboundmessageports.TriageMessageNotifier
 	Shipments     inboundmessageports.InboundShipmentFinder
@@ -66,19 +67,19 @@ type Params struct {
 	Replies       *inboundreplyservice.Service
 	ReplyReader   inboundmessageports.InboundReplyReader
 	Nova          *triagenova.Caller
-	Workflows     kernelports.WorkflowStarter                `optional:"true"`
-	Events        inboundmessageports.TriageEventSink        `optional:"true"`
-	Loads         inboundmessageports.TriageLoadCreator      `optional:"true"`
-	Exceptions    inboundmessageports.TriageExceptionLogger  `optional:"true"`
-	Detention     inboundmessageports.TriageDetentionSettler `optional:"true"`
-	CarrierPay    inboundmessageports.TriageCarrierPayQueuer `optional:"true"`
+	Workflows     kernelports.WorkflowStarter            `optional:"true"`
+	Events        inboundmessageports.TriageEventSink    `optional:"true"`
+	Loads         triageworkports.TriageLoadCreator      `optional:"true"`
+	Exceptions    triageworkports.TriageExceptionLogger  `optional:"true"`
+	Detention     triageworkports.TriageDetentionSettler `optional:"true"`
+	CarrierPay    triageworkports.TriageCarrierPayQueuer `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	messages      inboundmessageports.InboundMessageRepository
 	mailboxes     inboundmessageports.InboundMailboxRepository
-	work          inboundmessageports.TriageWorkRepository
+	work          triageworkports.TriageWorkRepository
 	activities    inboundmessageports.TriageActivityRecorder
 	notifier      inboundmessageports.TriageMessageNotifier
 	shipments     inboundmessageports.InboundShipmentFinder
@@ -92,10 +93,10 @@ type Service struct {
 	nova          triagenova.Completer
 	workflows     kernelports.WorkflowStarter
 	events        inboundmessageports.TriageEventSink
-	loads         inboundmessageports.TriageLoadCreator
-	exceptions    inboundmessageports.TriageExceptionLogger
-	detention     inboundmessageports.TriageDetentionSettler
-	carrierPay    inboundmessageports.TriageCarrierPayQueuer
+	loads         triageworkports.TriageLoadCreator
+	exceptions    triageworkports.TriageExceptionLogger
+	detention     triageworkports.TriageDetentionSettler
+	carrierPay    triageworkports.TriageCarrierPayQueuer
 	now           func() int64
 }
 

@@ -8,7 +8,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -62,7 +63,7 @@ func aiAuditEventColumns(ctx context.Context, nodePathPrefix string) []string {
 func aiAuditEventConnectionToModel(
 	result *pagination.CursorListResult[*aiaudit.AIAuditEvent],
 ) (*gqlmodel.AIAuditEventConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aiaudit.AIAuditEvent, cursor string) *gqlmodel.AIAuditEventEdge {
 			return &gqlmodel.AIAuditEventEdge{Node: node, Cursor: cursor}
@@ -84,7 +85,7 @@ func aiAuditEventConnectionToModel(
 func aiAuditExportConnectionToModel(
 	result *pagination.CursorListResult[*aiaudit.AIAuditExport],
 ) (*gqlmodel.AIAuditExportConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aiaudit.AIAuditExport, cursor string) *gqlmodel.AIAuditExportEdge {
 			return &gqlmodel.AIAuditExportEdge{Node: node, Cursor: cursor}
@@ -106,7 +107,7 @@ func aiAuditExportConnectionToModel(
 // loadAuditUser reads a person the trail names. A person since removed from
 // the organization is not an error: the trail keeps their name.
 func loadAuditUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
-	user, err := base.LoadUser(ctx, id)
+	user, err := loaderfields.LoadUser(ctx, id)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil

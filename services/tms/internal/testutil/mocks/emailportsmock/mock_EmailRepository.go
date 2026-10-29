@@ -980,6 +980,74 @@ func (_c *MockEmailRepository_GetProfile_Call) RunAndReturn(run func(context1 co
 	return _c
 }
 
+// GetProfilesByIDs provides a mock function for the type MockEmailRepository
+func (_mock *MockEmailRepository) GetProfilesByIDs(context1 context.Context, getEmailProfilesByIDsRequest emailports.GetEmailProfilesByIDsRequest) ([]*email.Profile, error) {
+	ret := _mock.Called(context1, getEmailProfilesByIDsRequest)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProfilesByIDs")
+	}
+
+	var r0 []*email.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, emailports.GetEmailProfilesByIDsRequest) ([]*email.Profile, error)); ok {
+		return returnFunc(context1, getEmailProfilesByIDsRequest)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, emailports.GetEmailProfilesByIDsRequest) []*email.Profile); ok {
+		r0 = returnFunc(context1, getEmailProfilesByIDsRequest)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*email.Profile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, emailports.GetEmailProfilesByIDsRequest) error); ok {
+		r1 = returnFunc(context1, getEmailProfilesByIDsRequest)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEmailRepository_GetProfilesByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProfilesByIDs'
+type MockEmailRepository_GetProfilesByIDs_Call struct {
+	*mock.Call
+}
+
+// GetProfilesByIDs is a helper method to define mock.On call
+//   - context1 context.Context
+//   - getEmailProfilesByIDsRequest emailports.GetEmailProfilesByIDsRequest
+func (_e *MockEmailRepository_Expecter) GetProfilesByIDs(context1 any, getEmailProfilesByIDsRequest any) *MockEmailRepository_GetProfilesByIDs_Call {
+	return &MockEmailRepository_GetProfilesByIDs_Call{Call: _e.mock.On("GetProfilesByIDs", context1, getEmailProfilesByIDsRequest)}
+}
+
+func (_c *MockEmailRepository_GetProfilesByIDs_Call) Run(run func(context1 context.Context, getEmailProfilesByIDsRequest emailports.GetEmailProfilesByIDsRequest)) *MockEmailRepository_GetProfilesByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 emailports.GetEmailProfilesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(emailports.GetEmailProfilesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEmailRepository_GetProfilesByIDs_Call) Return(profiles []*email.Profile, err error) *MockEmailRepository_GetProfilesByIDs_Call {
+	_c.Call.Return(profiles, err)
+	return _c
+}
+
+func (_c *MockEmailRepository_GetProfilesByIDs_Call) RunAndReturn(run func(context1 context.Context, getEmailProfilesByIDsRequest emailports.GetEmailProfilesByIDsRequest) ([]*email.Profile, error)) *MockEmailRepository_GetProfilesByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasSuppression provides a mock function for the type MockEmailRepository
 func (_mock *MockEmailRepository) HasSuppression(context1 context.Context, tenantInfo pagination.TenantInfo, s string) (bool, error) {
 	ret := _mock.Called(context1, tenantInfo, s)

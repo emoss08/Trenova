@@ -3,21 +3,21 @@
 package attentionresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentdecisionqueueports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	billingqueueports "github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 )
 
 type Deps struct {
-	*base.Core
-	EdiService                *ediservice.Service
+	*resolvercore.Core
+	EdiOverviewService        *edioverview.Service
 	ServiceFailureSvc         servicefailureports.ServiceFailureService
 	BillingQueueService       billingqueueports.BillingQueueService
 	InvoiceAdjustmentService  invoiceadjustmentports.InvoiceAdjustmentService
-	AgentDecisionQueueService agentports.AgentDecisionQueueService
+	AgentDecisionQueueService agentdecisionqueueports.AgentDecisionQueueService
 }
 
 type QueryResolver struct{ *Deps }

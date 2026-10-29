@@ -10,8 +10,6 @@ import (
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,7 +28,7 @@ var definitionsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
 		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "template", Quoted: `"template"`, Field: "Template", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template`, JSON: `template`, Enum: enumTemplate[:]},
+		{Name: "template", Quoted: `"template"`, Field: "Template", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template`, JSON: `template`, Enum: enumAgenttemplateTemplate[:]},
 		{Name: "instructions", Quoted: `"instructions"`, Field: "Instructions", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Instructions`, JSON: `instructions`},
 		{Name: "guardrails", Quoted: `"guardrails"`, Field: "Guardrails", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Guardrails`, JSON: `guardrails`},
 		{Name: "tool_names", Quoted: `"tool_names"`, Field: "ToolNames", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Tool Names`, JSON: `toolNames`},
@@ -109,7 +107,7 @@ type DefinitionsTable struct {
 	OrganizationID         keelkinds.PulidIDCol
 	Name                   keel.StringCol
 	Description            keel.StringCol
-	Template               TemplateCol
+	Template               keelkinds.AgenttemplateTemplateCol
 	Instructions           keel.StringCol
 	Guardrails             keel.StringArrayCol
 	ToolNames              keel.StringArrayCol
@@ -168,7 +166,7 @@ var Definitions = &DefinitionsTable{
 	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 2}}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 3}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 4}},
-	Template:               TemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 5}}},
+	Template:               keelkinds.AgenttemplateTemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 5}}},
 	Instructions:           keel.StringCol{Col: keel.Col{Ref: &definitionsRef, Index: 6}},
 	Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 7}},
 	ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: &definitionsRef, Index: 8}},
@@ -228,7 +226,7 @@ func BuildDefinitions(r *keel.Ref) *DefinitionsTable {
 		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Template:               TemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Template:               keelkinds.AgenttemplateTemplateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Instructions:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Guardrails:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 7}},
 		ToolNames:              keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -620,331 +618,6 @@ func beforeCreateDefinition(ctx context.Context, p unsafe.Pointer) error {
 	return (*agentdefinition.Definition)(p).BeforeCreate(ctx)
 }
 
-// definitionVersionsTable is the schema of agentdefinition.DefinitionVersion.
-var definitionVersionsTable = schema.Table{
-	Name:   "agent_definition_versions",
-	Quoted: `"agent_definition_versions"`,
-	Alias:  "adv",
-	Model:  "agentdefinition.DefinitionVersion",
-	Label:  `Definition Version`,
-	Plural: `Definition Versions`,
-	Doc:    `DefinitionVersion is an agent as it stood after one save: the whole definition, who saved it and a one-line account of what that save changed. Restoring a version loads it into the builder as a draft; nothing is saved until the person saves it, which writes a new version.`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "snapshot", Quoted: `"snapshot"`, Field: "Snapshot", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Snapshot`, JSON: `snapshot`},
-		{Name: "author_id", Quoted: `"author_id"`, Field: "AuthorID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Author ID`, JSON: `authorId`},
-		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, JSON: `summary`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Author", Alias: "a", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Author`, JSON: `author`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 5, 6, 7},
-	Returning:  nil,
-	Version:    4,
-	AutoID:     0,
-	AutoCreate: 8,
-	AutoUpdate: -1,
-	IDPrefix:   "agdv_",
-	New:        newDefinitionVersion,
-	NewN:       newNDefinitionVersion,
-	Size:       unsafe.Sizeof(agentdefinition.DefinitionVersion{}),
-	Ptr:        ptrDefinitionVersion,
-	Value:      valueDefinitionVersion,
-	Attach:     attachDefinitionVersion,
-}
-
-var definitionVersionsRef = keel.Ref{Table: &definitionVersionsTable}
-
-// DefinitionVersionsTable is the table of agentdefinition.DefinitionVersion.
-type DefinitionVersionsTable struct {
-	keel.Handle[*agentdefinition.DefinitionVersion]
-	ID                keelkinds.PulidIDCol
-	BusinessUnitID    keelkinds.PulidIDCol
-	OrganizationID    keelkinds.PulidIDCol
-	AgentDefinitionID keelkinds.PulidIDCol
-	Version           keel.Int64Col
-	Snapshot          keel.JSONBCol
-	AuthorID          keelkinds.PulidIDCol
-	Summary           keel.StringCol
-	CreatedAt         keel.Int64Col
-}
-
-// DefinitionVersions references the agent_definition_versions table.
-var DefinitionVersions = &DefinitionVersionsTable{
-	Handle:            keel.Handle[*agentdefinition.DefinitionVersion]{Ref: &definitionVersionsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 3}}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &definitionVersionsRef, Index: 4}},
-	Snapshot:          keel.JSONBCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 5}},
-	AuthorID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 6}}},
-	Summary:           keel.StringCol{Col: keel.Col{Ref: &definitionVersionsRef, Index: 7}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &definitionVersionsRef, Index: 8}},
-}
-
-// BuildDefinitionVersions builds the handle of agent_definition_versions for ref. Generated relation and alias methods call it.
-func BuildDefinitionVersions(r *keel.Ref) *DefinitionVersionsTable {
-	return &DefinitionVersionsTable{
-		Handle:            keel.Handle[*agentdefinition.DefinitionVersion]{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Snapshot:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
-		AuthorID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Summary:           keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-	}
-}
-
-// DefinitionVersionsSchema returns the schema of agent_definition_versions.
-func DefinitionVersionsSchema() *schema.Table { return &definitionVersionsTable }
-
-// As returns a handle that references agent_definition_versions under its own alias.
-func (t *DefinitionVersionsTable) As(alias string) *DefinitionVersionsTable {
-	return keel.Alias(t.Ref, alias, BuildDefinitionVersions)
-}
-
-// Author is the belongs relation.
-func (t *DefinitionVersionsTable) Author() *tenantdb.UsersTable {
-	return keel.Path(t.Ref, 0, tenantdb.BuildUsers)
-}
-
-// Get returns the agent_definition_versions row with the given key, or keel.ErrNotFound.
-func (t *DefinitionVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentdefinition.DefinitionVersion, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newDefinitionVersion() unsafe.Pointer {
-	return unsafe.Pointer(new(agentdefinition.DefinitionVersion))
-}
-
-func newNDefinitionVersion(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentdefinition.DefinitionVersion, n)))
-}
-
-func ptrDefinitionVersion(p unsafe.Pointer, c int32) any {
-	r := (*agentdefinition.DefinitionVersion)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
-	case 4:
-		return &r.Version
-	case 5:
-		return &r.Snapshot
-	case 6:
-		return (**string)(unsafe.Pointer(&r.AuthorID))
-	case 7:
-		return &r.Summary
-	case 8:
-		return &r.CreatedAt
-	}
-	return nil
-}
-
-func valueDefinitionVersion(p unsafe.Pointer, c int32) any {
-	r := (*agentdefinition.DefinitionVersion)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.AgentDefinitionID)
-	case 4:
-		return r.Version
-	case 5:
-		if r.Snapshot == nil {
-			return nil
-		}
-		return *r.Snapshot
-	case 6:
-		if r.AuthorID == nil {
-			return nil
-		}
-		return string(*r.AuthorID)
-	case 7:
-		if r.Summary == "" {
-			return nil
-		}
-		return r.Summary
-	case 8:
-		return r.CreatedAt
-	}
-	return nil
-}
-
-func attachDefinitionVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*agentdefinition.DefinitionVersion)(p)
-	switch rel {
-	case 0:
-		r.Author = (*tenant.User)(child)
-	}
-}
-
-// testPromptsTable is the schema of agentdefinition.TestPrompt.
-var testPromptsTable = schema.Table{
-	Name:   "agent_test_prompts",
-	Quoted: `"agent_test_prompts"`,
-	Alias:  "atp",
-	Model:  "agentdefinition.TestPrompt",
-	Label:  `Test Prompt`,
-	Plural: `Test Prompts`,
-	Doc:    `TestPrompt is a message kept with an agent for trying it again after an edit, so a change can be checked against the same questions each time.`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
-		{Name: "prompt", Quoted: `"prompt"`, Field: "Prompt", Kind: schema.KindString, Flags: 0, Label: `Prompt`, JSON: `prompt`},
-		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Created By ID`, JSON: `createdById`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{3, 4, 5},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 6,
-	AutoUpdate: -1,
-	IDPrefix:   "agtp_",
-	New:        newTestPrompt,
-	NewN:       newNTestPrompt,
-	Size:       unsafe.Sizeof(agentdefinition.TestPrompt{}),
-	Ptr:        ptrTestPrompt,
-	Value:      valueTestPrompt,
-}
-
-var testPromptsRef = keel.Ref{Table: &testPromptsTable}
-
-// TestPromptsTable is the table of agentdefinition.TestPrompt.
-type TestPromptsTable struct {
-	keel.Handle[*agentdefinition.TestPrompt]
-	ID                keelkinds.PulidIDCol
-	BusinessUnitID    keelkinds.PulidIDCol
-	OrganizationID    keelkinds.PulidIDCol
-	AgentDefinitionID keelkinds.PulidIDCol
-	Prompt            keel.StringCol
-	CreatedByID       keelkinds.PulidIDCol
-	CreatedAt         keel.Int64Col
-}
-
-// TestPrompts references the agent_test_prompts table.
-var TestPrompts = &TestPromptsTable{
-	Handle:            keel.Handle[*agentdefinition.TestPrompt]{Ref: &testPromptsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 3}}},
-	Prompt:            keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 4}},
-	CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 5}}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &testPromptsRef, Index: 6}},
-}
-
-// BuildTestPrompts builds the handle of agent_test_prompts for ref. Generated relation and alias methods call it.
-func BuildTestPrompts(r *keel.Ref) *TestPromptsTable {
-	return &TestPromptsTable{
-		Handle:            keel.Handle[*agentdefinition.TestPrompt]{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Prompt:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-	}
-}
-
-// TestPromptsSchema returns the schema of agent_test_prompts.
-func TestPromptsSchema() *schema.Table { return &testPromptsTable }
-
-// As returns a handle that references agent_test_prompts under its own alias.
-func (t *TestPromptsTable) As(alias string) *TestPromptsTable {
-	return keel.Alias(t.Ref, alias, BuildTestPrompts)
-}
-
-// Get returns the agent_test_prompts row with the given key, or keel.ErrNotFound.
-func (t *TestPromptsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*agentdefinition.TestPrompt, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newTestPrompt() unsafe.Pointer { return unsafe.Pointer(new(agentdefinition.TestPrompt)) }
-
-func newNTestPrompt(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]agentdefinition.TestPrompt, n)))
-}
-
-func ptrTestPrompt(p unsafe.Pointer, c int32) any {
-	r := (*agentdefinition.TestPrompt)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
-	case 4:
-		return &r.Prompt
-	case 5:
-		return (**string)(unsafe.Pointer(&r.CreatedByID))
-	case 6:
-		return &r.CreatedAt
-	}
-	return nil
-}
-
-func valueTestPrompt(p unsafe.Pointer, c int32) any {
-	r := (*agentdefinition.TestPrompt)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.AgentDefinitionID)
-	case 4:
-		return r.Prompt
-	case 5:
-		if r.CreatedByID == nil {
-			return nil
-		}
-		return string(*r.CreatedByID)
-	case 6:
-		return r.CreatedAt
-	}
-	return nil
-}
-
-func init() {
-	definitionVersionsTable.Relations[0].Target = tenantdb.UsersSchema()
-}
-
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
@@ -959,17 +632,7 @@ var enumAgentAutonomyTier = [...]schema.EnumValue{
 	{Value: `AutoExecute`, Label: `Tier Auto Execute`},
 }
 
-var enumDataAccessCeiling = [...]schema.EnumValue{
-	{Value: `Internal`, Label: `Data Access Internal`},
-	{Value: `Restricted`, Label: `Data Access Restricted`},
-}
-
-var enumOutputMode = [...]schema.EnumValue{
-	{Value: `Conversational`, Label: `Output Conversational`},
-	{Value: `Report`, Label: `Output Report`},
-}
-
-var enumTemplate = [...]schema.EnumValue{
+var enumAgenttemplateTemplate = [...]schema.EnumValue{
 	{Value: `DispatchAssistant`, Label: `Dispatch Assistant`},
 	{Value: `BillingAssistant`, Label: `Billing Assistant`},
 	{Value: `ComplianceAssistant`, Label: `Compliance Assistant`},
@@ -999,6 +662,16 @@ var enumTemplate = [...]schema.EnumValue{
 	{Value: `FuelTaxClerk`, Label: `Fuel Tax Clerk`},
 	{Value: `ReportAnalyst`, Label: `Report Analyst`},
 	{Value: `FactoringClerk`, Label: `Factoring Clerk`},
+}
+
+var enumDataAccessCeiling = [...]schema.EnumValue{
+	{Value: `Internal`, Label: `Data Access Internal`},
+	{Value: `Restricted`, Label: `Data Access Restricted`},
+}
+
+var enumOutputMode = [...]schema.EnumValue{
+	{Value: `Conversational`, Label: `Output Conversational`},
+	{Value: `Report`, Label: `Output Report`},
 }
 
 var enumTriggerMode = [...]schema.EnumValue{
@@ -1092,29 +765,6 @@ func (c OutputModeCol) In(vs ...agentdefinition.OutputMode) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c OutputModeCol) NotIn(vs ...agentdefinition.OutputMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// TemplateCol is a column of agentdefinition.Template values.
-type TemplateCol struct{ keel.StringCol }
-
-func (c TemplateCol) Eq(v agentdefinition.Template) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TemplateCol) Ne(v agentdefinition.Template) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TemplateCol) Gt(v agentdefinition.Template) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TemplateCol) Gte(v agentdefinition.Template) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TemplateCol) Lt(v agentdefinition.Template) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TemplateCol) Lte(v agentdefinition.Template) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TemplateCol) IsDistinctFrom(v agentdefinition.Template) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c TemplateCol) Between(lo, hi agentdefinition.Template) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c TemplateCol) To(v agentdefinition.Template) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TemplateCol) In(vs ...agentdefinition.Template) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c TemplateCol) NotIn(vs ...agentdefinition.Template) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

@@ -7,12 +7,12 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
@@ -34,13 +34,13 @@ const (
 type Params struct {
 	fx.In
 
-	Repo       iamports.IAMRepository
-	Encryption *encryptionservice.Service
-	Validator  *Validator
-	Auditor    permissionports.SecurityAuditor
-	Logger     *zap.Logger
-	Config     *config.Config                `optional:"true"`
-	Plans      platformplanports.PlanService `optional:"true"`
+	Repo           iamports.IAMRepository
+	Encryption     *encryptionservice.Service
+	Validator      *Validator
+	Auditor        permissionports.SecurityAuditor
+	Logger         *zap.Logger
+	SecurityConfig *securityconfig.Config        `optional:"true"`
+	Plans          platformplanports.PlanService `optional:"true"`
 }
 
 type service struct {
@@ -61,7 +61,7 @@ func New(p Params) iamports.IAMService {
 		auditor:   p.Auditor,
 		l:         p.Logger.Named("service.iam"),
 		plans:     p.Plans,
-		issuers:   p.Config.SSOIssuerPolicy(),
+		issuers:   p.SecurityConfig.SSOIssuerPolicy(),
 	}
 }
 
@@ -227,7 +227,7 @@ func (s *service) identityProviderFromRequest(
 	entity.Validate(multiErr)
 	validateOIDCConfig(entity, multiErr)
 	if entity.Protocol == iam.IdentityProviderProtocolOIDC {
-		tenant.ValidateOIDCIssuerURL(multiErr, "oidcIssuerUrl", entity.OIDCIssuerURL, s.issuers)
+		sso.ValidateOIDCIssuerURL(multiErr, "oidcIssuerUrl", entity.OIDCIssuerURL, s.issuers)
 	}
 	if multiErr.HasErrors() {
 		return nil, multiErr

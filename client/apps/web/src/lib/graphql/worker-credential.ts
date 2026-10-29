@@ -10,6 +10,7 @@ import {
   UpdateWorkerCredentialTypeDocument,
   VerifyWorkerCredentialDocument,
   WorkerCredentialSummaryDocument,
+  WorkerCredentialTypeChoicesDocument,
   WorkerCredentialTypeTableDocument,
   WorkerCredentialsDocument,
   type ArchiveWorkerCredentialInput,
@@ -94,6 +95,25 @@ export async function fetchWorkerCredentials(
     signal: options?.signal,
   });
   return data.workerCredentials as WorkerCredentialRow[];
+}
+
+export type WorkerCredentialTypeChoice = {
+  id: string;
+  code: string;
+  name: string;
+  isRequired: boolean;
+};
+
+export async function fetchWorkerCredentialTypeChoices(options?: {
+  signal?: AbortSignal;
+}): Promise<WorkerCredentialTypeChoice[]> {
+  const data = await requestGraphQL({
+    document: WorkerCredentialTypeChoicesDocument,
+    operationName: "WorkerCredentialTypeChoices",
+    variables: {},
+    signal: options?.signal,
+  });
+  return data.activeWorkerCredentialTypes;
 }
 
 export async function fetchWorkerCredentialSummary(

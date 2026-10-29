@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/deskbench/benchcell"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -20,9 +24,9 @@ const (
 	DefaultUserEmail = "admin@trenova.app"
 )
 
-var defaultAgentTemplates = []agentdefinition.Template{
-	agentdefinition.TemplateGeneralAssistant,
-	agentdefinition.TemplateDispatchAssistant,
+var defaultAgentTemplates = []agenttemplate.Template{
+	agenttemplate.TemplateGeneralAssistant,
+	agenttemplate.TemplateDispatchAssistant,
 }
 
 type Session struct {
@@ -115,8 +119,8 @@ func (s *Session) Agent(ctx context.Context, ref string) (*agentdefinition.Defin
 func (s *Session) Providers(ctx context.Context) ([]*aiprovider.Provider, error) {
 	providers, err := s.bench.Providers.ListForTask(
 		s.Context(ctx),
-		agentports.ListAIProvidersForTaskRequest{
-			Task:       aiprovider.TaskAssistantChat,
+		aiproviderports.ListAIProvidersForTaskRequest{
+			Task:       aitask.TaskAssistantChat,
 			TenantInfo: s.Tenant,
 		},
 	)
@@ -129,7 +133,7 @@ func (s *Session) Providers(ctx context.Context) ([]*aiprovider.Provider, error)
 
 func (s *Session) Provider(ctx context.Context, ref string) (*aiprovider.Provider, error) {
 	ref = strings.TrimSpace(ref)
-	if ref == "" || strings.EqualFold(ref, DefaultProviderLabel) {
+	if ref == "" || strings.EqualFold(ref, benchcell.DefaultProviderLabel) {
 		return nil, nil
 	}
 
@@ -151,24 +155,6 @@ func (s *Session) Provider(ctx context.Context, ref string) (*aiprovider.Provide
 	)
 }
 
-const DefaultProviderLabel = "default"
-
-func ProviderLabel(provider *aiprovider.Provider) string {
-	if provider == nil {
-		return DefaultProviderLabel
-	}
-
-	return provider.Name + " (" + provider.Model + ")"
-}
-
-func providerID(provider *aiprovider.Provider) pulid.ID {
-	if provider == nil {
-		return pulid.Nil
-	}
-
-	return provider.ID
-}
-
 const cleanPageSize = 100
 
 func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
@@ -176,7 +162,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 
 	doomed := make([]pulid.ID, 0, cleanPageSize)
 	for cursor := ""; ; {
-		page, err := s.bench.Assistant.ListThreads(ctx, agentports.ListThreadsRequest{
+		page, err := s.bench.Assistant.ListThreads(ctx, &conversationports.ListThreadsRequest{
 			UserID:          s.User.ID,
 			TenantInfo:      s.Tenant,
 			Limit:           cleanPageSize,
@@ -187,7 +173,7 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("list conversations: %w", err)
 		}
 		for _, thread := range page.Items {
-			if strings.HasPrefix(thread.Title, benchTitlePrefix) {
+			if strings.HasPrefix(thread.Title, BenchTitlePrefix) {
 				doomed = append(doomed, thread.ID)
 			}
 		}
@@ -204,4 +190,20 @@ func (s *Session) CleanBenchThreads(ctx context.Context) (int, error) {
 	}
 
 	return len(doomed), nil
+}
+
+func (s *Session) Cell(ctx context.Context, ref string) (benchcell.Cell, error) {
+	parsed, err := benchcell.ParseRef(ref)
+	if err != nil {
+		return benchcell.Cell{}, err
+	}
+	provider, err := s.Provider(ctx, parsed.Name)
+	if err != nil {
+		return benchcell.Cell{}, err
+	}
+	if err = benchcell.CheckAdvisor(provider, parsed.Advisor); err != nil {
+		return benchcell.Cell{}, fmt.Errorf("%s: %w", benchcell.ProviderLabel(provider), err)
+	}
+
+	return benchcell.Cell{Provider: provider, Effort: parsed.Effort, Advisor: parsed.Advisor}, nil
 }

@@ -29,8 +29,8 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 }));
 
 /*
-The GET /data-retention/ body, as tenant.DataRetention serializes it
-(services/tms/internal/modules/identity/domain/tenant/dataretention.go). A
+The GET /data-retention/ body, as dataretention.DataRetention serializes it
+(services/tms/internal/modules/identity/domain/dataretention/dataretention.go). A
 window of 0 on the EDI and evaluation-case fields means no limit.
 */
 const saved = {

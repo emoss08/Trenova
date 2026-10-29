@@ -3,16 +3,14 @@ package carriersettlement
 import (
 	"context"
 
-	"github.com/emoss08/trenova/shared/money"
-
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -56,7 +54,7 @@ type InvoiceMatch struct {
 }
 
 func (m *InvoiceMatch) BeforeUpdate(_ context.Context) error {
-	m.InvoiceNumberKey = edi.InvoiceNumberKey(m.InvoiceNumber)
+	m.InvoiceNumberKey = edicarrierinvoice.InvoiceNumberKey(m.InvoiceNumber)
 
 	return nil
 }
@@ -124,7 +122,7 @@ func (m *InvoiceMatch) BeforeCreate(ctx context.Context) error {
 	if m.CurrencyCode == "" {
 		m.CurrencyCode = money.DefaultCurrencyCode
 	}
-	m.InvoiceNumberKey = edi.InvoiceNumberKey(m.InvoiceNumber)
+	m.InvoiceNumberKey = edicarrierinvoice.InvoiceNumberKey(m.InvoiceNumber)
 
 	return nil
 }

@@ -5,11 +5,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 )
 
-func decorateMoves(moves []*shipmentports.BoardMove, now int64) []*BoardMove {
+func decorateMoves(moves []*dispatchboardports.BoardMove, now int64) []*BoardMove {
 	decorated := make([]*BoardMove, 0, len(moves))
 	for _, move := range moves {
 		decorated = append(decorated, decorateMove(move, now))
@@ -17,7 +17,7 @@ func decorateMoves(moves []*shipmentports.BoardMove, now int64) []*BoardMove {
 	return decorated
 }
 
-func decorateMove(move *shipmentports.BoardMove, now int64) *BoardMove {
+func decorateMove(move *dispatchboardports.BoardMove, now int64) *BoardMove {
 	return &BoardMove{
 		BoardMove:       move,
 		Urgency:         urgencyFor(move, now),
@@ -52,26 +52,41 @@ func summarizeTender(entity *tender.Tender) *MoveTenderSummary {
 	return summary
 }
 
-func urgencyFor(move *shipmentports.BoardMove, now int64) UrgencyBucket {
+// urgencyFor reads a move's urgency from its next stop: the pickup until it
+// is picked up, then the delivery. A stop is Late once its window has closed
+// with no arrival, and Now while its window is open, the same rule for a
+// pickup as for a delivery: a truck inside its pickup window is due, not
+// late, and calling it late made the board, the shipment list and the
+// answer built from them count late loads three ways.
+func urgencyFor(move *dispatchboardports.BoardMove, now int64) UrgencyBucket {
 	if arrived(move.OriginActualArrive) {
 		return deliveryUrgency(move, now)
 	}
 	if move.OriginWindowStart <= 0 {
 		return UrgencyPlanned
 	}
+	if windowClose(move.OriginWindowStart, move.OriginWindowEnd) < now {
+		return UrgencyLate
+	}
 
-	return bucketFor(move.OriginWindowStart - now)
+	return bucketFor(max(move.OriginWindowStart-now, 0))
 }
 
-func deliveryUrgency(move *shipmentports.BoardMove, now int64) UrgencyBucket {
+// windowClose is when a window closes: its end, or its start when it has
+// none.
+func windowClose(start int64, end *int64) int64 {
+	if end != nil && *end > start {
+		return *end
+	}
+
+	return start
+}
+
+func deliveryUrgency(move *dispatchboardports.BoardMove, now int64) UrgencyBucket {
 	if arrived(move.DestinationActualArrive) || move.DestinationWindowStart <= 0 {
 		return UrgencyPlanned
 	}
-	closes := move.DestinationWindowStart
-	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > closes {
-		closes = *move.DestinationWindowEnd
-	}
-	if closes < now {
+	if windowClose(move.DestinationWindowStart, move.DestinationWindowEnd) < now {
 		return UrgencyLate
 	}
 
@@ -97,7 +112,7 @@ func bucketFor(delta int64) UrgencyBucket {
 	}
 }
 
-func minutesToPickup(move *shipmentports.BoardMove, now int64) int64 {
+func minutesToPickup(move *dispatchboardports.BoardMove, now int64) int64 {
 	if move.OriginWindowStart <= 0 {
 		return 0
 	}
@@ -177,7 +192,7 @@ func applyWorkload(row *BoardDriver, snapshot *dispatchcandidateservice.FleetSna
 }
 
 func availabilityFindings(
-	driver *shipmentports.BoardDriver,
+	driver *dispatchboardports.BoardDriver,
 	snapshot *dispatchcandidateservice.FleetSnapshot,
 	control *dispatchcontrol.DispatchControl,
 	now int64,

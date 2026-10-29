@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,9 +22,11 @@ const (
 )
 
 var (
-	resourceConst   = regexp.MustCompile(`(?m)^\s*Resource(\w+)\s+Resource\s*=\s*"([^"]+)"`)
-	operationConst  = regexp.MustCompile(`(?m)^\s*Op(\w+)\s+Operation\s*=\s*"([^"]+)"`)
-	directCheck     = regexp.MustCompile(`permission\.Resource(\w+)(?:\.String\(\))?,\s*permission\.Op(\w+)\b`)
+	resourceConst  = regexp.MustCompile(`(?m)^\s*Resource(\w+)\s+Resource\s*=\s*"([^"]+)"`)
+	operationConst = regexp.MustCompile(`(?m)^\s*Op(\w+)\s+Operation\s*=\s*"([^"]+)"`)
+	directCheck    = regexp.MustCompile(
+		`permission\.Resource(\w+)(?:\.String\(\))?,\s*permission\.Op(\w+)\b`,
+	)
 	resourceVar     = regexp.MustCompile(`\bresource\s*:?=\s*permission\.Resource(\w+)\.String\(\)`)
 	resourceVarUsed = regexp.MustCompile(`RequirePermission\(\s*resource,\s*permission\.Op(\w+)\)`)
 )
@@ -69,7 +72,10 @@ func permissionUses(t *testing.T, dirs ...string) []permissionUse {
 			}
 			text := string(source)
 			for _, match := range directCheck.FindAllStringSubmatch(text, -1) {
-				uses = append(uses, permissionUse{file: path, resource: match[1], operation: match[2]})
+				uses = append(
+					uses,
+					permissionUse{file: path, resource: match[1], operation: match[2]},
+				)
 			}
 			if variable := resourceVar.FindStringSubmatch(text); variable != nil {
 				for _, match := range resourceVarUsed.FindAllStringSubmatch(text, -1) {
@@ -102,7 +108,7 @@ func TestEveryPermissionCheckNamesAnOperationItsResourceDeclares(t *testing.T) {
 
 	resources := constantValues(t, resourceSource, resourceConst)
 	operations := constantValues(t, operationFile, operationConst)
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 
 	var problems []string
 	for _, use := range permissionUses(t, resolverDir, handlerDir) {

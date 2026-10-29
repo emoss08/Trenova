@@ -6,11 +6,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -196,12 +196,12 @@ func (c *checker) leavingWrites() {
 
 func (c *checker) decide(
 	record *DispatchRecord,
-	policy *agentports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 	taint *agent.RunTaint,
 ) agenttoolpolicy.Decision {
 	return agenttoolpolicy.Decide(c.ctx, agenttoolpolicy.DecideInput{
 		Policy: *policy,
-		Params: agentports.ToolExecuteParams{
+		Params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: c.outcome.Actor.OrganizationID,
 			BusinessUnitID: c.outcome.Actor.BusinessUnitID,
 			Actor:          c.outcome.Actor,
@@ -305,7 +305,7 @@ func (c *checker) arguments() {
 			continue
 		}
 		for key := range action.Arguments {
-			if key == agentports.SelfScopeOwnerParam {
+			if key == agenttoolports.SelfScopeOwnerParam {
 				continue
 			}
 			if _, ok = declared[key]; !ok {
@@ -381,7 +381,7 @@ func (c *checker) definitions() {
 	}
 }
 
-func (c *checker) policy(name string) (agentports.ToolPolicy, bool) {
+func (c *checker) policy(name string) (agenttoolports.ToolPolicy, bool) {
 	if tool, ok := c.outcome.Kit.Actions.Get(name); ok {
 		return tool.Policy(), true
 	}
@@ -389,7 +389,7 @@ func (c *checker) policy(name string) (agentports.ToolPolicy, bool) {
 		return tool.Policy(), true
 	}
 
-	return agentports.ToolPolicy{}, false
+	return agenttoolports.ToolPolicy{}, false
 }
 
 func (o *Outcome) dispatched(name string) bool {
@@ -448,8 +448,10 @@ func (c *checker) scripts() {
 		if !isAction {
 			continue
 		}
-		if record.Status == codemode.CallOK && !slices.ContainsFunc(batch,
-			func(action agentports.PendingAction) bool { return action.ToolName == record.Tool }) {
+		if record.Status == codemode.CallOK && !slices.ContainsFunc(
+			batch,
+			func(action agentruntimeports.PendingAction) bool { return action.ToolName == record.Tool },
+		) {
 			c.violate(InvScriptWritesHeld,
 				"a script's call to %s came back ok and is in no batch for a person", record.Tool)
 		}
@@ -487,7 +489,7 @@ func (c *checker) targeted(name string, arguments map[string]any) bool {
 	if !ok {
 		return false
 	}
-	targeted, ok := tool.(agentports.TargetedTool)
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok {
 		return false
 	}
@@ -497,11 +499,11 @@ func (c *checker) targeted(name string, arguments map[string]any) bool {
 }
 
 // scriptBatch is every write the turn's scripts prepared and filed.
-func (o *Outcome) scriptBatch() []agentports.PendingAction {
+func (o *Outcome) scriptBatch() []agentruntimeports.PendingAction {
 	if o.Result == nil {
 		return nil
 	}
-	batch := make([]agentports.PendingAction, 0, len(o.Result.Actions))
+	batch := make([]agentruntimeports.PendingAction, 0, len(o.Result.Actions))
 	for idx := range o.Result.Actions {
 		if o.Result.Actions[idx].ScriptStepKey != "" {
 			batch = append(batch, o.Result.Actions[idx])
@@ -537,7 +539,7 @@ func (c *checker) scriptExercised() {
 	batch := o.scriptBatch()
 	for _, name := range want.Prepared {
 		if !slices.ContainsFunc(batch,
-			func(action agentports.PendingAction) bool { return action.ToolName == name }) {
+			func(action agentruntimeports.PendingAction) bool { return action.ToolName == name }) {
 			c.problem("the script never prepared %s, so the case no longer tests it", name)
 		}
 	}

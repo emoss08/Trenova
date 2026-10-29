@@ -1,6 +1,12 @@
 package accounting
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountinginboundrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingmappingrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingpayablesrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accounttyperepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -12,10 +18,34 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalreversalrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/manualjournalrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionapps"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionauth"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectioncert"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionhealth"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionstatus"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionsubscriptions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingconnectionwebhook"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accountinginboundservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingcreate"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingdecisions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingscoring"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingtargets"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncactions"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncdrain"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsynceffects"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncenqueue"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncledger"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncparty"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpayables"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncpush"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsales"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsetup"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncsweep"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
@@ -27,6 +57,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"go.uber.org/fx"
 )
@@ -34,26 +68,85 @@ import (
 func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			accountingconnectionservice.New,
-			func(s *accountingconnectionservice.Service) accountingsyncports.AccountingConnectionService { return s },
-			accountingmappingservice.New,
-			func(s *accountingmappingservice.Service) accountingsyncports.AccountingMappingService { return s },
+			accountingconnectionkit.New,
+			fx.Annotate(
+				accountingconnectionhealth.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingHealthChecker)),
+				fx.As(new(accountingconnectionports.AccountingSessionProvider)),
+			),
+			fx.Annotate(
+				accountingconnectionsubscriptions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingWebhookSubscriptionSyncer)),
+			),
+			fx.Annotate(
+				accountingconnectionstatus.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingConnectionStatusReader)),
+			),
+			fx.Annotate(
+				accountingconnectionapps.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingAppService)),
+			),
+			fx.Annotate(
+				accountingconnectionauth.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingAuthorizationService)),
+			),
+			fx.Annotate(
+				accountingconnectioncert.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingCertificateService)),
+			),
+			fx.Annotate(
+				accountingconnectionwebhook.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingconnectionports.AccountingWebhookReceiver)),
+			),
+			accountingmappingtargets.New,
+			fx.Annotate(
+				accountingmappingkit.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingHistoryGuard)),
+			),
+			fx.Annotate(
+				accountingmappingreads.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingReader)),
+			),
+			fx.Annotate(
+				accountingmappingscoring.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingScorer)),
+			),
+			fx.Annotate(
+				accountingmappingcreate.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingReferenceCreator)),
+			),
+			fx.Annotate(
+				accountingmappingdecisions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingmappingports.AccountingMappingDecisionService)),
+			),
 			accountinginboundservice.New,
-			func(s *accountinginboundservice.Service) accountingsyncports.AccountingInboundService { return s },
+			func(s *accountinginboundservice.Service) accountinginboundports.AccountingInboundService { return s },
 			glbalancerepository.New,
-			accountingsyncrepository.NewConnectionRepository,
-			accountingsyncrepository.NewAppCredentialRepository,
-			accountingsyncrepository.NewSubscriptionRepository,
-			accountingsyncrepository.NewPendingCertificateRepository,
-			accountingsyncrepository.NewReferenceRepository,
-			accountingsyncrepository.NewMappingRepository,
+			accountingconnectionrepository.NewConnectionRepository,
+			accountingconnectionrepository.NewAppCredentialRepository,
+			accountingconnectionrepository.NewSubscriptionRepository,
+			accountingconnectionrepository.NewPendingCertificateRepository,
+			accountingmappingrepository.NewReferenceRepository,
+			accountingmappingrepository.NewMappingRepository,
 			accountingsyncrepository.NewSyncRecordRepository,
-			accountingsyncrepository.NewInboundChangeRepository,
+			accountinginboundrepository.NewInboundChangeRepository,
 			accountingsyncrepository.NewBackfillRepository,
-			accountingsyncrepository.NewPayablesRepository,
-			accountingsyncrepository.NewDriftFindingRepository,
-			accountingsyncrepository.NewDriftSource,
-			accountingsyncrepository.NewLedgerSource,
+			accountingpayablesrepository.NewPayablesRepository,
+			accountingdriftrepository.NewDriftFindingRepository,
+			accountingdriftrepository.NewDriftSource,
+			accountingledgerrepository.NewLedgerSource,
 			accounttyperepository.New,
 			glaccountrepository.New,
 			fiscalyearrepository.New,
@@ -76,11 +169,45 @@ func SharedOptions() fx.Option {
 			fiscalcloseservice.New,
 			fiscalyearservice.New,
 			fiscalperiodservice.New,
-			accountingsyncservice.NewEnqueuer,
-			func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
-			func(e *accountingsyncservice.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
-			accountingsyncservice.New,
-			func(s *accountingsyncservice.Service) accountingsyncports.AccountingSyncService { return s },
+			accountingsyncenqueue.New,
+			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingSyncEnqueuer { return e },
+			func(e *accountingsyncenqueue.Enqueuer) accountingsyncports.AccountingLedgerEnqueuer { return e },
+			accountingsynceffects.New,
+			accountingsyncpush.New,
+			accountingsyncparty.New,
+			accountingsyncsales.New,
+			accountingsyncpayables.New,
+			accountingsyncledger.New,
+			fx.Annotate(
+				accountingsyncreads.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncReader)),
+			),
+			fx.Annotate(
+				accountingsyncsetup.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncSetupService)),
+			),
+			fx.Annotate(
+				accountingsyncactions.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncActionService)),
+			),
+			fx.Annotate(
+				accountingsyncbackfill.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingBackfillService)),
+			),
+			fx.Annotate(
+				accountingsyncdrain.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncDrainer)),
+			),
+			fx.Annotate(
+				accountingsyncsweep.New,
+				fx.As(fx.Self()),
+				fx.As(new(accountingsyncports.AccountingSyncSweeper)),
+			),
 			journalentryservice.New,
 			journalcardservice.New,
 			journalreversalservice.New,
@@ -92,7 +219,7 @@ func SharedOptions() fx.Option {
 		)),
 		fx.Provide(fx.Annotate(
 			accountingsynccontract.NewDriftChecker,
-			fx.As(new(accountingsyncports.AccountingDriftChecker)),
+			fx.As(new(accountingdriftports.AccountingDriftChecker)),
 		)),
 	)
 }

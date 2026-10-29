@@ -23,6 +23,11 @@ type GetFiscalPeriodByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetFiscalPeriodsByIDsRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	FiscalPeriodIDs []pulid.ID            `json:"fiscalPeriodIds"`
+}
+
 type DeleteFiscalPeriodRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -124,6 +129,10 @@ type FiscalPeriodRepository interface {
 		ctx context.Context,
 		req GetFiscalPeriodByIDRequest,
 	) (*fiscalperiod.FiscalPeriod, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetFiscalPeriodsByIDsRequest,
+	) ([]*fiscalperiod.FiscalPeriod, error)
 	GetByIDForUpdate(
 		ctx context.Context,
 		req GetFiscalPeriodByIDRequest,

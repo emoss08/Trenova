@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
 	"github.com/emoss08/trenova/pkg/x12"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -121,7 +122,7 @@ func buildTransaction(
 		raw.WriteString(segments[index].RawWithTerminator)
 	}
 	return &parsedTransaction{
-		set:                edi.TransactionSet(transaction.TransactionSet),
+		set:                edidocument.TransactionSet(transaction.TransactionSet),
 		controlNumber:      transaction.ControlNumber,
 		groupControlNumber: parsed.controlNumber,
 		functionalGroupID:  parsed.functionalGroupID,
@@ -155,11 +156,11 @@ func elementValue(segment *edix12inspect.X12Segment, position int) string {
 	return ""
 }
 
-func (t *parsedTransaction) documentPayload() edi.DocumentPayload {
+func (t *parsedTransaction) documentPayload() edipayload.DocumentPayload {
 	switch t.set {
-	case edi.TransactionSet997, edi.TransactionSet999:
+	case edidocument.TransactionSet997, edidocument.TransactionSet999:
 		entries := parseAcknowledgments(t)
-		ack := edi.FunctionalAcknowledgmentPayload{}
+		ack := edipayload.FunctionalAcknowledgmentPayload{}
 		if len(entries) > 0 {
 			first := entries[0]
 			ack.OriginalFunctionalGroupID = first.originalFunctionalGroupID
@@ -173,19 +174,19 @@ func (t *parsedTransaction) documentPayload() edi.DocumentPayload {
 			ack.IncludedTransactionSetCount = first.includedCount
 			ack.Diagnostics = first.diagnostics
 		}
-		if t.set == edi.TransactionSet999 {
-			implementation := edi.ImplementationAckPayload(ack)
-			return edi.DocumentPayload{
-				TransactionSet:               edi.TransactionSet999,
+		if t.set == edidocument.TransactionSet999 {
+			implementation := edipayload.ImplementationAckPayload(ack)
+			return edipayload.DocumentPayload{
+				TransactionSet:               edidocument.TransactionSet999,
 				ImplementationAcknowledgment: &implementation,
 			}
 		}
-		return edi.DocumentPayload{
-			TransactionSet:           edi.TransactionSet997,
+		return edipayload.DocumentPayload{
+			TransactionSet:           edidocument.TransactionSet997,
 			FunctionalAcknowledgment: &ack,
 		}
 	}
-	return edi.DocumentPayload{TransactionSet: t.set}
+	return edipayload.DocumentPayload{TransactionSet: t.set}
 }
 
 func parseAcknowledgments(t *parsedTransaction) []acknowledgmentEntry {
@@ -222,20 +223,26 @@ func parseAcknowledgments(t *parsedTransaction) []acknowledgmentEntry {
 			}
 		case "AK3", "IK3":
 			if current != nil {
-				current.diagnostics = append(current.diagnostics, edi.AcknowledgmentDiagnostic{
-					SegmentID:       strings.TrimSpace(elementValue(segment, 1)),
-					SegmentPosition: parseInt64(elementValue(segment, 2)),
-					ErrorCode:       strings.TrimSpace(elementValue(segment, 4)),
-					Message:         "segment level acknowledgment error",
-				})
+				current.diagnostics = append(
+					current.diagnostics,
+					edipayload.AcknowledgmentDiagnostic{
+						SegmentID:       strings.TrimSpace(elementValue(segment, 1)),
+						SegmentPosition: parseInt64(elementValue(segment, 2)),
+						ErrorCode:       strings.TrimSpace(elementValue(segment, 4)),
+						Message:         "segment level acknowledgment error",
+					},
+				)
 			}
 		case "AK4", "IK4":
 			if current != nil {
-				current.diagnostics = append(current.diagnostics, edi.AcknowledgmentDiagnostic{
-					ElementPosition: parseInt64(elementValue(segment, 1)),
-					ErrorCode:       strings.TrimSpace(elementValue(segment, 3)),
-					Message:         "element level acknowledgment error",
-				})
+				current.diagnostics = append(
+					current.diagnostics,
+					edipayload.AcknowledgmentDiagnostic{
+						ElementPosition: parseInt64(elementValue(segment, 1)),
+						ErrorCode:       strings.TrimSpace(elementValue(segment, 3)),
+						Message:         "element level acknowledgment error",
+					},
+				)
 			}
 		}
 	}
@@ -248,19 +255,19 @@ func parseAcknowledgments(t *parsedTransaction) []acknowledgmentEntry {
 	return entries
 }
 
-func transactionSetFromCode(code string) edi.TransactionSet {
+func transactionSetFromCode(code string) edidocument.TransactionSet {
 	code = strings.TrimSpace(code)
 	switch code {
 	case "SM":
-		return edi.TransactionSet204
+		return edidocument.TransactionSet204
 	case "IM":
-		return edi.TransactionSet210
+		return edidocument.TransactionSet210
 	case "QM":
-		return edi.TransactionSet214
+		return edidocument.TransactionSet214
 	case "GF":
-		return edi.TransactionSet990
+		return edidocument.TransactionSet990
 	default:
-		return edi.TransactionSet(code)
+		return edidocument.TransactionSet(code)
 	}
 }
 

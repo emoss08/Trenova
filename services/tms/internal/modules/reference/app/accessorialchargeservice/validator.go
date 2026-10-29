@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,18 +19,17 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*accessorialcharge.AccessorialCharge]
+	validator tenantedvalidation.EntityValidator[*accessorialcharge.AccessorialCharge]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(
+	checker := keelcheck.NewChecker(
 		p.DB,
 		accessorialchargedb.AccessorialChargesSchema(),
 	)
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*accessorialcharge.AccessorialCharge]().
+		validator: tenantedvalidation.NewBuilder[*accessorialcharge.AccessorialCharge]().
 			WithModelName("AccessorialCharge").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

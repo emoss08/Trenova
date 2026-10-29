@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,8 +15,8 @@ import (
 
 func findRequest(
 	kind accountingsync.SyncObjectType,
-) *accountingsyncports.AccountingFindDocumentRequest {
-	return &accountingsyncports.AccountingFindDocumentRequest{
+) *accountingconnectorports.AccountingFindDocumentRequest {
+	return &accountingconnectorports.AccountingFindDocumentRequest{
 		Auth:                   testAuth(),
 		Kind:                   kind,
 		DocNumber:              "TRN-INV-1001",
@@ -42,7 +44,7 @@ func TestFindDocumentMatchesTheExternalIDFirst(t *testing.T) {
 	assert.Equal(t, testInvoice, found.Refs[accountingsync.ExternalRefDocument])
 
 	call, _ := fake.query("t.externalid = ?")
-	assert.Equal(t, []any{typeInvoice, testRequestID}, call.Params)
+	assert.Equal(t, []any{nsdocsync.TypeInvoice, testRequestID}, call.Params)
 	_, byNumber := fake.query("t.otherrefnum = ?")
 	assert.False(t, byNumber)
 }
@@ -70,7 +72,11 @@ func TestFindDocumentFallsBackToNumberCounterpartyAndTotal(t *testing.T) {
 	assert.Equal(t, "1203", found.ExternalID)
 
 	call, _ := fake.query("t.otherrefnum = ?")
-	assert.Equal(t, []any{typeInvoice, "TRN-INV-1001", "TRN-INV-1001", float64(341)}, call.Params)
+	assert.Equal(
+		t,
+		[]any{nsdocsync.TypeInvoice, "TRN-INV-1001", "TRN-INV-1001", float64(341)},
+		call.Params,
+	)
 	assert.Contains(t, call.SQL, "t.voided = 'F'")
 
 	total = "9.99"
@@ -96,10 +102,14 @@ func TestFindDocumentShapesPurchaseAndPaymentResults(t *testing.T) {
 	found, ok, err := conn.FindDocument(t.Context(), req)
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, recordVendorCredit, found.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.RecordVendorCredit,
+		found.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	assert.Equal(t, "true", found.Refs[accountingsync.ExternalRefCreditDocument])
 	call, _ := fake.query("t.externalid = ?")
-	assert.Equal(t, typeVendorCredit, call.Params[0])
+	assert.Equal(t, nsdocsync.TypeVendorCredit, call.Params[0])
 
 	found, ok, err = conn.FindDocument(
 		t.Context(),
@@ -107,7 +117,11 @@ func TestFindDocumentShapesPurchaseAndPaymentResults(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, docTypeCustomerPayment, found.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.DocTypeCustomerPayment,
+		found.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
 	found, ok, err = conn.FindDocument(
 		t.Context(),
@@ -115,7 +129,11 @@ func TestFindDocumentShapesPurchaseAndPaymentResults(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, docTypeVendorPayment, found.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.DocTypeVendorPayment,
+		found.Refs[accountingsync.ExternalRefDocumentType],
+	)
 }
 
 func TestFindDocumentSkipsWhatItCannotSearch(t *testing.T) {
@@ -130,7 +148,7 @@ func TestFindDocumentSkipsWhatItCannotSearch(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ok)
 	_, _, err = conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectJournalEntry))
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 	assert.Empty(t, fake.all())
 
 	req := findRequest(accountingsync.SyncObjectInvoice)

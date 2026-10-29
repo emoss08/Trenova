@@ -5,6 +5,8 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/evalsplit"
 )
 
@@ -16,10 +18,10 @@ type SelectionSplit struct {
 }
 
 func DeskStrata() map[string]evalsplit.Stratum {
-	templates := agentdefinition.AllTemplates()
-	slices.SortFunc(templates, func(a, b agentdefinition.Template) int {
+	templates := agenttemplate.AllTemplates()
+	slices.SortFunc(templates, func(a, b agenttemplate.Template) int {
 		return cmp.Or(
-			cmp.Compare(len(a.StarterTools()), len(b.StarterTools())),
+			cmp.Compare(len(agentpreset.StarterTools(a)), len(agentpreset.StarterTools(b))),
 			cmp.Compare(a.Label(), b.Label()),
 		)
 	})
@@ -27,10 +29,10 @@ func DeskStrata() map[string]evalsplit.Stratum {
 	strata := make(map[string]evalsplit.Stratum, 512)
 	for _, template := range templates {
 		mode := evalsplit.Chat
-		if template.StarterTrigger() != agentdefinition.TriggerChat {
+		if agentpreset.StarterTrigger(template) != agentdefinition.TriggerChat {
 			mode = evalsplit.Unattended
 		}
-		for _, name := range template.StarterTools() {
+		for _, name := range agentpreset.StarterTools(template) {
 			if _, held := strata[name]; !held {
 				strata[name] = evalsplit.Stratum{Desk: template.Label(), Mode: mode}
 			}

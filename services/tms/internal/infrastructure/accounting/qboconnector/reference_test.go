@@ -10,9 +10,12 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,28 +40,35 @@ func TestListReferenceTranslatesTermsIntoDomainObjects(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/v3/company/123/query", r.URL.Path)
 		assert.Contains(t, r.URL.Query().Get("query"), "select * from Term")
-		_, _ = w.Write([]byte(`{"QueryResponse":{"Term":[{"Id":"3","Name":"Net 30","Type":"STANDARD","DueDays":30,"Active":true,"SyncToken":"1","MetaData":{"LastUpdatedTime":"2025-01-01T00:00:00Z"}}]}}`))
+		_, _ = w.Write(
+			[]byte(
+				`{"QueryResponse":{"Term":[{"Id":"3","Name":"Net 30","Type":"STANDARD","DueDays":30,"Active":true,"SyncToken":"1","MetaData":{"LastUpdatedTime":"2025-01-01T00:00:00Z"}}]}}`,
+			),
+		)
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
 	}
 
-	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-		RealmID:       "123",
-		AccessToken:   "token",
-		Kind:          accountingsync.ReferenceKindTerm,
-		StartPosition: 1,
-		PageSize:      conn.MaxReferencePageSize(),
-	})
+	page, err := conn.ListReference(
+		t.Context(),
+		&accountingconnectorports.AccountingReferencePageRequest{
+			RealmID:       "123",
+			AccessToken:   "token",
+			Kind:          accountingprovider.ReferenceKindTerm,
+			StartPosition: 1,
+			PageSize:      conn.MaxReferencePageSize(),
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Objects, 1)
 
 	term := page.Objects[0]
-	assert.Equal(t, accountingsync.ReferenceKindTerm, term.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindTerm, term.Kind)
 	assert.Equal(t, "3", term.ExternalID)
 	assert.Equal(t, "Net 30", term.Name)
 	assert.Equal(t, "STANDARD", term.SubType)
@@ -78,25 +88,35 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 		assert.Equal(t, "req-9", r.URL.Query().Get("requestid"))
 		raw, _ := io.ReadAll(r.Body)
 		assert.NoError(t, sonic.Unmarshal(raw, &body))
-		_, _ = w.Write([]byte(`{"Vendor":{"Id":"95","DisplayName":"Swift Haul","Vendor1099":true,"Active":true,"SyncToken":"0"}}`))
+		_, _ = w.Write(
+			[]byte(
+				`{"Vendor":{"Id":"95","DisplayName":"Swift Haul","Vendor1099":true,"Active":true,"SyncToken":"0"}}`,
+			),
+		)
 	}))
 	t.Cleanup(server.Close)
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	conn.apiOpts = []quickbooks.Option{
 		quickbooks.WithBaseURL(server.URL),
 		quickbooks.WithHTTPClient(server.Client()),
 	}
 
-	vendor, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-		RealmID:     "123",
-		AccessToken: "token",
-		RequestID:   "req-9",
-		Kind:        accountingsync.ReferenceKindVendor,
-		Party:       &accountingsyncports.AccountingPartyDraft{DisplayName: "Swift Haul", Is1099: true},
-	})
+	vendor, err := conn.CreateReference(
+		t.Context(),
+		&accountingconnectorports.AccountingCreateReferenceRequest{
+			RealmID:     "123",
+			AccessToken: "token",
+			RequestID:   "req-9",
+			Kind:        accountingprovider.ReferenceKindVendor,
+			Party: &accountingconnectorports.AccountingPartyDraft{
+				DisplayName: "Swift Haul",
+				Is1099:      true,
+			},
+		},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.ReferenceKindVendor, vendor.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindVendor, vendor.Kind)
 	assert.Equal(t, "95", vendor.ExternalID)
 	assert.True(t, vendor.Is1099)
 	assert.Equal(t, true, body["Vendor1099"])
@@ -105,18 +125,21 @@ func TestCreateReferenceCreatesAVendorWithTheRequestID(t *testing.T) {
 func TestCreateReferenceRefusesKindsTheBookkeeperOwns(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
-	for _, kind := range []accountingsync.ReferenceKind{
-		accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod,
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
+	for _, kind := range []accountingprovider.ReferenceKind{
+		accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod,
 	} {
-		_, err := conn.CreateReference(t.Context(), &accountingsyncports.AccountingCreateReferenceRequest{
-			RealmID:     "123",
-			AccessToken: "token",
-			RequestID:   "req",
-			Kind:        kind,
-		})
+		_, err := conn.CreateReference(
+			t.Context(),
+			&accountingconnectorports.AccountingCreateReferenceRequest{
+				RealmID:     "123",
+				AccessToken: "token",
+				RequestID:   "req",
+				Kind:        kind,
+			},
+		)
 		require.Error(t, err, kind)
 	}
 }
@@ -130,10 +153,11 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	limiter := &countingLimiter{}
-	cfg := &config.Config{App: config.AppConfig{WebBaseURL: "https://app.example.com"}}
-	provider, err := New(Params{Config: cfg, Logger: zap.NewNop(), Limiter: limiter})
+	cfg := &config.Config{App: appconfig.Config{WebBaseURL: "https://app.example.com"}}
+	provider, err := New(Params{AccountingConfig: &cfg.Accounting,
+		AppConfig: &cfg.App, Logger: zap.NewNop(), Limiter: limiter})
 	require.NoError(t, err)
-	conn, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
+	conn, err := provider.bind(tenantApp(accountingprovider.AppEnvironmentProduction))
 	require.NoError(t, err)
 	conn.apiOpts = append(
 		conn.apiOpts,
@@ -141,13 +165,16 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 		quickbooks.WithHTTPClient(server.Client()),
 	)
 
-	_, err = conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-		RealmID:       "555",
-		AccessToken:   "token",
-		Kind:          accountingsync.ReferenceKindAccount,
-		StartPosition: 1,
-		PageSize:      10,
-	})
+	_, err = conn.ListReference(
+		t.Context(),
+		&accountingconnectorports.AccountingReferencePageRequest{
+			RealmID:       "555",
+			AccessToken:   "token",
+			Kind:          accountingprovider.ReferenceKindAccount,
+			StartPosition: 1,
+			PageSize:      10,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, limiter.buckets, 1)
 	assert.Equal(t, "quickbooks:realm:555", limiter.buckets[0].Key)
@@ -156,12 +183,20 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 func TestSanitizeNameUsesEachKindsLimit(t *testing.T) {
 	t.Parallel()
 
-	conn := newConnector(t, config.QuickBooksConfig{})
+	conn := newConnector(t, accountingconfig.QuickBooksConfig{})
 	long := make([]byte, 300)
 	for idx := range long {
 		long[idx] = 'a'
 	}
-	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindItem, string(long)), quickbooks.MaxItemNameLength)
-	assert.Len(t, conn.SanitizeName(accountingsync.ReferenceKindCustomer, string(long)), 300)
-	assert.Equal(t, "Fuel - Surcharge", conn.SanitizeName(accountingsync.ReferenceKindItem, "Fuel:Surcharge"))
+	assert.Len(
+		t,
+		conn.SanitizeName(accountingprovider.ReferenceKindItem, string(long)),
+		quickbooksref.MaxItemNameLength,
+	)
+	assert.Len(t, conn.SanitizeName(accountingprovider.ReferenceKindCustomer, string(long)), 300)
+	assert.Equal(
+		t,
+		"Fuel - Surcharge",
+		conn.SanitizeName(accountingprovider.ReferenceKindItem, "Fuel:Surcharge"),
+	)
 }

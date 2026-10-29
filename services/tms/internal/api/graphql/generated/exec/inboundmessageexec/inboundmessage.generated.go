@@ -9,7 +9,8 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
@@ -388,7 +389,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.ClassificationCount)
+					obj := o.(*inboundreads.ClassificationCount)
 					return obj.Classification, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐClassification),
@@ -398,7 +399,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.ClassificationCount)
+					obj := o.(*inboundreads.ClassificationCount)
 					return obj.Total, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -408,7 +409,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.ClassificationCount)
+					obj := o.(*inboundreads.ClassificationCount)
 					return obj.Waiting, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -633,7 +634,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCount)
+					obj := o.(*inboundreads.MailboxCount)
 					return obj.MailboxID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -643,7 +644,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCount)
+					obj := o.(*inboundreads.MailboxCount)
 					return obj.Total, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -653,7 +654,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCount)
+					obj := o.(*inboundreads.MailboxCount)
 					return obj.Waiting, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -666,7 +667,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InboundMailbox",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCredentials)
+					obj := o.(*inboundmailbox.MailboxCredentials)
 					return obj.Mailbox, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋinboundmessageᚐMailbox),
@@ -676,7 +677,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCredentials)
+					obj := o.(*inboundmailbox.MailboxCredentials)
 					return obj.Token, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -688,7 +689,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.MailboxCredentials)
+					obj := o.(*inboundmailbox.MailboxCredentials)
 					return gqlexec.Resolver[resolverInboundMailboxCredentials](ec, "InboundMailboxCredentials").WebhookPath(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1288,7 +1289,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Waiting, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1298,7 +1299,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.WaitingOnThem, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1308,7 +1309,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Snoozed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1318,7 +1319,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.AssignedToMe, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1328,7 +1329,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Overdue, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1338,7 +1339,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Processing, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1348,7 +1349,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Handled, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1358,7 +1359,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Ignored, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1368,7 +1369,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Quarantined, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1378,7 +1379,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.Total, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -1389,10 +1390,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InboundClassificationCount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.ByClassification, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐClassificationCountᚄ),
 			},
 			{
 				Name:      "byMailbox",
@@ -1400,10 +1401,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "InboundMailboxCount",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*inboundmessageservice.Counts)
+					obj := o.(*inboundreads.Counts)
 					return obj.ByMailbox, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCountᚄ),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐMailboxCountᚄ),
 			},
 		}},
 		{Object: "InboundMessageEdge", Fields: []*gqlexec.Field{
@@ -1667,7 +1668,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateInboundMailbox(ctx, fc.Args["input"].(gqlmodel.InboundMailboxInput), fc.Args["signingSecret"].(*string), fc.Args["apiKey"].(*string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmailboxᚐMailboxCredentials),
 			},
 			{
 				Name:       "updateInboundMailbox",
@@ -1693,7 +1694,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RotateInboundMailboxToken(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials),
+				Marshal: gqlexec.Marshal(marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmailboxᚐMailboxCredentials),
 			},
 			{
 				Name:       "setInboundMailboxSigningSecret",
@@ -1965,7 +1966,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").InboundMessageCounts(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐCounts),
+				Marshal: gqlexec.Marshal(marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐCounts),
 			},
 			{
 				Name:       "inboundMailboxes",
@@ -2325,7 +2326,7 @@ type resolverInboundMailbox interface {
 }
 
 type resolverInboundMailboxCredentials interface {
-	WebhookPath(ctx context.Context, obj *inboundmessageservice.MailboxCredentials) (string, error)
+	WebhookPath(ctx context.Context, obj *inboundmailbox.MailboxCredentials) (string, error)
 }
 
 type resolverInboundMessage interface {
@@ -2370,9 +2371,9 @@ type resolverInboundSplitDocument interface {
 type resolverMutation interface {
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmailbox.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
-	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
+	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmailbox.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error)
@@ -2396,7 +2397,7 @@ type resolverMutation interface {
 type resolverQuery interface {
 	InboundMessages(ctx context.Context, input gqlmodel.InboundMessagesInput) (*gqlmodel.InboundMessageConnection, error)
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
-	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
+	InboundMessageCounts(ctx context.Context) (*inboundreads.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
 	InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error)
 	MyTriageViews(ctx context.Context) ([]*triage.View, error)
@@ -3706,13 +3707,13 @@ func marshalNInboundClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.ClassificationCount) graphql.Marshaler {
+func marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐClassificationCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundreads.ClassificationCount) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "InboundClassificationCount", &v)
 }
 
-func marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.ClassificationCount) graphql.Marshaler {
-	return gqlexec.List[inboundmessageservice.ClassificationCount]{
-		Elem:        marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐClassificationCount,
+func marshalNInboundClassificationCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐClassificationCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundreads.ClassificationCount) graphql.Marshaler {
+	return gqlexec.List[inboundreads.ClassificationCount]{
+		Elem:        marshalNInboundClassificationCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐClassificationCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -3734,19 +3735,19 @@ func marshalNInboundMailbox2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return ec.MarshalType(ctx, sel, "InboundMailbox", v)
 }
 
-func marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundmessageservice.MailboxCount) graphql.Marshaler {
+func marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐMailboxCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v inboundreads.MailboxCount) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "InboundMailboxCount", &v)
 }
 
-func marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundmessageservice.MailboxCount) graphql.Marshaler {
-	return gqlexec.List[inboundmessageservice.MailboxCount]{
-		Elem:        marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCount,
+func marshalNInboundMailboxCount2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐMailboxCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []inboundreads.MailboxCount) graphql.Marshaler {
+	return gqlexec.List[inboundreads.MailboxCount]{
+		Elem:        marshalNInboundMailboxCount2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐMailboxCount,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐMailboxCredentials(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.MailboxCredentials) graphql.Marshaler {
+func marshalNInboundMailboxCredentials2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmailboxᚐMailboxCredentials(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmailbox.MailboxCredentials) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -3786,7 +3787,7 @@ func marshalNInboundMessageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "InboundMessageConnection", v)
 }
 
-func marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundmessageserviceᚐCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundmessageservice.Counts) graphql.Marshaler {
+func marshalNInboundMessageCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋappᚋinboundreadsᚐCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *inboundreads.Counts) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

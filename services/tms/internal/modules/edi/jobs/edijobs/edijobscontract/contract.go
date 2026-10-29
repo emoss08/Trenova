@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
@@ -64,14 +64,14 @@ type TimerScheduler struct {
 	signals kernelports.WorkflowSignalStarter
 }
 
-func NewTimerScheduler(p TimerSchedulerParams) ediports.FlowTimerScheduler {
+func NewTimerScheduler(p TimerSchedulerParams) ladingports.FlowTimerScheduler {
 	return &TimerScheduler{l: p.Logger.Named("job.edi-flow-timer"), signals: p.Signals}
 }
 
 // Schedule starts the instance's timer workflow, or moves the one already waiting.
 func (s *TimerScheduler) Schedule(
 	ctx context.Context,
-	req *ediports.ScheduleFlowTimerRequest,
+	req *ladingports.ScheduleFlowTimerRequest,
 ) error {
 	if s.signals == nil {
 		return nil
@@ -97,13 +97,13 @@ type ShipmentObserverParams struct {
 	fx.In
 
 	Logger    *zap.Logger
-	Flows     ediports.FlowRepository
+	Flows     ladingports.FlowRepository
 	Workflows kernelports.WorkflowStarter `optional:"true"`
 }
 
 type ShipmentObserver struct {
 	l         *zap.Logger
-	flows     ediports.FlowRepository
+	flows     ladingports.FlowRepository
 	workflows kernelports.WorkflowStarter
 }
 
@@ -118,13 +118,13 @@ func NewShipmentObserver(p ShipmentObserverParams) shipmenteventports.ShipmentEv
 // OnShipmentEvent hands an event to a worker when a partner's flow follows the shipment; the
 // check is one indexed read, and a shipment no flow follows costs nothing more.
 func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error {
-	if o.workflows == nil || !o.workflows.Enabled() || !ediservice.FlowShipmentEvent(event.Type) {
+	if o.workflows == nil || !o.workflows.Enabled() || !edioutbound.FlowShipmentEvent(event.Type) {
 		return nil
 	}
 	tenant := pagination.TenantInfo{OrgID: event.OrganizationID, BuID: event.BusinessUnitID}
 	instances, err := o.flows.ListOpenInstances(
 		dbscope.WithTenant(ctx, tenant.DBTenant()),
-		&ediports.ListShipmentFlowInstancesRequest{
+		&ladingports.ListShipmentFlowInstancesRequest{
 			TenantInfo: tenant,
 			ShipmentID: event.ShipmentID,
 		},

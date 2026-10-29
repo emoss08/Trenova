@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentinvalidation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -24,28 +25,28 @@ func TestObserverAppliesTargetStatusToSourceShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusNew
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.source.Status = shipmentvocab.StatusNew
+	fixture.target.Status = shipmentvocab.StatusInTransit
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
-		targetStatusEvent(fixture, shipment.StatusInTransit),
+		targetStatusEvent(fixture, shipmentvocab.StatusInTransit),
 	)
 
 	require.NoError(t, err)
 	require.Len(t, fixture.transferRepo.created, 1)
-	require.Equal(t, edi.TransferChangeStatusApplied, fixture.transferRepo.created[0].Status)
+	require.Equal(t, edisync.TransferChangeStatusApplied, fixture.transferRepo.created[0].Status)
 	require.Equal(
 		t,
-		edi.TransferChangeDirectionTargetToSource,
+		edisync.TransferChangeDirectionTargetToSource,
 		fixture.transferRepo.created[0].Direction,
 	)
-	require.Equal(t, shipment.StatusInTransit, fixture.source.Status)
+	require.Equal(t, shipmentvocab.StatusInTransit, fixture.source.Status)
 	require.Len(t, fixture.eventRepo.inserted, 1)
 	require.Equal(
 		t,
 		fixture.event.ID.String(),
-		fixture.eventRepo.inserted[0].Metadata[edi.InternalEDIMirroredFromEventIDKey],
+		fixture.eventRepo.inserted[0].Metadata[edisync.InternalEDIMirroredFromEventIDKey],
 	)
 	require.Len(t, fixture.realtime.published, 3)
 }
@@ -54,20 +55,20 @@ func TestObserverDuplicateExecutionIsIdempotent(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	event := targetStatusEvent(fixture, shipment.StatusInTransit)
+	event := targetStatusEvent(fixture, shipmentvocab.StatusInTransit)
 	key := fixture.idempotencyKey(
 		event,
-		edi.TransferChangeDirectionTargetToSource,
-		edi.TransferChangeTypeShipmentStatus214,
+		edisync.TransferChangeDirectionTargetToSource,
+		edisync.TransferChangeTypeShipmentStatus214,
 	)
-	fixture.transferRepo.existing[key] = &edi.TransferChange{
+	fixture.transferRepo.existing[key] = &edisync.TransferChange{
 		ID:             pulid.MustNew("editc_"),
 		BusinessUnitID: fixture.link.BusinessUnitID,
 		ShipmentLinkID: fixture.link.ID,
-		Direction:      edi.TransferChangeDirectionTargetToSource,
-		ChangeType:     edi.TransferChangeTypeShipmentStatus214,
+		Direction:      edisync.TransferChangeDirectionTargetToSource,
+		ChangeType:     edisync.TransferChangeTypeShipmentStatus214,
 		IdempotencyKey: key,
-		Status:         edi.TransferChangeStatusApplied,
+		Status:         edisync.TransferChangeStatusApplied,
 	}
 
 	err := fixture.observer.OnShipmentEvent(t.Context(), event)
@@ -90,25 +91,25 @@ func TestObserverAutoAppliesLifecycleActualsThroughCoordinator(t *testing.T) {
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
-		targetStatusEvent(fixture, shipment.StatusInTransit),
+		targetStatusEvent(fixture, shipmentvocab.StatusInTransit),
 	)
 
 	require.NoError(t, err)
 	require.Empty(t, fixture.shipmentRepo.updates)
 	require.Len(t, fixture.shipmentRepo.lifecycleUpdates, 1)
 	updated := fixture.shipmentRepo.lifecycleUpdates[0]
-	require.Equal(t, shipment.StatusInTransit, updated.Status)
-	require.Equal(t, shipment.MoveStatusInTransit, updated.Moves[0].Status)
-	require.Equal(t, shipment.StopStatusCompleted, updated.Moves[0].Stops[0].Status)
-	require.Equal(t, shipment.StopStatusNew, updated.Moves[0].Stops[1].Status)
+	require.Equal(t, shipmentvocab.StatusInTransit, updated.Status)
+	require.Equal(t, shipmentvocab.MoveStatusInTransit, updated.Moves[0].Status)
+	require.Equal(t, shipmentvocab.StopStatusCompleted, updated.Moves[0].Stops[0].Status)
+	require.Equal(t, shipmentvocab.StopStatusNew, updated.Moves[0].Stops[1].Status)
 	require.Equal(t, arrival, *updated.Moves[0].Stops[0].ActualArrival)
 	require.Equal(t, departure, *updated.Moves[0].Stops[0].ActualDeparture)
 	require.Equal(t, departure, *updated.ActualShipDate)
 	require.Nil(t, updated.ActualDeliveryDate)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
-	require.Equal(t, edi.TransferChangeTypeShipmentLifecycle214, change.ChangeType)
-	require.Equal(t, edi.TransferChangeStatusApplied, change.Status)
+	require.Equal(t, edisync.TransferChangeTypeShipmentLifecycle214, change.ChangeType)
+	require.Equal(t, edisync.TransferChangeStatusApplied, change.Status)
 	require.NotEmpty(t, change.Payload["matchedStopActualDiffs"])
 	require.Len(t, fixture.eventRepo.inserted, 1)
 	require.Equal(
@@ -122,24 +123,28 @@ func TestObserverManualReviewLifecycleDoesNotMutateShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.link.SyncPolicy = edi.ShipmentSyncPolicyManualReview
+	fixture.link.SyncPolicy = edisync.ShipmentSyncPolicyManualReview
 	fixture.installLifecycleStops()
 	arrival := int64(1_000)
 	fixture.target.Moves[0].Stops[0].ActualArrival = &arrival
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
-		targetStatusEvent(fixture, shipment.StatusInTransit),
+		targetStatusEvent(fixture, shipmentvocab.StatusInTransit),
 	)
 
 	require.NoError(t, err)
 	require.Empty(t, fixture.shipmentRepo.lifecycleUpdates)
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
-	require.Equal(t, edi.TransferChangeStatusPendingReview, fixture.transferRepo.created[0].Status)
 	require.Equal(
 		t,
-		edi.TransferChangeTypeShipmentLifecycle214,
+		edisync.TransferChangeStatusPendingReview,
+		fixture.transferRepo.created[0].Status,
+	)
+	require.Equal(
+		t,
+		edisync.TransferChangeTypeShipmentLifecycle214,
 		fixture.transferRepo.created[0].ChangeType,
 	)
 }
@@ -155,7 +160,7 @@ func TestObserverLifecycleMappingConflictCreatesPendingReview(t *testing.T) {
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
-		targetStatusEvent(fixture, shipment.StatusInTransit),
+		targetStatusEvent(fixture, shipmentvocab.StatusInTransit),
 	)
 
 	require.NoError(t, err)
@@ -163,8 +168,8 @@ func TestObserverLifecycleMappingConflictCreatesPendingReview(t *testing.T) {
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
-	require.Equal(t, edi.TransferChangeStatusPendingReview, change.Status)
-	require.Equal(t, edi.TransferChangeConflictConflict, change.ConflictStatus)
+	require.Equal(t, edisync.TransferChangeStatusPendingReview, change.Status)
+	require.Equal(t, edisync.TransferChangeConflictConflict, change.ConflictStatus)
 	require.NotEmpty(t, change.ConflictReason)
 	require.NotEmpty(t, change.Payload["conflicts"])
 }
@@ -173,8 +178,8 @@ func TestObserverIgnoresMirroredEvents(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	event := targetStatusEvent(fixture, shipment.StatusInTransit)
-	event.Metadata[edi.InternalEDIMirroredFromEventIDKey] = pulid.MustNew("se_").String()
+	event := targetStatusEvent(fixture, shipmentvocab.StatusInTransit)
+	event.Metadata[edisync.InternalEDIMirroredFromEventIDKey] = pulid.MustNew("se_").String()
 
 	err := fixture.observer.OnShipmentEvent(t.Context(), event)
 
@@ -188,23 +193,23 @@ func TestObserverDoesNotApplyInactiveOrReadOnlyLinks(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		status edi.ShipmentLinkStatus
-		policy edi.ShipmentSyncPolicy
+		status edisync.ShipmentLinkStatus
+		policy edisync.ShipmentSyncPolicy
 	}{
 		{
 			name:   "suspended",
-			status: edi.ShipmentLinkStatusSuspended,
-			policy: edi.ShipmentSyncPolicyAutoOperational,
+			status: edisync.ShipmentLinkStatusSuspended,
+			policy: edisync.ShipmentSyncPolicyAutoOperational,
 		},
 		{
 			name:   "closed",
-			status: edi.ShipmentLinkStatusClosed,
-			policy: edi.ShipmentSyncPolicyAutoOperational,
+			status: edisync.ShipmentLinkStatusClosed,
+			policy: edisync.ShipmentSyncPolicyAutoOperational,
 		},
 		{
 			name:   "read only",
-			status: edi.ShipmentLinkStatusActive,
-			policy: edi.ShipmentSyncPolicyReadOnly,
+			status: edisync.ShipmentLinkStatusActive,
+			policy: edisync.ShipmentSyncPolicyReadOnly,
 		},
 	}
 
@@ -218,7 +223,7 @@ func TestObserverDoesNotApplyInactiveOrReadOnlyLinks(t *testing.T) {
 
 			err := fixture.observer.OnShipmentEvent(
 				t.Context(),
-				targetStatusEvent(fixture, shipment.StatusInTransit),
+				targetStatusEvent(fixture, shipmentvocab.StatusInTransit),
 			)
 
 			require.NoError(t, err)
@@ -227,7 +232,7 @@ func TestObserverDoesNotApplyInactiveOrReadOnlyLinks(t *testing.T) {
 			require.Len(t, fixture.transferRepo.created, 1)
 			require.Equal(
 				t,
-				edi.TransferChangeStatusIgnored,
+				edisync.TransferChangeStatusIgnored,
 				fixture.transferRepo.created[0].Status,
 			)
 		})
@@ -238,12 +243,12 @@ func TestObserverInvalidTransitionCreatesPendingConflict(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusInvoiced
-	fixture.target.Status = shipment.StatusCompleted
+	fixture.source.Status = shipmentvocab.StatusInvoiced
+	fixture.target.Status = shipmentvocab.StatusCompleted
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
-		targetStatusEvent(fixture, shipment.StatusCompleted),
+		targetStatusEvent(fixture, shipmentvocab.StatusCompleted),
 	)
 
 	require.NoError(t, err)
@@ -251,8 +256,8 @@ func TestObserverInvalidTransitionCreatesPendingConflict(t *testing.T) {
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
-	require.Equal(t, edi.TransferChangeStatusPendingReview, change.Status)
-	require.Equal(t, edi.TransferChangeConflictConflict, change.ConflictStatus)
+	require.Equal(t, edisync.TransferChangeStatusPendingReview, change.Status)
+	require.Equal(t, edisync.TransferChangeConflictConflict, change.ConflictStatus)
 	require.NotEmpty(t, change.ConflictReason)
 }
 
@@ -260,8 +265,8 @@ func TestObserverAutoAppliesSourceCancellationToTargetShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusCanceled
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.source.Status = shipmentvocab.StatusCanceled
+	fixture.target.Status = shipmentvocab.StatusInTransit
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
@@ -273,18 +278,22 @@ func TestObserverAutoAppliesSourceCancellationToTargetShipment(t *testing.T) {
 	require.Len(t, fixture.shipmentRepo.cancels, 1)
 	require.Equal(t, fixture.link.TargetShipmentID, fixture.shipmentRepo.cancels[0].ShipmentID)
 	require.Equal(t, "Customer canceled", fixture.shipmentRepo.cancels[0].CancelReason)
-	require.Equal(t, shipment.StatusCanceled, fixture.target.Status)
+	require.Equal(t, shipmentvocab.StatusCanceled, fixture.target.Status)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
-	require.Equal(t, edi.TransferChangeTypeShipmentCancel214, change.ChangeType)
-	require.Equal(t, edi.TransferChangeStatusApplied, change.Status)
-	require.Equal(t, "A7", change.Payload["shipmentStatus"].(edi.ShipmentStatusPayload).StatusCode)
+	require.Equal(t, edisync.TransferChangeTypeShipmentCancel214, change.ChangeType)
+	require.Equal(t, edisync.TransferChangeStatusApplied, change.Status)
+	require.Equal(
+		t,
+		"A7",
+		change.Payload["shipmentStatus"].(edipayload.ShipmentStatusPayload).StatusCode,
+	)
 	require.Len(t, fixture.eventRepo.inserted, 1)
 	require.Equal(t, shipmentevent.TypeShipmentCanceled, fixture.eventRepo.inserted[0].Type)
 	require.Equal(
 		t,
 		fixture.event.ID.String(),
-		fixture.eventRepo.inserted[0].Metadata[edi.InternalEDIMirroredFromEventIDKey],
+		fixture.eventRepo.inserted[0].Metadata[edisync.InternalEDIMirroredFromEventIDKey],
 	)
 	require.Len(t, fixture.realtime.published, 3)
 }
@@ -293,8 +302,8 @@ func TestObserverAutoAppliesTargetCancellationToSourceShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusAssigned
-	fixture.target.Status = shipment.StatusCanceled
+	fixture.source.Status = shipmentvocab.StatusAssigned
+	fixture.target.Status = shipmentvocab.StatusCanceled
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
@@ -305,11 +314,11 @@ func TestObserverAutoAppliesTargetCancellationToSourceShipment(t *testing.T) {
 	require.Empty(t, fixture.shipmentRepo.updates)
 	require.Len(t, fixture.shipmentRepo.cancels, 1)
 	require.Equal(t, fixture.link.SourceShipmentID, fixture.shipmentRepo.cancels[0].ShipmentID)
-	require.Equal(t, shipment.StatusCanceled, fixture.source.Status)
+	require.Equal(t, shipmentvocab.StatusCanceled, fixture.source.Status)
 	require.Len(t, fixture.transferRepo.created, 1)
 	require.Equal(
 		t,
-		edi.TransferChangeDirectionTargetToSource,
+		edisync.TransferChangeDirectionTargetToSource,
 		fixture.transferRepo.created[0].Direction,
 	)
 }
@@ -318,9 +327,9 @@ func TestObserverManualReviewCancellationDoesNotMutateShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.link.SyncPolicy = edi.ShipmentSyncPolicyManualReview
-	fixture.source.Status = shipment.StatusCanceled
-	fixture.target.Status = shipment.StatusInTransit
+	fixture.link.SyncPolicy = edisync.ShipmentSyncPolicyManualReview
+	fixture.source.Status = shipmentvocab.StatusCanceled
+	fixture.target.Status = shipmentvocab.StatusInTransit
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
@@ -332,15 +341,19 @@ func TestObserverManualReviewCancellationDoesNotMutateShipment(t *testing.T) {
 	require.Empty(t, fixture.shipmentRepo.cancels)
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
-	require.Equal(t, edi.TransferChangeStatusPendingReview, fixture.transferRepo.created[0].Status)
+	require.Equal(
+		t,
+		edisync.TransferChangeStatusPendingReview,
+		fixture.transferRepo.created[0].Status,
+	)
 }
 
 func TestObserverIgnoresAlreadyCanceledOppositeShipment(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusCanceled
-	fixture.target.Status = shipment.StatusCanceled
+	fixture.source.Status = shipmentvocab.StatusCanceled
+	fixture.target.Status = shipmentvocab.StatusCanceled
 
 	err := fixture.observer.OnShipmentEvent(
 		t.Context(),
@@ -351,15 +364,15 @@ func TestObserverIgnoresAlreadyCanceledOppositeShipment(t *testing.T) {
 	require.Empty(t, fixture.shipmentRepo.cancels)
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
-	require.Equal(t, edi.TransferChangeStatusIgnored, fixture.transferRepo.created[0].Status)
+	require.Equal(t, edisync.TransferChangeStatusIgnored, fixture.transferRepo.created[0].Status)
 }
 
 func TestObserverInvalidCancellationTransitionCreatesPendingConflict(t *testing.T) {
 	t.Parallel()
 
 	fixture := newObserverFixture(t)
-	fixture.source.Status = shipment.StatusCanceled
-	fixture.target.Status = shipment.StatusCompleted
+	fixture.source.Status = shipmentvocab.StatusCanceled
+	fixture.target.Status = shipmentvocab.StatusCompleted
 
 	err := fixture.observer.OnShipmentEvent(t.Context(), sourceCancelEvent(fixture, "Invalid"))
 
@@ -368,8 +381,8 @@ func TestObserverInvalidCancellationTransitionCreatesPendingConflict(t *testing.
 	require.Empty(t, fixture.eventRepo.inserted)
 	require.Len(t, fixture.transferRepo.created, 1)
 	change := fixture.transferRepo.created[0]
-	require.Equal(t, edi.TransferChangeStatusPendingReview, change.Status)
-	require.Equal(t, edi.TransferChangeConflictConflict, change.ConflictStatus)
+	require.Equal(t, edisync.TransferChangeStatusPendingReview, change.Status)
+	require.Equal(t, edisync.TransferChangeConflictConflict, change.ConflictStatus)
 	require.NotEmpty(t, change.ConflictReason)
 }
 
@@ -380,17 +393,17 @@ func TestObserverDuplicateCancellationExecutionIsIdempotent(t *testing.T) {
 	event := sourceCancelEvent(fixture, "Duplicate")
 	key := fixture.idempotencyKey(
 		event,
-		edi.TransferChangeDirectionSourceToTarget,
-		edi.TransferChangeTypeShipmentCancel214,
+		edisync.TransferChangeDirectionSourceToTarget,
+		edisync.TransferChangeTypeShipmentCancel214,
 	)
-	fixture.transferRepo.existing[key] = &edi.TransferChange{
+	fixture.transferRepo.existing[key] = &edisync.TransferChange{
 		ID:             pulid.MustNew("editc_"),
 		BusinessUnitID: fixture.link.BusinessUnitID,
 		ShipmentLinkID: fixture.link.ID,
-		Direction:      edi.TransferChangeDirectionSourceToTarget,
-		ChangeType:     edi.TransferChangeTypeShipmentCancel214,
+		Direction:      edisync.TransferChangeDirectionSourceToTarget,
+		ChangeType:     edisync.TransferChangeTypeShipmentCancel214,
 		IdempotencyKey: key,
-		Status:         edi.TransferChangeStatusApplied,
+		Status:         edisync.TransferChangeStatusApplied,
 	}
 
 	err := fixture.observer.OnShipmentEvent(t.Context(), event)
@@ -403,7 +416,7 @@ func TestObserverDuplicateCancellationExecutionIsIdempotent(t *testing.T) {
 
 type observerFixture struct {
 	observer     *Observer
-	link         *edi.ShipmentLink
+	link         *edisync.ShipmentLink
 	source       *shipment.Shipment
 	target       *shipment.Shipment
 	event        *shipmentevent.Event
@@ -422,22 +435,22 @@ func newObserverFixture(t *testing.T) *observerFixture {
 	buID := pulid.MustNew("bu_")
 	sourceID := pulid.MustNew("shp_")
 	targetID := pulid.MustNew("shp_")
-	link := &edi.ShipmentLink{
+	link := &edisync.ShipmentLink{
 		ID:                   pulid.MustNew("edislink_"),
 		BusinessUnitID:       buID,
 		SourceOrganizationID: sourceOrgID,
 		TargetOrganizationID: targetOrgID,
 		SourceShipmentID:     sourceID,
 		TargetShipmentID:     targetID,
-		SyncPolicy:           edi.ShipmentSyncPolicyAutoOperational,
-		Status:               edi.ShipmentLinkStatusActive,
+		SyncPolicy:           edisync.ShipmentSyncPolicyAutoOperational,
+		Status:               edisync.ShipmentLinkStatusActive,
 	}
 	source := &shipment.Shipment{
 		ID:             sourceID,
 		OrganizationID: sourceOrgID,
 		BusinessUnitID: buID,
 		ProNumber:      "SOURCE-1",
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		Version:        2,
 	}
 	target := &shipment.Shipment{
@@ -445,7 +458,7 @@ func newObserverFixture(t *testing.T) *observerFixture {
 		OrganizationID: targetOrgID,
 		BusinessUnitID: buID,
 		ProNumber:      "TARGET-1",
-		Status:         shipment.StatusInTransit,
+		Status:         shipmentvocab.StatusInTransit,
 		Version:        4,
 	}
 
@@ -453,8 +466,8 @@ func newObserverFixture(t *testing.T) *observerFixture {
 		sourceID: source,
 		targetID: target,
 	}}
-	linkRepo := &fakeShipmentLinkRepository{links: []*edi.ShipmentLink{link}}
-	transferRepo := &fakeTransferChangeRepository{existing: map[string]*edi.TransferChange{}}
+	linkRepo := &fakeShipmentLinkRepository{links: []*edisync.ShipmentLink{link}}
+	transferRepo := &fakeTransferChangeRepository{existing: map[string]*edisync.TransferChange{}}
 	eventRepo := &fakeShipmentEventRepository{}
 	realtime := &fakeRealtimeService{}
 
@@ -485,7 +498,7 @@ func newObserverFixture(t *testing.T) *observerFixture {
 	return fixture
 }
 
-func targetStatusEvent(fixture *observerFixture, status shipment.Status) *shipmentevent.Event {
+func targetStatusEvent(fixture *observerFixture, status shipmentvocab.Status) *shipmentevent.Event {
 	fixture.event = &shipmentevent.Event{
 		ID:             pulid.MustNew("se_"),
 		OrganizationID: fixture.link.TargetOrganizationID,
@@ -494,7 +507,7 @@ func targetStatusEvent(fixture *observerFixture, status shipment.Status) *shipme
 		Type:           shipmentevent.TypeStatusChanged,
 		Summary:        "Status updated",
 		Metadata: map[string]any{
-			"previousStatus": string(shipment.StatusAssigned),
+			"previousStatus": string(shipmentvocab.StatusAssigned),
 			"newStatus":      string(status),
 		},
 		OccurredAt: 1780418506,
@@ -538,14 +551,17 @@ func targetCancelEvent(fixture *observerFixture, reason string) *shipmentevent.E
 
 func (f *observerFixture) installLifecycleStops() {
 	f.source.Moves = []*shipment.ShipmentMove{
-		lifecycleMove(f.source, shipment.MoveStatusNew),
+		lifecycleMove(f.source, shipmentvocab.MoveStatusNew),
 	}
 	f.target.Moves = []*shipment.ShipmentMove{
-		lifecycleMove(f.target, shipment.MoveStatusNew),
+		lifecycleMove(f.target, shipmentvocab.MoveStatusNew),
 	}
 }
 
-func lifecycleMove(entity *shipment.Shipment, status shipment.MoveStatus) *shipment.ShipmentMove {
+func lifecycleMove(
+	entity *shipment.Shipment,
+	status shipmentvocab.MoveStatus,
+) *shipment.ShipmentMove {
 	moveID := pulid.MustNew("sm_")
 	return &shipment.ShipmentMove{
 		ID:             moveID,
@@ -555,8 +571,8 @@ func lifecycleMove(entity *shipment.Shipment, status shipment.MoveStatus) *shipm
 		Status:         status,
 		Sequence:       0,
 		Stops: []*shipment.Stop{
-			lifecycleStop(entity, moveID, shipment.StopTypePickup, 0),
-			lifecycleStop(entity, moveID, shipment.StopTypeDelivery, 1),
+			lifecycleStop(entity, moveID, shipmentvocab.StopTypePickup, 0),
+			lifecycleStop(entity, moveID, shipmentvocab.StopTypeDelivery, 1),
 		},
 	}
 }
@@ -564,7 +580,7 @@ func lifecycleMove(entity *shipment.Shipment, status shipment.MoveStatus) *shipm
 func lifecycleStop(
 	entity *shipment.Shipment,
 	moveID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 ) *shipment.Stop {
 	return &shipment.Stop{
@@ -573,7 +589,7 @@ func lifecycleStop(
 		BusinessUnitID:       entity.BusinessUnitID,
 		ShipmentMoveID:       moveID,
 		LocationID:           pulid.MustNew("loc_"),
-		Status:               shipment.StopStatusNew,
+		Status:               shipmentvocab.StopStatusNew,
 		Type:                 stopType,
 		Sequence:             sequence,
 		ScheduledWindowStart: 500 + sequence,
@@ -582,7 +598,7 @@ func lifecycleStop(
 
 func (f *observerFixture) idempotencyKey(
 	event *shipmentevent.Event,
-	direction edi.TransferChangeDirection,
+	direction edisync.TransferChangeDirection,
 	changeType string,
 ) string {
 	return f.link.ID.String() + ":" + event.ID.String() + ":" + string(direction) + ":" + changeType
@@ -629,7 +645,7 @@ func (r *fakeShipmentRepository) Cancel(
 ) (*shipment.Shipment, error) {
 	r.cancels = append(r.cancels, req)
 	entity := r.shipments[req.ShipmentID]
-	entity.Status = shipment.StatusCanceled
+	entity.Status = shipmentvocab.StatusCanceled
 	entity.CancelReason = req.CancelReason
 	entity.CanceledAt = &req.CanceledAt
 	entity.CanceledByID = req.CanceledByID
@@ -638,29 +654,29 @@ func (r *fakeShipmentRepository) Cancel(
 }
 
 type fakeShipmentLinkRepository struct {
-	links []*edi.ShipmentLink
+	links []*edisync.ShipmentLink
 	calls int
 }
 
 func (r *fakeShipmentLinkRepository) GetShipmentLinksByShipmentID(
 	context.Context,
-	ediports.GetEDIShipmentLinksByShipmentIDRequest,
-) ([]*edi.ShipmentLink, error) {
+	editenderports.GetEDIShipmentLinksByShipmentIDRequest,
+) ([]*edisync.ShipmentLink, error) {
 	r.calls++
 	return r.links, nil
 }
 
 type fakeTransferChangeRepository struct {
-	existing map[string]*edi.TransferChange
-	created  []*edi.TransferChange
+	existing map[string]*edisync.TransferChange
+	created  []*edisync.TransferChange
 }
 
 func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	_ context.Context,
-	entity *edi.TransferChange,
-) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
+	entity *edisync.TransferChange,
+) (*editenderports.CreateEDITransferChangeIdempotentResult, error) {
 	if existing := r.existing[entity.IdempotencyKey]; existing != nil {
-		return &ediports.CreateEDITransferChangeIdempotentResult{
+		return &editenderports.CreateEDITransferChangeIdempotentResult{
 			TransferChange: existing,
 			Created:        false,
 		}, nil
@@ -670,7 +686,7 @@ func (r *fakeTransferChangeRepository) CreateTransferChangeIdempotent(
 	}
 	r.existing[entity.IdempotencyKey] = entity
 	r.created = append(r.created, entity)
-	return &ediports.CreateEDITransferChangeIdempotentResult{
+	return &editenderports.CreateEDITransferChangeIdempotentResult{
 		TransferChange: entity,
 		Created:        true,
 	}, nil
@@ -692,12 +708,12 @@ func (r *fakeShipmentEventRepository) Insert(
 }
 
 type fakeRealtimeService struct {
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 }
 
 func (s *fakeRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	s.published = append(s.published, req)
 	return nil

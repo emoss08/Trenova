@@ -5,11 +5,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carrierpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -30,8 +34,8 @@ type fakeCarrierCoverage struct {
 	standing *rateconfirmation.RateConfirmation
 	refusal  error
 
-	assigned *shipmentports.AssignMoveToCarrierRequest
-	canceled *shipmentports.CancelCarrierAssignmentRequest
+	assigned *carrierassignmentports.AssignMoveToCarrierRequest
+	canceled *carrierassignmentports.CancelCarrierAssignmentRequest
 }
 
 func newFakeCarrierCoverage() *fakeCarrierCoverage {
@@ -41,12 +45,12 @@ func newFakeCarrierCoverage() *fakeCarrierCoverage {
 		shipment: &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: "S-3001",
-			Status:    shipment.StatusNew,
+			Status:    shipmentvocab.StatusNew,
 			Version:   4,
 			Moves: []*shipment.ShipmentMove{{
 				ID:           moveID,
-				Status:       shipment.MoveStatusNew,
-				CoverageType: shipment.MoveCoverageTypeUnassigned,
+				Status:       shipmentvocab.MoveStatusNew,
+				CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
 				Version:      2,
 			}},
 		},
@@ -74,7 +78,7 @@ func (f *fakeCarrierCoverage) retire(plan *carrierassignmentservice.CoveragePlan
 
 func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -82,7 +86,7 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	created := &shipment.CarrierAssignment{
 		ShipmentMoveID: req.ShipmentMoveID,
 		CarrierID:      req.CarrierID,
-		Status:         shipment.CarrierAssignmentStatusPending,
+		Status:         shipmentvocab.CarrierAssignmentStatusPending,
 		RateMethod:     req.RateMethod,
 		BaseRate:       req.BaseRate,
 		FuelSurcharge:  req.FuelSurcharge,
@@ -96,10 +100,10 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 	}
 	created.SyncTotals(nil)
 
-	after := shipment.CloneForUpdate(f.shipment)
-	after.Status = shipment.StatusAssigned
-	after.Moves[0].Status = shipment.MoveStatusAssigned
-	after.Moves[0].CoverageType = shipment.MoveCoverageTypeCarrier
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
+	after.Status = shipmentvocab.StatusAssigned
+	after.Moves[0].Status = shipmentvocab.MoveStatusAssigned
+	after.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 	plan := &carrierassignmentservice.CoveragePlan{
 		Created:        created,
 		Carrier:        f.carrier,
@@ -116,7 +120,7 @@ func (f *fakeCarrierCoverage) PreviewAssignToMove(
 
 func (f *fakeCarrierCoverage) AssignToMove(
 	_ context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -128,7 +132,7 @@ func (f *fakeCarrierCoverage) AssignToMove(
 
 func (f *fakeCarrierCoverage) PreviewCancel(
 	_ context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) (*carrierassignmentservice.CoveragePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
@@ -138,10 +142,10 @@ func (f *fakeCarrierCoverage) PreviewCancel(
 			"Carrier assignment not found within your organization",
 		)
 	}
-	after := shipment.CloneForUpdate(f.shipment)
-	after.Status = shipment.StatusNew
-	after.Moves[0].Status = shipment.MoveStatusNew
-	after.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
+	after.Status = shipmentvocab.StatusNew
+	after.Moves[0].Status = shipmentvocab.MoveStatusNew
+	after.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	plan := &carrierassignmentservice.CoveragePlan{
 		Carrier:        f.existing.Carrier,
 		ShipmentBefore: f.shipment,
@@ -154,7 +158,7 @@ func (f *fakeCarrierCoverage) PreviewCancel(
 
 func (f *fakeCarrierCoverage) Cancel(
 	_ context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -164,10 +168,10 @@ func (f *fakeCarrierCoverage) Cancel(
 	return nil
 }
 
-func (f *fakeCarrierCoverage) coverWith(status shipment.CarrierAssignmentStatus) {
-	f.shipment.Status = shipment.StatusAssigned
-	f.shipment.Moves[0].Status = shipment.MoveStatusAssigned
-	f.shipment.Moves[0].CoverageType = shipment.MoveCoverageTypeCarrier
+func (f *fakeCarrierCoverage) coverWith(status shipmentvocab.CarrierAssignmentStatus) {
+	f.shipment.Status = shipmentvocab.StatusAssigned
+	f.shipment.Moves[0].Status = shipmentvocab.MoveStatusAssigned
+	f.shipment.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeCarrier
 	f.existing = &shipment.CarrierAssignment{
 		ID:        pulid.MustNew("casn_"),
 		CarrierID: f.carrier.ID,
@@ -185,11 +189,11 @@ func (f *fakeCarrierCoverage) coverWith(status shipment.CarrierAssignmentStatus)
 
 func (f *fakeCarrierCoverage) assignParams(extra map[string]any) map[string]any {
 	params := map[string]any{
-		common.PreviewFieldShipmentMoveID: f.moveID().String(),
-		common.FieldCarrierID:             f.carrier.ID.String(),
-		"rateMethod":                      "Flat",
-		"baseRate":                        "1800.00",
-		"fuelSurcharge":                   "120",
+		changepreview.PreviewFieldShipmentMoveID: f.moveID().String(),
+		carrierpreview.FieldCarrierID:            f.carrier.ID.String(),
+		"rateMethod":                             "Flat",
+		"baseRate":                               "1800.00",
+		"fuelSurcharge":                          "120",
 	}
 	for key, value := range extra {
 		params[key] = value
@@ -221,7 +225,7 @@ func TestAssignMoveToCarrier_SendsTheConsolesRequest(t *testing.T) {
 	require.NotNil(t, req)
 	assert.Equal(t, carriers.moveID(), req.ShipmentMoveID)
 	assert.Equal(t, carriers.carrier.ID, req.CarrierID)
-	assert.Equal(t, shipment.CarrierRateMethodFlat, req.RateMethod)
+	assert.Equal(t, shipmentvocab.CarrierRateMethodFlat, req.RateMethod)
 	assert.True(t, decimal.NewFromInt(1800).Equal(req.BaseRate))
 	assert.True(t, decimal.NewFromInt(120).Equal(req.FuelSurcharge))
 	require.Len(t, req.Accessorials, 1)
@@ -253,7 +257,10 @@ func TestAssignMoveToCarrier_RefusesARateThatIsNotARate(t *testing.T) {
 		"negative fuel":   {"fuelSurcharge": "-1"},
 		"bad accessorial": {"accessorials": []any{map[string]any{"description": "x", "amount": "-5"}}},
 	} {
-		err := tool.Validate(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(extra)))
+		err := tool.Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(carriers.assignParams(extra)),
+		)
 		require.Error(t, err, name)
 	}
 	assert.Nil(t, carriers.assigned)
@@ -285,12 +292,19 @@ func TestAssignMoveToCarrier_PreviewShowsTheAssignmentThePayAndTheCover(t *testi
 	carriers := newFakeCarrierCoverage()
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(nil)))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
+			)
+		},
+	)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Carrier on S-3001: Ridgeline Freight", created.Label)
 	assert.Equal(t, "1800", agenttoolstest.FieldByPath(t, created, "baseRate").After)
 	require.NotNil(t, created.Money)
@@ -307,22 +321,37 @@ func TestAssignMoveToCarrier_PreviewShowsTheCarrierItReplaces(t *testing.T) {
 	t.Parallel()
 
 	carriers := newFakeCarrierCoverage()
-	carriers.coverWith(shipment.CarrierAssignmentStatusConfirmed)
+	carriers.coverWith(shipmentvocab.CarrierAssignmentStatusConfirmed)
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(map[string]any{
-			"replace":                  true,
-			"overrideInsuranceWarning": true,
-		})))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(map[string]any{
+					"replace":                  true,
+					"overrideInsuranceWarning": true,
+				})),
+			)
+		},
+	)
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationArchive, canceled.Operation)
-	assert.Equal(t, "Canceled", agenttoolstest.FieldByPath(t, canceled, common.FieldStatus).After)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, canceled.Operation)
+	assert.Equal(
+		t,
+		"Canceled",
+		agenttoolstest.FieldByPath(t, canceled, changepreview.FieldStatus).After,
+	)
 	voided := agenttoolstest.PreviewChange(t, preview, 2)
 	assert.Equal(t, permission.ResourceRateConfirmation, voided.Resource)
-	assert.Equal(t, "Voided", agenttoolstest.FieldByPath(t, voided, common.FieldStatus).After)
+	assert.Equal(
+		t,
+		"Voided",
+		agenttoolstest.FieldByPath(t, voided, changepreview.FieldStatus).After,
+	)
 	assert.Contains(t, preview.Summary, "rate confirmation voided")
 	assert.Contains(t, preview.Summary, "Cargo liability expires in 10 days")
 }
@@ -334,26 +363,36 @@ func TestAssignMoveToCarrier_PreviewWarnsWhatTheServiceRefuses(t *testing.T) {
 	carriers.refusal = errortypes.NewBusinessError("Shipment move already has a carrier assignment")
 	tool := NewAssignMoveToCarrierTool(carriers).(*AssignMoveToCarrierTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(carriers.assignParams(nil)))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(
+				t.Context(),
+				agenttoolstest.ExecuteParams(carriers.assignParams(nil)),
+			)
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestCancelCarrierAssignment_SendsTheMoveAndTheReason(t *testing.T) {
 	t.Parallel()
 
 	carriers := newFakeCarrierCoverage()
-	carriers.coverWith(shipment.CarrierAssignmentStatusPending)
+	carriers.coverWith(shipmentvocab.CarrierAssignmentStatusPending)
 
-	require.NoError(t, NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "  Carrier's truck broke down ",
-		},
-	)))
+	require.NoError(
+		t,
+		NewCancelCarrierAssignmentTool(carriers).Execute(t.Context(), agenttoolstest.ExecuteParams(
+			map[string]any{
+				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				changepreview.FieldReason:                "  Carrier's truck broke down ",
+			},
+		)),
+	)
 
 	require.NotNil(t, carriers.canceled)
 	assert.Equal(t, carriers.moveID(), carriers.canceled.ShipmentMoveID)
@@ -366,7 +405,9 @@ func TestCancelCarrierAssignment_RequiresAReason(t *testing.T) {
 	carriers := newFakeCarrierCoverage()
 	err := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool).Validate(
 		t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.PreviewFieldShipmentMoveID: carriers.moveID().String()}),
+		agenttoolstest.ExecuteParams(
+			map[string]any{changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String()},
+		),
 	)
 	require.Error(t, err)
 }
@@ -378,19 +419,19 @@ func TestCancelCarrierAssignment_AConfirmedCarrierIsAProposal(t *testing.T) {
 
 	params := func(carriers *fakeCarrierCoverage) map[string]any {
 		return map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "Carrier fell off",
+			changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+			changepreview.FieldReason:                "Carrier fell off",
 		}
 	}
 
 	pending := newFakeCarrierCoverage()
-	pending.coverWith(shipment.CarrierAssignmentStatusPending)
+	pending.coverWith(shipmentvocab.CarrierAssignmentStatusPending)
 	tool := NewCancelCarrierAssignmentTool(pending)
 	assert.Equal(t, agent.TierActWithApproval,
 		tool.Policy().Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(params(pending))))
 
 	confirmed := newFakeCarrierCoverage()
-	confirmed.coverWith(shipment.CarrierAssignmentStatusConfirmed)
+	confirmed.coverWith(shipmentvocab.CarrierAssignmentStatusConfirmed)
 	tool = NewCancelCarrierAssignmentTool(confirmed)
 	assert.Equal(t, agent.TierPropose,
 		tool.Policy().Condition.Limit(t.Context(), agenttoolstest.ExecuteParams(params(confirmed))))
@@ -410,19 +451,27 @@ func TestCancelCarrierAssignment_PreviewShowsTheCarrierComingOff(t *testing.T) {
 	t.Parallel()
 
 	carriers := newFakeCarrierCoverage()
-	carriers.coverWith(shipment.CarrierAssignmentStatusConfirmed)
+	carriers.coverWith(shipmentvocab.CarrierAssignmentStatusConfirmed)
 	tool := NewCancelCarrierAssignmentTool(carriers).(*CancelCarrierAssignmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &carriers.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			common.PreviewFieldShipmentMoveID: carriers.moveID().String(),
-			common.FieldReason:                "Carrier fell off",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&carriers.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				changepreview.PreviewFieldShipmentMoveID: carriers.moveID().String(),
+				changepreview.FieldReason:                "Carrier fell off",
+			}))
+		},
+	)
 
 	canceled := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Carrier on S-3001: Ridgeline Freight", canceled.Label)
-	assert.Equal(t, "Carrier fell off", agenttoolstest.FieldByPath(t, canceled, "cancellationReason").After)
+	assert.Equal(
+		t,
+		"Carrier fell off",
+		agenttoolstest.FieldByPath(t, canceled, "cancellationReason").After,
+	)
 	voided := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, carriers.standing.ID, voided.EntityID)
 	require.NotNil(t, voided.Version)

@@ -5,8 +5,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -106,8 +106,8 @@ func (p *CustomerEmailProfile) Recipients() EmailRecipients {
 		return EmailRecipients{}
 	}
 	return EmailRecipients{
-		To:  stringutils.SplitEmailList(p.ToRecipients),
-		CC:  stringutils.SplitEmailList(p.CCRecipients),
-		BCC: stringutils.SplitEmailList(p.BCCRecipients),
+		To:  mailtext.SplitEmailList(p.ToRecipients),
+		CC:  mailtext.SplitEmailList(p.CCRecipients),
+		BCC: mailtext.SplitEmailList(p.BCCRecipients),
 	}
 }

@@ -4,11 +4,16 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -26,7 +31,6 @@ const (
 	maxRequestedDocuments  = 20
 	fieldFactoringOverride = "factoringOverride"
 	fieldOverrideReason    = "factoringOverrideReason"
-	fieldFactoringCompany  = "factoringCompanyId"
 	fieldFactoringAgree    = "factoringAgreementId"
 )
 
@@ -35,7 +39,7 @@ func invoiceRecord(inv *invoice.Invoice) toolpreview.Record {
 		Resource: permission.ResourceInvoice,
 		ID:       inv.ID,
 		Label:    "Invoice " + inv.Number,
-		Version:  common.PreviewVersion(inv.Version),
+		Version:  changepreview.PreviewVersion(inv.Version),
 	}
 }
 
@@ -45,7 +49,7 @@ type SetInvoiceFactoringOverrideTool struct {
 
 func NewSetInvoiceFactoringOverrideTool(
 	readiness factoringports.ReadinessService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SetInvoiceFactoringOverrideTool{readiness: readiness}
 }
 
@@ -78,58 +82,58 @@ func (t *SetInvoiceFactoringOverrideTool) ParamSchema() map[string]any {
 			"Exclude keeps it out of factoring; Default follows the customer's factoring.",
 			agenttoolschema.FactoringOverrides,
 		),
-		paramReason: jsonschemautils.Text(
+		factoringkit.ParamReason: jsonschemautils.Text(
 			"Why the invoice stays out of factoring. Required for Exclude.",
 		),
 	}, paramInvoiceID, paramOverride)
 }
 
-func (t *SetInvoiceFactoringOverrideTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceInvoice,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		reversible:  true,
-		idempotent:  true,
-		rationale: "Moves one invoice between the organization's receivables and the " +
+func (t *SetInvoiceFactoringOverrideTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceInvoice,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Reversible:  true,
+		Idempotent:  true,
+		Rationale: "Moves one invoice between the organization's receivables and the " +
 			"factor's; reversible until the invoice is submitted.",
 	})
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *SetInvoiceFactoringOverrideTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SetOverrideRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := common.RequireString(params.Params, paramOverride)
+	raw, err := toolparams.RequireString(params.Params, paramOverride)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringports.SetOverrideRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		InvoiceID:  invoiceID,
 		Override:   invoice.FactoringOverride(raw),
-		Reason:     common.OptionalString(params.Params, paramReason),
+		Reason:     toolparams.OptionalString(params.Params, factoringkit.ParamReason),
 	}, nil
 }
 
 func (t *SetInvoiceFactoringOverrideTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -139,9 +143,9 @@ func (t *SetInvoiceFactoringOverrideTool) Validate(
 
 func (t *SetInvoiceFactoringOverrideTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -151,33 +155,33 @@ func (t *SetInvoiceFactoringOverrideTool) Execute(
 
 func (t *SetInvoiceFactoringOverrideTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would change whether the invoice is factored."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.readiness.PlanOverride(ctx, req)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	change, err := toolpreview.Changed(invoiceRecord(plan.Before), plan.Before, plan.After,
 		toolpreview.Only(
 			fieldFactoringOverride,
 			fieldOverrideReason,
-			fieldFactoringCompany,
+			factoringkit.FieldFactoringCompany,
 			fieldFactoringAgree,
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			fieldFactoringCompany: permission.ResourceFactoringCompany,
-			fieldFactoringAgree:   permission.ResourceFactoringAgreement,
+			factoringkit.FieldFactoringCompany: permission.ResourceFactoringCompany,
+			fieldFactoringAgree:                permission.ResourceFactoringAgreement,
 		}),
 		toolpreview.Labels(map[string]string{
-			fieldFactoringOverride: "Factoring",
-			fieldOverrideReason:    "Why it stays out",
-			fieldFactoringCompany:  "Assigned to",
-			fieldFactoringAgree:    "Agreement",
+			fieldFactoringOverride:             "Factoring",
+			fieldOverrideReason:                "Why it stays out",
+			factoringkit.FieldFactoringCompany: "Assigned to",
+			fieldFactoringAgree:                "Agreement",
 		}),
 	)
 	if err != nil {
@@ -209,7 +213,7 @@ type RequestMissingFactoringDocumentTool struct {
 func NewRequestMissingFactoringDocumentTool(
 	readiness factoringports.ReadinessService,
 	senders emailports.EmailSenderResolver,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RequestMissingFactoringDocumentTool{readiness: readiness, senders: senders}
 }
 
@@ -254,35 +258,35 @@ func (t *RequestMissingFactoringDocumentTool) ParamSchema() map[string]any {
 	}, paramInvoiceID)
 }
 
-func (t *RequestMissingFactoringDocumentTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceCustomerCommunication,
-		operation:   permission.OpCreate,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierPropose,
-		egress:      agent.EgressExternalRecipient,
-		idempotent:  true,
-		rationale:   "Emails a driver, carrier or customer outside the organization.",
+func (t *RequestMissingFactoringDocumentTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceCustomerCommunication,
+		Operation:   permission.OpCreate,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierPropose,
+		Egress:      agent.EgressExternalRecipient,
+		Idempotent:  true,
+		Rationale:   "Emails a driver, carrier or customer outside the organization.",
 	})
 }
 
 func (t *RequestMissingFactoringDocumentTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
+) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramInvoiceID, permission.ResourceInvoice)
 }
 
 func (t *RequestMissingFactoringDocumentTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.RequestMissingDocumentsRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	invoiceID, err := common.RequirePulid(params.Params, paramInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	typeIDs, err := common.RequirePulidSlice(
+	typeIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramDocumentTypeIDs,
 		maxRequestedDocuments,
@@ -294,19 +298,19 @@ func (t *RequestMissingFactoringDocumentTool) request(
 		typeIDs = nil
 	}
 	return &factoringports.RequestMissingDocumentsRequest{
-		TenantInfo:      common.TenantFrom(*params),
+		TenantInfo:      toolparams.TenantFrom(params),
 		InvoiceID:       invoiceID,
 		DocumentTypeIDs: typeIDs,
-		Recipient:       common.OptionalString(params.Params, paramRecipient),
-		Message:         common.OptionalString(params.Params, paramMessage),
+		Recipient:       toolparams.OptionalString(params.Params, paramRecipient),
+		Message:         toolparams.OptionalString(params.Params, paramMessage),
 	}, nil
 }
 
 func (t *RequestMissingFactoringDocumentTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -316,9 +320,9 @@ func (t *RequestMissingFactoringDocumentTool) Validate(
 
 func (t *RequestMissingFactoringDocumentTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -328,19 +332,19 @@ func (t *RequestMissingFactoringDocumentTool) Execute(
 
 func (t *RequestMissingFactoringDocumentTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email a request for the invoice's missing documents."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.readiness.PlanDocumentRequest(ctx, req, params.Actor.UserID)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	send := messageRequest(&plan.Message)
-	sender, err := common.ResolveEmailSender(ctx, t.senders, send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)
 	if err != nil {
 		return nil, err
 	}
@@ -349,9 +353,9 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 			Resource: permission.ResourceCustomerCommunication,
 			Label:    strings.Join(plan.Message.To, ", "),
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(send, plan.Message.VersionID),
+			outboundpreview.RenderedEmailPreview(send, plan.Message.VersionID),
 		),
 	)
 	preview := toolpreview.Build(
@@ -360,6 +364,6 @@ func (t *RequestMissingFactoringDocumentTool) Preview(
 			" can be factored. It cannot be recalled once sent.",
 		change,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
 	return preview, nil
 }

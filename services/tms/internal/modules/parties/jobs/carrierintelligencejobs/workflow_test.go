@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -153,11 +154,11 @@ func (s *WorkflowTestSuite) runReconcileOn(start time.Time) []bool {
 	s.env.SetStartTime(start)
 	s.env.OnActivity(a.ListTenantsActivity, mock.Anything, mock.Anything).Return(pager.list)
 	s.env.OnActivity(a.ReconcileTenantActivity, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, payload *ReconcileTenantPayload) (*carrierintelservice.ReconcileResult, error) {
+		func(_ context.Context, payload *ReconcileTenantPayload) (*carrierintelenrollmentservice.ReconcileResult, error) {
 			mu.Lock()
 			drift = append(drift, payload.DriftCheck)
 			mu.Unlock()
-			return &carrierintelservice.ReconcileResult{Desired: 4}, nil
+			return &carrierintelenrollmentservice.ReconcileResult{Desired: 4}, nil
 		},
 	)
 
@@ -185,7 +186,7 @@ func (s *WorkflowTestSuite) TestMaintenanceSurvivesGlobalFailure() {
 	pager := &pagedTenants{pages: [][]temporaljobs.TenantWorkItem{tenants(2)}}
 
 	s.env.OnActivity(a.GlobalMaintenanceActivity, mock.Anything).Return(
-		(*carrierintelservice.MaintenanceResult)(nil),
+		(*carrierintelmonitorservice.MaintenanceResult)(nil),
 		temporal.NewNonRetryableApplicationError("rollup failed", "BusinessError", nil),
 	).Once()
 	s.env.OnActivity(a.ListTenantsActivity, mock.Anything, mock.Anything).Return(pager.list)
@@ -222,7 +223,7 @@ func (s *WorkflowTestSuite) TestDigestCountsEvents() {
 
 	s.env.OnActivity(a.ListTenantsActivity, mock.Anything, mock.Anything).Return(pager.list)
 	s.env.OnActivity(a.DigestTenantActivity, mock.Anything, mock.Anything).
-		Return(&carrierintelservice.DigestResult{Events: 2}, nil)
+		Return(&carrierintelmonitorservice.DigestResult{Events: 2}, nil)
 
 	s.env.ExecuteWorkflow(CarrierIntelDigestWorkflow, &FanOutInput{})
 

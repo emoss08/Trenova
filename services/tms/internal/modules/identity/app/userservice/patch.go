@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
@@ -123,7 +123,7 @@ func (s *Service) Patch(ctx context.Context, req *PatchUserRequest) (*tenant.Use
 
 	restoreImmutableFields(user, &original)
 	user.Name = strings.TrimSpace(user.Name)
-	user.EmailAddress = stringutils.NormalizeEmailAddress(user.EmailAddress)
+	user.EmailAddress = mailtext.NormalizeEmailAddress(user.EmailAddress)
 
 	if multiErr := guardSelfAccess(req.TenantInfo.UserID, &original, user); multiErr != nil {
 		return nil, multiErr

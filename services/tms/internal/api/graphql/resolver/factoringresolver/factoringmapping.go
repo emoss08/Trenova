@@ -4,10 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -21,7 +26,7 @@ func (d *Deps) factorFor(
 	ctx context.Context,
 	id pulid.ID,
 ) (*factoringcompany.FactoringCompany, error) {
-	if id.IsNil() || !loaders.Available(ctx) {
+	if id.IsNil() || !loadercore.Available(ctx) {
 		return nil, nil //nolint:nilnil // an unset factor resolves to null
 	}
 	authCtx, err := d.RequireAuth(ctx)
@@ -31,7 +36,7 @@ func (d *Deps) factorFor(
 	if !d.HasPermission(ctx, authCtx, permission.ResourceFactoringCompany, permission.OpRead) {
 		return nil, nil //nolint:nilnil // a factor the caller cannot read resolves to null
 	}
-	return loaders.FactoringCompanyByID(ctx, id.String())
+	return billingloaders.FactoringCompanyByID(ctx, id.String())
 }
 
 func agreementInputFromModel(
@@ -108,7 +113,7 @@ func statusChangeFromModel(
 		return nil, err
 	}
 	return &factoringports.ChangeAgreementStatusRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         id,
 		Version:    int64(in.Version),
 		EndAt:      int64Ptr(in.EndAt),
@@ -118,7 +123,7 @@ func statusChangeFromModel(
 func noaConnectionToModel(
 	result *pagination.CursorListResult[*factoring.Noa],
 ) (*gqlmodel.FactoringNoaConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoring.Noa, cursor string) *gqlmodel.FactoringNoaEdge {
 			return &gqlmodel.FactoringNoaEdge{Node: node, Cursor: cursor}
@@ -137,11 +142,11 @@ func noaConnectionToModel(
 }
 
 func invoiceStateConnectionToModel(
-	result *pagination.CursorListResult[*factoring.InvoiceState],
+	result *pagination.CursorListResult[*factoringreadiness.InvoiceState],
 ) (*gqlmodel.FactoringInvoiceStateConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.InvoiceState, cursor string) *gqlmodel.FactoringInvoiceStateEdge {
+		func(node *factoringreadiness.InvoiceState, cursor string) *gqlmodel.FactoringInvoiceStateEdge {
 			return &gqlmodel.FactoringInvoiceStateEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringInvoiceStateEdge) string { return edge.Cursor },
@@ -158,11 +163,11 @@ func invoiceStateConnectionToModel(
 }
 
 func submissionConnectionToModel(
-	result *pagination.CursorListResult[*factoring.Submission],
+	result *pagination.CursorListResult[*factoringsubmission.Submission],
 ) (*gqlmodel.FactoringSubmissionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *factoring.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
+		func(node *factoringsubmission.Submission, cursor string) *gqlmodel.FactoringSubmissionEdge {
 			return &gqlmodel.FactoringSubmissionEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.FactoringSubmissionEdge) string { return edge.Cursor },
@@ -181,7 +186,7 @@ func submissionConnectionToModel(
 func planRequestFromModel(
 	in *gqlmodel.FactoringSubmissionPlanInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.PlanSubmissionRequest, error) {
+) (*factoringsubmissionports.PlanSubmissionRequest, error) {
 	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
 	if err != nil {
 		return nil, err
@@ -190,8 +195,8 @@ func planRequestFromModel(
 	if err != nil {
 		return nil, err
 	}
-	return &factoringports.PlanSubmissionRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+	return &factoringsubmissionports.PlanSubmissionRequest{
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		InvoiceIDs:         invoiceIDs,
 	}, nil
@@ -200,16 +205,16 @@ func planRequestFromModel(
 func transportRequestFromModel(
 	in *gqlmodel.SaveFactoringTransportInput,
 	authCtx *authctx.AuthContext,
-) (*factoringports.SaveTransportRequest, error) {
+) (*factoringsubmissionports.SaveTransportRequest, error) {
 	factorID, err := parseID(in.FactoringCompanyID, "factoringCompanyId")
 	if err != nil {
 		return nil, err
 	}
-	req := &factoringports.SaveTransportRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+	req := &factoringsubmissionports.SaveTransportRequest{
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		FactoringCompanyID: factorID,
 		Version:            int64Ptr(in.Version),
-		Input: factoringports.TransportInput{
+		Input: factoringsubmissionports.TransportInput{
 			Method:           in.Method,
 			EmailRecipients:  in.EmailRecipients,
 			AttachPackets:    in.AttachPackets == nil || *in.AttachPackets,

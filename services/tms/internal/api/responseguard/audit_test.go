@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +19,7 @@ import (
 // it: its JSON, under the resource its entries name.
 type auditedRecord struct {
 	resource permission.Resource
-	build    func() permission.FieldWithholder
+	build    func() protectedfield.Withholder
 }
 
 // auditedRecords are the stored records with protected fields: the personal
@@ -27,7 +29,7 @@ func auditedRecords() []auditedRecord {
 	records := []auditedRecord{
 		{
 			resource: permission.ResourceWorker,
-			build: func() permission.FieldWithholder {
+			build: func() protectedfield.Withholder {
 				return &worker.Worker{FirstName: "Rosa", Profile: &worker.WorkerProfile{
 					DOB:            315532800,
 					LicenseNumber:  "D1234567",
@@ -38,8 +40,8 @@ func auditedRecords() []auditedRecord {
 		},
 		{
 			resource: permission.ResourceWorkerCredential,
-			build: func() permission.FieldWithholder {
-				return &worker.WorkerCredential{Number: "CDL-445566"}
+			build: func() protectedfield.Withholder {
+				return &workercredential.WorkerCredential{Number: "CDL-445566"}
 			},
 		},
 	}
@@ -160,11 +162,11 @@ func TestEveryProtectedFieldIsWithheldFromTheAuditTrail(t *testing.T) {
 			checked++
 			assert.Nilf(t, leafAt(entry.CurrentState, path),
 				"%s.%s is withheld from a response but not from an audit entry of %q; "+
-					"declare it in permission.ProtectedPaths", key, path, record.resource)
+					"declare it in protectedfield.Paths", key, path, record.resource)
 		}
 
 		full := &audit.Entry{Resource: record.resource, CurrentState: encode(t, record.build())}
-		full.WithholdFields(permission.AllFieldGroups())
+		full.WithholdFields(protectedfield.AllGroups())
 		for _, path := range paths {
 			assert.NotNilf(t, leafAt(full.CurrentState, path),
 				"%s.%s was withheld from a reader who holds every group", key, path)
@@ -186,7 +188,12 @@ func TestAnAuditEntryResponseWithholdsItsProtectedFields(t *testing.T) {
 		}
 	}
 
-	body, _ := serve(t, []permission.Resource{permission.ResourceProtectedMargins}, entry(), guarded)
+	body, _ := serve(
+		t,
+		[]permission.Resource{permission.ResourceProtectedMargins},
+		entry(),
+		guarded,
+	)
 	assert.Nil(t, object(t, body, "currentState")["targetMarginPercent"])
 	assert.Equal(t, "6.5", object(t, body, "currentState")["milesPerGallon"])
 	assert.Nil(t, object(t, body, "changes", "targetMarginPercent")["to"])

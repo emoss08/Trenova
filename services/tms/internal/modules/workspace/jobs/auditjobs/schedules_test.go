@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,14 +15,14 @@ import (
 func TestNewScheduleProvider(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	require.NotNil(t, provider)
 }
 
 func TestScheduleProvider_GetSchedules(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	require.Len(t, schedules, 3)
@@ -30,7 +31,7 @@ func TestScheduleProvider_GetSchedules(t *testing.T) {
 func TestScheduleProvider_AuditBufferFlush(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	flushSchedule := schedules[0]
@@ -49,10 +50,8 @@ func TestScheduleProvider_AuditBufferFlush(t *testing.T) {
 func TestScheduleProvider_AuditBufferFlushConfigOverride(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(&config.Config{
-		Audit: config.AuditConfig{
-			BufferFlushInterval: 2 * time.Minute,
-		},
+	provider := NewScheduleProvider(&auditconfig.Config{
+		BufferFlushInterval: 2 * time.Minute,
 	})
 	schedules := provider.GetSchedules()
 
@@ -63,7 +62,7 @@ func TestScheduleProvider_AuditBufferFlushConfigOverride(t *testing.T) {
 func TestScheduleProvider_RetentionPurge(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	retentionSchedule := schedules[1]
@@ -77,7 +76,7 @@ func TestScheduleProvider_RetentionPurge(t *testing.T) {
 func TestScheduleProvider_DLQRetry(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	dlqSchedule := schedules[2]
@@ -96,10 +95,8 @@ func TestScheduleProvider_DLQRetry(t *testing.T) {
 func TestScheduleProvider_DLQRetryConfigOverride(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(&config.Config{
-		Audit: config.AuditConfig{
-			DLQRetryInterval: 15 * time.Minute,
-		},
+	provider := NewScheduleProvider(&auditconfig.Config{
+		DLQRetryInterval: 15 * time.Minute,
 	})
 	schedules := provider.GetSchedules()
 
@@ -110,7 +107,7 @@ func TestScheduleProvider_DLQRetryConfigOverride(t *testing.T) {
 func TestScheduleProvider_AllSchedulesHaveRequiredFields(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	for _, s := range schedules {
@@ -129,7 +126,7 @@ func TestScheduleProvider_AllSchedulesHaveRequiredFields(t *testing.T) {
 func TestScheduleProvider_UniqueIDs(t *testing.T) {
 	t.Parallel()
 
-	provider := NewScheduleProvider(newTestConfig())
+	provider := NewScheduleProvider(&newTestConfig().Audit)
 	schedules := provider.GetSchedules()
 
 	ids := make(map[string]bool)

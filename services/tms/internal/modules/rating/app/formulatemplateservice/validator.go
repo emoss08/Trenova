@@ -14,102 +14,100 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const fieldSource = "source"
-
-type contentCheck struct {
-	checked *tariff.SourceCheck
-	tests   *rules.TariffTestRun
+type ContentCheck struct {
+	Checked *tariff.SourceCheck
+	TestRun *rules.TariffTestRun
 }
 
-func (c *contentCheck) checks() bool {
-	return c.checked != nil && c.checked.OK()
+func (c *ContentCheck) Checks() bool {
+	return c.Checked != nil && c.Checked.OK()
 }
 
-func (c *contentCheck) testsPass() bool {
-	return c.tests != nil && c.tests.Passed()
+func (c *ContentCheck) TestsPass() bool {
+	return c.TestRun != nil && c.TestRun.Passed()
 }
 
-func (c *contentCheck) passedTests() int {
-	if c.tests == nil {
+func (c *ContentCheck) PassedTests() int {
+	if c.TestRun == nil {
 		return 0
 	}
 	passed := 0
-	for i := range c.tests.Tests {
-		if c.tests.Tests[i].Status == rules.TariffTestPassed {
+	for i := range c.TestRun.Tests {
+		if c.TestRun.Tests[i].Status == rules.TariffTestPassed {
 			passed++
 		}
 	}
 	return passed
 }
 
-func (c *contentCheck) failingTests() []string {
-	if c.tests == nil {
+func (c *ContentCheck) FailingTests() []string {
+	if c.TestRun == nil {
 		return nil
 	}
-	names := make([]string, 0, len(c.tests.Tests))
-	for i := range c.tests.Tests {
-		if c.tests.Tests[i].Status != rules.TariffTestPassed {
-			names = append(names, c.tests.Tests[i].Name)
+	names := make([]string, 0, len(c.TestRun.Tests))
+	for i := range c.TestRun.Tests {
+		if c.TestRun.Tests[i].Status != rules.TariffTestPassed {
+			names = append(names, c.TestRun.Tests[i].Name)
 		}
 	}
 	return names
 }
 
-func (c *contentCheck) testCount() int32 {
-	if c.tests == nil {
+func (c *ContentCheck) TestCount() int32 {
+	if c.TestRun == nil {
 		return 0
 	}
-	return intutils.SafeToInt32(len(c.tests.Tests))
+	return intutils.SafeToInt32(len(c.TestRun.Tests))
 }
 
-func (c *contentCheck) headerName() string {
-	if c.checked == nil || c.checked.Check == nil || c.checked.Check.Header == nil {
+func (c *ContentCheck) HeaderName() string {
+	if c.Checked == nil || c.Checked.Check == nil || c.Checked.Check.Header == nil {
 		return ""
 	}
-	return c.checked.Check.Header.Name
+	return c.Checked.Check.Header.Name
 }
 
-func (c *contentCheck) refusal() error {
-	if c.checked == nil {
+func (c *ContentCheck) Refusal() error {
+	if c.Checked == nil {
 		return nil
 	}
-	return tarifferrors.CheckRefusal(c.checked.Check, tarifferrors.CheckFields{Source: fieldSource})
+	return tarifferrors.CheckRefusal(c.Checked.Check, tarifferrors.CheckFields{Source: FieldSource})
 }
 
-type contentRequest struct {
-	tenant pagination.TenantInfo
-	source string
-	mode   tariff.LibraryMode
-	pins   []tarifftypes.Import
-	tables []tarifftypes.TablePin
+type ContentRequest struct {
+	Tenant pagination.TenantInfo
+	Source string
+	Mode   tariff.LibraryMode
+	Pins   []tarifftypes.Import
+	Tables []tarifftypes.TablePin
 }
 
-func (s *Service) checkContent(ctx context.Context, req *contentRequest) (*contentCheck, error) {
+func (s *Service) CheckContent(ctx context.Context, req *ContentRequest) (*ContentCheck, error) {
 	checked, err := s.checker.CheckSource(ctx, &tariff.SourceCheckRequest{
-		TenantInfo: req.tenant,
-		Source:     req.source,
+		TenantInfo: req.Tenant,
+		Source:     req.Source,
 		Kind:       rules.TariffKindTariff,
-		Mode:       req.mode,
-		Pins:       req.pins,
-		TablePins:  req.tables,
+		Mode:       req.Mode,
+		Pins:       req.Pins,
+		TablePins:  req.Tables,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	tests, err := s.checker.TestChecked(ctx, checked, req.source)
+	tests, err := s.checker.TestChecked(ctx, checked, req.Source)
 	if err != nil {
 		return nil, err
 	}
 
-	return &contentCheck{checked: checked, tests: tests}, nil
+	return &ContentCheck{Checked: checked, TestRun: tests}, nil
 }
 
-func templateTenant(template *formulatemplate.FormulaTemplate) pagination.TenantInfo {
+func TemplateTenant(template *formulatemplate.FormulaTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: template.OrganizationID, BuID: template.BusinessUnitID}
 }
 
-func (s *Service) prepareContent(
+func (s *Service) PrepareContent(
 	ctx context.Context,
 	entity *formulatemplate.FormulaTemplate,
 ) error {
@@ -124,37 +122,37 @@ func (s *Service) prepareContent(
 		return multiErr
 	}
 
-	content, err := s.checkContent(ctx, &contentRequest{
-		tenant: templateTenant(entity),
-		source: entity.Source,
-		mode:   tariff.LibrariesLatest,
+	content, err := s.CheckContent(ctx, &ContentRequest{
+		Tenant: TemplateTenant(entity),
+		Source: entity.Source,
+		Mode:   tariff.LibrariesLatest,
 	})
 	if err != nil {
 		return err
 	}
-	if refusal := content.refusal(); refusal != nil {
+	if refusal := content.Refusal(); refusal != nil {
 		return refusal
 	}
 
-	entity.Name = content.headerName()
+	entity.Name = content.HeaderName()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
-	applyContent(entity, content)
+	ApplyContent(entity, content)
 	return nil
 }
 
-func (s *Service) renamed(ctx context.Context, source, name string) (string, error) {
+func (s *Service) Renamed(ctx context.Context, source, name string) (string, error) {
 	return s.checker.SetName(ctx, source, name)
 }
 
-func applyContent(entity *formulatemplate.FormulaTemplate, content *contentCheck) {
-	entity.Inputs = tarifftypes.InputDeclsFrom(content.checked.Check.Inputs)
-	entity.Imports = content.checked.Imports
-	entity.Tables = content.checked.Tables
-	entity.TestCount = content.testCount()
+func ApplyContent(entity *formulatemplate.FormulaTemplate, content *ContentCheck) {
+	entity.Inputs = tarifftypes.InputDeclsFrom(content.Checked.Check.Inputs)
+	entity.Imports = content.Checked.Imports
+	entity.Tables = content.Checked.Tables
+	entity.TestCount = content.TestCount()
 }
 
 func validateBulkTemplateIDs(ids []pulid.ID) error {

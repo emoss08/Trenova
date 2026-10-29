@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockAccountingControlRepository) EXPECT() *MockAccountingControlReposi
 }
 
 // GetByOrgID provides a mock function for the type MockAccountingControlRepository
-func (_mock *MockAccountingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.AccountingControl, error) {
+func (_mock *MockAccountingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*accountingcontrol.AccountingControl, error) {
 	ret := _mock.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByOrgID")
 	}
 
-	var r0 *tenant.AccountingControl
+	var r0 *accountingcontrol.AccountingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*tenant.AccountingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*accountingcontrol.AccountingControl, error)); ok {
 		return returnFunc(ctx, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *tenant.AccountingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *accountingcontrol.AccountingControl); ok {
 		r0 = returnFunc(ctx, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.AccountingControl)
+			r0 = ret.Get(0).(*accountingcontrol.AccountingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
@@ -97,34 +97,34 @@ func (_c *MockAccountingControlRepository_GetByOrgID_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_GetByOrgID_Call) Return(accountingControl *tenant.AccountingControl, err error) *MockAccountingControlRepository_GetByOrgID_Call {
+func (_c *MockAccountingControlRepository_GetByOrgID_Call) Return(accountingControl *accountingcontrol.AccountingControl, err error) *MockAccountingControlRepository_GetByOrgID_Call {
 	_c.Call.Return(accountingControl, err)
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*tenant.AccountingControl, error)) *MockAccountingControlRepository_GetByOrgID_Call {
+func (_c *MockAccountingControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*accountingcontrol.AccountingControl, error)) *MockAccountingControlRepository_GetByOrgID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListWithScheduledPeriodClose provides a mock function for the type MockAccountingControlRepository
-func (_mock *MockAccountingControlRepository) ListWithScheduledPeriodClose(ctx context.Context) ([]*tenant.AccountingControl, error) {
+func (_mock *MockAccountingControlRepository) ListWithScheduledPeriodClose(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListWithScheduledPeriodClose")
 	}
 
-	var r0 []*tenant.AccountingControl
+	var r0 []*accountingcontrol.AccountingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.AccountingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*accountingcontrol.AccountingControl, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.AccountingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*accountingcontrol.AccountingControl); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*tenant.AccountingControl)
+			r0 = ret.Get(0).([]*accountingcontrol.AccountingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -159,37 +159,37 @@ func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) Run
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) Return(accountingControls []*tenant.AccountingControl, err error) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
+func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) Return(accountingControls []*accountingcontrol.AccountingControl, err error) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	_c.Call.Return(accountingControls, err)
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.AccountingControl, error)) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
+func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) RunAndReturn(run func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error)) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockAccountingControlRepository
-func (_mock *MockAccountingControlRepository) Update(ctx context.Context, ac *tenant.AccountingControl) (*tenant.AccountingControl, error) {
+func (_mock *MockAccountingControlRepository) Update(ctx context.Context, ac *accountingcontrol.AccountingControl) (*accountingcontrol.AccountingControl, error) {
 	ret := _mock.Called(ctx, ac)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.AccountingControl
+	var r0 *accountingcontrol.AccountingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.AccountingControl) (*tenant.AccountingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *accountingcontrol.AccountingControl) (*accountingcontrol.AccountingControl, error)); ok {
 		return returnFunc(ctx, ac)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.AccountingControl) *tenant.AccountingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *accountingcontrol.AccountingControl) *accountingcontrol.AccountingControl); ok {
 		r0 = returnFunc(ctx, ac)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.AccountingControl)
+			r0 = ret.Get(0).(*accountingcontrol.AccountingControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.AccountingControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *accountingcontrol.AccountingControl) error); ok {
 		r1 = returnFunc(ctx, ac)
 	} else {
 		r1 = ret.Error(1)
@@ -204,20 +204,20 @@ type MockAccountingControlRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ac *tenant.AccountingControl
+//   - ac *accountingcontrol.AccountingControl
 func (_e *MockAccountingControlRepository_Expecter) Update(ctx any, ac any) *MockAccountingControlRepository_Update_Call {
 	return &MockAccountingControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, ac)}
 }
 
-func (_c *MockAccountingControlRepository_Update_Call) Run(run func(ctx context.Context, ac *tenant.AccountingControl)) *MockAccountingControlRepository_Update_Call {
+func (_c *MockAccountingControlRepository_Update_Call) Run(run func(ctx context.Context, ac *accountingcontrol.AccountingControl)) *MockAccountingControlRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.AccountingControl
+		var arg1 *accountingcontrol.AccountingControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.AccountingControl)
+			arg1 = args[1].(*accountingcontrol.AccountingControl)
 		}
 		run(
 			arg0,
@@ -227,34 +227,34 @@ func (_c *MockAccountingControlRepository_Update_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_Update_Call) Return(accountingControl *tenant.AccountingControl, err error) *MockAccountingControlRepository_Update_Call {
+func (_c *MockAccountingControlRepository_Update_Call) Return(accountingControl *accountingcontrol.AccountingControl, err error) *MockAccountingControlRepository_Update_Call {
 	_c.Call.Return(accountingControl, err)
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, ac *tenant.AccountingControl) (*tenant.AccountingControl, error)) *MockAccountingControlRepository_Update_Call {
+func (_c *MockAccountingControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, ac *accountingcontrol.AccountingControl) (*accountingcontrol.AccountingControl, error)) *MockAccountingControlRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListAll provides a mock function for the type MockAccountingControlRepository
-func (_mock *MockAccountingControlRepository) ListAll(ctx context.Context) ([]*tenant.AccountingControl, error) {
+func (_mock *MockAccountingControlRepository) ListAll(ctx context.Context) ([]*accountingcontrol.AccountingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAll")
 	}
 
-	var r0 []*tenant.AccountingControl
+	var r0 []*accountingcontrol.AccountingControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*tenant.AccountingControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*accountingcontrol.AccountingControl, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) []*tenant.AccountingControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*accountingcontrol.AccountingControl); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*tenant.AccountingControl)
+			r0 = ret.Get(0).([]*accountingcontrol.AccountingControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -289,12 +289,12 @@ func (_c *MockAccountingControlRepository_ListAll_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListAll_Call) Return(accountingControls []*tenant.AccountingControl, err error) *MockAccountingControlRepository_ListAll_Call {
+func (_c *MockAccountingControlRepository_ListAll_Call) Return(accountingControls []*accountingcontrol.AccountingControl, err error) *MockAccountingControlRepository_ListAll_Call {
 	_c.Call.Return(accountingControls, err)
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListAll_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.AccountingControl, error)) *MockAccountingControlRepository_ListAll_Call {
+func (_c *MockAccountingControlRepository_ListAll_Call) RunAndReturn(run func(ctx context.Context) ([]*accountingcontrol.AccountingControl, error)) *MockAccountingControlRepository_ListAll_Call {
 	_c.Call.Return(run)
 	return _c
 }

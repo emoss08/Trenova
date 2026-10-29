@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -251,16 +251,16 @@ func (s *Service) rateWithoutAgreement(
 		)
 	}
 
-	disposition := tenant.UnratedShipmentDispositionFallbackFormulaTemplate
+	disposition := billingcontrol.UnratedShipmentDispositionFallbackFormulaTemplate
 	if req.BillingControl != nil && req.BillingControl.UnratedShipmentDisposition != "" {
 		disposition = req.BillingControl.UnratedShipmentDisposition
 	}
 
 	switch disposition { //nolint:exhaustive // the fallback disposition is the default arm
-	case tenant.UnratedShipmentDispositionBlock:
+	case billingcontrol.UnratedShipmentDispositionBlock:
 		return nil, errortypes.NewBusinessError("No rate agreement covers this lane")
 
-	case tenant.UnratedShipmentDispositionZeroAndFlag:
+	case billingcontrol.UnratedShipmentDispositionZeroAndFlag:
 		trace.Warn("No rate agreement covers this lane")
 		return s.finish(
 			ctx,

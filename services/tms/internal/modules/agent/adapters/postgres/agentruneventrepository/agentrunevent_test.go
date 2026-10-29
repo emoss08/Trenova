@@ -3,22 +3,25 @@ package agentruneventrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
-func readEventsEveryWay(t *testing.T, reader agentports.RunReader) []string {
+func readEventsEveryWay(t *testing.T, reader agentruntimeports.RunReader) []string {
 	t.Helper()
 
-	byRun, _ := keeltest.Render(t, listQuery(&agentports.ListAgentRunEventsRequest{
-		OwnerKind: string(agentports.RunStepOwnerAgentRun),
+	byRun, _ := keeltest.Render(t, listQuery(&agentruntimeports.ListAgentRunEventsRequest{
+		OwnerKind: string(agentruntimeports.RunStepOwnerAgentRun),
 		OwnerID:   pulid.MustNew("ar_"),
 		Reader:    reader,
 	}).Limit(10))
-	page, _ := keeltest.Render(t, agentdb.AgentRunEvents.Where(ofReadableRuns(reader)).Limit(10))
+	page, _ := keeltest.Render(
+		t,
+		agentruneventdb.AgentRunEvents.Where(ofReadableRuns(reader)).Limit(10),
+	)
 
 	return []string{byRun, page}
 }
@@ -26,7 +29,7 @@ func readEventsEveryWay(t *testing.T, reader agentports.RunReader) []string {
 func TestRunEventReads_KeepAConversationRunsEventsToItsOwnerForAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, query := range readEventsEveryWay(t, agentports.PersonRunRead(pulid.MustNew("usr_"))) {
+	for _, query := range readEventsEveryWay(t, agentruntimeports.PersonRunRead(pulid.MustNew("usr_"))) {
 		assert.Contains(t, query, `are."owner_kind" <> $`, query)
 		assert.Contains(t, query, `EXISTS (SELECT`, query)
 		assert.Contains(t, query, `"agent_runs" event_run`, query)
@@ -41,7 +44,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwnerForAPerson(t *testin
 func TestRunEventReads_ShowNoConversationRunsEventsToAReaderWhoIsNoPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, query := range readEventsEveryWay(t, agentports.PersonRunRead(pulid.Nil)) {
+	for _, query := range readEventsEveryWay(t, agentruntimeports.PersonRunRead(pulid.Nil)) {
 		assert.Contains(t, query, `event_run."subject_type" <> 'AssistantThread'`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}
@@ -50,7 +53,7 @@ func TestRunEventReads_ShowNoConversationRunsEventsToAReaderWhoIsNoPerson(t *tes
 func TestRunEventReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
 	t.Parallel()
 
-	for _, query := range readEventsEveryWay(t, agentports.UnattendedRunRead()) {
+	for _, query := range readEventsEveryWay(t, agentruntimeports.UnattendedRunRead()) {
 		assert.NotContains(t, query, "agent_runs", query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}

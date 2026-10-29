@@ -10,12 +10,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -76,7 +78,7 @@ func (r *MutationResolver) PatchTrailer(ctx context.Context, id string, input gq
 
 	existing, err := r.TrailerService.Get(ctx, trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -100,7 +102,7 @@ func (r *MutationResolver) BulkUpdateTrailerStatus(ctx context.Context, input gq
 		return nil, err
 	}
 
-	trailerIDs, err := base.ParseIDs(input.TrailerIds)
+	trailerIDs, err := gqlid.ParseIDs(input.TrailerIds)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +110,7 @@ func (r *MutationResolver) BulkUpdateTrailerStatus(ctx context.Context, input gq
 	entities, err := r.TrailerService.BulkUpdateStatus(
 		ctx,
 		&trailerports.BulkUpdateTrailerStatusRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			TrailerIDs: trailerIDs,
 			Status:     input.Status,
 		},
@@ -138,7 +140,7 @@ func (r *MutationResolver) LocateTrailer(ctx context.Context, input gqlmodel.Loc
 	result, err := r.TrailerService.Locate(
 		ctx,
 		&trailerports.LocateTrailerRequest{
-			TenantInfo:    base.TenantInfo(authCtx),
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
 			TrailerID:     trailerID,
 			NewLocationID: newLocationID,
 		},
@@ -157,7 +159,7 @@ func (r *QueryResolver) Trailers(ctx context.Context, input gqlmodel.DataTableCo
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +209,7 @@ func (r *QueryResolver) Trailer(ctx context.Context, id string) (*trailer.Traile
 
 	return r.TrailerService.Get(ctx, trailerports.GetTrailerByIDRequest{
 		ID:         trailerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		TrailerRelationIncludes: trailerRelationIncludes(
 			ctx,
 			"",
@@ -218,11 +220,11 @@ func (r *QueryResolver) Trailer(ctx context.Context, id string) (*trailer.Traile
 }
 
 func (r *TrailerResolver) RegistrationStateID(ctx context.Context, obj *trailer.Trailer) (*string, error) {
-	return base.IDPtr(obj.RegistrationStateID), nil
+	return gqlid.IDPtr(obj.RegistrationStateID), nil
 }
 
 func (r *TrailerResolver) FleetCodeID(ctx context.Context, obj *trailer.Trailer) (*string, error) {
-	return base.IDPtr(obj.FleetCodeID), nil
+	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
 func (r *TrailerResolver) EquipmentStatus(ctx context.Context, obj *trailer.Trailer) (domaintypes.EquipmentStatus, error) {
@@ -230,11 +232,11 @@ func (r *TrailerResolver) EquipmentStatus(ctx context.Context, obj *trailer.Trai
 }
 
 func (r *TrailerResolver) LastKnownLocationID(ctx context.Context, obj *trailer.Trailer) (*string, error) {
-	return base.IDPtr(obj.LastKnownLocationID), nil
+	return gqlid.IDPtr(obj.LastKnownLocationID), nil
 }
 
 func (r *TrailerResolver) InProgressMoveID(ctx context.Context, obj *trailer.Trailer) (*string, error) {
-	return base.IDPtr(obj.InProgressMoveID), nil
+	return gqlid.IDPtr(obj.InProgressMoveID), nil
 }
 
 func (r *TrailerResolver) LastKnownLocation(ctx context.Context, obj *trailer.Trailer) (*gqlmodel.LocationReference, error) {

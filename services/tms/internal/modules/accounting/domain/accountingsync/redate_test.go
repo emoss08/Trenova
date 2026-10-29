@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -15,7 +16,7 @@ func TestFirstOpenDayIsTheDayAfterTheBooksClosedInTheOrganizationsTimezone(t *te
 	t.Parallel()
 
 	closed := time.Date(2026, time.April, 10, 23, 59, 59, 0, time.UTC).Unix()
-	conn := &accountingsync.AccountingConnection{ExternalBooksClosedThrough: &closed}
+	conn := &accountingconnection.AccountingConnection{ExternalBooksClosedThrough: &closed}
 
 	for _, zone := range []string{"UTC", "America/Los_Angeles", "Asia/Tokyo", "Pacific/Kiritimati"} {
 		loc, err := time.LoadLocation(zone)
@@ -28,7 +29,7 @@ func TestFirstOpenDayIsTheDayAfterTheBooksClosedInTheOrganizationsTimezone(t *te
 		assert.False(t, conn.BooksClosedOn(day), zone)
 	}
 
-	_, ok := (&accountingsync.AccountingConnection{}).FirstOpenDay(time.UTC)
+	_, ok := (&accountingconnection.AccountingConnection{}).FirstOpenDay(time.UTC)
 	assert.False(t, ok)
 }
 
@@ -52,7 +53,11 @@ func TestRedateQueuesOnlyARecordHeldByAClosedPeriod(t *testing.T) {
 	require.NotNil(t, held.NextAttemptAt)
 	assert.Equal(t, int64(1_776_000_000), *held.NextAttemptAt)
 	assert.Equal(t, int64(1_775_000_000), held.SentDate(1_700_000_000))
-	assert.Equal(t, int64(1_700_000_000), (&accountingsync.AccountingSyncRecord{}).SentDate(1_700_000_000))
+	assert.Equal(
+		t,
+		int64(1_700_000_000),
+		(&accountingsync.AccountingSyncRecord{}).SentDate(1_700_000_000),
+	)
 
 	for _, record := range []*accountingsync.AccountingSyncRecord{
 		{Status: accountingsync.SyncStatusBlocked, ErrorCategory: accountingsync.SyncErrorMapping},

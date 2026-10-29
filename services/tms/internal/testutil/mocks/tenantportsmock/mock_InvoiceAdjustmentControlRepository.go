@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockInvoiceAdjustmentControlRepository) EXPECT() *MockInvoiceAdjustmen
 }
 
 // GetByOrgID provides a mock function for the type MockInvoiceAdjustmentControlRepository
-func (_mock *MockInvoiceAdjustmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.InvoiceAdjustmentControl, error) {
+func (_mock *MockInvoiceAdjustmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	ret := _mock.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByOrgID")
 	}
 
-	var r0 *tenant.InvoiceAdjustmentControl
+	var r0 *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*tenant.InvoiceAdjustmentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)); ok {
 		return returnFunc(ctx, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *tenant.InvoiceAdjustmentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *invoiceadjustmentcontrol.InvoiceAdjustmentControl); ok {
 		r0 = returnFunc(ctx, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.InvoiceAdjustmentControl)
+			r0 = ret.Get(0).(*invoiceadjustmentcontrol.InvoiceAdjustmentControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
@@ -97,37 +97,37 @@ func (_c *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call) Return(invoiceAdjustmentControl *tenant.InvoiceAdjustmentControl, err error) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
+func (_c *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call) Return(invoiceAdjustmentControl *invoiceadjustmentcontrol.InvoiceAdjustmentControl, err error) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
 	_c.Call.Return(invoiceAdjustmentControl, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*tenant.InvoiceAdjustmentControl, error)) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
+func (_c *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)) *MockInvoiceAdjustmentControlRepository_GetByOrgID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockInvoiceAdjustmentControlRepository
-func (_mock *MockInvoiceAdjustmentControlRepository) Update(ctx context.Context, control *tenant.InvoiceAdjustmentControl) (*tenant.InvoiceAdjustmentControl, error) {
+func (_mock *MockInvoiceAdjustmentControlRepository) Update(ctx context.Context, control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
 	ret := _mock.Called(ctx, control)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.InvoiceAdjustmentControl
+	var r0 *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.InvoiceAdjustmentControl) (*tenant.InvoiceAdjustmentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)); ok {
 		return returnFunc(ctx, control)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.InvoiceAdjustmentControl) *tenant.InvoiceAdjustmentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentcontrol.InvoiceAdjustmentControl) *invoiceadjustmentcontrol.InvoiceAdjustmentControl); ok {
 		r0 = returnFunc(ctx, control)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.InvoiceAdjustmentControl)
+			r0 = ret.Get(0).(*invoiceadjustmentcontrol.InvoiceAdjustmentControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.InvoiceAdjustmentControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustmentcontrol.InvoiceAdjustmentControl) error); ok {
 		r1 = returnFunc(ctx, control)
 	} else {
 		r1 = ret.Error(1)
@@ -142,20 +142,20 @@ type MockInvoiceAdjustmentControlRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - control *tenant.InvoiceAdjustmentControl
+//   - control *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 func (_e *MockInvoiceAdjustmentControlRepository_Expecter) Update(ctx any, control any) *MockInvoiceAdjustmentControlRepository_Update_Call {
 	return &MockInvoiceAdjustmentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, control)}
 }
 
-func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) Run(run func(ctx context.Context, control *tenant.InvoiceAdjustmentControl)) *MockInvoiceAdjustmentControlRepository_Update_Call {
+func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) Run(run func(ctx context.Context, control *invoiceadjustmentcontrol.InvoiceAdjustmentControl)) *MockInvoiceAdjustmentControlRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.InvoiceAdjustmentControl
+		var arg1 *invoiceadjustmentcontrol.InvoiceAdjustmentControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.InvoiceAdjustmentControl)
+			arg1 = args[1].(*invoiceadjustmentcontrol.InvoiceAdjustmentControl)
 		}
 		run(
 			arg0,
@@ -165,12 +165,12 @@ func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) Return(invoiceAdjustmentControl *tenant.InvoiceAdjustmentControl, err error) *MockInvoiceAdjustmentControlRepository_Update_Call {
+func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) Return(invoiceAdjustmentControl *invoiceadjustmentcontrol.InvoiceAdjustmentControl, err error) *MockInvoiceAdjustmentControlRepository_Update_Call {
 	_c.Call.Return(invoiceAdjustmentControl, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, control *tenant.InvoiceAdjustmentControl) (*tenant.InvoiceAdjustmentControl, error)) *MockInvoiceAdjustmentControlRepository_Update_Call {
+func (_c *MockInvoiceAdjustmentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)) *MockInvoiceAdjustmentControlRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

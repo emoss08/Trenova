@@ -6,11 +6,16 @@ import { DataTableTotalsRow } from "../data-table-totals-row";
 let resize: (() => void) | null = null;
 let footerHeight = 0;
 
+// The table's scroll area observes its viewport as well, after the footer, so
+// the callback kept is the one watching the footer, not the last one made.
 class FakeResizeObserver {
+  callback: () => void;
   constructor(callback: () => void) {
-    resize = callback;
+    this.callback = callback;
   }
-  observe() {}
+  observe(target: Element) {
+    if (target.tagName === "TFOOT") resize = this.callback;
+  }
   disconnect() {}
 }
 

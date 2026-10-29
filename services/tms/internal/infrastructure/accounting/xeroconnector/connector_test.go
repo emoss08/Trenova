@@ -14,12 +14,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -28,11 +33,11 @@ import (
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
-	require.ErrorIs(t, err, ErrNotConfigured)
+	require.ErrorIs(t, err, xerosession.ErrNotConfigured)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, provider.ClassifyError(err))
 	assert.Equal(t, integration.TypeXero, provider.IntegrationType())
 	assert.Equal(t, xero.SignatureHeader, provider.WebhookSignatureHeader())
@@ -41,18 +46,22 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{
+	provider := newProvider(t, accountingconfig.XeroConfig{
 		ClientID:     " id ",
 		ClientSecret: "secret",
 		WebhookKey:   "hook-key",
 	})
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
-	assert.Equal(t, accountingsync.AppSourceInstance, app.Source)
-	assert.Equal(t, accountingsync.AppEnvironmentProduction, app.Environment)
+	assert.Equal(t, accountingconnection.AppSourceInstance, app.Source)
+	assert.Equal(t, accountingprovider.AppEnvironmentProduction, app.Environment)
 	assert.Equal(t, "id", app.ClientID)
 	assert.Equal(t, "hook-key", app.WebhookVerifierToken)
-	assert.Equal(t, "https://app.example.com/admin/integrations/xero/callback", provider.RedirectURL())
+	assert.Equal(
+		t,
+		"https://app.example.com/admin/integrations/xero/callback",
+		provider.RedirectURL(),
+	)
 
 	app.ClientID = "changed"
 	again, _ := provider.InstanceApp()
@@ -61,7 +70,9 @@ func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 	conn, err := provider.Bind(again)
 	require.NoError(t, err)
 	assert.Equal(t, integration.TypeXero, conn.IntegrationType())
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state-1"})
+	raw, err := conn.AuthorizeURL(
+		accountingconnectorports.AccountingAuthorizeRequest{State: "state-1"},
+	)
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(raw, "https://login.xero.com/identity/connect/authorize?"))
 	assert.Contains(t, raw, "client_id=id")
@@ -74,14 +85,17 @@ func TestConfiguredInstanceAppIsProductionWithTheWebhookKey(t *testing.T) {
 func TestExplicitRedirectURLWins(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{RedirectURL: "https://tms.example.com/cb"})
+	provider := newProvider(
+		t,
+		accountingconfig.XeroConfig{RedirectURL: "https://tms.example.com/cb"},
+	)
 	assert.Equal(t, "https://tms.example.com/cb", provider.RedirectURL())
 }
 
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	first, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp())
@@ -98,16 +112,20 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
+	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
 	require.Error(t, err)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code"})
+	_, err = conn.ExchangeCode(
+		t.Context(),
+		&accountingconnectorports.AccountingCodeExchange{Code: "code"},
+	)
 	require.Error(t, err)
-	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
+	require.ErrorIs(t, conn.VerifyApp(t.Context()), xerosession.ErrNoRedirect)
 }
 
 func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
@@ -126,7 +144,7 @@ func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
 	}))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	provider.oauthOpts = []xero.Option{
 		xero.WithIdentityURL(server.URL),
 		xero.WithHTTPClient(server.Client()),
@@ -134,7 +152,10 @@ func TestExchangeCodeUsesBasicAuthAndReportsTheTokenLifetimes(t *testing.T) {
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 
-	grant, err := conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "code-1"})
+	grant, err := conn.ExchangeCode(
+		t.Context(),
+		&accountingconnectorports.AccountingCodeExchange{Code: "code-1"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "a.b.c", grant.AccessToken)
 	assert.Equal(t, "r1", grant.RefreshToken)
@@ -166,12 +187,16 @@ func TestCompaniesListsTheOrganisationsOfThisConsent(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	companies, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	companies, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: accessTokenWithEvent("evt-1"),
 	}, "")
 	require.NoError(t, err)
-	assert.Equal(t, []accountingsyncports.AccountingCompany{
-		{ID: testTenant, Name: "Acme Freight", ConnectionID: "11111111-1111-4111-8111-111111111111"},
+	assert.Equal(t, []accountingconnectorports.AccountingCompany{
+		{
+			ID:           testTenant,
+			Name:         "Acme Freight",
+			ConnectionID: "11111111-1111-4111-8111-111111111111",
+		},
 		{
 			ID:           "55555555-5555-4555-8555-555555555555",
 			Name:         "Acme Logistics",
@@ -194,13 +219,17 @@ func TestCompaniesFailsWithoutAnOrganisation(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	_, err := conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{
+	_, err := conn.Companies(t.Context(), &accountingconnectorports.AccountingTokenGrant{
 		AccessToken: accessTokenWithEvent("evt-2"),
 	}, "")
 	require.ErrorIs(t, err, errNoCompany)
 
-	_, err = conn.Companies(t.Context(), &accountingsyncports.AccountingTokenGrant{AccessToken: "opaque"}, "")
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
+	_, err = conn.Companies(
+		t.Context(),
+		&accountingconnectorports.AccountingTokenGrant{AccessToken: "opaque"},
+		"",
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
 }
 
 func TestReleaseCompaniesDeletesTheirConnections(t *testing.T) {
@@ -217,12 +246,15 @@ func TestReleaseCompaniesDeletesTheirConnections(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	err := conn.ReleaseCompanies(t.Context(), &accountingsyncports.AccountingTokenGrant{AccessToken: "token"},
-		[]accountingsyncports.AccountingCompany{
+	err := conn.ReleaseCompanies(
+		t.Context(),
+		&accountingconnectorports.AccountingTokenGrant{AccessToken: "token"},
+		[]accountingconnectorports.AccountingCompany{
 			{ID: "a", ConnectionID: "11111111-1111-4111-8111-111111111111"},
 			{ID: "b", ConnectionID: "44444444-4444-4444-8444-444444444444"},
 			{ID: "c"},
-		})
+		},
+	)
 	require.NoError(t, err)
 	deletes := fake.writes()
 	require.Len(t, deletes, 2)
@@ -254,7 +286,11 @@ func TestCompanyFactsReadsOrganisationAndActions(t *testing.T) {
 	assert.True(t, facts.MultiCurrencyEnabled)
 	assert.Equal(t, time.April, facts.FiscalYearStartMonth)
 	require.NotNil(t, facts.BooksClosedThrough)
-	assert.Equal(t, time.Date(2026, 6, 30, 23, 59, 59, 0, time.UTC).Unix(), *facts.BooksClosedThrough)
+	assert.Equal(
+		t,
+		time.Date(2026, 6, 30, 23, 59, 59, 0, time.UTC).Unix(),
+		*facts.BooksClosedThrough,
+	)
 	call, ok := fake.find(http.MethodGet, "/Organisation")
 	require.True(t, ok)
 	assert.Equal(t, testTenant, call.Tenant)
@@ -287,10 +323,10 @@ func TestVerifyApp(t *testing.T) {
 
 	require.NoError(t, verifyAppAgainst(t, http.StatusBadRequest, `{"error":"invalid_grant"}`))
 	err := verifyAppAgainst(t, http.StatusBadRequest, `{"error":"invalid_client"}`)
-	require.ErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	require.ErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 	err = verifyAppAgainst(t, http.StatusBadGateway, `{}`)
 	require.Error(t, err)
-	assert.NotErrorIs(t, err, accountingsyncports.ErrAccountingAppRejected)
+	assert.NotErrorIs(t, err, accountingconnectorports.ErrAccountingAppRejected)
 }
 
 func sign(key string, body []byte) string {
@@ -302,7 +338,7 @@ func sign(key string, body []byte) string {
 func TestWebhookVerificationAndCompanies(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 
@@ -311,7 +347,11 @@ func TestWebhookVerificationAndCompanies(t *testing.T) {
 	 {"resourceId":"` + testCustomer + `","tenantId":"` + testTenant + `","eventCategory":"CONTACT","eventType":"CREATE","eventDateUtc":"2026-09-29T10:00:01.000"}
 	],"firstEventSequence":1,"lastEventSequence":2,"entropy":"X"}`)
 	require.NoError(t, conn.VerifyWebhook(sign("tenant-webhook-key", body), body))
-	require.ErrorIs(t, conn.VerifyWebhook(sign("other-key", body), body), xero.ErrInvalidSignature)
+	require.ErrorIs(
+		t,
+		conn.VerifyWebhook(sign("other-key", body), body),
+		xeroerrors.ErrInvalidSignature,
+	)
 	require.Error(t, conn.VerifyWebhook("", body))
 
 	realms, err := provider.WebhookRealmIDs(body)
@@ -338,16 +378,40 @@ func TestClassifyError(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
-		{"revoked", &xero.OAuthError{Status: 400, Code: "invalid_grant"}, accountingsync.ErrorCategoryRevoked},
-		{"bad client", &xero.OAuthError{Status: 400, Code: "invalid_client"}, accountingsync.ErrorCategoryUnauthorized},
-		{"unauthorized", &xero.APIError{Status: 401}, accountingsync.ErrorCategoryUnauthorized},
-		{"disconnected", &xero.APIError{Status: 403, Type: xero.TypeAuthUnsuccessful}, accountingsync.ErrorCategoryUnauthorized},
-		{"rate limited", &xero.APIError{Status: 429}, accountingsync.ErrorCategoryRateLimited},
-		{"server", &xero.APIError{Status: 503}, accountingsync.ErrorCategoryTransient},
-		{"transport", &restx.TransportError{Err: errors.New("reset")}, accountingsync.ErrorCategoryTransient},
+		{"not configured", xerosession.ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
+		{
+			"revoked",
+			&xeroerrors.OAuthError{Status: 400, Code: "invalid_grant"},
+			accountingsync.ErrorCategoryRevoked,
+		},
+		{
+			"bad client",
+			&xeroerrors.OAuthError{Status: 400, Code: "invalid_client"},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"unauthorized",
+			&xeroerrors.APIError{Status: 401},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"disconnected",
+			&xeroerrors.APIError{Status: 403, Type: xeroerrors.TypeAuthUnsuccessful},
+			accountingsync.ErrorCategoryUnauthorized,
+		},
+		{
+			"rate limited",
+			&xeroerrors.APIError{Status: 429},
+			accountingsync.ErrorCategoryRateLimited,
+		},
+		{"server", &xeroerrors.APIError{Status: 503}, accountingsync.ErrorCategoryTransient},
+		{
+			"transport",
+			&restx.TransportError{Err: errors.New("reset")},
+			accountingsync.ErrorCategoryTransient,
+		},
 		{"deadline", context.DeadlineExceeded, accountingsync.ErrorCategoryTransient},
-		{"validation", &xero.APIError{Status: 400}, accountingsync.ErrorCategoryUnknown},
+		{"validation", &xeroerrors.APIError{Status: 400}, accountingsync.ErrorCategoryUnknown},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, conn.ClassifyError(tc.err), tc.name)

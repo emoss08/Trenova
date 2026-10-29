@@ -129,9 +129,9 @@ Delete these Go implementations and dependencies; their responsibilities move to
   - `documentservice` (GetPageImage)
   - `documentuploadservice`
   - `thumbnailjobs`, `documentuploadjobs`
-  - `captureservice` (processing, batches checkPDF, filing, storage)
+  - `captureprocessing`, `captureintake` (checkPDF), `capturefiling`, `capturesupport` (storage)
   - `triageworkservice` (split)
-  - `billing/app/factoringservice` (submission packets)
+  - `billing/app/factoringsubmissionservice` (submission packets)
   - `agent/app/messagefileservice`
   - `internal/testutil/pdftest`
   - `bootstrap/modules/infrastructure/pdfrender.go`
@@ -228,7 +228,7 @@ Docling is the only extraction engine. Delete the Legacy engine end to end, so t
   - After upload, a Temporal activity pre-renders every page's view image and thumbnail (bounded pages per document, rest on demand) and stores them encrypted, keyed by document version, page, size and format.
   - GetPageImage serves the stored render. On a miss it renders synchronously at interactive priority behind singleflight and stores the result.
   - Keep ETag and immutable caching headers, and the document-view audit events.
-- **Capture.** captureservice streams a whole batch through the batch inspection call instead of 4 goroutines each rendering through PDFium.
+- **Capture.** captureprocessing streams a whole batch through the batch inspection call instead of 4 goroutines each rendering through PDFium.
 - **Remove** every deleted dependency from go.mod and go.sum, and keep `go build` and `go test` green with the nomsgpack tag as the Taskfile does.
 
 ## Verification

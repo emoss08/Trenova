@@ -2,19 +2,20 @@ package recordanchorservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,24 +23,27 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const msPerMinute = 60_000
+const (
+	msPerMinute = 60_000
+	factStatus  = "status"
+)
 
 func shipmentReader(tracking shipmenttrackingports.ShipmentTrackingReader) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
 		snapshots, err := tracking.TrackingSnapshots(ctx, read.tenant, read.ids, read.timezone)
 		if err != nil {
 			return nil, err
 		}
 
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(snapshots))
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(snapshots))
 		for id, snapshot := range snapshots {
 			if snapshot == nil {
 				continue
 			}
 			facts := snapshot.Facts()
-			anchor := &agentdefinition.RuntimeAnchor{
+			anchor := &agentturn.RuntimeAnchor{
 				Label: snapshot.ProNumber,
-				Facts: make([]agentdefinition.AnchorFact, 0, len(facts)),
+				Facts: make([]agentturn.AnchorFact, 0, len(facts)),
 			}
 			for _, fact := range facts {
 				anchor.Facts = append(anchor.Facts, anchorFact(fact))
@@ -51,8 +55,8 @@ func shipmentReader(tracking shipmenttrackingports.ShipmentTrackingReader) kindR
 	}
 }
 
-func anchorFact(fact shipmenttracking.Fact) agentdefinition.AnchorFact {
-	return agentdefinition.AnchorFact{
+func anchorFact(fact shipmenttracking.Fact) agentturn.AnchorFact {
+	return agentturn.AnchorFact{
 		Name:   fact.Name,
 		Value:  fact.Value,
 		SeenAt: fact.SeenAt,
@@ -61,7 +65,7 @@ func anchorFact(fact shipmenttracking.Fact) agentdefinition.AnchorFact {
 }
 
 func invoiceReader(invoices invoiceports.InvoiceRepository) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
 		found, err := invoices.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
 			TenantInfo: read.tenant,
 			InvoiceIDs: read.ids,
@@ -70,12 +74,12 @@ func invoiceReader(invoices invoiceports.InvoiceRepository) kindReader {
 			return nil, err
 		}
 
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(found))
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(found))
 		for _, entity := range found {
 			if entity == nil {
 				continue
 			}
-			out[entity.ID] = &agentdefinition.RuntimeAnchor{
+			out[entity.ID] = &agentturn.RuntimeAnchor{
 				Label: entity.Number,
 				Facts: invoiceFacts(entity, read),
 			}
@@ -85,19 +89,19 @@ func invoiceReader(invoices invoiceports.InvoiceRepository) kindReader {
 	}
 }
 
-func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentdefinition.AnchorFact {
+func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentturn.AnchorFact {
 	status := fmt.Sprintf("%s, %s", entity.Status, entity.SettlementStatus)
 	if entity.DisputeStatus != "" && entity.DisputeStatus != invoice.DisputeStatusNone {
 		status += ", dispute " + string(entity.DisputeStatus)
 	}
-	facts := []agentdefinition.AnchorFact{{Name: "status", Value: status}}
+	facts := []agentturn.AnchorFact{{Name: factStatus, Value: status}}
 	if entity.BillToName != "" {
-		facts = append(facts, agentdefinition.AnchorFact{Name: "bill to", Value: entity.BillToName})
+		facts = append(facts, agentturn.AnchorFact{Name: "bill to", Value: entity.BillToName})
 	}
 	if entity.ShipmentProNumber != "" {
 		facts = append(
 			facts,
-			agentdefinition.AnchorFact{Name: "shipment", Value: entity.ShipmentProNumber},
+			agentturn.AnchorFact{Name: "shipment", Value: entity.ShipmentProNumber},
 		)
 	}
 	if entity.DueDate != nil && *entity.DueDate > 0 {
@@ -105,7 +109,7 @@ func invoiceFacts(entity *invoice.Invoice, read *kindRead) []agentdefinition.Anc
 		if *entity.DueDate < read.now && entity.SettlementStatus != invoice.SettlementStatusPaid {
 			due += ", past due"
 		}
-		facts = append(facts, agentdefinition.AnchorFact{Name: "due", Value: due})
+		facts = append(facts, agentturn.AnchorFact{Name: "due", Value: due})
 	}
 
 	return facts
@@ -115,7 +119,7 @@ func tractorReader(
 	tractors tractorports.TractorRepository,
 	telem telematicsports.TelematicsRepository,
 ) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
 		found, err := tractors.GetByIDs(ctx, tractorports.GetTractorsByIDsRequest{
 			TenantInfo: read.tenant,
 			TractorIDs: read.ids,
@@ -142,14 +146,14 @@ func tractorReader(
 			}
 		}
 
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(found))
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(found))
 		for _, entity := range found {
 			if entity == nil {
 				continue
 			}
-			anchor := &agentdefinition.RuntimeAnchor{
+			anchor := &agentturn.RuntimeAnchor{
 				Label: entity.Code,
-				Facts: []agentdefinition.AnchorFact{{Name: "status", Value: string(entity.Status)}},
+				Facts: []agentturn.AnchorFact{{Name: factStatus, Value: string(entity.Status)}},
 			}
 			if position, ok := positions[entity.ID]; ok {
 				anchor.Facts = append(anchor.Facts, positionFact(position, read.now))
@@ -161,7 +165,7 @@ func tractorReader(
 	}
 }
 
-func positionFact(position *telematics.VehiclePosition, now int64) agentdefinition.AnchorFact {
+func positionFact(position *telematics.VehiclePosition, now int64) agentturn.AnchorFact {
 	where := position.FormattedLocation
 	if where == "" {
 		where = fmt.Sprintf("%.4f, %.4f", position.Latitude, position.Longitude)
@@ -170,7 +174,7 @@ func positionFact(position *telematics.VehiclePosition, now int64) agentdefiniti
 		where += fmt.Sprintf(", moving at %.0f mph", position.SpeedMph)
 	}
 
-	return agentdefinition.AnchorFact{
+	return agentturn.AnchorFact{
 		Name:   "last position",
 		Value:  where,
 		SeenAt: position.RecordedAt,
@@ -179,7 +183,7 @@ func positionFact(position *telematics.VehiclePosition, now int64) agentdefiniti
 }
 
 func trailerReader(trailers trailerports.TrailerRepository) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
 		found, err := trailers.GetByIDs(ctx, trailerports.GetTrailersByIDsRequest{
 			TenantInfo: read.tenant,
 			TrailerIDs: read.ids,
@@ -188,14 +192,14 @@ func trailerReader(trailers trailerports.TrailerRepository) kindReader {
 			return nil, err
 		}
 
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(found))
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(found))
 		for _, entity := range found {
 			if entity == nil {
 				continue
 			}
-			out[entity.ID] = &agentdefinition.RuntimeAnchor{
+			out[entity.ID] = &agentturn.RuntimeAnchor{
 				Label: entity.Code,
-				Facts: []agentdefinition.AnchorFact{{Name: "status", Value: string(entity.Status)}},
+				Facts: []agentturn.AnchorFact{{Name: factStatus, Value: string(entity.Status)}},
 			}
 		}
 
@@ -204,7 +208,7 @@ func trailerReader(trailers trailerports.TrailerRepository) kindReader {
 }
 
 func workerReader(telem telematicsports.TelematicsRepository) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
 		states, err := telem.ListWorkerHOSStates(ctx, &telematicsports.ListWorkerHOSStatesRequest{
 			TenantInfo:    read.tenant,
 			WorkerIDs:     read.ids,
@@ -215,7 +219,7 @@ func workerReader(telem telematicsports.TelematicsRepository) kindReader {
 			return nil, err
 		}
 
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(read.ids))
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(read.ids))
 		for _, state := range states {
 			if state == nil {
 				continue
@@ -224,16 +228,16 @@ func workerReader(telem telematicsports.TelematicsRepository) kindReader {
 			if state.Worker != nil {
 				label = strings.TrimSpace(state.Worker.FirstName + " " + state.Worker.LastName)
 			}
-			out[state.WorkerID] = &agentdefinition.RuntimeAnchor{
+			out[state.WorkerID] = &agentturn.RuntimeAnchor{
 				Label: label,
-				Facts: []agentdefinition.AnchorFact{hoursFact(state, read.now)},
+				Facts: []agentturn.AnchorFact{hoursFact(state, read.now)},
 			}
 		}
 		for _, id := range read.ids {
 			if _, ok := out[id]; !ok {
-				out[id] = &agentdefinition.RuntimeAnchor{
+				out[id] = &agentturn.RuntimeAnchor{
 					Label: read.labels[id],
-					Facts: []agentdefinition.AnchorFact{{
+					Facts: []agentturn.AnchorFact{{
 						Name:  "driver hours",
 						Value: "no ELD has reported hours of service, so they are unknown",
 					}},
@@ -245,13 +249,13 @@ func workerReader(telem telematicsports.TelematicsRepository) kindReader {
 	}
 }
 
-func hoursFact(state *telematics.WorkerHOSState, now int64) agentdefinition.AnchorFact {
+func hoursFact(state *telematics.WorkerHOSState, now int64) agentturn.AnchorFact {
 	duty := string(state.DutyStatus)
 	if duty == "" {
 		duty = "duty status unknown"
 	}
 
-	return agentdefinition.AnchorFact{
+	return agentturn.AnchorFact{
 		Name: "driver hours",
 		Value: fmt.Sprintf("%s, %s drive and %s on duty left, %s in the cycle", duty,
 			timeutils.FormatLongDurationMs(state.DriveRemainingMs),
@@ -266,8 +270,8 @@ func detentionReader(
 	occurrences detentionports.DetentionOccurrenceRepository,
 	pricer clockPricer,
 ) kindReader {
-	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentdefinition.RuntimeAnchor, error) {
-		out := make(map[pulid.ID]*agentdefinition.RuntimeAnchor, len(read.ids))
+	return func(ctx context.Context, read *kindRead) (map[pulid.ID]*agentturn.RuntimeAnchor, error) {
+		out := make(map[pulid.ID]*agentturn.RuntimeAnchor, len(read.ids))
 		for _, id := range read.ids {
 			occurrence, err := occurrences.GetByID(
 				ctx,
@@ -301,13 +305,13 @@ func detentionAnchor(
 	occurrence *detention.DetentionOccurrence,
 	pricer clockPricer,
 	read *kindRead,
-) (*agentdefinition.RuntimeAnchor, error) {
+) (*agentturn.RuntimeAnchor, error) {
 	label := occurrence.ShipmentProNumber
 	if occurrence.LocationName != "" {
 		label = strings.TrimSpace(label + " at " + occurrence.LocationName)
 	}
-	facts := []agentdefinition.AnchorFact{{
-		Name:  "status",
+	facts := []agentturn.AnchorFact{{
+		Name:  factStatus,
 		Value: fmt.Sprintf("%s, notice %s", occurrence.Status, occurrence.NotificationStatus),
 	}}
 	if occurrence.ArrivedAt != nil && *occurrence.ArrivedAt > 0 {
@@ -320,17 +324,18 @@ func detentionAnchor(
 		} else {
 			clock += ", no departure recorded"
 		}
-		facts = append(facts, agentdefinition.AnchorFact{Name: "clock", Value: clock})
+		facts = append(facts, agentturn.AnchorFact{Name: "clock", Value: clock})
 	}
 
 	minutes, amount := occurrence.BillableMinutes, occurrence.BillableAmount
-	billable := agentdefinition.AnchorFact{Name: "billable", SeenAt: occurrence.UpdatedAt}
+	billable := agentturn.AnchorFact{Name: "billable", SeenAt: occurrence.UpdatedAt}
 	if pricer != nil {
 		price, err := pricer.PriceOpenClock(ctx, read.tenant, occurrence)
-		if err != nil {
+		switch {
+		case errors.Is(err, detentionreview.ErrClockNotPriced):
+		case err != nil:
 			return nil, err
-		}
-		if price != nil {
+		default:
 			minutes, amount = price.BillableMinutes, price.BillableAmount
 			billable.SeenAt = 0
 			billable.Name = "billable if the truck left now"
@@ -341,5 +346,5 @@ func detentionAnchor(
 		amount.StringFixed(2), occurrence.Currency)
 	facts = append(facts, billable)
 
-	return &agentdefinition.RuntimeAnchor{Label: label, Facts: facts}, nil
+	return &agentturn.RuntimeAnchor{Label: label, Facts: facts}, nil
 }

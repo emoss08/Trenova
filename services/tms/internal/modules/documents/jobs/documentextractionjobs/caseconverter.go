@@ -36,7 +36,7 @@ func (c *CaseConverter) ConvertCaseDocument(
 	if err != nil {
 		return nil, err
 	}
-	control, err := a.getDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	control, err := a.support.GetDocumentControl(ctx, doc.OrganizationID, doc.BusinessUnitID)
 	if err != nil {
 		return nil, err
 	}

@@ -6,9 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,15 +22,15 @@ import (
 // heldRuntime says an agent holds exactly the tools its definition names, so
 // a preview is seen to read the form's tools rather than the saved ones.
 type heldRuntime struct {
-	agentports.AgentRuntime
+	agentruntimeports.AgentRuntime
 }
 
 func (heldRuntime) ToolSummaries(
 	definition *agentdefinition.Definition,
-) []agentdefinition.ToolSummary {
-	out := make([]agentdefinition.ToolSummary, 0, len(definition.ToolNames))
+) []agentturn.ToolSummary {
+	out := make([]agentturn.ToolSummary, 0, len(definition.ToolNames))
 	for _, name := range definition.ToolNames {
-		out = append(out, agentdefinition.ToolSummary{Name: name})
+		out = append(out, agentturn.ToolSummary{Name: name})
 	}
 
 	return out
@@ -47,7 +50,7 @@ func (p *coveringPermissions) RoleCoverage(
 	for _, id := range req.RoleIDs {
 		out = append(out, permissionports.RoleCoverage{
 			RoleID:           id,
-			Coverage:         agentdefinition.CoverageFull,
+			Coverage:         agentreach.CoverageFull,
 			MissingResources: []permission.Resource{},
 		})
 	}
@@ -63,9 +66,9 @@ type grantsByAgent struct {
 func (g *grantsByAgent) ListRolesByAgents(
 	_ context.Context,
 	req permissionports.ListGrantsByAgentsRequest,
-) (map[pulid.ID][]*permission.Role, error) {
+) (map[pulid.ID][]*rbac.Role, error) {
 	g.reads++
-	out := make(map[pulid.ID][]*permission.Role, len(req.AgentIDs))
+	out := make(map[pulid.ID][]*rbac.Role, len(req.AgentIDs))
 	for _, agentID := range req.AgentIDs {
 		for _, roleID := range g.agentRoles[agentID] {
 			out[agentID] = append(out[agentID], g.roles[roleID])
@@ -116,12 +119,15 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 	f := newPreviewFixture(t)
 	f.grants.agentRoles[f.agent.ID] = []pulid.ID{f.roleA.ID}
 
-	open, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		ToolNames:  []string{"shipment_get", "customer_send_email"},
-		Mode:       agentdefinition.AccessEveryone,
-	})
+	open, err := f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			ToolNames:  []string{"shipment_get", "customer_send_email"},
+			Mode:       agentdefinition.AccessEveryone,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessEveryone, open.Agent.EffectiveAccessMode())
 	assert.Equal(t, []string{"customer_send_email"}, open.SensitiveTools)
@@ -130,20 +136,26 @@ func TestPreviewAudience_ReadsTheFormNotTheSavedAgent(t *testing.T) {
 		assert.Equal(t, role.Role.ID == f.roleA.ID, role.Granted, role.Role.Name)
 	}
 
-	stored, err := f.definitions.GetByID(t.Context(), agentdefinitionports.GetAgentDefinitionByIDRequest{
-		ID: f.agent.ID, TenantInfo: f.tenant,
-	})
+	stored, err := f.definitions.GetByID(
+		t.Context(),
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID: f.agent.ID, TenantInfo: f.tenant,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessRoles, stored.AccessMode, "a preview changes nothing")
 	assert.Equal(t, []string{"shipment_get"}, stored.ToolNames)
 	assert.Empty(t, f.definitions.modeSets)
 
-	restricted, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		ToolNames:  []string{"shipment_get", "customer_send_email"},
-		Mode:       agentdefinition.AccessRoles,
-	})
+	restricted, err := f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			ToolNames:  []string{"shipment_get", "customer_send_email"},
+			Mode:       agentdefinition.AccessRoles,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, restricted.SensitiveTools)
 }
@@ -155,11 +167,14 @@ func TestPreviewAudience_WorksForAnAgentNotYetSaved(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		ToolNames:  []string{" customer_send_email ", "customer_send_email", "", "not_a_tool"},
-		Mode:       agentdefinition.AccessEveryone,
-	})
+	preview, err := f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			ToolNames:  []string{" customer_send_email ", "customer_send_email", "", "not_a_tool"},
+			Mode:       agentdefinition.AccessEveryone,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"customer_send_email"}, preview.SensitiveTools)
 	assert.Zero(t, f.grants.reads, "a new agent has no grants to read")
@@ -179,12 +194,15 @@ func TestPreviewAudience_ASystemAgentStaysOpen(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	preview, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.system.ID,
-		ToolNames:  []string{"customer_send_email"},
-		Mode:       agentdefinition.AccessRoles,
-	})
+	preview, err := f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.system.ID,
+			ToolNames:  []string{"customer_send_email"},
+			Mode:       agentdefinition.AccessRoles,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, agentdefinition.AccessEveryone, preview.Agent.EffectiveAccessMode())
 	assert.Equal(t, []string{"customer_send_email"}, preview.SensitiveTools)
@@ -195,10 +213,13 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 
 	f := newPreviewFixture(t)
 
-	_, err := f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		Mode:       "Somebody",
-	})
+	_, err := f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			Mode:       "Somebody",
+		},
+	)
 	var invalid *errortypes.Error
 	require.ErrorAs(t, err, &invalid)
 	assert.Equal(t, "accessMode", invalid.Field)
@@ -207,18 +228,24 @@ func TestPreviewAudience_RefusesABadRequest(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = "shipment_get"
 	}
-	_, err = f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		ToolNames:  tooMany,
-		Mode:       agentdefinition.AccessEveryone,
-	})
+	_, err = f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			ToolNames:  tooMany,
+			Mode:       agentdefinition.AccessEveryone,
+		},
+	)
 	require.ErrorAs(t, err, &invalid)
 	assert.Equal(t, "toolNames", invalid.Field)
 
-	_, err = f.service.PreviewAudience(t.Context(), &agentdefinitionports.PreviewAgentAudienceRequest{
-		TenantInfo: f.tenant,
-		AgentID:    pulid.MustNew("agdef_"),
-		Mode:       agentdefinition.AccessEveryone,
-	})
+	_, err = f.service.PreviewAudience(
+		t.Context(),
+		&agentdefinitionports.PreviewAgentAudienceRequest{
+			TenantInfo: f.tenant,
+			AgentID:    pulid.MustNew("agdef_"),
+			Mode:       agentdefinition.AccessEveryone,
+		},
+	)
 	assert.True(t, errortypes.IsNotFoundError(err), "another tenant's agent is not found")
 }

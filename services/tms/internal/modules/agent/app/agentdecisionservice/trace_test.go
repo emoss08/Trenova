@@ -10,9 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -34,61 +38,61 @@ type traceControls struct {
 func (traceControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	return &tenant.AgentControl{}, nil
+) (*agentcontrol.AgentControl, error) {
+	return &agentcontrol.AgentControl{}, nil
 }
 
 type traceRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 }
 
 func (traceRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID}, nil
 }
 
 type traceProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	proposal *agent.AgentProposal
-	executed []agentports.RecordAgentProposalExecutionRequest
+	executed []agentproposalports.RecordAgentProposalExecutionRequest
 }
 
 func (p *traceProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) UpdateStatus(
 	context.Context,
-	agentports.UpdateAgentProposalStatusRequest,
+	*agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	return p.proposal, nil
 }
 
 func (p *traceProposals) RecordExecution(
 	_ context.Context,
-	req agentports.RecordAgentProposalExecutionRequest,
+	req *agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
-	p.executed = append(p.executed, req)
+	p.executed = append(p.executed, *req)
 
 	return p.proposal, nil
 }
 
 type traceDecisions struct {
-	agentports.AgentDecisionRepository
+	agentdecisionports.AgentDecisionRepository
 
-	created *agent.AgentDecision
+	created *agentdecision.AgentDecision
 }
 
 func (d *traceDecisions) Create(
 	_ context.Context,
-	decision *agent.AgentDecision,
-) (*agent.AgentDecision, error) {
+	decision *agentdecision.AgentDecision,
+) (*agentdecision.AgentDecision, error) {
 	decision.ID = pulid.MustNew("ad_")
 	d.created = decision
 
@@ -99,14 +103,19 @@ type traceAudit struct {
 	auditports.AuditService
 }
 
-func (traceAudit) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error { return nil }
+func (traceAudit) LogAction(
+	*auditports.LogActionParams,
+	...auditports.LogOption,
+) error {
+	return nil
+}
 
 type traceVersions struct{ versions []int64 }
 
 func (v *traceVersions) Version(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.ToolTarget,
+	agenttoolports.ToolTarget,
 ) (int64, error) {
 	version := v.versions[0]
 	if len(v.versions) > 1 {
@@ -162,7 +171,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 	runs := traceRuns{}
 	executor := proposalexecutor.New(proposalexecutor.Params{
 		Logger: zap.NewNop(),
-		Tools: &agenttest.StubActionRegistry{Tools: []agentports.AgentTool{
+		Tools: &agenttest.StubActionRegistry{Tools: []agenttoolports.AgentTool{
 			&agenttest.StubActionTool{ToolName: "shipment_place_hold"},
 		}},
 		ProposalRepo: proposals,
@@ -191,11 +200,11 @@ func newDecideHarness(t *testing.T) *decideHarness {
 func (h *decideHarness) decide(
 	t *testing.T,
 	ctx context.Context,
-	decision agent.DecisionType,
-) *agentports.DecisionOutcome {
+	decision agentdecision.DecisionType,
+) *agentdecisionports.DecisionOutcome {
 	t.Helper()
 
-	outcome, err := h.service.DecideWithOutcome(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := h.service.DecideWithOutcome(ctx, &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID: h.proposals.proposal.ID,
 		Decision:   decision,
 		ReasonCode: "looks_right",
@@ -214,7 +223,7 @@ func TestDecide_LinksBackToTheSpanThatProposedIt(t *testing.T) {
 
 	h := newDecideHarness(t)
 	ctx, request := otel.Tracer("agentdecisionservice-test").Start(t.Context(), "POST /graphql")
-	h.decide(t, ctx, agent.DecisionRejected)
+	h.decide(t, ctx, agentdecision.DecisionRejected)
 	request.End()
 
 	requestTrace := request.SpanContext().TraceID()
@@ -226,7 +235,7 @@ func TestDecide_LinksBackToTheSpanThatProposedIt(t *testing.T) {
 	assert.Equal(t, h.proposing.SpanID(), decide.Links[0].SpanContext.SpanID())
 	for _, want := range []attribute.KeyValue{
 		aitrace.AIProposalID.String(h.proposals.proposal.ID.String()),
-		aitrace.AIDecision.String(string(agent.DecisionRejected)),
+		aitrace.AIDecision.String(string(agentdecision.DecisionRejected)),
 		aitrace.UserID.String(h.actor.UserID.String()),
 		aitrace.GenAIToolName.String("shipment_place_hold"),
 	} {
@@ -245,7 +254,7 @@ func TestDecide_AnApprovalRunsTheWriteInsideItsExecuteSpan(t *testing.T) {
 
 	h := newDecideHarness(t)
 	ctx, request := otel.Tracer("agentdecisionservice-test").Start(t.Context(), "POST /graphql")
-	outcome := h.decide(t, ctx, agent.DecisionAccepted)
+	outcome := h.decide(t, ctx, agentdecision.DecisionAccepted)
 	request.End()
 	require.NoError(t, outcome.ExecutionError)
 

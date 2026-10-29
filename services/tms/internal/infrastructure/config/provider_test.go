@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func TestProvideLogger_BuildsForStandardOutputs(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.Logging.Output = "stdout"
 
-		logger, sink, err := ProvideLogger(cfg)
+		logger, sink, err := ProvideLogger(&cfg.Logging)
 
 		require.NoError(t, err)
 		require.NotNil(t, logger)
@@ -33,7 +34,7 @@ func TestProvideLogger_BuildsForStandardOutputs(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.Logging.Output = "stderr"
 
-		logger, sink, err := ProvideLogger(cfg)
+		logger, sink, err := ProvideLogger(&cfg.Logging)
 
 		require.NoError(t, err)
 		require.NotNil(t, logger)
@@ -49,7 +50,7 @@ func TestProvideLogger_FileOutputWritesLog(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, sink, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(&cfg.Logging)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sink.Close() })
 
@@ -70,7 +71,7 @@ func TestProvideLogger_UsesJSONFormat(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, sink, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(&cfg.Logging)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sink.Close() })
 
@@ -91,7 +92,7 @@ func TestProvideLogger_UsesTextFormat(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, sink, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(&cfg.Logging)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sink.Close() })
 
@@ -112,7 +113,7 @@ func TestProvideLogger_RespectsLogLevel(t *testing.T) {
 	cfg.Logging.Output = "file"
 	cfg.Logging.File = testLogFileConfig(logPath)
 
-	logger, sink, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(&cfg.Logging)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sink.Close() })
 
@@ -135,7 +136,7 @@ func TestProvideLogger_DisablesSamplingWhenConfigured(t *testing.T) {
 	cfg.Logging.File = testLogFileConfig(logPath)
 	cfg.Logging.Sampling = false
 
-	logger, sink, err := ProvideLogger(cfg)
+	logger, sink, err := ProvideLogger(&cfg.Logging)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sink.Close() })
 
@@ -149,8 +150,8 @@ func TestProvideLogger_DisablesSamplingWhenConfigured(t *testing.T) {
 	assert.Equal(t, 5, strings.Count(string(data), "repeat message"))
 }
 
-func testLogFileConfig(path string) *LogFileConfig {
-	return &LogFileConfig{
+func testLogFileConfig(path string) *loggingconfig.FileConfig {
+	return &loggingconfig.FileConfig{
 		Path:       path,
 		MaxSize:    10,
 		MaxAge:     1,

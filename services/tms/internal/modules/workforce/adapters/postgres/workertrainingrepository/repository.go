@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -31,9 +31,9 @@ var courseErrors = dberror.Mapping{Entity: "TrainingCourse"}
 
 var recordErrors = dberror.Mapping{Entity: "WorkerTrainingRecord"}
 
-var openTrainingStatuses = []worker.TrainingStatus{
-	worker.TrainingStatusAssigned,
-	worker.TrainingStatusInProgress,
+var openTrainingStatuses = []workertraining.TrainingStatus{
+	workertraining.TrainingStatusAssigned,
+	workertraining.TrainingStatusInProgress,
 }
 
 type courseCount struct {
@@ -53,7 +53,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerTrainingRepository {
+func New(p Params) workertrainingports.WorkerTrainingRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-training-repository"),
@@ -61,29 +61,29 @@ func New(p Params) workerports.WorkerTrainingRepository {
 }
 
 func courseOrder() []keel.Order {
-	c := workerdb.TrainingCourses
+	c := workertrainingdb.TrainingCourses
 	return []keel.Order{c.SortOrder.Asc(), c.Name.Asc()}
 }
 
 func (r *repository) ListCourses(
 	ctx context.Context,
-	req *workerports.ListTrainingCoursesRequest,
-) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
+	req *workertrainingports.ListTrainingCoursesRequest,
+) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
-			c := workerdb.TrainingCourses
+		func(ctx context.Context) (*pagination.CursorListResult[*workertraining.TrainingCourse], error) {
+			c := workertrainingdb.TrainingCourses
 			q := c.Where(
 				keel.When(req.Status != "", c.Status.Eq(domaintypes.Status(req.Status))),
 				keel.When(
 					req.Category != "",
-					c.Category.Eq(worker.TrainingCategory(req.Category)),
+					c.Category.Eq(workertraining.TrainingCategory(req.Category)),
 				),
 			)
 
 			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
-				&listquery.Request[worker.TrainingCourse]{
+				&listquery.Request[workertraining.TrainingCourse]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				})
@@ -100,30 +100,34 @@ func (r *repository) ListCourses(
 func (r *repository) ListActiveCourses(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]*worker.TrainingCourse, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TrainingCourse, error) {
-		c := workerdb.TrainingCourses
-		entities, err := c.Where(c.Status.Eq(domaintypes.StatusActive)).
-			Order(courseOrder()...).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list active training courses", zap.Error(err))
-			return nil, err
-		}
+) ([]*workertraining.TrainingCourse, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.TrainingCourse, error) {
+			c := workertrainingdb.TrainingCourses
+			entities, err := c.Where(c.Status.Eq(domaintypes.StatusActive)).
+				Order(courseOrder()...).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list active training courses", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) CourseSelectOptions(
 	ctx context.Context,
-	req *workerports.TrainingCourseSelectOptionsRequest,
-) (*pagination.ListResult[*worker.TrainingCourse], error) {
+	req *workertrainingports.TrainingCourseSelectOptionsRequest,
+) (*pagination.ListResult[*workertraining.TrainingCourse], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
-			c := workerdb.TrainingCourses
+		func(ctx context.Context) (*pagination.ListResult[*workertraining.TrainingCourse], error) {
+			c := workertrainingdb.TrainingCourses
 			q := c.Pick(
 				c.ID,
 				c.Code,
@@ -158,12 +162,38 @@ func (r *repository) CourseSelectOptions(
 	)
 }
 
+func (r *repository) GetCoursesByIDs(
+	ctx context.Context,
+	req *workertrainingports.GetTrainingCoursesByIDsRequest,
+) ([]*workertraining.TrainingCourse, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.TrainingCourse, error) {
+			if len(req.CourseIDs) == 0 {
+				return []*workertraining.TrainingCourse{}, nil
+			}
+
+			tc := workertrainingdb.TrainingCourses
+			entities, err := tc.Where(tc.ID.In(req.CourseIDs...)).
+				Limit(len(req.CourseIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get training courses", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) GetCourseByID(
 	ctx context.Context,
-	req *workerports.GetTrainingCourseByIDRequest,
-) (*worker.TrainingCourse, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		entity, err := workerdb.TrainingCourses.Get(ctx, r.db.Keel(ctx), req.ID)
+	req *workertrainingports.GetTrainingCourseByIDRequest,
+) (*workertraining.TrainingCourse, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
+		entity, err := workertrainingdb.TrainingCourses.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, courseErrors.Map(err, req.ID.String())
 		}
@@ -174,10 +204,10 @@ func (r *repository) GetCourseByID(
 
 func (r *repository) CourseCodeExists(
 	ctx context.Context,
-	req *workerports.TrainingCourseCodeExistsRequest,
+	req *workertrainingports.TrainingCourseCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		c := workerdb.TrainingCourses
+		c := workertrainingdb.TrainingCourses
 		exists, err := c.Where(
 			c.Code.Lower().Eq(strings.ToLower(req.Code)),
 			keel.When(req.ExcludeID.IsNotNil(), c.ID.Ne(req.ExcludeID)),
@@ -193,10 +223,10 @@ func (r *repository) CourseCodeExists(
 
 func (r *repository) CreateCourse(
 	ctx context.Context,
-	entity *worker.TrainingCourse,
-) (*worker.TrainingCourse, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		if err := workerdb.TrainingCourses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *workertraining.TrainingCourse,
+) (*workertraining.TrainingCourse, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
+		if err := workertrainingdb.TrainingCourses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create training course", zap.Error(err))
 			return nil, courseErrors.Map(err, entity.ID.String())
 		}
@@ -207,10 +237,10 @@ func (r *repository) CreateCourse(
 
 func (r *repository) UpdateCourse(
 	ctx context.Context,
-	entity *worker.TrainingCourse,
-) (*worker.TrainingCourse, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		if err := workerdb.TrainingCourses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *workertraining.TrainingCourse,
+) (*workertraining.TrainingCourse, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*workertraining.TrainingCourse, error) {
+		if err := workertrainingdb.TrainingCourses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update training course", zap.Error(err))
 			return nil, courseErrors.Map(err, entity.ID.String())
 		}
@@ -221,10 +251,10 @@ func (r *repository) UpdateCourse(
 
 func (r *repository) CountRecordsByCourse(
 	ctx context.Context,
-	req *workerports.CountTrainingRecordsRequest,
+	req *workertrainingports.CountTrainingRecordsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		tr := workerdb.WorkerTrainingRecords
+		tr := workertrainingdb.WorkerTrainingRecords
 		count, err := tr.Where(
 			tr.CourseID.Eq(req.CourseID),
 			keel.When(req.OpenOnly, tr.Status.In(openTrainingStatuses...)),
@@ -240,14 +270,14 @@ func (r *repository) CountRecordsByCourse(
 
 func (r *repository) CountRecordsByCourseIDs(
 	ctx context.Context,
-	req *workerports.CountTrainingRecordsByCourseIDsRequest,
+	req *workertrainingports.CountTrainingRecordsByCourseIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.CourseIDs) == 0 {
 			return map[pulid.ID]int{}, nil
 		}
 
-		tr := workerdb.WorkerTrainingRecords
+		tr := workertrainingdb.WorkerTrainingRecords
 		rows, err := keel.Into[courseCount](ctx, r.db.Keel(ctx), tr.
 			Group(tr.CourseID).
 			Pick(tr.CourseID, keel.Count()).
@@ -271,87 +301,111 @@ func (r *repository) CountRecordsByCourseIDs(
 
 func (r *repository) ListForWorker(
 	ctx context.Context,
-	req *workerports.ListWorkerTrainingRequest,
-) ([]*worker.WorkerTrainingRecord, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		tr := workerdb.WorkerTrainingRecords
-		loads := make([]keel.Loader, 0, 4)
-		loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
-		loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
-		loads = append(
-			loads,
-			listquery.When(req.IncludeActors, tr.AssignedBy(), tr.RecordedBy())...)
+	req *workertrainingports.ListWorkerTrainingRequest,
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			loads := make([]keel.Loader, 0, 4)
+			loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
+			loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
+			loads = append(
+				loads,
+				listquery.When(req.IncludeActors, tr.AssignedBy(), tr.RecordedBy())...)
 
-		entities, err := tr.Where(
-			tr.WorkerID.Eq(req.WorkerID),
-			keel.When(!req.IncludeClosed, tr.Status.In(openTrainingStatuses...)),
-		).
-			Load(loads...).
-			Order(tr.AssignedAt.Desc(), tr.CreatedAt.Desc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list worker training records", zap.Error(err))
-			return nil, err
-		}
+			entities, err := tr.Where(
+				tr.WorkerID.Eq(req.WorkerID),
+				keel.When(!req.IncludeClosed, tr.Status.In(openTrainingStatuses...)),
+			).
+				Load(loads...).
+				Order(tr.AssignedAt.Desc(), tr.CreatedAt.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list worker training records", zap.Error(err))
+				return nil, err
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetWorkerTrainingByIDRequest,
-) (*worker.WorkerTrainingRecord, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		tr := workerdb.WorkerTrainingRecords
-		loads := make([]keel.Loader, 0, 3)
-		loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
-		loads = append(loads, listquery.When(req.IncludeWorker, tr.Worker().Profile())...)
-		loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
+	req *workertrainingports.GetWorkerTrainingByIDRequest,
+) (*workertraining.WorkerTrainingRecord, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			loads := make([]keel.Loader, 0, 3)
+			loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
+			loads = append(loads, listquery.When(req.IncludeWorker, tr.Worker().Profile())...)
+			loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
 
-		entity, err := tr.Where(tr.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, recordErrors.Map(err, req.ID.String())
-		}
+			entity, err := tr.Where(tr.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, recordErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *worker.WorkerTrainingRecord,
-) (*worker.WorkerTrainingRecord, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		if err := workerdb.WorkerTrainingRecords.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create worker training record", zap.Error(err))
-			return nil, recordErrors.Map(err, entity.ID.String())
-		}
+	entity *workertraining.WorkerTrainingRecord,
+) (*workertraining.WorkerTrainingRecord, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
+			if err := workertrainingdb.WorkerTrainingRecords.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to create worker training record", zap.Error(err))
+				return nil, recordErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *worker.WorkerTrainingRecord,
-) (*worker.WorkerTrainingRecord, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		if err := workerdb.WorkerTrainingRecords.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update worker training record", zap.Error(err))
-			return nil, recordErrors.Map(err, entity.ID.String())
-		}
+	entity *workertraining.WorkerTrainingRecord,
+) (*workertraining.WorkerTrainingRecord, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*workertraining.WorkerTrainingRecord, error) {
+			if err := workertrainingdb.WorkerTrainingRecords.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to update worker training record", zap.Error(err))
+				return nil, recordErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func reminderQuery(
 	ctx context.Context,
-	req *workerports.ListTrainingRemindersRequest,
+	req *workertrainingports.ListTrainingRemindersRequest,
 	window keel.Pred,
-) *keel.Query[*worker.WorkerTrainingRecord] {
-	tr := workerdb.WorkerTrainingRecords
+) *keel.Query[*workertraining.WorkerTrainingRecord] {
+	tr := workertrainingdb.WorkerTrainingRecords
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultReminderPageSize
@@ -375,60 +429,73 @@ func reminderQuery(
 	return q
 }
 
-func reminderWindow(req *workerports.ListTrainingRemindersRequest) (int64, int64) {
+func reminderWindow(
+	req *workertrainingports.ListTrainingRemindersRequest,
+) (grace, horizon int64) {
 	now := timeutils.NowUnix()
 	return now - int64(req.GraceDays)*secondsPerDay, now + int64(req.HorizonDays)*secondsPerDay
 }
 
 func (r *repository) ListDue(
 	ctx context.Context,
-	req *workerports.ListTrainingRemindersRequest,
-) ([]*worker.WorkerTrainingRecord, error) {
+	req *workertrainingports.ListTrainingRemindersRequest,
+) ([]*workertraining.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(
 			ctx,
 			"list training due across every organization for the reminder sweep",
 		)
 	}
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		tr := workerdb.WorkerTrainingRecords
-		grace, horizon := reminderWindow(req)
-		window := keel.And(tr.Status.In(openTrainingStatuses...), tr.DueAt.Between(grace, horizon))
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			grace, horizon := reminderWindow(req)
+			window := keel.And(
+				tr.Status.In(openTrainingStatuses...),
+				tr.DueAt.Between(grace, horizon),
+			)
 
-		entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list due training", zap.Error(err))
-			return nil, fmt.Errorf("list due training: %w", err)
-		}
+			entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list due training", zap.Error(err))
+				return nil, fmt.Errorf("list due training: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) ListExpiring(
 	ctx context.Context,
-	req *workerports.ListTrainingRemindersRequest,
-) ([]*worker.WorkerTrainingRecord, error) {
+	req *workertrainingports.ListTrainingRemindersRequest,
+) ([]*workertraining.WorkerTrainingRecord, error) {
 	if req.TenantInfo.OrgID.IsNil() {
 		ctx = dbscope.WithSystem(
 			ctx,
 			"list expiring training across every organization for the reminder sweep",
 		)
 	}
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		tr := workerdb.WorkerTrainingRecords
-		grace, horizon := reminderWindow(req)
-		window := keel.And(
-			tr.Status.Eq(worker.TrainingStatusCompleted),
-			tr.ExpiresAt.Between(grace, horizon),
-		)
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*workertraining.WorkerTrainingRecord, error) {
+			tr := workertrainingdb.WorkerTrainingRecords
+			grace, horizon := reminderWindow(req)
+			window := keel.And(
+				tr.Status.Eq(workertraining.TrainingStatusCompleted),
+				tr.ExpiresAt.Between(grace, horizon),
+			)
 
-		entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list expiring training", zap.Error(err))
-			return nil, fmt.Errorf("list expiring training: %w", err)
-		}
+			entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list expiring training", zap.Error(err))
+				return nil, fmt.Errorf("list expiring training: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }

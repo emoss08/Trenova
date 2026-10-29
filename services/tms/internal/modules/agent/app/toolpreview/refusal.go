@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 // WouldFailPrefix leads the message of a would_fail warning; the rest is
@@ -17,11 +17,11 @@ const WouldFailPrefix = "This would be refused as it stands: "
 // message keeps the refusal whole; each problem it is made of is a reason,
 // with the field it names where it names one, so a person can be told each
 // and offered the value to change.
-func WouldFail(err error) agent.PreviewWarning {
+func WouldFail(err error) agentpreview.PreviewWarning {
 	refusal := strings.TrimSpace(err.Error())
 
-	return agent.PreviewWarning{
-		Code:    agent.PreviewWarningWouldFail,
+	return agentpreview.PreviewWarning{
+		Code:    agentpreview.PreviewWarningWouldFail,
 		Args:    []string{refusal},
 		Message: WouldFailPrefix + refusal,
 		Reasons: Reasons(err),
@@ -30,13 +30,13 @@ func WouldFail(err error) agent.PreviewWarning {
 
 // RefusalMessage is a would_fail warning's refusal as the write's own rules
 // worded it, without the prefix the preview adds for a person.
-func RefusalMessage(warning *agent.PreviewWarning) string {
+func RefusalMessage(warning *agentpreview.PreviewWarning) string {
 	return strings.TrimPrefix(strings.TrimSpace(warning.Message), WouldFailPrefix)
 }
 
 // Refused is the refusal a preview warns its write would meet, as an error,
 // or nil when the write would go through.
-func Refused(preview *agent.ToolPreview) error {
+func Refused(preview *agentpreview.ToolPreview) error {
 	refusal := preview.Refusal()
 	if refusal == nil {
 		return nil
@@ -47,19 +47,19 @@ func Refused(preview *agent.ToolPreview) error {
 
 // Reasons are the problems a refusal is made of: one per field a validation
 // error names, or the refusal itself when it names none.
-func Reasons(err error) []agent.PreviewReason {
+func Reasons(err error) []agentpreview.PreviewReason {
 	if err == nil {
 		return nil
 	}
 
 	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && multiErr.HasErrors() {
 		reasons := make(
-			[]agent.PreviewReason,
+			[]agentpreview.PreviewReason,
 			0,
-			min(len(multiErr.Errors), agent.MaxPreviewReasons),
+			min(len(multiErr.Errors), agentpreview.MaxPreviewReasons),
 		)
 		for _, fieldErr := range multiErr.Errors {
-			if len(reasons) == agent.MaxPreviewReasons {
+			if len(reasons) == agentpreview.MaxPreviewReasons {
 				break
 			}
 			if fieldErr != nil {
@@ -71,20 +71,20 @@ func Reasons(err error) []agent.PreviewReason {
 	}
 
 	if fieldErr, ok := errors.AsType[*errortypes.Error](err); ok {
-		return []agent.PreviewReason{fieldReason(fieldErr.Field, fieldErr.Error())}
+		return []agentpreview.PreviewReason{fieldReason(fieldErr.Field, fieldErr.Error())}
 	}
 
 	if businessErr, ok := errors.AsType[*errortypes.BusinessError](err); ok {
-		return []agent.PreviewReason{{Message: strings.TrimSpace(businessErr.Error())}}
+		return []agentpreview.PreviewReason{{Message: strings.TrimSpace(businessErr.Error())}}
 	}
 
-	return []agent.PreviewReason{{Message: strings.TrimSpace(err.Error())}}
+	return []agentpreview.PreviewReason{{Message: strings.TrimSpace(err.Error())}}
 }
 
-func fieldReason(field, message string) agent.PreviewReason {
+func fieldReason(field, message string) agentpreview.PreviewReason {
 	field = strings.TrimSpace(field)
 
-	return agent.PreviewReason{
+	return agentpreview.PreviewReason{
 		Field:   field,
 		Label:   fieldLabel(field),
 		Message: strings.TrimSpace(message),
@@ -103,7 +103,7 @@ func fieldLabel(field string) string {
 		last = last[:bracket]
 	}
 
-	return stringutils.HumanizeCamelCaseSentence(last)
+	return textcase.HumanizeCamelCaseSentence(last)
 }
 
 // LocateReasons names, for each reason of a would_fail warning, the call's
@@ -111,14 +111,14 @@ func fieldLabel(field string) string {
 // field inside the one object parameter that holds the record whole
 // (shipment.bol). A field the schema does not reach, or reaches through
 // more than one parameter, names none. A parameter already named is kept.
-func LocateReasons(warnings []agent.PreviewWarning, schema map[string]any) {
+func LocateReasons(warnings []agentpreview.PreviewWarning, schema map[string]any) {
 	properties := schemaProperties(schema)
 	if len(properties) == 0 {
 		return
 	}
 
 	for i := range warnings {
-		if warnings[i].Code != agent.PreviewWarningWouldFail {
+		if warnings[i].Code != agentpreview.PreviewWarningWouldFail {
 			continue
 		}
 		reasons := warnings[i].Reasons

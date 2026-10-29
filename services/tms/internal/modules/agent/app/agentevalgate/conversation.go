@@ -11,11 +11,14 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/mdtable"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,9 +116,9 @@ type RefusalExpect struct {
 
 type ConversationOutcome struct {
 	Case     *ConversationCase
-	Result   *agentports.RunResult
+	Result   *agentruntimeports.RunResult
 	Received map[string][]map[string]any
-	Tables   map[string]agentports.ShownArtifact
+	Tables   map[string]agentruntimeports.ShownArtifact
 }
 
 func LoadConversationSuite(path string) (*ConversationSuite, error) {
@@ -143,7 +146,7 @@ type recordingTool struct {
 
 func (t *recordingTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	t.mu.Lock()
 	t.received = append(t.received, maps.Clone(params.Params))
@@ -156,7 +159,7 @@ func (t *recordingTool) Query(
 // the case's tools as the only ones registered.
 func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOutcome, error) {
 	tools := make([]*recordingTool, 0, len(c.Tools))
-	queries := make([]agentports.AgentQueryTool, 0, len(c.Tools))
+	queries := make([]agenttoolports.AgentQueryTool, 0, len(c.Tools))
 	names := make([]string, 0, len(c.Tools))
 	tables := make(map[string]*TableFixture, len(c.Tools))
 	for idx := range c.Tools {
@@ -184,7 +187,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 		return nil, err
 	}
 
-	kit := FromTools(queries, nil, agentruntime.RuntimePolicies())
+	kit := FromTools(queries, nil, runtimetools.Policies())
 	rt := kit.NewRuntime(RuntimeParams{
 		Completion:  script,
 		Permissions: &agenttest.StubPermissions{},
@@ -193,7 +196,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 	outcome := &ConversationOutcome{
 		Case:     c,
 		Received: make(map[string][]map[string]any, len(tools)),
-		Tables:   make(map[string]agentports.ShownArtifact, len(tables)),
+		Tables:   make(map[string]agentruntimeports.ShownArtifact, len(tables)),
 	}
 	var shown sync.Mutex
 	definition := &agentdefinition.Definition{
@@ -206,7 +209,7 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 	}
 	definition.ApplyDefaults()
 
-	result, err := rt.Run(ctx, &agentports.RunRequest{
+	result, err := rt.Run(ctx, &agentruntimeports.RunRequest{
 		Definition: definition,
 		Actor: &permissionports.RequestActor{
 			PrincipalType:  permissionports.PrincipalTypeUser,
@@ -217,8 +220,8 @@ func RunConversation(ctx context.Context, c *ConversationCase) (*ConversationOut
 		},
 		Input: c.Input,
 		ToolObserver: func(
-			observation agentports.ToolObservation,
-		) (*agentports.ShownArtifact, error) {
+			observation agentruntimeports.ToolObservation,
+		) (*agentruntimeports.ShownArtifact, error) {
 			table, kept := tables[observation.Call.Name]
 			if !kept || observation.Failed {
 				return nil, nil //nolint:nilnil // a call that showed nothing
@@ -266,13 +269,13 @@ func tableLabel(idx int) string {
 	return fmt.Sprintf("%s%d", tableRowPrefix, firstTableRow+idx)
 }
 
-func tableArtifact(table *TableFixture) agentports.ShownArtifact {
+func tableArtifact(table *TableFixture) agentruntimeports.ShownArtifact {
 	labels := make([]string, 0, table.Rows)
 	for idx := range table.Rows {
 		labels = append(labels, tableLabel(idx))
 	}
 
-	return agentports.ShownArtifact{
+	return agentruntimeports.ShownArtifact{
 		ID:     pulid.MustNew("aart_"),
 		Kind:   "table_view",
 		Title:  table.Title,
@@ -288,10 +291,10 @@ func conversationScript(
 	c *ConversationCase,
 	tables map[string]*TableFixture,
 ) (*agenttest.ScriptedCompletion, error) {
-	turns := make([]*agentports.ChatCompletionResult, 0, len(c.Script))
+	turns := make([]*llmports.ChatCompletionResult, 0, len(c.Script))
 	for stepIdx := range c.Script {
 		step := &c.Script[stepIdx]
-		result := &agentports.ChatCompletionResult{
+		result := &llmports.ChatCompletionResult{
 			Text:            step.Reply + reprint(step.ReprintRows, tables),
 			ModelIdentifier: conversationModel,
 		}
@@ -301,7 +304,7 @@ func conversationScript(
 			if err != nil {
 				return nil, err
 			}
-			result.ToolCalls = append(result.ToolCalls, agentports.ToolCall{
+			result.ToolCalls = append(result.ToolCalls, llmports.ToolCall{
 				ID:        fmt.Sprintf("call_%d_%d", stepIdx, callIdx),
 				Name:      call.Name,
 				Arguments: args,
@@ -355,9 +358,9 @@ func (o *ConversationOutcome) Failures() []string {
 		switch {
 		case !kept:
 			failures = append(failures, tool+" kept no table")
-		case !slices.Contains(agentruntime.ArtifactRefIDs(reply), table.ID.String()):
+		case !slices.Contains(replycheck.ArtifactRefIDs(reply), table.ID.String()):
 			failures = append(failures, "the reply does not point to "+tool+"'s table")
-		case slices.Contains(agentruntime.StrayArtifactLinks(reply), table.ID.String()):
+		case slices.Contains(replycheck.StrayArtifactLinks(reply), table.ID.String()):
 			failures = append(failures, "the reply points to "+tool+"'s table outside a sentence")
 		}
 	}

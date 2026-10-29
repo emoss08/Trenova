@@ -12,7 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 )
 
 var deskColumns = []string{
@@ -20,7 +21,7 @@ var deskColumns = []string{
 }
 
 type deskTerms struct {
-	req      agentports.SearchDeskRequest
+	req      *conversationports.SearchDeskRequest
 	term     string
 	contains string
 }
@@ -67,7 +68,7 @@ func deskChats(terms *deskTerms) keel.Projection {
 }
 
 func deskChapters(terms *deskTerms) keel.Projection {
-	c := conversationdb.Chapters
+	c := conversationchapterdb.Chapters
 	t := conversationdb.Threads
 
 	return c.Join(t, t.ID.EqCol(c.ThreadID)).
@@ -182,43 +183,47 @@ var deskSearchQueries = map[string]deskQuery{
 
 func (r *repository) SearchDesk(
 	ctx context.Context,
-	req agentports.SearchDeskRequest,
-) ([]agentports.DeskSearchRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskSearchRow, error) {
-		if req.LimitPerKind <= 0 {
-			return []agentports.DeskSearchRow{}, nil
-		}
-		terms := &deskTerms{req: req, term: strings.TrimSpace(req.Query)}
-		if terms.term != "" {
-			terms.contains = "%" + likeEscape(terms.term) + "%"
-		}
-		results := make([][]agentports.DeskSearchRow, 0, len(req.Kinds))
-		items := make([]keel.BatchItem, 0, len(req.Kinds))
-		for _, kind := range req.Kinds {
-			query, ok := deskSearchQueries[kind]
-			if !ok {
-				continue
+	req *conversationports.SearchDeskRequest,
+) ([]conversationports.DeskSearchRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]conversationports.DeskSearchRow, error) {
+			if req.LimitPerKind <= 0 {
+				return []conversationports.DeskSearchRow{}, nil
 			}
-			results = append(results, nil)
-			items = append(items, keel.IntoSlice(query(terms), &results[len(results)-1]))
-		}
-		if len(items) == 0 {
-			return []agentports.DeskSearchRow{}, nil
-		}
-		if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
-			return nil, fmt.Errorf("search desk: %w", err)
-		}
-		out := make([]agentports.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
-		for _, rows := range results {
-			out = append(out, rows...)
-		}
-		return out, nil
-	})
+			terms := &deskTerms{req: req, term: strings.TrimSpace(req.Query)}
+			if terms.term != "" {
+				terms.contains = "%" + likeEscape(terms.term) + "%"
+			}
+			results := make([][]conversationports.DeskSearchRow, 0, len(req.Kinds))
+			items := make([]keel.BatchItem, 0, len(req.Kinds))
+			for _, kind := range req.Kinds {
+				query, ok := deskSearchQueries[kind]
+				if !ok {
+					continue
+				}
+				results = append(results, nil)
+				items = append(items, keel.IntoSlice(query(terms), &results[len(results)-1]))
+			}
+			if len(items) == 0 {
+				return []conversationports.DeskSearchRow{}, nil
+			}
+			if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+				return nil, fmt.Errorf("search desk: %w", err)
+			}
+			out := make([]conversationports.DeskSearchRow, 0, len(req.Kinds)*req.LimitPerKind)
+			for _, rows := range results {
+				out = append(out, rows...)
+			}
+			return out, nil
+		},
+	)
 }
 
 func (r *repository) CountQuestionsSince(
 	ctx context.Context,
-	req agentports.CountQuestionsSinceRequest,
+	req conversationports.CountQuestionsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		m := conversationdb.Messages

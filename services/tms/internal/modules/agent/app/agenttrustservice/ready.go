@@ -3,10 +3,11 @@ package agenttrustservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -17,21 +18,21 @@ import (
 const maxReadyTools = 500
 
 type readyTool struct {
-	promotion  agentports.ToolPromotion
-	row        *agent.ToolTrust
+	promotion  agenttrustports.ToolPromotion
+	row        *agenttooltrust.ToolTrust
 	definition *agentdefinition.Definition
 }
 
 func (s *Service) PromotionCandidates(
 	ctx context.Context,
-	req *agentports.PromoteReadyRequest,
-) ([]agentports.ToolPromotion, error) {
+	req *agenttrustports.PromoteReadyRequest,
+) ([]agenttrustports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]agentports.ToolPromotion, 0, len(ready))
+	out := make([]agenttrustports.ToolPromotion, 0, len(ready))
 	for idx := range ready {
 		out = append(out, ready[idx].promotion)
 	}
@@ -40,15 +41,15 @@ func (s *Service) PromotionCandidates(
 
 func (s *Service) PromoteReady(
 	ctx context.Context,
-	req *agentports.PromoteReadyRequest,
-) ([]agentports.ToolPromotion, error) {
+	req *agenttrustports.PromoteReadyRequest,
+) ([]agenttrustports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, req)
 	if err != nil || len(ready) == 0 {
-		return []agentports.ToolPromotion{}, err
+		return []agenttrustports.ToolPromotion{}, err
 	}
 
 	now := timeutils.NowUnix()
-	promoted := make([]agentports.ToolPromotion, 0, len(ready))
+	promoted := make([]agenttrustports.ToolPromotion, 0, len(ready))
 	for idx := range ready {
 		tool := &ready[idx]
 		change := tierChange{
@@ -86,13 +87,13 @@ func (s *Service) PromoteReady(
 // tier above them their agent's ceiling and the tool's policy allow.
 func (s *Service) ready(
 	ctx context.Context,
-	req *agentports.PromoteReadyRequest,
+	req *agenttrustports.PromoteReadyRequest,
 ) ([]readyTool, error) {
 	if req.Threshold <= 0 {
 		return []readyTool{}, nil
 	}
 
-	rows, err := s.trust.ListReady(ctx, agentports.ListReadyToolTrustRequest{
+	rows, err := s.trust.ListReady(ctx, agenttoolports.ListReadyToolTrustRequest{
 		TenantInfo: req.TenantInfo,
 		MinStreak:  req.Threshold,
 		Limit:      maxReadyTools,
@@ -138,7 +139,7 @@ func (s *Service) ready(
 			continue
 		}
 		out = append(out, readyTool{
-			promotion: agentports.ToolPromotion{
+			promotion: agenttrustports.ToolPromotion{
 				AgentDefinitionID: definition.ID,
 				AgentName:         definition.Name,
 				ToolName:          row.ToolName,
@@ -158,8 +159,8 @@ func (s *Service) ready(
 
 func (s *Service) PromoteTool(
 	ctx context.Context,
-	req *agentports.PromoteToolRequest,
-) (*agentports.ToolPromotion, error) {
+	req *agenttrustports.PromoteToolRequest,
+) (*agenttrustports.ToolPromotion, error) {
 	ready, err := s.ready(ctx, &req.PromoteReadyRequest)
 	if err != nil {
 		return nil, err

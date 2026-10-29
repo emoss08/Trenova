@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/shared/carrierok"
+	"github.com/emoss08/trenova/shared/carrierokpayload"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,11 +16,11 @@ const (
 	liteProfileFixture = "profile_lite_265752.json"
 )
 
-func loadFixtureProfile(t *testing.T, name string) (*carrierok.Profile, []byte) {
+func loadFixtureProfile(t *testing.T, name string) (*carrierokpayload.Profile, []byte) {
 	t.Helper()
 
 	item := fixture(t, name)
-	profile, err := carrierok.DecodeProfile(item)
+	profile, err := carrierokpayload.DecodeProfile(item)
 	require.NoError(t, err)
 	return profile, item
 }
@@ -121,9 +121,9 @@ func TestDecodeProfileSafetyAndBasics(t *testing.T) {
 	assert.False(t, safety.OutOfServiceFlag.Value())
 	assert.True(t, safety.IndicatorCarrierSafety.Value())
 
-	require.Len(t, profile.Basics, len(carrierok.BasicCategories()))
+	require.Len(t, profile.Basics, len(carrierokpayload.BasicCategories()))
 
-	unsafe := profile.Basics[carrierok.BasicUnsafeDriving]
+	unsafe := profile.Basics[carrierokpayload.BasicUnsafeDriving]
 	assert.InDelta(t, 0.13, unsafe.Measure.Value(), 1e-9)
 	require.NotNil(t, unsafe.ACIndicator)
 	assert.False(t, unsafe.ACIndicator.Value())
@@ -134,11 +134,11 @@ func TestDecodeProfileSafetyAndBasics(t *testing.T) {
 	assert.Zero(t, unsafe.Violations.Value())
 	require.NotNil(t, unsafe.OOSViolations)
 
-	maintenance := profile.Basics[carrierok.BasicVehicleMaintenance]
+	maintenance := profile.Basics[carrierokpayload.BasicVehicleMaintenance]
 	assert.InDelta(t, 3.11, maintenance.Measure.Value(), 1e-9)
 	require.NotNil(t, maintenance.Alert)
 
-	crash := profile.Basics[carrierok.BasicCrashIndicator]
+	crash := profile.Basics[carrierokpayload.BasicCrashIndicator]
 	assert.Nil(t, crash.Measure)
 	assert.Nil(t, crash.MeasuredAt)
 	require.NotNil(t, crash.Alert)
@@ -148,7 +148,7 @@ func TestDecodeProfileSafetyAndBasics(t *testing.T) {
 func TestDecodeProfileBasicAlertsAndHistoryOrdering(t *testing.T) {
 	t.Parallel()
 
-	profile, err := carrierok.DecodeProfile([]byte(`{
+	profile, err := carrierokpayload.DecodeProfile([]byte(`{
 		"basic_alert_hours_of_service": true,
 		"violations_hours_of_service": "12",
 		"violations_oos_hours_of_service": "3",
@@ -162,7 +162,7 @@ func TestDecodeProfileBasicAlertsAndHistoryOrdering(t *testing.T) {
 	}`))
 	require.NoError(t, err)
 
-	hos := profile.Basics[carrierok.BasicHoursOfService]
+	hos := profile.Basics[carrierokpayload.BasicHoursOfService]
 	assert.True(t, hos.Alert.Value())
 	assert.Equal(t, int64(12), hos.Violations.Value())
 	assert.Equal(t, int64(3), hos.OOSViolations.Value())
@@ -170,12 +170,12 @@ func TestDecodeProfileBasicAlertsAndHistoryOrdering(t *testing.T) {
 	assert.True(t, hos.ACIndicator.Value())
 	assert.Equal(t, unixDate(2025, time.March, 31), *hos.MeasuredAt.Unix())
 
-	assert.True(t, profile.Basics[carrierok.BasicVehicleMaintenance].Alert.Value())
-	_, ok := profile.Basics[carrierok.BasicControlledSubstance]
+	assert.True(t, profile.Basics[carrierokpayload.BasicVehicleMaintenance].Alert.Value())
+	_, ok := profile.Basics[carrierokpayload.BasicControlledSubstance]
 	assert.False(t, ok)
 
-	_, err = carrierok.DecodeProfile([]byte(`[1,2]`))
-	require.ErrorIs(t, err, carrierok.ErrUnexpectedPayload)
+	_, err = carrierokpayload.DecodeProfile([]byte(`[1,2]`))
+	require.ErrorIs(t, err, carrierokpayload.ErrUnexpectedPayload)
 }
 
 func TestDecodeProfileInspectionsFleetAndOperations(t *testing.T) {
@@ -252,18 +252,18 @@ func TestDecodeProfileHistoryNetworkAndBenchmarks(t *testing.T) {
 	assert.Equal(t, int64(4), network.MailingAddressCount.Value())
 	assert.Equal(t, int64(1), network.FaxNumberCount.Value())
 	assert.Zero(t, network.PowerUnitsCount.Value())
-	assert.Equal(t, []carrierok.NetworkLink{
-		{Kind: carrierok.NetworkLinkPhysicalAddress, DOTNumber: "86876"},
-		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "1964900"},
-		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "4356378"},
-		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "598081"},
-		{Kind: carrierok.NetworkLinkMailingAddress, DOTNumber: "86876"},
-		{Kind: carrierok.NetworkLinkTelephone, DOTNumber: "86876"},
-		{Kind: carrierok.NetworkLinkTelephone, DOTNumber: "598081"},
-		{Kind: carrierok.NetworkLinkFax, DOTNumber: "598081"},
-		{Kind: carrierok.NetworkLinkEmail, DOTNumber: "598081"},
-		{Kind: carrierok.NetworkLinkEIN, DOTNumber: "3859536"},
-		{Kind: carrierok.NetworkLinkDUNS, DOTNumber: "3859536"},
+	assert.Equal(t, []carrierokpayload.NetworkLink{
+		{Kind: carrierokpayload.NetworkLinkPhysicalAddress, DOTNumber: "86876"},
+		{Kind: carrierokpayload.NetworkLinkMailingAddress, DOTNumber: "1964900"},
+		{Kind: carrierokpayload.NetworkLinkMailingAddress, DOTNumber: "4356378"},
+		{Kind: carrierokpayload.NetworkLinkMailingAddress, DOTNumber: "598081"},
+		{Kind: carrierokpayload.NetworkLinkMailingAddress, DOTNumber: "86876"},
+		{Kind: carrierokpayload.NetworkLinkTelephone, DOTNumber: "86876"},
+		{Kind: carrierokpayload.NetworkLinkTelephone, DOTNumber: "598081"},
+		{Kind: carrierokpayload.NetworkLinkFax, DOTNumber: "598081"},
+		{Kind: carrierokpayload.NetworkLinkEmail, DOTNumber: "598081"},
+		{Kind: carrierokpayload.NetworkLinkEIN, DOTNumber: "3859536"},
+		{Kind: carrierokpayload.NetworkLinkDUNS, DOTNumber: "3859536"},
 	}, network.Links)
 
 	assert.Empty(t, profile.Lanes.PreferredStates)
@@ -278,7 +278,7 @@ func TestDecodeProfileHistoryNetworkAndBenchmarks(t *testing.T) {
 func TestDecodeProfilePreferredStates(t *testing.T) {
 	t.Parallel()
 
-	profile, err := carrierok.DecodeProfile([]byte(`{
+	profile, err := carrierokpayload.DecodeProfile([]byte(`{
 		"preferred_lanes": [{"state": "TX"}, {"state": ""}, {"state": "IL"}],
 		"preferred_states": "IL, GA"
 	}`))
@@ -308,7 +308,7 @@ func TestDecodeLiteProfile(t *testing.T) {
 func TestProfileSonicRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	var profile carrierok.Profile
+	var profile carrierokpayload.Profile
 	require.NoError(t, sonic.Unmarshal([]byte(`{"dot_number":"42","total_drivers":"7"}`), &profile))
 	assert.Equal(t, "42", profile.Identity.DOTNumber.Value())
 	assert.Equal(t, int64(7), profile.Fleet.TotalDrivers.Value())
@@ -328,31 +328,35 @@ func TestBasicVendorKeys(t *testing.T) {
 	assert.Equal(
 		t,
 		"vehicle_maintence",
-		carrierok.BasicVendorKey(carrierok.BasicVehicleMaintenance),
+		carrierokpayload.BasicVendorKey(carrierokpayload.BasicVehicleMaintenance),
 	)
-	assert.Equal(t, "unsafe_driving", carrierok.BasicVendorKey(carrierok.BasicUnsafeDriving))
+	assert.Equal(
+		t,
+		"unsafe_driving",
+		carrierokpayload.BasicVendorKey(carrierokpayload.BasicUnsafeDriving),
+	)
 
-	category, ok := carrierok.BasicCategoryForVendorKey("vehicle_maintence")
+	category, ok := carrierokpayload.BasicCategoryForVendorKey("vehicle_maintence")
 	require.True(t, ok)
-	assert.Equal(t, carrierok.BasicVehicleMaintenance, category)
+	assert.Equal(t, carrierokpayload.BasicVehicleMaintenance, category)
 
-	_, ok = carrierok.BasicCategoryForVendorKey("total")
+	_, ok = carrierokpayload.BasicCategoryForVendorKey("total")
 	assert.False(t, ok)
 }
 
 func TestProfileIDHelpers(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "568253-MC277621", carrierok.ProfileID("568253", "MC", "277621"))
-	assert.Equal(t, "568253-MC277621", carrierok.ProfileID(" 568253 ", "mc", "MC277621"))
-	assert.Equal(t, "568253-FF12", carrierok.ProfileID("568253", "FF", "12"))
-	assert.Equal(t, "568253", carrierok.ProfileID("568253", "MC", ""))
+	assert.Equal(t, "568253-MC277621", carrierokpayload.ProfileID("568253", "MC", "277621"))
+	assert.Equal(t, "568253-MC277621", carrierokpayload.ProfileID(" 568253 ", "mc", "MC277621"))
+	assert.Equal(t, "568253-FF12", carrierokpayload.ProfileID("568253", "FF", "12"))
+	assert.Equal(t, "568253", carrierokpayload.ProfileID("568253", "MC", ""))
 
-	dot, docket := carrierok.SplitProfileID("568253-MC277621")
+	dot, docket := carrierokpayload.SplitProfileID("568253-MC277621")
 	assert.Equal(t, "568253", dot)
 	assert.Equal(t, "MC277621", docket)
 
-	dot, docket = carrierok.SplitProfileID("568253")
+	dot, docket = carrierokpayload.SplitProfileID("568253")
 	assert.Equal(t, "568253", dot)
 	assert.Empty(t, docket)
 }

@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -47,11 +49,11 @@ func (p *DryRunPlan) Opening() kernelports.StreamEvent {
 
 // RunRequest is the plan as the runtime reads it. No thread, no step ledger
 // and no publishing: a dry run leaves nothing behind but what it cost.
-func (p *DryRunPlan) RunRequest(actor *permissionports.RequestActor) *agentports.RunRequest {
-	return &agentports.RunRequest{
+func (p *DryRunPlan) RunRequest(actor *permissionports.RequestActor) *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition:   p.Definition,
 		Actor:        actor,
-		Context:      agentdefinition.RuntimeContext{Timezone: p.Timezone},
+		Context:      agentturn.RuntimeContext{Timezone: p.Timezone},
 		Input:        p.Input,
 		RunID:        p.RunID,
 		UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
@@ -71,7 +73,7 @@ func (s *Service) PrepareDryRun(
 	switch {
 	case prompt == "":
 		multiErr.Add("prompt", errortypes.ErrRequired, "Enter a message to try the agent with")
-	case utf8.RuneCountInString(prompt) > agentdefinition.MaxTestPromptRunes:
+	case utf8.RuneCountInString(prompt) > agenttestprompt.MaxTestPromptRunes:
 		multiErr.Add(
 			"prompt",
 			errortypes.ErrInvalidLength,

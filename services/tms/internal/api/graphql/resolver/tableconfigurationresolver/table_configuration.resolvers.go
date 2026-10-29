@@ -11,7 +11,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
@@ -67,7 +69,7 @@ func (r *MutationResolver) PatchTableConfiguration(ctx context.Context, id strin
 		ctx,
 		tableconfigurationports.GetTableConfigurationByIDRequest{
 			ConfigurationID: configurationID,
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -92,7 +94,7 @@ func (r *MutationResolver) DeleteTableConfiguration(ctx context.Context, id stri
 		return false, err
 	}
 
-	if err = r.TableConfigurationService.Delete(ctx, configurationID, base.TenantInfo(authCtx)); err != nil {
+	if err = r.TableConfigurationService.Delete(ctx, configurationID, resolvercore.TenantInfo(authCtx)); err != nil {
 		return false, err
 	}
 
@@ -110,7 +112,7 @@ func (r *MutationResolver) SetDefaultTableConfiguration(ctx context.Context, id 
 		return nil, err
 	}
 
-	return r.TableConfigurationService.SetDefault(ctx, configurationID, base.TenantInfo(authCtx))
+	return r.TableConfigurationService.SetDefault(ctx, configurationID, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *MutationResolver) SetOrgDefaultTableConfiguration(ctx context.Context, id string, enabled bool) (*tableconfiguration.TableConfiguration, error) {
@@ -124,7 +126,7 @@ func (r *MutationResolver) SetOrgDefaultTableConfiguration(ctx context.Context, 
 		return nil, err
 	}
 
-	return r.TableConfigurationService.SetOrgDefault(ctx, configurationID, enabled, base.TenantInfo(authCtx))
+	return r.TableConfigurationService.SetOrgDefault(ctx, configurationID, enabled, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) (*gqlmodel.TableConfigurationConnection, error) {
@@ -133,7 +135,7 @@ func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +145,7 @@ func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.
 		visibilityValue = visibility.String()
 	}
 
-	readable, err := r.readableTableResources(ctx, authCtx, base.StringValue(resource))
+	readable, err := r.readableTableResources(ctx, authCtx, gqlscalar.StringValue(resource))
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +155,7 @@ func (r *QueryResolver) TableConfigurations(ctx context.Context, input gqlmodel.
 		&tableconfigurationports.ListTableConfigurationConnectionRequest{
 			Filter:            tableInput.Filter,
 			Cursor:            tableInput.Cursor,
-			Resource:          base.StringValue(resource),
+			Resource:          gqlscalar.StringValue(resource),
 			Visibility:        visibilityValue,
 			LimitToResources:  true,
 			ReadableResources: readable,
@@ -181,7 +183,7 @@ func (r *QueryResolver) TableConfiguration(ctx context.Context, id string) (*tab
 		ctx,
 		tableconfigurationports.GetTableConfigurationByIDRequest{
 			ConfigurationID: configurationID,
-			TenantInfo:      base.TenantInfo(authCtx),
+			TenantInfo:      resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {
@@ -207,7 +209,7 @@ func (r *QueryResolver) DefaultTableConfiguration(ctx context.Context, resource 
 		ctx,
 		tableconfigurationports.GetDefaultTableConfigurationRequest{
 			Resource:   resource,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 	)
 	if err != nil {

@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,8 +17,8 @@ import (
 
 func (s *Service) ListCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
-) ([]*worker.WorkerLeaveCase, error) {
+	req *workerleaveports.ListLeaveCasesRequest,
+) ([]*workerleave.WorkerLeaveCase, error) {
 	return s.repo.ListCases(ctx, req)
 }
 
@@ -25,7 +26,7 @@ func (s *Service) ListCases(
 // number of outstanding certifications, not the cases themselves.
 func (s *Service) CountCases(
 	ctx context.Context,
-	req *workerports.ListLeaveCasesRequest,
+	req *workerleaveports.ListLeaveCasesRequest,
 ) (int, error) {
 	return s.repo.CountCases(ctx, req)
 }
@@ -34,8 +35,8 @@ func (s *Service) GetCase(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
-	return s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+) (*workerleave.WorkerLeaveCase, error) {
+	return s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeDocument: true,
@@ -43,32 +44,32 @@ func (s *Service) GetCase(
 	})
 }
 
-func (s *Service) prepareCase(entity *worker.WorkerLeaveCase) error {
+func (s *Service) prepareCase(entity *workerleave.WorkerLeaveCase) error {
 	entity.Reason = strings.TrimSpace(entity.Reason)
 	entity.Notes = strings.TrimSpace(entity.Notes)
 
 	if entity.Status == "" {
-		entity.Status = worker.LeaveCasePending
+		entity.Status = workerleave.LeaveCasePending
 	}
 	if entity.LeaveType == "" {
 		entity.LeaveType = worker.LeaveTypeFMLA
 	}
 	if entity.Frequency == "" {
-		entity.Frequency = worker.LeaveContinuous
+		entity.Frequency = workerleave.LeaveContinuous
 	}
 	if entity.CertificationStatus == "" {
-		entity.CertificationStatus = worker.CertificationNotRequired
+		entity.CertificationStatus = workerleave.CertificationNotRequired
 	}
 	if entity.RequestedAt <= 0 {
 		entity.RequestedAt = timeutils.NowUnix()
 	}
 	// A case that was never decided has no decision date, whatever a form sent
 	// before somebody changed their mind.
-	if entity.Status == worker.LeaveCasePending {
+	if entity.Status == workerleave.LeaveCasePending {
 		entity.DecidedAt = nil
 		entity.DecidedByID = pulid.Nil
 	}
-	if entity.Status != worker.LeaveCaseClosed {
+	if entity.Status != workerleave.LeaveCaseClosed {
 		entity.ClosedAt = nil
 	}
 
@@ -84,9 +85,9 @@ func (s *Service) prepareCase(entity *worker.WorkerLeaveCase) error {
 // OpenCase files a request for leave.
 func (s *Service) OpenCase(
 	ctx context.Context,
-	entity *worker.WorkerLeaveCase,
+	entity *workerleave.WorkerLeaveCase,
 	userID pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	tenantInfo := caseTenant(entity)
 
 	if err := s.prepareOpenCase(ctx, entity, userID); err != nil {
@@ -117,7 +118,7 @@ type UpdateCaseRequest struct {
 	TenantInfo             pagination.TenantInfo
 	CaseID                 pulid.ID
 	LeaveType              *worker.LeaveType
-	Frequency              *worker.LeaveFrequency
+	Frequency              *workerleave.LeaveFrequency
 	Reason                 *string
 	MilitaryCaregiver      *bool
 	StartsAt               *int64
@@ -131,7 +132,7 @@ type UpdateCaseRequest struct {
 func (s *Service) UpdateCase(
 	ctx context.Context,
 	req *UpdateCaseRequest,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	change, err := s.PlanUpdateCase(ctx, req)
 	if err != nil {
 		return nil, err
@@ -157,7 +158,7 @@ func (s *Service) UpdateCase(
 	return updated, nil
 }
 
-func applyCaseUpdate(entity *worker.WorkerLeaveCase, req *UpdateCaseRequest) {
+func applyCaseUpdate(entity *workerleave.WorkerLeaveCase, req *UpdateCaseRequest) {
 	if req.LeaveType != nil {
 		entity.LeaveType = *req.LeaveType
 	}
@@ -203,8 +204,8 @@ type DecideCaseRequest struct {
 func (s *Service) DecideCase(
 	ctx context.Context,
 	req *DecideCaseRequest,
-) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+) (*workerleave.WorkerLeaveCase, error) {
+	entity, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -212,7 +213,7 @@ func (s *Service) DecideCase(
 		return nil, err
 	}
 
-	if entity.Status == worker.LeaveCaseClosed {
+	if entity.Status == workerleave.LeaveCaseClosed {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -225,10 +226,10 @@ func (s *Service) DecideCase(
 	entity.DecidedAt = &now
 	entity.DecidedByID = req.UserID
 	if req.Approve {
-		entity.Status = worker.LeaveCaseApproved
+		entity.Status = workerleave.LeaveCaseApproved
 		entity.FMLADesignated = req.Designate
 	} else {
-		entity.Status = worker.LeaveCaseDenied
+		entity.Status = workerleave.LeaveCaseDenied
 		// Denied leave cannot draw down an entitlement, whatever the caller
 		// asked for.
 		entity.FMLADesignated = false
@@ -267,12 +268,12 @@ func (s *Service) CloseCase(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	userID pulid.ID,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	change, err := s.PlanCloseCase(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
 	}
-	if change.Before.Status == worker.LeaveCaseClosed {
+	if change.Before.Status == workerleave.LeaveCaseClosed {
 		return change.Before, nil
 	}
 	previous, entity := change.Before, change.After
@@ -309,7 +310,7 @@ type RequestCertificationRequest struct {
 func (s *Service) RequestCertification(
 	ctx context.Context,
 	req *RequestCertificationRequest,
-) (*worker.WorkerLeaveCase, error) {
+) (*workerleave.WorkerLeaveCase, error) {
 	change, err := s.PlanRequestCertification(ctx, req)
 	if err != nil {
 		return nil, err
@@ -339,7 +340,7 @@ func (s *Service) RequestCertification(
 type RecordCertificationRequest struct {
 	TenantInfo           pagination.TenantInfo
 	CaseID               pulid.ID
-	Status               worker.LeaveCertificationStatus
+	Status               workerleave.LeaveCertificationStatus
 	ReceivedAt           *int64
 	RecertificationDueAt *int64
 	DocumentID           pulid.ID
@@ -349,8 +350,8 @@ type RecordCertificationRequest struct {
 func (s *Service) RecordCertification(
 	ctx context.Context,
 	req *RecordCertificationRequest,
-) (*worker.WorkerLeaveCase, error) {
-	entity, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+) (*workerleave.WorkerLeaveCase, error) {
+	entity, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         req.CaseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -360,8 +361,8 @@ func (s *Service) RecordCertification(
 
 	previous := *entity
 	entity.CertificationStatus = req.Status
-	if req.Status == worker.CertificationReceived ||
-		req.Status == worker.CertificationInsufficient {
+	if req.Status == workerleave.CertificationReceived ||
+		req.Status == workerleave.CertificationInsufficient {
 		received := timeutils.NowUnix()
 		if req.ReceivedAt != nil && *req.ReceivedAt > 0 {
 			received = *req.ReceivedAt
@@ -400,15 +401,15 @@ func (s *Service) RecordCertification(
 
 func (s *Service) ListEntries(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesRequest,
-) ([]*worker.WorkerLeaveEntry, error) {
+	req *workerleaveports.ListLeaveEntriesRequest,
+) ([]*workerleave.WorkerLeaveEntry, error) {
 	return s.repo.ListEntries(ctx, req)
 }
 
 func (s *Service) ListEntriesByCaseIDs(
 	ctx context.Context,
-	req *workerports.ListLeaveEntriesByCaseIDsRequest,
-) (map[pulid.ID][]*worker.WorkerLeaveEntry, error) {
+	req *workerleaveports.ListLeaveEntriesByCaseIDsRequest,
+) (map[pulid.ID][]*workerleave.WorkerLeaveEntry, error) {
 	return s.repo.ListEntriesByCaseIDs(ctx, req)
 }
 
@@ -430,7 +431,7 @@ type RecordDayRequest struct {
 func (s *Service) RecordDay(
 	ctx context.Context,
 	req *RecordDayRequest,
-) (*worker.WorkerLeaveEntry, error) {
+) (*workerleave.WorkerLeaveEntry, error) {
 	entity, err := s.PlanRecordDay(ctx, req)
 	if err != nil {
 		return nil, err
@@ -470,7 +471,7 @@ type UpdateDayRequest struct {
 func (s *Service) UpdateDay(
 	ctx context.Context,
 	req *UpdateDayRequest,
-) (*worker.WorkerLeaveEntry, error) {
+) (*workerleave.WorkerLeaveEntry, error) {
 	change, err := s.PlanUpdateDay(ctx, req)
 	if err != nil {
 		return nil, err
@@ -509,7 +510,7 @@ func (s *Service) DeleteDay(
 		return err
 	}
 
-	if err = s.repo.DeleteEntry(ctx, &workerports.GetLeaveEntryByIDRequest{
+	if err = s.repo.DeleteEntry(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -536,7 +537,7 @@ func (s *Service) CaseWorker(
 	tenantInfo pagination.TenantInfo,
 	caseID pulid.ID,
 ) (pulid.ID, error) {
-	found, err := s.repo.GetCaseByID(ctx, &workerports.GetLeaveCaseByIDRequest{
+	found, err := s.repo.GetCaseByID(ctx, &workerleaveports.GetLeaveCaseByIDRequest{
 		ID:         caseID,
 		TenantInfo: tenantInfo,
 	})
@@ -552,7 +553,7 @@ func (s *Service) EntryWorker(
 	tenantInfo pagination.TenantInfo,
 	entryID pulid.ID,
 ) (pulid.ID, error) {
-	found, err := s.repo.GetEntryByID(ctx, &workerports.GetLeaveEntryByIDRequest{
+	found, err := s.repo.GetEntryByID(ctx, &workerleaveports.GetLeaveEntryByIDRequest{
 		ID:         entryID,
 		TenantInfo: tenantInfo,
 	})

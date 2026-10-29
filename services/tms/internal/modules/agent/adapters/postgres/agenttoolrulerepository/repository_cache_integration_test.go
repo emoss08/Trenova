@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ func TestToolRuleOverridesAreCachedPerTenantUntilAnOverrideChanges(t *testing.T)
 	repo := New(Params{DB: postgres.NewTestConnection(cached)})
 	actx := tenantA.Ctx(ctx)
 
-	var overrides []*agent.ToolRuleOverride
+	var overrides []*agenttooltrust.ToolRuleOverride
 	readFor := func(data *seedtest.TestData) func() error {
 		return func() error {
 			var readErr error
@@ -39,7 +40,7 @@ func TestToolRuleOverridesAreCachedPerTenantUntilAnOverrideChanges(t *testing.T)
 		assert.Empty(t, overrides)
 	})
 
-	created, err := repo.Create(actx, &agent.ToolRuleOverride{
+	created, err := repo.Create(actx, &agenttooltrust.ToolRuleOverride{
 		OrganizationID: tenantA.Organization.ID,
 		BusinessUnitID: tenantA.BusinessUnit.ID,
 		ToolName:       "shipment_update",

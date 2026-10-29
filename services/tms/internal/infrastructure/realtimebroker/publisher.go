@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,11 +21,11 @@ var ErrPublisherStopped = errors.New("realtime publisher is stopped")
 type PublisherParams struct {
 	fx.In
 
-	Client  *redis.Client
-	Config  *config.Config
-	Logger  *zap.Logger
-	Metrics *metrics.Registry `optional:"true"`
-	LC      fx.Lifecycle
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry `optional:"true"`
+	LC             fx.Lifecycle
 }
 
 // Publisher writes events to the sharded bus.
@@ -37,10 +38,10 @@ type PublisherParams struct {
 // see.
 type Publisher struct {
 	client   *redis.Client
-	cfg      config.RealtimeConfig
+	cfg      realtimeconfig.Config
 	l        *zap.Logger
-	metrics  *metrics.Realtime
-	queue    chan *agentports.RealtimeEnvelope
+	metrics  *platformmetrics.Realtime
+	queue    chan *realtimeports.RealtimeEnvelope
 	stopOnce sync.Once
 	stop     chan struct{}
 	done     chan struct{}
@@ -49,12 +50,12 @@ type Publisher struct {
 }
 
 func NewPublisher(p PublisherParams) *Publisher {
-	cfg := *p.Config.GetRealtimeConfig()
+	cfg := *p.RealtimeConfig
 	pub := &Publisher{
 		client: p.Client,
 		cfg:    cfg,
 		l:      p.Logger.Named("realtime.publisher"),
-		queue:  make(chan *agentports.RealtimeEnvelope, cfg.GetPublishQueueSize()),
+		queue:  make(chan *realtimeports.RealtimeEnvelope, cfg.GetPublishQueueSize()),
 		stop:   make(chan struct{}),
 		done:   make(chan struct{}),
 	}
@@ -73,7 +74,7 @@ func NewPublisher(p PublisherParams) *Publisher {
 	return pub
 }
 
-func (p *Publisher) Enqueue(env *agentports.RealtimeEnvelope) bool {
+func (p *Publisher) Enqueue(env *realtimeports.RealtimeEnvelope) bool {
 	if env == nil {
 		return false
 	}
@@ -98,7 +99,7 @@ func (p *Publisher) Enqueue(env *agentports.RealtimeEnvelope) bool {
 	}
 }
 
-func (p *Publisher) Publish(ctx context.Context, env *agentports.RealtimeEnvelope) error {
+func (p *Publisher) Publish(ctx context.Context, env *realtimeports.RealtimeEnvelope) error {
 	if env == nil {
 		return nil
 	}
@@ -139,7 +140,7 @@ func (p *Publisher) run() {
 	defer close(p.done)
 
 	batchSize := p.cfg.GetPublishBatchSize()
-	batch := make([]*agentports.RealtimeEnvelope, 0, batchSize)
+	batch := make([]*realtimeports.RealtimeEnvelope, 0, batchSize)
 
 	for {
 		select {
@@ -157,9 +158,9 @@ func (p *Publisher) run() {
 }
 
 func (p *Publisher) fill(
-	batch []*agentports.RealtimeEnvelope,
+	batch []*realtimeports.RealtimeEnvelope,
 	batchSize int,
-) []*agentports.RealtimeEnvelope {
+) []*realtimeports.RealtimeEnvelope {
 	for len(batch) < batchSize {
 		select {
 		case env := <-p.queue:
@@ -171,7 +172,7 @@ func (p *Publisher) fill(
 	return batch
 }
 
-func (p *Publisher) drain(batch []*agentports.RealtimeEnvelope, batchSize int) {
+func (p *Publisher) drain(batch []*realtimeports.RealtimeEnvelope, batchSize int) {
 	for {
 		batch = p.fill(batch[:0], batchSize)
 		if len(batch) == 0 {
@@ -182,7 +183,7 @@ func (p *Publisher) drain(batch []*agentports.RealtimeEnvelope, batchSize int) {
 	}
 }
 
-func (p *Publisher) flush(batch []*agentports.RealtimeEnvelope) {
+func (p *Publisher) flush(batch []*realtimeports.RealtimeEnvelope) {
 	if len(batch) == 0 {
 		return
 	}
@@ -224,7 +225,7 @@ func (p *Publisher) flush(batch []*agentports.RealtimeEnvelope) {
 	)
 }
 
-func (p *Publisher) addArgs(env *agentports.RealtimeEnvelope, shards int) *redis.XAddArgs {
+func (p *Publisher) addArgs(env *realtimeports.RealtimeEnvelope, shards int) *redis.XAddArgs {
 	tenant := tenantKey(env.OrganizationID, env.BusinessUnitID)
 	values := make([]any, 0, 18)
 	values = append(values,

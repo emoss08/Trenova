@@ -3,15 +3,14 @@ package tenantresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +43,7 @@ func TestQueryResolver_Organization_DelegatesToService(t *testing.T) {
 		Once()
 	permissionEngine := &resolvertest.RecordingPermissionEngine{}
 	resolver := &QueryResolver{&Deps{
-		Core:                &base.Core{PermissionEngine: permissionEngine},
+		Core:                &resolvercore.Core{PermissionEngine: permissionEngine},
 		OrganizationService: organizationService,
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
@@ -111,7 +110,7 @@ func TestMutationResolver_UpdateOrganization_MapsInputToService(t *testing.T) {
 		Once()
 	permissionEngine := &resolvertest.RecordingPermissionEngine{}
 	resolver := &MutationResolver{&Deps{
-		Core:                &base.Core{PermissionEngine: permissionEngine},
+		Core:                &resolvercore.Core{PermissionEngine: permissionEngine},
 		OrganizationService: organizationService,
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
@@ -176,7 +175,9 @@ func TestMutationResolver_UpdateOrganization_PreservesOmittedCapabilityFlags(t *
 		Return(stored, nil).
 		Once()
 	resolver := &MutationResolver{&Deps{
-		Core:                &base.Core{PermissionEngine: &resolvertest.RecordingPermissionEngine{}},
+		Core: &resolvercore.Core{
+			PermissionEngine: &resolvertest.RecordingPermissionEngine{},
+		},
 		OrganizationService: organizationService,
 	}}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{

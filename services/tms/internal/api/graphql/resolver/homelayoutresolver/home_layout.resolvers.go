@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -61,7 +61,7 @@ func (r *MutationResolver) CreateHomeLayoutPreset(ctx context.Context, input gql
 	view, err := r.HomeLayoutService.CreatePreset(ctx, &homelayoutservice.SavePresetRequest{
 		Request:            homeLayoutRequest(authCtx),
 		Name:               input.Name,
-		Description:        base.DerefString(input.Description),
+		Description:        gqlscalar.DerefString(input.Description),
 		Layout:             homeWidgetsFromInput(input.Widgets),
 		RoleIDs:            homePresetRoleIDs(input.RoleIds),
 		CoreResponsibility: homeCoreResponsibility(input.CoreResponsibility),
@@ -95,7 +95,7 @@ func (r *MutationResolver) UpdateHomeLayoutPreset(ctx context.Context, input gql
 		Request:            homeLayoutRequest(authCtx),
 		PresetID:           presetID,
 		Name:               input.Name,
-		Description:        base.DerefString(input.Description),
+		Description:        gqlscalar.DerefString(input.Description),
 		Layout:             homeWidgetsFromInput(input.Widgets),
 		RoleIDs:            homePresetRoleIDs(input.RoleIds),
 		CoreResponsibility: homeCoreResponsibility(input.CoreResponsibility),

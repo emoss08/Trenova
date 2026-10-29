@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,7 +15,7 @@ func TestProfileOptionsQuery_AppliesTheFiltersAndSearch(t *testing.T) {
 	t.Parallel()
 
 	partnerID := pulid.ID("edip_1")
-	q := profileOptionsQuery(&ediports.EDICommunicationProfileSelectOptionsRequest{
+	q := profileOptionsQuery(&edipartnerports.EDICommunicationProfileSelectOptionsRequest{
 		Status:    domaintypes.StatusActive,
 		Method:    edi.ConnectionMethodSFTP,
 		PartnerID: partnerID,

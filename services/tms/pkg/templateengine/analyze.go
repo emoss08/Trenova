@@ -7,6 +7,9 @@ import (
 	"sort"
 	"strings"
 	"text/template/parse"
+
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatefuncs"
 )
 
 // The analyzer walks the parse tree instead of waiting for execution.
@@ -277,7 +280,7 @@ func checkPaths(
 	referenced []string,
 	allowed []string,
 	strict bool,
-) Diagnostics {
+) templatediag.Diagnostics {
 	if len(allowed) == 0 {
 		return nil
 	}
@@ -287,12 +290,12 @@ func checkPaths(
 		allowedSet[p] = struct{}{}
 	}
 
-	severity := SeverityWarning
+	severity := templatediag.SeverityWarning
 	if strict {
-		severity = SeverityError
+		severity = templatediag.SeverityError
 	}
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 	for _, path := range referenced {
 		if _, ok := allowedSet[path]; ok {
 			continue
@@ -304,9 +307,9 @@ func checkPaths(
 			continue
 		}
 
-		diags = append(diags, Diagnostic{
+		diags = append(diags, templatediag.Diagnostic{
 			Severity: severity,
-			Code:     CodeUnknownVariable,
+			Code:     templatediag.CodeUnknownVariable,
 			Field:    field,
 			Message: fmt.Sprintf(
 				"%q is not available on this template. %s",
@@ -335,12 +338,12 @@ func hasDeclaredPrefix(path string, allowed map[string]struct{}) bool {
 // This is what stops an organization from publishing an invoice that no longer
 // prints its total or its remit-to address. Those fields are not styling; leaving
 // one out produces a document a customer can refuse to pay against.
-func checkRequiredPaths(field string, referenced, required []string) Diagnostics {
+func checkRequiredPaths(field string, referenced, required []string) templatediag.Diagnostics {
 	if len(required) == 0 {
 		return nil
 	}
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 	for _, want := range required {
 		if slices.Contains(referenced, want) {
 			continue
@@ -354,9 +357,9 @@ func checkRequiredPaths(field string, referenced, required []string) Diagnostics
 			}
 		}
 		if !found {
-			diags = append(diags, Diagnostic{
-				Severity: SeverityError,
-				Code:     CodeRequiredVariableMissing,
+			diags = append(diags, templatediag.Diagnostic{
+				Severity: templatediag.SeverityError,
+				Code:     templatediag.CodeRequiredVariableMissing,
 				Field:    field,
 				Message: fmt.Sprintf(
 					"%q is required on this template and is no longer referenced", want,
@@ -377,8 +380,8 @@ func checkRequiredPaths(field string, referenced, required []string) Diagnostics
 // but they let an author pick an escaping context, which is the one decision
 // contextual auto-escaping needs to own. So the allowlist is enforced here, on
 // the parsed tree, where builtins are visible.
-func checkFunctions(field string, called map[string]struct{}) Diagnostics {
-	allowed := allowedFunctionSet()
+func checkFunctions(field string, called map[string]struct{}) templatediag.Diagnostics {
+	allowed := templatefuncs.AllowedFunctionSet()
 
 	names := make([]string, 0, len(called))
 	for name := range called {
@@ -386,15 +389,18 @@ func checkFunctions(field string, called map[string]struct{}) Diagnostics {
 	}
 	sort.Strings(names)
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 	for _, name := range names {
 		if _, ok := allowed[name]; ok {
 			continue
 		}
-		diags = append(diags, errorDiag(CodeUnknownFunction, field, fmt.Sprintf(
-			"%q is not a function you can call in a template. Available functions: %s",
-			name, strings.Join(AllowedFunctionNames(), ", "),
-		)))
+		diags = append(
+			diags,
+			templatediag.Error(templatediag.CodeUnknownFunction, field, fmt.Sprintf(
+				"%q is not a function you can call in a template. Available functions: %s",
+				name, strings.Join(templatefuncs.AllowedFunctionNames(), ", "),
+			)),
+		)
 	}
 
 	return diags

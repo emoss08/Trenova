@@ -132,6 +132,28 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *ratezoneports.GetRateZonesByIDsRequest,
+) ([]*ratezone.RateZone, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratezone.RateZone, error) {
+		if len(req.RateZoneIDs) == 0 {
+			return []*ratezone.RateZone{}, nil
+		}
+
+		rz := ratezonedb.RateZones
+		entities, err := rz.Where(rz.ID.In(req.RateZoneIDs...)).
+			Limit(len(req.RateZoneIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get rate zones", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 type laneZoneRow struct {
 	ID       pulid.ID
 	Code     string

@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +15,10 @@ func date(year int, month time.Month, day int, loc *time.Location) int64 {
 	return time.Date(year, month, day, 0, 0, 0, 0, loc).Unix()
 }
 
-func monthlyRule() worker.PTOPolicyRule {
-	return worker.PTOPolicyRule{
+func monthlyRule() pto.PTOPolicyRule {
+	return pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodMonthly,
+		AccrualMethod:     pto.PTOAccrualMethodMonthly,
 		AccrualAmountDays: decimal.RequireFromString("1.25"),
 	}
 }
@@ -36,7 +37,7 @@ func TestScheduleMonthlyStartsAfterWaitingPeriod(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:        monthlyRule(),
-		YearBasis:   worker.PTOYearBasisCalendarYear,
+		YearBasis:   pto.PTOYearBasisCalendarYear,
 		WaitingDays: 90,
 		HireDate:    date(2026, time.January, 15, loc),
 		Loc:         loc,
@@ -45,7 +46,7 @@ func TestScheduleMonthlyStartsAfterWaitingPeriod(t *testing.T) {
 
 	assert.Equal(t, []string{"M:2026-05", "M:2026-06", "M:2026-07"}, keys(plan))
 	for _, e := range plan {
-		assert.Equal(t, worker.PTOLedgerEntryAccrual, e.EntryType)
+		assert.Equal(t, pto.PTOLedgerEntryAccrual, e.EntryType)
 		assert.True(t, e.NominalDays.Equal(decimal.RequireFromString("1.25")))
 		assert.False(t, e.Deferred)
 	}
@@ -57,7 +58,7 @@ func TestScheduleSkipsPeriodsAlreadyPosted(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:           monthlyRule(),
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       date(2025, time.March, 1, loc),
 		Loc:            loc,
 		AsOf:           date(2026, time.March, 15, loc),
@@ -71,7 +72,7 @@ func TestScheduleSkipsPeriodsAlreadyPosted(t *testing.T) {
 func filterAccruals(plan []PlannedEntry) []PlannedEntry {
 	out := make([]PlannedEntry, 0, len(plan))
 	for _, e := range plan {
-		if e.EntryType == worker.PTOLedgerEntryAccrual {
+		if e.EntryType == pto.PTOLedgerEntryAccrual {
 			out = append(out, e)
 		}
 	}
@@ -85,7 +86,7 @@ func TestScheduleStopsAtTermination(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:            monthlyRule(),
-		YearBasis:       worker.PTOYearBasisCalendarYear,
+		YearBasis:       pto.PTOYearBasisCalendarYear,
 		HireDate:        date(2026, time.January, 1, loc),
 		TerminationDate: &termination,
 		Loc:             loc,
@@ -105,7 +106,7 @@ func TestScheduleBoundsCatchUpToLookback(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:           monthlyRule(),
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       date(2019, time.January, 1, loc),
 		Loc:            loc,
 		AsOf:           date(2026, time.March, 1, loc),
@@ -121,15 +122,15 @@ func TestScheduleBoundsCatchUpToLookback(t *testing.T) {
 func TestScheduleAnnualGrantOnHireAnniversaryHandlesLeapDay(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeSick,
-		AccrualMethod:     worker.PTOAccrualMethodFixedAnnualGrant,
+		AccrualMethod:     pto.PTOAccrualMethodFixedAnnualGrant,
 		AccrualAmountDays: decimal.NewFromInt(5),
 	}
 
 	plan := Schedule(CalcInput{
 		Rule:           rule,
-		YearBasis:      worker.PTOYearBasisHireAnniversary,
+		YearBasis:      pto.PTOYearBasisHireAnniversary,
 		HireDate:       date(2024, time.February, 29, loc),
 		Loc:            loc,
 		AsOf:           date(2026, time.March, 5, loc),
@@ -147,9 +148,9 @@ func TestScheduleAnnualGrantOnHireAnniversaryHandlesLeapDay(t *testing.T) {
 func TestScheduleEmitsCarryoverAndExpiryBeforeAccrualOnYearStart(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:             worker.PTOTypeVacation,
-		AccrualMethod:       worker.PTOAccrualMethodFixedAnnualGrant,
+		AccrualMethod:       pto.PTOAccrualMethodFixedAnnualGrant,
 		AccrualAmountDays:   decimal.NewFromInt(10),
 		CarryoverCapDays:    decimal.NewNullDecimal(decimal.NewFromInt(5)),
 		CarryoverExpiryDays: 90,
@@ -157,7 +158,7 @@ func TestScheduleEmitsCarryoverAndExpiryBeforeAccrualOnYearStart(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:           rule,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       date(2024, time.June, 1, loc),
 		Loc:            loc,
 		AsOf:           date(2026, time.May, 1, loc),
@@ -167,7 +168,7 @@ func TestScheduleEmitsCarryoverAndExpiryBeforeAccrualOnYearStart(t *testing.T) {
 	require.Len(t, plan, 3)
 	assert.Equal(t, "C:2026", plan[0].PeriodKey)
 	assert.True(t, plan[0].Deferred)
-	assert.Equal(t, worker.PTOLedgerEntryExpiry, plan[0].EntryType)
+	assert.Equal(t, pto.PTOLedgerEntryExpiry, plan[0].EntryType)
 	assert.Equal(t, "A:2026", plan[1].PeriodKey)
 	assert.Equal(
 		t,
@@ -182,16 +183,16 @@ func TestScheduleEmitsCarryoverAndExpiryBeforeAccrualOnYearStart(t *testing.T) {
 func TestScheduleSkipsRolloverAlreadyApplied(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodMonthly,
+		AccrualMethod:     pto.PTOAccrualMethodMonthly,
 		AccrualAmountDays: decimal.NewFromInt(1),
 		CarryoverCapDays:  decimal.NewNullDecimal(decimal.NewFromInt(5)),
 	}
 
 	plan := Schedule(CalcInput{
 		Rule:            rule,
-		YearBasis:       worker.PTOYearBasisCalendarYear,
+		YearBasis:       pto.PTOYearBasisCalendarYear,
 		HireDate:        date(2025, time.January, 1, loc),
 		Loc:             loc,
 		AsOf:            date(2026, time.February, 1, loc),
@@ -209,7 +210,7 @@ func TestScheduleReturnsNothingBeforeEligibility(t *testing.T) {
 
 	plan := Schedule(CalcInput{
 		Rule:        monthlyRule(),
-		YearBasis:   worker.PTOYearBasisCalendarYear,
+		YearBasis:   pto.PTOYearBasisCalendarYear,
 		WaitingDays: 180,
 		HireDate:    date(2026, time.May, 1, loc),
 		Loc:         loc,
@@ -222,9 +223,9 @@ func TestScheduleReturnsNothingBeforeEligibility(t *testing.T) {
 func TestProjectedAccrualRespectsCapAndCarryover(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodMonthly,
+		AccrualMethod:     pto.PTOAccrualMethodMonthly,
 		AccrualAmountDays: decimal.NewFromInt(2),
 		MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(6)),
 		CarryoverCapDays:  decimal.NewNullDecimal(decimal.NewFromInt(3)),
@@ -232,32 +233,32 @@ func TestProjectedAccrualRespectsCapAndCarryover(t *testing.T) {
 
 	plan := []PlannedEntry{
 		{
-			EntryType:   worker.PTOLedgerEntryAccrual,
+			EntryType:   pto.PTOLedgerEntryAccrual,
 			PeriodKey:   "M:2026-11",
 			NominalDays: decimal.NewFromInt(2),
 			EffectiveAt: date(2026, time.November, 1, loc),
 		},
 		{
-			EntryType:   worker.PTOLedgerEntryAccrual,
+			EntryType:   pto.PTOLedgerEntryAccrual,
 			PeriodKey:   "M:2026-12",
 			NominalDays: decimal.NewFromInt(2),
 			EffectiveAt: date(2026, time.December, 1, loc),
 		},
 		{
-			EntryType:   worker.PTOLedgerEntryExpiry,
+			EntryType:   pto.PTOLedgerEntryExpiry,
 			PeriodKey:   "C:2027",
 			Deferred:    true,
 			EffectiveAt: date(2027, time.January, 1, loc),
 		},
 		{
-			EntryType:   worker.PTOLedgerEntryAccrual,
+			EntryType:   pto.PTOLedgerEntryAccrual,
 			PeriodKey:   "M:2027-01",
 			NominalDays: decimal.NewFromInt(2),
 			EffectiveAt: date(2027, time.January, 1, loc),
 		},
 	}
 
-	delta := ProjectedAccrual(plan, decimal.NewFromInt(4), decimal.Zero, rule)
+	delta := ProjectedAccrual(plan, decimal.NewFromInt(4), decimal.Zero, &rule)
 	assert.True(t, delta.Equal(decimal.NewFromInt(1)),
 		"4 → 6 (capped) → 6 (capped) → 3 (carryover cap) → 5; delta %s", delta)
 }
@@ -265,19 +266,19 @@ func TestProjectedAccrualRespectsCapAndCarryover(t *testing.T) {
 func TestRolloversPostedWithTheGrantLeaveNothingForAProjectionToReplay(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeSick,
-		AccrualMethod:     worker.PTOAccrualMethodFixedAnnualGrant,
+		AccrualMethod:     pto.PTOAccrualMethodFixedAnnualGrant,
 		AccrualAmountDays: decimal.NewFromInt(5),
 		CarryoverCapDays:  decimal.NewNullDecimal(decimal.Zero),
 	}
 	hire := date(2023, time.October, 28, loc)
 	seededAt := date(2026, time.October, 27, loc)
 
-	bal := &worker.WorkerPTOBalance{BalanceDays: decimal.NewFromInt(2)}
+	bal := &pto.WorkerPTOBalance{BalanceDays: decimal.NewFromInt(2)}
 	for _, planned := range Schedule(CalcInput{
 		Rule:           rule,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       hire,
 		Loc:            loc,
 		AsOf:           seededAt,
@@ -285,27 +286,31 @@ func TestRolloversPostedWithTheGrantLeaveNothingForAProjectionToReplay(t *testin
 	}) {
 		if planned.Deferred {
 			if amount, posts := ResolveExpiry(bal, planned, &rule); posts {
-				bal.Apply(&worker.WorkerPTOLedgerEntry{
+				bal.Apply(&pto.WorkerPTOLedgerEntry{
 					EntryType:  planned.EntryType,
 					AmountDays: amount,
 				})
 			}
-			AdvanceCursor(bal, planned, &rule)
+			AdvanceCursor(bal, &planned, &rule)
 			continue
 		}
-		bal.Apply(&worker.WorkerPTOLedgerEntry{
+		bal.Apply(&pto.WorkerPTOLedgerEntry{
 			EntryType:  planned.EntryType,
 			AmountDays: planned.NominalDays,
 		})
-		AdvanceCursor(bal, planned, &rule)
+		AdvanceCursor(bal, &planned, &rule)
 	}
 
 	require.Equal(t, "C:2026", bal.LastRolloverKey, "this year's rollover is on the balance")
-	assert.True(t, decimal.NewFromInt(5).Equal(bal.BalanceDays), "2 forfeited at year end, 5 granted")
+	assert.True(
+		t,
+		decimal.NewFromInt(5).Equal(bal.BalanceDays),
+		"2 forfeited at year end, 5 granted",
+	)
 
 	ahead := Schedule(CalcInput{
 		Rule:            rule,
-		YearBasis:       worker.PTOYearBasisCalendarYear,
+		YearBasis:       pto.PTOYearBasisCalendarYear,
 		HireDate:        hire,
 		Loc:             loc,
 		AsOf:            date(2026, time.November, 8, loc),
@@ -313,7 +318,7 @@ func TestRolloversPostedWithTheGrantLeaveNothingForAProjectionToReplay(t *testin
 		LastRolloverKey: bal.LastRolloverKey,
 	})
 	assert.Empty(t, ahead, "nothing falls between now and the request")
-	assert.True(t, ProjectedAccrual(ahead, bal.BalanceDays, bal.CarriedDays, rule).IsZero())
+	assert.True(t, ProjectedAccrual(ahead, bal.BalanceDays, bal.CarriedDays, &rule).IsZero())
 }
 
 func TestRolloverDue_OrdersByYearThenCarryoverBeforeExpiry(t *testing.T) {
@@ -323,23 +328,27 @@ func TestRolloverDue_OrdersByYearThenCarryoverBeforeExpiry(t *testing.T) {
 	assert.True(t, RolloverDue("X:2026", "C:2026"), "the carried days expire after the carryover")
 	assert.False(t, RolloverDue("C:2026", "X:2026"))
 	assert.False(t, RolloverDue("C:2026", "C:2026"))
-	assert.True(t, RolloverDue("C:2027", "X:2026"), "a new year's carryover follows last year's expiry")
+	assert.True(
+		t,
+		RolloverDue("C:2027", "X:2026"),
+		"a new year's carryover follows last year's expiry",
+	)
 	assert.False(t, RolloverDue("X:2025", "C:2026"))
 }
 
 func TestScheduleExpiresCarriedDaysAfterTheCarryoverWasPosted(t *testing.T) {
 	t.Parallel()
 	loc := time.UTC
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:             worker.PTOTypeVacation,
-		AccrualMethod:       worker.PTOAccrualMethodFixedAnnualGrant,
+		AccrualMethod:       pto.PTOAccrualMethodFixedAnnualGrant,
 		AccrualAmountDays:   decimal.NewFromInt(10),
 		CarryoverCapDays:    decimal.NewNullDecimal(decimal.NewFromInt(5)),
 		CarryoverExpiryDays: 90,
 	}
 	in := CalcInput{
 		Rule:            rule,
-		YearBasis:       worker.PTOYearBasisCalendarYear,
+		YearBasis:       pto.PTOYearBasisCalendarYear,
 		HireDate:        date(2024, time.June, 1, loc),
 		Loc:             loc,
 		AsOf:            date(2026, time.April, 2, loc),

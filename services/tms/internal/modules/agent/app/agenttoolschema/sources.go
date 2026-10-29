@@ -4,15 +4,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/productguide"
@@ -21,32 +26,35 @@ import (
 // The sources more than one tool package spends, or that name a domain type
 // the tools share. A source only one tool uses lives beside that tool.
 var (
-	StopTypes         = Source("shipment.stopType", shipment.StopTypeValues())
-	StopScheduleTypes = Source("shipment.stopScheduleType", shipment.StopScheduleTypeValues())
-	FreightTerms      = Source("shipment.freightTerms", shipment.FreightTermsValues())
+	StopTypes         = Source("shipment.stopType", shipmentvocab.StopTypeValues())
+	StopScheduleTypes = Source("shipment.stopScheduleType", shipmentvocab.StopScheduleTypeValues())
+	FreightTerms      = Source("shipment.freightTerms", shipmentvocab.FreightTermsValues())
 	StopActualActions = Source(
 		"shipmentMove.stopActualAction",
-		shipmentports.StopActualActionValues(),
+		shipmentmoveports.StopActualActionValues(),
 	)
-	SettableMoveStatuses = Source("shipmentMove.settableStatus", []shipment.MoveStatus{
-		shipment.MoveStatusInTransit,
-		shipment.MoveStatusCompleted,
-		shipment.MoveStatusCanceled,
+	SettableMoveStatuses = Source("shipmentMove.settableStatus", []shipmentvocab.MoveStatus{
+		shipmentvocab.MoveStatusInTransit,
+		shipmentvocab.MoveStatusCompleted,
+		shipmentvocab.MoveStatusCanceled,
 	})
 	CommentVisibilities = Source(
 		"shipment.commentVisibility",
-		shipment.CommentVisibilityValues(),
+		shipmentvocab.CommentVisibilityValues(),
 	)
-	CommentPriorities   = Source("shipment.commentPriority", shipment.CommentPriorityValues())
-	CarrierRateMethods  = Source("shipment.carrierRateMethod", shipment.CarrierRateMethodValues())
+	CommentPriorities  = Source("shipment.commentPriority", shipmentvocab.CommentPriorityValues())
+	CarrierRateMethods = Source(
+		"shipment.carrierRateMethod",
+		shipmentvocab.CarrierRateMethodValues(),
+	)
 	AccessorialMethods  = Source("accessorialCharge.method", accessorialcharge.MethodValues())
 	TenderChannels      = Source("tender.channel", tender.ChannelValues())
 	SpotTenderModes     = Source("tender.spotMode", tender.SpotModeValues())
 	ExceptionCategories = Source(
 		"agent.exceptionCategory",
-		agent.AllExceptionCategories(),
+		agentexception.AllExceptionCategories(),
 	)
-	Severities   = Source("agent.severity", agent.SeverityValues())
+	Severities   = Source("agent.severity", agentexception.SeverityValues())
 	PTOTypes     = Source("worker.ptoType", worker.PTOTypeValues())
 	SubjectTypes = Source("agent.subjectType", agent.AllSubjectTypes())
 
@@ -54,19 +62,19 @@ var (
 
 	AccountingSystems = Source(
 		"integration.accountingSystem",
-		accountingsync.AccountingSystems(),
+		accountingprovider.AccountingSystems(),
 	)
 	FactoringFundingOutcomes = Source(
 		"factoring.fundingOutcome",
-		factoring.AllFundingOutcomes(),
+		factoringledger.AllFundingOutcomes(),
 	)
 	FactoringRemittanceLineKinds = Source(
 		"factoring.remittanceLineKind",
-		factoring.AllRemittanceLineKinds(),
+		factoringremittance.AllRemittanceLineKinds(),
 	)
 	FactoringRemittanceLineActions = Source(
 		"factoring.remittanceLineAction",
-		factoringports.AllRemittanceLineActions(),
+		factoringremittanceports.AllRemittanceLineActions(),
 	)
 	FactoringOverrides = Source(
 		"invoice.factoringOverride",
@@ -87,23 +95,23 @@ var (
 	)
 	BackfillObjectTypes = Source(
 		"accountingSync.backfillObjectType",
-		accountingsync.BackfillObjectTypes(),
+		accountingbackfill.BackfillObjectTypes(),
 	)
 	InboundChangeStatuses = Source(
 		"accountingSync.inboundChangeStatus",
-		accountingsync.AllInboundChangeStatuses(),
+		accountinginbound.AllInboundChangeStatuses(),
 	)
 	InboundChangeKinds = Source(
 		"accountingSync.inboundChangeKind",
-		accountingsync.AllInboundChangeKinds(),
+		accountinginbound.AllInboundChangeKinds(),
 	)
 	InboundChangeReasons = Source(
 		"accountingSync.inboundChangeReason",
-		accountingsync.AllInboundChangeReasons(),
+		accountinginbound.AllInboundChangeReasons(),
 	)
-	DriftStatuses    = Source("accountingSync.driftStatus", accountingsync.AllDriftStatuses())
-	DriftKinds       = Source("accountingSync.driftKind", accountingsync.AllDriftKinds())
-	DriftDirections  = Source("accountingSync.driftDirection", accountingsync.AllDriftDirections())
+	DriftStatuses    = Source("accountingSync.driftStatus", accountingdrift.AllDriftStatuses())
+	DriftKinds       = Source("accountingSync.driftKind", accountingdrift.AllDriftKinds())
+	DriftDirections  = Source("accountingSync.driftDirection", accountingdrift.AllDriftDirections())
 	DriftObjectTypes = Source(
 		"accountingSync.driftObjectType",
 		append(
@@ -111,7 +119,7 @@ var (
 				accountingsync.SyncObjectCustomer,
 				accountingsync.DriftObjectGLAccount,
 			},
-			accountingsync.DriftObjectTypes()...,
+			accountingdrift.DriftObjectTypes()...,
 		),
 	)
 )

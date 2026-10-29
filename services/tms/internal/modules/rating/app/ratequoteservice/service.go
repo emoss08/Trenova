@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
@@ -27,7 +28,7 @@ type Params struct {
 	BillingControlRepo tenantports.BillingControlRepository
 	Engine             ratequoteports.RateEngine
 	Hydrator           ratequoteports.ShipmentRatingHydrator
-	Distances          shipmentports.DistanceCalculationService `optional:"true"`
+	Distances          shipmentdistanceports.DistanceCalculationService `optional:"true"`
 }
 
 type Service struct {
@@ -37,7 +38,7 @@ type Service struct {
 	billingControlRepo tenantports.BillingControlRepository
 	engine             ratequoteports.RateEngine
 	hydrator           ratequoteports.ShipmentRatingHydrator
-	distances          shipmentports.DistanceCalculationService
+	distances          shipmentdistanceports.DistanceCalculationService
 }
 
 func New(p Params) *Service {
@@ -247,7 +248,10 @@ func (s *Service) rate(
 // billingControl carries the organization's unrated-shipment decision into the
 // engine. Failing to read it is not worth failing the request over: the default
 // it falls back to is the behaviour that existed before rate agreements.
-func (s *Service) billingControl(ctx context.Context, orgID pulid.ID) *tenant.BillingControl {
+func (s *Service) billingControl(
+	ctx context.Context,
+	orgID pulid.ID,
+) *billingcontrol.BillingControl {
 	control, err := s.billingControlRepo.GetByOrgID(ctx, orgID)
 	if err != nil {
 		return nil

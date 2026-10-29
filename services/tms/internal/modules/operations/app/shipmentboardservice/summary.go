@@ -3,7 +3,9 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
@@ -11,23 +13,23 @@ import (
 
 func (s *Service) scope(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
+	req *shipmentboardports.ShipmentBoardScopeRequest,
 	needAll bool,
-) (*shipmentports.ShipmentBoardScope, error) {
+) (*shipmentboardports.ShipmentBoardScope, error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewBusinessError("A shipment board scope is required")
 	}
 
 	multiErr := errortypes.NewMultiError()
-	shipment.ValidateQuickFilters(req.QuickFilters, multiErr)
+	quickfilter.ValidateQuickFilters(req.QuickFilters, multiErr)
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if err := shipment.AuthorizeQuickFilters(req.QuickFilters, req.Margins); err != nil {
+	if err := quickfilter.AuthorizeQuickFilters(req.QuickFilters, req.Margins); err != nil {
 		return nil, err
 	}
 
-	margin, detention := shipment.QuickFiltersNeed(req.QuickFilters)
+	margin, detention := quickfilter.QuickFiltersNeed(req.QuickFilters)
 	basis, err := s.quickFilters.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: req.Filter.TenantInfo,
 		Timezone:   req.Timezone,
@@ -38,7 +40,7 @@ func (s *Service) scope(
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentBoardScope{
+	return &shipmentboardports.ShipmentBoardScope{
 		Filter: req.Filter,
 		Options: shipmentports.ShipmentOptions{
 			QuickFilters:     req.QuickFilters,
@@ -50,8 +52,8 @@ func (s *Service) scope(
 
 func (s *Service) StageSummary(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
-) ([]*shipmentports.ShipmentStageSummary, error) {
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) ([]*shipmentboardports.ShipmentStageSummary, error) {
 	scope, err := s.scope(ctx, req, false)
 	if err != nil {
 		return nil, err
@@ -67,8 +69,8 @@ func (s *Service) StageSummary(
 
 func (s *Service) GroupSummary(
 	ctx context.Context,
-	req *shipmentports.SummarizeShipmentBoardGroupsRequest,
-) ([]*shipmentports.ShipmentBoardGroup, error) {
+	req *shipmentboardports.SummarizeShipmentBoardGroupsRequest,
+) ([]*shipmentboardports.ShipmentBoardGroup, error) {
 	if req == nil || !req.GroupBy.IsValid() {
 		return nil, errortypes.NewValidationError(
 			"groupBy",
@@ -82,7 +84,7 @@ func (s *Service) GroupSummary(
 		return nil, err
 	}
 
-	rows, err := s.repo.GroupSummary(ctx, &shipmentports.SummarizeShipmentBoardGroupsQuery{
+	rows, err := s.repo.GroupSummary(ctx, &shipmentboardports.SummarizeShipmentBoardGroupsQuery{
 		Scope:    scope,
 		GroupBy:  req.GroupBy,
 		Timezone: req.Scope.Timezone,
@@ -91,9 +93,9 @@ func (s *Service) GroupSummary(
 		return nil, err
 	}
 
-	out := make([]*shipmentports.ShipmentBoardGroup, 0, len(rows))
+	out := make([]*shipmentboardports.ShipmentBoardGroup, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, &shipmentports.ShipmentBoardGroup{
+		out = append(out, &shipmentboardports.ShipmentBoardGroup{
 			Key:     row.Key,
 			Label:   row.Label,
 			Count:   row.Count,
@@ -105,17 +107,17 @@ func (s *Service) GroupSummary(
 }
 
 func ZeroFilledStageSummary(
-	rows []*shipmentports.ShipmentStageSummaryRow,
-) []*shipmentports.ShipmentStageSummary {
-	byRank := make(map[int16]*shipmentports.ShipmentStageSummaryRow, len(rows))
+	rows []*shipmentboardports.ShipmentStageSummaryRow,
+) []*shipmentboardports.ShipmentStageSummary {
+	byRank := make(map[int16]*shipmentboardports.ShipmentStageSummaryRow, len(rows))
 	for _, row := range rows {
 		byRank[row.StageRank] = row
 	}
 
-	stages := shipment.Stages()
-	out := make([]*shipmentports.ShipmentStageSummary, 0, len(stages))
+	stages := shipmentvocab.Stages()
+	out := make([]*shipmentboardports.ShipmentStageSummary, 0, len(stages))
 	for _, stage := range stages {
-		summary := &shipmentports.ShipmentStageSummary{
+		summary := &shipmentboardports.ShipmentStageSummary{
 			Stage:   stage,
 			Rank:    int(stage.Rank()),
 			Revenue: decimal.Zero,
@@ -132,38 +134,41 @@ func ZeroFilledStageSummary(
 
 func (s *Service) QuickFilterCounts(
 	ctx context.Context,
-	req *shipmentports.ShipmentBoardScopeRequest,
-) ([]*shipmentports.ShipmentQuickFilterCount, error) {
+	req *shipmentboardports.ShipmentBoardScopeRequest,
+) ([]*shipmentboardports.ShipmentQuickFilterCount, error) {
 	scope, err := s.scope(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
 
-	filters := make([]shipment.QuickFilter, 0, len(shipment.CountableQuickFilters()))
-	for _, filter := range shipment.CountableQuickFilters() {
+	filters := make([]quickfilter.QuickFilter, 0, len(quickfilter.CountableQuickFilters()))
+	for _, filter := range quickfilter.CountableQuickFilters() {
 		if filter.NeedsMargin() && !req.Margins {
 			continue
 		}
 		filters = append(filters, filter)
 	}
-	specs := make([]shipment.QuickFilterSpec, 0, len(filters))
+	specs := make([]quickfilter.QuickFilterSpec, 0, len(filters))
 	for _, filter := range filters {
-		specs = append(specs, shipment.Quick(filter))
+		specs = append(specs, quickfilter.Quick(filter))
 	}
 
-	totals, err := s.repo.QuickFilterTotals(ctx, &shipmentports.CountShipmentQuickFiltersRequest{
-		Scope:   scope,
-		Filters: specs,
-	})
+	totals, err := s.repo.QuickFilterTotals(
+		ctx,
+		&shipmentboardports.CountShipmentQuickFiltersRequest{
+			Scope:   scope,
+			Filters: specs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*shipmentports.ShipmentQuickFilterCount, 0, len(filters))
+	out := make([]*shipmentboardports.ShipmentQuickFilterCount, 0, len(filters))
 	for i, filter := range filters {
 		out = append(
 			out,
-			&shipmentports.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
+			&shipmentboardports.ShipmentQuickFilterCount{Filter: filter, Count: totals[i].Count},
 		)
 	}
 

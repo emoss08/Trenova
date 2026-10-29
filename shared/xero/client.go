@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/shared/restx"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/google/uuid"
 )
 
@@ -68,8 +69,8 @@ type wireOrganisation struct {
 	Edition               string   `json:"Edition"`
 	FinancialYearEndDay   int      `json:"FinancialYearEndDay"`
 	FinancialYearEndMonth int      `json:"FinancialYearEndMonth"`
-	PeriodLockDate        wireTime `json:"PeriodLockDate"`
-	EndOfYearLockDate     wireTime `json:"EndOfYearLockDate"`
+	PeriodLockDate        WireTime `json:"PeriodLockDate"`
+	EndOfYearLockDate     WireTime `json:"EndOfYearLockDate"`
 	IsDemoCompany         bool     `json:"IsDemoCompany"`
 }
 
@@ -84,26 +85,26 @@ type actionsEnvelope struct {
 	} `json:"Actions"`
 }
 
-type call struct {
-	endpoint      string
-	method        string
-	path          string
-	query         url.Values
-	key           string
-	modifiedSince *time.Time
-	body          any
-	out           any
-	expected      []int
+type Call struct {
+	Endpoint      string
+	Method        string
+	Path          string
+	Query         url.Values
+	Key           string
+	ModifiedSince *time.Time
+	Body          any
+	Out           any
+	Expected      []int
 }
 
 func New(tenantID, accessToken string, opts ...Option) (*Client, error) {
 	tenant := strings.TrimSpace(tenantID)
 	if tenant == "" {
-		return nil, ErrTenantIDRequired
+		return nil, xeroerrors.ErrTenantIDRequired
 	}
 	token := strings.TrimSpace(accessToken)
 	if token == "" {
-		return nil, ErrAccessTokenRequired
+		return nil, xeroerrors.ErrAccessTokenRequired
 	}
 
 	settings := resolveOptions(opts)
@@ -118,7 +119,7 @@ func New(tenantID, accessToken string, opts ...Option) (*Client, error) {
 		},
 		Retry:        settings.retry,
 		Observer:     settings.observer,
-		ErrorDecoder: decodeAPIError,
+		ErrorDecoder: xeroerrors.DecodeAPIError,
 	}
 	if settings.limiter != nil {
 		bucket := TenantBucket(settings.limiterKeyPrefix, tenant)
@@ -140,16 +141,16 @@ func (c *Client) TenantID() string {
 
 func (c *Client) Organisation(ctx context.Context) (*Organisation, error) {
 	var out organisationEnvelope
-	if err := c.do(ctx, &call{
-		endpoint: "organisation",
-		method:   http.MethodGet,
-		path:     accountingPath("Organisation"),
-		out:      &out,
+	if err := c.Do(ctx, &Call{
+		Endpoint: "organisation",
+		Method:   http.MethodGet,
+		Path:     AccountingPath("Organisation"),
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
 	if len(out.Organisations) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 
 	org := &out.Organisations[0]
@@ -165,19 +166,19 @@ func (c *Client) Organisation(ctx context.Context) (*Organisation, error) {
 		Edition:               org.Edition,
 		FinancialYearEndDay:   org.FinancialYearEndDay,
 		FinancialYearEndMonth: time.Month(org.FinancialYearEndMonth),
-		PeriodLockDate:        org.PeriodLockDate.ptr(),
-		EndOfYearLockDate:     org.EndOfYearLockDate.ptr(),
+		PeriodLockDate:        org.PeriodLockDate.Ptr(),
+		EndOfYearLockDate:     org.EndOfYearLockDate.Ptr(),
 		IsDemoCompany:         org.IsDemoCompany,
 	}, nil
 }
 
 func (c *Client) OrganisationActions(ctx context.Context) ([]OrganisationAction, error) {
 	var out actionsEnvelope
-	if err := c.do(ctx, &call{
-		endpoint: "organisation-actions",
-		method:   http.MethodGet,
-		path:     accountingPath("Organisation", "Actions"),
-		out:      &out,
+	if err := c.Do(ctx, &Call{
+		Endpoint: "organisation-actions",
+		Method:   http.MethodGet,
+		Path:     AccountingPath("Organisation", "Actions"),
+		Out:      &out,
 	}); err != nil {
 		return nil, err
 	}
@@ -192,23 +193,23 @@ func (c *Client) OrganisationActions(ctx context.Context) ([]OrganisationAction,
 	return actions, nil
 }
 
-func (c *Client) do(ctx context.Context, req *call) error {
-	headers := requestHeaders{idempotencyKey: req.key}
-	if req.modifiedSince != nil && !req.modifiedSince.IsZero() {
-		headers.ifModifiedSince = formatHTTPDate(*req.modifiedSince)
+func (c *Client) Do(ctx context.Context, req *Call) error {
+	headers := requestHeaders{idempotencyKey: req.Key}
+	if req.ModifiedSince != nil && !req.ModifiedSince.IsZero() {
+		headers.ifModifiedSince = formatHTTPDate(*req.ModifiedSince)
 	}
-	expected := req.expected
+	expected := req.Expected
 	if len(expected) == 0 {
 		expected = []int{http.StatusOK}
 	}
 
 	_, err := c.transport.Do(withRequestHeaders(ctx, headers), &restx.Request{
-		Endpoint:       req.endpoint,
-		Method:         req.method,
-		Path:           req.path,
-		Query:          req.query,
-		Body:           req.body,
-		Out:            req.out,
+		Endpoint:       req.Endpoint,
+		Method:         req.Method,
+		Path:           req.Path,
+		Query:          req.Query,
+		Body:           req.Body,
+		Out:            req.Out,
 		ExpectedStatus: expected,
 	})
 	if err != nil {
@@ -218,7 +219,7 @@ func (c *Client) do(ctx context.Context, req *call) error {
 }
 
 func redactAPIError(err error, redact func(string) string) {
-	apiErr, ok := apiErrorOf(err)
+	apiErr, ok := xeroerrors.APIErrorOf(err)
 	if !ok {
 		return
 	}
@@ -228,7 +229,7 @@ func redactAPIError(err error, redact func(string) string) {
 	}
 }
 
-func accountingPath(parts ...string) string {
+func AccountingPath(parts ...string) string {
 	segments := make([]string, 0, len(parts)+1)
 	segments = append(segments, accountingRoot)
 	for _, part := range parts {
@@ -237,38 +238,38 @@ func accountingPath(parts ...string) string {
 	return "/" + strings.Join(segments, "/")
 }
 
-func idempotencyKey(key string) (string, error) {
+func IdempotencyKey(key string) (string, error) {
 	trimmed := strings.TrimSpace(key)
 	if trimmed == "" || len(trimmed) > MaxIdempotencyKeyLength {
-		return "", ErrIdempotencyKey
+		return "", xeroerrors.ErrIdempotencyKey
 	}
 	for idx := range len(trimmed) {
 		if trimmed[idx] < ' ' || trimmed[idx] > '~' {
-			return "", ErrIdempotencyKey
+			return "", xeroerrors.ErrIdempotencyKey
 		}
 	}
 	return trimmed, nil
 }
 
-func guid(raw string) (string, error) {
+func GUID(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if value == "" {
-		return "", ErrIDRequired
+		return "", xeroerrors.ErrIDRequired
 	}
 	if len(value) != guidLength {
-		return "", ErrInvalidID
+		return "", xeroerrors.ErrInvalidID
 	}
 	if _, err := uuid.Parse(value); err != nil {
-		return "", ErrInvalidID
+		return "", xeroerrors.ErrInvalidID
 	}
 	return strings.ToLower(value), nil
 }
 
-func guids(ids []string, limit int) ([]string, error) {
+func GUIDs(ids []string, limit int) ([]string, error) {
 	out := make([]string, 0, len(ids))
 	seen := make(map[string]struct{}, len(ids))
 	for _, raw := range ids {
-		id, err := guid(raw)
+		id, err := GUID(raw)
 		if err != nil {
 			return nil, err
 		}
@@ -279,14 +280,14 @@ func guids(ids []string, limit int) ([]string, error) {
 		out = append(out, id)
 	}
 	if len(out) > limit {
-		return nil, ErrTooManyIDs
+		return nil, xeroerrors.ErrTooManyIDs
 	}
 	return out, nil
 }
 
-func pageQuery(page int) (url.Values, error) {
+func PageQuery(page int) (url.Values, error) {
 	if page < 1 {
-		return nil, ErrInvalidPage
+		return nil, xeroerrors.ErrInvalidPage
 	}
 	return url.Values{
 		"page":     {strconv.Itoa(page)},
@@ -294,21 +295,21 @@ func pageQuery(page int) (url.Values, error) {
 	}, nil
 }
 
-func textWithin(value string, limit int) bool {
+func TextWithin(value string, limit int) bool {
 	return utf8.RuneCountInString(value) <= limit
 }
 
-func currencyCode(raw string) (string, error) {
+func CurrencyCode(raw string) (string, error) {
 	code := strings.ToUpper(strings.TrimSpace(raw))
 	if code == "" {
 		return "", nil
 	}
 	if len(code) != 3 {
-		return "", ErrCurrencyCodeInvalid
+		return "", xeroerrors.ErrCurrencyCodeInvalid
 	}
 	for _, r := range code {
 		if !unicode.IsUpper(r) || r > unicode.MaxASCII {
-			return "", ErrCurrencyCodeInvalid
+			return "", xeroerrors.ErrCurrencyCodeInvalid
 		}
 	}
 	return code, nil

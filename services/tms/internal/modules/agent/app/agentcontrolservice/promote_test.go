@@ -4,21 +4,22 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type promoter struct {
-	agentports.AgentTrustService
-	asked []*agentports.PromoteReadyRequest
+	agenttrustports.AgentTrustService
+	asked []*agenttrustports.PromoteReadyRequest
 }
 
 func (p *promoter) PromoteReady(
 	_ context.Context,
-	req *agentports.PromoteReadyRequest,
-) ([]agentports.ToolPromotion, error) {
+	req *agenttrustports.PromoteReadyRequest,
+) ([]agenttrustports.ToolPromotion, error) {
 	p.asked = append(p.asked, req)
 	return nil, nil
 }
@@ -33,7 +34,7 @@ func TestTurningEarnedAutonomyOnPromotesWhatAlreadyEarnedIt(t *testing.T) {
 	svc.trust = trust
 	user := pulid.ID("usr_admin")
 
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		EarnedAutonomy: boolPtr(true),
 	}, userActor(user))
 
@@ -52,13 +53,13 @@ func TestLoweringTheThresholdPromotesButRaisingItDoesNot(t *testing.T) {
 	trust := &promoter{}
 	svc.trust = trust
 
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		PromotionThreshold: intPtr(25),
 	}, userActor(pulid.ID("usr_admin")))
 	require.NoError(t, err)
 	assert.Empty(t, trust.asked)
 
-	_, err = svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err = svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		PromotionThreshold: intPtr(5),
 	}, userActor(pulid.ID("usr_admin")))
 	require.NoError(t, err)

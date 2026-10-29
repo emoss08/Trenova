@@ -3,7 +3,6 @@ package agentevalcaseservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,14 +18,14 @@ const (
 
 func (s *Service) Purge(
 	ctx context.Context,
-	req agentports.PurgeEvalCasesRequest,
-) (*agentports.PurgeEvalCasesResult, error) {
+	req agentqualityports.PurgeEvalCasesRequest,
+) (*agentqualityports.PurgeEvalCasesResult, error) {
 	now := req.Now
 	if now <= 0 {
 		now = s.now()
 	}
 	limit := intutils.WithDefault(req.Limit, defaultPurgeBatch)
-	result := &agentports.PurgeEvalCasesResult{}
+	result := &agentqualityports.PurgeEvalCasesResult{}
 
 	retentions, err := s.retention.List(ctx)
 	if err != nil {

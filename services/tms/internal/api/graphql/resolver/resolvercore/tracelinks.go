@@ -1,0 +1,27 @@
+package resolvercore
+
+import (
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+)
+
+func TraceURLBuilder(cfg *monitoringconfig.Config) func(traceID string) string {
+	if cfg == nil {
+		return func(string) string { return "" }
+	}
+	tracing := cfg.Tracing
+
+	return tracing.TraceURL
+}
+
+func (r *Core) TraceURLOf(traceID string) *string {
+	if r.TraceURL == nil || traceID == "" {
+		return nil
+	}
+
+	url := r.TraceURL(traceID)
+	if url == "" {
+		return nil
+	}
+
+	return &url
+}

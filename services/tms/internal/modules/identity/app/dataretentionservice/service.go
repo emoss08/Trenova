@@ -3,7 +3,7 @@ package dataretentionservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,7 +37,7 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	entity, err := s.repo.Get(ctx, tenantports.GetDataRetentionRequest{
 		UserID: tenantInfo.UserID,
 		OrgID:  tenantInfo.OrgID,
@@ -49,14 +49,14 @@ func (s *Service) Get(
 	if !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
-	return &tenant.DataRetention{
+	return &dataretention.DataRetention{
 		OrganizationID:               tenantInfo.OrgID,
 		BusinessUnitID:               tenantInfo.BuID,
 		AuditRetentionPeriod:         defaultAuditRetentionDays,
-		AIFeedbackRetentionPeriod:    tenant.DefaultAIFeedbackRetentionDays,
-		AgentEvalCaseRetentionPeriod: tenant.DefaultAgentEvalCaseRetentionDays,
-		AIAuditRetentionPeriod:       tenant.DefaultAIAuditRetentionDays,
-		AICorrectionRetentionPeriod:  tenant.DefaultAICorrectionRetentionDays,
+		AIFeedbackRetentionPeriod:    dataretention.DefaultAIFeedbackRetentionDays,
+		AgentEvalCaseRetentionPeriod: dataretention.DefaultAgentEvalCaseRetentionDays,
+		AIAuditRetentionPeriod:       dataretention.DefaultAIAuditRetentionDays,
+		AICorrectionRetentionPeriod:  dataretention.DefaultAICorrectionRetentionDays,
 	}, nil
 }
 
@@ -79,8 +79,8 @@ func (r *UpdateDataRetentionRequest) keepsCurrent() bool {
 func (s *Service) Update(
 	ctx context.Context,
 	req *UpdateDataRetentionRequest,
-) (*tenant.DataRetention, error) {
-	entity := &tenant.DataRetention{
+) (*dataretention.DataRetention, error) {
+	entity := &dataretention.DataRetention{
 		OrganizationID:                req.TenantInfo.OrgID,
 		BusinessUnitID:                req.TenantInfo.BuID,
 		AuditRetentionPeriod:          req.AuditRetentionPeriod,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,22 +30,22 @@ func providers() []*aiprovider.Provider {
 		{
 			ID: vllmID, Name: "Workstation vLLM", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 			Model: "meta-llama/Llama-3.3-70B-Instruct", TimeoutSeconds: 60, Priority: 10,
-			Tasks: []aiprovider.Task{aiprovider.TaskAssistantChat, aiprovider.TaskFormulaAssistant},
+			Tasks: []aitask.Task{aitask.TaskAssistantChat, aitask.TaskFormulaAssistant},
 		},
 		{
 			ID: groqID, Name: "Groq", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 			Model: "llama-3.3-70b-versatile", Priority: 20,
-			Tasks: []aiprovider.Task{aiprovider.TaskOperationalInsights},
+			Tasks: []aitask.Task{aitask.TaskOperationalInsights},
 		},
 		{
 			ID: bedrockID, Name: "AWS Bedrock", Kind: aiprovider.KindAnthropicMessages, Enabled: true,
 			Model: "claude-sonnet-5", Priority: 30, Trusted: true,
-			Tasks: []aiprovider.Task{aiprovider.TaskBillingDiagnosis},
+			Tasks: []aitask.Task{aitask.TaskBillingDiagnosis},
 		},
 		{
 			ID: localID, Name: "Local LM Studio", Kind: aiprovider.KindOpenAIChat, Enabled: true,
 			Model: "Qwen/Qwen2.5-14B-Instruct", Priority: 40,
-			Tasks: []aiprovider.Task{aiprovider.TaskScopeClassification},
+			Tasks: []aitask.Task{aitask.TaskScopeClassification},
 		},
 	}
 }
@@ -186,25 +187,25 @@ func fixture() *readings {
 		taskCells: []aianalyticsports.TaskCellRow{
 			{
 				DeploymentKey: at(llamaKey, vllmID),
-				Task:          aiprovider.TaskAssistantChat,
+				Task:          aitask.TaskAssistantChat,
 				Runs:          100,
 				Completed:     72,
 			},
 			{
 				DeploymentKey: at(sonnetKey, bedrockID),
-				Task:          aiprovider.TaskAssistantChat,
+				Task:          aitask.TaskAssistantChat,
 				Runs:          50,
 				Completed:     48,
 			},
 			{
 				DeploymentKey: at(sonnetKey, bedrockID),
-				Task:          aiprovider.TaskBillingDiagnosis,
+				Task:          aitask.TaskBillingDiagnosis,
 				Runs:          10,
 				Completed:     9,
 			},
 			{
 				DeploymentKey: at(llamaKey, groqID),
-				Task:          aiprovider.TaskOperationalInsights,
+				Task:          aitask.TaskOperationalInsights,
 				Runs:          40,
 				Completed:     36,
 			},
@@ -353,7 +354,7 @@ func TestTaskFitSuggestsRoutingToTheProviderOfTheModelThatFinishesMore(t *testin
 
 	require.Len(t, got.Tasks, 3)
 	chat := got.Tasks[0]
-	assert.Equal(t, aiprovider.TaskAssistantChat, chat.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, chat.Task)
 	assert.Equal(t, "Workstation vLLM", chat.Current.Name)
 	assert.Equal(t, llamaKey, chat.CurrentSeriesKey)
 	assert.Equal(t, sonnetKey, chat.BestSeriesKey)
@@ -362,7 +363,7 @@ func TestTaskFitSuggestsRoutingToTheProviderOfTheModelThatFinishesMore(t *testin
 	assert.InDelta(t, 24, chat.Suggestion.GainPoints, 1e-9)
 
 	insights := got.Tasks[1]
-	assert.Equal(t, aiprovider.TaskOperationalInsights, insights.Task)
+	assert.Equal(t, aitask.TaskOperationalInsights, insights.Task)
 	assert.Equal(t, "Groq", insights.Current.Name)
 	assert.Empty(t, insights.BestSeriesKey, "one series cannot be the best of one")
 	assert.Nil(t, insights.Suggestion, "nothing else took the task")
@@ -403,24 +404,24 @@ func TestTaskFitRoutesToTheDeploymentThatFinishesTheTaskBest(t *testing.T) {
 
 	data := fixture()
 	local := data.providers[3]
-	local.Tasks = append(local.Tasks, aiprovider.TaskDailyBriefing)
+	local.Tasks = append(local.Tasks, aitask.TaskDailyBriefing)
 	data.providers = append([]*aiprovider.Provider{local}, data.providers[:3]...)
 	data.taskCells = []aianalyticsports.TaskCellRow{
 		{
 			DeploymentKey: at(llamaKey, vllmID),
-			Task:          aiprovider.TaskDailyBriefing,
+			Task:          aitask.TaskDailyBriefing,
 			Runs:          40,
 			Completed:     32,
 		},
 		{
 			DeploymentKey: at(llamaKey, groqID),
-			Task:          aiprovider.TaskDailyBriefing,
+			Task:          aitask.TaskDailyBriefing,
 			Runs:          30,
 			Completed:     29,
 		},
 		{
 			DeploymentKey: at(qwenKey, localID),
-			Task:          aiprovider.TaskDailyBriefing,
+			Task:          aitask.TaskDailyBriefing,
 			Runs:          40,
 			Completed:     28,
 		},
@@ -451,13 +452,13 @@ func TestTaskFitWithholdsASuggestionWhenTheCurrentRouteHasTooFewRuns(t *testing.
 	data.taskCells = []aianalyticsports.TaskCellRow{
 		{
 			DeploymentKey: at(llamaKey, vllmID),
-			Task:          aiprovider.TaskAssistantChat,
+			Task:          aitask.TaskAssistantChat,
 			Runs:          12,
 			Completed:     6,
 		},
 		{
 			DeploymentKey: at(sonnetKey, bedrockID),
-			Task:          aiprovider.TaskAssistantChat,
+			Task:          aitask.TaskAssistantChat,
 			Runs:          50,
 			Completed:     48,
 		},

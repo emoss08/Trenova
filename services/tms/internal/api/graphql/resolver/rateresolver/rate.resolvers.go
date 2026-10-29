@@ -9,11 +9,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
@@ -27,7 +31,7 @@ func (r *QueryResolver) RateAgreements(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +56,7 @@ func (r *QueryResolver) RateZones(ctx context.Context, input gqlmodel.DataTableC
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +81,7 @@ func (r *QueryResolver) RateMatrices(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +106,7 @@ func (r *QueryResolver) RateQuotes(ctx context.Context, input gqlmodel.DataTable
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -127,12 +131,12 @@ func (r *QueryResolver) RateAgreement(ctx context.Context, id string) (*gqlmodel
 		return nil, err
 	}
 
-	agreementID, err := base.ParseIDField("id", id)
+	agreementID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	entity, err := r.RateAgreementService.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: agreementID,
 		TenantInfo:      tenant,
@@ -169,14 +173,14 @@ func (r *QueryResolver) RateMatrix(ctx context.Context, id string) (*gqlmodel.Ra
 		return nil, err
 	}
 
-	matrixID, err := base.ParseIDField("id", id)
+	matrixID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	entity, err := r.RateMatrixService.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID:      matrixID,
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		IncludeDimensions: true,
 	})
 	if err != nil {
@@ -187,13 +191,13 @@ func (r *QueryResolver) RateMatrix(ctx context.Context, id string) (*gqlmodel.Ra
 }
 
 func (r *RateMatrixResolver) Cells(ctx context.Context, obj *gqlmodel.RateMatrix, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
-	matrixID, err := base.ParseIDField("id", obj.ID)
+	matrixID, err := gqlid.ParseIDField("id", obj.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.matrixCellPage(ctx, &cellPageRequest{
-		key:    ratematrix.VersionKey{RateMatrixID: matrixID, VersionNumber: ratematrix.DraftVersion},
+		key:    ratematrixversion.VersionKey{RateMatrixID: matrixID, VersionNumber: ratematrix.DraftVersion},
 		offset: offset,
 		limit:  limit,
 	})
@@ -243,13 +247,13 @@ func (r *RateAgreementResolver) LaneCountExact(ctx context.Context, obj *gqlmode
 	return count.Exact, nil
 }
 
-func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error) {
+func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrixversion.RateMatrixVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	matrixID, err := gqlid.ParseIDField("rateMatrixId", rateMatrixID)
 	if err != nil {
 		return nil, err
 	}
@@ -260,43 +264,43 @@ func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID str
 	}
 
 	return r.RateMatrixService.ListVersions(ctx, &ratematrixports.ListVersionsRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		RateMatrixID: matrixID,
 		Limit:        limit,
 	})
 }
 
-func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error) {
+func (r *QueryResolver) RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrixversion.RateMatrixVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	matrixID, err := gqlid.ParseIDField("rateMatrixId", rateMatrixID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.RateMatrixService.GetVersion(ctx, &ratematrixports.GetVersionRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		RateMatrixID:  matrixID,
 		VersionNumber: int64(versionNumber),
 	})
 }
 
-func (r *QueryResolver) RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error) {
+func (r *QueryResolver) RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	matrixID, err := gqlid.ParseIDField("rateMatrixId", rateMatrixID)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.RateMatrixService.ListReviews(ctx, &ratematrixports.ListReviewsRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		RateMatrixID: matrixID,
 	})
 }
@@ -307,7 +311,7 @@ func (r *QueryResolver) RateMatrixUsages(ctx context.Context, rateMatrixID strin
 		return nil, err
 	}
 
-	matrixID, err := base.ParseIDField("rateMatrixId", rateMatrixID)
+	matrixID, err := gqlid.ParseIDField("rateMatrixId", rateMatrixID)
 	if err != nil {
 		return nil, err
 	}
@@ -319,17 +323,17 @@ func (r *QueryResolver) RateMatrixUsages(ctx context.Context, rateMatrixID strin
 	}
 
 	return r.RateMatrixService.ListUsages(ctx, &ratematrixservice.ListUsagesRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		RateMatrixID:  matrixID,
 		VersionNumber: number,
 	})
 }
 
-func (r *RateMatrixVersionResolver) Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error) {
+func (r *RateMatrixVersionResolver) Dimensions(ctx context.Context, obj *ratematrixversion.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error) {
 	return rateMatrixDimensionsToModel(obj.OrderedDimensions()), nil
 }
 
-func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
+func (r *RateMatrixVersionResolver) Cells(ctx context.Context, obj *ratematrixversion.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error) {
 	return r.matrixCellPage(ctx, &cellPageRequest{
 		key:    obj.Key(),
 		offset: offset,

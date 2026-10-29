@@ -1,7 +1,7 @@
 package edix12inspect
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/pkg/x12"
 )
 
@@ -28,22 +28,22 @@ const (
 )
 
 type InspectX12Request struct {
-	RawX12         string                   `json:"rawX12"`
-	TransactionSet edi.TransactionSet       `json:"transactionSet"`
-	X12Version     string                   `json:"x12Version"`
-	Envelope       *edi.X12EnvelopeSettings `json:"envelope,omitempty"`
-	Diagnostics    []edi.Diagnostic         `json:"diagnostics,omitempty"`
+	RawX12         string                           `json:"rawX12"`
+	TransactionSet edidocument.TransactionSet       `json:"transactionSet"`
+	X12Version     string                           `json:"x12Version"`
+	Envelope       *edidocument.X12EnvelopeSettings `json:"envelope,omitempty"`
+	Diagnostics    []edidocument.Diagnostic         `json:"diagnostics,omitempty"`
 }
 
 type InspectOverview struct {
-	TransactionSet edi.TransactionSet     `json:"transactionSet"`
-	X12Version     string                 `json:"x12Version"`
-	Separators     X12Separators          `json:"separators"`
-	Summary        InspectSummary         `json:"summary"`
-	Envelope       X12Envelope            `json:"envelope"`
-	Groups         []X12FunctionalGroup   `json:"groups"`
-	Transactions   []X12Transaction       `json:"transactions"`
-	Diagnostics    []NormalizedDiagnostic `json:"diagnostics"`
+	TransactionSet edidocument.TransactionSet `json:"transactionSet"`
+	X12Version     string                     `json:"x12Version"`
+	Separators     X12Separators              `json:"separators"`
+	Summary        InspectSummary             `json:"summary"`
+	Envelope       X12Envelope                `json:"envelope"`
+	Groups         []X12FunctionalGroup       `json:"groups"`
+	Transactions   []X12Transaction           `json:"transactions"`
+	Diagnostics    []NormalizedDiagnostic     `json:"diagnostics"`
 }
 
 type InspectX12Result struct {
@@ -158,13 +158,13 @@ type X12Component struct {
 }
 
 type NormalizedDiagnostic struct {
-	Severity        edi.ValidationSeverity `json:"severity"`
-	Code            string                 `json:"code"`
-	Source          DiagnosticSource       `json:"source"`
-	SegmentID       string                 `json:"segmentId,omitempty"`
-	SegmentIndex    int                    `json:"segmentIndex,omitempty"`
-	ElementPosition int                    `json:"elementPosition,omitempty"`
-	Path            string                 `json:"path,omitempty"`
-	Message         string                 `json:"message"`
-	SuggestedFix    string                 `json:"suggestedFix,omitempty"`
+	Severity        edidocument.ValidationSeverity `json:"severity"`
+	Code            string                         `json:"code"`
+	Source          DiagnosticSource               `json:"source"`
+	SegmentID       string                         `json:"segmentId,omitempty"`
+	SegmentIndex    int                            `json:"segmentIndex,omitempty"`
+	ElementPosition int                            `json:"elementPosition,omitempty"`
+	Path            string                         `json:"path,omitempty"`
+	Message         string                         `json:"message"`
+	SuggestedFix    string                         `json:"suggestedFix,omitempty"`
 }

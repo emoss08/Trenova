@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestRenderTemplateFillsKnownPlaceholders(t *testing.T) {
 
 	out := RenderTemplate(
 		"Hi {first} — {PRO} for {customer} ({po}) is {status} on {lane}, ETA {eta}. {unknown} {sender}",
-		&inboundmessageports.ReplyContext{
+		&inboundreplyports.ReplyContext{
 			SenderFirstName: "Dana",
 			SenderAddress:   "edi@partner.example",
 			ProNumber:       "S-104251",
@@ -38,7 +38,10 @@ func TestRenderTemplateFillsKnownPlaceholders(t *testing.T) {
 func TestRenderTemplateFallsBackWhenUnknown(t *testing.T) {
 	t.Parallel()
 
-	out := RenderTemplate("Hi {first}, {pro} is {status}; ETA {eta}.", &inboundmessageports.ReplyContext{})
+	out := RenderTemplate(
+		"Hi {first}, {pro} is {status}; ETA {eta}.",
+		&inboundreplyports.ReplyContext{},
+	)
 
 	assert.Equal(t, "Hi there, your load is moving; ETA to follow.", out)
 }
@@ -50,7 +53,10 @@ func TestServiceRenderTemplateUsesMatchedShipment(t *testing.T) {
 	created, err := f.service.CreateTemplate(t.Context(), &CreateTemplateRequest{
 		TenantInfo: testTenant,
 		UserID:     testUserID,
-		Input:      TemplateInput{Name: "Running late", Body: "Hi {first} — {pro} is {status}. {lane} {unknown}"},
+		Input: TemplateInput{
+			Name: "Running late",
+			Body: "Hi {first} — {pro} is {status}. {lane} {unknown}",
+		},
 	})
 	require.NoError(t, err)
 
@@ -61,7 +67,11 @@ func TestServiceRenderTemplateUsesMatchedShipment(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, "Hi Dana — S-104251 is running about two hours behind. Columbus → Louisville {unknown}", out)
+	assert.Equal(
+		t,
+		"Hi Dana — S-104251 is running about two hours behind. Columbus → Louisville {unknown}",
+		out,
+	)
 }
 
 func TestCreateTemplateRejectsDuplicateName(t *testing.T) {

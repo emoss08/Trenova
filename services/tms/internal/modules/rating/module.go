@@ -20,7 +20,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratezonerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
@@ -32,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tarifftables"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
@@ -80,7 +84,7 @@ func SharedOptions() fx.Option {
 			func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
 			ratinghydration.New,
 			func(h *ratinghydration.Hydrator) ratequoteports.ShipmentRatingHydrator { return h },
-			tariff.NewTables,
+			tarifftables.NewTables,
 			tariff.NewCodes,
 			tariff.NewSettings,
 			tariff.NewContexts,
@@ -92,6 +96,11 @@ func SharedOptions() fx.Option {
 		),
 		tariff.AuthoringModule,
 		formulatemplateservice.Module,
+		fx.Provide(
+			formulatemplatereviewservice.New,
+			formulatemplatestudioservice.New,
+			formulatemplateimportservice.New,
+		),
 		formulalibraryservice.Module,
 		rateengine.Module,
 	)

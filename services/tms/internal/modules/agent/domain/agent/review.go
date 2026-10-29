@@ -2,7 +2,6 @@ package agent
 
 import (
 	"errors"
-	"slices"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -17,16 +16,6 @@ func (p *AgentProposal) ApprovalNeedsReview() bool {
 // called: nobody saw it before its preview, so approving it always needs one.
 func (p *AgentProposal) FromScript() bool {
 	return p.ScriptStepKey != ""
-}
-
-func (p *AgentPlan) FromScript() bool {
-	return p.ScriptStepKey != ""
-}
-
-func PlanNeedsReview(steps []*AgentProposal) bool {
-	return slices.ContainsFunc(steps, func(step *AgentProposal) bool {
-		return step != nil && step.Status == ProposalStatusPending && step.ApprovalNeedsReview()
-	})
 }
 
 func ReviewRequiredError() error {

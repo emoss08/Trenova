@@ -16,7 +16,7 @@ everywhere at once (see "Renaming a tool" below).
 A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `shipment_list`,
 `shipment_place_hold`, `order_attach_shipments`.
 
-- **Namespace.** One word from `agentports.ToolNamespaces()`, the area of the product the tool
+- **Namespace.** One word from `agenttoolports.ToolNamespaces()`, the area of the product the tool
   works in (`shipment`, `order`, `invoice`, `worker`, …). Each namespace has a title and a
   one-line summary; the runtime's namespace map is built from that table and from
   `AgentToolDescriptor.Namespace`, never from a list kept anywhere else. A new namespace is
@@ -39,13 +39,13 @@ A tool is `<namespace>_<verb>[_<object>]`, all lower case: `shipment_get`, `ship
   namespace, so `settlement_get_driver` reads `get_driver_settlement`, the kind of record it
   reads, `settlement_list_carrier` reads `list_carrier_settlements` and
   `settlement_add_driver_adjustment` reads `add_driver_settlement_adjustment`.
-  `agentports.ToolNameFor` reads a name in reading order back to its tool, which is how a
+  `agenttoolports.ToolNameFor` reads a name in reading order back to its tool, which is how a
   record link finds the tool that reads it (`ReadRecord`).
 - **Records.** A kind of record that keeps its own name in the registry (`bank_receipt`,
   `customer_payment`) is listed in its namespace's `Records`. An object that opens with one
   reads without the namespace: `receivable_get_bank_receipt` reads `get_bank_receipt`,
   `receivable_list_customer_payments` reads `list_customer_payments`, and
-  `agentports.ToolNameFor("get_bank_receipt")` finds the tool. Without it a record link, a
+  `agenttoolports.ToolNameFor("get_bank_receipt")` finds the tool. Without it a record link, a
   run's subject read (`ReadRecord`) and a card's kind would all name a `receivable_bank_receipt`
   that does not exist. List a record only when the registry names it so; anything else reads
   with the namespace (`receivable_apply_credit_memo` reads `apply_receivable_credit_memo`).
@@ -60,7 +60,7 @@ one read with the union of their parameters (`shipment_list` was `list_shipments
 `search_shipments`). Tools are not merged across permission operations: a tool's policy names
 one resource and one operation, so pin and unpin stay two tools.
 
-A write over one record or many is a `common.RecordBatch` around the single-record tool, which
+A write over one record or many is a `recordbatch.RecordBatch` around the single-record tool, which
 is no longer registered. A call naming one record is the single tool's call, with its preview,
 its validation, its target (so the proposal is pinned to that record's version) and its
 result; a call naming several previews each through the single tool and runs each through it
@@ -85,7 +85,8 @@ their notes).
 | Paging | `limit` with its `minimum` and `maximum` declared and marked `toolschema.Clamped`, so a call past the bound is read as the bound with a note rather than refused. A read over a cursor connection (a repository listing through `listquery.Connection`, which has no offset) pages with `after`, the `nextCursor` of the previous page, and returns `hasMore` and `nextCursor`, as the GraphQL list queries page with `after` and `endCursor` (`cursorPageSchema`, `readCursorWindow`). Each cursor is bound to the tool and its other arguments (`cursorScope`), so one reused under a changed query, filter, status or sort is refused, and an `offset` sent to a cursor list is refused rather than ignored. A read over an offset query (a repository that applies `.Offset(SafeOffset())`, or a slice in memory) keeps `offset` and returns `hasMore` and `nextOffset` (`pageSchema`). A tool never takes both. |
 | Free text | `reason` for why a change is made (a cancel, a rejection, a void); `note` for text kept on the record (a hold's note); `body` for a message sent to someone. `comment` and `memo` stay where they are the record's own field. Never `notes` or `<x>Reason`. |
 | Dates | `agenttoolschema.Date` for a day, `DateTime` for an instant and `LocalDateTime` for a wall-clock time read in the place's or organization's zone. Each declares its format, which the runtime asserts before the tool parses it. |
-| Columns | A list whose rows are wide takes `fields`, the columns of each row to read besides the id (`fieldsSchema`, `paramFields`), outside the cursor scope. Every GraphQL list and `shipment_list` take it. |
+| Columns | A list whose rows are wide takes `fields`, the columns of each row the model reads besides the id (`fieldsSchema`, `agenttoolports.ListFieldsParam`), outside the cursor scope. The list returns every column; the runtime narrows the model's copy, so the person's table keeps them all. Every GraphQL list takes it, and every repository list whose spec names its `row` (a zero value of the row it returns, `rowColumns`). |
+| Lateness | A list of work that runs late takes `late`, read from the stops' windows, never from a status a person sets (`shipment_list`, `dispatch_get_board`). |
 | Status | A tool narrowing by status takes `status` as a list of the domain's values, all in one call. |
 | Filters | The generated list tools take `filters` of `{field, operator, value, values, days}` from the entity's filter catalog; a tool that takes `status` itself leaves it out of `filters`. |
 

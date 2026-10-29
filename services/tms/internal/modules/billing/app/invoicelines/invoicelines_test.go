@@ -4,15 +4,16 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicelines"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -453,8 +454,8 @@ func TestForShipmentSplitsAPartialFreightShareAcrossTheLinesToTheCent(t *testing
 		{Label: "Linehaul", Amount: dec("666.67")},
 		{Label: "Stop charges", Amount: dec("333.33")},
 	}
-	share := &shipment.PayerShare{Charges: []shipment.AllocatedCharge{{
-		Kind:        shipment.ChargeAllocationKindFreight,
+	share := &chargeallocation.PayerShare{Charges: []chargeallocation.AllocatedCharge{{
+		Kind:        shipmentvocab.ChargeAllocationKindFreight,
 		ChargeTotal: dec("1000"),
 		Amount:      dec("333.33"),
 		Percent:     decimal.NewNullDecimal(dec("33.333")),

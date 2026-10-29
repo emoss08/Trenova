@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -76,7 +77,7 @@ type OperationAccess struct {
 // own fields are selections.
 func Operations(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	operations ast.OperationList,
 	fragments ast.FragmentDefinitionList,
 	checks RootChecks,
@@ -131,7 +132,7 @@ func Operations(
 // names the kind in @requiresRead.
 func LinkedFields(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	operations ast.OperationList,
 	fragments ast.FragmentDefinitionList,
 	checks RootChecks,

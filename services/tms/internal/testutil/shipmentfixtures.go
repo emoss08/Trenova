@@ -5,31 +5,31 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule/hazmatsegregationruledb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule/hazmatsegregationruledb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,7 +55,7 @@ type ShipmentGraphParams struct {
 	BOL          string
 	ProNumber    string
 	ShipmentID   pulid.ID
-	MoveStatuses []shipment.MoveStatus
+	MoveStatuses []shipmentvocab.MoveStatus
 }
 
 func SeedShipmentIntegrationFixture(
@@ -98,7 +98,7 @@ func CreateShipmentGraph(
 		ShipmentTypeID:    fixture.ShipmentType.ID,
 		CustomerID:        fixture.Customer.ID,
 		FormulaTemplateID: fixture.FormulaTemplate.ID,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		ProNumber:         params.ProNumber,
 		BOL:               params.BOL,
 	}
@@ -126,9 +126,9 @@ func CreateShipmentGraph(
 				OrganizationID:       tenantInfo.OrgID,
 				ShipmentMoveID:       move.ID,
 				LocationID:           origin.ID,
-				Status:               shipment.StopStatusNew,
-				Type:                 shipment.StopTypePickup,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusNew,
+				Type:                 shipmentvocab.StopTypePickup,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             0,
 				ScheduledWindowStart: now + int64(idx*10_000),
 				ScheduledWindowEnd:   new(now + int64(idx*10_000) + 1_800),
@@ -139,9 +139,9 @@ func CreateShipmentGraph(
 				OrganizationID:       tenantInfo.OrgID,
 				ShipmentMoveID:       move.ID,
 				LocationID:           delivery.ID,
-				Status:               shipment.StopStatusNew,
-				Type:                 shipment.StopTypeDelivery,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusNew,
+				Type:                 shipmentvocab.StopTypeDelivery,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             1,
 				ScheduledWindowStart: now + int64(idx*10_000) + 7_200,
 				ScheduledWindowEnd:   new(now + int64(idx*10_000) + 9_000),
@@ -400,7 +400,11 @@ func MustCreateHazmatSegregationRule(
 		entity.MinimumDistance = new(float64(10))
 		entity.DistanceUnit = "FT"
 	}
-	err := hazmatsegregationruledb.HazmatSegregationRules.Create(tenantContext(ctx, tenantInfo), db, entity)
+	err := hazmatsegregationruledb.HazmatSegregationRules.Create(
+		tenantContext(ctx, tenantInfo),
+		db,
+		entity,
+	)
 	require.NoError(t, err)
 	return entity
 }

@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,18 +23,18 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("worker_list", map[string]any{}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("worker_list", map[string]any{"query": "Maria"}),
-		toolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
-		textTurn("I cannot look that up."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("worker_list", map[string]any{"query": "Maria"}),
+		runtimetest.ToolTurn("shipment_get", map[string]any{"shipmentId": "shp_1"}),
+		runtimetest.TextTurn("I cannot look that up."),
 	}}
-	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 		tool, queryTool("shipment_get", map[string]any{"id": "shp_1"}, nil),
 	}}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Who is Maria?",
 	})
 	require.NoError(t, err)
@@ -44,48 +45,4 @@ func TestRun_KeepsTheCallsTheLoopRefusedWithoutDispatching(t *testing.T) {
 	assert.Equal(t, aitrace.OutcomeDenied, refusal.Verdict)
 	assert.NotEmpty(t, refusal.CallID)
 	assert.Contains(t, refusal.Content, "not enabled for this agent")
-}
-
-func TestRecordLoopRefusals_WritesEachOnceAsAFailedToolStep(t *testing.T) {
-	t.Parallel()
-
-	ledger := newKeyedLedger()
-	definition := pulid.MustNew("agdef_")
-	req := &RecordLoopRefusalsRequest{
-		Ledger: ledger,
-		Tenant: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		Owner: agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAssistantTurn,
-			ID:   pulid.MustNew("atrn_"),
-		},
-		DefinitionID: definition,
-		Attempt:      1,
-		Refusals: []agentports.LoopRefusal{
-			{
-				CallID:   "call_1",
-				ToolName: "worker_list",
-				Verdict:  aitrace.OutcomeDenied,
-				Reason:   "the agent does not hold the tool",
-				Content:  `"worker_list" is not enabled for this agent`,
-			},
-			{CallID: "", ToolName: "nameless", Verdict: aitrace.OutcomeInvalid},
-		},
-	}
-
-	assert.Zero(t, RecordLoopRefusals(t.Context(), req))
-	require.Len(t, ledger.steps, 1, "a refusal with no call id has nothing to key it by")
-
-	step := ledger.steps[loopRefusalKeyPrefix+"call_1"]
-	assert.Equal(t, agentports.RunStepTool, step.Kind)
-	assert.Equal(t, agentports.RunStepFailed, step.Status)
-	assert.Equal(t, definition, step.DefinitionID, "the scorecard counts it toward its agent")
-	assert.Equal(t, aitrace.OutcomeDenied, step.Outcome.Verdict)
-	assert.Equal(t, "the agent does not hold the tool", step.Outcome.Reason)
-
-	req.Attempt = 2
-	req.Refusals[0].Reason = "written again"
-	assert.Zero(t, RecordLoopRefusals(t.Context(), req))
-	assert.Equal(t, "the agent does not hold the tool",
-		ledger.steps[loopRefusalKeyPrefix+"call_1"].Outcome.Reason,
-		"a retried finish does not write the refusal twice")
 }

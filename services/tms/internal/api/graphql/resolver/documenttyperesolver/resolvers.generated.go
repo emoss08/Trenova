@@ -3,12 +3,12 @@
 package documenttyperesolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	DocumentTypeService *documenttypeservice.Service
 }
 

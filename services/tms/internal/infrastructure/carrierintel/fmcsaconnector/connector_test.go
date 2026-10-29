@@ -12,11 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/carrierintelligenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -103,7 +105,7 @@ func routeHandler(t *testing.T, overrides map[string]http.HandlerFunc) http.Hand
 }
 
 func testConnector() *Connector {
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	connector.extraOptions = []fmcsa.Option{fmcsa.WithRetry(restx.RetryConfig{})}
 	return connector
 }
@@ -138,7 +140,7 @@ func bindTestClient(t *testing.T, limiter restx.Limiter, handler http.HandlerFun
 func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	t.Parallel()
 
-	connector := New(&config.Config{})
+	connector := New(&appconfig.Config{}, &carrierintelligenceconfig.Config{})
 	assert.Equal(t, integration.TypeFMCSAQCMobile, connector.IntegrationType())
 
 	descriptor := connector.Descriptor()
@@ -157,8 +159,8 @@ func TestConnector_DescriptorAndPriceBook(t *testing.T) {
 	assert.Empty(t, prices)
 	assert.Equal(
 		t,
-		carrierintel.BillingModelFree,
-		prices.Price(carrierintel.EndpointComposite).Model,
+		carrierintelusage.BillingModelFree,
+		prices.Price(carrierintelusage.EndpointComposite).Model,
 	)
 }
 
@@ -180,13 +182,19 @@ func TestConnector_BindAndClientInterfaces(t *testing.T) {
 func TestConnector_BindValidation(t *testing.T) {
 	t.Parallel()
 
-	_, err := New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err := New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{},
 	})
 	require.Error(t, err)
 	assert.Equal(t, "FMCSA QCMobile web key is required", err.Error())
 
-	_, err = New(&config.Config{}).Bind(&carrierintelports.CarrierIntelBindParams{
+	_, err = New(
+		&appconfig.Config{},
+		&carrierintelligenceconfig.Config{},
+	).Bind(&carrierintelports.CarrierIntelBindParams{
 		Config: map[string]string{
 			integration.ConfigKeyCarrierIntelWebKey:  testWebKey,
 			integration.ConfigKeyCarrierIntelBaseURL: "http://mobile.fmcsa.dot.gov/qc/services",
@@ -268,7 +276,7 @@ func TestClient_LookupByDOT(t *testing.T) {
 		Depth:      carrierintel.LookupDepthFull,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, carrierintel.EndpointComposite, result.Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointComposite, result.Endpoint)
 	assert.Equal(t, carrierintel.LookupDepthFMCSA, result.Depth)
 	assert.Equal(t, "818175-MC277621", result.ProviderRef)
 	assert.Contains(t, string(result.Raw), `"basics"`)
@@ -276,7 +284,7 @@ func TestClient_LookupByDOT(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 1)
-	assert.Equal(t, carrierintel.EndpointComposite, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointComposite, calls[0].Endpoint)
 	assert.Equal(t, "818175", calls[0].DOTNumber)
 	assert.True(t, calls[0].Found)
 	assert.Equal(t, 1, calls[0].Units)
@@ -320,10 +328,22 @@ func TestClient_LookupRejectsUnsupportedIdentifiers(t *testing.T) {
 	_, err := bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{
 		Identifier: carrierintelports.CarrierIntelIdentifier{Company: "Sandbox"},
 	})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorUnsupported,
+		),
+	)
 
 	_, err = bound.client.Lookup(t.Context(), &carrierintelports.CarrierIntelLookupRequest{})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorInvalidRequest))
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorInvalidRequest,
+		),
+	)
 	assert.Equal(t, int32(0), hits.Load())
 	assert.Empty(t, bound.log.all())
 }
@@ -423,8 +443,17 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, empty.Items)
 
-	_, err = bound.client.Search(t.Context(), &carrierintelports.CarrierIntelSearchRequest{EIN: "364123456"})
-	assert.True(t, carrierintelports.IsCarrierIntelErrorKind(err, carrierintelports.CarrierIntelErrorUnsupported))
+	_, err = bound.client.Search(
+		t.Context(),
+		&carrierintelports.CarrierIntelSearchRequest{EIN: "364123456"},
+	)
+	assert.True(
+		t,
+		carrierintelports.IsCarrierIntelErrorKind(
+			err,
+			carrierintelports.CarrierIntelErrorUnsupported,
+		),
+	)
 
 	suggestions, err := bound.client.Autocomplete(t.Context(), "sandbox", 5)
 	require.NoError(t, err)
@@ -433,10 +462,10 @@ func TestClient_SearchAndAutocomplete(t *testing.T) {
 
 	calls := bound.log.all()
 	require.Len(t, calls, 3)
-	assert.Equal(t, carrierintel.EndpointSearch, calls[0].Endpoint)
-	assert.Equal(t, carrierintel.EndpointSearch, calls[1].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointSearch, calls[0].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointSearch, calls[1].Endpoint)
 	assert.False(t, calls[1].Found)
-	assert.Equal(t, carrierintel.EndpointAutocomplete, calls[2].Endpoint)
+	assert.Equal(t, carrierintelusage.EndpointAutocomplete, calls[2].Endpoint)
 }
 
 func TestNormalizeComposite(t *testing.T) {
@@ -505,7 +534,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.Equal(t, "C", safety.LatestReviewType)
 
 	require.Len(t, profile.Basics, 2)
-	hos := profile.Basic(worker.BasicHOSCompliance)
+	hos := profile.Basic(fleetsafety.BasicHOSCompliance)
 	require.NotNil(t, hos)
 	require.NotNil(t, hos.Percentile)
 	assert.InDelta(t, 72.4, *hos.Percentile, 0.0001)
@@ -515,7 +544,7 @@ func TestNormalizeComposite(t *testing.T) {
 	assert.True(t, hos.RoadsideAlert)
 	assert.False(t, hos.ACIndicator)
 
-	unsafe := profile.Basic(worker.BasicUnsafeDriving)
+	unsafe := profile.Basic(fleetsafety.BasicUnsafeDriving)
 	require.NotNil(t, unsafe)
 	assert.Nil(t, unsafe.Percentile)
 	assert.False(t, unsafe.Alert)
@@ -577,17 +606,17 @@ func TestOutOfServiceOrder(t *testing.T) {
 func TestCSABasicFromLabel(t *testing.T) {
 	t.Parallel()
 
-	cases := map[string]worker.CSABasic{
-		"Unsafe Driving":                 worker.BasicUnsafeDriving,
-		"HOS Compliance":                 worker.BasicHOSCompliance,
-		"Hours-of-Service Compliance":    worker.BasicHOSCompliance,
-		"Driver Fitness":                 worker.BasicDriverFitness,
-		"Drugs/Alcohol":                  worker.BasicControlledSubstances,
-		"Controlled Substances/Alcohol":  worker.BasicControlledSubstances,
-		"Vehicle Maint.":                 worker.BasicVehicleMaintenance,
-		"HM Compliance":                  worker.BasicHazmatCompliance,
-		"Hazardous Materials Compliance": worker.BasicHazmatCompliance,
-		"Crash Indicator":                worker.BasicCrashIndicator,
+	cases := map[string]fleetsafety.CSABasic{
+		"Unsafe Driving":                 fleetsafety.BasicUnsafeDriving,
+		"HOS Compliance":                 fleetsafety.BasicHOSCompliance,
+		"Hours-of-Service Compliance":    fleetsafety.BasicHOSCompliance,
+		"Driver Fitness":                 fleetsafety.BasicDriverFitness,
+		"Drugs/Alcohol":                  fleetsafety.BasicControlledSubstances,
+		"Controlled Substances/Alcohol":  fleetsafety.BasicControlledSubstances,
+		"Vehicle Maint.":                 fleetsafety.BasicVehicleMaintenance,
+		"HM Compliance":                  fleetsafety.BasicHazmatCompliance,
+		"Hazardous Materials Compliance": fleetsafety.BasicHazmatCompliance,
+		"Crash Indicator":                fleetsafety.BasicCrashIndicator,
 	}
 	for label, want := range cases {
 		got, ok := csaBasicFromLabel(label)

@@ -13,10 +13,12 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -25,7 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/requestmeta"
@@ -48,9 +50,9 @@ type Params struct {
 	SSOStateRepo      tenantports.SSOLoginStateRepository
 	SSOIdentityLinks  tenantports.SSOIdentityLinkRepository
 	APIKeyRepository  apikeyports.APIKeyRepository
-	PortalRepo        workerports.PortalAccessRepository
+	PortalRepo        portalaccessports.PortalAccessRepository
 	UsageRecorder     apikeyports.UsageRecorder
-	TurnStopper       agentports.AssistantTurnStopper
+	TurnStopper       assistantturnports.AssistantTurnStopper
 	AuthEvents        iamports.AuthEventRecorder
 	LoginThrottle     sessionports.LoginThrottleStore `optional:"true"`
 	Plans             platformplanports.PlanService   `optional:"true"`
@@ -58,63 +60,66 @@ type Params struct {
 	MFAChallenges     iamports.MFAChallengeRepository `optional:"true"`
 	RoleActivation    iamports.RoleActivationPolicy   `optional:"true"`
 	Encryption        *encryptionservice.Service
-	Config            *config.Config
+	SecurityConfig    *securityconfig.Config
+	ServerConfig      *serverconfig.Config
 	Logger            *zap.Logger
 }
 
 type Service struct {
-	ur         tenantports.UserRepository
-	or         tenantports.OrganizationRepository
-	sr         sessionports.SessionRepository
-	rbacRepo   permissionports.RBACRepository
-	ssoRepo    tenantports.SSOConfigRepository
-	stateRepo  tenantports.SSOLoginStateRepository
-	links      tenantports.SSOIdentityLinkRepository
-	akr        apikeyports.APIKeyRepository
-	portalRepo workerports.PortalAccessRepository
-	usageBuf   apikeyports.UsageRecorder
-	turns      agentports.AssistantTurnStopper
-	authEvents iamports.AuthEventRecorder
-	throttle   sessionports.LoginThrottleStore
-	plans      platformplanports.PlanService
-	mfa        sessionports.MFAService
-	challenges iamports.MFAChallengeRepository
-	activation iamports.RoleActivationPolicy
-	enc        *encryptionservice.Service
-	cfg        *config.Config
-	policy     session.Policy
-	oidc       *oidcProviders
-	l          *zap.Logger
+	ur             tenantports.UserRepository
+	or             tenantports.OrganizationRepository
+	sr             sessionports.SessionRepository
+	rbacRepo       permissionports.RBACRepository
+	ssoRepo        tenantports.SSOConfigRepository
+	stateRepo      tenantports.SSOLoginStateRepository
+	links          tenantports.SSOIdentityLinkRepository
+	akr            apikeyports.APIKeyRepository
+	portalRepo     portalaccessports.PortalAccessRepository
+	usageBuf       apikeyports.UsageRecorder
+	turns          assistantturnports.AssistantTurnStopper
+	authEvents     iamports.AuthEventRecorder
+	throttle       sessionports.LoginThrottleStore
+	plans          platformplanports.PlanService
+	mfa            sessionports.MFAService
+	challenges     iamports.MFAChallengeRepository
+	activation     iamports.RoleActivationPolicy
+	enc            *encryptionservice.Service
+	securityConfig *securityconfig.Config
+	serverConfig   *serverconfig.Config
+	policy         session.Policy
+	oidc           *oidcProviders
+	l              *zap.Logger
 }
 
 func New(p Params) tenantports.AuthService {
 	return &Service{
-		ur:         p.UserRepository,
-		or:         p.OrganizationRepo,
-		sr:         p.SessionRepository,
-		rbacRepo:   p.RBACRepository,
-		ssoRepo:    p.SSOConfigRepo,
-		stateRepo:  p.SSOStateRepo,
-		links:      p.SSOIdentityLinks,
-		akr:        p.APIKeyRepository,
-		portalRepo: p.PortalRepo,
-		usageBuf:   p.UsageRecorder,
-		turns:      p.TurnStopper,
-		authEvents: p.AuthEvents,
-		throttle:   p.LoginThrottle,
-		plans:      p.Plans,
-		mfa:        p.MFA,
-		challenges: p.MFAChallenges,
-		activation: p.RoleActivation,
-		enc:        p.Encryption,
-		cfg:        p.Config,
+		ur:             p.UserRepository,
+		or:             p.OrganizationRepo,
+		sr:             p.SessionRepository,
+		rbacRepo:       p.RBACRepository,
+		ssoRepo:        p.SSOConfigRepo,
+		stateRepo:      p.SSOStateRepo,
+		links:          p.SSOIdentityLinks,
+		akr:            p.APIKeyRepository,
+		portalRepo:     p.PortalRepo,
+		usageBuf:       p.UsageRecorder,
+		turns:          p.TurnStopper,
+		authEvents:     p.AuthEvents,
+		throttle:       p.LoginThrottle,
+		plans:          p.Plans,
+		mfa:            p.MFA,
+		challenges:     p.MFAChallenges,
+		activation:     p.RoleActivation,
+		enc:            p.Encryption,
+		securityConfig: p.SecurityConfig,
+		serverConfig:   p.ServerConfig,
 		policy: session.Policy{
-			MaxAge:      p.Config.Security.Session.MaxAge,
-			IdleTimeout: p.Config.Security.Session.IdleTimeout,
+			MaxAge:      p.SecurityConfig.Session.MaxAge,
+			IdleTimeout: p.SecurityConfig.Session.IdleTimeout,
 		},
 		oidc: newOIDCProviders(
-			p.Config.Security.SSO.IssuerPolicy(),
-			p.Config.Security.SSO.GetProviderCacheTTL(),
+			p.SecurityConfig.SSO.IssuerPolicy(),
+			p.SecurityConfig.SSO.GetProviderCacheTTL(),
 		),
 		l: p.Logger.Named("service.auth"),
 	}
@@ -132,7 +137,7 @@ const ssoLoginStateTTL = 10 * time.Minute
 
 type tenantSSOConfiguration struct {
 	organization *tenant.Organization
-	configs      []*tenant.SSOConfig
+	configs      []*sso.SSOConfig
 }
 
 type loginSessionContext struct {
@@ -326,7 +331,7 @@ func (s *Service) StartSSOLogin(
 	}
 	req.Provider = ssoConfig.Provider
 
-	if err = validateReturnToURL(req.ReturnTo, s.cfg.Server.CORS.AllowedOrigins); err != nil {
+	if err = validateReturnToURL(req.ReturnTo, s.serverConfig.CORS.AllowedOrigins); err != nil {
 		return "", err
 	}
 
@@ -373,7 +378,7 @@ func (s *Service) resolveSSOConfig(
 	ctx context.Context,
 	orgID pulid.ID,
 	req tenantports.StartSSOLoginRequest,
-) (*tenant.SSOConfig, error) {
+) (*sso.SSOConfig, error) {
 	if req.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, req.ProviderID)
 		if err != nil {
@@ -487,7 +492,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		return nil, errortypes.NewAuthenticationError("{0} login nonce mismatch", displayName)
 	}
 
-	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
+	if ssoConfig.Provider == sso.SSOProviderAzureAD {
 		expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
 		if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
 			attempt.fail(authErrorSSOTenant)
@@ -622,7 +627,7 @@ func (s *Service) enabledTenantSSOConfiguration(
 func (s *Service) resolveSSOConfigForCallback(
 	ctx context.Context,
 	loginState *tenantports.SSOLoginState,
-) (*tenant.SSOConfig, error) {
+) (*sso.SSOConfig, error) {
 	if loginState.ProviderID.IsNotNil() {
 		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
 		if err != nil {
@@ -869,7 +874,7 @@ func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
 	)
 	defer cancel()
 
-	err := s.turns.StopAllForUser(stopCtx, agentports.StopUserTurnsRequest{
+	err := s.turns.StopAllForUser(stopCtx, assistantturnports.StopUserTurnsRequest{
 		UserID: sess.UserID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  sess.OrganizationID,
@@ -890,7 +895,7 @@ func (s *Service) AuthenticateAPIKey(
 	token string,
 	ipAddress, userAgent string,
 ) (*tenantports.AuthenticatedPrincipal, error) {
-	if !s.cfg.Security.APIToken.Enabled {
+	if !s.securityConfig.APIToken.Enabled {
 		return nil, errortypes.NewAuthenticationError("API token authentication is disabled")
 	}
 
@@ -1149,7 +1154,7 @@ func (s *Service) enforcePasswordLoginPolicy(
 
 	ctx = organizationScope(ctx, targetOrg.ID, targetOrg.BusinessUnitID, user.ID)
 
-	for _, p := range []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta} {
+	for _, p := range []sso.SSOProvider{sso.SSOProviderAzureAD, sso.SSOProviderOkta} {
 		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)
 		if err != nil {
 			if errortypes.IsNotFoundError(err) {
@@ -1182,11 +1187,11 @@ func (c oidcClaims) EmailAddress() string {
 	return strings.ToLower(strings.TrimSpace(c.Email))
 }
 
-func (c oidcClaims) EmailIsVerified(provider tenant.SSOProvider) bool {
+func (c oidcClaims) EmailIsVerified(provider sso.SSOProvider) bool {
 	if c.EmailVerified.IsTrue() {
 		return true
 	}
-	return provider == tenant.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
+	return provider == sso.SSOProviderAzureAD && c.EmailDomainOwnerVerified.IsTrue()
 }
 
 var federatedMFAMethods = map[string]struct{}{
@@ -1203,14 +1208,14 @@ var federatedMFAMethods = map[string]struct{}{
 	"ngcmfa": {},
 }
 
-func assuranceFromOIDCClaims(cfg *tenant.SSOConfig, claims oidcClaims) (int, int64) {
+func assuranceFromOIDCClaims(cfg *sso.SSOConfig, claims oidcClaims) (int, int64) {
 	if federatedMFASatisfied(cfg, claims) {
 		return mfaAssuranceLevel, timeutils.NowUnix()
 	}
 	return 1, 0
 }
 
-func federatedMFASatisfied(cfg *tenant.SSOConfig, claims oidcClaims) bool {
+func federatedMFASatisfied(cfg *sso.SSOConfig, claims oidcClaims) bool {
 	if cfg == nil || !cfg.AllowFederatedMFA {
 		return false
 	}
@@ -1273,18 +1278,18 @@ func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
 	)
 }
 
-func ssoAuthEventProvider(p tenant.SSOProvider) string {
+func ssoAuthEventProvider(p sso.SSOProvider) string {
 	if p == "" {
 		return "sso"
 	}
 	return "sso." + string(p)
 }
 
-func providerDisplayName(p tenant.SSOProvider) string {
+func providerDisplayName(p sso.SSOProvider) string {
 	switch p {
-	case tenant.SSOProviderAzureAD:
+	case sso.SSOProviderAzureAD:
 		return "Microsoft"
-	case tenant.SSOProviderOkta:
+	case sso.SSOProviderOkta:
 		return "Okta"
 	default:
 		return string(p)
@@ -1309,7 +1314,7 @@ func randomURLToken(size int) string {
 	return base64.RawURLEncoding.EncodeToString(buf)
 }
 
-func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) string {
+func decryptSSOSecret(enc *encryptionservice.Service, cfg *sso.SSOConfig) string {
 	if cfg == nil {
 		return ""
 	}
@@ -1343,7 +1348,7 @@ func ssoSecretAAD(tenantInfo pagination.TenantInfo, resourceID string) encryptio
 	}
 }
 
-func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {
+func ssoSecretAADResourceIDs(provider sso.SSOProvider) []string {
 	resourceID := string(provider)
 	normalized := strings.ToLower(strings.TrimSpace(resourceID))
 	if normalized == "" || normalized == resourceID {

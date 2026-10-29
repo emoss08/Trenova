@@ -3,21 +3,23 @@ package worker_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func completePolicy() *worker.WorkerPolicy {
-	return &worker.WorkerPolicy{
+func completePolicy() *workerpolicy.WorkerPolicy {
+	return &workerpolicy.WorkerPolicy{
 		Status:        domaintypes.StatusActive,
 		Code:          "HANDBOOK",
 		Title:         "Driver handbook",
 		Body:          "Be safe.",
 		VersionLabel:  "2026.1",
-		AppliesTo:     worker.PolicyAudienceAll,
+		AppliesTo:     workerpolicy.PolicyAudienceAll,
 		EffectiveFrom: 1_800_000_000,
 	}
 }
@@ -25,12 +27,12 @@ func completePolicy() *worker.WorkerPolicy {
 func TestPolicyAudience_Covers(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, worker.PolicyAudienceAll.Covers(worker.WorkerTypeEmployee))
-	assert.True(t, worker.PolicyAudienceAll.Covers(worker.WorkerTypeContractor))
+	assert.True(t, workerpolicy.PolicyAudienceAll.Covers(worker.WorkerTypeEmployee))
+	assert.True(t, workerpolicy.PolicyAudienceAll.Covers(worker.WorkerTypeContractor))
 	// A handbook for employees is not a contract term for an owner-operator.
-	assert.True(t, worker.PolicyAudienceEmployees.Covers(worker.WorkerTypeEmployee))
-	assert.False(t, worker.PolicyAudienceEmployees.Covers(worker.WorkerTypeContractor))
-	assert.False(t, worker.PolicyAudienceContractors.Covers(worker.WorkerTypeEmployee))
+	assert.True(t, workerpolicy.PolicyAudienceEmployees.Covers(worker.WorkerTypeEmployee))
+	assert.False(t, workerpolicy.PolicyAudienceEmployees.Covers(worker.WorkerTypeContractor))
+	assert.False(t, workerpolicy.PolicyAudienceContractors.Covers(worker.WorkerTypeEmployee))
 }
 
 func TestWorkerPolicy_Validate(t *testing.T) {
@@ -89,7 +91,7 @@ func TestWorkerPolicy_ContentChanged(t *testing.T) {
 func TestWorkerPolicyAcknowledgement_Signed(t *testing.T) {
 	t.Parallel()
 
-	ack := &worker.WorkerPolicyAcknowledgement{SignatureName: "  "}
+	ack := &workerpolicy.WorkerPolicyAcknowledgement{SignatureName: "  "}
 	assert.False(t, ack.Signed())
 	ack.SignatureName = "Ada Byron"
 	assert.True(t, ack.Signed())
@@ -98,7 +100,7 @@ func TestWorkerPolicyAcknowledgement_Signed(t *testing.T) {
 func TestDiffContact(t *testing.T) {
 	t.Parallel()
 
-	current := worker.ContactSnapshot{
+	current := profilechange.ContactSnapshot{
 		PhoneNumber:  "555-0100",
 		AddressLine1: "1 Main St",
 		City:         "Springfield",
@@ -113,17 +115,17 @@ func TestDiffContact(t *testing.T) {
 		wanted.PostalCode = "54321"
 		wanted.PhoneNumber = " 555-0100 "
 
-		changes := worker.DiffContact(current, wanted)
+		changes := profilechange.DiffContact(current, wanted)
 
 		require.Len(t, changes, 1)
-		assert.Equal(t, worker.ProfileFieldPostalCode, changes[0].Field)
+		assert.Equal(t, profilechange.ProfileFieldPostalCode, changes[0].Field)
 		assert.Equal(t, "12345", changes[0].From)
 		assert.Equal(t, "54321", changes[0].To)
 	})
 
 	t.Run("an unchanged snapshot is no request at all", func(t *testing.T) {
 		t.Parallel()
-		assert.Empty(t, worker.DiffContact(current, current))
+		assert.Empty(t, profilechange.DiffContact(current, current))
 	})
 
 	t.Run("reads in address order", func(t *testing.T) {
@@ -133,25 +135,25 @@ func TestDiffContact(t *testing.T) {
 		wanted.PhoneNumber = "555-0101"
 		wanted.City = "Shelbyville"
 
-		changes := worker.DiffContact(current, wanted)
+		changes := profilechange.DiffContact(current, wanted)
 
 		require.Len(t, changes, 3)
-		assert.Equal(t, worker.ProfileFieldPhoneNumber, changes[0].Field)
-		assert.Equal(t, worker.ProfileFieldCity, changes[1].Field)
-		assert.Equal(t, worker.ProfileFieldEmergencyContactPhone, changes[2].Field)
+		assert.Equal(t, profilechange.ProfileFieldPhoneNumber, changes[0].Field)
+		assert.Equal(t, profilechange.ProfileFieldCity, changes[1].Field)
+		assert.Equal(t, profilechange.ProfileFieldEmergencyContactPhone, changes[2].Field)
 	})
 }
 
 func TestWorkerProfileChangeRequest_Validate(t *testing.T) {
 	t.Parallel()
 
-	base := func() *worker.WorkerProfileChangeRequest {
-		return &worker.WorkerProfileChangeRequest{
+	base := func() *profilechange.WorkerProfileChangeRequest {
+		return &profilechange.WorkerProfileChangeRequest{
 			WorkerID:    "wrk_1",
-			Status:      worker.ProfileChangePending,
+			Status:      profilechange.ProfileChangePending,
 			SubmittedAt: 1_800_000_000,
-			Changes: []worker.FieldChange{
-				{Field: worker.ProfileFieldCity, From: "A", To: "B"},
+			Changes: []profilechange.FieldChange{
+				{Field: profilechange.ProfileFieldCity, From: "A", To: "B"},
 			},
 		}
 	}
@@ -172,7 +174,7 @@ func TestWorkerProfileChangeRequest_Validate(t *testing.T) {
 	t.Run("only the closed list of fields can be asked for", func(t *testing.T) {
 		t.Parallel()
 		req := base()
-		req.Changes = []worker.FieldChange{{Field: "licenseNumber", From: "A", To: "B"}}
+		req.Changes = []profilechange.FieldChange{{Field: "licenseNumber", From: "A", To: "B"}}
 
 		multiErr := errortypes.NewMultiError()
 		req.Validate(multiErr)
@@ -186,7 +188,7 @@ func TestWorkerProfileChangeRequest_Validate(t *testing.T) {
 		t.Parallel()
 		req := base()
 		decided := int64(1_800_000_100)
-		req.Status = worker.ProfileChangeRejected
+		req.Status = profilechange.ProfileChangeRejected
 		req.DecidedAt = &decided
 
 		multiErr := errortypes.NewMultiError()
@@ -202,9 +204,9 @@ func TestWorkerProfileChangeRequest_ApplyTo(t *testing.T) {
 	t.Parallel()
 
 	w := &worker.Worker{PhoneNumber: "old", City: "Springfield", AddressLine1: "1 Main St"}
-	req := &worker.WorkerProfileChangeRequest{
-		Changes: []worker.FieldChange{
-			{Field: worker.ProfileFieldPhoneNumber, From: "old", To: "new"},
+	req := &profilechange.WorkerProfileChangeRequest{
+		Changes: []profilechange.FieldChange{
+			{Field: profilechange.ProfileFieldPhoneNumber, From: "old", To: "new"},
 			{Field: "licenseNumber", From: "x", To: "y"},
 		},
 	}
@@ -219,17 +221,30 @@ func TestWorkerProfileChangeRequest_ApplyTo(t *testing.T) {
 func TestProfileChangeStatus_CanTransitionTo(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, worker.ProfileChangePending.CanTransitionTo(worker.ProfileChangeApproved))
-	assert.True(t, worker.ProfileChangePending.CanTransitionTo(worker.ProfileChangeRejected))
-	assert.True(t, worker.ProfileChangePending.CanTransitionTo(worker.ProfileChangeWithdrawn))
+	assert.True(
+		t,
+		profilechange.ProfileChangePending.CanTransitionTo(profilechange.ProfileChangeApproved),
+	)
+	assert.True(
+		t,
+		profilechange.ProfileChangePending.CanTransitionTo(profilechange.ProfileChangeRejected),
+	)
+	assert.True(
+		t,
+		profilechange.ProfileChangePending.CanTransitionTo(profilechange.ProfileChangeWithdrawn),
+	)
 	// Every decision is final: an approval is already on the record, and a
 	// rejection is asked for again rather than reopened.
-	for _, terminal := range []worker.ProfileChangeStatus{
-		worker.ProfileChangeApproved,
-		worker.ProfileChangeRejected,
-		worker.ProfileChangeWithdrawn,
+	for _, terminal := range []profilechange.ProfileChangeStatus{
+		profilechange.ProfileChangeApproved,
+		profilechange.ProfileChangeRejected,
+		profilechange.ProfileChangeWithdrawn,
 	} {
-		assert.False(t, terminal.CanTransitionTo(worker.ProfileChangePending), string(terminal))
+		assert.False(
+			t,
+			terminal.CanTransitionTo(profilechange.ProfileChangePending),
+			string(terminal),
+		)
 		assert.False(t, terminal.IsOpen(), string(terminal))
 	}
 }

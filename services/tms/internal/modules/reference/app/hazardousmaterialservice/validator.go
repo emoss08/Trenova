@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,18 +19,17 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*hazardousmaterial.HazardousMaterial]
+	validator tenantedvalidation.EntityValidator[*hazardousmaterial.HazardousMaterial]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(
+	checker := keelcheck.NewChecker(
 		p.DB,
 		hazardousmaterialdb.HazardousMaterialsSchema(),
 	)
 
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*hazardousmaterial.HazardousMaterial]().
+		validator: tenantedvalidation.NewBuilder[*hazardousmaterial.HazardousMaterial]().
 			WithModelName("HazardousMaterial").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).

@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -39,7 +39,7 @@ func equipmentTypeColumns(ctx context.Context, nodePathPrefix string) []string {
 func equipmentTypeConnectionToModel(
 	result *pagination.CursorListResult[*equipmenttype.EquipmentType],
 ) (*gqlmodel.EquipmentTypeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *equipmenttype.EquipmentType, cursor string) *gqlmodel.EquipmentTypeEdge {
 			return &gqlmodel.EquipmentTypeEdge{

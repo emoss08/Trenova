@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -18,13 +20,13 @@ import (
 func (s *Service) ListVersions(
 	ctx context.Context,
 	req *ratematrixports.ListVersionsRequest,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	versions, err := s.versionRepo.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if versions == nil {
-		versions = []*ratematrix.RateMatrixVersion{}
+		versions = []*ratematrixversion.RateMatrixVersion{}
 	}
 	return versions, nil
 }
@@ -32,7 +34,7 @@ func (s *Service) ListVersions(
 func (s *Service) GetVersion(
 	ctx context.Context,
 	req *ratematrixports.GetVersionRequest,
-) (*ratematrix.RateMatrixVersion, error) {
+) (*ratematrixversion.RateMatrixVersion, error) {
 	return s.versionRepo.Get(ctx, req)
 }
 
@@ -71,7 +73,7 @@ func (s *Service) ListUsages(
 func (s *Service) ListReviews(
 	ctx context.Context,
 	req *ratematrixports.ListReviewsRequest,
-) ([]*ratematrix.RateMatrixReview, error) {
+) ([]*ratematrixreview.RateMatrixReview, error) {
 	if _, err := s.repo.GetByID(ctx, &ratematrixports.GetRateMatrixByIDRequest{
 		RateMatrixID: req.RateMatrixID,
 		TenantInfo:   req.TenantInfo,
@@ -83,7 +85,7 @@ func (s *Service) ListReviews(
 		return nil, err
 	}
 	if reviews == nil {
-		reviews = []*ratematrix.RateMatrixReview{}
+		reviews = []*ratematrixreview.RateMatrixReview{}
 	}
 	return reviews, nil
 }
@@ -242,7 +244,7 @@ func (s *Service) RestoreVersion(
 
 func applyRestoredDraft(
 	matrix *ratematrix.RateMatrix,
-	version *ratematrix.RateMatrixVersion,
+	version *ratematrixversion.RateMatrixVersion,
 	copied int64,
 	userID pulid.ID,
 ) {

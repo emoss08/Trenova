@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -40,7 +41,7 @@ func TestCatalogNamesWhatEachFieldNeeds(t *testing.T) {
 			{Decision: reportaccess.NeedsKindRead, Kind: permission.ResourceWorker},
 			{
 				Decision: reportaccess.NeedsFieldGroup,
-				Group:    permission.FieldGroupPersonal,
+				Group:    protectedfield.Personal,
 			},
 		},
 		Edges: []reportaccess.Use{
@@ -60,7 +61,7 @@ func TestCatalogNamesWhatEachFieldNeeds(t *testing.T) {
 	assert.Equal(t, gqlmodel.ReportFieldAccessNeedsKindRead, model.Fields[1].Access)
 	assert.Equal(t, gqlmodel.ReportFieldAccessNeedsFieldGroup, model.Fields[2].Access)
 	require.NotNil(t, model.Fields[2].Protection)
-	assert.Equal(t, permission.FieldGroupPersonal, model.Fields[2].Protection.Group)
+	assert.Equal(t, protectedfield.Personal, model.Fields[2].Protection.Group)
 	assert.False(t, model.Fields[2].Protection.Held)
 	require.Len(t, model.Edges, 1)
 	assert.True(t, model.Edges[0].ToMany)

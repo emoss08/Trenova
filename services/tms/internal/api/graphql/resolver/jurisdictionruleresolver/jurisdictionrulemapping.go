@@ -2,7 +2,7 @@ package jurisdictionruleresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/places/domain/jurisdictionrule"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func jurisdictionRuleConnectionToModel(
 	result *pagination.CursorListResult[*jurisdictionrule.JurisdictionRule],
 ) (*gqlmodel.JurisdictionRuleConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *jurisdictionrule.JurisdictionRule,
@@ -38,7 +38,7 @@ func jurisdictionRuleConnectionToModel(
 func jurisdictionOverrideConnectionToModel(
 	result *pagination.CursorListResult[*jurisdictionrule.Override],
 ) (*gqlmodel.JurisdictionRuleOverrideConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
 			node *jurisdictionrule.Override,

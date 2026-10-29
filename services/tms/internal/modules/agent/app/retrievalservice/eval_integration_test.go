@@ -11,9 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/keel"
-
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
@@ -21,12 +20,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevalgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -57,11 +59,11 @@ type evalHarness struct {
 	ctx      context.Context
 	db       *keel.DB
 	conn     *postgres.Connection
-	repo     agentports.AIRetrievalRepository
-	sources  agentports.RetrievalSourceRepository
-	memories agentports.AgentMemoryRepository
-	threads  agentports.ThreadOwnerRepository
-	registry *permission.Registry
+	repo     retrievalports.AIRetrievalRepository
+	sources  retrievalports.RetrievalSourceRepository
+	memories agentmemoryports.AgentMemoryRepository
+	threads  conversationports.ThreadOwnerRepository
+	registry *permissioncatalog.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo
 }
@@ -97,7 +99,7 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 			DB:     conn,
 			Logger: zap.NewNop(),
 		}),
-		registry: permission.NewRegistry(),
+		registry: permissioncatalog.NewRegistry(),
 		data:     data,
 		tenant:   pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID},
 	}
@@ -105,7 +107,9 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 	return h, evalSuites{documents: documents, inbox: inbox, memories: memories}
 }
 
-func (h *evalHarness) searcher(vectorizer agentports.QueryVectorizer) *retrievalservice.Searcher {
+func (h *evalHarness) searcher(
+	vectorizer retrievalports.QueryVectorizer,
+) *retrievalservice.Searcher {
 	return retrievalservice.NewSearcher(retrievalservice.SearcherParams{
 		Logger:     zap.NewNop(),
 		Repo:       h.repo,
@@ -116,8 +120,8 @@ func (h *evalHarness) searcher(vectorizer agentports.QueryVectorizer) *retrieval
 }
 
 func (h *evalHarness) memoryService(
-	vectors agentports.MemoryVectorSearcher,
-) agentports.AgentMemoryService {
+	vectors retrievalports.MemoryVectorSearcher,
+) agentmemoryports.AgentMemoryService {
 	return agentmemoryservice.New(agentmemoryservice.Params{
 		Logger:  zap.NewNop(),
 		Repo:    h.memories,
@@ -223,7 +227,7 @@ func loadFixture(t *testing.T) (*agentevalgate.EmbeddingFixture, bool) {
 	return fixture, true
 }
 
-func access(registry *permission.Registry) retrievaltest.Access {
+func access(registry *permissioncatalog.Registry) retrievaltest.Access {
 	return retrievaltest.Access{Registry: registry}
 }
 
@@ -235,11 +239,11 @@ type retrievers struct {
 
 func (h *evalHarness) retrievers(
 	searcher *retrievalservice.Searcher,
-	memories agentports.AgentMemoryService,
+	memories agentmemoryports.AgentMemoryService,
 	corpora seeded,
 ) retrievers {
-	request := func(query string) *agentports.RetrievalSearchRequest {
-		return &agentports.RetrievalSearchRequest{
+	request := func(query string) *retrievalports.RetrievalSearchRequest {
+		return &retrievalports.RetrievalSearchRequest{
 			TenantInfo: h.tenant,
 			Query:      query,
 			Limit:      evalLimit,
@@ -271,11 +275,14 @@ func (h *evalHarness) retrievers(
 			return corpora.inbox.KeysOf(ids), nil
 		},
 		memories: func(query string) ([]string, error) {
-			recalled, err := memories.Recall(h.as(h.tenant), agentports.RecallAgentMemoriesRequest{
-				TenantInfo: h.tenant,
-				Query:      query,
-				Limit:      evalLimit,
-			})
+			recalled, err := memories.Recall(
+				h.as(h.tenant),
+				&agentmemoryports.RecallAgentMemoriesRequest{
+					TenantInfo: h.tenant,
+					Query:      query,
+					Limit:      evalLimit,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -325,8 +332,12 @@ func TestRetrievalAgainstFloors(t *testing.T) {
 	legs := []leg{
 		{label: "document_list", suite: suites.documents, floors: retrievaltest.DocumentFloors,
 			keyword: keyword.documents},
-		{label: "inbox_list_inbound_messages", suite: suites.inbox, floors: retrievaltest.InboxFloors,
-			keyword: keyword.inbox},
+		{
+			label:   "inbox_list_inbound_messages",
+			suite:   suites.inbox,
+			floors:  retrievaltest.InboxFloors,
+			keyword: keyword.inbox,
+		},
 		{label: "agent_list_memories", suite: suites.memories, floors: retrievaltest.MemoryFloors,
 			keyword: keyword.memories},
 	}
@@ -358,8 +369,13 @@ func measureLeg(t *testing.T, current leg) {
 		hybrid = &report
 	}
 
-	require.Emptyf(t, keyword.Spurious, "%s by keyword found something for a query nothing answers:\n%s",
-		current.label, keyword.SpuriousMatches())
+	require.Emptyf(
+		t,
+		keyword.Spurious,
+		"%s by keyword found something for a query nothing answers:\n%s",
+		current.label,
+		keyword.SpuriousMatches(),
+	)
 	if hybrid != nil {
 		require.Emptyf(t, hybrid.Spurious,
 			"%s by keyword and meaning found something for a query nothing answers:\n%s",
@@ -466,13 +482,13 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 	agentScoped := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
 		Tenant:            h.tenant,
 		Items:             suites.memories.Corpus,
-		Scope:             agent.MemoryScopeAgent,
+		Scope:             agentmemory.MemoryScopeAgent,
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 	})
 	retired := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
 		Tenant: h.tenant,
 		Items:  suites.memories.Corpus,
-		Status: agent.MemoryStatusRetired,
+		Status: agentmemory.MemoryStatusRetired,
 	})
 	expiredAt := int64(1)
 	expired := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
@@ -482,7 +498,9 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 	})
 
 	searchers := map[string]*retrievalservice.Searcher{"keyword": h.searcher(nil)}
-	memoryServices := map[string]agentports.AgentMemoryService{"keyword": h.memoryService(nil)}
+	memoryServices := map[string]agentmemoryports.AgentMemoryService{
+		"keyword": h.memoryService(nil),
+	}
 	if fixture, recorded := loadFixture(t); recorded && h.vectorReady(t) {
 		for _, tenant := range []pagination.TenantInfo{h.tenant, otherTenant} {
 			h.activateModel(t, tenant)
@@ -538,7 +556,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 				for _, query := range allQueries(suites) {
 					documents, err := searcher.SearchDocuments(
 						h.as(h.tenant),
-						&agentports.RetrievalSearchRequest{
+						&retrievalports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						},
 					)
@@ -551,7 +569,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					messages, err := searcher.SearchInboundMessages(h.as(h.tenant),
-						&agentports.RetrievalSearchRequest{
+						&retrievalports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						})
 					require.NoError(t, err)
@@ -562,8 +580,8 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					recalled, err := memoryServices[name].Recall(h.as(h.tenant),
-						agentports.RecallAgentMemoriesRequest{
-							TenantInfo: h.tenant, Query: query, Limit: agent.MaxMemoryRecallLimit,
+						&agentmemoryports.RecallAgentMemoriesRequest{
+							TenantInfo: h.tenant, Query: query, Limit: agentmemory.MaxMemoryRecallLimit,
 						})
 					require.NoError(t, err)
 					for _, memory := range recalled {
@@ -578,7 +596,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 
 				quoted, err := searcher.SearchInboundMessages(
 					h.as(h.tenant),
-					&agentports.RetrievalSearchRequest{
+					&retrievalports.RetrievalSearchRequest{
 						TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: caller.access,
 					},
 				)
@@ -620,26 +638,29 @@ func (h *evalHarness) plantVectors(
 			chunks = retrievalservice.ChunkMemory(retrievaltest.MemoryFor(item))
 		}
 
-		embedded := make([]agentports.EmbeddingChunk, 0, len(chunks))
+		embedded := make([]retrievalports.EmbeddingChunk, 0, len(chunks))
 		for _, chunk := range chunks {
 			vector, ok := fixture.Document(chunk.Hash)
 			require.True(t, ok, item.Key)
-			embedded = append(embedded, agentports.EmbeddingChunk{
+			embedded = append(embedded, retrievalports.EmbeddingChunk{
 				ChunkIndex:  chunk.Index,
 				ContentHash: chunk.Hash,
 				Vector:      vector,
 			})
 		}
-		_, err := h.repo.ReplaceChunks(h.as(corpus.Tenant), &agentports.ReplaceEmbeddingChunksRequest{
-			Source: agentports.AIRetrievalSourceRef{
-				TenantInfo: corpus.Tenant,
-				SourceType: sourceType,
-				SourceID:   corpus.IDs[item.Key],
+		_, err := h.repo.ReplaceChunks(
+			h.as(corpus.Tenant),
+			&retrievalports.ReplaceEmbeddingChunksRequest{
+				Source: retrievalports.AIRetrievalSourceRef{
+					TenantInfo: corpus.Tenant,
+					SourceType: sourceType,
+					SourceID:   corpus.IDs[item.Key],
+				},
+				ModelKey:   retrievaltest.ModelKey,
+				Dimensions: fixture.Dimensions,
+				Chunks:     embedded,
 			},
-			ModelKey:   retrievaltest.ModelKey,
-			Dimensions: fixture.Dimensions,
-			Chunks:     embedded,
-		})
+		)
 		require.NoError(t, err)
 	}
 }

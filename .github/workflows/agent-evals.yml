@@ -15,9 +15,20 @@ on:
       - "claude/**"
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/domain/agentprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentturn/**"
+      - "services/tms/internal/modules/agent/domain/agentmessage/**"
+      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
+      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
+      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
+      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
+      - "services/tms/internal/modules/agent/domain/agentpreset/**"
+      - "services/tms/internal/modules/agent/domain/agentstarter/**"
       - "services/tms/internal/modules/agent/app/agentruntime/**"
       - "services/tms/internal/modules/agent/app/agenttoolservice/**"
       - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
+      - "services/tms/internal/modules/agent/app/querytools/**"
       - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
       - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
       - "services/tms/internal/modules/agent/app/agentguard/**"
@@ -27,10 +38,10 @@ on:
       - "services/tms/internal/modules/agent/domain/evalsplit/**"
       - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
-      - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
-      - "services/tms/internal/modules/agent/ports/agentports/toolpolicy.go"
-      - "services/tms/internal/modules/agent/ports/agentports/agentruntime.go"
-      - "services/tms/internal/modules/agent/ports/agentports/retrievalquery.go"
+      - "services/tms/internal/modules/agent/ports/agenttoolports/agenttool.go"
+      - "services/tms/internal/modules/agent/ports/agenttoolports/toolpolicy.go"
+      - "services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go"
+      - "services/tms/internal/modules/agent/ports/retrievalports/retrievalquery.go"
       - "shared/rankfusion/**"
       - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
       - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
@@ -44,9 +55,20 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - "services/tms/internal/modules/agent/domain/agentdefinition/**"
+      - "services/tms/internal/modules/agent/domain/agentprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentturn/**"
+      - "services/tms/internal/modules/agent/domain/agentmessage/**"
+      - "services/tms/internal/modules/agent/domain/agentmemoryprompt/**"
+      - "services/tms/internal/modules/agent/domain/agentpageprompt/**"
+      - "services/tms/internal/modules/agent/domain/agenttaskframe/**"
+      - "services/tms/internal/modules/agent/domain/agentinstructions/**"
+      - "services/tms/internal/modules/agent/domain/agenttemplate/**"
+      - "services/tms/internal/modules/agent/domain/agentpreset/**"
+      - "services/tms/internal/modules/agent/domain/agentstarter/**"
       - "services/tms/internal/modules/agent/app/agentruntime/**"
       - "services/tms/internal/modules/agent/app/agenttoolservice/**"
       - "services/tms/internal/modules/agent/app/agentquerytoolservice/**"
+      - "services/tms/internal/modules/agent/app/querytools/**"
       - "services/tms/internal/modules/agent/app/agenttoolpolicy/**"
       - "services/tms/internal/modules/agent/app/agenttoolcatalog/**"
       - "services/tms/internal/modules/agent/app/agentguard/**"
@@ -56,10 +78,10 @@ on:
       - "services/tms/internal/modules/agent/domain/evalsplit/**"
       - "services/tms/internal/modules/agent/app/productguideservice/**"
       - "services/tms/pkg/productguide/catalog_gen.json"
-      - "services/tms/internal/modules/agent/ports/agentports/agenttool.go"
-      - "services/tms/internal/modules/agent/ports/agentports/toolpolicy.go"
-      - "services/tms/internal/modules/agent/ports/agentports/agentruntime.go"
-      - "services/tms/internal/modules/agent/ports/agentports/retrievalquery.go"
+      - "services/tms/internal/modules/agent/ports/agenttoolports/agenttool.go"
+      - "services/tms/internal/modules/agent/ports/agenttoolports/toolpolicy.go"
+      - "services/tms/internal/modules/agent/ports/agentruntimeports/agentruntime.go"
+      - "services/tms/internal/modules/agent/ports/retrievalports/retrievalquery.go"
       - "shared/rankfusion/**"
       - "services/tms/internal/modules/agent/app/insightservice/narrator/**"
       - "services/tms/internal/modules/agent/app/briefingservice/briefingwriter/**"
@@ -109,7 +131,7 @@ jobs:
         run: |
           set -euo pipefail
           go test -tags=nomsgpack -count=1 -run 'TestPromptSnapshots' \
-            ./internal/modules/agent/domain/agentdefinition/
+            ./internal/modules/agent/domain/agentprompt/
 
       - name: Tool catalog snapshot
         working-directory: ./services/tms

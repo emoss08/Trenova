@@ -8,7 +8,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/schema"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
@@ -198,7 +198,7 @@ var presetsTable = schema.Table{
 		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
 		{Name: "layout", Quoted: `"layout"`, Field: "Layout", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Layout`, JSON: `layout`},
 		{Name: "role_ids", Quoted: `"role_ids"`, Field: "RoleIDs", Kind: schema.KindStringArray, Flags: schema.FlagNullable | schema.FlagNullZero, Label: `Role IDs`, JSON: `roleIds`},
-		{Name: "core_responsibility", Quoted: `"core_responsibility"`, Field: "CoreResponsibility", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Core Responsibility`, JSON: `coreResponsibility`, Enum: enumPermissionCoreResponsibility[:]},
+		{Name: "core_responsibility", Quoted: `"core_responsibility"`, Field: "CoreResponsibility", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Core Responsibility`, JSON: `coreResponsibility`, Enum: enumRbacCoreResponsibility[:]},
 		{Name: "is_org_default", Quoted: `"is_org_default"`, Field: "IsOrgDefault", Kind: schema.KindBool, Flags: 0, Label: `Is Org Default`, JSON: `isOrgDefault`},
 		{Name: "locked", Quoted: `"locked"`, Field: "Locked", Kind: schema.KindBool, Flags: 0, Label: `Locked`, JSON: `locked`},
 		{Name: "priority", Quoted: `"priority"`, Field: "Priority", Kind: schema.KindInt64, Flags: 0, Label: `Priority`, JSON: `priority`},
@@ -237,7 +237,7 @@ type PresetsTable struct {
 	Description        keel.StringCol
 	Layout             keel.JSONBCol
 	RoleIDs            keel.StringArrayCol
-	CoreResponsibility permissiondb.CoreResponsibilityCol
+	CoreResponsibility rbacdb.CoreResponsibilityCol
 	IsOrgDefault       keel.BoolCol
 	Locked             keel.BoolCol
 	Priority           keel.Int64Col
@@ -257,7 +257,7 @@ var Presets = &PresetsTable{
 	Description:        keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 4}},
 	Layout:             keel.JSONBCol{Col: keel.Col{Ref: &presetsRef, Index: 5}},
 	RoleIDs:            keel.StringArrayCol{Col: keel.Col{Ref: &presetsRef, Index: 6}},
-	CoreResponsibility: permissiondb.CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 7}}},
+	CoreResponsibility: rbacdb.CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &presetsRef, Index: 7}}},
 	IsOrgDefault:       keel.BoolCol{Col: keel.Col{Ref: &presetsRef, Index: 8}},
 	Locked:             keel.BoolCol{Col: keel.Col{Ref: &presetsRef, Index: 9}},
 	Priority:           keel.Int64Col{Col: keel.Col{Ref: &presetsRef, Index: 10}},
@@ -278,7 +278,7 @@ func BuildPresets(r *keel.Ref) *PresetsTable {
 		Description:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Layout:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		RoleIDs:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
-		CoreResponsibility: permissiondb.CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CoreResponsibility: rbacdb.CoreResponsibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		IsOrgDefault:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		Locked:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		Priority:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -402,7 +402,7 @@ func init() {
 // intIs64 fails the build where int is not 64 bits: int fields are read through *int64.
 const intIs64 = unsafe.Sizeof(int(0)) - 8
 
-var enumPermissionCoreResponsibility = [...]schema.EnumValue{
+var enumRbacCoreResponsibility = [...]schema.EnumValue{
 	{Value: `Billing`, Label: `Billing`},
 	{Value: `Operations`, Label: `Operations`},
 	{Value: `Finance`, Label: `Finance`},

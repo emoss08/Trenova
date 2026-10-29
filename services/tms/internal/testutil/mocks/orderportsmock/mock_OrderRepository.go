@@ -5,10 +5,10 @@
 package orderportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -689,23 +689,23 @@ func (_c *MockOrderRepository_GetShipmentAttachRefs_Call) RunAndReturn(run func(
 }
 
 // GetShipmentStatuses provides a mock function for the type MockOrderRepository
-func (_mock *MockOrderRepository) GetShipmentStatuses(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipment.Status, error) {
+func (_mock *MockOrderRepository) GetShipmentStatuses(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipmentvocab.Status, error) {
 	ret := _mock.Called(ctx, tenantInfo, orderID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetShipmentStatuses")
 	}
 
-	var r0 []shipment.Status
+	var r0 []shipmentvocab.Status
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) ([]shipment.Status, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) ([]shipmentvocab.Status, error)); ok {
 		return returnFunc(ctx, tenantInfo, orderID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) []shipment.Status); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, pulid.ID) []shipmentvocab.Status); ok {
 		r0 = returnFunc(ctx, tenantInfo, orderID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]shipment.Status)
+			r0 = ret.Get(0).([]shipmentvocab.Status)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, pulid.ID) error); ok {
@@ -752,12 +752,12 @@ func (_c *MockOrderRepository_GetShipmentStatuses_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockOrderRepository_GetShipmentStatuses_Call) Return(statuss []shipment.Status, err error) *MockOrderRepository_GetShipmentStatuses_Call {
+func (_c *MockOrderRepository_GetShipmentStatuses_Call) Return(statuss []shipmentvocab.Status, err error) *MockOrderRepository_GetShipmentStatuses_Call {
 	_c.Call.Return(statuss, err)
 	return _c
 }
 
-func (_c *MockOrderRepository_GetShipmentStatuses_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipment.Status, error)) *MockOrderRepository_GetShipmentStatuses_Call {
+func (_c *MockOrderRepository_GetShipmentStatuses_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, orderID pulid.ID) ([]shipmentvocab.Status, error)) *MockOrderRepository_GetShipmentStatuses_Call {
 	_c.Call.Return(run)
 	return _c
 }

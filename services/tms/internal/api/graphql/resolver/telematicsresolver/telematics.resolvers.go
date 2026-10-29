@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsmapping"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -30,7 +31,7 @@ func (r *MutationResolver) SaveTelematicsFormMapping(ctx context.Context, input 
 	}
 
 	req := &telematicsservice.SaveFormMappingRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		TemplateID: input.TemplateID,
 		Name:       input.Name,
 		Enabled:    input.Enabled,
@@ -85,7 +86,7 @@ func (r *MutationResolver) DeleteTelematicsFormMapping(ctx context.Context, id s
 	if err != nil {
 		return false, err
 	}
-	err = r.TelematicsService.DeleteFormMapping(ctx, base.TenantInfo(authCtx), mappingID)
+	err = r.TelematicsService.DeleteFormMapping(ctx, resolvercore.TenantInfo(authCtx), mappingID)
 	if err != nil {
 		return false, err
 	}
@@ -103,7 +104,7 @@ func (r *QueryResolver) ShipmentFormSubmissions(ctx context.Context, shipmentID 
 	}
 	submissions, err := r.TelematicsService.ListShipmentFormSubmissions(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
 	)
 	if err != nil {
@@ -121,7 +122,7 @@ func (r *QueryResolver) TelematicsFormMappings(ctx context.Context) ([]*gqlmodel
 	if err != nil {
 		return nil, err
 	}
-	mappings, err := r.TelematicsService.ListFormMappings(ctx, base.TenantInfo(authCtx))
+	mappings, err := r.TelematicsService.ListFormMappings(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +142,7 @@ func (r *QueryResolver) TelematicsFormMapping(ctx context.Context, id string) (*
 	if err != nil {
 		return nil, err
 	}
-	mapping, err := r.TelematicsService.GetFormMapping(ctx, base.TenantInfo(authCtx), mappingID)
+	mapping, err := r.TelematicsService.GetFormMapping(ctx, resolvercore.TenantInfo(authCtx), mappingID)
 	if err != nil {
 		return nil, err
 	}
@@ -159,9 +160,9 @@ func (r *QueryResolver) ShipmentDriverFeasibility(ctx context.Context, shipmentI
 		return nil, err
 	}
 
-	entity, err := r.ShipmentService.Get(ctx, &shipmentports.GetShipmentByIDRequest{
+	entity, err := r.ShipmentReader.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         id,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ShipmentOptions: shipmentports.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
@@ -170,7 +171,7 @@ func (r *QueryResolver) ShipmentDriverFeasibility(ctx context.Context, shipmentI
 		return nil, err
 	}
 
-	req := &telematicsservice.FeasibilityRequest{TenantInfo: base.TenantInfo(authCtx)}
+	req := &telematicsservice.FeasibilityRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
 	for _, move := range entity.Moves {
 		if move == nil || move.Distance == nil {
 			continue
@@ -209,13 +210,13 @@ func (r *QueryResolver) VehiclePositions(ctx context.Context, maxAgeSeconds *int
 	if maxAgeSeconds != nil {
 		maxAge = int64(*maxAgeSeconds)
 	}
-	tractors, err := base.ParseIDs(tractorIds)
+	tractors, err := gqlid.ParseIDs(tractorIds)
 	if err != nil {
 		return nil, err
 	}
 
 	positions, err := r.TelematicsService.ListVehiclePositions(ctx, &telematicsports.ListVehiclePositionsRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		TractorIDs:    tractors,
 		MaxAgeSeconds: maxAge,
 	})
@@ -241,7 +242,7 @@ func (r *QueryResolver) VehiclePosition(ctx context.Context, tractorID string) (
 		return nil, err
 	}
 
-	position, err := r.TelematicsService.GetVehiclePosition(ctx, base.TenantInfo(authCtx), id)
+	position, err := r.TelematicsService.GetVehiclePosition(ctx, resolvercore.TenantInfo(authCtx), id)
 	if errortypes.IsNotFoundError(err) {
 		return nil, nil
 	}
@@ -271,7 +272,7 @@ func (r *QueryResolver) WorkerHosStates(ctx context.Context, workerIds []string,
 		resultLimit = *limit
 	}
 
-	states, err := r.TelematicsService.ListWorkerHOSStates(ctx, base.TenantInfo(authCtx), ids, resultLimit)
+	states, err := r.TelematicsService.ListWorkerHOSStates(ctx, resolvercore.TenantInfo(authCtx), ids, resultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +295,7 @@ func (r *QueryResolver) WorkerHosState(ctx context.Context, workerID string) (*g
 		return nil, err
 	}
 
-	state, err := r.TelematicsService.GetWorkerHOSState(ctx, base.TenantInfo(authCtx), id)
+	state, err := r.TelematicsService.GetWorkerHOSState(ctx, resolvercore.TenantInfo(authCtx), id)
 	if errortypes.IsNotFoundError(err) || (err == nil && state == nil) {
 		return nil, nil
 	}
@@ -328,7 +329,7 @@ func (r *QueryResolver) WorkerHosViolations(ctx context.Context, workerID *strin
 		resultLimit = *limit
 	}
 
-	violations, err := r.TelematicsService.ListWorkerHOSViolations(ctx, base.TenantInfo(authCtx), id, sinceAt, resultLimit)
+	violations, err := r.TelematicsService.ListWorkerHOSViolations(ctx, resolvercore.TenantInfo(authCtx), id, sinceAt, resultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +361,7 @@ func (r *QueryResolver) WorkerHosLogs(ctx context.Context, workerID string, star
 
 	entries, err := r.TelematicsService.GetWorkerHOSLogs(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
 		int64(startTime),
 		int64(endTime),
@@ -398,7 +399,7 @@ func (r *QueryResolver) WorkerHosDailyLogs(ctx context.Context, workerID string,
 
 	days, err := r.TelematicsService.GetWorkerHOSDailyLogs(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
 		startDate,
 		endDate,
@@ -462,7 +463,7 @@ func (r *QueryResolver) VehicleInspections(ctx context.Context, tractorID *strin
 	inspections, err := r.TelematicsService.ListVehicleInspections(
 		ctx,
 		&telematicsports.ListVehicleInspectionsRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			TractorID:  tractorFilter,
 			WorkerID:   workerFilter,
 			Since:      sinceAt,
@@ -502,7 +503,7 @@ func (r *QueryResolver) WorkerFormSubmissions(ctx context.Context, workerID stri
 
 	submissions, err := r.TelematicsService.GetWorkerFormSubmissions(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		id,
 		int64(startTime),
 		int64(endTime),
@@ -536,7 +537,7 @@ func (r *QueryResolver) HosCertificationSummary(ctx context.Context, startDate s
 
 	summaries, err := r.TelematicsService.GetHOSCertificationSummary(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		startDate,
 		endDate,
 	)
@@ -557,7 +558,7 @@ func (r *QueryResolver) TelematicsStatus(ctx context.Context) (*gqlmodel.Telemat
 		return nil, err
 	}
 
-	status, err := r.TelematicsService.GetStatus(ctx, base.TenantInfo(authCtx))
+	status, err := r.TelematicsService.GetStatus(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}

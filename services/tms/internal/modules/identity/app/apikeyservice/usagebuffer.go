@@ -9,7 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -77,20 +77,20 @@ type UsageBuffer struct {
 type UsageBufferParams struct {
 	fx.In
 
-	LC     fx.Lifecycle
-	Repo   apikeyports.APIKeyRepository
-	Logger *zap.Logger
-	Config *config.Config
+	LC             fx.Lifecycle
+	Repo           apikeyports.APIKeyRepository
+	Logger         *zap.Logger
+	SecurityConfig *securityconfig.Config
 }
 
 func NewUsageBuffer(
 	repo apikeyports.APIKeyRepository,
 	l *zap.Logger,
-	cfg *config.Config,
+	cfg *securityconfig.Config,
 ) *UsageBuffer {
-	apiTokenCfg := config.APITokenConfig{}
+	apiTokenCfg := securityconfig.APITokenConfig{}
 	if cfg != nil {
-		apiTokenCfg = cfg.Security.APIToken
+		apiTokenCfg = cfg.APIToken
 	}
 
 	return &UsageBuffer{
@@ -106,7 +106,7 @@ func NewUsageBuffer(
 }
 
 func NewUsageBufferWithLifecycle(p UsageBufferParams) *UsageBuffer {
-	buf := NewUsageBuffer(p.Repo, p.Logger, p.Config)
+	buf := NewUsageBuffer(p.Repo, p.Logger, p.SecurityConfig)
 	p.LC.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			buf.Start()

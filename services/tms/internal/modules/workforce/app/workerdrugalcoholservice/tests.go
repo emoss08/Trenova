@@ -5,7 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,8 +19,8 @@ import (
 
 func (s *Service) ListTests(
 	ctx context.Context,
-	req *workerports.ListWorkerDOTTestsRequest,
-) ([]*worker.WorkerDOTTest, error) {
+	req *workerdotports.ListWorkerDOTTestsRequest,
+) ([]*workerdot.WorkerDOTTest, error) {
 	return s.repo.ListTests(ctx, req)
 }
 
@@ -26,8 +28,8 @@ func (s *Service) GetTest(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerDOTTest, error) {
-	return s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+) (*workerdot.WorkerDOTTest, error) {
+	return s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeWorker:   true,
@@ -36,14 +38,14 @@ func (s *Service) GetTest(
 	})
 }
 
-func (s *Service) prepareTest(entity *worker.WorkerDOTTest) error {
+func (s *Service) prepareTest(entity *workerdot.WorkerDOTTest) error {
 	// The columns default to Scheduled and Pending, but validation runs before
 	// the insert does, so the defaults have to be applied here too.
 	if entity.Status == "" {
-		entity.Status = worker.DOTTestStatusScheduled
+		entity.Status = workerdot.DOTTestStatusScheduled
 	}
 	if entity.Result == "" {
-		entity.Result = worker.DOTResultPending
+		entity.Result = workerdot.DOTResultPending
 	}
 	entity.Reason = strings.TrimSpace(entity.Reason)
 	entity.CollectionSite = strings.TrimSpace(entity.CollectionSite)
@@ -56,7 +58,7 @@ func (s *Service) prepareTest(entity *worker.WorkerDOTTest) error {
 	// The two halves of a collection cannot borrow each other's fields, so
 	// clear whatever the caller sent that this substance cannot produce rather
 	// than storing a number the analysis never generated.
-	if entity.Substance == worker.DOTSubstanceAlcohol {
+	if entity.Substance == workerdot.DOTSubstanceAlcohol {
 		entity.MROName = ""
 		entity.MROVerifiedAt = nil
 	} else {
@@ -77,9 +79,9 @@ func (s *Service) prepareTest(entity *worker.WorkerDOTTest) error {
 // with it runs the same follow-ons an update would.
 func (s *Service) RecordTest(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	tenantInfo := testTenant(entity)
 	log := s.l.With(
 		zap.String("operation", "RecordTest"),
@@ -116,7 +118,7 @@ func (s *Service) RecordTest(
 
 func (s *Service) prepareRecordTest(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
 ) error {
 	tenantInfo := testTenant(entity)
@@ -134,7 +136,7 @@ func (s *Service) prepareRecordTest(
 	if err := s.prepareTest(entity); err != nil {
 		return err
 	}
-	if entity.Status == worker.DOTTestStatusCompleted {
+	if entity.Status == workerdot.DOTTestStatusCompleted {
 		return s.checkOutcomePreconditions(
 			ctx, tenantInfo, entity.WorkerID, entity.TestType, entity.Result,
 		)
@@ -147,7 +149,7 @@ func (s *Service) prepareRecordTest(
 type RecordResultRequest struct {
 	TenantInfo           pagination.TenantInfo
 	TestID               pulid.ID
-	Result               worker.DOTTestResult
+	Result               workerdot.DOTTestResult
 	ResultAt             int64
 	LabName              string
 	MROName              string
@@ -163,13 +165,13 @@ type RecordResultRequest struct {
 func (s *Service) RecordResult(
 	ctx context.Context,
 	req *RecordResultRequest,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	log := s.l.With(
 		zap.String("operation", "RecordResult"),
 		zap.String("testId", req.TestID.String()),
 	)
 
-	entity, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+	entity, err := s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:         req.TestID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -177,7 +179,7 @@ func (s *Service) RecordResult(
 		return nil, err
 	}
 
-	if !entity.Status.CanTransitionTo(worker.DOTTestStatusCompleted) {
+	if !entity.Status.CanTransitionTo(workerdot.DOTTestStatusCompleted) {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -189,7 +191,7 @@ func (s *Service) RecordResult(
 	// The result an alcohol test lands on is decided by the concentration, not
 	// by the caller, so work it out before asking whether it may be recorded.
 	intended := req.Result
-	if entity.Substance == worker.DOTSubstanceAlcohol {
+	if entity.Substance == workerdot.DOTSubstanceAlcohol {
 		if req.AlcoholConcentration == nil {
 			return nil, errortypes.NewValidationError(
 				"alcoholConcentration",
@@ -197,7 +199,7 @@ func (s *Service) RecordResult(
 				"An alcohol test result needs the concentration that was measured",
 			)
 		}
-		intended = worker.ResultForConcentration(*req.AlcoholConcentration)
+		intended = workerdot.ResultForConcentration(*req.AlcoholConcentration)
 	}
 
 	// Asked before a single field is touched: the entity here is the one the
@@ -210,7 +212,7 @@ func (s *Service) RecordResult(
 
 	previous := *entity
 
-	entity.Status = worker.DOTTestStatusCompleted
+	entity.Status = workerdot.DOTTestStatusCompleted
 	entity.Result = intended
 	resultAt := req.ResultAt
 	if resultAt <= 0 {
@@ -230,7 +232,7 @@ func (s *Service) RecordResult(
 		entity.DocumentID = req.DocumentID
 	}
 
-	if entity.Substance == worker.DOTSubstanceAlcohol {
+	if entity.Substance == workerdot.DOTSubstanceAlcohol {
 		entity.AlcoholConcentration = req.AlcoholConcentration
 	} else {
 		entity.MROName = req.MROName
@@ -275,7 +277,7 @@ func (s *Service) CancelTest(
 	id pulid.ID,
 	reason string,
 	userID pulid.ID,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	change, err := s.PlanCancelTest(ctx, tenantInfo, id, reason)
 	if err != nil {
 		return nil, err
@@ -316,10 +318,10 @@ func (s *Service) checkOutcomePreconditions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	testType worker.DOTTestType,
-	result worker.DOTTestResult,
+	testType workerdot.DOTTestType,
+	result workerdot.DOTTestResult,
 ) error {
-	if testType != worker.DOTTestReturnToDuty || !result.IsNegative() {
+	if testType != workerdot.DOTTestReturnToDuty || !result.IsNegative() {
 		return nil
 	}
 
@@ -350,11 +352,11 @@ func (s *Service) checkOutcomePreconditions(
 // testing programme in one place.
 func (s *Service) applyTestOutcome(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
 	log *zap.Logger,
 ) error {
-	if entity.Status != worker.DOTTestStatusCompleted {
+	if entity.Status != workerdot.DOTTestStatusCompleted {
 		return nil
 	}
 
@@ -381,9 +383,9 @@ func (s *Service) applyTestOutcome(
 	}
 
 	switch entity.TestType {
-	case worker.DOTTestReturnToDuty:
+	case workerdot.DOTTestReturnToDuty:
 		return s.applyReturnToDuty(ctx, violation, entity, userID)
-	case worker.DOTTestFollowUp:
+	case workerdot.DOTTestFollowUp:
 		return s.applyFollowUp(ctx, violation, userID)
 	default:
 		return nil
@@ -394,7 +396,7 @@ func (s *Service) applyTestOutcome(
 // the round's outstanding list shrinks as collections come in.
 func (s *Service) closeDrawEntry(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	log *zap.Logger,
 ) error {
 	if entity.DrawEntryID.IsNil() {
@@ -402,7 +404,7 @@ func (s *Service) closeDrawEntry(
 	}
 
 	tenantInfo := testTenant(entity)
-	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
+	dbEntry, err := s.repo.GetDrawEntryByID(ctx, &workerdotports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         entity.DrawEntryID,
 		TenantInfo: tenantInfo,
 	})
@@ -410,12 +412,12 @@ func (s *Service) closeDrawEntry(
 		log.Warn("failed to read draw entry for test", zap.Error(err))
 		return nil
 	}
-	if dbEntry.Status == worker.RandomEntryCompleted {
+	if dbEntry.Status == dotrandom.RandomEntryCompleted {
 		return nil
 	}
 
 	completedAt := entity.EffectiveAt()
-	dbEntry.Status = worker.RandomEntryCompleted
+	dbEntry.Status = dotrandom.RandomEntryCompleted
 	dbEntry.CompletedAt = &completedAt
 	dbEntry.TestID = entity.ID
 

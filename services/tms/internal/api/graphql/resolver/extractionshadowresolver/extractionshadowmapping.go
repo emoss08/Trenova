@@ -5,13 +5,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 func extractionShadowResultColumns(ctx context.Context, nodePathPrefix string) []string {
-	return base.ProjectedSelection(
+	return gqlconnection.ProjectedSelection(
 		ctx,
 		projection.ExtractionShadowResultSpec,
 		nodePathPrefix,
@@ -21,7 +21,7 @@ func extractionShadowResultColumns(ctx context.Context, nodePathPrefix string) [
 func extractionShadowResultConnectionToModel(
 	result *pagination.CursorListResult[*extractionshadow.ShadowResult],
 ) (*gqlmodel.ExtractionShadowResultConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *extractionshadow.ShadowResult, cursor string) *gqlmodel.ExtractionShadowResultEdge {
 			return &gqlmodel.ExtractionShadowResultEdge{Node: node, Cursor: cursor}

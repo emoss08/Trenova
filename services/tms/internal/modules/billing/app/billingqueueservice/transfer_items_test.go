@@ -4,25 +4,27 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueactivity"
+	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueuereadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -74,15 +76,15 @@ func transferFixture(t *testing.T) (*shipment.Shipment, pulid.ID, pagination.Ten
 		BusinessUnitID:      tenantInfo.BuID,
 		CustomerID:          pulid.MustNew("cus_"),
 		OrderID:             pulid.MustNew("ord_"),
-		Status:              shipment.StatusReadyToInvoice,
+		Status:              shipmentvocab.StatusReadyToInvoice,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 		AdditionalCharges:   []*shipment.AdditionalCharge{charge},
 		ChargeAllocations: []*shipment.ChargeAllocation{{
 			ID:                 pulid.MustNew("chal_"),
-			ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 			AdditionalChargeID: &chargeID,
 			BillToCustomerID:   amd,
-			Method:             shipment.ChargeAllocationMethodPercent,
+			Method:             shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:            decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}
@@ -92,11 +94,29 @@ func transferFixture(t *testing.T) (*shipment.Shipment, pulid.ID, pagination.Ten
 
 func testValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*billingqueue.BillingQueueItem]().
+		validator: tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
 			WithModelName("Billing Queue Item").
 			WithCustomRule(createStatusConstraintsRule()).
 			Build(),
 	}
+}
+
+// wired gives a queue built field by field the activity recorder and the
+// reviewer NewService builds from the same dependencies.
+func wired(s *Service) *Service {
+	s.activity = billingqueueactivity.New(billingqueueactivity.Params{
+		Logger:     s.l,
+		ReviewRepo: s.reviewRepo,
+		UserRepo:   s.userRepo,
+		Realtime:   s.realtime,
+	})
+	s.readiness = billingqueuereadiness.New(&billingqueuereadiness.Params{
+		Logger:      s.l,
+		Activity:    s.activity,
+		ReviewRepo:  s.reviewRepo,
+		InvoiceRepo: s.invoiceRepo,
+	})
+	return s
 }
 
 func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
@@ -140,10 +160,10 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Twice()
 
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -153,7 +173,7 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		auditService: audit,
 		realtime:     realtime,
 		validator:    testValidator(),
-	}
+	})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -226,7 +246,7 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 		Return(true, nil).
 		Once()
 
-	svc := &service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo}
+	svc := wired(&Service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -250,12 +270,12 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 	t.Parallel()
 
 	shp, _, tenantInfo := transferFixture(t)
-	shp.Status = shipment.StatusCompleted
+	shp.Status = shipmentvocab.StatusCompleted
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(shp, nil).Once()
 
-	svc := &service{l: zap.NewNop(), shipmentRepo: shipmentRepo}
+	svc := wired(&Service{l: zap.NewNop(), shipmentRepo: shipmentRepo})
 
 	_, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
 		ShipmentID: shp.ID,
@@ -271,7 +291,7 @@ func TestTransferToBillingItemsRequiresAReadyToInvoiceShipment(t *testing.T) {
 func TestShouldAutoApprove(t *testing.T) {
 	t.Parallel()
 
-	svc := &service{}
+	svc := wired(&Service{})
 	intel := pulid.MustNew("cus_")
 	amd := pulid.MustNew("cus_")
 
@@ -308,9 +328,9 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	shp.ChargeAllocations = append(shp.ChargeAllocations, &shipment.ChargeAllocation{
 		ID:               pulid.MustNew("chal_"),
 		ShipmentID:       &shipmentID,
-		ChargeKind:       shipment.ChargeAllocationKindFreight,
+		ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 		BillToCustomerID: amd,
-		Method:           shipment.ChargeAllocationMethodPercent,
+		Method:           shipmentvocab.ChargeAllocationMethodPercent,
 		Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 	})
 
@@ -344,10 +364,10 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -357,7 +377,7 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		auditService: audit,
 		realtime:     realtime,
 		validator:    testValidator(),
-	}
+	})
 
 	result, err := svc.TransferToBillingItems(
 		t.Context(),
@@ -386,7 +406,7 @@ func transferringService(
 	shp *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
 	shipmentRepo *shipmentportsmock.MockShipmentRepository,
-) *service {
+) *Service {
 	t.Helper()
 
 	repo := billingqueueportsmock.NewMockBillingQueueRepository(t)
@@ -413,7 +433,7 @@ func transferringService(
 		}).
 		Twice()
 
-	return &service{
+	return wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -423,7 +443,7 @@ func transferringService(
 		auditService: &mocks.NoopAuditService{},
 		realtime:     &mocks.NoopRealtimeService{},
 		validator:    testValidator(),
-	}
+	})
 }
 
 func transferActor(tenantInfo pagination.TenantInfo) *permissionports.RequestActor {

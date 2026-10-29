@@ -3,8 +3,13 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,19 +24,19 @@ func taintOf(marks ...agent.TaintMark) *agent.RunTaint {
 }
 
 func delegatingTurnScript(delegateID string) *scriptedCompletion {
-	return &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn(delegateTaskName, map[string]any{
+	return &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn(runtimetools.DelegateTaskName, map[string]any{
 			"agentId": delegateID,
 			"task":    "Create the report and return its id.",
 		}),
-		textTurn("Done."),
+		runtimetest.TextTurn("Done."),
 	}}
 }
 
 func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
@@ -57,12 +62,12 @@ func TestDelegate_HandsTheTurnsTaintDown(t *testing.T) {
 func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	document := agent.TaintMark{
 		Source:   agent.TaintSourceDocument,
 		ToolName: "document_get_summary",
 		CallID:   "call_d0",
-		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	}
 	run := scriptedDelegateRun(delegate)
 	run.Result.Taint = taintOf(document)
@@ -82,9 +87,9 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 	assert.Equal(t, []agent.TaintMark{document}, result.Delegations[0].Taint.Marks,
 		"the delegate's proposals carry its own turn's taint")
 
-	var announced []agentports.AssistantRunTaintedEvent
+	var announced []assistantstreamports.AssistantRunTaintedEvent
 	for _, event := range fx.events {
-		if data, ok := event.Data.(agentports.AssistantRunTaintedEvent); ok {
+		if data, ok := event.Data.(assistantstreamports.AssistantRunTaintedEvent); ok {
 			announced = append(announced, data)
 		}
 	}
@@ -95,22 +100,29 @@ func TestDelegate_FoldsTheDelegatesTaintBackUp(t *testing.T) {
 func TestDelegate_AnOverflowedDelegateTaintOverflowsTheTurn(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	run := scriptedDelegateRun(delegate)
-	run.Result.Taint = &agent.RunTaint{Seen: []agent.TaintSource{agent.TaintSourceWeb}, Overflowed: true}
+	run.Result.Taint = &agent.RunTaint{
+		Seen:       []agent.TaintSource{agent.TaintSourceWeb},
+		Overflowed: true,
+	}
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
 		&stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
 	result := driveWith(t, rt, delegatingRequest(delegate), &delegateRecorder{run: run})
 
 	assert.True(t, result.Taint.Overflowed)
-	assert.True(t, result.Taint.Has(agent.TaintSourceWeb), "a source past the delegate's marks is kept")
+	assert.True(
+		t,
+		result.Taint.Has(agent.TaintSourceWeb),
+		"a source past the delegate's marks is kept",
+	)
 }
 
 func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	email := agent.TaintMark{
 		Source:   agent.TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
@@ -127,13 +139,13 @@ func TestDelegate_AMarkTheTurnAlreadyHadIsNotAnnouncedAgain(t *testing.T) {
 	result := driveWith(t, rt, req, fx)
 
 	assert.Len(t, result.Taint.Marks, 1)
-	assert.NotContains(t, fx.eventNames(), agentports.AssistantEventRunTainted)
+	assert.NotContains(t, fx.eventNames(), assistantstreamports.AssistantEventRunTainted)
 }
 
 func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	run := scriptedDelegateRun(delegate)
 	run.Result.Taint = nil
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
@@ -148,10 +160,10 @@ func TestDelegate_ADelegateOfUnknownTaintLeavesTheTurnUnknown(t *testing.T) {
 func TestDelegate_ADeclinedTaskTaintsNothing(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(delegatingTurnScript(delegate.ID.String()),
 		&stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	fx := &delegateRecorder{run: DelegateRun{Declined: "Report Builder is disabled."}}
+	fx := &delegateRecorder{run: delegation.Run{Declined: "Report Builder is disabled."}}
 
 	result := driveWith(t, rt, delegatingRequest(delegate), fx)
 

@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -19,28 +20,28 @@ import (
 func TestToolPolicyViewToModel(t *testing.T) {
 	t.Parallel()
 
-	condition := &agentports.TierCondition{
+	condition := &agenttoolports.TierCondition{
 		Description: "Runs only as far as its mailbox allows.",
-		Limit: func(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+		Limit: func(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 			return agent.TierPropose
 		},
 	}
-	view := agentports.AgentToolPolicyView{
-		Policy: agentports.ToolPolicy{
+	view := agenttoolports.AgentToolPolicyView{
+		Policy: agenttoolports.ToolPolicy{
 			Name:          "inbox_send_reply",
-			Kind:          agent.ToolKindAction,
-			Scope:         agent.ToolScopeTenant,
+			Kind:          agenttooltrust.ToolKindAction,
+			Scope:         agenttooltrust.ToolScopeTenant,
 			DefaultTier:   agent.TierActWithApproval,
 			MaxTier:       agent.TierActWithApproval,
 			Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
 			Condition:     condition,
-			Effect:        agent.ToolEffectChange,
-			ReadsExternal: agent.ExternalReadAlways,
+			Effect:        agenttooltrust.ToolEffectChange,
+			ReadsExternal: agenttooltrust.ExternalReadAlways,
 			Source:        agent.TaintSourceInboundMessage,
 			Rationale:     "A reply reaches the sender.",
 		},
 		Title: "Reply to inbound message",
-		Needs: &agentports.ToolGrant{
+		Needs: &agenttoolports.ToolGrant{
 			Resource:  permission.ResourceInboundMessage,
 			Operation: permission.OpUpdate,
 		},
@@ -70,14 +71,17 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	assert.Equal(t, agent.EgressExternalRecipient, model.Egress[0],
 		"the model keeps its own copy of the classes")
 
-	selfScoped := ToolPolicyViewToModel(&agentports.AgentToolPolicyView{
-		Policy: agentports.ToolPolicy{Name: "home_add_widget", Kind: agent.ToolKindAction},
+	selfScoped := ToolPolicyViewToModel(&agenttoolports.AgentToolPolicyView{
+		Policy: agenttoolports.ToolPolicy{
+			Name: "home_add_widget",
+			Kind: agenttooltrust.ToolKindAction,
+		},
 	})
 	assert.Nil(t, selfScoped.Needs)
 	assert.Nil(t, selfScoped.Source)
 	assert.Nil(t, selfScoped.ConditionDescription)
-	assert.Equal(t, agent.ToolEffectChange, selfScoped.Effect)
-	assert.Equal(t, agent.ExternalReadNever, selfScoped.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, selfScoped.Effect)
+	assert.Equal(t, agenttooltrust.ExternalReadNever, selfScoped.ReadsExternal)
 	assert.Equal(t, agent.TierPropose, selfScoped.DefaultTier)
 	assert.Equal(t, agent.TierAutoExecute, selfScoped.MaxTier)
 }
@@ -88,7 +92,7 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 	first := 50
 	after := "cursor"
 	query := "move"
-	req := base.MemtableRequestFromGraphQL(t.Context(), &gqlmodel.DataTableConnectionInput{
+	req := gqlconnection.MemtableRequestFromGraphQL(t.Context(), &gqlmodel.DataTableConnectionInput{
 		First: &first,
 		After: &after,
 		Query: &query,
@@ -116,6 +120,6 @@ func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
 
 	assert.Equal(t,
 		memtable.Request{IncludeTotalCount: true},
-		base.MemtableRequestFromGraphQL(t.Context(), nil),
+		gqlconnection.MemtableRequestFromGraphQL(t.Context(), nil),
 	)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ type stubSection struct{}
 
 func (stubSection) Name() string                         { return "stub" }
 func (stubSection) Paths() []string                      { return []string{"platform.stub"} }
-func (stubSection) PlatformModes() []config.PlatformMode { return nil }
+func (stubSection) PlatformModes() []platformconfig.Mode { return nil }
 func (stubSection) SetDefaults(*viper.Viper, string)     {}
 func (stubSection) Decode(*viper.Viper) (any, error)     { return struct{}{}, nil }
 func (stubSection) Validate(*config.Config, string) error {

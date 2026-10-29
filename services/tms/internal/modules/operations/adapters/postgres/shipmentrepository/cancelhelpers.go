@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -27,9 +28,9 @@ func scoped[T any](q *keel.Query[*T], t tenancy) *keel.Query[*T] {
 	return q
 }
 
-func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment.Status {
-	if req.RestoredStatus == "" || req.RestoredStatus == shipment.StatusCanceled {
-		return shipment.StatusNew
+func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipmentvocab.Status {
+	if req.RestoredStatus == "" || req.RestoredStatus == shipmentvocab.StatusCanceled {
+		return shipmentvocab.StatusNew
 	}
 
 	return req.RestoredStatus
@@ -55,7 +56,7 @@ func (r *repository) cancelShipmentComponents(
 	if _, err := scoped(sm.Where(
 		sm.ShipmentID.In(shipmentIDs...),
 		sm.Status.NotIn(shipmentstate.CancelPreservedMoveStatuses()...),
-	), t).Update(ctx, db, sm.Status.To(shipment.MoveStatusCanceled)); err != nil {
+	), t).Update(ctx, db, sm.Status.To(shipmentvocab.MoveStatusCanceled)); err != nil {
 		return err
 	}
 
@@ -64,7 +65,7 @@ func (r *repository) cancelShipmentComponents(
 		a.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
 		a.ArchivedAt.IsNull(),
 		a.Status.NotIn(shipmentstate.CancelPreservedAssignmentStatuses()...),
-	), t).Update(ctx, db, a.Status.To(shipment.AssignmentStatusCanceled)); err != nil {
+	), t).Update(ctx, db, a.Status.To(shipmentvocab.AssignmentStatusCanceled)); err != nil {
 		return err
 	}
 
@@ -72,7 +73,7 @@ func (r *repository) cancelShipmentComponents(
 	if _, err := scoped(st.Where(
 		st.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
 		st.Status.NotIn(shipmentstate.CancelPreservedStopStatuses()...),
-	), t).Update(ctx, db, st.Status.To(shipment.StopStatusCanceled)); err != nil {
+	), t).Update(ctx, db, st.Status.To(shipmentvocab.StopStatusCanceled)); err != nil {
 		return err
 	}
 
@@ -94,8 +95,8 @@ func (r *repository) uncancelShipmentComponents(
 	if _, err := a.Where(
 		a.ShipmentMoveID.InQuery(moves),
 		a.ArchivedAt.IsNull(),
-		a.Status.Eq(shipment.AssignmentStatusCanceled),
-	).Update(ctx, db, a.Status.To(shipment.AssignmentStatusNew)); err != nil {
+		a.Status.Eq(shipmentvocab.AssignmentStatusCanceled),
+	).Update(ctx, db, a.Status.To(shipmentvocab.AssignmentStatusNew)); err != nil {
 		return err
 	}
 
@@ -111,13 +112,13 @@ func restoreMoveStatuses(
 	sm := shipmentdb.ShipmentMoves
 	groups := sliceutils.GroupBy(
 		restores,
-		func(item shipmentports.MoveStatusRestore) shipment.MoveStatus {
+		func(item shipmentports.MoveStatusRestore) shipmentvocab.MoveStatus {
 			return item.Status
 		},
 	)
 
 	for status, items := range groups {
-		if status == shipment.MoveStatusCanceled {
+		if status == shipmentvocab.MoveStatusCanceled {
 			continue
 		}
 
@@ -129,7 +130,7 @@ func restoreMoveStatuses(
 		if _, err := sm.Where(
 			sm.ID.In(ids...),
 			sm.ShipmentID.Eq(shipmentID),
-			sm.Status.Eq(shipment.MoveStatusCanceled),
+			sm.Status.Eq(shipmentvocab.MoveStatusCanceled),
 		).Update(ctx, db, sm.Status.To(status)); err != nil {
 			return err
 		}
@@ -147,13 +148,13 @@ func restoreStopStatuses(
 	st := shipmentdb.Stops
 	groups := sliceutils.GroupBy(
 		restores,
-		func(item shipmentports.StopStatusRestore) shipment.StopStatus {
+		func(item shipmentports.StopStatusRestore) shipmentvocab.StopStatus {
 			return item.Status
 		},
 	)
 
 	for status, items := range groups {
-		if status == shipment.StopStatusCanceled {
+		if status == shipmentvocab.StopStatusCanceled {
 			continue
 		}
 
@@ -165,7 +166,7 @@ func restoreStopStatuses(
 		if _, err := st.Where(
 			st.ID.In(ids...),
 			st.ShipmentMoveID.InQuery(movesOf([]pulid.ID{shipmentID}, scopedTenant)),
-			st.Status.Eq(shipment.StopStatusCanceled),
+			st.Status.Eq(shipmentvocab.StopStatusCanceled),
 		).Update(ctx, db, st.Status.To(status)); err != nil {
 			return err
 		}

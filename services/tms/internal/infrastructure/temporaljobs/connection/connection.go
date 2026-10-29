@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/contrib/envconfig"
 	"go.uber.org/zap"
@@ -39,7 +39,7 @@ type Summary struct {
 }
 
 func BuildOptions(
-	cfg *config.TemporalConfig,
+	cfg *temporalconfig.Config,
 ) (client.Options, Summary, error) {
 	profile, summary, err := resolveClientProfile(cfg)
 	if err != nil {
@@ -77,7 +77,7 @@ func BuildOptions(
 }
 
 func resolveClientProfile(
-	cfg *config.TemporalConfig,
+	cfg *temporalconfig.Config,
 ) (envconfig.ClientConfigProfile, Summary, error) {
 	if cfg.UsesProfile() {
 		name := strings.TrimSpace(cfg.Profile)

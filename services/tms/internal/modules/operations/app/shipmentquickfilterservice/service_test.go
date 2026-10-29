@@ -7,9 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,14 +20,14 @@ import (
 
 type stubControls struct {
 	tenantports.ShipmentControlRepository
-	control *tenant.ShipmentControl
+	control *shipmentcontrol.ShipmentControl
 	calls   int
 }
 
 func (s *stubControls) Get(
 	context.Context,
 	tenantports.GetShipmentControlRequest,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	s.calls++
 	return s.control, nil
 }
@@ -67,7 +67,7 @@ func TestResolveLoadsOnlyWhatIsNeeded(t *testing.T) {
 	t.Parallel()
 
 	threshold := int16(45)
-	controls := &stubControls{control: &tenant.ShipmentControl{
+	controls := &stubControls{control: &shipmentcontrol.ShipmentControl{
 		DetentionThreshold:       &threshold,
 		UseDetentionPolicyEngine: true,
 	}}
@@ -105,14 +105,14 @@ func TestResolveLoadsOnlyWhatIsNeeded(t *testing.T) {
 func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(&stubControls{control: &tenant.ShipmentControl{}}, &stubCosts{})
+	svc := newTestService(&stubControls{control: &shipmentcontrol.ShipmentControl{}}, &stubCosts{})
 
 	opts := &shipmentports.ShipmentOptions{}
 	require.NoError(t, svc.Prepare(t.Context(), pagination.TenantInfo{}, opts))
 	assert.Nil(t, opts.QuickFilterBasis)
 
 	opts = &shipmentports.ShipmentOptions{
-		QuickFilters: []shipment.QuickFilterSpec{{Filter: shipment.QuickFilterDeliveryHour}},
+		QuickFilters: []quickfilter.QuickFilterSpec{{Filter: quickfilter.QuickFilterDeliveryHour}},
 		Timezone:     "UTC",
 	}
 	err := svc.Prepare(t.Context(), pagination.TenantInfo{}, opts)
@@ -120,8 +120,10 @@ func TestPrepareValidatesAndAttachesTheBasis(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 
 	opts = &shipmentports.ShipmentOptions{
-		QuickFilters: []shipment.QuickFilterSpec{shipment.Quick(shipment.QuickFilterDetention)},
-		Timezone:     "UTC",
+		QuickFilters: []quickfilter.QuickFilterSpec{
+			quickfilter.Quick(quickfilter.QuickFilterDetention),
+		},
+		Timezone: "UTC",
 	}
 	require.NoError(t, svc.Prepare(t.Context(), pagination.TenantInfo{}, opts))
 	require.NotNil(t, opts.QuickFilterBasis)

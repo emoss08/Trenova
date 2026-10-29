@@ -3,7 +3,7 @@ package extractionshadowservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
@@ -41,7 +41,7 @@ type Params struct {
 	Results   extractionshadowports.ExtractionShadowResultRepository
 	Scorer    *Scorer
 	Contents  documentcontentports.DocumentContentRepository
-	Providers agentports.AIProviderRepository
+	Providers aiproviderports.AIProviderRepository
 	Retention tenantports.DataRetentionRepository
 	Audit     auditports.AuditService
 	Predictor extractionshadowports.ExtractionShadowPredictor `optional:"true"`
@@ -54,7 +54,7 @@ type Service struct {
 	results   extractionshadowports.ExtractionShadowResultRepository
 	scorer    *Scorer
 	contents  contentReader
-	providers agentports.AIProviderRepository
+	providers aiproviderports.AIProviderRepository
 	retention tenantports.DataRetentionRepository
 	audit     auditports.AuditService
 	predictor extractionshadowports.ExtractionShadowPredictor

@@ -4,9 +4,9 @@ package assignmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
@@ -16,11 +16,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -45,10 +49,10 @@ type Params struct {
 
 	Logger              *zap.Logger
 	DB                  kernelports.Transactor
-	Repo                shipmentports.AssignmentRepository
+	Repo                assignmentports.AssignmentRepository
 	ShipmentRepo        shipmentports.ShipmentRepository
 	OrgRepo             tenantports.OrganizationRepository
-	HoldRepo            shipmentports.ShipmentHoldRepository
+	HoldRepo            shipmentholdports.ShipmentHoldRepository
 	ControlRepo         tenantports.ShipmentControlRepository
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	WorkerRepo          workerports.WorkerRepository
@@ -59,23 +63,23 @@ type Params struct {
 	TrailerRepo         trailerports.TrailerRepository
 	TractorRepo         tractorports.TractorRepository `optional:"true"`
 	LocationRepo        locationports.LocationRepository
-	ShipmentValidator   *shipmentservice.Validator
+	ShipmentValidator   *shipmentvalidator.Validator
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
 	EventService        shipmenteventports.ShipmentEventService
-	Invalidator         shipmentports.ShipmentInvalidator
+	Invalidator         shipmentinvalidationports.ShipmentInvalidator
 	DriverNotify        *drivernotificationservice.Service
-	TenderGuard         tenderports.TenderGuard        `optional:"true"`
-	AgentEvents         agentports.AgentEventPublisher `optional:"true"`
+	TenderGuard         tenderports.TenderGuard             `optional:"true"`
+	AgentEvents         agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type service struct {
 	l                   *zap.Logger
 	db                  kernelports.Transactor
-	repo                shipmentports.AssignmentRepository
+	repo                assignmentports.AssignmentRepository
 	shipmentRepo        shipmentports.ShipmentRepository
 	orgRepo             tenantports.OrganizationRepository
-	holdRepo            shipmentports.ShipmentHoldRepository
+	holdRepo            shipmentholdports.ShipmentHoldRepository
 	controlRepo         tenantports.ShipmentControlRepository
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
 	workerRepo          workerports.WorkerRepository
@@ -86,17 +90,17 @@ type service struct {
 	trailerRepo         trailerports.TrailerRepository
 	tractorRepo         tractorports.TractorRepository
 	locationRepo        locationports.LocationRepository
-	shipmentValidator   *shipmentservice.Validator
+	shipmentValidator   *shipmentvalidator.Validator
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
 	eventService        shipmenteventports.ShipmentEventService
-	invalidator         shipmentports.ShipmentInvalidator
+	invalidator         shipmentinvalidationports.ShipmentInvalidator
 	driverNotify        *drivernotificationservice.Service
 	tenderGuard         tenderports.TenderGuard
-	agentEvents         agentports.AgentEventPublisher
+	agentEvents         agenteventports.AgentEventPublisher
 }
 
-func New(p Params) shipmentports.AssignmentService {
+func New(p Params) assignmentports.AssignmentService {
 	return &service{
 		l:                   p.Logger.Named("service.assignment"),
 		db:                  p.DB,
@@ -144,7 +148,7 @@ func (s *service) notifyAssignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_assigned",
 			Priority:   notification.PriorityHigh,
-			Context:    documenttemplate.DriverNotificationContext{},
+			Context:    notificationtemplate.DriverNotificationContext{},
 			Link:       link,
 			RelatedEntities: map[string]any{
 				"assignmentId": assignment.ID.String(),
@@ -171,7 +175,7 @@ func (s *service) notifyUnassignedWorkers(
 			WorkerID:   workerID,
 			EventType:  "dash.load_unassigned",
 			Priority:   notification.PriorityMedium,
-			Context:    documenttemplate.DriverNotificationContext{},
+			Context:    notificationtemplate.DriverNotificationContext{},
 			Link:       "/dash/loads",
 		})
 	}
@@ -242,21 +246,21 @@ func driverDisplayName(assignment *shipment.Assignment) string {
 
 func (s *service) List(
 	ctx context.Context,
-	req *shipmentports.ListAssignmentsRequest,
+	req *assignmentports.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *service) Get(
 	ctx context.Context,
-	req *shipmentports.GetAssignmentByIDRequest,
+	req *assignmentports.GetAssignmentByIDRequest,
 ) (*shipment.Assignment, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *service) AssignToMove(
 	ctx context.Context,
-	req *shipmentports.AssignShipmentMoveRequest,
+	req *assignmentports.AssignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -287,10 +291,14 @@ func (s *service) AssignToMove(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		shipmentports.InvalidateShipments(
+		shipmentinvalidationports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "assigned"),
+			shipmentinvalidationports.ShipmentInvalidationByUser(
+				req.TenantInfo,
+				ref.ShipmentID,
+				"assigned",
+			),
 		)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, nil)
 	}
@@ -316,7 +324,7 @@ func (s *service) withdrawLiveTender(
 
 func (s *service) Reassign(
 	ctx context.Context,
-	req *shipmentports.ReassignShipmentMoveRequest,
+	req *assignmentports.ReassignShipmentMoveRequest,
 ) (*shipment.Assignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -340,7 +348,7 @@ func (s *service) Reassign(
 			updated.TractorID = &req.TractorID
 			updated.TrailerID = req.TrailerID
 			updated.SecondaryWorkerID = req.SecondaryWorkerID
-			updated.Status = shipment.AssignmentStatusNew
+			updated.Status = shipmentvocab.AssignmentStatusNew
 
 			return &updated, nil
 		},
@@ -360,10 +368,14 @@ func (s *service) Reassign(
 			driverDisplayName(result),
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		shipmentports.InvalidateShipments(
+		shipmentinvalidationports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "reassigned"),
+			shipmentinvalidationports.ShipmentInvalidationByUser(
+				req.TenantInfo,
+				ref.ShipmentID,
+				"reassigned",
+			),
 		)
 		currentWorkers := assignmentWorkerIDs(result)
 		s.notifyAssignedWorkers(ctx, req.TenantInfo, result, workerIDSet(previousWorkers))
@@ -375,7 +387,7 @@ func (s *service) Reassign(
 
 func (s *service) Unassign(
 	ctx context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -392,14 +404,18 @@ func (s *service) Unassign(
 			*ref,
 			shipmenteventservice.ActorFor(req.TenantInfo),
 		))
-		shipmentports.InvalidateShipments(
+		shipmentinvalidationports.InvalidateShipments(
 			ctx,
 			s.invalidator,
-			shipmentports.ShipmentInvalidationByUser(req.TenantInfo, ref.ShipmentID, "unassigned"),
+			shipmentinvalidationports.ShipmentInvalidationByUser(
+				req.TenantInfo,
+				ref.ShipmentID,
+				"unassigned",
+			),
 		)
 		s.notifyUnassignedWorkers(ctx, req.TenantInfo, previousWorkers, nil)
-		agentports.PublishAgentEvent(ctx, s.agentEvents, agentports.AgentEvent{
-			Kind:      agent.EventShipmentMoveUnassigned,
+		agenteventports.PublishAgentEvent(ctx, s.agentEvents, agenteventports.AgentEvent{
+			Kind:      agenttrigger.EventShipmentMoveUnassigned,
 			SubjectID: ref.MoveID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: req.TenantInfo.OrgID,
@@ -413,7 +429,7 @@ func (s *service) Unassign(
 
 func (s *service) unassignWithinTx(
 	ctx context.Context,
-	req *shipmentports.UnassignShipmentMoveRequest,
+	req *assignmentports.UnassignShipmentMoveRequest,
 ) (*shipmenteventservice.AssignmentRef, []pulid.ID, error) {
 	var ref *shipmenteventservice.AssignmentRef
 	var previousWorkers []pulid.ID
@@ -454,7 +470,7 @@ func (s *service) unassignWithinTx(
 
 func (s *service) CheckWorkerCompliance(
 	ctx context.Context,
-	req *shipmentports.CheckWorkerComplianceRequest,
+	req *assignmentports.CheckWorkerComplianceRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -621,7 +637,7 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 		if _, err = s.shipmentRepo.Update(txCtx, updatedShipment); err != nil {
 			return err
 		}
-		result, err = s.repo.GetByID(txCtx, &shipmentports.GetAssignmentByIDRequest{
+		result, err = s.repo.GetByID(txCtx, &assignmentports.GetAssignmentByIDRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: tenantInfo.OrgID,
 				BuID:  tenantInfo.BuID,

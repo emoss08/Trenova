@@ -5,9 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -15,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/securityaudittest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +39,9 @@ type fakeRepo struct {
 	getCalls     int
 }
 
-func (f *fakeRepo) GetState(context.Context) (*instancebootstrapports.InstanceBootstrapState, error) {
+func (f *fakeRepo) GetState(
+	context.Context,
+) (*instancebootstrapports.InstanceBootstrapState, error) {
 	f.getCalls++
 	if f.stateErr != nil {
 		return nil, f.stateErr
@@ -87,14 +88,12 @@ func newDeps(t *testing.T, state *instancebootstrapports.InstanceBootstrapState)
 		auditor: &securityaudittest.Recorder{},
 	}
 	d.svc = New(Params{
-		DB:      dbtest.NopConnection{},
-		Tenants: d.tenants,
-		Repo:    d.repo,
-		Auditor: d.auditor,
-		Config: &config.Config{
-			System: config.SystemConfig{SystemUserPassword: testSystemUserPassword},
-		},
-		Logger: zap.NewNop(),
+		DB:           dbtest.NopConnection{},
+		Tenants:      d.tenants,
+		Repo:         d.repo,
+		Auditor:      d.auditor,
+		SystemConfig: &systemconfig.Config{SystemUserPassword: testSystemUserPassword},
+		Logger:       zap.NewNop(),
 	})
 	d.svc.now = func() int64 { return testNow }
 

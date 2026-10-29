@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -131,7 +132,7 @@ type AIFeedbackMessageContext struct {
 	Message  *conversation.Message
 	Thread   *conversation.Thread
 	Exchange []conversation.Message
-	Turn     *conversation.AssistantTurn
+	Turn     *conversationturn.AssistantTurn
 }
 
 type AIFeedbackSourceRepository interface {

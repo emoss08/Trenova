@@ -8,9 +8,12 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/keeltables"
@@ -30,24 +33,27 @@ var (
 type ConnectionParams struct {
 	fx.In
 
-	Lifecycle fx.Lifecycle
-	Config    *config.Config
-	Logger    *zap.Logger
-	Metrics   *metrics.Registry `optional:"true"`
-	Redis     *goredis.Client   `optional:"true"`
-	Observers []keel.Observer   `optional:"true"`
+	Lifecycle       fx.Lifecycle
+	AppConfig       *appconfig.Config
+	DatabaseConfig  *databaseconfig.Config
+	ReportingConfig *reportingconfig.Config
+	Logger          *zap.Logger
+	Metrics         *metrics.Registry `optional:"true"`
+	Redis           *goredis.Client   `optional:"true"`
+	Observers       []keel.Observer   `optional:"true"`
 }
 
 type Connection struct {
-	tenantKeel *keel.DB
-	systemKeel *keel.DB
-	cfg        *config.Config
-	logger     *observability.ContextLogger
-	metrics    *metrics.Registry
-	redis      *goredis.Client
-	observers  []keel.Observer
-	settings   connectionSettings
-	rls        *rlsRuntime
+	tenantKeel     *keel.DB
+	systemKeel     *keel.DB
+	appConfig      *appconfig.Config
+	databaseConfig *databaseconfig.Config
+	logger         *observability.ContextLogger
+	metrics        *metrics.Registry
+	redis          *goredis.Client
+	observers      []keel.Observer
+	settings       connectionSettings
+	rls            *rlsRuntime
 }
 
 type connectionSettings struct {
@@ -71,7 +77,7 @@ type txBinding struct {
 type detachedFromTx struct{}
 
 func NewConnection(p ConnectionParams) (*Connection, error) {
-	return newConnection(p, oltpSettings(p.Config))
+	return newConnection(p, oltpSettings(p.DatabaseConfig))
 }
 
 type ReportingConnection struct {
@@ -79,7 +85,7 @@ type ReportingConnection struct {
 }
 
 func NewReportingConnection(p ConnectionParams) (*ReportingConnection, error) {
-	conn, err := newConnection(p, reportingSettings(p.Config))
+	conn, err := newConnection(p, reportingSettings(p.DatabaseConfig, p.ReportingConfig))
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +99,8 @@ func newConnection(p ConnectionParams, settings connectionSettings) (*Connection
 	)
 
 	var rls *rlsRuntime
-	if rlsConfigured(p.Config) {
-		runtime, err := newRLSRuntime(p.Config, logger, p.Metrics)
+	if rlsConfigured(p.DatabaseConfig) {
+		runtime, err := newRLSRuntime(p.DatabaseConfig, logger, p.Metrics)
 		if err != nil {
 			return nil, err
 		}
@@ -102,13 +108,14 @@ func newConnection(p ConnectionParams, settings connectionSettings) (*Connection
 	}
 
 	conn := &Connection{
-		cfg:       p.Config,
-		logger:    logger,
-		metrics:   p.Metrics,
-		redis:     p.Redis,
-		observers: p.Observers,
-		settings:  settings,
-		rls:       rls,
+		appConfig:      p.AppConfig,
+		databaseConfig: p.DatabaseConfig,
+		logger:         logger,
+		metrics:        p.Metrics,
+		redis:          p.Redis,
+		observers:      p.Observers,
+		settings:       settings,
+		rls:            rls,
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -123,37 +130,40 @@ func newConnection(p ConnectionParams, settings connectionSettings) (*Connection
 	return conn, nil
 }
 
-func oltpSettings(cfg *config.Config) connectionSettings {
+func oltpSettings(cfg *databaseconfig.Config) connectionSettings {
 	return connectionSettings{
 		component:       "postgres",
-		maxOpenConns:    cfg.Database.MaxOpenConns,
-		connMaxLifetime: cfg.Database.ConnMaxLifetime,
-		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
+		maxOpenConns:    cfg.MaxOpenConns,
+		connMaxLifetime: cfg.ConnMaxLifetime,
+		connMaxIdleTime: cfg.ConnMaxIdleTime,
 		connParams: sessionParams(
-			cfg.Database.GetStatementTimeout(),
-			cfg.Database.GetLockTimeout(),
-			cfg.Database.GetIdleTxTimeout(),
+			cfg.GetStatementTimeout(),
+			cfg.GetLockTimeout(),
+			cfg.GetIdleTxTimeout(),
 		),
-		tenantConcurrency: cfg.Database.GetTenantConcurrency(cfg.Database.MaxOpenConns),
-		resultCache:       cfg.Database.Cache.Enabled,
+		tenantConcurrency: cfg.GetTenantConcurrency(cfg.MaxOpenConns),
+		resultCache:       cfg.Cache.Enabled,
 		registerStats:     true,
 	}
 }
 
-func reportingSettings(cfg *config.Config) connectionSettings {
-	reporting := cfg.GetReportingConfig()
+func reportingSettings(
+	databaseConfig *databaseconfig.Config,
+	reportingConfig *reportingconfig.Config,
+) connectionSettings {
+	reporting := reportingConfig
 
 	return connectionSettings{
 		component:       "postgres-reporting",
 		maxOpenConns:    reporting.GetPoolMaxOpenConns(),
-		connMaxLifetime: cfg.Database.ConnMaxLifetime,
-		connMaxIdleTime: cfg.Database.ConnMaxIdleTime,
+		connMaxLifetime: databaseConfig.ConnMaxLifetime,
+		connMaxIdleTime: databaseConfig.ConnMaxIdleTime,
 		connParams: sessionParams(
 			reporting.GetStatementTimeout(),
-			cfg.Database.GetLockTimeout(),
-			cfg.Database.GetIdleTxTimeout(),
+			databaseConfig.GetLockTimeout(),
+			databaseConfig.GetIdleTxTimeout(),
 		),
-		tenantConcurrency: cfg.Database.GetTenantConcurrency(reporting.GetPoolMaxOpenConns()),
+		tenantConcurrency: databaseConfig.GetTenantConcurrency(reporting.GetPoolMaxOpenConns()),
 		resultCache:       false,
 		registerStats:     false,
 	}
@@ -172,11 +182,11 @@ func milliseconds(d time.Duration) string {
 }
 
 func (c *Connection) connect(ctx context.Context) error {
-	c.logger.Debug(ctx, "Connecting to database", zap.String("dsn", c.cfg.GetDSNMasked()))
+	c.logger.Debug(ctx, "Connecting to database", zap.String("dsn", c.databaseConfig.DSNMasked()))
 
 	var guard dbpool.Guard
 	if c.rls != nil {
-		guard = c.rls.guard(scopePoolTenant, !c.cfg.Database.System.Configured())
+		guard = c.rls.guard(scopePoolTenant, !c.databaseConfig.System.Configured())
 	}
 
 	var (
@@ -190,7 +200,7 @@ func (c *Connection) connect(ctx context.Context) error {
 	}
 
 	tenant, err := c.openPool(ctx, &dbpool.Options{
-		DSN:               c.cfg.GetDSN(c.cfg.Database.Password),
+		DSN:               c.databaseConfig.DSN(c.appConfig.Name, c.databaseConfig.Password),
 		MaxConns:          c.settings.maxOpenConns,
 		MaxConnLifetime:   c.settings.connMaxLifetime,
 		MaxConnIdleTime:   c.settings.connMaxIdleTime,
@@ -207,7 +217,9 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	if c.settings.registerStats && c.metrics != nil && c.metrics.Database != nil {
 		pool := tenant.Pool()
-		c.metrics.Database.RegisterPoolStats(func() metrics.PoolStats { return poolStats(pool) })
+		c.metrics.Database.RegisterPoolStats(
+			func() platformmetrics.PoolStats { return poolStats(pool) },
+		)
 	}
 
 	if err = c.HealthCheck(ctx); err != nil {
@@ -228,7 +240,7 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	c.logger.Info(
 		ctx, "Database connection established",
-		zap.String("database", c.cfg.Database.Name),
+		zap.String("database", c.databaseConfig.Name),
 		zap.Int32("max_conns", tenant.Pool().Config().MaxConns),
 		zap.Int("tenant_concurrency", c.settings.tenantConcurrency),
 		zap.Bool("result_cache", cache != nil),
@@ -236,7 +248,7 @@ func (c *Connection) connect(ctx context.Context) error {
 		zap.String("row_level_security", c.rlsMode()),
 	)
 
-	if c.cfg.App.IsProduction() && !c.rls.enforced() {
+	if c.appConfig.IsProduction() && !c.rls.enforced() {
 		c.logger.Warn(
 			ctx,
 			"Row-level security is not enforced; tenant isolation rests on application filters alone",
@@ -250,9 +262,9 @@ func (c *Connection) connect(ctx context.Context) error {
 func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.DB, error) {
 	slow := newSlowQueryLog(c.logger)
 	opts.Observers = c.poolObservers(slow)
-	opts.ObserveArgs = queryLog(c.cfg) != nil
+	opts.ObserveArgs = queryLog(c.appConfig, c.databaseConfig) != nil
 	opts.Tables = keeltables.All()
-	opts.MaxWait = c.cfg.Database.MaxWait
+	opts.MaxWait = c.databaseConfig.MaxWait
 	opts.VersionErrors = func(err error) {
 		c.logger.Warn(context.Background(), "Failed to record data versions", zap.Error(err))
 	}
@@ -269,13 +281,13 @@ func (c *Connection) openPool(ctx context.Context, opts *dbpool.Options) (*keel.
 
 func (c *Connection) poolObservers(slow *slowQueryLog) []keel.Observer {
 	observers := make([]keel.Observer, 0, 3+len(c.observers))
-	if log := queryLog(c.cfg); log != nil {
+	if log := queryLog(c.appConfig, c.databaseConfig); log != nil {
 		observers = append(observers, log)
 	}
 
 	observers = append(observers,
 		&slowQueryObserver{log: slow},
-		newTracingObserver(c.cfg.Database.Name),
+		newTracingObserver(c.databaseConfig.Name),
 	)
 
 	return append(observers, c.observers...)
@@ -299,7 +311,7 @@ func (c *Connection) RunScoped(
 
 func (c *Connection) rlsMode() string {
 	if c.rls == nil {
-		return config.RLSModeOff
+		return databaseconfig.RLSModeOff
 	}
 
 	return c.rls.mode

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -15,8 +15,8 @@ const realtimeViolation = "worker_safety_violation"
 
 func (s *Service) ListViolations(
 	ctx context.Context,
-	req *workerports.ListWorkerSafetyViolationsRequest,
-) ([]*worker.WorkerSafetyViolation, error) {
+	req *workersafetyports.ListWorkerSafetyViolationsRequest,
+) ([]*fleetsafety.WorkerSafetyViolation, error) {
 	return s.repo.ListViolations(ctx, req)
 }
 
@@ -24,7 +24,7 @@ func (s *Service) ListViolations(
 type RecordViolationRequest struct {
 	TenantInfo     pagination.TenantInfo
 	SafetyEventID  pulid.ID
-	Basic          worker.CSABasic
+	Basic          fleetsafety.CSABasic
 	Code           string
 	Description    string
 	SeverityWeight int16
@@ -39,7 +39,7 @@ type RecordViolationRequest struct {
 func (s *Service) RecordViolation(
 	ctx context.Context,
 	req *RecordViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	log := s.l.With(
 		zap.String("operation", "RecordViolation"),
 		zap.String("eventId", req.SafetyEventID.String()),
@@ -72,7 +72,7 @@ func (s *Service) RecordViolation(
 type UpdateViolationRequest struct {
 	TenantInfo     pagination.TenantInfo
 	ID             pulid.ID
-	Basic          worker.CSABasic
+	Basic          fleetsafety.CSABasic
 	Code           string
 	Description    string
 	SeverityWeight int16
@@ -84,7 +84,7 @@ type UpdateViolationRequest struct {
 func (s *Service) UpdateViolation(
 	ctx context.Context,
 	req *UpdateViolationRequest,
-) (*worker.WorkerSafetyViolation, error) {
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	log := s.l.With(zap.String("operation", "UpdateViolation"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanUpdateViolation(ctx, req)
@@ -121,7 +121,7 @@ func (s *Service) DeleteViolation(
 		return err
 	}
 
-	if err = s.repo.DeleteViolation(ctx, &workerports.GetWorkerSafetyViolationByIDRequest{
+	if err = s.repo.DeleteViolation(ctx, &workersafetyports.GetWorkerSafetyViolationByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {

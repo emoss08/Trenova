@@ -9,11 +9,20 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/handlers/capturehandler"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -25,7 +34,7 @@ import (
 )
 
 func (r *CaptureBatchResolver) User(ctx context.Context, obj *capture.CaptureBatch) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.UserID)
+	return loaderfields.LoadUser(ctx, obj.UserID)
 }
 
 func (r *CaptureBatchResolver) Device(ctx context.Context, obj *capture.CaptureBatch) (*capture.CaptureDevice, error) {
@@ -70,7 +79,7 @@ func (r *CaptureCoverSheetResolver) Target(ctx context.Context, obj *gqlmodel.Ca
 }
 
 func (r *CaptureDeviceResolver) User(ctx context.Context, obj *capture.CaptureDevice) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.UserID)
+	return loaderfields.LoadUser(ctx, obj.UserID)
 }
 
 func (r *CaptureDeviceResolver) IsOnline(ctx context.Context, obj *capture.CaptureDevice) (bool, error) {
@@ -98,7 +107,7 @@ func (r *CaptureItemResolver) FiledBy(ctx context.Context, obj *capture.CaptureI
 		return nil, nil
 	}
 
-	return base.LoadUser(ctx, *obj.FiledByID)
+	return loaderfields.LoadUser(ctx, *obj.FiledByID)
 }
 
 func (r *CapturePageResolver) PatchCode(ctx context.Context, obj *capture.CapturePage) (string, error) {
@@ -114,7 +123,7 @@ func (r *CapturePageResolver) UnrecognizedCoverSheet(ctx context.Context, obj *c
 }
 
 func (r *CapturePageResolver) ContentPath(ctx context.Context, obj *capture.CapturePage) (string, error) {
-	return capturehandler.PageContentPath(obj.ID, captureservice.PageContentPDF), nil
+	return capturehandler.PageContentPath(obj.ID, capturefiling.PageContentPDF), nil
 }
 
 func (r *CapturePageResolver) ThumbnailPath(ctx context.Context, obj *capture.CapturePage) (string, error) {
@@ -122,14 +131,14 @@ func (r *CapturePageResolver) ThumbnailPath(ctx context.Context, obj *capture.Ca
 		return "", nil
 	}
 
-	return capturehandler.PageContentPath(obj.ID, captureservice.PageContentThumbnail), nil
+	return capturehandler.PageContentPath(obj.ID, capturefiling.PageContentThumbnail), nil
 }
 
-func (r *CaptureRequestResolver) FailureCode(ctx context.Context, obj *capture.CaptureRequest) (*capture.RequestFailureCode, error) {
+func (r *CaptureRequestResolver) FailureCode(ctx context.Context, obj *capturerequest.CaptureRequest) (*capturerequest.RequestFailureCode, error) {
 	return stringutils.NilIfEmpty(obj.FailureCode), nil
 }
 
-func (r *CaptureRequestResolver) IsOpen(ctx context.Context, obj *capture.CaptureRequest) (bool, error) {
+func (r *CaptureRequestResolver) IsOpen(ctx context.Context, obj *capturerequest.CaptureRequest) (bool, error) {
 	return obj.IsOpen(timeutils.NowUnix()), nil
 }
 
@@ -168,8 +177,8 @@ func (r *MutationResolver) EditCaptureItems(ctx context.Context, batchID string,
 		return nil, err
 	}
 
-	return r.CaptureService.EditItems(ctx, &captureservice.EditItemsInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureFilingService.EditItems(ctx, &capturefiling.EditItemsInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    id,
 		Version:    int64(input.Version),
 		Items:      layouts,
@@ -187,18 +196,18 @@ func (r *MutationResolver) FileCaptureItem(ctx context.Context, id string, input
 	if err != nil {
 		return nil, err
 	}
-	in.TenantInfo = base.TenantInfo(authCtx)
+	in.TenantInfo = resolvercore.TenantInfo(authCtx)
 
-	return r.CaptureService.FileItem(ctx, &in)
+	return r.CaptureFilingService.FileItem(ctx, &in)
 }
 
-func (r *MutationResolver) FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error) {
+func (r *MutationResolver) FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*capturefiling.FileItemsResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
 
-	entries := make([]captureservice.FileItemInput, 0, len(items))
+	entries := make([]capturefiling.FileItemInput, 0, len(items))
 	for _, item := range items {
 		if item == nil {
 			continue
@@ -212,8 +221,8 @@ func (r *MutationResolver) FileCaptureItems(ctx context.Context, items []*gqlmod
 		entries = append(entries, entry)
 	}
 
-	return r.CaptureService.FileItems(ctx, &captureservice.FileItemsInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureFilingService.FileItems(ctx, &capturefiling.FileItemsInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Items:      entries,
 	})
 }
@@ -229,8 +238,8 @@ func (r *MutationResolver) DiscardCaptureItem(ctx context.Context, id string, ve
 		return nil, err
 	}
 
-	return r.CaptureService.DiscardItem(ctx, &captureservice.DiscardItemInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureFilingService.DiscardItem(ctx, &capturefiling.DiscardItemInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ItemID:     itemID,
 		Version:    int64(version),
 	})
@@ -247,14 +256,14 @@ func (r *MutationResolver) DiscardCaptureBatch(ctx context.Context, id string, v
 		return nil, err
 	}
 
-	return r.CaptureService.DiscardBatch(ctx, &captureservice.DiscardBatchInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureFilingService.DiscardBatch(ctx, &capturefiling.DiscardBatchInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		BatchID:    batchID,
 		Version:    int64(version),
 	})
 }
 
-func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capture.CaptureRequest, error) {
+func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -277,8 +286,8 @@ func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	return r.CaptureService.CreateRequest(ctx, &captureservice.CreateRequestInput{
-		TenantInfo:     base.TenantInfo(authCtx),
+	return r.CaptureRequestService.CreateRequest(ctx, &capturerequests.CreateRequestInput{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		DeviceID:       deviceID,
 		Mode:           input.Mode,
 		TargetType:     input.TargetType,
@@ -289,7 +298,7 @@ func (r *MutationResolver) CreateCaptureRequest(ctx context.Context, input gqlmo
 	})
 }
 
-func (r *MutationResolver) CancelCaptureRequest(ctx context.Context, id string) (*capture.CaptureRequest, error) {
+func (r *MutationResolver) CancelCaptureRequest(ctx context.Context, id string) (*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -300,7 +309,7 @@ func (r *MutationResolver) CancelCaptureRequest(ctx context.Context, id string) 
 		return nil, err
 	}
 
-	return r.CaptureService.CancelRequest(ctx, base.TenantInfo(authCtx), requestID)
+	return r.CaptureRequestService.CancelRequest(ctx, resolvercore.TenantInfo(authCtx), requestID)
 }
 
 func (r *MutationResolver) CreateCaptureCoverSheets(ctx context.Context, sheets []*gqlmodel.CaptureCoverSheetInput) ([]*gqlmodel.CaptureCoverSheet, error) {
@@ -314,8 +323,8 @@ func (r *MutationResolver) CreateCaptureCoverSheets(ctx context.Context, sheets 
 		return nil, err
 	}
 
-	issued, err := r.CaptureService.CreateCoverSheets(ctx, &captureservice.CreateCoverSheetsInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	issued, err := r.CaptureRequestService.CreateCoverSheets(ctx, &capturerequests.CreateCoverSheetsInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Sheets:     specs,
 	})
 	if err != nil {
@@ -336,8 +345,8 @@ func (r *MutationResolver) ApproveCaptureDevicePairing(ctx context.Context, user
 		return false, err
 	}
 
-	if err = r.CaptureService.DecidePairing(ctx, &captureservice.DecidePairingRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	if err = r.CaptureDeviceService.DecidePairing(ctx, &capturedevices.DecidePairingRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserCode:   userCode,
 		DeviceName: stringutils.FromPtr(deviceName),
 		Approve:    true,
@@ -354,8 +363,8 @@ func (r *MutationResolver) DenyCaptureDevicePairing(ctx context.Context, userCod
 		return false, err
 	}
 
-	if err = r.CaptureService.DecidePairing(ctx, &captureservice.DecidePairingRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	if err = r.CaptureDeviceService.DecidePairing(ctx, &capturedevices.DecidePairingRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserCode:   userCode,
 	}); err != nil {
 		return false, err
@@ -375,8 +384,8 @@ func (r *MutationResolver) RevokeMyCaptureDevice(ctx context.Context, id string,
 		return nil, err
 	}
 
-	return r.CaptureService.RevokeDevice(ctx, &captureservice.RevokeDeviceRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureDeviceService.RevokeDevice(ctx, &capturedevices.RevokeDeviceRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		DeviceID:   deviceID,
 		Reason:     stringutils.FromPtr(reason),
 		Mine:       true,
@@ -394,26 +403,26 @@ func (r *MutationResolver) RevokeCaptureDevice(ctx context.Context, id string, r
 		return nil, err
 	}
 
-	return r.CaptureService.RevokeDevice(ctx, &captureservice.RevokeDeviceRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureDeviceService.RevokeDevice(ctx, &capturedevices.RevokeDeviceRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		DeviceID:   deviceID,
 		Reason:     stringutils.FromPtr(reason),
 	})
 }
 
-func (r *MutationResolver) CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error) {
+func (r *MutationResolver) CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.CaptureService.CreateProfile(ctx, &captureservice.CreateProfileInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureProfileService.CreateProfile(ctx, &captureprofiles.CreateProfileInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Settings:   captureProfileSettings(&input),
 	})
 }
 
-func (r *MutationResolver) UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error) {
+func (r *MutationResolver) UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -424,8 +433,8 @@ func (r *MutationResolver) UpdateCaptureProfile(ctx context.Context, id string, 
 		return nil, err
 	}
 
-	return r.CaptureService.UpdateProfile(ctx, &captureservice.UpdateProfileInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CaptureProfileService.UpdateProfile(ctx, &captureprofiles.UpdateProfileInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ProfileID:  profileID,
 		Version:    int64(version),
 		Settings:   captureProfileSettings(&input),
@@ -443,20 +452,20 @@ func (r *MutationResolver) DeleteCaptureProfile(ctx context.Context, id string) 
 		return false, err
 	}
 
-	if err = r.CaptureService.DeleteProfile(ctx, base.TenantInfo(authCtx), profileID); err != nil {
+	if err = r.CaptureProfileService.DeleteProfile(ctx, resolvercore.TenantInfo(authCtx), profileID); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (r *QueryResolver) MyCaptureAccess(ctx context.Context) (*captureservice.Access, error) {
+func (r *QueryResolver) MyCaptureAccess(ctx context.Context) (*capturesupport.Access, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.CaptureService.Access(ctx, base.TenantInfo(authCtx))
+	return r.CaptureSupportService.Access(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error) {
@@ -486,10 +495,10 @@ func (r *QueryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 	if err != nil {
 		return nil, err
 	}
-	cursor.IncludeTotalCount = base.ConnectionTotalRequested(ctx)
+	cursor.IncludeTotalCount = gqlconnection.ConnectionTotalRequested(ctx)
 
-	tenant := base.TenantInfo(authCtx)
-	in := &captureservice.ListBatchesInput{
+	tenant := resolvercore.TenantInfo(authCtx)
+	in := &capturefiling.ListBatchesInput{
 		TenantInfo: tenant,
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
@@ -507,11 +516,11 @@ func (r *QueryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 	if input.Source != nil {
 		in.Source = *input.Source
 	}
-	if in.TargetID, err = base.OptionalID(input.TargetID); err != nil {
+	if in.TargetID, err = gqlid.OptionalID(input.TargetID); err != nil {
 		return nil, err
 	}
 
-	result, err := r.CaptureService.ListBatches(ctx, in)
+	result, err := r.CaptureFilingService.ListBatches(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -530,7 +539,7 @@ func (r *QueryResolver) CaptureBatch(ctx context.Context, id string) (*capture.C
 		return nil, err
 	}
 
-	return r.CaptureService.GetBatch(ctx, base.TenantInfo(authCtx), batchID)
+	return r.CaptureFilingService.GetBatch(ctx, resolvercore.TenantInfo(authCtx), batchID)
 }
 
 func (r *QueryResolver) MyCaptureDevices(ctx context.Context, status *capture.DeviceStatus) ([]*capture.CaptureDevice, error) {
@@ -551,33 +560,33 @@ func (r *QueryResolver) CaptureDevices(ctx context.Context, status *capture.Devi
 	return r.ListCaptureDevices(ctx, authCtx, false, status, query)
 }
 
-func (r *QueryResolver) AvailableCaptureProfiles(ctx context.Context) ([]*capture.CaptureProfile, error) {
+func (r *QueryResolver) AvailableCaptureProfiles(ctx context.Context) ([]*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.CaptureService.AvailableProfiles(ctx, base.TenantInfo(authCtx))
+	return r.CaptureProfileService.AvailableProfiles(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) CaptureProfiles(ctx context.Context, status *capture.ProfileStatus, query *string) ([]*capture.CaptureProfile, error) {
+func (r *QueryResolver) CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	in := &captureservice.ListProfilesInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	in := &captureprofiles.ListProfilesInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Query:      stringutils.FromPtr(query),
 	}
 	if status != nil {
 		in.Status = *status
 	}
 
-	return r.CaptureService.ListProfiles(ctx, in)
+	return r.CaptureProfileService.ListProfiles(ctx, in)
 }
 
-func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*capture.CaptureProfile, error) {
+func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureProfile, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -588,10 +597,10 @@ func (r *QueryResolver) CaptureProfile(ctx context.Context, id string) (*capture
 		return nil, err
 	}
 
-	return r.CaptureService.GetProfile(ctx, base.TenantInfo(authCtx), profileID)
+	return r.CaptureProfileService.GetProfile(ctx, resolvercore.TenantInfo(authCtx), profileID)
 }
 
-func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capture.CaptureRequest, error) {
+func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -602,8 +611,8 @@ func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType
 		return nil, err
 	}
 
-	in := &captureservice.ListRequestsForTargetInput{
-		TenantInfo: base.TenantInfo(authCtx),
+	in := &capturerequests.ListRequestsForTargetInput{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		TargetType: targetType,
 		TargetID:   id,
 	}
@@ -611,14 +620,14 @@ func (r *QueryResolver) CaptureRequestsForTarget(ctx context.Context, targetType
 		in.Limit = *limit
 	}
 
-	return r.CaptureService.ListRequestsForTarget(ctx, in)
+	return r.CaptureRequestService.ListRequestsForTarget(ctx, in)
 }
 
-func (r *QueryResolver) CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error) {
+func (r *QueryResolver) CaptureDevicePairing(ctx context.Context, userCode string) (*capturedevices.PairingPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCaptureBatch, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.CaptureService.PreviewPairing(ctx, base.TenantInfo(authCtx), userCode)
+	return r.CaptureDeviceService.PreviewPairing(ctx, resolvercore.TenantInfo(authCtx), userCode)
 }

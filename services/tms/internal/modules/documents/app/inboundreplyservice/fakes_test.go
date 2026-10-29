@@ -6,13 +6,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -96,7 +98,7 @@ func (f *fakeReplies) Update(_ context.Context, entity *triage.Reply) (*triage.R
 
 func (f *fakeReplies) GetByID(
 	_ context.Context,
-	req inboundmessageports.GetInboundReplyRequest,
+	req inboundreplyports.GetInboundReplyRequest,
 ) (*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -111,14 +113,14 @@ func (f *fakeReplies) GetByID(
 
 func (f *fakeReplies) GetByIDs(
 	context.Context,
-	inboundmessageports.GetInboundRepliesRequest,
+	inboundreplyports.GetInboundRepliesRequest,
 ) ([]*triage.Reply, error) {
 	return nil, nil
 }
 
 func (f *fakeReplies) GetByIdempotencyKey(
 	_ context.Context,
-	req inboundmessageports.GetInboundReplyByKeyRequest,
+	req inboundreplyports.GetInboundReplyByKeyRequest,
 ) (*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -155,7 +157,7 @@ func (f *fakeReplies) UpsertDraft(_ context.Context, entity *triage.Reply) (*tri
 
 func (f *fakeReplies) DeleteDraft(
 	_ context.Context,
-	req inboundmessageports.InboundReplyMessageRequest,
+	req inboundreplyports.InboundReplyMessageRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -172,14 +174,14 @@ func (f *fakeReplies) DeleteDraft(
 
 func (f *fakeReplies) ListByMessageIDs(
 	context.Context,
-	inboundmessageports.InboundRepliesByMessagesRequest,
+	inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID][]*triage.Reply, error) {
 	return nil, nil
 }
 
 func (f *fakeReplies) DraftsByMessageIDs(
 	_ context.Context,
-	req inboundmessageports.InboundRepliesByMessagesRequest,
+	req inboundreplyports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID]*triage.Reply, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -224,14 +226,20 @@ func (f *fakeReplies) byStatus(status triage.ReplyStatus) []*triage.Reply {
 }
 
 func uniqueViolation() error {
-	return &pgconn.PgError{Code: pgerrcode.UniqueViolation, ConstraintName: "uq_inbound_replies_idempotency"}
+	return &pgconn.PgError{
+		Code:           pgerrcode.UniqueViolation,
+		ConstraintName: "uq_inbound_replies_idempotency",
+	}
 }
 
 type fakeTemplates struct {
 	templates map[pulid.ID]*triage.ReplyTemplate
 }
 
-func (f *fakeTemplates) List(context.Context, pagination.TenantInfo) ([]*triage.ReplyTemplate, error) {
+func (f *fakeTemplates) List(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*triage.ReplyTemplate, error) {
 	out := make([]*triage.ReplyTemplate, 0, len(f.templates))
 	for _, template := range f.templates {
 		out = append(out, template)
@@ -246,7 +254,7 @@ func (f *fakeTemplates) Count(context.Context, pagination.TenantInfo) (int, erro
 
 func (f *fakeTemplates) GetByID(
 	_ context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) (*triage.ReplyTemplate, error) {
 	template, ok := f.templates[req.ID]
 	if !ok {
@@ -272,14 +280,20 @@ func (f *fakeTemplates) NameTaken(
 	return false, nil
 }
 
-func (f *fakeTemplates) Create(_ context.Context, entity *triage.ReplyTemplate) (*triage.ReplyTemplate, error) {
+func (f *fakeTemplates) Create(
+	_ context.Context,
+	entity *triage.ReplyTemplate,
+) (*triage.ReplyTemplate, error) {
 	entity.ID = pulid.MustNew("ttpl_")
 	f.templates[entity.ID] = entity
 
 	return entity, nil
 }
 
-func (f *fakeTemplates) Update(_ context.Context, entity *triage.ReplyTemplate) (*triage.ReplyTemplate, error) {
+func (f *fakeTemplates) Update(
+	_ context.Context,
+	entity *triage.ReplyTemplate,
+) (*triage.ReplyTemplate, error) {
 	f.templates[entity.ID] = entity
 
 	return entity, nil
@@ -287,7 +301,7 @@ func (f *fakeTemplates) Update(_ context.Context, entity *triage.ReplyTemplate) 
 
 func (f *fakeTemplates) Delete(
 	_ context.Context,
-	req inboundmessageports.GetTriageReplyTemplateRequest,
+	req inboundreplyports.GetTriageReplyTemplateRequest,
 ) error {
 	delete(f.templates, req.ID)
 
@@ -295,14 +309,14 @@ func (f *fakeTemplates) Delete(
 }
 
 type fakeWork struct {
-	inboundmessageports.TriageWorkRepository
+	triageworkports.TriageWorkRepository
 	alternates []string
-	asked      *inboundmessageports.AlternateAddressRequest
+	asked      *triageworkports.AlternateAddressRequest
 }
 
 func (f *fakeWork) AlternateAddresses(
 	_ context.Context,
-	req *inboundmessageports.AlternateAddressRequest,
+	req *triageworkports.AlternateAddressRequest,
 ) ([]string, error) {
 	f.asked = req
 
@@ -338,7 +352,10 @@ type fakeNotifier struct {
 	changed []pulid.ID
 }
 
-func (f *fakeNotifier) MessagesChanged(_ context.Context, messages ...*inboundmessage.InboundMessage) {
+func (f *fakeNotifier) MessagesChanged(
+	_ context.Context,
+	messages ...*inboundmessage.InboundMessage,
+) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	for _, message := range messages {
@@ -364,7 +381,10 @@ type fakeEmail struct {
 	err      error
 }
 
-func (f *fakeEmail) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
+func (f *fakeEmail) Send(
+	_ context.Context,
+	req *emailports.SendEmailRequest,
+) (*email.Message, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.requests = append(f.requests, req)
@@ -390,7 +410,7 @@ type fakeNova struct {
 	available bool
 	text      string
 	err       error
-	requests  []*agentports.StructuredCompletionRequest
+	requests  []*llmports.StructuredCompletionRequest
 }
 
 func (f *fakeNova) Available(triagenova.Mode) bool { return f.available }
@@ -398,14 +418,14 @@ func (f *fakeNova) Available(triagenova.Mode) bool { return f.available }
 func (f *fakeNova) Complete(
 	_ context.Context,
 	_ triagenova.Mode,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	f.requests = append(f.requests, req)
 	if f.err != nil {
 		return nil, f.err
 	}
 
-	return &agentports.StructuredCompletionResult{Text: f.text}, nil
+	return &llmports.StructuredCompletionResult{Text: f.text}, nil
 }
 
 type fakePeeks struct {
@@ -429,9 +449,9 @@ func (f *fakePeeks) ShipmentPeeks(
 
 func (f *fakePeeks) CustomerShipments(
 	context.Context,
-	*inboundmessageports.TriageCustomerShipmentsRequest,
-) (*inboundmessageports.TriageCustomerShipments, error) {
-	return &inboundmessageports.TriageCustomerShipments{}, nil
+	*triageworkports.TriageCustomerShipmentsRequest,
+) (*triageworkports.TriageCustomerShipments, error) {
+	return &triageworkports.TriageCustomerShipments{}, nil
 }
 
 type fakeAttachments struct {
@@ -470,7 +490,8 @@ func (f *fakeAttachments) Resolve(
 		doc, ok := f.docs[id]
 		if !ok {
 			multiErr := errortypes.NewMultiError()
-			multiErr.WithIndex(req.Field, i).Add("", errortypes.ErrInvalid, "This file no longer exists")
+			multiErr.WithIndex(req.Field, i).
+				Add("", errortypes.ErrInvalid, "This file no longer exists")
 
 			return nil, multiErr
 		}
@@ -509,15 +530,15 @@ func (f *fakeAttachments) last() *documentports.ResolveMailAttachmentsRequest {
 }
 
 type fakeEvidence struct {
-	evidence *inboundmessageports.TriageDetentionEvidence
+	evidence *triageworkports.TriageDetentionEvidence
 	err      error
-	asked    []*inboundmessageports.TriageDetentionEvidenceRequest
+	asked    []*triageworkports.TriageDetentionEvidenceRequest
 }
 
 func (f *fakeEvidence) DetentionEvidence(
 	_ context.Context,
-	req *inboundmessageports.TriageDetentionEvidenceRequest,
-) (*inboundmessageports.TriageDetentionEvidence, error) {
+	req *triageworkports.TriageDetentionEvidenceRequest,
+) (*triageworkports.TriageDetentionEvidence, error) {
 	f.asked = append(f.asked, req)
 
 	return f.evidence, f.err
@@ -568,14 +589,18 @@ func newFixture() *fixture {
 	}
 
 	f := &fixture{
-		messages:  &fakeMessages{messages: map[pulid.ID]*inboundmessage.InboundMessage{message.ID: message}},
+		messages: &fakeMessages{
+			messages: map[pulid.ID]*inboundmessage.InboundMessage{message.ID: message},
+		},
 		replies:   newFakeReplies(),
 		templates: &fakeTemplates{templates: map[pulid.ID]*triage.ReplyTemplate{}},
 		work:      &fakeWork{},
 		recorder:  &fakeRecorder{},
 		notifier:  &fakeNotifier{},
-		email:     &fakeEmail{result: &email.Message{ID: pulid.MustNew("eml_"), Status: email.MessageStatusQueued}},
-		nova:      &fakeNova{available: true},
+		email: &fakeEmail{
+			result: &email.Message{ID: pulid.MustNew("eml_"), Status: email.MessageStatusQueued},
+		},
+		nova: &fakeNova{available: true},
 		peeks: &fakePeeks{peeks: map[pulid.ID]*inboundmessageports.ShipmentPeek{
 			shipmentID: {
 				ID:           shipmentID,

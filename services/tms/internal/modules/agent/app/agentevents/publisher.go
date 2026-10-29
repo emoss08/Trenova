@@ -8,8 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -24,7 +26,7 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	RunService  agentports.AgentRunService
+	RunService  agentruntimeports.AgentRunService
 	Plans       platformplanports.PlanService    `optional:"true"`
 	Waits       agentwaitports.AgentWaitNotifier `optional:"true"`
 }
@@ -32,13 +34,13 @@ type Params struct {
 type Publisher struct {
 	l           *zap.Logger
 	definitions agentdefinitionports.AgentDefinitionRepository
-	runService  agentports.AgentRunService
+	runService  agentruntimeports.AgentRunService
 	plans       platformplanports.PlanService
 	waits       agentwaitports.AgentWaitNotifier
 	// attachments are bound after the graph is built, by
 	// RegisterAttachmentObservers: what shows an attached file's card
 	// depends, through its tools, on services that publish events.
-	attachments   atomic.Pointer[[]agentports.AttachmentExtractionObserver]
+	attachments   atomic.Pointer[[]agenteventports.AttachmentExtractionObserver]
 	attachmentsMu sync.Mutex
 }
 
@@ -56,7 +58,7 @@ type ObserverParams struct {
 	fx.In
 
 	Publisher *Publisher
-	Observers []agentports.AttachmentExtractionObserver `group:"attachment_extraction_observers"`
+	Observers []agenteventports.AttachmentExtractionObserver `group:"attachment_extraction_observers"`
 }
 
 // RegisterAttachmentObservers binds the observers told when a document's
@@ -67,7 +69,7 @@ func RegisterAttachmentObservers(p ObserverParams) {
 
 // ObserveAttachments adds observers told of every document extraction from
 // now on.
-func (p *Publisher) ObserveAttachments(observers ...agentports.AttachmentExtractionObserver) {
+func (p *Publisher) ObserveAttachments(observers ...agenteventports.AttachmentExtractionObserver) {
 	if len(observers) == 0 {
 		return
 	}
@@ -75,11 +77,11 @@ func (p *Publisher) ObserveAttachments(observers ...agentports.AttachmentExtract
 	p.attachmentsMu.Lock()
 	defer p.attachmentsMu.Unlock()
 
-	var current []agentports.AttachmentExtractionObserver
+	var current []agenteventports.AttachmentExtractionObserver
 	if loaded := p.attachments.Load(); loaded != nil {
 		current = *loaded
 	}
-	next := make([]agentports.AttachmentExtractionObserver, 0, len(current)+len(observers))
+	next := make([]agenteventports.AttachmentExtractionObserver, 0, len(current)+len(observers))
 	next = append(next, current...)
 	for _, observer := range observers {
 		if observer != nil {
@@ -89,7 +91,7 @@ func (p *Publisher) ObserveAttachments(observers ...agentports.AttachmentExtract
 	p.attachments.Store(&next)
 }
 
-func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
+func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEvent) {
 	log := p.l.With(
 		zap.String("kind", string(event.Kind)),
 		zap.String("subjectId", event.SubjectID.String()),
@@ -110,14 +112,14 @@ func (p *Publisher) Publish(ctx context.Context, event agentports.AgentEvent) {
 	// happened. It is told before the plan is consulted: an organization
 	// without automated agents still has conversations that wait.
 	if p.waits != nil {
-		p.waits.NotifyEvent(ctx, &event)
+		p.waits.NotifyEvent(ctx, event)
 	}
 	// A file read for a conversation is shown there whatever the plan says
 	// of automated agents: the person asked for it by attaching it.
-	if event.Kind == agent.EventDocumentExtracted {
+	if event.Kind == agenttrigger.EventDocumentExtracted {
 		if observers := p.attachments.Load(); observers != nil {
 			for _, observer := range *observers {
-				observer.AttachmentExtracted(ctx, &event)
+				observer.AttachmentExtracted(ctx, event)
 			}
 		}
 	}
@@ -159,7 +161,7 @@ func (p *Publisher) startFor(
 	ctx context.Context,
 	log *zap.Logger,
 	definition *agentdefinition.Definition,
-	event agentports.AgentEvent,
+	event *agenteventports.AgentEvent,
 ) {
 	log = log.With(zap.String("definitionId", definition.ID.String()))
 
@@ -168,7 +170,7 @@ func (p *Publisher) startFor(
 	// pass a check and start two.
 	_, err := p.runService.StartForDefinition(
 		ctx,
-		&agentports.StartAgentRunForDefinitionRequest{
+		&agentruntimeports.StartAgentRunForDefinitionRequest{
 			DefinitionID: definition.ID,
 			SubjectType:  event.Kind.SubjectType(),
 			SubjectID:    event.SubjectID,
@@ -179,7 +181,7 @@ func (p *Publisher) startFor(
 		nil,
 	)
 	switch {
-	case errors.Is(err, agentports.ErrAgentRunAlreadyOpen):
+	case errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen):
 		log.Debug("agent already has an open run for this subject; event skipped")
 	case err != nil:
 		log.Error("failed to start agent run for event", zap.Error(err))

@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -30,29 +32,29 @@ func (r *MutationResolver) LogCheckCall(
 	if err != nil {
 		return nil, err
 	}
-	stopID, err := base.OptionalID(input.StopID)
+	stopID, err := gqlid.OptionalID(input.StopID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("stopId", errortypes.ErrInvalid, "Invalid stop")
 	}
 
 	result, err := r.CheckCallService.Log(ctx, &checkcallports.LogCheckCallRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		MoveID:       moveID,
 		Source:       checkcall.SourceDispatcher,
 		ReportedByID: authCtx.UserID,
 		Details: checkcallports.CheckCallDetails{
 			Kind:             input.Kind,
 			StopID:           stopID,
-			ReportedAt:       base.Int64Ptr(input.ReportedAt),
+			ReportedAt:       gqlscalar.Int64Ptr(input.ReportedAt),
 			Latitude:         input.Latitude,
 			Longitude:        input.Longitude,
-			City:             base.StringValue(input.City),
-			StateCode:        base.StringValue(input.StateCode),
-			Delayed:          base.BoolValue(input.Delayed),
-			DelayReason:      base.StringValue(input.DelayReason),
-			EstimatedArrival: base.Int64Ptr(input.EstimatedArrival),
-			Note:             base.StringValue(input.Note),
-			ContactName:      base.StringValue(input.ContactName),
+			City:             gqlscalar.StringValue(input.City),
+			StateCode:        gqlscalar.StringValue(input.StateCode),
+			Delayed:          gqlscalar.BoolValue(input.Delayed),
+			DelayReason:      gqlscalar.StringValue(input.DelayReason),
+			EstimatedArrival: gqlscalar.Int64Ptr(input.EstimatedArrival),
+			Note:             gqlscalar.StringValue(input.Note),
+			ContactName:      gqlscalar.StringValue(input.ContactName),
 		},
 	})
 	if err != nil {
@@ -77,9 +79,9 @@ func (r *MutationResolver) IssueCarrierTrackingLink(
 	}
 
 	issued, err := r.CheckCallService.IssueLink(ctx, &checkcallports.IssueTrackingLinkRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		MoveID:         moveID,
-		RecipientEmail: base.StringValue(input.RecipientEmail),
+		RecipientEmail: gqlscalar.StringValue(input.RecipientEmail),
 		IssuedByID:     authCtx.UserID,
 	})
 	if err != nil {
@@ -90,7 +92,7 @@ func (r *MutationResolver) IssueCarrierTrackingLink(
 		Link:       issued.Link,
 		URL:        issued.URL,
 		Emailed:    issued.Emailed,
-		EmailError: base.NonEmptyPtr(issued.EmailError),
+		EmailError: gqlscalar.NonEmptyPtr(issued.EmailError),
 	}, nil
 }
 
@@ -109,7 +111,7 @@ func (r *MutationResolver) RevokeCarrierTrackingLink(
 	}
 
 	if err = r.CheckCallService.RevokeLink(ctx, &checkcallports.RevokeTrackingLinkRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		MoveID:     moveID,
 	}); err != nil {
 		return false, err
@@ -137,7 +139,7 @@ func (r *QueryResolver) ShipmentCheckCalls(
 	}
 
 	return r.CheckCallService.ListForShipment(ctx, &checkcallports.ListCheckCallsByShipmentRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ShipmentID: parsedShipmentID,
 	})
 }
@@ -156,5 +158,5 @@ func (r *QueryResolver) CarrierTrackingLink(
 		return nil, err
 	}
 
-	return r.CheckCallService.ActiveLink(ctx, base.TenantInfo(authCtx), moveID)
+	return r.CheckCallService.ActiveLink(ctx, resolvercore.TenantInfo(authCtx), moveID)
 }

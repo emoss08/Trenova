@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +69,10 @@ func (stagingRuns) Create(ctx context.Context, run *agent.AgentRun) (*agent.Agen
 
 type stagingPlans struct{}
 
-func (stagingPlans) Create(ctx context.Context, plan *agent.AgentPlan) (*agent.AgentPlan, error) {
+func (stagingPlans) Create(
+	ctx context.Context,
+	plan *agentplan.AgentPlan,
+) (*agentplan.AgentPlan, error) {
 	if err := stage(ctx, "plan"); err != nil {
 		return nil, err
 	}
@@ -99,7 +104,7 @@ func (s *stagingProposals) Create(
 }
 
 type countingActivity struct {
-	agentports.AgentActivityPublisher
+	agentactivityports.AgentActivityPublisher
 	proposals int
 	plans     int
 }
@@ -115,7 +120,7 @@ func (a *countingActivity) ProposalChanged(
 
 func (a *countingActivity) PlanChanged(
 	context.Context,
-	*agent.AgentPlan,
+	*agentplan.AgentPlan,
 	kernelports.AuditActor,
 	string,
 ) {
@@ -148,7 +153,7 @@ func recordInTx(
 			PromptVersion:    "v1",
 			InputContextHash: "hash",
 		},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			pendingAction("dispatch_assign_move"),
 			pendingAction("worker_send_message"),
 			pendingAction("shipment_add_comment"),

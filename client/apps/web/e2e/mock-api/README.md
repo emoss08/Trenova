@@ -300,9 +300,9 @@ the service select), the submit dialog's coverage warning, and the shipment's ch
 
 The Lading studio (`/edi/lading/edip_lading_acme`, and `/edi/lading/edip_lading_northwind` for a
 partner with no project yet) reads its routes from `handlers/lading.mjs`, which serves what
-`edihandler`'s Lading routes serve: the context, the catalog, projects, versions, drafts, settings,
+`ediladinghandler`'s routes serve: the context, the catalog, projects, versions, drafts, settings,
 runs, tests, certify, activate, archive, shadow, shadow results and replays, and the partner the
-page header reads. Every check, test, run, replay and shadow comparison is the answer of the
+page header reads from `edisetuphandler`. Every check, test, run, replay and shadow comparison is the answer of the
 client's own `edi.wasm`, loaded in Node by `edi.mjs`, so the studio and the mock agree the way the
 studio and the TMS do.
 
@@ -382,7 +382,7 @@ scenarios and the panels each one opens. The AI control data is the design hando
 kinds in `fixtures/ai/` are dumped from the Go service, so names and labels are the real ones.
 Regenerate them after the registry changes with a throwaway test that marshals
 `aiproviderhandler`'s catalog, `agentextensionservice.ListCatalog`,
-`agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agent.KnownEvents()`.
+`agentdefinitionservice.buildToolCatalog` (parameters stripped) and `agenttrigger.KnownEvents()`.
 
 The Analytics tab (`?tab=analytics`, shots named `analytics-*`) reads `agentAnalytics` and
 `agentAnalyticsToolFailures` from `handlers/aianalytics.mjs`, which ports the Go service's rules
@@ -572,7 +572,7 @@ sizes were kept), `nobox` (no layout lines), `broken` (every page fails to draw)
 fields, long values, none placed). `extractionStage` picks where the shipment stands: `idle`,
 `replying`, `proposed`, `created`, `failed`, `rejected` or `attached`. The pages are drawn as SVGs
 from the same text lines the payload's boxes are built from (`fixtures/desk-extraction.mjs`, a
-port of `assistantservice/extraction.go`), and the walkthrough measures every drawn box against
+port of `assistantservice/extractionartifact/extraction.go`), and the walkthrough measures every drawn box against
 the drawn page (inside the sheet's padding) and fails a shot whose worst box is more than 1.5px
 off. Stop fields carry their `place` as the server's do, so the head reads the lane. Values are
 found by their button names (`Bill to: Northline Logistics, needs a look, …`), the check button by

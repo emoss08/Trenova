@@ -1,7 +1,7 @@
 package retrievalquery
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"go.uber.org/fx"
 )
 
@@ -14,6 +14,6 @@ var Module = fx.Module("retrieval-query",
 	),
 )
 
-func asQueryVectorizer(s *Service) agentports.QueryVectorizer { return s }
+func asQueryVectorizer(s *Service) retrievalports.QueryVectorizer { return s }
 
-func asCatalogVectorIndex(c *CatalogIndex) agentports.CatalogVectorIndex { return c }
+func asCatalogVectorIndex(c *CatalogIndex) retrievalports.CatalogVectorIndex { return c }

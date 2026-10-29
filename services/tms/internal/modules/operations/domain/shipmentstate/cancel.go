@@ -2,6 +2,7 @@ package shipmentstate
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -14,7 +15,7 @@ func ValidateCancel(entity *shipment.Shipment) error {
 		return errortypes.NewBusinessError("shipment is already canceled")
 	}
 
-	if entity.StatusEquals(shipment.StatusInvoiced) {
+	if entity.StatusEquals(shipmentvocab.StatusInvoiced) {
 		return cancelConflict(errortypes.NewConflictError(
 			"An invoiced shipment cannot be canceled. Credit or void its invoice first.",
 		))
@@ -26,7 +27,7 @@ func ValidateCancel(entity *shipment.Shipment) error {
 		))
 	}
 
-	if !CanTransitionShipmentStatus(entity.Status, shipment.StatusCanceled) {
+	if !CanTransitionShipmentStatus(entity.Status, shipmentvocab.StatusCanceled) {
 		return cancelConflict(errortypes.NewConflictError(
 			"A shipment with status {0} cannot be canceled.",
 			entity.Status,

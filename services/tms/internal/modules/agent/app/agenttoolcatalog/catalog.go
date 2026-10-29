@@ -15,7 +15,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 )
 
 const (
@@ -30,7 +31,7 @@ const (
 )
 
 type indexed struct {
-	descriptor  agentports.AgentToolDescriptor
+	descriptor  agenttoolports.AgentToolDescriptor
 	nameTokens  map[string]struct{}
 	bodyTokens  map[string]struct{}
 	paramTokens map[string]struct{}
@@ -44,14 +45,14 @@ type Catalog struct {
 	entries []indexed
 	byName  map[string]int
 	family  map[string][]string
-	items   []agentports.EmbeddingCatalogItem
+	items   []retrievalports.EmbeddingCatalogItem
 	// feeds names, for each step of a recipe, the tools whose recipe it is a
 	// step of before the tool itself.
 	feeds map[string][]string
 }
 
-func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
-	sorted := make([]agentports.AgentToolDescriptor, len(descriptors))
+func New(descriptors []agenttoolports.AgentToolDescriptor) *Catalog {
+	sorted := make([]agenttoolports.AgentToolDescriptor, len(descriptors))
 	copy(sorted, descriptors)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Name < sorted[j].Name })
 
@@ -59,7 +60,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 		entries: make([]indexed, 0, len(sorted)),
 		byName:  make(map[string]int, len(sorted)),
 		family:  indexFamilies(),
-		items:   make([]agentports.EmbeddingCatalogItem, 0, len(sorted)),
+		items:   make([]retrievalports.EmbeddingCatalogItem, 0, len(sorted)),
 		feeds:   make(map[string][]string),
 	}
 
@@ -70,7 +71,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 			descriptor: descriptor,
 			nameTokens: agentsearch.NameTokenSet(
 				descriptor.Name,
-				agentports.ReadingOrder(descriptor.Name),
+				agenttoolports.ReadingOrder(descriptor.Name),
 				strings.Join(descriptor.SearchTerms, " "),
 			),
 			bodyTokens:  agentsearch.TokenSet(descriptor.Description),
@@ -79,7 +80,7 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 		})
 		catalog.items = append(
 			catalog.items,
-			agentports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
+			retrievalports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
 		)
 		for _, step := range descriptor.Recipe {
 			if step == descriptor.Name {
@@ -96,12 +97,12 @@ func New(descriptors []agentports.AgentToolDescriptor) *Catalog {
 
 // readingOrderRanks is each tool's position, by index into sorted, when the
 // tools are ordered by their names in reading order and then by name.
-func readingOrderRanks(sorted []agentports.AgentToolDescriptor) []int {
+func readingOrderRanks(sorted []agenttoolports.AgentToolDescriptor) []int {
 	order := make([]int, len(sorted))
 	reading := make([]string, len(sorted))
 	for i := range sorted {
 		order[i] = i
-		reading[i] = agentports.ReadingOrder(sorted[i].Name)
+		reading[i] = agenttoolports.ReadingOrder(sorted[i].Name)
 	}
 	sort.SliceStable(order, func(a, b int) bool {
 		return reading[order[a]] < reading[order[b]]
@@ -122,10 +123,10 @@ func (c *Catalog) Feeds(name string) []string {
 }
 
 // Descriptor returns one tool by its exact name.
-func (c *Catalog) Descriptor(name string) (agentports.AgentToolDescriptor, bool) {
+func (c *Catalog) Descriptor(name string) (agenttoolports.AgentToolDescriptor, bool) {
 	index, ok := c.byName[name]
 	if !ok {
-		return agentports.AgentToolDescriptor{}, false
+		return agenttoolports.AgentToolDescriptor{}, false
 	}
 
 	return c.entries[index].descriptor, true
@@ -141,7 +142,7 @@ func (c *Catalog) Rank(
 	allowed []string,
 	query string,
 	limit int,
-) []agentports.AgentToolDescriptor {
+) []agenttoolports.AgentToolDescriptor {
 	return c.rank(allowed, query, limit, 0, false)
 }
 
@@ -151,7 +152,7 @@ func (c *Catalog) rank(
 	limit int,
 	minScore int,
 	strong bool,
-) []agentports.AgentToolDescriptor {
+) []agenttoolports.AgentToolDescriptor {
 	if limit <= 0 {
 		return nil
 	}
@@ -165,7 +166,7 @@ func (c *Catalog) rank(
 		candidates = candidates[:limit]
 	}
 
-	out := make([]agentports.AgentToolDescriptor, 0, len(candidates))
+	out := make([]agenttoolports.AgentToolDescriptor, 0, len(candidates))
 	for _, candidate := range candidates {
 		out = append(out, candidate.entry.descriptor)
 	}
@@ -249,7 +250,7 @@ func (c *Catalog) Find(
 	allowed []string,
 	query string,
 	limit int,
-) []agentports.AgentToolDescriptor {
+) []agenttoolports.AgentToolDescriptor {
 	return c.withFamilies(c.allowedSet(allowed), c.rank(allowed, query, limit, 1, false))
 }
 

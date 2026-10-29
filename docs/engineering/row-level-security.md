@@ -124,7 +124,7 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
   aborts the transaction and the read after it fails too.
 - Work that must commit on its own regardless of the caller's transaction
   (sequence allocation) uses `Connection.RunDetached`.
-- Validators use `validationframework.NewKeelChecker(conn, xdb.XsSchema())`, which
+- Validators use `keelcheck.NewChecker(conn, xdb.XsSchema())`, which
   runs its checks through `Keel(ctx)` in the caller's transaction.
 - A keel query under a system scope must say
   `AllTenants()`, and keel fills and checks the tenant columns of every write from
@@ -208,7 +208,7 @@ deny, make sure the scope is the tenant the question is about.
   binds that organization's tenant instead. A write whose only other-tenant rows
   are rows both parties' policies admit (an EDI transfer, shipment link or tender
   recipient) runs under the tenant that owns the rest: rejecting or expiring an
-  internal tender runs under the source organization's scope (`ediservice.transferSourceContext`),
+  internal tender runs under the source organization's scope (`editransferservice.transferSourceContext`),
   since it changes the source shipment. Work that must create rows in one
   organization through another module's service and change rows of the other
   cannot share a transaction (a system scope would need every repository it
@@ -216,7 +216,7 @@ deny, make sure the scope is the tenant the question is about.
   receiving side under the target's scope, then accepts the source shipment's
   tender under the source's scope in a second transaction that skips what is
   already done, so a retried activity converges
-  (`ediservice.ProcessLoadTenderApproval`). Replacing a user's
+  (`editransferservice.ProcessLoadTenderApproval`). Replacing a user's
   organization memberships is the same shape: the user repository lists and rewrites
   them under the system scope, filtered to that user and business unit, and the user
   service first checks the caller holds `user:update` in every organization it adds or

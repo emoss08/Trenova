@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview/ratematrixreviewdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -45,66 +47,82 @@ func New(p Params) ratematrixports.RateMatrixReviewRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *ratematrix.RateMatrixReview,
-) (*ratematrix.RateMatrixReview, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrixReview, error) {
-		if err := ratematrixdb.RateMatrixReviews.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to record rate matrix review",
-				zap.String("matrixId", entity.RateMatrixID.String()),
-				zap.Error(err),
-			)
-			return nil, reviewErrors.Map(err, entity.ID.String())
-		}
+	entity *ratematrixreview.RateMatrixReview,
+) (*ratematrixreview.RateMatrixReview, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ratematrixreview.RateMatrixReview, error) {
+			if err := ratematrixreviewdb.RateMatrixReviews.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to record rate matrix review",
+					zap.String("matrixId", entity.RateMatrixID.String()),
+					zap.Error(err),
+				)
+				return nil, reviewErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) ListByMatrix(
 	ctx context.Context,
 	req *ratematrixports.ListReviewsRequest,
-) ([]*ratematrix.RateMatrixReview, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixReview, error) {
-		limit := req.Limit
-		if limit <= 0 || limit > defaultHistoryLimit {
-			limit = defaultHistoryLimit
-		}
+) ([]*ratematrixreview.RateMatrixReview, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*ratematrixreview.RateMatrixReview, error) {
+			limit := req.Limit
+			if limit <= 0 || limit > defaultHistoryLimit {
+				limit = defaultHistoryLimit
+			}
 
-		rv := ratematrixdb.RateMatrixReviews
-		reviews, err := rv.Where(rv.RateMatrixID.Eq(req.RateMatrixID)).
-			Load(rv.Actor(), rv.RequestedReviewer()).
-			Order(rv.CreatedAt.Desc()).
-			Limit(limit).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list rate matrix reviews", zap.Error(err))
-			return nil, err
-		}
+			rv := ratematrixreviewdb.RateMatrixReviews
+			reviews, err := rv.Where(rv.RateMatrixID.Eq(req.RateMatrixID)).
+				Load(rv.Actor(), rv.RequestedReviewer()).
+				Order(rv.CreatedAt.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list rate matrix reviews", zap.Error(err))
+				return nil, err
+			}
 
-		return reviews, nil
-	})
+			return reviews, nil
+		},
+	)
 }
 
 func (r *repository) Latest(
 	ctx context.Context,
 	rateMatrixID pulid.ID,
 	_ pagination.TenantInfo,
-) (*ratematrix.RateMatrixReview, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrixReview, error) {
-		rv := ratematrixdb.RateMatrixReviews
-		review, err := rv.Where(rv.RateMatrixID.Eq(rateMatrixID)).
-			Order(rv.CreatedAt.Desc(), rv.ID.Desc()).
-			First(ctx, r.db.Keel(ctx))
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
+) (*ratematrixreview.RateMatrixReview, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ratematrixreview.RateMatrixReview, error) {
+			rv := ratematrixreviewdb.RateMatrixReviews
+			review, err := rv.Where(rv.RateMatrixID.Eq(rateMatrixID)).
+				Order(rv.CreatedAt.Desc(), rv.ID.Desc()).
+				First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, nil
+				}
+				r.l.Error("failed to read the latest rate matrix review", zap.Error(err))
+				return nil, err
 			}
-			r.l.Error("failed to read the latest rate matrix review", zap.Error(err))
-			return nil, err
-		}
 
-		return review, nil
-	})
+			return review, nil
+		},
+	)
 }
 
 func (r *repository) ListStaleSubmissions(

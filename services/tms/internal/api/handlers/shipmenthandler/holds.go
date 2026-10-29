@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,7 +22,7 @@ import (
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]shipment.ShipmentHold]
+// @Success 200 {object} pagination.Response[[]shipmenthold.ShipmentHold]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -42,10 +42,10 @@ func (h *Handler) listHolds(c *gin.Context) {
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*shipment.ShipmentHold], error) {
+		func() (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 			return h.holdService.ListByShipmentID(
 				c.Request.Context(),
-				&shipmentports.ListShipmentHoldsRequest{
+				&shipmentholdports.ListShipmentHoldsRequest{
 					Filter:     req,
 					ShipmentID: shipmentID,
 				},
@@ -60,7 +60,7 @@ func (h *Handler) listHolds(c *gin.Context) {
 // @Produce json
 // @Param shipmentID path string true "Shipment ID"
 // @Param holdID path string true "Hold ID"
-// @Success 200 {object} shipment.ShipmentHold
+// @Success 200 {object} shipmenthold.ShipmentHold
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -83,7 +83,7 @@ func (h *Handler) getHold(c *gin.Context) {
 
 	entity, err := h.holdService.GetByID(
 		c.Request.Context(),
-		&shipmentports.GetShipmentHoldByIDRequest{
+		&shipmentholdports.GetShipmentHoldByIDRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),
@@ -104,7 +104,7 @@ func (h *Handler) getHold(c *gin.Context) {
 // @Produce json
 // @Param shipmentID path string true "Shipment ID"
 // @Param request body repositories.CreateShipmentHoldRequest true "Shipment hold payload"
-// @Success 201 {object} shipment.ShipmentHold
+// @Success 201 {object} shipmenthold.ShipmentHold
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -119,7 +119,7 @@ func (h *Handler) createHold(c *gin.Context) {
 		return
 	}
 
-	req := new(shipmentports.CreateShipmentHoldRequest)
+	req := new(shipmentholdports.CreateShipmentHoldRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -151,7 +151,7 @@ func (h *Handler) createHold(c *gin.Context) {
 // @Param shipmentID path string true "Shipment ID"
 // @Param holdID path string true "Hold ID"
 // @Param request body repositories.UpdateShipmentHoldRequest true "Shipment hold payload"
-// @Success 200 {object} shipment.ShipmentHold
+// @Success 200 {object} shipmenthold.ShipmentHold
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -172,7 +172,7 @@ func (h *Handler) updateHold(c *gin.Context) {
 		return
 	}
 
-	req := new(shipmentports.UpdateShipmentHoldRequest)
+	req := new(shipmentholdports.UpdateShipmentHoldRequest)
 	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -203,7 +203,7 @@ func (h *Handler) updateHold(c *gin.Context) {
 // @Produce json
 // @Param shipmentID path string true "Shipment ID"
 // @Param holdID path string true "Hold ID"
-// @Success 200 {object} shipment.ShipmentHold
+// @Success 200 {object} shipmenthold.ShipmentHold
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -226,7 +226,7 @@ func (h *Handler) releaseHold(c *gin.Context) {
 
 	released, err := h.holdService.Release(
 		c.Request.Context(),
-		&shipmentports.ReleaseShipmentHoldRequest{
+		&shipmentholdports.ReleaseShipmentHoldRequest{
 			HoldID:     holdID,
 			ShipmentID: shipmentID,
 			TenantInfo: pagination.FromAuth(authCtx),

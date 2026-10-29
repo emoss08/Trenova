@@ -3,9 +3,7 @@ package fuelpurchaseservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/rateimport"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -17,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -56,7 +55,7 @@ type Params struct {
 	WorkerRepo   workerports.WorkerRepository
 	Documents    documentports.InvoiceDocumentService
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService             `optional:"true"`
+	Realtime     realtimeports.RealtimeService          `optional:"true"`
 	Feeds        fuelpurchaseports.FuelCardFeedResolver `optional:"true"`
 	Validator    *Validator
 	SheetLimits  rateimport.Limits `optional:"true"`
@@ -70,7 +69,7 @@ type Service struct {
 	workerRepo    workerports.WorkerRepository
 	documents     documentports.InvoiceDocumentService
 	auditService  auditports.AuditService
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	feeds         fuelpurchaseports.FuelCardFeedResolver
 	validator     *Validator
 	now           func() int64
@@ -102,7 +101,7 @@ type Deps struct {
 	WorkerRepo    workerports.WorkerRepository
 	Documents     documentports.InvoiceDocumentService
 	AuditService  auditports.AuditService
-	Realtime      agentports.RealtimeService
+	Realtime      realtimeports.RealtimeService
 	Feeds         fuelpurchaseports.FuelCardFeedResolver
 	Validator     *Validator
 	Now           func() int64

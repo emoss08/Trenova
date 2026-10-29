@@ -3,12 +3,12 @@
 package holdreasonresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	HoldReasonService *holdreasonservice.Service
 }
 

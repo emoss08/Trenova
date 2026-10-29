@@ -6,9 +6,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -33,7 +36,10 @@ type fakeNoas struct {
 	released     *factoringports.ReleaseNoaRequest
 }
 
-func (f *fakeNoas) Get(_ context.Context, req factoringports.GetNoaRequest) (*factoring.Noa, error) {
+func (f *fakeNoas) Get(
+	_ context.Context,
+	req factoringports.GetNoaRequest,
+) (*factoring.Noa, error) {
 	noa, ok := f.noas[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("Notice of assignment not found")
@@ -137,12 +143,12 @@ func (f *fakeReadiness) SetOverride(
 	_ context.Context,
 	req *factoringports.SetOverrideRequest,
 	_ *permissionports.RequestActor,
-) (*factoring.InvoiceState, error) {
+) (*factoringreadiness.InvoiceState, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.overridden = req
-	return &factoring.InvoiceState{}, nil
+	return &factoringreadiness.InvoiceState{}, nil
 }
 
 func (f *fakeReadiness) PlanDocumentRequest(
@@ -181,13 +187,6 @@ func (f fakeSenders) ResolveSender(
 	}, nil
 }
 
-func toolParams(params map[string]any) agentports.ToolExecuteParams {
-	out := agenttoolstest.ExecuteParams(params)
-	out.IdempotencyKey = "call-1"
-	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
-	return out
-}
-
 func noaWithStatus(status factoring.NoaStatus) *factoring.Noa {
 	return &factoring.Noa{
 		ID:                 pulid.MustNew("facnoa_"),
@@ -209,7 +208,7 @@ func TestPolicies_KeepOutsideMailWithAPerson(t *testing.T) {
 	readiness := &fakeReadiness{}
 	senders := fakeSenders{}
 	cases := []struct {
-		tool        agentports.AgentTool
+		tool        agenttoolports.AgentTool
 		resource    permission.Resource
 		defaultTier agent.AutonomyTier
 		maxTier     agent.AutonomyTier
@@ -266,7 +265,12 @@ func TestPolicies_KeepOutsideMailWithAPerson(t *testing.T) {
 		assert.Equal(t, tc.defaultTier, policy.DefaultTier, tc.tool.Name())
 		assert.Equal(t, tc.maxTier, policy.MaxTier, tc.tool.Name())
 		if tc.external {
-			assert.Equal(t, []agent.EgressClass{agent.EgressExternalRecipient}, policy.Egress, tc.tool.Name())
+			assert.Equal(
+				t,
+				[]agent.EgressClass{agent.EgressExternalRecipient},
+				policy.Egress,
+				tc.tool.Name(),
+			)
 		} else {
 			assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress, tc.tool.Name())
 		}
@@ -280,15 +284,19 @@ func TestDraftFactoringNoa_DraftsForTheNamedCustomerAndFactor(t *testing.T) {
 	tool := NewDraftFactoringNoaTool(noas)
 	customerID := pulid.MustNew("cus_")
 	factorID := pulid.MustNew("facco_")
-	params := toolParams(map[string]any{
-		paramCustomerID: customerID.String(),
-		paramFactorID:   factorID.String(),
-		paramNote:       "Open invoices are included.",
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramCustomerID:            customerID.String(),
+		factoringkit.ParamFactorID: factorID.String(),
+		paramNote:                  "Open invoices are included.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceFactoringNoa, change.Resource)
 	agenttoolstest.FieldByPath(t, change, "status")
@@ -307,14 +315,18 @@ func TestSendFactoringNoa_PreviewsTheLetterAndSendsThePinnedVersion(t *testing.T
 	noa := noaWithStatus(factoring.NoaStatusDraft)
 	noas := newNoas(noa, "ap@customer.example")
 	tool := NewSendFactoringNoaTool(noas, fakeSenders{})
-	params := toolParams(map[string]any{
-		paramNoaID:   noa.ID.String(),
-		paramVersion: float64(noa.Version),
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "ap@customer.example")
 	var message, update bool
 	for i := range preview.Changes {
@@ -322,7 +334,7 @@ func TestSendFactoringNoa_PreviewsTheLetterAndSendsThePinnedVersion(t *testing.T
 		if change.Message != nil {
 			message = true
 		}
-		if change.Operation == agent.PreviewOperationUpdate {
+		if change.Operation == agentpreview.PreviewOperationUpdate {
 			update = true
 			agenttoolstest.FieldByPath(t, change, "status")
 		}
@@ -335,9 +347,13 @@ func TestSendFactoringNoa_PreviewsTheLetterAndSendsThePinnedVersion(t *testing.T
 	assert.Equal(t, noa.ID, noas.sent.ID)
 	assert.Equal(t, noa.Version, noas.sent.Version)
 
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceFactoringNoa, ID: noa.ID}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceFactoringNoa, ID: noa.ID},
+		target,
+	)
 }
 
 func TestSendFactoringNoa_WarnsAboutSuppressedRecipients(t *testing.T) {
@@ -346,14 +362,18 @@ func TestSendFactoringNoa_WarnsAboutSuppressedRecipients(t *testing.T) {
 	noa := noaWithStatus(factoring.NoaStatusDraft)
 	noas := newNoas(noa, "ap@customer.example")
 	tool := NewSendFactoringNoaTool(noas, fakeSenders{suppressed: []string{"ap@customer.example"}})
-	params := toolParams(map[string]any{
-		paramNoaID:   noa.ID.String(),
-		paramVersion: float64(noa.Version),
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.NotEmpty(t, preview.Warnings)
 }
 
@@ -363,17 +383,21 @@ func TestSendFactoringNoa_RefusesAReleasedNotice(t *testing.T) {
 	noa := noaWithStatus(factoring.NoaStatusReleased)
 	noas := newNoas(noa, "ap@customer.example")
 	tool := NewSendFactoringNoaTool(noas, fakeSenders{})
-	params := toolParams(map[string]any{
-		paramNoaID:   noa.ID.String(),
-		paramVersion: float64(noa.Version),
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.NotEmpty(t, preview.Warnings, "a notice that cannot be sent previews as a refusal")
 	assert.Empty(t, preview.Changes)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }
 
 func TestRecordFactoringNoaAcknowledgement_RecordsTheSignedCopy(t *testing.T) {
@@ -384,16 +408,20 @@ func TestRecordFactoringNoaAcknowledgement_RecordsTheSignedCopy(t *testing.T) {
 	tool := NewRecordFactoringNoaAcknowledgementTool(noas)
 	documentID := pulid.MustNew("doc_")
 	signed := time.Now().Add(-48 * time.Hour).UTC()
-	params := toolParams(map[string]any{
-		paramNoaID:          noa.ID.String(),
-		paramVersion:        float64(noa.Version),
-		paramAcknowledgedAt: signed.Format(time.RFC3339),
-		paramSignedDocument: documentID.String(),
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
+		paramAcknowledgedAt:       signed.Format(time.RFC3339),
+		paramSignedDocument:       documentID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	agenttoolstest.FieldByPath(t, change, "status")
 	agenttoolstest.FieldByPath(t, change, "signedDocumentId")
@@ -412,18 +440,22 @@ func TestRecordFactoringNoaAcknowledgement_RefusesAFutureSignature(t *testing.T)
 	noa := noaWithStatus(factoring.NoaStatusSent)
 	noas := newNoas(noa)
 	tool := NewRecordFactoringNoaAcknowledgementTool(noas)
-	params := toolParams(map[string]any{
-		paramNoaID:          noa.ID.String(),
-		paramVersion:        float64(noa.Version),
-		paramAcknowledgedAt: time.Now().Add(72 * time.Hour).UTC().Format(time.RFC3339),
-		paramSignedDocument: pulid.MustNew("doc_").String(),
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
+		paramAcknowledgedAt:       time.Now().Add(72 * time.Hour).UTC().Format(time.RFC3339),
+		paramSignedDocument:       pulid.MustNew("doc_").String(),
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.NotEmpty(t, preview.Warnings)
 }
 
@@ -434,25 +466,29 @@ func TestReleaseFactoringNoa_NeedsAReason(t *testing.T) {
 	noas := newNoas(noa)
 	tool := NewReleaseFactoringNoaTool(noas)
 
-	missing := toolParams(map[string]any{
-		paramNoaID:   noa.ID.String(),
-		paramVersion: float64(noa.Version),
+	missing := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
 	})
 	require.Error(t, tool.Execute(t.Context(), missing))
 	assert.Nil(t, noas.released)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), missing))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), missing))
 
-	params := toolParams(map[string]any{
-		paramNoaID:   noa.ID.String(),
-		paramVersion: float64(noa.Version),
-		paramReason:  "The factor's release letter arrived.",
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramNoaID:                noa.ID.String(),
+		factoringkit.ParamVersion: float64(noa.Version),
+		factoringkit.ParamReason:  "The factor's release letter arrived.",
 	})
-	preview := agenttoolstest.PreviewWithoutWrites(t, &noas.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&noas.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "releaseReason")
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Nil(t, noas.released, "validating releases nothing")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, noas.released)
@@ -482,21 +518,25 @@ func TestSetInvoiceFactoringOverride_PreviewsTheExclusion(t *testing.T) {
 	plan := overridePlan(true)
 	readiness := &fakeReadiness{override: plan}
 	tool := NewSetInvoiceFactoringOverrideTool(readiness)
-	params := toolParams(map[string]any{
-		paramInvoiceID: plan.Before.ID.String(),
-		paramOverride:  string(invoice.FactoringOverrideExclude),
-		paramReason:    "Customer disputes the lane rate",
+	params := agenttoolstest.PersonCallParams(map[string]any{
+		paramInvoiceID:           plan.Before.ID.String(),
+		paramOverride:            string(invoice.FactoringOverrideExclude),
+		factoringkit.ParamReason: "Customer disputes the lane rate",
 	})
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
-	preview := agenttoolstest.PreviewWithoutWrites(t, &readiness.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&readiness.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "INV-1001")
 	assert.Contains(t, preview.Summary, "Customer disputes the lane rate")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	agenttoolstest.FieldByPath(t, change, fieldFactoringOverride)
-	agenttoolstest.FieldByPath(t, change, fieldFactoringCompany)
+	agenttoolstest.FieldByPath(t, change, factoringkit.FieldFactoringCompany)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, readiness.overridden)
@@ -510,14 +550,18 @@ func TestSetInvoiceFactoringOverride_SaysWhenNothingChanges(t *testing.T) {
 	plan := overridePlan(false)
 	readiness := &fakeReadiness{override: plan}
 	tool := NewSetInvoiceFactoringOverrideTool(readiness)
-	params := toolParams(map[string]any{
+	params := agenttoolstest.PersonCallParams(map[string]any{
 		paramInvoiceID: plan.Before.ID.String(),
 		paramOverride:  string(invoice.FactoringOverrideDefault),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &readiness.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&readiness.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "nothing changes")
 	assert.Empty(t, preview.Changes)
 }
@@ -543,11 +587,17 @@ func TestRequestMissingFactoringDocument_PreviewsTheEmailToTheDriver(t *testing.
 	plan := documentPlan()
 	readiness := &fakeReadiness{request: plan}
 	tool := NewRequestMissingFactoringDocumentTool(readiness, fakeSenders{})
-	params := toolParams(map[string]any{paramInvoiceID: plan.Invoice.ID.String()})
+	params := agenttoolstest.PersonCallParams(
+		map[string]any{paramInvoiceID: plan.Invoice.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &readiness.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&readiness.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "driver@fleet.example")
 	assert.Contains(t, preview.Summary, "(driver)")
 	assert.Contains(t, preview.Summary, "Proof of delivery")
@@ -565,7 +615,7 @@ func TestRequestMissingFactoringDocument_RefusesMalformedDocumentTypes(t *testin
 
 	readiness := &fakeReadiness{request: documentPlan()}
 	tool := NewRequestMissingFactoringDocumentTool(readiness, fakeSenders{})
-	params := toolParams(map[string]any{
+	params := agenttoolstest.PersonCallParams(map[string]any{
 		paramInvoiceID:       pulid.MustNew("inv_").String(),
 		paramDocumentTypeIDs: []any{"not-an-id"},
 	})

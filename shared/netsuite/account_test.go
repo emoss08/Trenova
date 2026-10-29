@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +58,7 @@ func TestAccountIDValidation(t *testing.T) {
 		}
 		assert.False(t, netsuite.ValidAccountID(invalid), invalid)
 		_, err := netsuite.APIHost(invalid)
-		require.ErrorIs(t, err, netsuite.ErrInvalidAccountID, invalid)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID, invalid)
 	}
 
 	normalized, err := netsuite.NormalizeAccountID("tstdrv123_sb2")
@@ -86,7 +87,7 @@ func TestAllowedHosts(t *testing.T) {
 	}
 
 	_, err = netsuite.AllowedHosts("bad id")
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestTransactionLink(t *testing.T) {
@@ -143,13 +144,13 @@ func TestCompanyRefRejects(t *testing.T) {
 		"1234567-s1234567890123456789", "bad id-s3",
 	} {
 		_, err := netsuite.ParseCompanyRef(raw)
-		require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef, raw)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef, raw)
 	}
 
 	_, err := netsuite.NewCompanyRef("1234567", "0")
-	require.ErrorIs(t, err, netsuite.ErrInvalidSubsidiaryID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidSubsidiaryID)
 	_, err = netsuite.NewCompanyRef("1234567-x", "")
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 
 	invalid := netsuite.CompanyRef{AccountID: "1234567", SubsidiaryID: "abc"}
 	assert.Empty(t, invalid.String())

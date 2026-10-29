@@ -9,24 +9,28 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/ledgersync"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/internaledistatussync"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentwrite"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderdispatch"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendereffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderlifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"go.uber.org/fx"
@@ -55,23 +59,33 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	),
 	inboundmail.New,
 	fx.Annotate(
-		func(s *ediservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *editenderchangeservice.Service) shipmentserviceports.ShipmentMutationObserver {
+			return s
+		},
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *driversettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *driversettlementaccrualservice.Service) shipmentserviceports.ShipmentMutationObserver {
+			return s
+		},
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *driversettlementservice.Service) shipmentports.MoveStatusObserver { return s },
+		func(s *driversettlementaccrualservice.Service) shipmentserviceports.MoveStatusObserver {
+			return s
+		},
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentports.ShipmentMutationObserver { return s },
+		func(s *carriersettlementcostservice.Service) shipmentserviceports.ShipmentMutationObserver {
+			return s
+		},
 		fx.ResultTags(`group:"shipment_mutation_observers"`),
 	),
 	fx.Annotate(
-		func(s *carriersettlementservice.Service) shipmentports.MoveStatusObserver { return s },
+		func(s *carriersettlementcostservice.Service) shipmentserviceports.MoveStatusObserver {
+			return s
+		},
 		fx.ResultTags(`group:"move_status_observers"`),
 	),
 	fx.Annotate(
@@ -93,50 +107,60 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 			},
 		})
 	},
-	func(setter servicefailureservice.EDIServiceSetter, service ediports.EDIService) {
+	func(setter servicefailureservice.EDIServiceSetter, service ediports.ServiceFailure214Service) {
 		setter.SetEDIService(service)
 	},
-	func(s *tenderservice.Service, assigner tenderports.CarrierMoveAssigner) {
-		s.SetCarrierMoveAssigner(assigner)
+	func(
+		bounces *tenderbounce.Service,
+		lifecycle *tenderlifecycle.Service,
+		assigner tenderports.CarrierMoveAssigner,
+	) {
+		bounces.SetCarrierMoveAssigner(assigner)
+		lifecycle.SetCarrierMoveAssigner(assigner)
 	},
 	// Carrier intelligence writes carrier records back through the carrier
 	// service, so the gate and lifecycle observer are attached after every
 	// consumer is built instead of through their constructors.
 	func(
-		tenders *tenderservice.Service,
+		tenderEffects *tendereffects.Effects,
+		tenderDispatch *tenderdispatch.Service,
 		assignments *carrierassignmentservice.Service,
 		gate carrierintelports.CarrierIntelGate,
 		observer carrierintelports.CarrierLifecycleObserver,
 	) {
-		tenders.SetIntelGate(gate)
-		tenders.SetLifecycleObserver(observer)
+		tenderEffects.SetIntelGate(gate)
+		tenderDispatch.SetIntelGate(gate)
+		tenderEffects.SetLifecycleObserver(observer)
 		assignments.SetIntelGate(gate)
 		assignments.SetLifecycleObserver(observer)
 	},
 	// Injecting the recorder through FX would close the constructor cycle
 	// workerservice -> EmploymentEventRecorder -> workeremploymentservice ->
 	// workerservice, so it arrives after both services are built.
-	func(s *workerservice.Service, recorder workerports.EmploymentEventRecorder) {
+	func(s *workerservice.Service, recorder workeremploymentports.EmploymentEventRecorder) {
 		s.SetEmploymentRecorder(recorder)
 	},
 	// The portal service reaches back into the employment service through the
 	// safety service to record a termination, so injecting the revoker through
 	// FX would close that cycle; it arrives after both are built.
-	func(s *workeremploymentservice.Service, portal *driverportalservice.Service) {
+	func(
+		s *workeremploymentservice.Service,
+		portal *driverportalinvitationservice.Service,
+	) {
 		s.SetPortalRevoker(portal)
 	},
 	// Providing services.EDITenderChannel would close the constructor cycle
-	// ediservice -> ShipmentService -> TenderGuard -> tenderservice ->
+	// editenderservice -> ShipmentService -> TenderGuard -> tenderservice ->
 	// EDITenderChannel, so the channel arrives after both services are built.
-	func(s *tenderservice.Service, ediSvc *ediservice.Service) {
-		s.SetEDITenderChannel(ediSvc)
+	func(s *tenderdispatch.Service, ediTenders *editenderservice.Service) {
+		s.SetEDITenderChannel(ediTenders)
 	},
 	fx.Annotate(
 		func(
-			setter shipmentservice.MutationObserverSetter,
-			observers []shipmentports.ShipmentMutationObserver,
+			writer *shipmentwrite.Service,
+			observers []shipmentserviceports.ShipmentMutationObserver,
 		) {
-			setter.SetShipmentMutationObservers(observers)
+			writer.SetShipmentMutationObservers(observers)
 		},
 		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
 	),

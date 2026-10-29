@@ -2,10 +2,11 @@ package billingtransferresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -124,7 +125,7 @@ func billingTransferRunItemToModel(
 func billingTransferRunItemConnectionToModel(
 	result *pagination.CursorListResult[*billingtransfer.BillingTransferRunItem],
 ) (*gqlmodel.BillingTransferRunItemConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *billingtransfer.BillingTransferRunItem, cursor string) *gqlmodel.BillingTransferRunItemEdge {
 			return &gqlmodel.BillingTransferRunItemEdge{
@@ -141,7 +142,7 @@ func billingTransferRunItemConnectionToModel(
 	return &gqlmodel.BillingTransferRunItemConnection{
 		Edges:           page.Edges,
 		PageInfo:        page.PageInfo,
-		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCount:      gqlscalar.DerefInt(page.TotalCount),
 		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
@@ -161,12 +162,12 @@ func unixPtr(v *int64) *int {
 // billingTransferShipmentStatus narrows the optional status filter a run was
 // started with. An absent status means "either of the two a shipment can be
 // transferred from", which the candidate query already enforces.
-func billingTransferShipmentStatus(status *gqlmodel.ShipmentStatus) shipment.Status {
+func billingTransferShipmentStatus(status *gqlmodel.ShipmentStatus) shipmentvocab.Status {
 	if status == nil {
 		return ""
 	}
 
-	return shipment.Status(*status)
+	return shipmentvocab.Status(*status)
 }
 
 func billingTransferBillType(billType *billingqueue.BillType) billingqueue.BillType {

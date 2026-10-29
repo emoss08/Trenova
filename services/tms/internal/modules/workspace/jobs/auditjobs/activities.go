@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -37,7 +37,7 @@ type ActivitiesParams struct {
 	AuditDLQRepository      auditports.AuditDLQRepository
 	AuthEventRepository     iamports.AuthEventRepository
 	DataRetentionRepository tenantports.DataRetentionRepository
-	RealtimeService         agentports.RealtimeService
+	RealtimeService         realtimeports.RealtimeService
 	Metrics                 *metrics.Registry
 }
 
@@ -47,7 +47,7 @@ type Activities struct {
 	adlq    auditports.AuditDLQRepository
 	aer     iamports.AuthEventRepository
 	dr      tenantports.DataRetentionRepository
-	rt      agentports.RealtimeService
+	rt      realtimeports.RealtimeService
 	metrics *metrics.Registry
 }
 

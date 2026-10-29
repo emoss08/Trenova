@@ -4,9 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,14 +31,14 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 			name: "auto execute",
 			tier: agent.TierAutoExecute,
 			definition: func(tool string) *agentdefinition.Definition {
-				return autoDefinition(tool)
+				return runtimetest.AutoDefinition(tool)
 			},
 		},
 		{
 			name: "act with approval",
 			tier: agent.TierActWithApproval,
 			definition: func(tool string) *agentdefinition.Definition {
-				definition := testDefinition(tool)
+				definition := runtimetest.Definition(tool)
 				definition.AutonomyCeiling = agent.TierActWithApproval
 
 				return definition
@@ -45,14 +48,14 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 			name: "propose",
 			tier: agent.TierPropose,
 			definition: func(tool string) *agentdefinition.Definition {
-				return testDefinition(tool)
+				return runtimetest.Definition(tool)
 			},
 		},
 		{
 			name: "simulation",
 			tier: agent.TierAutoExecute,
 			definition: func(tool string) *agentdefinition.Definition {
-				definition := autoDefinition(tool)
+				definition := runtimetest.AutoDefinition(tool)
 				definition.SimulationMode = true
 
 				return definition
@@ -69,15 +72,15 @@ func TestRun_AToolThatSaysItWouldFailIsRefusedAtEveryTier(t *testing.T) {
 				stubActionToolAlias: actionTool("report_update", tc.tier, nil),
 				invalid:             errors.New("the report no longer has a column named lateness"),
 			}
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
-				textTurn("I will fix the column."),
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+				runtimetest.ToolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
+				runtimetest.TextTurn("I will fix the column."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{},
-				&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-			actor := testActor()
+				&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
+			actor := runtimetest.Actor()
 
-			result, err := rt.Run(t.Context(), &agentports.RunRequest{
+			result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
 				Definition: tc.definition("report_update"),
 				Actor:      actor,
 				Input:      "update",
@@ -114,16 +117,16 @@ func TestRun_AToolThatValidatesRunsWhenItsCheckPasses(t *testing.T) {
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
-		textTurn("Done."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: autoDefinition("report_update"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.AutoDefinition("report_update"),
+		Actor:      runtimetest.Actor(),
 		Input:      "update",
 	})
 	require.NoError(t, err)

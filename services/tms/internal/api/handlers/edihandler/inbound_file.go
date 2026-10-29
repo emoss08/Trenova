@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,16 +46,23 @@ func (h *Handler) listInboundFiles(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 	partnerID, _ := pulid.MustParse(helpers.QueryString(c, "partnerId", ""))
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIInboundFile], error) {
-		return h.inboundService.ListInboundFiles(
-			c.Request.Context(),
-			&ediports.ListEDIInboundFilesRequest{
-				Filter:    req,
-				Status:    edi.InboundFileStatus(helpers.QueryString(c, "status", "")),
-				PartnerID: partnerID,
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*ediinboundfile.EDIInboundFile], error) {
+			return h.inboundService.ListInboundFiles(
+				c.Request.Context(),
+				&edimessageports.ListEDIInboundFilesRequest{
+					Filter: req,
+					Status: ediinboundfile.InboundFileStatus(
+						helpers.QueryString(c, "status", ""),
+					),
+					PartnerID: partnerID,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getInboundFile(c *gin.Context) {
@@ -67,7 +74,7 @@ func (h *Handler) getInboundFile(c *gin.Context) {
 	}
 	file, err := h.inboundService.GetInboundFile(
 		c.Request.Context(),
-		ediports.GetEDIInboundFileByIDRequest{
+		edimessageports.GetEDIInboundFileByIDRequest{
 			ID:              fileID,
 			TenantInfo:      pagination.FromAuth(authCtx),
 			IncludeMessages: true,
@@ -89,7 +96,7 @@ func (h *Handler) inspectInboundFile(c *gin.Context) {
 	}
 	inspection, err := h.inboundService.InspectInboundFile(
 		c.Request.Context(),
-		ediports.GetEDIInboundFileByIDRequest{
+		edimessageports.GetEDIInboundFileByIDRequest{
 			ID:         fileID,
 			TenantInfo: pagination.FromAuth(authCtx),
 		},

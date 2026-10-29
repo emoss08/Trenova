@@ -11,10 +11,15 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/routeaccess"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -64,8 +69,8 @@ type Params struct {
 	AgentGrants         permissionports.RoleAgentGrantRepository  `optional:"true"`
 	AgentRoles          permissionports.AgentRoleSource           `optional:"true"`
 	Delegated           permissionports.DelegatedPermissionSource `optional:"true"`
-	Registry            *permission.Registry
-	RouteRegistry       *permission.RouteRegistry
+	Registry            *permissioncatalog.Registry
+	RouteRegistry       *routeaccess.RouteRegistry
 	Metrics             *metrics.Registry
 	Logger              *zap.Logger
 }
@@ -80,8 +85,8 @@ type engine struct {
 	agentGrants   permissionports.RoleAgentGrantRepository
 	agentRoles    permissionports.AgentRoleSource
 	delegated     permissionports.DelegatedPermissionSource
-	registry      *permission.Registry
-	routeRegistry *permission.RouteRegistry
+	registry      *permissioncatalog.Registry
+	routeRegistry *routeaccess.RouteRegistry
 	metrics       *metrics.Registry
 	l             *zap.Logger
 }
@@ -742,7 +747,7 @@ func (*engine) lightResourceBitmasks(perms *permissionports.CachedPermissions) m
 	for resource, rp := range perms.Resources {
 		var bitmask uint32
 		for _, op := range rp.Operations {
-			bitmask |= permission.OperationToBit[permission.Operation(op)]
+			bitmask |= operationbits.ByOperation[permission.Operation(op)]
 		}
 		permissions[resource] = bitmask
 	}
@@ -860,7 +865,7 @@ func (e *engine) GetEffectivePermissions(
 	start := time.Now()
 	defer func() {
 		e.metrics.Permission.RecordCompute(
-			metrics.PermissionPathEffective, time.Since(start),
+			auditmetrics.PermissionPathEffective, time.Since(start),
 		)
 	}()
 
@@ -900,7 +905,7 @@ func (e *engine) SimulatePermissions(
 	start := time.Now()
 	defer func() {
 		e.metrics.Permission.RecordCompute(
-			metrics.PermissionPathSimulation, time.Since(start),
+			auditmetrics.PermissionPathSimulation, time.Since(start),
 		)
 	}()
 
@@ -1094,17 +1099,17 @@ func (e *engine) getOrComputePermissions(
 	cached, err := e.cacheRepo.Get(ctx, key)
 	result.cacheLookupDuration = time.Since(cacheStart)
 
-	outcome := metrics.PermissionCacheMiss
+	outcome := auditmetrics.PermissionCacheMiss
 	switch {
 	case err != nil:
-		outcome = metrics.PermissionCacheError
+		outcome = auditmetrics.PermissionCacheError
 		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
 	case cached != nil && cached.ExpiresAt > timeutils.NowUnix():
-		outcome = metrics.PermissionCacheHit
+		outcome = auditmetrics.PermissionCacheHit
 	}
 	e.metrics.Permission.RecordCacheLookup(outcome, result.cacheLookupDuration)
 
-	if outcome == metrics.PermissionCacheHit {
+	if outcome == auditmetrics.PermissionCacheHit {
 		result.perms = cached
 		result.cacheHit = true
 		return result, nil
@@ -1121,7 +1126,7 @@ func (e *engine) getOrComputePermissions(
 	if err != nil {
 		return result, err
 	}
-	e.metrics.Permission.RecordCompute(metrics.PermissionPathCached, result.computeDuration)
+	e.metrics.Permission.RecordCompute(auditmetrics.PermissionPathCached, result.computeDuration)
 
 	if epochErr == nil {
 		perms.Epoch = epoch
@@ -1207,7 +1212,7 @@ func (e *engine) computePermissions(
 }
 
 func activePermissionRoleIDs(
-	assignments []*permission.UserRoleAssignment,
+	assignments []*rbac.UserRoleAssignment,
 	roleActivation authctx.SessionRoleActivation,
 	hasRoleActivation bool,
 ) []pulid.ID {
@@ -1242,7 +1247,7 @@ func activePermissionRoleIDs(
 }
 
 func applyRoleSensitivity(
-	role *permission.Role,
+	role *rbac.Role,
 	maxSensitivity *permission.FieldSensitivity,
 ) {
 	if role.MaxSensitivity.Level() > maxSensitivity.Level() {
@@ -1252,7 +1257,7 @@ func applyRoleSensitivity(
 
 func (e *engine) mergeRolePermissionsIntoCache(
 	resources map[string]*permissionports.CachedResourcePermission,
-	rolePermissions []*permission.ResourcePermission,
+	rolePermissions []*rbac.ResourcePermission,
 ) {
 	for _, rp := range rolePermissions {
 		e.mergeResourcePermissionIntoCache(resources, rp)
@@ -1280,7 +1285,7 @@ func (e *engine) mergeAPIKeyPermissionIntoCache(
 
 func (e *engine) mergeResourcePermissionIntoCache(
 	resources map[string]*permissionports.CachedResourcePermission,
-	rp *permission.ResourcePermission,
+	rp *rbac.ResourcePermission,
 ) {
 	existing, ok := resources[rp.Resource]
 	if !ok {
@@ -1323,7 +1328,7 @@ func (e *engine) mergeOpStrings(existing []string, incoming []permission.Operati
 
 func (e *engine) buildEffectivePermissions(
 	userID, orgID pulid.ID,
-	roles []*permission.Role,
+	roles []*rbac.Role,
 ) *permissionports.EffectivePermissions {
 	maxSensitivity := permission.SensitivityPublic
 	resources := make(map[string]permissionports.EffectiveResourcePermission)

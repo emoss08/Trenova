@@ -4,14 +4,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func purchaseDoc(credit bool) *accountingsyncports.AccountingPurchaseDocument {
-	return &accountingsyncports.AccountingPurchaseDocument{
+func purchaseDoc(credit bool) *accountingconnectorports.AccountingPurchaseDocument {
+	return &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:             testAuth(),
 		RequestID:        testRequestID,
 		Kind:             accountingsync.SyncObjectCarrierBill,
@@ -21,7 +23,7 @@ func purchaseDoc(credit bool) *accountingsyncports.AccountingPurchaseDocument {
 		TxnDate:          "2026-09-10",
 		DueDate:          "2026-10-10",
 		PrivateNote:      "Carrier settlement",
-		Lines: []accountingsyncports.AccountingPurchaseLine{
+		Lines: []accountingconnectorports.AccountingPurchaseLine{
 			{Description: "Linehaul", AccountExternalID: testRevenue, Amount: dec("1200")},
 		},
 	}
@@ -113,7 +115,7 @@ func TestUpdateAndVoidPurchases(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testBill, updated.ExternalID)
 
-	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectDriverBill,
 		ExternalID: testCreditNote,
 		Refs:       map[string]string{accountingsync.ExternalRefCreditDocument: "true"},
@@ -122,41 +124,19 @@ func TestUpdateAndVoidPurchases(t *testing.T) {
 	_, ok := fake.find(http.MethodPost, "/CreditNotes/"+testCreditNote)
 	assert.True(t, ok)
 
-	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill, ExternalID: testBill,
 		Refs: map[string]string{accountingsync.ExternalRefDocumentType: "VendorCredit"},
 	})
-	require.ErrorIs(t, err, errPurchaseDocumentType)
+	require.ErrorIs(t, err, xerodocsync.ErrPurchaseDocumentType)
 
-	_, err = conn.CreatePurchaseDocument(t.Context(), &accountingsyncports.AccountingPurchaseDocument{
-		Kind: accountingsync.SyncObjectInvoice,
-	})
-	require.ErrorIs(t, err, errDocumentKind)
-}
-
-func TestPurchaseCreditFlagReadsNeutralAndLegacyRefs(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		refs map[string]string
-		want bool
-		err  bool
-	}{
-		{map[string]string{}, false, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "true"}, true, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "false"}, false, false},
-		{map[string]string{accountingsync.ExternalRefDocumentType: "ACCPAYCREDIT"}, true, false},
-		{map[string]string{accountingsync.ExternalRefCreditDocument: "maybe"}, false, true},
-	}
-	for _, tc := range cases {
-		got, err := purchaseIsCredit(tc.refs)
-		if tc.err {
-			require.Error(t, err)
-			continue
-		}
-		require.NoError(t, err)
-		assert.Equal(t, tc.want, got)
-	}
+	_, err = conn.CreatePurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingPurchaseDocument{
+			Kind: accountingsync.SyncObjectInvoice,
+		},
+	)
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }
 
 func TestBillPaymentCreateAndReplace(t *testing.T) {
@@ -164,7 +144,7 @@ func TestBillPaymentCreateAndReplace(t *testing.T) {
 
 	fake := payablesFake()
 	conn := testConnector(t, fake)
-	doc := &accountingsyncports.AccountingBillPaymentDocument{
+	doc := &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCarrierBillPay,
 		VendorExternalID: testVendor, BankAccountExternalID: testBank, BillExternalID: testBill,
 		DocNumber: "CHK 55", TxnDate: "2026-09-20", Amount: dec("1200"),
@@ -172,7 +152,7 @@ func TestBillPaymentCreateAndReplace(t *testing.T) {
 	created, err := conn.CreateBillPayment(t.Context(), doc)
 	require.NoError(t, err)
 	assert.Equal(t, testPayment, created.ExternalID)
-	assert.NotContains(t, created.Refs, refReplaced)
+	assert.NotContains(t, created.Refs, xerodocsync.RefReplaced)
 	call, ok := fake.find(http.MethodPut, "/Payments")
 	require.True(t, ok)
 	payment := firstDoc(t, call.Body, "Payments")
@@ -205,7 +185,7 @@ func TestFindBillMatchesContactNumberDateAndTotal(t *testing.T) {
 		}
 	}}
 	conn := testConnector(t, fake)
-	req := &accountingsyncports.AccountingFindDocumentRequest{
+	req := &accountingconnectorports.AccountingFindDocumentRequest{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill, DocNumber: "SUP-88",
 		CounterpartyExternalID: testVendor, TxnDate: "2026-09-10", Total: dec("1200"),
 	}
@@ -236,13 +216,17 @@ func TestFindBillPaymentByBillAndReference(t *testing.T) {
 	t.Parallel()
 
 	body := `{"Payments":[{"PaymentID":"` + testPayment + `","Status":"AUTHORISED","Amount":1200,"Date":"2026-09-20T00:00:00","Reference":"CHK 55 ` + testRequestID + `","PaymentType":"ACCPAYPAYMENT","Invoice":{"InvoiceID":"` + testBill + `"}}]}`
-	found, ok, _ := findPaymentWith(t, body, &accountingsyncports.AccountingFindDocumentRequest{
-		Kind:                 accountingsync.SyncObjectDriverBillPay,
-		DocNumber:            "CHK 55",
-		TxnDate:              "2026-09-20",
-		Total:                dec("1200"),
-		AppliesToExternalIDs: []string{testBill},
-	})
+	found, ok, _ := findPaymentWith(
+		t,
+		body,
+		&accountingconnectorports.AccountingFindDocumentRequest{
+			Kind:                 accountingsync.SyncObjectDriverBillPay,
+			DocNumber:            "CHK 55",
+			TxnDate:              "2026-09-20",
+			Total:                dec("1200"),
+			AppliesToExternalIDs: []string{testBill},
+		},
+	)
 	require.True(t, ok)
 	assert.Equal(t, testPayment, found.ExternalID)
 }

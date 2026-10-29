@@ -86,7 +86,7 @@ inspection, thumbnails, the page viewer, legacy extraction and the docling pre-c
   encodes WebP. Caching is ETag only, and the Desk prefetches the next page.
 - **Legacy OCR churns codecs and cannot run in the shipped image.** A scanned page is rendered,
   PNG-encoded, PNG-decoded, passed through four `disintegration/imaging` filters, thresholded by a
-  per-pixel `img.At()` loop (`documentextractionjobs/contentbuilding.go:103-125`), PNG-encoded again,
+  per-pixel `img.At()` loop (`documentanalysis/contentbuilding.go:103-125`), PNG-encoded again,
   written to a temp file, and handed to a `tesseract` subprocess (`activities.go:912-1029`). The TMS
   image does not include tesseract (`docs/self-hosting/README.md:398`).
 - **QR decoding runs on full pages.** `gozxing` with `TRY_HARDER` over a 150 DPI page builds a full
@@ -131,7 +131,7 @@ encryption envelope stays in Go, so plaintext crosses a local socket.
 upload sends only the PDF and a few headers (`crates/capture-client/src/api.rs:418-437`). The server
 then reads each page back from storage, renders it through PDFium, rebuilds an almost identical
 thumbnail (quality 72 instead of 70), measures ink coverage for blank detection and decodes QR codes
-(`modules/documents/app/captureservice/processing.go:263-299`, four workers).
+(`modules/documents/app/captureprocessing/processing.go:263-299`, four workers).
 
 Luma and thresholding are written twice, with the same coefficients and different thresholds
 (`capture-imaging/src/raster.rs:125-170` against `captureimaging/inspector.go:116` and
@@ -146,7 +146,7 @@ carries little risk.
 type mirrors a Go type, and constants such as `MAX_PAGE_BYTES` and the header names are copied
 (`api.rs:13-34`, `api/handlers/capturehandler/device.go:17-20`). The seal digest has golden vectors on
 the Rust side only (`capture-protocol/src/manifest.rs:60-72`); the Go tests compute expected values with
-Go's own function (`captureservice/service_test.go:296,406`). And `native-capture.yml:36-48` runs only
+Go's own function (`captureflow/service_test.go:296,406`). And `native-capture.yml:36-48` runs only
 on changes under `desktop/capture/**`, so a Go-side protocol change never runs the Rust tests. Check in
 shared JSON fixtures and golden digests that both test suites read, and widen the CI path filter to
 `modules/documents/domain/capture/**` and `capturehandler/**`.
@@ -350,7 +350,7 @@ chain is signed with symmetric HMAC; Ed25519 signatures would let third parties 
 
 `shared/piiscrub` runs six RE2 patterns plus Luhn, ABA and IBAN checks over embedding inputs
 (`agentcompletion/completionrouter/embed.go:105`) and training-export text
-(`aitraining/anonymizer.go:197`), and the anonymizer adds about twelve more regex passes. Rust's
+(`aianonymizer/anonymizer.go`), and the anonymizer adds about twelve more regex passes. Rust's
 `RegexSet` matches all patterns in one pass and is much faster per byte. Volume is modest today, so act
 only if it shows up in a profile.
 
@@ -378,7 +378,7 @@ only if it shows up in a profile.
 | --- | --- |
 | GraphQL executor and resolvers | The pain is Go compile time (354 s cold before sharding, 152 s after a domain-struct edit). Rust compiles more slowly. `async-graphql` would mean rewriting every resolver. |
 | Agent runtime and model I/O | Network- and Temporal-bound. Streams parse fine with sonic; no partial-JSON parser is needed. |
-| Token counting | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/contextuse.go:134-143`) heuristics, which disagree. |
+| Token counting | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/turnhistory/contextuse.go:134-143`) heuristics, which disagree. |
 | Tool-argument validation | Compiled once per tool (`pkg/toolschema/validate.go:50-101`); a WASM call would cost more than the validation. |
 | Retrieval | pgvector and Postgres full-text search do the work; in-memory catalogs are a few hundred items. |
 | numberguard | O(citations × supported) decimal comparisons; the fix is a sorted float slice and binary search in Go. |
@@ -417,7 +417,7 @@ output. Trimming the spec to the endpoints used would cut compile time more than
 | --- | --- |
 | Cost of `claims()` per statement | `track_functions = 'pl'`, then `pg_stat_user_functions` under a realistic load |
 | Index use under row-level security | `SET ROLE trenova_tenant; EXPLAIN ANALYZE` on trigram, full-text and `ST_DWithin` searches |
-| Where capture processing spends time | CPU profile of `captureservice/processing.go` over a 100-page batch |
+| Where capture processing spends time | CPU profile of `captureprocessing/processing.go` over a 100-page batch |
 | Peak heap per document | Heap profile of upload → decrypt → thumbnail for 5, 20 and 50 MB files |
 | Page-viewer latency | p50/p95 of `GetPageImage` under concurrent Desk use |
 | wazero against native for pixel work | Benchmark the same resize, threshold and QR code natively, under wazero, and in Go |

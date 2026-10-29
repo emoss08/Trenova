@@ -6,8 +6,14 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -17,14 +23,14 @@ import (
 type notedConversations struct {
 	*fakeConversations
 	notes []conversation.Message
-	asked []agentports.ListMessagesRequest
+	asked []conversationports.ListMessagesRequest
 }
 
 func (f *notedConversations) ListMessages(
 	_ context.Context,
-	req agentports.ListMessagesRequest,
+	req *conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 
 	return f.notes, nil
 }
@@ -35,30 +41,30 @@ type fakeProposals struct {
 
 func (f *fakeProposals) ListByThread(
 	_ context.Context,
-	_ agentports.ListAgentProposalsByThreadRequest,
+	_ agentproposalports.ListAgentProposalsByThreadRequest,
 ) ([]*agent.AgentProposal, error) {
 	return f.proposals, nil
 }
 
 type fakePlans struct {
-	plans []*agent.AgentPlan
+	plans []*agentplan.AgentPlan
 }
 
 func (f *fakePlans) ListByThread(
 	_ context.Context,
-	_ agentports.ListAgentPlansByThreadRequest,
-) ([]*agent.AgentPlan, error) {
+	_ agentplanports.ListAgentPlansByThreadRequest,
+) ([]*agentplan.AgentPlan, error) {
 	return f.plans, nil
 }
 
 type fakeDecisions struct {
-	decisions []*agent.AgentDecision
+	decisions []*agentdecision.AgentDecision
 }
 
 func (f *fakeDecisions) ListByProposals(
 	_ context.Context,
-	_ agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+	_ agentdecisionports.ListAgentDecisionsByProposalsRequest,
+) ([]*agentdecision.AgentDecision, error) {
 	return f.decisions, nil
 }
 
@@ -96,7 +102,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 		Status:   status,
 	}
 	f.proposals.proposals = append(f.proposals.proposals, proposal)
-	f.decisions.decisions = append(f.decisions.decisions, &agent.AgentDecision{
+	f.decisions.decisions = append(f.decisions.decisions, &agentdecision.AgentDecision{
 		ID:         pulid.MustNew("adec_"),
 		ProposalID: &proposal.ID,
 		CreatedAt:  at,
@@ -108,7 +114,7 @@ func (f *resumeFixture) decide(status agent.ProposalStatus, at int64) *agent.Age
 func (f *resumeFixture) resume(t *testing.T) {
 	t.Helper()
 
-	f.service.ResumeFollowUps(t.Context(), agentports.ResumeFollowUpsRequest{
+	f.service.ResumeFollowUps(t.Context(), assistantports.ResumeFollowUpsRequest{
 		TenantInfo: f.tenant,
 		ThreadID:   f.thread.ID,
 	})
@@ -227,13 +233,13 @@ func TestResumeFollowUps_ReportsTheOldestDecisionFirst(t *testing.T) {
 	now := timeutils.NowUnix()
 	f.decide(agent.ProposalStatusExecuted, now)
 	older := now - 60
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:        pulid.MustNew("apl_"),
 		RunID:     f.runs.run.ID,
-		Status:    agent.PlanStatusFailed,
+		Status:    agentplan.PlanStatusFailed,
 		DecidedAt: &older,
 	}
-	f.plans.plans = []*agent.AgentPlan{plan}
+	f.plans.plans = []*agentplan.AgentPlan{plan}
 
 	f.resume(t)
 

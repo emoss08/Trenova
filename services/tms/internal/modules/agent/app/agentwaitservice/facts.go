@@ -10,13 +10,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentwaitjobs/agentwaitcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -28,13 +30,13 @@ import (
 // facts reads the records a wait names, to refuse a wait on something already
 // true and to look again when a timed wait comes due.
 type facts struct {
-	moves       shipmentports.ShipmentMoveRepository
-	assignments shipmentports.AssignmentRepository
+	moves       shipmentmoveports.ShipmentMoveRepository
+	assignments assignmentports.AssignmentRepository
 	occurrences detentionports.DetentionOccurrenceRepository
 	telematics  telematicsports.TelematicsRepository
 	carriers    carrierports.CarrierRepository
 	customers   customerports.CustomerRepository
-	subjects    agentports.AgentSubjectRepository
+	subjects    agentsubjectports.AgentSubjectRepository
 	portalRuns  agentextensionports.PortalRunRepository
 	webWatches  agentextensionports.WebWatchRepository
 	documents   documentports.DocumentRepository
@@ -164,7 +166,8 @@ func (f *facts) assessStopVisit(
 	if err != nil {
 		return err
 	}
-	if move.Status == shipment.MoveStatusCompleted || move.Status == shipment.MoveStatusCanceled {
+	if move.Status == shipmentvocab.MoveStatusCompleted ||
+		move.Status == shipmentvocab.MoveStatusCanceled {
 		return alreadyTrue("the move is %s.", move.Status)
 	}
 	if c.StopID.IsNil() {
@@ -232,7 +235,7 @@ func (f *facts) assessParty(
 ) error {
 	switch {
 	case c.ShipmentID.IsNotNil():
-		found, err := f.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+		found, err := f.subjects.Exists(ctx, &agentsubjectports.AgentSubjectExistsRequest{
 			TenantInfo:  tenant,
 			SubjectType: agent.SubjectShipment,
 			SubjectID:   c.ShipmentID,
@@ -353,7 +356,7 @@ func (f *facts) move(
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
 ) (*shipment.ShipmentMove, error) {
-	move, err := f.moves.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := f.moves.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            moveID,
 		TenantInfo:        tenant,
 		ExpandMoveDetails: true,

@@ -6,18 +6,18 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
 
-var knownSSOProviders = []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta}
+var knownSSOProviders = []sso.SSOProvider{sso.SSOProviderAzureAD, sso.SSOProviderOkta}
 
 func EnvelopeColumns() []kernelports.EnvelopeColumn {
 	idp := iamdb.IdentityProviders
-	sso := tenantdb.SSOConfigs
+	ssoConfigs := ssodb.SSOConfigs
 	slug := kernelports.EnvelopeColumnName(idp.Slug)
-	provider := kernelports.EnvelopeColumnName(sso.Provider)
+	provider := kernelports.EnvelopeColumnName(ssoConfigs.Provider)
 	return []kernelports.EnvelopeColumn{
 		{
 			Name:  "identity provider client secret",
@@ -29,12 +29,12 @@ func EnvelopeColumns() []kernelports.EnvelopeColumn {
 		},
 		{
 			Name:  "SSO configuration client secret",
-			Value: sso.OIDCClientSecret,
-			Extra: []keel.Expr{sso.Provider},
+			Value: ssoConfigs.OIDCClientSecret,
+			Extra: []keel.Expr{ssoConfigs.Provider},
 			Scopes: func(row *kernelports.EnvelopeRow, _ string) []kernelports.SecretScope {
 				return ssoSecretScopes(
 					row,
-					ssoSecretAADResourceIDs(tenant.SSOProvider(row.Extra[provider])),
+					ssoSecretAADResourceIDs(sso.SSOProvider(row.Extra[provider])),
 				)
 			},
 		},

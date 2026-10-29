@@ -6,12 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -20,16 +20,16 @@ import (
 )
 
 type fakeAIProviderSelectService struct {
-	agentports.AIProviderService
+	aiproviderports.AIProviderService
 	byID       map[pulid.ID]*aiprovider.Provider
-	selectReq  *agentports.AIProviderSelectOptionsRequest
+	selectReq  *aiproviderports.AIProviderSelectOptionsRequest
 	selectList []*aiprovider.Provider
-	lookups    []agentports.GetAIProviderByIDRequest
+	lookups    []aiproviderports.GetAIProvidersByIDsRequest
 }
 
 func (f *fakeAIProviderSelectService) SelectOptions(
 	_ context.Context,
-	req *agentports.AIProviderSelectOptionsRequest,
+	req *aiproviderports.AIProviderSelectOptionsRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	f.selectReq = req
 	return &pagination.ListResult[*aiprovider.Provider]{
@@ -39,16 +39,18 @@ func (f *fakeAIProviderSelectService) SelectOptions(
 	}, nil
 }
 
-func (f *fakeAIProviderSelectService) GetByID(
+func (f *fakeAIProviderSelectService) GetByIDs(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
-) (*aiprovider.Provider, error) {
+	req aiproviderports.GetAIProvidersByIDsRequest,
+) ([]*aiprovider.Provider, error) {
 	f.lookups = append(f.lookups, req)
-	provider, ok := f.byID[req.ID]
-	if !ok {
-		return nil, errortypes.NewNotFoundError("AIProvider not found within your organization")
+	providers := make([]*aiprovider.Provider, 0, len(req.ProviderIDs))
+	for _, id := range req.ProviderIDs {
+		if provider, ok := f.byID[id]; ok {
+			providers = append(providers, provider)
+		}
 	}
-	return provider, nil
+	return providers, nil
 }
 
 type decidingPermissionEngine struct {
@@ -70,7 +72,7 @@ func aiProviderResolver(
 	engine *decidingPermissionEngine,
 ) *QueryResolver {
 	return &QueryResolver{&Deps{
-		Core:              &base.Core{PermissionEngine: engine},
+		Core:              &resolvercore.Core{PermissionEngine: engine},
 		AiProviderService: svc,
 	}}
 }
@@ -101,7 +103,7 @@ func TestSelectOptions_AIProviderListsAssistantChatProvidersForTheTenant(t *test
 	require.NoError(t, err)
 
 	require.NotNil(t, svc.selectReq)
-	assert.Equal(t, aiprovider.TaskAssistantChat, svc.selectReq.Task)
+	assert.Equal(t, aitask.TaskAssistantChat, svc.selectReq.Task)
 	assert.Equal(t, "opus", svc.selectReq.SelectQueryRequest.Query)
 	assert.Equal(t, orgID, svc.selectReq.SelectQueryRequest.TenantInfo.OrgID)
 	assert.Equal(t, buID, svc.selectReq.SelectQueryRequest.TenantInfo.BuID)
@@ -165,10 +167,9 @@ func TestSelectOptions_AIProviderByIDsKeepsKnownProvidersInTheTenant(t *testing.
 	require.Len(t, result.Edges, 1)
 	assert.Equal(t, kept.ID.String(), result.Edges[0].Node.ID)
 	assert.Equal(t, "Local vLLM", result.Edges[0].Node.Label)
-	require.Len(t, svc.lookups, 2)
-	for _, lookup := range svc.lookups {
-		assert.Equal(t, orgID, lookup.TenantInfo.OrgID)
-		assert.Equal(t, buID, lookup.TenantInfo.BuID)
-	}
+	require.Len(t, svc.lookups, 1, "every selected provider is read in one batch")
+	assert.Equal(t, []pulid.ID{kept.ID, gone}, svc.lookups[0].ProviderIDs)
+	assert.Equal(t, orgID, svc.lookups[0].TenantInfo.OrgID)
+	assert.Equal(t, buID, svc.lookups[0].TenantInfo.BuID)
 	assert.Nil(t, svc.selectReq)
 }

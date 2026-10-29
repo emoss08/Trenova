@@ -12,9 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation/portalinvitationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -50,18 +52,22 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 	}
 	require.NoError(t, workerdb.Workers.Create(tenantCtx, db, driver))
 
-	invitation := &worker.PortalInvitation{
+	invitation := &portalinvitation.PortalInvitation{
 		WorkerID:    driver.ID,
 		Email:       driver.Email,
 		TokenHash:   strings.Repeat("a", 64),
-		Status:      worker.PortalInvitationStatusPending,
+		Status:      portalinvitation.PortalInvitationStatusPending,
 		ExpiresAt:   time.Now().Add(time.Hour).Unix(),
 		InvitedByID: data.User.ID,
 	}
-	require.NoError(t, workerdb.PortalInvitations.Create(tenantCtx, db, invitation))
+	require.NoError(t, portalinvitationdb.PortalInvitations.Create(tenantCtx, db, invitation))
 
 	guard := platformplanportsmock.NewMockQuotaGuard(t)
-	repo := &portalAccessRepository{db: postgres.NewTestConnection(db), l: zap.NewNop(), quota: guard}
+	repo := &portalAccessRepository{
+		db:    postgres.NewTestConnection(db),
+		l:     zap.NewNop(),
+		quota: guard,
+	}
 	guard.EXPECT().Enforce(mock.Anything, &platformplanports.QuotaRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: data.Organization.ID,
@@ -71,14 +77,17 @@ func TestActivatePortalAccessRefusesASeatPastTheQuota(t *testing.T) {
 		Quantity: 1,
 	}).Return(errortypes.NewQuotaExceededError(string(platformcatalog.MeterUserSeats), 1, 1, "free_demo"))
 
-	user, err := repo.ActivatePortalAccess(tenantCtx, &workerports.ActivatePortalAccessRequest{
-		Invitation: invitation,
-		User: &tenant.User{
-			Name:         "Quota Driver",
-			Username:     "quotadriver",
-			EmailAddress: driver.Email,
+	user, err := repo.ActivatePortalAccess(
+		tenantCtx,
+		&portalaccessports.ActivatePortalAccessRequest{
+			Invitation: invitation,
+			User: &tenant.User{
+				Name:         "Quota Driver",
+				Username:     "quotadriver",
+				EmailAddress: driver.Email,
+			},
 		},
-	})
+	)
 
 	require.Nil(t, user)
 	require.True(t, errortypes.IsQuotaExceededError(err))

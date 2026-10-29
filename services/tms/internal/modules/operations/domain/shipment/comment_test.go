@@ -3,6 +3,7 @@ package shipment
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ func TestShipmentComment_ValidateRequiresUserForUserAuthoredSources(t *testing.T
 
 	entity := validShipmentComment()
 	entity.UserID = pulid.Nil
-	entity.Source = CommentSourceUser
+	entity.Source = shipmentvocab.CommentSourceUser
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -26,7 +27,7 @@ func TestShipmentComment_ValidateAllowsSystemSourceWithoutUser(t *testing.T) {
 
 	entity := validShipmentComment()
 	entity.UserID = pulid.Nil
-	entity.Source = CommentSourceSystem
+	entity.Source = shipmentvocab.CommentSourceSystem
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -41,7 +42,7 @@ func validShipmentComment() *ShipmentComment {
 		ShipmentID:     pulid.MustNew("shp_"),
 		UserID:         pulid.MustNew("usr_"),
 		Comment:        "hello",
-		Source:         CommentSourceUser,
+		Source:         shipmentvocab.CommentSourceUser,
 	}
 }
 
@@ -53,58 +54,73 @@ func TestShipmentComment_WrittenOutside(t *testing.T) {
 		outside bool
 	}{
 		"a dispatcher's note": {
-			comment: ShipmentComment{Source: CommentSourceUser, Type: CommentTypeDispatch},
+			comment: ShipmentComment{
+				Source: shipmentvocab.CommentSourceUser,
+				Type:   shipmentvocab.CommentTypeDispatch,
+			},
 		},
 		"a dispatcher's note to the driver": {
 			comment: ShipmentComment{
-				Source:     CommentSourceUser,
-				Type:       CommentTypeDispatch,
-				Visibility: CommentVisibilityDriver,
+				Source:     shipmentvocab.CommentSourceUser,
+				Type:       shipmentvocab.CommentTypeDispatch,
+				Visibility: shipmentvocab.CommentVisibilityDriver,
 			},
 		},
 		"a driver's Dash post": {
 			comment: ShipmentComment{
-				Source:     CommentSourceUser,
-				Type:       CommentTypeDriverUpdate,
-				Visibility: CommentVisibilityDriver,
+				Source:     shipmentvocab.CommentSourceUser,
+				Type:       shipmentvocab.CommentTypeDriverUpdate,
+				Visibility: shipmentvocab.CommentVisibilityDriver,
 				Metadata:   map[string]any{CommentMetadataOrigin: CommentOriginDash},
 			},
 			outside: true,
 		},
 		"a Dash post written before the origin was stamped": {
-			comment: ShipmentComment{Source: CommentSourceUser, Type: CommentTypeDriverUpdate},
+			comment: ShipmentComment{
+				Source: shipmentvocab.CommentSourceUser,
+				Type:   shipmentvocab.CommentTypeDriverUpdate,
+			},
 			outside: true,
 		},
 		"an EDI status message": {
 			comment: ShipmentComment{
-				Source:   CommentSourceSystem,
-				Type:     CommentTypeStatusUpdate,
+				Source:   shipmentvocab.CommentSourceSystem,
+				Type:     shipmentvocab.CommentTypeStatusUpdate,
 				Metadata: map[string]any{CommentMetadataOrigin: CommentOriginEDI},
 			},
 			outside: true,
 		},
 		"an integration's note": {
-			comment: ShipmentComment{Source: CommentSourceIntegration, Type: CommentTypeInternal},
+			comment: ShipmentComment{
+				Source: shipmentvocab.CommentSourceIntegration,
+				Type:   shipmentvocab.CommentTypeInternal,
+			},
 			outside: true,
 		},
 		"a system note from inside Trenova": {
-			comment: ShipmentComment{Source: CommentSourceSystem, Type: CommentTypeBilling},
+			comment: ShipmentComment{
+				Source: shipmentvocab.CommentSourceSystem,
+				Type:   shipmentvocab.CommentTypeBilling,
+			},
 		},
 		"an agent's note from a clean run": {
-			comment: ShipmentComment{Source: CommentSourceAI, Type: CommentTypeDriverUpdate},
+			comment: ShipmentComment{
+				Source: shipmentvocab.CommentSourceAI,
+				Type:   shipmentvocab.CommentTypeDriverUpdate,
+			},
 		},
 		"an agent's note written after outside content": {
 			comment: ShipmentComment{
-				Source:   CommentSourceAI,
-				Type:     CommentTypeInternal,
+				Source:   shipmentvocab.CommentSourceAI,
+				Type:     shipmentvocab.CommentTypeInternal,
 				Metadata: map[string]any{CommentMetadataTainted: true},
 			},
 			outside: true,
 		},
 		"the record of an email an agent sent": {
 			comment: ShipmentComment{
-				Source:   CommentSourceSystem,
-				Type:     CommentTypeCustomerUpdate,
+				Source:   shipmentvocab.CommentSourceSystem,
+				Type:     shipmentvocab.CommentTypeCustomerUpdate,
 				Metadata: map[string]any{CommentMetadataOrigin: CommentOriginAgent},
 			},
 		},

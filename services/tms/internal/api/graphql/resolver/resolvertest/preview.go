@@ -4,7 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,20 +32,20 @@ func (p *PreviewPermissions) Check(
 }
 
 type PreviewProposals struct {
-	agentports.AgentProposalService
+	agentproposalports.AgentProposalService
 
 	Proposal *agent.AgentProposal
 }
 
 func (p *PreviewProposals) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return p.Proposal, nil
 }
 
 type PreviewDecisions struct {
-	agentports.AgentDecisionService
+	agentdecisionports.AgentDecisionService
 
 	Yours bool
 	Asked []pulid.ID
@@ -54,14 +59,16 @@ func (d *PreviewDecisions) AssertOwnProposal(
 ) error {
 	d.Asked = append(d.Asked, proposalID)
 	if !d.Yours {
-		return errortypes.NewNotFoundError("That proposal was not raised in one of your conversations")
+		return errortypes.NewNotFoundError(
+			"That proposal was not raised in one of your conversations",
+		)
 	}
 
 	return nil
 }
 
 type PreviewPlans struct {
-	agentports.AgentPlanService
+	agentplanports.AgentPlanService
 
 	Yours bool
 }
@@ -81,37 +88,37 @@ func (p *PreviewPlans) AssertOwnPlan(
 
 func (p *PreviewPlans) GetByID(
 	_ context.Context,
-	req agentports.GetAgentPlanByIDRequest,
-) (*agent.AgentPlan, error) {
-	return &agent.AgentPlan{ID: req.ID}, nil
+	req agentplanports.GetAgentPlanByIDRequest,
+) (*agentplan.AgentPlan, error) {
+	return &agentplan.AgentPlan{ID: req.ID}, nil
 }
 
 type PreviewService struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	Proposals int
 	Plans     int
-	Viewer    *agentports.PreviewViewer
+	Viewer    *agentruntimeports.PreviewViewer
 	Mods      map[string]any
-	Warnings  []agent.PreviewWarning
+	Warnings  []agentpreview.PreviewWarning
 }
 
 func (s *PreviewService) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+	req *agentruntimeports.ProposalPreviewRequest,
+) (*agentpreview.ProposalPreview, error) {
 	s.Proposals++
 	s.Viewer = req.Viewer
 	s.Mods = req.Modifications
 
-	return &agent.ProposalPreview{ProposalID: req.Proposal.ID, Warnings: s.Warnings}, nil
+	return &agentpreview.ProposalPreview{ProposalID: req.Proposal.ID, Warnings: s.Warnings}, nil
 }
 
 func (s *PreviewService) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
+	req *agentruntimeports.PlanPreviewRequest,
+) (*agentpreview.PlanPreview, error) {
 	s.Plans++
 
-	return &agent.PlanPreview{PlanID: req.Plan.ID}, nil
+	return &agentpreview.PlanPreview{PlanID: req.Plan.ID}, nil
 }

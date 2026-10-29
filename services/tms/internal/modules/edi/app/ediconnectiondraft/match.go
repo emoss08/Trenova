@@ -4,66 +4,40 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type identityHints struct {
-	code         string
-	name         string
-	isaQualifier string
-	isaID        string
-	as2ID        string
-}
-
-func (e *evidence) hint(field string) string {
-	spec, ok := fieldCatalog[field]
-	if !ok {
-		return ""
-	}
-	settled := resolveField(spec, e, "", nil, false)
-	if settled.Status != ediports.ValueStatusAccepted {
-		return ""
-	}
-	return settled.Value
-}
-
-func (e *evidence) hints() *identityHints {
-	return &identityHints{
-		code:         e.hint(fieldPartnerCode),
-		name:         e.hint(fieldPartnerName),
-		isaQualifier: e.hint(fieldPartnerQualifier),
-		isaID:        e.hint(fieldPartnerID),
-		as2ID:        e.hint("as2.partnerAs2Id"),
-	}
-}
-
 type partnerMatch struct {
-	draft ediports.DraftPartner
-	setup *ediports.EDIPartnerSetup
+	draft ediconnectiondraftports.DraftPartner
+	setup *ediconnectiondraftports.EDIPartnerSetup
 }
 
 func (s *Service) matchPartner(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
-	hints *identityHints,
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+	hints *ediconnectionfield.IdentityHints,
 ) (*partnerMatch, error) {
 	if req.PartnerID.IsNotNil() {
 		return s.namedPartner(ctx, req)
 	}
 
-	matches, err := s.repo.FindPartnerMatches(ctx, &ediports.FindEDIPartnerMatchesRequest{
-		TenantInfo:   req.TenantInfo,
-		Code:         hints.code,
-		Name:         hints.name,
-		ISAQualifier: hints.isaQualifier,
-		ISAID:        hints.isaID,
-		AS2ID:        hints.as2ID,
-		CustomerID:   req.CustomerID,
-	})
+	matches, err := s.repo.FindPartnerMatches(
+		ctx,
+		&ediconnectiondraftports.FindEDIPartnerMatchesRequest{
+			TenantInfo:   req.TenantInfo,
+			Code:         hints.Code,
+			Name:         hints.Name,
+			ISAQualifier: hints.ISAQualifier,
+			ISAID:        hints.ISAID,
+			AS2ID:        hints.AS2ID,
+			CustomerID:   req.CustomerID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +45,8 @@ func (s *Service) matchPartner(
 	chosen, candidates := classifyMatches(matches)
 	switch len(chosen) {
 	case 0:
-		return &partnerMatch{draft: ediports.DraftPartner{
-			Match:      ediports.PartnerMatchNew,
+		return &partnerMatch{draft: ediconnectiondraftports.DraftPartner{
+			Match:      ediconnectiondraftports.PartnerMatchNew,
 			Candidates: candidates,
 			Reasons:    newPartnerReasons(candidates),
 		}}, nil
@@ -84,8 +58,8 @@ func (s *Service) matchPartner(
 		match.draft.Reasons = matchReasons(chosen[0])
 		return match, nil
 	default:
-		return &partnerMatch{draft: ediports.DraftPartner{
-			Match:      ediports.PartnerMatchAmbiguous,
+		return &partnerMatch{draft: ediconnectiondraftports.DraftPartner{
+			Match:      ediconnectiondraftports.PartnerMatchAmbiguous,
 			Candidates: candidates,
 			Reasons: []string{fmt.Sprintf(
 				"%d partners match what the document says; name the one to update",
@@ -97,7 +71,7 @@ func (s *Service) matchPartner(
 
 func (s *Service) namedPartner(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
+	req *ediconnectiondraftports.ConnectionDraftRequest,
 ) (*partnerMatch, error) {
 	match, err := s.existingPartner(ctx, req, req.PartnerID)
 	if err != nil {
@@ -123,10 +97,10 @@ func (s *Service) namedPartner(
 
 func (s *Service) existingPartner(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
+	req *ediconnectiondraftports.ConnectionDraftRequest,
 	partnerID pulid.ID,
 ) (*partnerMatch, error) {
-	setup, err := s.repo.GetPartnerSetup(ctx, &ediports.GetEDIPartnerSetupRequest{
+	setup, err := s.repo.GetPartnerSetup(ctx, &ediconnectiondraftports.GetEDIPartnerSetupRequest{
 		TenantInfo: req.TenantInfo,
 		PartnerID:  partnerID,
 	})
@@ -135,8 +109,8 @@ func (s *Service) existingPartner(
 	}
 	return &partnerMatch{
 		setup: setup,
-		draft: ediports.DraftPartner{
-			Match:     ediports.PartnerMatchExisting,
+		draft: ediconnectiondraftports.DraftPartner{
+			Match:     ediconnectiondraftports.PartnerMatchExisting,
 			PartnerID: setup.Partner.ID,
 			Version:   setup.Partner.Version,
 			Status:    setup.Partner.Status,
@@ -145,16 +119,16 @@ func (s *Service) existingPartner(
 }
 
 func classifyMatches(
-	matches []*ediports.EDIPartnerMatch,
-) (chosen []*ediports.EDIPartnerMatch, candidates []ediports.PartnerCandidate) {
-	strong := make([]*ediports.EDIPartnerMatch, 0, len(matches))
-	byName := make([]*ediports.EDIPartnerMatch, 0, 1)
-	candidates = make([]ediports.PartnerCandidate, 0, len(matches))
+	matches []*ediconnectiondraftports.EDIPartnerMatch,
+) (chosen []*ediconnectiondraftports.EDIPartnerMatch, candidates []ediconnectiondraftports.PartnerCandidate) {
+	strong := make([]*ediconnectiondraftports.EDIPartnerMatch, 0, len(matches))
+	byName := make([]*ediconnectiondraftports.EDIPartnerMatch, 0, 1)
+	candidates = make([]ediconnectiondraftports.PartnerCandidate, 0, len(matches))
 	for _, match := range matches {
 		if match.Partner.Kind != edi.PartnerKindExternal {
 			continue
 		}
-		candidates = append(candidates, ediports.PartnerCandidate{
+		candidates = append(candidates, ediconnectiondraftports.PartnerCandidate{
 			PartnerID: match.Partner.ID,
 			Code:      match.Partner.Code,
 			Name:      match.Partner.Name,
@@ -173,7 +147,7 @@ func classifyMatches(
 	return byName, candidates
 }
 
-func matchReasons(match *ediports.EDIPartnerMatch) []string {
+func matchReasons(match *ediconnectiondraftports.EDIPartnerMatch) []string {
 	reasons := make([]string, 0, 5)
 	if match.ByCode {
 		reasons = append(reasons, "Same partner code")
@@ -193,7 +167,7 @@ func matchReasons(match *ediports.EDIPartnerMatch) []string {
 	return reasons
 }
 
-func newPartnerReasons(candidates []ediports.PartnerCandidate) []string {
+func newPartnerReasons(candidates []ediconnectiondraftports.PartnerCandidate) []string {
 	if len(candidates) == 0 {
 		return []string{"No partner has this code, name, ISA ID or AS2 ID"}
 	}

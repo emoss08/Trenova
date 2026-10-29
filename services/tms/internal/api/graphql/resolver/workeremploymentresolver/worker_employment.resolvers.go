@@ -9,10 +9,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +30,7 @@ func (r *MutationResolver) RecordWorkerEmploymentEvent(ctx context.Context, inpu
 	if err != nil {
 		return nil, errortypes.NewValidationError("workerId", errortypes.ErrInvalid, "Worker is invalid")
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Document is invalid")
 	}
@@ -41,25 +44,25 @@ func (r *MutationResolver) RecordWorkerEmploymentEvent(ctx context.Context, inpu
 	}
 
 	return r.WorkerEmploymentService.Record(ctx, &workeremploymentservice.RecordRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WorkerID:    workerID,
 		Kind:        input.Kind,
 		EffectiveAt: int64(input.EffectiveAt),
-		Reason:      base.StringValue(input.Reason),
-		Notes:       base.StringValue(input.Notes),
+		Reason:      gqlscalar.StringValue(input.Reason),
+		Notes:       gqlscalar.StringValue(input.Notes),
 		DocumentID:  documentID,
 		FleetCodeID: fleetCodeID,
 		ManagerID:   managerID,
 		DriverType:  input.DriverType,
 		WorkerType:  input.WorkerType,
-		Rate:        base.StringValue(input.Rate),
-		RateUnit:    base.StringValue(input.RateUnit),
+		Rate:        gqlscalar.StringValue(input.Rate),
+		RateUnit:    gqlscalar.StringValue(input.RateUnit),
 		LeaveType:   input.LeaveType,
 		UserID:      authCtx.UserID,
 	})
 }
 
-func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*worker.WorkerEmploymentEvent, error) {
+func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -76,18 +79,18 @@ func (r *MutationResolver) AmendWorkerEmploymentEvent(ctx context.Context, input
 
 	return r.WorkerEmploymentService.Amend(ctx, &workeremploymentservice.AmendRequest{
 		ID:            eventID,
-		TenantInfo:    base.TenantInfo(authCtx),
-		EffectiveAt:   base.Int64Ptr(input.EffectiveAt),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
+		EffectiveAt:   gqlscalar.Int64Ptr(input.EffectiveAt),
 		Reason:        input.Reason,
 		Notes:         input.Notes,
 		DocumentID:    documentID,
 		AmendmentNote: input.AmendmentNote,
-		Version:       int64(base.IntValue(input.Version)),
+		Version:       int64(gqlscalar.IntValue(input.Version)),
 		UserID:        authCtx.UserID,
 	})
 }
 
-func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []worker.EmploymentEventKind) ([]*worker.WorkerEmploymentEvent, error) {
+func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -98,10 +101,10 @@ func (r *QueryResolver) WorkerEmploymentEvents(ctx context.Context, workerID str
 		return nil, err
 	}
 
-	return r.WorkerEmploymentService.List(ctx, base.TenantInfo(authCtx), wid, kinds)
+	return r.WorkerEmploymentService.List(ctx, resolvercore.TenantInfo(authCtx), wid, kinds)
 }
 
-func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*worker.WorkerEmploymentEvent, error) {
+func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceWorkerEmploymentEvent, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -112,33 +115,33 @@ func (r *QueryResolver) WorkerEmploymentEvent(ctx context.Context, id string) (*
 		return nil, err
 	}
 
-	return r.WorkerEmploymentService.Get(ctx, base.TenantInfo(authCtx), eventID)
+	return r.WorkerEmploymentService.Get(ctx, resolvercore.TenantInfo(authCtx), eventID)
 }
 
 func (r *WorkerEmploymentCascadeResolver) PTOPaidOutDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error) {
-	return base.DecimalString(obj.PTOPaidOutDays), nil
+	return gqldecimal.DecimalString(obj.PTOPaidOutDays), nil
 }
 
 func (r *WorkerEmploymentCascadeResolver) PTOForfeitedDays(ctx context.Context, obj *workeremploymentservice.CascadeSummary) (string, error) {
-	return base.DecimalString(obj.PTOForfeitedDays), nil
+	return gqldecimal.DecimalString(obj.PTOForfeitedDays), nil
 }
 
-func (r *WorkerEmploymentEventResolver) FromValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
+func (r *WorkerEmploymentEventResolver) FromValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
 	return employmentValues(obj.FromValues), nil
 }
 
-func (r *WorkerEmploymentEventResolver) ToValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
+func (r *WorkerEmploymentEventResolver) ToValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error) {
 	return employmentValues(obj.ToValues), nil
 }
 
-func (r *WorkerEmploymentEventResolver) DocumentID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
-	return base.IDPtr(obj.DocumentID), nil
+func (r *WorkerEmploymentEventResolver) DocumentID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
+	return gqlid.IDPtr(obj.DocumentID), nil
 }
 
-func (r *WorkerEmploymentEventResolver) RecordedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
-	return base.IDPtr(obj.RecordedByID), nil
+func (r *WorkerEmploymentEventResolver) RecordedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
+	return gqlid.IDPtr(obj.RecordedByID), nil
 }
 
-func (r *WorkerEmploymentEventResolver) AmendedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error) {
-	return base.IDPtr(obj.AmendedByID), nil
+func (r *WorkerEmploymentEventResolver) AmendedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error) {
+	return gqlid.IDPtr(obj.AmendedByID), nil
 }

@@ -30,7 +30,7 @@ item 4 and §5), widened by the owner's direction to "use GraphQL with everythin
 
 ## Why
 
-Today a read tool reaches a repository or service directly (`agentquerytoolservice`, 176 `list`
+Today a read tool reaches a repository or service directly (`querytools`, 176 `list`
 and `get` tools). That gives four problems.
 
 **Two authorization paths.** The tool checks `resource:read` once in `dispatch`, then reads with
@@ -56,10 +56,10 @@ operation-cost budget, which the screen is.
 ## How it works
 
 ```text
-model call ──▶ agentruntime.dispatch ──▶ graphQL read tool (agent module)
+model call ──▶ tooldispatch.dispatch ──▶ graphQL read tool (agent module)
                                             │  typed params → variables (generated)
                                             ▼
-                                agentports.GraphQLReader (port, agent module)
+                                graphqlreadports.GraphQLReader (port, agent module)
                                             │
                                             ▼
                       internal/api/graphql/agentread (adapter, API package)
@@ -77,7 +77,7 @@ The agent module may not import `internal/api` (`.go-arch-lint.yml`), so the rea
 inversion port declared low and provided at the composition root:
 
 ```go
-// agentports
+// graphqlreadports
 type GraphQLReader interface {
 	Read(ctx context.Context, req *GraphQLReadRequest) (*GraphQLReadResult, error)
 }
@@ -120,7 +120,7 @@ request:
 - `gqlctx.WithAuthContext` from the actor: user principal or agent principal; API keys stay
   refused, as on HTTP;
 - a fresh `gqlctx.PermissionMemo`;
-- `loaders.Factory.Attach` for the tenant;
+- `loadercore.Registry.Attach` for the tenant (each loader is built on its first use);
 - the request id, taken from the run, so logs join;
 - the `pkg/readscope` holder. `agentflow.runTool` already installs one for every tool call, and
   the adapter refuses to run without it, rather than reading the whole tenant.
@@ -210,7 +210,7 @@ the last step of `task gqlgen` and in `Codegen Checks`. It reads four sources:
 It writes two files:
 
 - `agentread/executor_gen.go`: the read executor, holding the bound operations byte for byte.
-- `agentquerytoolservice/graphqlreads_gen.go`: for each tool, its operation, root field and node
+- `querytools/graphqlread/graphqlreads_gen.go`: for each tool, its operation, root field and node
   type, the fields the operation selects on the node, the input types its variables take, and a
   constructor for the node's Go entity, read from gqlgen's own binder.
 
@@ -219,7 +219,7 @@ The rule, for each listed tool:
 1. **Root field to record kind.** A Query root field returning `XConnection` (a list) or `X` with
    an `id` argument (a get) reads the record kind the permission registry maps `X` to
    ([record-kinds.md](record-kinds.md)). A type no kind claims gets no tool.
-2. **Record kind to tool.** The tool is `agentports.ToolNameFor("list_" + plural(kind))` or
+2. **Record kind to tool.** The tool is `agenttoolports.ToolNameFor("list_" + plural(kind))` or
    `ToolNameFor("get_" + kind)`. This is the reading-order rule the conventions already use, so
    `tractors` becomes `equipment_list_tractors` and `customer` becomes `customer_get`. A listed
    tool no root field is named for fails generation.
@@ -386,7 +386,7 @@ The record a list is keyed by may be optional: `workerInjuries` and `workerDotTe
 worker's records, or every worker's when no worker is named, as the repository tools did. Such a
 field takes a `limit` argument, which the tool offers with the list bounds (25 unless asked, at
 most 100, the server's page), and the resolver reads every row of a named record when no limit is
-sent and one default page when no record is named (`base.RecordListLimit`). An unpaged list has
+sent and one default page when no record is named (`gqlconnection.RecordListLimit`). An unpaged list has
 no next page, so when the rows fill the limit the result's `note` says more may exist and how to
 narrow the call. Any other `Int` argument is a parameter only when the schema describes it
 (`caseYear`). A default that holds only when the call names no record goes in the spec's
@@ -560,7 +560,7 @@ A root with no arguments at all that returns one record is a get too: `home_get_
 `homeLayout`, the caller's own page, and takes no parameter. Such a root is usually the caller's
 own record, whose resolver checks no resource and is listed in `selfscoped.Resolvers`; the
 generator binds it as `SelfScoped`, and its tool's policy must be scoped to the caller
-(`scope: agent.ToolScopeSelf` on the spec), since that policy is the only check the read meets.
+(`scope: agenttooltrust.ToolScopeSelf` on the spec), since that policy is the only check the read meets.
 A get whose operation reads one page of a list the record holds (a rate matrix's
 `cells(offset: $cellOffset)`) names it in `pages`: the result adds `cellsHasMore` and, while more
 follow, `nextCellOffset`. A variable sent to a field's argument below the root is described by
@@ -592,7 +592,7 @@ Two hooks carry what a repository row did that the screen's resolver does not, a
 named in the spec rather than hidden in a fetch: `rank` orders a page that matched a free-text
 query when the call chose no order (`worker_list` puts the closest name first), and `shape`
 applies a domain rule to each row given what was withheld (`worker_list` folds a NonCompliant
-credential into `canBeAssigned`, as `worker.Standing` does, and keeps the credential dates
+credential into `canBeAssigned`, as `workercompliance.Standing` does, and keeps the credential dates
 present and null when nothing is on file).
 
 The parameters are derived when the tool is built, not when the code is generated, because the
@@ -623,13 +623,17 @@ page too long for a model to read whole and resumes it at the first row it left 
 takes that row's cursor (see "An oversized tool result" in [agent-runtime.md](agent-runtime.md)).
 A resolver that leaves an edge's cursor empty is not refused; its pages are only never cut.
 
-A list takes `fields`, the columns of each row it reads besides the id
+A list takes `fields`, the columns of each row the model reads besides the id
 (`agenttoolschema.Derived("<tool>.column", …)`, the operation's selected top-level fields under
-the names a row shows them by). Rows keep their id, the columns named, and what the spec's
-`shape` works out beside the columns (a worker's `dispatchable`), and `columns` names only what
-they carry. `fields` is outside the cursor scope, since it never changes which rows a page
-holds. A worker row with its profile is about 900 characters; names and statuses alone fit ten
-times as many rows in a result. `shipment_list` takes it too (`projectOutcome`).
+the names a row shows them by). The list returns every column whatever the call names; the
+runtime narrows the model's copy (`toolresult.narrowRows`): each row keeps its id, the columns
+named and what the spec's `shape` works out beside the columns (a worker's `dispatchable`, which
+the spec lists in `derived` so `fields` may name it; Haiku asked for it and was refused twice), and
+`columns` names only what is left. The person's table is drawn from the list, so it and its later
+pages keep every column: narrowing the list itself left "show me the inactive drivers" a table of
+names. `fields` is outside the cursor scope, since it never changes which rows a page holds. A
+worker row with its profile is about 900 characters; names and statuses alone fit ten times as
+many rows in a result. The repository lists take it too, from the row their spec names (`listSpec.row`).
 
 So a model sees the same shape whichever path a list reads through. A cursor sent with changed
 filters, query or sort, an altered cursor, or one the tool never returned is refused before the
@@ -639,11 +643,16 @@ read with `errStaleCursor` ("call it again without after"), and `offset` with
 and compares them.
 
 A person's table pages the same list again through the Desk's rows endpoint (see "A table that
-pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out. Only that
-read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
-connection's `totalCount` as `total`, with `totalEstimated: true` when `totalCountExact` says
-it is the planner's estimate; the model's reads never pay for the count, and the
-parameter is not in any tool's schema.
+pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out.
+`QueryToolParams.IncludeTotal` sends `includeTotalCount: true` and returns the connection's
+`totalCount` as `total`, with `totalEstimated: true` when `totalCountExact` says it is the
+planner's estimate. The rows endpoint sets it when the table counts, and the runtime sets it for a
+model's first page (`firstPage` in `dispatch.go`): the count is exact up to
+`pagination.ExactTotalUpTo` and estimated past it, so its cost follows the size of the answer, and
+"how many inactive drivers" is answered from the first page rather than by paging to the end or a
+script. The models' reads used to skip it, and an agent told "50 of more" could only say "at least
+50". Every operation a paged list reads declares `$includeTotalCount` and selects `totalCount` and
+`totalCountExact` under it; the parameter is in no tool's schema.
 
 A root that takes neither a table input nor its own `first` and `after`, but a bespoke input that
 holds them (`InboundMessagesInput`, `CaptureBatchesInput`), pages inside that input
@@ -881,7 +890,7 @@ Each module's PR:
 | Carriers | `carrier_list_capacity_postings` | none | `field-no-op`: reads `DeskCarrierCapacityPostings`, written for it. Every `carrier_capacity_posting` field is Internal; the carrier, origin location, states and equipment type are linked records and show their reference views. `openOnly` replaces telling the model to filter `availableTo` from today. The repository list spec stays in `listCatalogSpecs` for `FilterCatalog()` |
 | Carriers | `carrier_list_invoice_matches` | none | reads `DeskCarrierInvoiceMatches`, an `items` list paged by its root's limit and offset, checked by `carrier_invoice_match` read as its root is; the repository tool checked `carrier_settlement` read, which still reaches it as the parent. `carrier_invoice_match` declared only the EDI invoice's fields, so under its Restricted default every match field but its reference view would be withheld at Internal; the match's links, how it was matched, its resolution and its carrier are now declared Internal, and the invoice, expected and variance totals stay Restricted, as the repository row gated them. The spec sets `amounts` and computes `source` (EDI, Document or Manual) in its `shape`; a match whose invoice a carrier sent over EDI marks the run with that EDI invoice (`marks`) |
 | Reports | `report_list_runs` | none | reads `DeskReportRuns`, added for the Desk. `ReportRun` declares `@kind(resource: "report")` and gains `rowsStored`, whether the run's rows were stored for a comparison, which the repository row worked out from the run itself. `reportRuns` keeps the reader to their own runs (`ListRunsConnection` sets `RequestedBy` from the reader), as the repository tool did. `report` defaults to Internal, so nothing is withheld at Internal; the spec's `shape` marks each run `comparable` with the reason it is not, and leaves a run whose status or storage was withheld unjudged. The repository tool's 25-run cap becomes the cursor page |
-| Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `base.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
+| Reports | `report_list_schedules` | none | reads `DeskReportSchedules`, added for the Desk. `ReportSchedule` declares `@kind(resource: "report")` and gains `mine` (the reader set it up), which the repository row called `yours`; `reportSchedules` gains `enabledOnly` and `limit` (safe additions), the limit bounded by `gqlconnection.RecordListLimit`: every schedule of a named report, one page of 20 across the organization when no report is named, where the root read every schedule. The list is the organization's on both paths, as the repository tool read it; `mine` widens nothing, it only says which are the reader's |
 | Reports | `report_list_table_change_alerts` | `name`, `tableName`, `watchedColumns`, `conditionCount` | reads `DeskTableChangeAlerts`, added for the Desk. `TCASubscription` had no kind; it now declares `@kind(resource: "table_change_alert")`. By the owner's decision `table_change_alert` declares its `status`, `eventTypes` and `conditionMatch` Internal, and an alert's name, table, conditions, watched columns and custom title and message keep its Restricted default; the repository row returned them all ungated. The declaration also reaches the AI audit trail's recorded arguments of the alert tools and write previews, where exactly those three fields are newly shown at Internal (`TestReaderArguments_KeepsAnAlertsDetailsRestricted`). The repository keeps the read to the reader's own alerts on both paths. The spec's `shape` counts the conditions only where they are shown. `query` matches the name and table, so it is refused where they are withheld (`searches`), as a filter on them is. The status is a database enum, now marked in the search configuration, so it is matched whole |
 | Inbox | `inbox_list_inbound_messages` | none | reads `DeskInboundMessages`, written for it, for a call without words; a call with `query` still ranks by meaning on the retrieval index, narrowed only by `status`, `classification` and `mailboxId`, and any other parameter beside `query` is refused. `InboundMessagesInput` pages inside itself (`first`, `after`), the first list to (`pagedInput`). `status` is now a list of the inbox's statuses, so the repository tool's `waiting` shorthand is gone and the note names InReview and Quarantined. Every field is Internal under `inbound_message`; the mailbox's name and address are its reference view, Internal, so the address shows at Internal as the repository row showed it. Rows gain the matched customer, the attachment count, the thread and its count, the owner and the due time |
 | Inbox | `inbox_get_inbound_message` | none | reads `DeskInboundMessage`. The body is cut at 6,000 characters by the spec's `shape`, which says so (`bodyTruncated`), and the sender is written once (`from`), as before. The reply draft, the load draft, the steps the message asks for (`actions`, which replace the repository view's created shipment, logged exception and stops decision) and the conflicts are the screen's own fields; the mailbox shows as on the list |

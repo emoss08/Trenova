@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
@@ -23,22 +24,22 @@ import (
 const consentChangedAt = int64(1_790_000_000)
 
 type fakeControls struct {
-	control *tenant.AgentControl
-	updated *tenant.AgentControl
+	control *agentcontrol.AgentControl
+	updated *agentcontrol.AgentControl
 }
 
 func (f *fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	current := *f.control
 	return &current, nil
 }
 
 func (f *fakeControls) Update(
 	_ context.Context,
-	entity *tenant.AgentControl,
-) (*tenant.AgentControl, error) {
+	entity *agentcontrol.AgentControl,
+) (*agentcontrol.AgentControl, error) {
 	if entity.Version != f.control.Version {
 		return nil, dberror.CreateVersionMismatchError("AgentControl", entity.ID.String())
 	}
@@ -69,7 +70,7 @@ func (v *settingVersions) LatestAt(
 	return best, nil
 }
 
-func newTestService(control *tenant.AgentControl) (*Service, *fakeControls) {
+func newTestService(control *agentcontrol.AgentControl) (*Service, *fakeControls) {
 	controls := &fakeControls{control: control}
 	return &Service{
 		l:        zap.NewNop(),
@@ -83,18 +84,22 @@ func newTestService(control *tenant.AgentControl) (*Service, *fakeControls) {
 
 func boolPtr(v bool) *bool { return &v }
 
-func defaultControl() *tenant.AgentControl {
-	return &tenant.AgentControl{
+func defaultControl() *agentcontrol.AgentControl {
+	return &agentcontrol.AgentControl{
 		ID:                 pulid.ID("agc_test"),
 		OrganizationID:     pulid.ID("org_test"),
 		BusinessUnitID:     pulid.ID("bu_test"),
-		PromotionThreshold: tenant.DefaultPromotionThreshold,
-		BriefingHourLocal:  tenant.DefaultBriefingHourLocal,
+		PromotionThreshold: agentcontrol.DefaultPromotionThreshold,
+		BriefingHourLocal:  agentcontrol.DefaultBriefingHourLocal,
 	}
 }
 
 func userActor(id pulid.ID) *permissionports.RequestActor {
-	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: id, UserID: id}
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   id,
+		UserID:        id,
+	}
 }
 
 func TestUpdate_GrantingTrainingConsentRecordsWhoAndWhen(t *testing.T) {
@@ -103,7 +108,7 @@ func TestUpdate_GrantingTrainingConsentRecordsWhoAndWhen(t *testing.T) {
 	svc, controls := newTestService(defaultControl())
 	userID := pulid.ID("usr_admin")
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
 	}, userActor(userID))
 
@@ -127,7 +132,7 @@ func TestUpdate_LeavesTrainingConsentAloneWhenNotSent(t *testing.T) {
 	control.AITrainingConsentChangedByID = &changedBy
 	svc, _ := newTestService(control)
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode: true,
 	}, userActor(pulid.ID("usr_other")))
 
@@ -142,7 +147,7 @@ func TestUpdate_SendingTheSameConsentDoesNotRestampIt(t *testing.T) {
 
 	svc, _ := newTestService(defaultControl())
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(false),
 	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAPIKey, APIKeyID: "key_1"})
 
@@ -157,7 +162,7 @@ func TestUpdate_RefusesAConsentChangeWithoutAPerson(t *testing.T) {
 
 	svc, controls := newTestService(defaultControl())
 
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
 	}, &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeAPIKey, APIKeyID: "key_1"})
 
@@ -173,7 +178,7 @@ func TestUpdate_RefusesAConsentChangeFromAnAgentCarryingTheSystemUser(t *testing
 
 	svc, controls := newTestService(defaultControl())
 
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(true),
 	}, &permissionports.RequestActor{
 		PrincipalType: permissionports.PrincipalTypeAgent,
@@ -196,7 +201,7 @@ func TestUpdate_WithdrawingConsentIsRecorded(t *testing.T) {
 	svc, _ := newTestService(control)
 	userID := pulid.ID("usr_admin")
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AITrainingConsent: boolPtr(false),
 	}, userActor(userID))
 
@@ -209,13 +214,13 @@ func TestAgentControlAuditComment(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "AI training consent granted",
-		agentControlAuditComment(true, false, &tenant.AgentControl{AITrainingConsent: true}))
+		agentControlAuditComment(true, false, &agentcontrol.AgentControl{AITrainingConsent: true}))
 	assert.Equal(t, "AI training consent withdrawn",
-		agentControlAuditComment(true, false, &tenant.AgentControl{}))
+		agentControlAuditComment(true, false, &agentcontrol.AgentControl{}))
 	assert.Equal(t, "Agent money limits changed",
-		agentControlAuditComment(false, true, &tenant.AgentControl{}))
+		agentControlAuditComment(false, true, &agentcontrol.AgentControl{}))
 	assert.Equal(t, "Agent control updated",
-		agentControlAuditComment(false, false, &tenant.AgentControl{AITrainingConsent: true}))
+		agentControlAuditComment(false, false, &agentcontrol.AgentControl{AITrainingConsent: true}))
 }
 
 func TestUpdate_SetsOnlyTheMoneyLimitsSent(t *testing.T) {
@@ -227,8 +232,8 @@ func TestUpdate_SetsOnlyTheMoneyLimitsSent(t *testing.T) {
 	ceiling := int64(25_000)
 	dayCalls := 20
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
-		AgentMoney: agentports.AgentMoneyLimitsUpdate{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
+		AgentMoney: agentcontrolports.AgentMoneyLimitsUpdate{
 			CallCeilingMinor: &ceiling,
 			DayCalls:         &dayCalls,
 		},
@@ -238,8 +243,12 @@ func TestUpdate_SetsOnlyTheMoneyLimitsSent(t *testing.T) {
 	require.Same(t, updated, controls.updated)
 	assert.Equal(t, ceiling, updated.AgentMoneyCallCeilingMinor)
 	assert.Equal(t, dayCalls, updated.AgentMoneyDayCalls)
-	assert.Equal(t, int64(tenant.DefaultAgentMoneyRunAmountMinor), updated.AgentMoneyRunAmountMinor)
-	assert.Equal(t, tenant.DefaultAgentMoneyRunCalls, updated.AgentMoneyRunCalls)
+	assert.Equal(
+		t,
+		int64(agentcontrol.DefaultAgentMoneyRunAmountMinor),
+		updated.AgentMoneyRunAmountMinor,
+	)
+	assert.Equal(t, agentcontrol.DefaultAgentMoneyRunCalls, updated.AgentMoneyRunCalls)
 }
 
 func TestUpdate_RefusesMoneyLimitsThatDoNotNest(t *testing.T) {
@@ -248,10 +257,10 @@ func TestUpdate_RefusesMoneyLimitsThatDoNotNest(t *testing.T) {
 	control := defaultControl()
 	control.ApplyAgentMoneyDefaults()
 	svc, controls := newTestService(control)
-	ceiling := int64(tenant.DefaultAgentMoneyRunAmountMinor + 1)
+	ceiling := int64(agentcontrol.DefaultAgentMoneyRunAmountMinor + 1)
 
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
-		AgentMoney: agentports.AgentMoneyLimitsUpdate{CallCeilingMinor: &ceiling},
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
+		AgentMoney: agentcontrolports.AgentMoneyLimitsUpdate{CallCeilingMinor: &ceiling},
 	}, userActor(pulid.ID("usr_admin")))
 
 	require.Error(t, err)
@@ -279,7 +288,7 @@ func TestUpdateRecordsTheVersionTheControlsBecome(t *testing.T) {
 	svc, _ := newTestService(defaultControl())
 	author := pulid.MustNew("usr_")
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode: true,
 		TenantInfo: pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"},
 	}, userActor(author))
@@ -298,7 +307,7 @@ func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
 
 	svc, _ := newTestService(defaultControl())
 	tenantInfo := pagination.TenantInfo{OrgID: "org_test", BuID: "bu_test"}
-	_, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode: false,
 		Version:    int64Ptr(0),
 		TenantInfo: tenantInfo,
@@ -316,7 +325,7 @@ func TestUpdateOnAStaleVersionSaysWhoChangedWhat(t *testing.T) {
 	})
 	versions.created[0].Version = 0
 
-	_, err = svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	_, err = svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode: true,
 		Version:    int64Ptr(0),
 		TenantInfo: tenantInfo,
@@ -338,7 +347,7 @@ func TestUpdate_TurnsAutomaticChaptersOffOnlyWhenSent(t *testing.T) {
 
 	svc, controls := newTestService(defaultControl())
 
-	updated, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	updated, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		AutoChaptersOff: boolPtr(true),
 	}, userActor(pulid.ID("usr_admin")))
 	require.NoError(t, err)
@@ -349,7 +358,7 @@ func TestUpdate_TurnsAutomaticChaptersOffOnlyWhenSent(t *testing.T) {
 	control.AutoChaptersOff = true
 	svc, _ = newTestService(control)
 
-	kept, err := svc.Update(t.Context(), &agentports.UpdateAgentControlRequest{
+	kept, err := svc.Update(t.Context(), &agentcontrolports.UpdateAgentControlRequest{
 		ShadowMode: true,
 	}, userActor(pulid.ID("usr_admin")))
 	require.NoError(t, err)

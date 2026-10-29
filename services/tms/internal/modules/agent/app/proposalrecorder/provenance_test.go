@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +21,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 	t.Parallel()
 
 	minted := pulid.MustNew("ap_")
-	proposal := recordOne(t, agentports.PendingAction{
+	proposal := recordOne(t, agentruntimeports.PendingAction{
 		ToolName:   "dispatch_assign_move",
 		Arguments:  map[string]any{},
 		Rationale:  "cover it",
@@ -29,7 +30,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 		TraceID:    provenanceTraceID,
 		SpanID:     provenanceSpanID,
 		StepKey:    "step-key-1",
-		TierSource: agent.TierSourcePersonSetting,
+		TierSource: agenttooltrust.TierSourcePersonSetting,
 	})
 
 	assert.Equal(t, minted, proposal.ID, "the step, the trace and the proposal name one record")
@@ -43,7 +44,7 @@ func TestRecord_KeepsTheProposalTheCallWasDecidedAs(t *testing.T) {
 func TestRecord_MintsAsBeforeForAnActionRecordedWithoutAnID(t *testing.T) {
 	t.Parallel()
 
-	proposal := recordOne(t, agentports.PendingAction{
+	proposal := recordOne(t, agentruntimeports.PendingAction{
 		ToolName:  "dispatch_assign_move",
 		Arguments: map[string]any{},
 		Rationale: "cover it",
@@ -59,7 +60,7 @@ func TestRecord_KeepsWhoAnAutomaticWriteRanAsAndWhen(t *testing.T) {
 	t.Parallel()
 
 	version := int64(9)
-	proposal := recordOne(t, agentports.PendingAction{
+	proposal := recordOne(t, agentruntimeports.PendingAction{
 		ToolName:        "dispatch_assign_move",
 		Arguments:       map[string]any{},
 		Rationale:       "cover it",
@@ -93,7 +94,7 @@ func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{
 				ToolName:  "dispatch_assign_move",
 				Arguments: map[string]any{},
@@ -114,7 +115,11 @@ func TestRecord_AnUnattendedAutomaticWriteIsExecutedByTheSystemUser(t *testing.T
 	require.Len(t, store.created, 2)
 	assert.Equal(t, systemUser, store.created[0].ExecutedByUserID,
 		"the system account the run carries is named as the executor")
-	assert.True(t, store.created[1].ExecutedByUserID.IsNil(), "a proposal that did not run has none")
+	assert.True(
+		t,
+		store.created[1].ExecutedByUserID.IsNil(),
+		"a proposal that did not run has none",
+	)
 }
 
 func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
@@ -129,7 +134,7 @@ func TestRecord_AnUnattendedWriteRanAsNoPerson(t *testing.T) {
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 		Run: &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions: []agentports.PendingAction{{
+		Actions: []agentruntimeports.PendingAction{{
 			ToolName:  "dispatch_assign_move",
 			Arguments: map[string]any{},
 			Rationale: "cover it",
@@ -169,7 +174,7 @@ func TestRecord_OpensADelegatesRunUnderItsParentAndTask(t *testing.T) {
 			ParentOwnerID:    turnID,
 			DelegateCallID:   "call_task_1",
 		},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{ToolName: "dispatch_assign_move", Rationale: "cover it", Tier: agent.TierPropose},
 		},
 		Evidence: messageEvidence,

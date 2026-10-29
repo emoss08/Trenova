@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	minioadapter "github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -21,7 +22,7 @@ func setupTestClient(t *testing.T, mc *testutil.MinioContainer) kernelports.Clie
 	t.Helper()
 
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:  mc.Endpoint(),
 			AccessKey: mc.AccessKey(),
 			SecretKey: mc.SecretKey(),
@@ -33,8 +34,8 @@ func setupTestClient(t *testing.T, mc *testutil.MinioContainer) kernelports.Clie
 	logger := zap.NewNop()
 
 	client, err := minioadapter.New(minioadapter.Params{
-		Config: cfg,
-		Logger: logger,
+		StorageConfig: &cfg.Storage,
+		Logger:        logger,
 	})
 	require.NoError(t, err)
 
@@ -453,7 +454,7 @@ func TestClient_New_WithRegion(t *testing.T) {
 	defer tc.Cancel()
 
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:  mc.Endpoint(),
 			AccessKey: mc.AccessKey(),
 			SecretKey: mc.SecretKey(),
@@ -466,8 +467,8 @@ func TestClient_New_WithRegion(t *testing.T) {
 	logger := zap.NewNop()
 
 	client, err := minioadapter.New(minioadapter.Params{
-		Config: cfg,
-		Logger: logger,
+		StorageConfig: &cfg.Storage,
+		Logger:        logger,
 	})
 	require.NoError(t, err)
 	assert.NotNil(t, client)
@@ -501,7 +502,7 @@ func TestClient_EnsureBucket_CreateNew(t *testing.T) {
 	defer tc.Cancel()
 
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:  mc.Endpoint(),
 			AccessKey: mc.AccessKey(),
 			SecretKey: mc.SecretKey(),
@@ -513,8 +514,8 @@ func TestClient_EnsureBucket_CreateNew(t *testing.T) {
 	logger := zap.NewNop()
 
 	client, err := minioadapter.New(minioadapter.Params{
-		Config: cfg,
-		Logger: logger,
+		StorageConfig: &cfg.Storage,
+		Logger:        logger,
 	})
 	require.NoError(t, err)
 
@@ -536,7 +537,7 @@ func TestClient_New_AutoCreateBucketDisabled(t *testing.T) {
 	autoCreateBucket := false
 	bucket := "missing-test-bucket"
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:         mc.Endpoint(),
 			AccessKey:        mc.AccessKey(),
 			SecretKey:        mc.SecretKey(),
@@ -549,8 +550,8 @@ func TestClient_New_AutoCreateBucketDisabled(t *testing.T) {
 	logger := zap.NewNop()
 
 	client, err := minioadapter.New(minioadapter.Params{
-		Config: cfg,
-		Logger: logger,
+		StorageConfig: &cfg.Storage,
+		Logger:        logger,
 	})
 
 	require.Error(t, err)

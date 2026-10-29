@@ -3,15 +3,17 @@
 package selectoptionsresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	accounttypeservice "github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	fiscalperiodports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	fiscalyearports "github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	aiproviderports "github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -24,7 +26,7 @@ import (
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	carrierports "github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	customerports "github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	factoringcompanyports "github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
@@ -57,10 +59,11 @@ import (
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	OrganizationService          tenantports.OrganizationService
-	ShipmentService              shipmentports.ShipmentService
-	EdiService                   *ediservice.Service
+	ShipmentReader               shipmentserviceports.ShipmentReader
+	EdiSetupService              *edisetup.Service
+	EdiTransferService           *editransferservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	AccessorialChargeService     *accessorialchargeservice.Service
 	AccountTypeService           *accounttypeservice.Service
@@ -102,8 +105,9 @@ type Deps struct {
 	DistanceProfileService       *distanceprofileservice.Service
 	JournalEntryService          *journalentryservice.Service
 	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
-	AiProviderService            agentports.AIProviderService
-	CaptureService               *captureservice.Service
+	AiProviderService            aiproviderports.AIProviderService
+	CaptureProfileService        *captureprofiles.Service
+	CaptureDeviceService         *capturedevices.Service
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service
 	DriverPayService             *driverpayservice.Service

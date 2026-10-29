@@ -5,13 +5,21 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -39,60 +47,62 @@ var permissionResource = permission.ResourceAccountingSync.String()
 type Params struct {
 	fx.In
 
-	Logger            *zap.Logger
-	DB                kernelports.Transactor
-	Connections       accountingsyncports.AccountingConnectionRepository
-	ConnectionService accountingsyncports.AccountingConnectionService
-	Records           accountingsyncports.AccountingSyncRecordRepository
-	Findings          accountingsyncports.AccountingDriftFindingRepository
-	Source            accountingsyncports.AccountingDriftSource
-	Ledger            journalentryports.AccountingLedgerSource
-	Mappings          accountingsyncports.AccountingMappingRepository
-	References        accountingsyncports.AccountingReferenceObjectRepository
-	Organizations     tenantports.OrganizationRepository
-	InvoiceRepo       invoiceports.InvoiceRepository
-	Controls          tenantports.AccountingControlRepository
-	Invoices          invoiceports.InvoiceService
-	Payments          customerpaymentports.CustomerPaymentService
-	Permissions       permissionports.PermissionEngine
-	AuditService      auditports.AuditService
-	Dispatcher        accountingsyncports.AccountingSyncDispatcher `optional:"true"`
-	Checker           accountingsyncports.AccountingDriftChecker   `optional:"true"`
-	Publisher         agentports.AgentEventPublisher               `optional:"true"`
-	Watchtower        watchtowerports.WatchtowerProjector          `optional:"true"`
-	Realtime          agentports.RealtimeService                   `optional:"true"`
+	Logger        *zap.Logger
+	DB            kernelports.Transactor
+	Connections   accountingconnectionports.AccountingConnectionRepository
+	Sessions      accountingconnectionports.AccountingSessionProvider
+	Records       accountingsyncports.AccountingSyncRecordRepository
+	Findings      accountingdriftports.AccountingDriftFindingRepository
+	Source        accountingdriftports.AccountingDriftSource
+	Ledger        journalentryports.AccountingLedgerSource
+	Mappings      accountingmappingports.AccountingMappingRepository
+	References    accountingmappingports.AccountingReferenceObjectRepository
+	Organizations tenantports.OrganizationRepository
+	InvoiceRepo   invoiceports.InvoiceRepository
+	Controls      tenantports.AccountingControlRepository
+	Memos         invoiceports.InvoiceMemoService
+	Voids         invoiceports.InvoiceVoidService
+	Payments      customerpaymentports.CustomerPaymentService
+	Permissions   permissionports.PermissionEngine
+	AuditService  auditports.AuditService
+	Dispatcher    accountingsyncports.AccountingSyncDispatcher `optional:"true"`
+	Checker       accountingdriftports.AccountingDriftChecker  `optional:"true"`
+	Publisher     agenteventports.AgentEventPublisher          `optional:"true"`
+	Watchtower    watchtowerports.WatchtowerProjector          `optional:"true"`
+	Realtime      realtimeports.RealtimeService                `optional:"true"`
 }
 
 type Service struct {
 	l             *zap.Logger
 	db            kernelports.Transactor
-	connections   accountingsyncports.AccountingConnectionRepository
-	connService   accountingsyncports.AccountingConnectionService
+	connections   accountingconnectionports.AccountingConnectionRepository
+	sessions      accountingconnectionports.AccountingSessionProvider
 	records       accountingsyncports.AccountingSyncRecordRepository
-	findings      accountingsyncports.AccountingDriftFindingRepository
-	source        accountingsyncports.AccountingDriftSource
+	findings      accountingdriftports.AccountingDriftFindingRepository
+	source        accountingdriftports.AccountingDriftSource
 	ledger        journalentryports.AccountingLedgerSource
-	mappings      accountingsyncports.AccountingMappingRepository
-	references    accountingsyncports.AccountingReferenceObjectRepository
+	mappings      accountingmappingports.AccountingMappingRepository
+	references    accountingmappingports.AccountingReferenceObjectRepository
 	organizations tenantports.OrganizationRepository
 	invoiceRepo   invoiceports.InvoiceRepository
 	controls      tenantports.AccountingControlRepository
-	invoices      invoiceports.InvoiceService
+	memos         invoiceports.InvoiceMemoService
+	voids         invoiceports.InvoiceVoidService
 	payments      customerpaymentports.CustomerPaymentService
 	permissions   permissionports.PermissionEngine
 	audit         auditports.AuditService
 	dispatcher    accountingsyncports.AccountingSyncDispatcher
-	checker       accountingsyncports.AccountingDriftChecker
-	publisher     agentports.AgentEventPublisher
+	checker       accountingdriftports.AccountingDriftChecker
+	publisher     agenteventports.AgentEventPublisher
 	watchtower    watchtowerports.WatchtowerProjector
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	now           func() time.Time
 }
 
 var (
-	_ accountingsyncports.AccountingDriftReconciler = (*Service)(nil)
-	_ accountingsyncports.AccountingDriftRechecker  = (*Service)(nil)
-	_ accountingsyncports.AccountingDriftService    = (*Service)(nil)
+	_ accountingdriftports.AccountingDriftReconciler = (*Service)(nil)
+	_ accountingdriftports.AccountingDriftRechecker  = (*Service)(nil)
+	_ accountingdriftports.AccountingDriftService    = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -101,7 +111,7 @@ func New(p Params) *Service {
 		l:             p.Logger.Named("service.accounting-drift"),
 		db:            p.DB,
 		connections:   p.Connections,
-		connService:   p.ConnectionService,
+		sessions:      p.Sessions,
 		records:       p.Records,
 		findings:      p.Findings,
 		source:        p.Source,
@@ -111,7 +121,8 @@ func New(p Params) *Service {
 		organizations: p.Organizations,
 		invoiceRepo:   p.InvoiceRepo,
 		controls:      p.Controls,
-		invoices:      p.Invoices,
+		memos:         p.Memos,
+		voids:         p.Voids,
 		payments:      p.Payments,
 		permissions:   p.Permissions,
 		audit:         p.AuditService,
@@ -126,15 +137,15 @@ func New(p Params) *Service {
 
 type readSession struct {
 	tenant pagination.TenantInfo
-	conn   *accountingsync.AccountingConnection
-	reader accountingsyncports.AccountingDocumentReader
-	writer accountingsyncports.AccountingDocumentWriter
-	ledger accountingsyncports.AccountingLedgerReader
-	auth   accountingsyncports.AccountingDocumentAuth
+	conn   *accountingconnection.AccountingConnection
+	reader accountingconnectorports.AccountingDocumentReader
+	writer accountingconnectorports.AccountingDocumentWriter
+	ledger accountingconnectorports.AccountingLedgerReader
+	auth   accountingconnectorports.AccountingDocumentAuth
 	limit  int
 }
 
-func tenantOf(conn *accountingsync.AccountingConnection) pagination.TenantInfo {
+func tenantOf(conn *accountingconnection.AccountingConnection) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 }
 
@@ -142,8 +153,8 @@ func (s *Service) connectionByID(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
-	return s.connections.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+) (*accountingconnection.AccountingConnection, error) {
+	return s.connections.GetByID(ctx, accountingconnectionports.GetAccountingConnectionByIDRequest{
 		TenantInfo: tenantInfo,
 		ID:         id,
 	})
@@ -151,29 +162,29 @@ func (s *Service) connectionByID(
 
 func (s *Service) openRead(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 ) (*readSession, error) {
 	tenant := tenantOf(conn)
-	session, err := s.connService.Session(ctx, tenant, conn.ID)
+	session, err := s.sessions.Session(ctx, tenant, conn.ID)
 	if err != nil {
 		return nil, err
 	}
-	reader, ok := session.Connector.(accountingsyncports.AccountingDocumentReader)
+	reader, ok := session.Connector.(accountingconnectorports.AccountingDocumentReader)
 	if !ok {
 		return nil, fmt.Errorf(
 			"%s cannot show Trenova the documents it holds",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 		)
 	}
-	writer, _ := session.Connector.(accountingsyncports.AccountingDocumentWriter)
-	ledger, _ := session.Connector.(accountingsyncports.AccountingLedgerReader)
+	writer, _ := session.Connector.(accountingconnectorports.AccountingDocumentWriter)
+	ledger, _ := session.Connector.(accountingconnectorports.AccountingLedgerReader)
 	return &readSession{
 		tenant: tenant,
 		conn:   session.Connection,
 		reader: reader,
 		writer: writer,
 		ledger: ledger,
-		auth:   accountingsyncports.DocumentAuthFor(session.Connection, session.AccessToken),
+		auth:   accountingconnectorports.DocumentAuthFor(session.Connection, session.AccessToken),
 		limit:  max(reader.DocumentReadLimits().MaxPerRead, 1),
 	}, nil
 }
@@ -192,14 +203,14 @@ func (s *Service) classify(sess *readSession, readErr error) *accountingsync.Syn
 
 func (s *Service) recordFailure(
 	ctx context.Context,
-	conn *accountingsync.AccountingConnection,
+	conn *accountingconnection.AccountingConnection,
 	failure *accountingsync.SyncError,
 ) {
 	recorded := *conn
 	recorded.RecordDriftFailure(failure.Category, failure.Message)
 	if err := s.connections.SaveDriftCheck(
 		ctx,
-		&accountingsyncports.SaveAccountingDriftCheckRequest{
+		&accountingconnectionports.SaveAccountingDriftCheckRequest{
 			TenantInfo:    tenantOf(conn),
 			ID:            conn.ID,
 			ErrorCategory: recorded.DriftErrorCategory,
@@ -213,20 +224,23 @@ func (s *Service) recordFailure(
 
 func (s *Service) FinishCheck(
 	ctx context.Context,
-	req *accountingsyncports.FinishAccountingDriftCheckRequest,
+	req *accountingdriftports.FinishAccountingDriftCheckRequest,
 ) error {
 	conn, err := s.connectionByID(ctx, req.TenantInfo, req.ConnectionID)
 	if err != nil {
 		return err
 	}
 	conn.FinishDriftCheck(s.now().Unix())
-	if err = s.connections.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
-		TenantInfo:    req.TenantInfo,
-		ID:            conn.ID,
-		CheckedAt:     conn.DriftCheckedAt,
-		ErrorCategory: conn.DriftErrorCategory,
-		ErrorMessage:  conn.DriftErrorMessage,
-	}); err != nil {
+	if err = s.connections.SaveDriftCheck(
+		ctx,
+		&accountingconnectionports.SaveAccountingDriftCheckRequest{
+			TenantInfo:    req.TenantInfo,
+			ID:            conn.ID,
+			CheckedAt:     conn.DriftCheckedAt,
+			ErrorCategory: conn.DriftErrorCategory,
+			ErrorMessage:  conn.DriftErrorMessage,
+		},
+	); err != nil {
 		return err
 	}
 	s.refreshAttention(ctx, conn)
@@ -234,17 +248,20 @@ func (s *Service) FinishCheck(
 	return nil
 }
 
-func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) refreshAttention(
+	ctx context.Context,
+	conn *accountingconnection.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
 	tenant := tenantOf(conn)
 	groups, err := s.findings.ListAttention(
 		ctx,
-		&accountingsyncports.ListAccountingDriftAttentionRequest{
+		&accountingdriftports.ListAccountingDriftAttentionRequest{
 			TenantInfo:     tenant,
 			ConnectionID:   conn.ID,
-			DetectedBefore: s.now().Add(-watchtowersources.AccountingDriftAfter).Unix(),
+			DetectedBefore: s.now().Add(-watchtoweraccounting.AccountingDriftAfter).Unix(),
 		},
 	)
 	if err != nil {
@@ -252,14 +269,14 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 		return
 	}
 	byKind := make(
-		map[accountingsync.DriftKind]*accountingsyncports.AccountingDriftAttentionGroup,
+		map[accountingdrift.DriftKind]*accountingdriftports.AccountingDriftAttentionGroup,
 		len(groups),
 	)
 	for idx := range groups {
 		byKind[groups[idx].Kind] = &groups[idx]
 	}
-	for _, kind := range accountingsync.AllDriftKinds() {
-		if item, open := watchtowersources.DescribeAccountingDriftAttention(
+	for _, kind := range accountingdrift.AllDriftKinds() {
+		if item, open := watchtoweraccounting.DescribeAccountingDriftAttention(
 			conn,
 			byKind[kind],
 		); open {
@@ -270,14 +287,14 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 			ctx,
 			tenant,
 			watchtower.SourceAccountingSync,
-			watchtowersources.AccountingDriftAttentionSourceID(conn, kind),
+			watchtoweraccounting.AccountingDriftAttentionSourceID(conn, kind),
 		)
 	}
 }
 
 func (s *Service) refreshAttentionFor(
 	ctx context.Context,
-	finding *accountingsync.AccountingDriftFinding,
+	finding *accountingdrift.AccountingDriftFinding,
 ) {
 	conn, err := s.connectionByID(ctx, finding.TenantInfo(), finding.ConnectionID)
 	if err != nil {
@@ -290,7 +307,7 @@ func (s *Service) refreshAttentionFor(
 func (s *Service) announce(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	opened []*accountingsync.AccountingDriftFinding,
+	opened []*accountingdrift.AccountingDriftFinding,
 	budget int,
 ) int {
 	sent := 0
@@ -298,8 +315,8 @@ func (s *Service) announce(
 		if sent >= budget {
 			break
 		}
-		agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-			Kind:       agent.EventAccountingDriftDetected,
+		agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
+			Kind:       agenttrigger.EventAccountingDriftDetected,
 			SubjectID:  finding.ID,
 			TenantInfo: tenant,
 		})

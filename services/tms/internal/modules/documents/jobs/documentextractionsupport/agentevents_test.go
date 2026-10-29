@@ -1,0 +1,58 @@
+package documentextractionsupport
+
+import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func TestUpsertDraft_PublishesDocumentExtractedEvent(t *testing.T) {
+	t.Parallel()
+
+	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
+	draftRepo.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+			return entity, nil
+		}).
+		Once()
+
+	recorder := &agenteventstest.Recorder{}
+	activities := &Service{
+		logger:      zap.NewNop(),
+		draftRepo:   draftRepo,
+		agentEvents: recorder,
+	}
+	doc := &document.Document{
+		ID:             pulid.MustNew("doc_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+
+	status, err := activities.UpsertDraft(
+		t.Context(),
+		doc,
+		documentanalysis.KindRateConfirmation,
+		&documentanalysis.DocumentIntelligenceAnalysis{},
+		true,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, document.ShipmentDraftStatusReady, status)
+	events := recorder.Published()
+	require.Len(t, events, 1)
+	require.Equal(t, agenttrigger.EventDocumentExtracted, events[0].Kind)
+	require.Equal(t, doc.ID, events[0].SubjectID)
+	require.Equal(t, doc.OrganizationID, events[0].TenantInfo.OrgID)
+	require.Equal(t, doc.BusinessUnitID, events[0].TenantInfo.BuID)
+}

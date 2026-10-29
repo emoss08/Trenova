@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,13 +14,13 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type RecordChange = kernelports.RecordChange[worker.WorkerTrainingRecord]
+type RecordChange = kernelports.RecordChange[workertraining.WorkerTrainingRecord]
 
 func (s *Service) PlanAssign(
 	ctx context.Context,
 	req *AssignRequest,
-) (*worker.WorkerTrainingRecord, error) {
-	course, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
+) (*workertraining.WorkerTrainingRecord, error) {
+	course, err := s.repo.GetCourseByID(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         req.CourseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -39,12 +39,12 @@ func (s *Service) PlanAssign(
 	}
 
 	now := timeutils.NowUnix()
-	entity := &worker.WorkerTrainingRecord{
+	entity := &workertraining.WorkerTrainingRecord{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
 		CourseID:       req.CourseID,
-		Status:         worker.TrainingStatusAssigned,
+		Status:         workertraining.TrainingStatusAssigned,
 		AssignedAt:     now,
 		DueAt:          req.DueAt,
 		AssignedByID:   req.UserID,
@@ -66,7 +66,7 @@ func (s *Service) PlanAssign(
 }
 
 type BulkAssignPlan struct {
-	Records []*worker.WorkerTrainingRecord
+	Records []*workertraining.WorkerTrainingRecord
 	Skipped []BulkAssignOutcome
 	Failed  []BulkAssignOutcome
 }
@@ -80,7 +80,11 @@ func (s *Service) PlanBulkAssign(
 	}
 
 	plan := &BulkAssignPlan{
-		Records: make([]*worker.WorkerTrainingRecord, 0, len(req.WorkerIDs)*len(req.CourseIDs)),
+		Records: make(
+			[]*workertraining.WorkerTrainingRecord,
+			0,
+			len(req.WorkerIDs)*len(req.CourseIDs),
+		),
 	}
 	for _, workerID := range req.WorkerIDs {
 		open, err := s.openCourseIDs(ctx, req.TenantInfo, workerID)
@@ -120,7 +124,7 @@ func (s *Service) PlanAssignRequired(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) ([]*worker.TrainingCourse, error) {
+) ([]*workertraining.TrainingCourse, error) {
 	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -169,10 +173,10 @@ func (s *Service) PlanComplete(ctx context.Context, req *CompleteRequest) (*Reco
 		record.Notes = notes
 	}
 	if passed {
-		record.Status = worker.TrainingStatusCompleted
+		record.Status = workertraining.TrainingStatusCompleted
 		record.ExpiresAt = course.ExpiryFor(completedAt)
 	} else {
-		record.Status = worker.TrainingStatusFailed
+		record.Status = workertraining.TrainingStatusFailed
 		record.ExpiresAt = nil
 	}
 
@@ -188,7 +192,7 @@ func (s *Service) loadOpenRecord(
 	ctx context.Context,
 	req *StatusRequest,
 	refusal string,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	original, err := s.loadRecord(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
@@ -219,7 +223,7 @@ func (s *Service) PlanWaive(ctx context.Context, req *StatusRequest) (*RecordCha
 	}
 
 	updated := *original
-	updated.Status = worker.TrainingStatusWaived
+	updated.Status = workertraining.TrainingStatusWaived
 	updated.WaivedReason = reason
 	updated.RecordedByID = req.UserID
 	return &RecordChange{Before: original, After: &updated}, nil
@@ -233,7 +237,7 @@ func (s *Service) PlanCancel(ctx context.Context, req *StatusRequest) (*RecordCh
 	}
 
 	updated := *original
-	updated.Status = worker.TrainingStatusCancelled
+	updated.Status = workertraining.TrainingStatusCancelled
 	updated.RecordedByID = req.UserID
 	if reason := strings.TrimSpace(req.Reason); reason != "" {
 		updated.Notes = reason
@@ -249,7 +253,7 @@ func (s *Service) PlanAttachDocument(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status == worker.TrainingStatusCancelled {
+	if original.Status == workertraining.TrainingStatusCancelled {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,8 +24,8 @@ func (s *Service) invoice(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	invoiceID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInvoice,
 		ID:    invoiceID.String(),
 		Label: "Invoice",
@@ -72,8 +72,8 @@ func (s *Service) invoiceDispute(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	disputeID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectInvoiceDispute,
 		ID:    disputeID.String(),
 		Label: "Invoice dispute",

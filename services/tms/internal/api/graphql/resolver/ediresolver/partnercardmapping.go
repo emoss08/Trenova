@@ -2,13 +2,15 @@ package ediresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 )
 
-func ediPartnerCardToModel(card *ediservice.EDIPartnerCard) *gqlmodel.EDIPartnerCard {
+func ediPartnerCardToModel(card *edioverview.EDIPartnerCard) *gqlmodel.EDIPartnerCard {
 	model := &gqlmodel.EDIPartnerCard{
 		Partner:    card.Partner,
 		Lading:     &gqlmodel.EDIPartnerLading{},
@@ -40,16 +42,16 @@ func ediPartnerCardToModel(card *ediservice.EDIPartnerCard) *gqlmodel.EDIPartner
 }
 
 func ediPartnerTransportsToModel(
-	transports []*ediservice.EDIPartnerTransport,
+	transports []*edioverview.EDIPartnerTransport,
 ) []*gqlmodel.EDIPartnerTransport {
 	models := make([]*gqlmodel.EDIPartnerTransport, 0, len(transports))
 	for _, transport := range transports {
 		profile := transport.Profile
 		models = append(models, &gqlmodel.EDIPartnerTransport{
 			Profile:           profile,
-			LastPollAttemptAt: base.IntPtr(profile.LastPollAttemptAt),
-			LastPollSuccessAt: base.IntPtr(profile.LastPollSuccessAt),
-			LastPollError:     base.NonEmptyPtr(transport.LastPollError),
+			LastPollAttemptAt: gqlscalar.IntPtr(profile.LastPollAttemptAt),
+			LastPollSuccessAt: gqlscalar.IntPtr(profile.LastPollSuccessAt),
+			LastPollError:     gqlscalar.NonEmptyPtr(transport.LastPollError),
 			Credentials:       ediTransportCredentialsToModel(transport.Credentials),
 			Certificates:      ediTransportCertificatesToModel(transport.Certificates),
 		})
@@ -59,7 +61,7 @@ func ediPartnerTransportsToModel(
 }
 
 func ediTransportCredentialsToModel(
-	requirements []ediports.CredentialRequirement,
+	requirements []ediconnectiondraftports.CredentialRequirement,
 ) []*gqlmodel.EDITransportCredential {
 	models := make([]*gqlmodel.EDITransportCredential, 0, len(requirements))
 	for index := range requirements {
@@ -69,7 +71,7 @@ func ediTransportCredentialsToModel(
 		}
 		models = append(models, &gqlmodel.EDITransportCredential{
 			Key:      requirement.Keys[0],
-			Secret:   requirement.Kind == ediports.CredentialKindSecret,
+			Secret:   requirement.Kind == ediconnectiondraftports.CredentialKindSecret,
 			Required: requirement.Required,
 			OnFile:   !requirement.Missing,
 		})
@@ -79,7 +81,7 @@ func ediTransportCredentialsToModel(
 }
 
 func ediTransportCertificatesToModel(
-	certificates []ediservice.EDIPartnerCertificate,
+	certificates []edioverview.EDIPartnerCertificate,
 ) []*gqlmodel.EDITransportCertificate {
 	models := make([]*gqlmodel.EDITransportCertificate, 0, len(certificates))
 	for index := range certificates {
@@ -91,8 +93,8 @@ func ediTransportCertificatesToModel(
 		if summary := certificate.Summary; model.Readable {
 			notBefore := int(summary.NotBefore)
 			notAfter := int(summary.NotAfter)
-			model.Subject = base.NonEmptyPtr(summary.Subject)
-			model.Issuer = base.NonEmptyPtr(summary.Issuer)
+			model.Subject = gqlscalar.NonEmptyPtr(summary.Subject)
+			model.Issuer = gqlscalar.NonEmptyPtr(summary.Issuer)
 			model.NotBefore = &notBefore
 			model.NotAfter = &notAfter
 			model.Expired = summary.Expired
@@ -104,7 +106,7 @@ func ediTransportCertificatesToModel(
 }
 
 func ediPartnerReadinessToModel(
-	readiness *ediservice.EDIPartnerReadiness,
+	readiness *edioverview.EDIPartnerReadiness,
 ) *gqlmodel.EDIPartnerCardReadiness {
 	model := &gqlmodel.EDIPartnerCardReadiness{
 		Ready:          readiness.Ready,
@@ -124,7 +126,7 @@ func ediPartnerReadinessToModel(
 }
 
 func ediPartnerMappingsToModel(
-	summary *ediports.EDIMappingSummary,
+	summary *edipartnerports.EDIMappingSummary,
 ) *gqlmodel.EDIPartnerMappingSummary {
 	model := &gqlmodel.EDIPartnerMappingSummary{
 		Counts: make([]*gqlmodel.EDIMappingCount, 0, len(summary.Counts)),
@@ -146,15 +148,15 @@ func ediPartnerMappingsToModel(
 }
 
 func ediPartnerActivityToModel(
-	activity *ediservice.EDIPartnerActivity,
+	activity *edioverview.EDIPartnerActivity,
 ) *gqlmodel.EDIPartnerActivity {
 	model := &gqlmodel.EDIPartnerActivity{
 		Since:           int(activity.Since),
 		SeriesSince:     int(activity.SeriesSince),
-		Scorecard:       ediPartnerScorecardsToModel([]*ediports.EDIPartnerScorecardRow{activity.Scorecard})[0],
+		Scorecard:       ediPartnerScorecardsToModel([]*edimessageports.EDIPartnerScorecardRow{activity.Scorecard})[0],
 		AckStatusCounts: summaryStatusCounts(activity.AckCounts),
 		Sets:            make([]*gqlmodel.EDIPartnerSetActivity, 0, len(activity.Sets)),
-		Series: ediVolumeSeriesToModel(&ediservice.EDIVolumeSeries{
+		Series: ediVolumeSeriesToModel(&edioverview.EDIVolumeSeries{
 			BucketSeconds: activity.BucketSeconds,
 			Points:        activity.Series,
 		}),
@@ -178,7 +180,7 @@ func ediPartnerActivityToModel(
 }
 
 func ediPartnerAttentionToModel(
-	attention *ediservice.EDIPartnerAttention,
+	attention *edioverview.EDIPartnerAttention,
 ) *gqlmodel.EDIPartnerAttention {
 	model := &gqlmodel.EDIPartnerAttention{
 		OverdueAckAgeSeconds: int(attention.OverdueAckAge),
@@ -209,8 +211,8 @@ func ediPartnerCarriersToModel(
 		models = append(models, &gqlmodel.EDIPartnerCarrier{
 			CarrierID:   channel.CarrierID.String(),
 			CarrierName: channel.Carrier.Name,
-			CarrierCode: base.NonEmptyPtr(channel.Carrier.Code),
-			SCAC:        base.NonEmptyPtr(scac),
+			CarrierCode: gqlscalar.NonEmptyPtr(channel.Carrier.Code),
+			SCAC:        gqlscalar.NonEmptyPtr(scac),
 			IsDefault:   channel.IsDefault,
 		})
 	}

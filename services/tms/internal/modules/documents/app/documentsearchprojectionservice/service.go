@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
@@ -19,13 +19,13 @@ type Params struct {
 
 	Logger  *zap.Logger
 	Repo    documentsearchprojectionports.DocumentSearchProjectionRepository
-	Indexer agentports.RetrievalIndexer `optional:"true"`
+	Indexer retrievalports.RetrievalIndexer `optional:"true"`
 }
 
 type Service struct {
 	logger  *zap.Logger
 	repo    documentsearchprojectionports.DocumentSearchProjectionRepository
-	indexer agentports.RetrievalIndexer
+	indexer retrievalports.RetrievalIndexer
 }
 
 var _ documentsearchprojectionports.DocumentSearchProjectionService = (*Service)(nil)

@@ -3,11 +3,13 @@ package agentaccessservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -122,7 +124,7 @@ func (s *Service) audience(
 		return nil, err
 	}
 
-	var granted []*permission.Role
+	var granted []*rbac.Role
 	if withGrants {
 		byAgent, grantErr := s.grants.ListRolesByAgents(
 			ctx,
@@ -184,12 +186,12 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 		return HeldTool{}, false
 	}
 
-	return HeldToolOf(policy), true
+	return HeldToolOf(&policy), true
 }
 
-func HeldToolOf(policy agentports.ToolPolicy) HeldTool {
+func HeldToolOf(policy *agenttoolports.ToolPolicy) HeldTool {
 	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
-	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
+	if policy.Scope == agenttooltrust.ToolScopeSelf || policy.Resource == "" {
 		return held
 	}
 
@@ -219,9 +221,9 @@ func requiredGrants(held []HeldTool) []permissionports.RequiredGrant {
 }
 
 func audienceRoles(
-	roles []*permission.Role,
+	roles []*rbac.Role,
 	coverage []permissionports.RoleCoverage,
-	granted []*permission.Role,
+	granted []*rbac.Role,
 ) []agentdefinitionports.AgentAudienceRole {
 	byRole := make(map[pulid.ID]permissionports.RoleCoverage, len(coverage))
 	for _, entry := range coverage {
@@ -239,7 +241,7 @@ func audienceRoles(
 		if !ok {
 			entry = permissionports.RoleCoverage{
 				RoleID:           role.ID,
-				Coverage:         agentdefinition.CoverageNone,
+				Coverage:         agentreach.CoverageNone,
 				MissingResources: []permission.Resource{},
 			}
 		}

@@ -14,12 +14,12 @@ import (
 )
 
 var accessPrimitives = map[string]bool{
-	"CanAccess":        true,
-	"Decide":           true,
-	"Person":           true,
-	"InReferenceView":  true,
-	"ProtectedGroupAt": true,
-	"Visible":          true,
+	"CanAccess":       true,
+	"Decide":          true,
+	"Person":          true,
+	"InReferenceView": true,
+	"GroupAt":         true,
+	"Visible":         true,
 }
 
 type reportSurface struct {
@@ -34,12 +34,7 @@ var reportSurfaces = []reportSurface{
 	{dir: "../../../jobs/reportjobs", match: allFiles},
 	{dir: "../../../../../infrastructure/reportengine", match: allFiles},
 	{dir: "../../../../../api/graphql/resolver/reportresolver", match: allFiles},
-	{
-		dir: "../../../../agent/app/agentquerytoolservice",
-		match: func(name string) bool {
-			return strings.HasPrefix(name, "report")
-		},
-	},
+	{dir: "../../../../agent/app/querytools/reportquerytools", match: allFiles},
 }
 
 func TestReportSurfacesDecideAccessOnlyThroughReportaccess(t *testing.T) {

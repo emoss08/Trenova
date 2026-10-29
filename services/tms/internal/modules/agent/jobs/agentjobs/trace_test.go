@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -43,9 +45,9 @@ func TestFinishRun_EmitsTheRunsRootAtItsAnchorFromItsRealStart(t *testing.T) {
 	emitRunRoot(t.Context(), &FinishRunInput{
 		Payload:    payload,
 		Definition: definition,
-		Run: &agentports.RunResult{
+		Run: &agentruntimeports.RunResult{
 			ToolCallsUsed: 4,
-			Usage: &agentports.RunUsage{
+			Usage: &agentruntimeports.RunUsage{
 				ModelCalls:   3,
 				InputTokens:  900,
 				OutputTokens: 60,
@@ -62,7 +64,7 @@ func TestFinishRun_EmitsTheRunsRootAtItsAnchorFromItsRealStart(t *testing.T) {
 		aitrace.GenAIAgentID.String(definition.ID.String()),
 		aitrace.AIAgentVersion.Int64(11),
 		aitrace.AIRunID.String(runID.String()),
-		aitrace.AIOwnerKind.String(string(agentports.RunStepOwnerAgentRun)),
+		aitrace.AIOwnerKind.String(string(agentruntimeports.RunStepOwnerAgentRun)),
 		aitrace.AITrigger.String(string(agent.RunTriggerEvent)),
 		aitrace.AIStatus.String(string(agent.RunStatusAwaitingDecision)),
 		aitrace.AITokensInput.Int64(900),
@@ -81,7 +83,10 @@ func TestFinishRun_AFailedRunsRootSaysHowItFailed(t *testing.T) {
 
 	runID := pulid.MustNew("ar_")
 	emitRunRoot(t.Context(), &FinishRunInput{
-		Payload:    &agentcontract.AgentRunPayload{RunID: runID, Trigger: agent.RunTriggerScheduled},
+		Payload: &agentcontract.AgentRunPayload{
+			RunID:   runID,
+			Trigger: agent.RunTriggerScheduled,
+		},
 		Definition: loopReplayDefinition(pulid.MustNew("agdef_")),
 		Failure:    &modelcallcontract.Failure{TimedOut: true},
 	}, &agent.AgentRun{}, &FinishRunResult{})
@@ -98,15 +103,15 @@ func TestFinishReplay_AnEvaluationIsItsOwnTraceMarkedAsOne(t *testing.T) {
 	aitracetest.Install()
 
 	started := int64(1_790_000_200)
-	evaluation := &agent.Evaluation{
-		ID:                pulid.MustNew(agent.EvaluationIDPrefix),
+	evaluation := &agentevaluation.Evaluation{
+		ID:                pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		DefinitionVersion: 6,
 		Trigger:           agent.RunTriggerEvent,
 		StartedAt:         &started,
 	}
-	emitEvaluationRoot(t.Context(), evaluation, &agentports.RunResult{ToolCallsUsed: 2},
-		agent.EvaluationStatusCompleted, "")
+	emitEvaluationRoot(t.Context(), evaluation, &agentruntimeports.RunResult{ToolCallsUsed: 2},
+		agentevaluation.EvaluationStatusCompleted, "")
 
 	anchor := aitrace.AnchorFor(aitrace.AnchorEvaluation, evaluation.ID.String())
 	assert.Equal(t, anchor, aitrace.ForAttribution(&aiusageports.AIUsageAttribution{
@@ -120,25 +125,25 @@ func TestFinishReplay_AnEvaluationIsItsOwnTraceMarkedAsOne(t *testing.T) {
 }
 
 type expiringProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	expired int
 }
 
 func (p *expiringProposals) ExpirePendingByRun(
 	context.Context,
-	agentports.ExpireAgentProposalsByRunRequest,
+	agentproposalports.ExpireAgentProposalsByRunRequest,
 ) (int, error) {
 	return p.expired, nil
 }
 
 type expiringRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 }
 
 func (expiringRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: req.ID}, nil
 }

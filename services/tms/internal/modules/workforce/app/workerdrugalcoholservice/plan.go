@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,16 +15,16 @@ import (
 )
 
 type (
-	TestChange  = kernelports.RecordChange[worker.WorkerDOTTest]
-	DrawChange  = kernelports.RecordChange[worker.DOTRandomDraw]
-	EntryChange = kernelports.RecordChange[worker.DOTRandomDrawEntry]
+	TestChange  = kernelports.RecordChange[workerdot.WorkerDOTTest]
+	DrawChange  = kernelports.RecordChange[dotrandom.DOTRandomDraw]
+	EntryChange = kernelports.RecordChange[dotrandom.DOTRandomDrawEntry]
 )
 
 func (s *Service) PlanRecordTest(
 	ctx context.Context,
-	entity *worker.WorkerDOTTest,
+	entity *workerdot.WorkerDOTTest,
 	userID pulid.ID,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	planned := *entity
 	if err := s.prepareRecordTest(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -37,7 +38,7 @@ func (s *Service) PlanCancelTest(
 	id pulid.ID,
 	reason string,
 ) (*TestChange, error) {
-	original, err := s.repo.GetTestByID(ctx, &workerports.GetWorkerDOTTestByIDRequest{
+	original, err := s.repo.GetTestByID(ctx, &workerdotports.GetWorkerDOTTestByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -45,7 +46,7 @@ func (s *Service) PlanCancelTest(
 		return nil, err
 	}
 
-	if !original.Status.CanTransitionTo(worker.DOTTestStatusCancelled) {
+	if !original.Status.CanTransitionTo(workerdot.DOTTestStatusCancelled) {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -63,8 +64,8 @@ func (s *Service) PlanCancelTest(
 	}
 
 	entity := *original
-	entity.Status = worker.DOTTestStatusCancelled
-	entity.Result = worker.DOTResultCancelled
+	entity.Status = workerdot.DOTTestStatusCancelled
+	entity.Result = workerdot.DOTResultCancelled
 	entity.Notes = strings.TrimSpace(entity.Notes + "\nCancelled: " + reason)
 	return &TestChange{Before: original, After: &entity}, nil
 }
@@ -72,7 +73,7 @@ func (s *Service) PlanCancelTest(
 func (s *Service) PlanRunDraw(
 	ctx context.Context,
 	req *RunDrawRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	plan, err := s.planDraw(ctx, req)
 	if err != nil {
 		return nil, err
@@ -89,14 +90,14 @@ func (s *Service) PlanFinalizeDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*DrawChange, error) {
-	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerdotports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.RandomDrawStatusDraft {
+	if original.Status != dotrandom.RandomDrawStatusDraft {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -106,7 +107,7 @@ func (s *Service) PlanFinalizeDraw(
 
 	entity := *original
 	finalizedAt := timeutils.NowUnix()
-	entity.Status = worker.RandomDrawStatusFinal
+	entity.Status = dotrandom.RandomDrawStatusFinal
 	entity.FinalizedAt = &finalizedAt
 	return &DrawChange{Before: original, After: &entity}, nil
 }
@@ -126,7 +127,7 @@ func (s *Service) PlanCancelDraw(
 		)
 	}
 
-	original, err := s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
+	original, err := s.repo.GetDrawByID(ctx, &workerdotports.GetDOTRandomDrawByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -134,11 +135,11 @@ func (s *Service) PlanCancelDraw(
 		return nil, err
 	}
 	entity := *original
-	if original.Status == worker.RandomDrawStatusCancelled {
+	if original.Status == dotrandom.RandomDrawStatusCancelled {
 		return &DrawChange{Before: original, After: &entity}, nil
 	}
 
-	entity.Status = worker.RandomDrawStatusCancelled
+	entity.Status = dotrandom.RandomDrawStatusCancelled
 	entity.FinalizedAt = nil
 	entity.Notes = strings.TrimSpace(entity.Notes + "\nCancelled: " + reason)
 	return &DrawChange{Before: original, After: &entity}, nil
@@ -148,7 +149,7 @@ func (s *Service) PlanUpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
 ) (*EntryChange, error) {
-	original, err := s.repo.GetDrawEntryByID(ctx, &workerports.GetDOTRandomDrawEntryByIDRequest{
+	original, err := s.repo.GetDrawEntryByID(ctx, &workerdotports.GetDOTRandomDrawEntryByIDRequest{
 		ID:         req.EntryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -156,7 +157,7 @@ func (s *Service) PlanUpdateDrawEntry(
 		return nil, err
 	}
 
-	if req.Status == worker.RandomEntryCompleted {
+	if req.Status == dotrandom.RandomEntryCompleted {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -167,7 +168,7 @@ func (s *Service) PlanUpdateDrawEntry(
 	entity := *original
 	entity.Status = req.Status
 	entity.ExcuseReason = strings.TrimSpace(req.ExcuseReason)
-	if req.Status == worker.RandomEntryNotified && entity.NotifiedAt == nil {
+	if req.Status == dotrandom.RandomEntryNotified && entity.NotifiedAt == nil {
 		notifiedAt := timeutils.NowUnix()
 		entity.NotifiedAt = &notifiedAt
 	}

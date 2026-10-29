@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -22,5 +22,8 @@ type LocationCodeGenerateRequest struct {
 
 type LocationCodeGenerator interface {
 	Generate(ctx context.Context, req LocationCodeGenerateRequest) (string, error)
-	BuildPrefix(input LocationCodeInput, strategy *tenant.LocationCodeStrategy) (string, error)
+	BuildPrefix(
+		input LocationCodeInput,
+		strategy *sequenceconfig.LocationCodeStrategy,
+	) (string, error)
 }

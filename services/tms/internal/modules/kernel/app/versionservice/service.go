@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/updateconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -24,14 +25,16 @@ var ErrNoReleaseFound = errors.New("no release found")
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
+	Logger       *zap.Logger
+	AppConfig    *appconfig.Config
+	UpdateConfig *updateconfig.Config
 }
 
 type Service struct {
-	l          *zap.Logger
-	cfg        *config.Config
-	httpClient *http.Client
+	l            *zap.Logger
+	appConfig    *appconfig.Config
+	updateConfig *updateconfig.Config
+	httpClient   *http.Client
 
 	mu           sync.RWMutex
 	cachedStatus *kernelports.UpdateStatus
@@ -40,8 +43,9 @@ type Service struct {
 
 func New(p Params) *Service {
 	return &Service{
-		l:   p.Logger.Named("service.version"),
-		cfg: p.Config,
+		l:            p.Logger.Named("service.version"),
+		appConfig:    p.AppConfig,
+		updateConfig: p.UpdateConfig,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -50,15 +54,15 @@ func New(p Params) *Service {
 
 func (s *Service) GetVersionInfo(_ context.Context) (*kernelports.VersionInfo, error) {
 	return &kernelports.VersionInfo{
-		Version:     s.cfg.App.Version,
-		Environment: s.cfg.App.Env,
+		Version:     s.appConfig.Version,
+		Environment: s.appConfig.Env,
 	}, nil
 }
 
 func (s *Service) GetUpdateStatus(ctx context.Context) (*kernelports.UpdateStatus, error) {
-	if !s.cfg.Update.Enabled {
+	if !s.updateConfig.Enabled {
 		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.cfg.App.Version,
+			CurrentVersion:  s.appConfig.Version,
 			UpdateAvailable: false,
 			LastChecked:     0,
 		}, nil
@@ -69,7 +73,7 @@ func (s *Service) GetUpdateStatus(ctx context.Context) (*kernelports.UpdateStatu
 	lastCheck := s.lastCheck
 	s.mu.RUnlock()
 
-	if cached != nil && time.Since(lastCheck) < s.cfg.Update.GetCheckInterval() {
+	if cached != nil && time.Since(lastCheck) < s.updateConfig.GetCheckInterval() {
 		return cached, nil
 	}
 
@@ -77,18 +81,18 @@ func (s *Service) GetUpdateStatus(ctx context.Context) (*kernelports.UpdateStatu
 }
 
 func (s *Service) CheckForUpdates(ctx context.Context) (*kernelports.UpdateStatus, error) {
-	if !s.cfg.Update.Enabled {
+	if !s.updateConfig.Enabled {
 		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.cfg.App.Version,
+			CurrentVersion:  s.appConfig.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
 		}, nil
 	}
 
-	if s.cfg.Update.OfflineMode {
+	if s.updateConfig.OfflineMode {
 		s.l.Debug("offline mode enabled, skipping remote update check")
 		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.cfg.App.Version,
+			CurrentVersion:  s.appConfig.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
 		}, nil
@@ -98,23 +102,23 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*kernelports.UpdateStatu
 	if err != nil {
 		if errors.Is(err, ErrNoReleaseFound) {
 			return &kernelports.UpdateStatus{
-				CurrentVersion:  s.cfg.App.Version,
+				CurrentVersion:  s.appConfig.Version,
 				UpdateAvailable: false,
 				LastChecked:     timeutils.NowUnix(),
 			}, nil
 		}
 		s.l.Warn("failed to fetch latest release", zap.Error(err))
 		return &kernelports.UpdateStatus{
-			CurrentVersion:  s.cfg.App.Version,
+			CurrentVersion:  s.appConfig.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
 		}, nil
 	}
 
 	status := &kernelports.UpdateStatus{
-		CurrentVersion:  s.cfg.App.Version,
+		CurrentVersion:  s.appConfig.Version,
 		LatestVersion:   release.Version,
-		UpdateAvailable: s.isNewerVersion(release.Version, s.cfg.App.Version),
+		UpdateAvailable: s.isNewerVersion(release.Version, s.appConfig.Version),
 		LatestRelease:   release,
 		LastChecked:     timeutils.NowUnix(),
 	}
@@ -129,8 +133,8 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*kernelports.UpdateStatu
 
 func (s *Service) fetchLatestRelease(ctx context.Context) (*kernelports.ReleaseInfo, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest",
-		s.cfg.Update.GetGitHubOwner(),
-		s.cfg.Update.GetGitHubRepo(),
+		s.updateConfig.GetGitHubOwner(),
+		s.updateConfig.GetGitHubRepo(),
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
@@ -139,7 +143,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*kernelports.ReleaseI
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Trenova/%s", s.cfg.App.Version))
+	req.Header.Set("User-Agent", fmt.Sprintf("Trenova/%s", s.appConfig.Version))
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
@@ -169,7 +173,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*kernelports.ReleaseI
 		return nil, ErrNoReleaseFound
 	}
 
-	if ghRelease.Prerelease && !s.cfg.Update.AllowPrerelease {
+	if ghRelease.Prerelease && !s.updateConfig.AllowPrerelease {
 		return nil, ErrNoReleaseFound
 	}
 

@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/keel/migrate"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/pgxdsn"
 	"github.com/emoss08/trenova/schema"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -27,8 +28,9 @@ var Module = fx.Module("schemaversion", fx.Invoke(requireAtStartup))
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	AppConfig      *appconfig.Config
+	DatabaseConfig *databaseconfig.Config
+	Logger         *zap.Logger
 }
 
 func requireAtStartup(p Params) error {
@@ -36,7 +38,7 @@ func requireAtStartup(p Params) error {
 	defer cancel()
 
 	return Require(ctx, RequireParams{
-		DSN:     p.Config.GetDSN(p.Config.Database.Password),
+		DSN:     p.DatabaseConfig.DSN(p.AppConfig.Name, p.DatabaseConfig.Password),
 		Version: schema.Version,
 		Logger:  p.Logger,
 	})

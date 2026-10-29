@@ -4,7 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -24,27 +25,30 @@ func keysOf(plan []PlannedEntry) []string {
 }
 
 func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodPerPayPeriod,
+		AccrualMethod:     pto.PTOAccrualMethodPerPayPeriod,
 		AccrualAmountDays: decimal.RequireFromString("0.5"),
 	}
 	// Biweekly periods closing on Saturday (end day 6): period end is the
 	// midnight after the most recent Saturday, i.e. a Sunday 00:00 UTC.
 	in := CalcInput{
 		Rule:      rule,
-		YearBasis: worker.PTOYearBasisCalendarYear,
+		YearBasis: pto.PTOYearBasisCalendarYear,
 		HireDate:  utcDay(2026, time.January, 5),
 		Loc:       time.UTC,
 		AsOf:      utcDay(2026, time.March, 1),
-		PayPeriod: &PayPeriodSpec{Frequency: tenant.PayPeriodFrequencyBiweekly, EndDayOfWeek: 6},
+		PayPeriod: &PayPeriodSpec{
+			Frequency:    settlementcontrol.PayPeriodFrequencyBiweekly,
+			EndDayOfWeek: 6,
+		},
 	}
 
 	plan := Schedule(in)
 	keys := keysOf(plan)
 	require.NotEmpty(t, keys)
 	for _, entry := range plan {
-		assert.Equal(t, worker.PTOLedgerEntryAccrual, entry.EntryType)
+		assert.Equal(t, pto.PTOLedgerEntryAccrual, entry.EntryType)
 		assert.True(t, entry.NominalDays.Equal(decimal.RequireFromString("0.5")))
 		day := time.Unix(entry.EffectiveAt, 0).UTC()
 		assert.Equal(
@@ -77,7 +81,10 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 	assert.Empty(t, Schedule(in), "no settlement calendar, nothing to post")
 
 	weekly := in
-	weekly.PayPeriod = &PayPeriodSpec{Frequency: tenant.PayPeriodFrequencyWeekly, EndDayOfWeek: 5}
+	weekly.PayPeriod = &PayPeriodSpec{
+		Frequency:    settlementcontrol.PayPeriodFrequencyWeekly,
+		EndDayOfWeek: 5,
+	}
 	weekly.LastAccrualKey = ""
 	weeklyPlan := Schedule(weekly)
 	require.Greater(t, len(weeklyPlan), len(plan))
@@ -85,12 +92,12 @@ func TestSchedule_PerPayPeriodFollowsTheSettlementCalendar(t *testing.T) {
 }
 
 func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
-	rule := worker.PTOPolicyRule{
+	rule := pto.PTOPolicyRule{
 		PTOType:           worker.PTOTypeVacation,
-		AccrualMethod:     worker.PTOAccrualMethodMonthly,
+		AccrualMethod:     pto.PTOAccrualMethodMonthly,
 		AccrualAmountDays: decimal.NewFromInt(1),
 		MaxBalanceDays:    decimal.NewNullDecimal(decimal.NewFromInt(10)),
-		Tiers: []worker.PTOAccrualTier{
+		Tiers: []pto.PTOAccrualTier{
 			{
 				MinMonths:         12,
 				AccrualAmountDays: decimal.NewFromInt(2),
@@ -100,7 +107,7 @@ func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
 	}
 	in := CalcInput{
 		Rule:           rule,
-		YearBasis:      worker.PTOYearBasisCalendarYear,
+		YearBasis:      pto.PTOYearBasisCalendarYear,
 		HireDate:       utcDay(2025, time.March, 1),
 		Loc:            time.UTC,
 		AsOf:           utcDay(2026, time.April, 15),
@@ -120,7 +127,7 @@ func TestSchedule_TenureTiersRaiseAccrualAndCap(t *testing.T) {
 	assert.True(t, after.NominalDays.Equal(decimal.NewFromInt(2)), "twelve months in: tier amount")
 	assert.True(t, after.MaxBalanceDays.Decimal.Equal(decimal.NewFromInt(20)))
 
-	projected := ProjectedAccrual(plan, decimal.NewFromInt(9), decimal.Zero, rule)
+	projected := ProjectedAccrual(plan, decimal.NewFromInt(9), decimal.Zero, &rule)
 	assert.True(t, projected.GreaterThan(decimal.NewFromInt(1)),
 		"the raised cap lets the projection grow past the base cap")
 }

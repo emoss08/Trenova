@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
@@ -51,7 +53,7 @@ func (s *Service) planIssue(
 	if multiErr := validateIssueRequest(req); multiErr != nil {
 		return nil, multiErr
 	}
-	base := s.cfg.PublicLinkBaseURL()
+	base := s.tenderingConfig.PublicLinkBaseURL(s.appConfig)
 	if base == "" {
 		return nil, errortypes.NewBusinessError(
 			"Carrier tracking links need a public base URL; set app.webBaseUrl",
@@ -293,7 +295,7 @@ func (s *Service) trackableAssignment(
 		}
 		return nil, err
 	}
-	if assignment == nil || assignment.Status == shipment.CarrierAssignmentStatusCanceled {
+	if assignment == nil || assignment.Status == shipmentvocab.CarrierAssignmentStatusCanceled {
 		return nil, errortypes.NewBusinessError(
 			"Assign a carrier to this load before sending a tracking link",
 		)
@@ -348,7 +350,7 @@ func (s *Service) renderLinkEmail(
 	ctx context.Context,
 	msg *linkEmail,
 ) (*documenttemplateports.RenderedMessage, error) {
-	data := documenttemplate.CarrierTrackingLinkEmailContext{
+	data := trackingtemplate.CarrierTrackingLinkEmailContext{
 		CarrierName:       s.carrierName(ctx, msg.tenant, msg.carrierID),
 		CompanyName:       s.companyName(ctx, msg.tenant),
 		ShipmentProNumber: msg.proNumber,

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -85,7 +85,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&agentports.OpenPageThreadRequest{
+		&assistantports.OpenPageThreadRequest{
 			TenantInfo:  tenant,
 			Origin:      conversation.ThreadOriginFormula,
 			SubjectType: agent.SubjectFormulaTemplate,

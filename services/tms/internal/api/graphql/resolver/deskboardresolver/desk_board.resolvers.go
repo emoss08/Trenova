@@ -10,8 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -30,11 +31,11 @@ func (r *QueryResolver) DeskBoardCard(ctx context.Context, threadID string, arti
 		return nil, err
 	}
 
-	card, err := r.BoardCards.Card(ctx, &agentports.BoardCardRequest{
-		Thread: agentports.GetThreadRequest{
+	card, err := r.BoardCards.Card(ctx, &assistantports.BoardCardRequest{
+		Thread: conversationports.GetThreadRequest{
 			ID:         thread,
 			UserID:     authCtx.UserID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 		ArtifactID: artifact,
 		Actor:      actorutil.FromAuthContext(authCtx),

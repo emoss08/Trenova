@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -102,7 +103,7 @@ func TestEmailSubjectIsTranslated(t *testing.T) {
 func TestEveryStarterStillLoadsForEveryLocale(t *testing.T) {
 	t.Parallel()
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	for _, locale := range i18n.Supported() {
 		for _, def := range registry.All() {
 			_, err := starters.ForLocale(def.Kind, locale)

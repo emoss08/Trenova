@@ -4,9 +4,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,7 +22,7 @@ import (
 func dotTestFromInput(
 	input *gqlmodel.RecordDOTTestInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerDOTTest, error) {
+) (*workerdot.WorkerDOTTest, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -26,7 +31,7 @@ func dotTestFromInput(
 			"Worker is invalid",
 		)
 	}
-	safetyEventID, err := base.OptionalID(input.SafetyEventID)
+	safetyEventID, err := gqlid.OptionalID(input.SafetyEventID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"safetyEventId",
@@ -34,7 +39,7 @@ func dotTestFromInput(
 			"Safety event is invalid",
 		)
 	}
-	drawEntryID, err := base.OptionalID(input.DrawEntryID)
+	drawEntryID, err := gqlid.OptionalID(input.DrawEntryID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"drawEntryId",
@@ -42,7 +47,7 @@ func dotTestFromInput(
 			"Random selection is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -50,7 +55,7 @@ func dotTestFromInput(
 			"Document is invalid",
 		)
 	}
-	concentration, err := base.ParseNullDecimalField(
+	concentration, err := gqldecimal.ParseNullDecimalField(
 		"alcoholConcentration",
 		input.AlcoholConcentration,
 	)
@@ -58,30 +63,30 @@ func dotTestFromInput(
 		return nil, err
 	}
 
-	entity := &worker.WorkerDOTTest{
+	entity := &workerdot.WorkerDOTTest{
 		OrganizationID:       tenantInfo.OrgID,
 		BusinessUnitID:       tenantInfo.BuID,
 		WorkerID:             workerID,
 		TestType:             input.TestType,
 		Substance:            input.Substance,
-		Status:               worker.DOTTestStatusScheduled,
-		Result:               worker.DOTResultPending,
+		Status:               workerdot.DOTTestStatusScheduled,
+		Result:               workerdot.DOTResultPending,
 		IsDOT:                true,
-		Reason:               base.StringValue(input.Reason),
-		ScheduledAt:          base.Int64Ptr(input.ScheduledAt),
-		CollectedAt:          base.Int64Ptr(input.CollectedAt),
-		ResultAt:             base.Int64Ptr(input.ResultAt),
-		CollectionSite:       base.StringValue(input.CollectionSite),
-		CollectorName:        base.StringValue(input.CollectorName),
-		SpecimenID:           base.StringValue(input.SpecimenID),
-		LabName:              base.StringValue(input.LabName),
-		MROName:              base.StringValue(input.MroName),
-		MROVerifiedAt:        base.Int64Ptr(input.MroVerifiedAt),
-		AlcoholConcentration: base.NullDecimalValue(concentration),
+		Reason:               gqlscalar.StringValue(input.Reason),
+		ScheduledAt:          gqlscalar.Int64Ptr(input.ScheduledAt),
+		CollectedAt:          gqlscalar.Int64Ptr(input.CollectedAt),
+		ResultAt:             gqlscalar.Int64Ptr(input.ResultAt),
+		CollectionSite:       gqlscalar.StringValue(input.CollectionSite),
+		CollectorName:        gqlscalar.StringValue(input.CollectorName),
+		SpecimenID:           gqlscalar.StringValue(input.SpecimenID),
+		LabName:              gqlscalar.StringValue(input.LabName),
+		MROName:              gqlscalar.StringValue(input.MroName),
+		MROVerifiedAt:        gqlscalar.Int64Ptr(input.MroVerifiedAt),
+		AlcoholConcentration: gqldecimal.NullDecimalValue(concentration),
 		SafetyEventID:        safetyEventID,
 		DrawEntryID:          drawEntryID,
 		DocumentID:           documentID,
-		Notes:                base.StringValue(input.Notes),
+		Notes:                gqlscalar.StringValue(input.Notes),
 	}
 	if input.Status != nil {
 		entity.Status = *input.Status
@@ -109,7 +114,7 @@ func dotTestResultRequest(
 			"Test is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -117,7 +122,7 @@ func dotTestResultRequest(
 			"Document is invalid",
 		)
 	}
-	concentration, err := base.ParseNullDecimalField(
+	concentration, err := gqldecimal.ParseNullDecimalField(
 		"alcoholConcentration",
 		input.AlcoholConcentration,
 	)
@@ -129,12 +134,12 @@ func dotTestResultRequest(
 		TenantInfo:           tenantInfo,
 		TestID:               testID,
 		Result:               input.Result,
-		ResultAt:             base.Int64Value(input.ResultAt),
-		LabName:              base.StringValue(input.LabName),
-		MROName:              base.StringValue(input.MroName),
-		MROVerifiedAt:        base.Int64Ptr(input.MroVerifiedAt),
-		AlcoholConcentration: base.NullDecimalValue(concentration),
-		Notes:                base.StringValue(input.Notes),
+		ResultAt:             gqlscalar.Int64Value(input.ResultAt),
+		LabName:              gqlscalar.StringValue(input.LabName),
+		MROName:              gqlscalar.StringValue(input.MroName),
+		MROVerifiedAt:        gqlscalar.Int64Ptr(input.MroVerifiedAt),
+		AlcoholConcentration: gqldecimal.NullDecimalValue(concentration),
+		Notes:                gqlscalar.StringValue(input.Notes),
 		DocumentID:           documentID,
 		UserID:               userID,
 	}, nil
@@ -143,7 +148,7 @@ func dotTestResultRequest(
 func dotViolationFromInput(
 	input *gqlmodel.RecordDOTViolationInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -152,7 +157,7 @@ func dotViolationFromInput(
 			"Worker is invalid",
 		)
 	}
-	sourceTestID, err := base.OptionalID(input.SourceTestID)
+	sourceTestID, err := gqlid.OptionalID(input.SourceTestID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"sourceTestId",
@@ -160,7 +165,7 @@ func dotViolationFromInput(
 			"Test is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -169,18 +174,18 @@ func dotViolationFromInput(
 		)
 	}
 
-	return &worker.WorkerDOTViolation{
+	return &workerdot.WorkerDOTViolation{
 		OrganizationID:            tenantInfo.OrgID,
 		BusinessUnitID:            tenantInfo.BuID,
 		WorkerID:                  workerID,
 		ViolationType:             input.ViolationType,
 		OccurredAt:                int64(input.OccurredAt),
 		SourceTestID:              sourceTestID,
-		ReportedToClearinghouseAt: base.Int64Ptr(input.ReportedToClearinghouseAt),
-		SAPName:                   base.StringValue(input.SapName),
-		SAPReferredAt:             base.Int64Ptr(input.SapReferredAt),
+		ReportedToClearinghouseAt: gqlscalar.Int64Ptr(input.ReportedToClearinghouseAt),
+		SAPName:                   gqlscalar.StringValue(input.SapName),
+		SAPReferredAt:             gqlscalar.Int64Ptr(input.SapReferredAt),
 		DocumentID:                documentID,
-		Notes:                     base.StringValue(input.Notes),
+		Notes:                     gqlscalar.StringValue(input.Notes),
 	}, nil
 }
 
@@ -197,7 +202,7 @@ func dotViolationUpdateRequest(
 			"Violation is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -210,10 +215,10 @@ func dotViolationUpdateRequest(
 		TenantInfo:                tenantInfo,
 		ViolationID:               violationID,
 		SAPName:                   input.SapName,
-		SAPReferredAt:             base.Int64Ptr(input.SapReferredAt),
-		SAPEvaluationCompletedAt:  base.Int64Ptr(input.SapEvaluationCompletedAt),
-		FollowUpEndsAt:            base.Int64Ptr(input.FollowUpEndsAt),
-		ReportedToClearinghouseAt: base.Int64Ptr(input.ReportedToClearinghouseAt),
+		SAPReferredAt:             gqlscalar.Int64Ptr(input.SapReferredAt),
+		SAPEvaluationCompletedAt:  gqlscalar.Int64Ptr(input.SapEvaluationCompletedAt),
+		FollowUpEndsAt:            gqlscalar.Int64Ptr(input.FollowUpEndsAt),
+		ReportedToClearinghouseAt: gqlscalar.Int64Ptr(input.ReportedToClearinghouseAt),
 		DocumentID:                documentID,
 		Notes:                     input.Notes,
 		UserID:                    userID,
@@ -229,7 +234,7 @@ func dotViolationUpdateRequest(
 func clearinghouseQueryFromInput(
 	input *gqlmodel.RecordClearinghouseQueryInput,
 	tenantInfo pagination.TenantInfo,
-) (*worker.WorkerClearinghouseQuery, error) {
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -238,7 +243,7 @@ func clearinghouseQueryFromInput(
 			"Worker is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -247,19 +252,19 @@ func clearinghouseQueryFromInput(
 		)
 	}
 
-	entity := &worker.WorkerClearinghouseQuery{
+	entity := &dotclearinghouse.WorkerClearinghouseQuery{
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		WorkerID:          workerID,
 		QueryType:         input.QueryType,
-		Result:            worker.ClearinghouseResultPending,
-		ConsentObtainedAt: base.Int64Ptr(input.ConsentObtainedAt),
-		ConsentExpiresAt:  base.Int64Ptr(input.ConsentExpiresAt),
-		RequestedAt:       base.Int64Value(input.RequestedAt),
-		CompletedAt:       base.Int64Ptr(input.CompletedAt),
-		Reference:         base.StringValue(input.Reference),
+		Result:            dotclearinghouse.ClearinghouseResultPending,
+		ConsentObtainedAt: gqlscalar.Int64Ptr(input.ConsentObtainedAt),
+		ConsentExpiresAt:  gqlscalar.Int64Ptr(input.ConsentExpiresAt),
+		RequestedAt:       gqlscalar.Int64Value(input.RequestedAt),
+		CompletedAt:       gqlscalar.Int64Ptr(input.CompletedAt),
+		Reference:         gqlscalar.StringValue(input.Reference),
 		DocumentID:        documentID,
-		Notes:             base.StringValue(input.Notes),
+		Notes:             gqlscalar.StringValue(input.Notes),
 	}
 	if input.Result != nil {
 		entity.Result = *input.Result
@@ -284,7 +289,7 @@ func completeQueryRequest(
 			"Query is invalid",
 		)
 	}
-	documentID, err := base.OptionalID(input.DocumentID)
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
 			"documentId",
@@ -297,11 +302,11 @@ func completeQueryRequest(
 		TenantInfo:     tenantInfo,
 		QueryID:        queryID,
 		Result:         input.Result,
-		CompletedAt:    base.Int64Value(input.CompletedAt),
-		ViolationCount: intutils.SafeToInt32(base.IntValue(input.ViolationCount)),
-		Reference:      base.StringValue(input.Reference),
+		CompletedAt:    gqlscalar.Int64Value(input.CompletedAt),
+		ViolationCount: intutils.SafeToInt32(gqlscalar.IntValue(input.ViolationCount)),
+		Reference:      gqlscalar.StringValue(input.Reference),
 		DocumentID:     documentID,
-		Notes:          base.StringValue(input.Notes),
+		Notes:          gqlscalar.StringValue(input.Notes),
 		UserID:         userID,
 	}, nil
 }
@@ -309,19 +314,19 @@ func completeQueryRequest(
 func randomPoolFromInput(
 	input *gqlmodel.DOTRandomPoolInput,
 	tenantInfo pagination.TenantInfo,
-) *worker.DOTRandomPool {
-	entity := &worker.DOTRandomPool{
+) *dotrandom.DOTRandomPool {
+	entity := &dotrandom.DOTRandomPool{
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
 		Code:                strings.TrimSpace(input.Code),
 		Name:                strings.TrimSpace(input.Name),
-		Description:         base.StringValue(input.Description),
+		Description:         gqlscalar.StringValue(input.Description),
 		Status:              domaintypes.StatusActive,
 		Period:              input.Period,
 		DrugRatePercent:     int16(input.DrugRatePercent),
 		AlcoholRatePercent:  int16(input.AlcoholRatePercent),
 		IncludedDriverTypes: input.IncludedDriverTypes,
-		IsDefault:           base.BoolValue(input.IsDefault),
+		IsDefault:           gqlscalar.BoolValue(input.IsDefault),
 	}
 	if input.Status != nil {
 		entity.Status = *input.Status
@@ -334,12 +339,12 @@ func randomPoolFromInput(
 }
 
 func randomPoolCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.DOTRandomPool],
+	result *pagination.CursorListResult[*dotrandom.DOTRandomPool],
 ) (*gqlmodel.DOTRandomPoolConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
+		func(node *dotrandom.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
 			return &gqlmodel.DOTRandomPoolEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -349,9 +354,9 @@ func randomPoolCursorConnectionToModel(
 
 	return &gqlmodel.DOTRandomPoolConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.DOTRandomPoolEdge) string { return edge.Cursor },
 			),

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ var finder = []string{
 func TestAnEncodedSheetIsASquareCodeWithItsThreeFinderPatterns(t *testing.T) {
 	t.Parallel()
 
-	payload := capture.CoverSheetPayload("dGhpcy1pcy1hLXJhbmRvbS10b2tlbi1mb3ItdGVzdGluZw")
+	payload := capturecoversheet.CoverSheetPayload("dGhpcy1pcy1hLXJhbmRvbS10b2tlbi1mb3ItdGVzdGluZw")
 	code, err := New().Encode(payload)
 	require.NoError(t, err)
 	require.Equal(t, code.Size, len(code.Modules))

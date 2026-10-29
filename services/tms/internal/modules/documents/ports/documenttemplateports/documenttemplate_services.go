@@ -6,7 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -162,7 +164,7 @@ type RenderedDocument struct {
 	// Warnings records what the render dropped — a blocked image, an asset over
 	// budget — so an omission reaches the generated document rather than
 	// vanishing.
-	Warnings []documenttemplate.GeneratedDocumentWarning
+	Warnings []generateddocument.GeneratedDocumentWarning
 }
 
 type RenderMessageRequest struct {
@@ -197,7 +199,7 @@ type RenderedMessage struct {
 	VersionID   *pulid.ID
 	ContentHash string
 
-	Warnings []documenttemplate.GeneratedDocumentWarning
+	Warnings []generateddocument.GeneratedDocumentWarning
 }
 
 // PreviewVersionRequest previews content that may not be saved.
@@ -232,7 +234,7 @@ type PreviewResult struct {
 
 	// Diagnostics are advisory here rather than blocking. A draft is allowed to
 	// be wrong; the author needs to see why, not be refused a preview.
-	Diagnostics templateengine.Diagnostics
+	Diagnostics templatediag.Diagnostics
 }
 
 // RecordGeneratedDocumentRequest logs one rendered artifact against the template
@@ -294,7 +296,7 @@ type DocumentTemplateResolver interface {
 	RecordGeneratedDocument(
 		ctx context.Context,
 		req *RecordGeneratedDocumentRequest,
-	) (*documenttemplate.GeneratedDocument, error)
+	) (*generateddocument.GeneratedDocument, error)
 }
 
 // AssetInlineRequest is one rendered document whose images need resolving.
@@ -307,7 +309,7 @@ type AssetInlineRequest struct {
 
 type AssetInlineResult struct {
 	HTML  string
-	Diags templateengine.Diagnostics
+	Diags templatediag.Diagnostics
 	// Inlined counts the assets that made it in; Bytes is their decoded size.
 	Inlined int
 	Bytes   int64

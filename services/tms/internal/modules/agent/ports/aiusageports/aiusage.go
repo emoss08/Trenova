@@ -3,7 +3,7 @@ package aiusageports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -152,7 +152,7 @@ type AIUsageProviderTaskRequest struct {
 
 type AIUsageProviderTaskTotals struct {
 	ProviderID pulid.ID
-	Task       aiprovider.Task
+	Task       aitask.Task
 	Calls      int
 	Failed     int
 	Rescued    int

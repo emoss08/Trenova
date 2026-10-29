@@ -3,7 +3,7 @@ package aicorrectionports
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 )
 
@@ -11,7 +11,7 @@ type ExtractionContract interface {
 	CompletionRequest(
 		fileName string,
 		pages []documentaiextractionports.AIDocumentPage,
-	) *agentports.StructuredCompletionRequest
+	) *llmports.StructuredCompletionRequest
 	PageLimit() int
 	FieldKeys() []string
 	ParseReply(text string) (*documentaiextractionports.AIExtractResult, error)
@@ -26,7 +26,7 @@ type RenderedPrompt struct {
 
 type StructuredPromptRenderer interface {
 	RenderStructuredPrompt(
-		req *agentports.StructuredCompletionRequest,
+		req *llmports.StructuredCompletionRequest,
 		mode aiprovider.StructuredOutputMode,
 	) RenderedPrompt
 }

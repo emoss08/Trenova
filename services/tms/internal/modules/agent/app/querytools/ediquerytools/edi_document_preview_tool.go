@@ -1,0 +1,422 @@
+package ediquerytools
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+)
+
+const (
+	paramTenderResponse = "response"
+	paramDeclineReason  = "reason"
+
+	maxPreviewSegments     = 200
+	maxDeclineReasonLength = 500
+
+	rawX12Field = "rawX12"
+
+	previewDocumentNote = "Rendered as a send would render it now, with provisional control " +
+		"numbers (zeros); the real ones are assigned when it is sent. Nothing was sent or saved."
+	previewWithheldNote = " The findings and whether it would go stand. Nothing was sent or saved."
+)
+
+var (
+	previewTransactionSets = agenttoolschema.Source("edi.previewTransactionSet", []string{
+		string(edidocument.TransactionSet204),
+		string(edidocument.TransactionSet214),
+		string(edidocument.TransactionSet990),
+	})
+	tenderResponses = agenttoolschema.Source("edi.tenderResponseChoice", []string{
+		string(editransferservice.TenderResponseAccept),
+		string(editransferservice.TenderResponseDecline),
+	})
+)
+
+type ediDocumentPreviewer interface {
+	PreviewOutboundDocument(
+		ctx context.Context,
+		req *edioutbound.GenerateEDIDocumentRequest,
+	) (*edioutbound.OutboundDocumentPreview, error)
+}
+
+type tenderResponsePreviewer interface {
+	PreviewTenderResponse(
+		ctx context.Context,
+		req *editransferservice.PreviewTenderResponseRequest,
+	) (*editransferservice.TenderResponsePreview, error)
+}
+
+func providePreviewEDIDocumentTool(
+	documents *edioutbound.Service,
+	transfers *editransferservice.Service,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return newPreviewEDIDocumentTool(documents, transfers, permissions)
+}
+
+type previewEDIDocumentTool struct {
+	documents ediDocumentPreviewer
+	responses tenderResponsePreviewer
+	access    fieldgate.Access
+}
+
+func newPreviewEDIDocumentTool(
+	documents ediDocumentPreviewer,
+	responses tenderResponsePreviewer,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &previewEDIDocumentTool{
+		documents: documents,
+		responses: responses,
+		access:    fieldgate.NewAccess(permissions),
+	}
+}
+
+func (t *previewEDIDocumentTool) Name() string { return "edi_preview_x12" }
+
+func (t *previewEDIDocumentTool) SearchTerms() []string {
+	return []string{
+		"what would we send", "before it goes", "render 214", "render 204", "preview the 990",
+		"990 look like", "990 we would send", "edi document preview", "check before sending",
+	}
+}
+
+func (t *previewEDIDocumentTool) Description() string {
+	return "Render the X12 a send would produce now, without sending or saving it: a 204 or " +
+		"214 for a shipment, or the 990 answering a partner's tender. It returns each " +
+		"segment, the partner profile's validation findings with the segment and element " +
+		"they name, and whether the profile would let it go. For a 990 on an unanswered " +
+		"tender, say whether to preview accepting or declining it."
+}
+
+func (t *previewEDIDocumentTool) ParamSchema() map[string]any {
+	return querytool.ObjectSchema(map[string]any{
+		paramTransactionSet: querytool.EnumParam(
+			"Which document: 204 load tender, 214 shipment status "+
+				"or 990 tender response.",
+			previewTransactionSets,
+		),
+		querytool.ParamPartnerID: agenttoolschema.KindID(
+			"The trading partner it would go to, by id from "+
+				"edi_list_partners or edi_get_partner.",
+			recordkind.EDIPartner,
+		),
+		querytool.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
+			"For a 204 or 214: the shipment, from shipment_list or shipment_get."),
+		paramEDITransferID: agenttoolschema.KindID("For a 990: the tender it answers, from "+
+			"edi_list_transfers.", recordkind.EDITransfer),
+		paramTenderResponse: querytool.EnumParam("For a 990 on a tender not yet answered: preview "+
+			"accepting or declining it.", tenderResponses),
+		paramDeclineReason: querytool.StringParam(fmt.Sprintf(
+			"For a declining 990: the reason, at most %d characters.", maxDeclineReasonLength,
+		)),
+	}, paramTransactionSet, querytool.ParamPartnerID)
+}
+
+func (t *previewEDIDocumentTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
+		Resource: permission.ResourceEDI,
+		Reads:    agenttooltrust.ExternalReadMarked,
+		Source:   agent.TaintSourceEDI,
+		Rationale: "Renders the X12 a send would produce from records already in Trenova, " +
+			"with what the partner's Lading version found; nothing is saved and nothing is sent.",
+	})
+}
+
+type ediDocumentPreviewView struct {
+	Title          string             `json:"title"`
+	TransactionSet string             `json:"transactionSet"`
+	Partner        string             `json:"partner,omitempty"`
+	Map            string             `json:"map,omitempty"`
+	X12Version     string             `json:"x12Version,omitempty"`
+	Response       string             `json:"response,omitempty"`
+	WouldSend      bool               `json:"wouldSend"`
+	SegmentCount   int64              `json:"segmentCount"`
+	Segments       []string           `json:"segments"`
+	SegmentsCut    int                `json:"segmentsNotShown,omitempty"`
+	FindingCount   int                `json:"findingCount"`
+	Findings       []ediDiagnosticRow `json:"findings"`
+	rawX12Excerpt
+	Note string `json:"note"`
+
+	outside []agentrecord.RecordRef
+}
+
+func (v *ediDocumentPreviewView) TaintedRecords() []agentrecord.RecordRef { return v.outside }
+
+type documentPreviewCall struct {
+	set        edidocument.TransactionSet
+	partnerID  pulid.ID
+	shipmentID pulid.ID
+	transferID pulid.ID
+	response   editransferservice.TenderResponseChoice
+	reason     string
+}
+
+func (t *previewEDIDocumentTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	call, err := readDocumentPreviewCall(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	if err = t.mayReadSource(ctx, params, call); err != nil {
+		return nil, err
+	}
+
+	tenant := querytool.TenantOf(params)
+	if call.set == edidocument.TransactionSet990 {
+		answered, pErr := t.responses.PreviewTenderResponse(
+			ctx,
+			&editransferservice.PreviewTenderResponseRequest{
+				TenantInfo: tenant,
+				PartnerID:  call.partnerID,
+				TransferID: call.transferID,
+				Choice:     call.response,
+				Reason:     call.reason,
+			},
+		)
+		if pErr != nil {
+			return nil, pErr
+		}
+		view, vErr := documentPreviewView(ctx, call.set, &answered.OutboundDocumentPreview)
+		if vErr != nil {
+			return nil, vErr
+		}
+		view.Response = string(answered.Choice)
+		view.outside = []agentrecord.RecordRef{
+			{EntityType: ediTransferEntity, ID: call.transferID.String()},
+		}
+
+		return t.gated(ctx, params, view), nil
+	}
+
+	preview, err := t.documents.PreviewOutboundDocument(
+		ctx,
+		&edioutbound.GenerateEDIDocumentRequest{
+			TenantInfo:     tenant,
+			EDIPartnerID:   call.partnerID,
+			ShipmentID:     call.shipmentID,
+			TransactionSet: call.set,
+			Direction:      edidocument.DocumentDirectionOutbound,
+			GeneratedByID:  params.Actor.UserID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	view, err := documentPreviewView(ctx, call.set, preview)
+	if err != nil {
+		return nil, err
+	}
+	return t.gated(ctx, params, view), nil
+}
+
+func (t *previewEDIDocumentTool) gated(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+	view *ediDocumentPreviewView,
+) *ediDocumentPreviewView {
+	gate := t.access.Gate(ctx, params, permission.ResourceEDI)
+	if gate.Show(rawX12Field, rawX12Field) {
+		return view
+	}
+
+	view.Raw = ""
+	view.RawTruncated = false
+	view.Segments = []string{}
+	view.SegmentsCut = 0
+	view.Withheld = gate.Withheld()
+	view.Note = rawEDIWithheldNote(gate, rawX12Field) + previewWithheldNote
+
+	return view
+}
+
+func readDocumentPreviewCall(params map[string]any) (*documentPreviewCall, error) {
+	set, err := querytool.ValidEnum(params, paramTransactionSet, previewTransactionSets)
+	if err != nil {
+		return nil, err
+	}
+	if set == "" {
+		return nil, fmt.Errorf("parameter %q is required: 204, 214 or 990", paramTransactionSet)
+	}
+	call := &documentPreviewCall{set: edidocument.TransactionSet(set)}
+	if call.partnerID, err = querytool.RequirePulid(params, querytool.ParamPartnerID); err != nil {
+		return nil, err
+	}
+	if call.shipmentID, err = querytool.OptionalID(params, querytool.ParamShipmentID); err != nil {
+		return nil, err
+	}
+	if call.transferID, err = querytool.OptionalID(params, paramEDITransferID); err != nil {
+		return nil, err
+	}
+	response, err := querytool.ValidEnum(params, paramTenderResponse, tenderResponses)
+	if err != nil {
+		return nil, err
+	}
+	call.response = editransferservice.TenderResponseChoice(response)
+	call.reason = strings.TrimSpace(querytool.OptionalString(params, paramDeclineReason))
+
+	if call.set == edidocument.TransactionSet990 {
+		err = call.check990()
+	} else {
+		err = call.checkShipmentDocument()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return call, nil
+}
+
+func (c *documentPreviewCall) check990() error {
+	switch {
+	case c.transferID.IsNil():
+		return fmt.Errorf("a 990 answers a tender: give %q from edi_list_transfers",
+			paramEDITransferID)
+	case c.shipmentID.IsNotNil():
+		return fmt.Errorf("a 990 is named by %q, not %q; leave the shipment out",
+			paramEDITransferID, querytool.ParamShipmentID)
+	case c.reason != "" && c.response != editransferservice.TenderResponseDecline:
+		return fmt.Errorf("parameter %q goes only with %q Decline", paramDeclineReason,
+			paramTenderResponse)
+	case len(c.reason) > maxDeclineReasonLength:
+		return fmt.Errorf("parameter %q is longer than %d characters", paramDeclineReason,
+			maxDeclineReasonLength)
+	}
+
+	return nil
+}
+
+func (c *documentPreviewCall) checkShipmentDocument() error {
+	switch {
+	case c.shipmentID.IsNil():
+		return fmt.Errorf(
+			"a %s is built from a shipment: give %q",
+			c.set,
+			querytool.ParamShipmentID,
+		)
+	case c.transferID.IsNotNil():
+		return fmt.Errorf(
+			"a %s is named by %q alone; %q is for a 990",
+			c.set,
+			querytool.ParamShipmentID,
+			paramEDITransferID,
+		)
+	case c.response != "" || c.reason != "":
+		return fmt.Errorf("parameters %q and %q are for a 990 only", paramTenderResponse,
+			paramDeclineReason)
+	}
+
+	return nil
+}
+
+func (t *previewEDIDocumentTool) mayReadSource(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+	call *documentPreviewCall,
+) error {
+	if call.set == edidocument.TransactionSet990 {
+		if !t.access.MayReadRecord(ctx, params, permission.ResourceEDI, call.transferID.String()) {
+			return errors.New("the person you are working for may not read that tender, so " +
+				"its 990 was not rendered")
+		}
+
+		return nil
+	}
+	if !t.access.MayReadRecord(ctx, params, permission.ResourceShipment, call.shipmentID.String()) {
+		return errors.New("the person you are working for may not read that shipment, so " +
+			"no document was rendered from it")
+	}
+
+	return nil
+}
+
+func documentPreviewView(
+	ctx context.Context,
+	set edidocument.TransactionSet,
+	preview *edioutbound.OutboundDocumentPreview,
+) (*ediDocumentPreviewView, error) {
+	document := preview.Document
+	view := &ediDocumentPreviewView{
+		Title:          "EDI " + string(set),
+		TransactionSet: string(set),
+		X12Version:     document.X12Version,
+		WouldSend:      !preview.Blocking,
+		SegmentCount:   document.SegmentCount,
+		FindingCount:   len(document.Diagnostics),
+		Findings:       previewFindings(document.Diagnostics),
+		Note:           previewDocumentNote,
+	}
+	view.Partner = document.PartnerName
+	view.Map = document.Map
+	if view.Partner != "" {
+		view.Title += " to " + view.Partner
+	}
+
+	inspection, err := edix12inspect.InspectX12(ctx, &edix12inspect.InspectX12Request{
+		RawX12:         document.RawX12,
+		TransactionSet: set,
+		X12Version:     document.X12Version,
+	})
+	if err != nil {
+		return nil, err
+	}
+	view.Segments = make([]string, 0, min(len(inspection.Segments), maxPreviewSegments))
+	for idx := range inspection.Segments {
+		if len(view.Segments) == maxPreviewSegments {
+			view.SegmentsCut = len(inspection.Segments) - maxPreviewSegments
+			break
+		}
+		view.Segments = append(view.Segments, inspection.Segments[idx].Raw)
+	}
+	view.Raw = stringutils.TruncateBytes(document.RawX12, maxRawX12Bytes)
+	view.RawTruncated = len(view.Raw) < len(document.RawX12)
+
+	return view, nil
+}
+
+func previewFindings(diagnostics []edidocument.Diagnostic) []ediDiagnosticRow {
+	rows := make([]ediDiagnosticRow, 0, min(len(diagnostics), maxMessageDiagnostics))
+	for idx := range diagnostics {
+		if len(rows) == maxMessageDiagnostics {
+			break
+		}
+		diagnostic := &diagnostics[idx]
+		rows = append(rows, ediDiagnosticRow{
+			Severity:     string(diagnostic.Severity),
+			Code:         diagnostic.Code,
+			Segment:      diagnostic.SegmentID,
+			Element:      diagnostic.ElementPosition,
+			Path:         diagnostic.Path,
+			Message:      diagnostic.Message,
+			SuggestedFix: diagnostic.SuggestedFix,
+		})
+	}
+
+	return rows
+}

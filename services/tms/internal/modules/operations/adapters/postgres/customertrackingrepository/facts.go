@@ -12,8 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold/shipmentholddb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
@@ -103,7 +104,7 @@ func (r *factRepository) ListCandidateShipments(
 			Pick(sp.ID).
 			Where(
 				pc.NotificationsEnabledAt.IsNotNull(),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 				keel.Or(
 					sp.Status.In(movingStatuses()...),
 					sp.UpdatedAt.Gte(req.Since),
@@ -120,13 +121,13 @@ func (r *factRepository) ListCandidateShipments(
 	})
 }
 
-func movingStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusAssigned,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
+func movingStatuses() []shipmentvocab.Status {
+	return []shipmentvocab.Status{
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
 	}
 }
 
@@ -199,7 +200,7 @@ func (r *factRepository) CustomerVisibleHolds(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]customertrackingports.PublicHold, error) {
-			hc := shipmentdb.ShipmentHolds
+			hc := shipmentholddb.ShipmentHolds
 			hr := holdreasondb.HoldReasons
 			rows, err := keel.Into[customertrackingports.PublicHold](ctx, r.db.Keel(ctx), hc.
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).
@@ -241,7 +242,7 @@ func (r *factRepository) CustomerVisibleNotes(
 				Pick(cc.Comment, cc.CreatedAt).
 				Where(
 					cc.ShipmentID.Eq(shipmentID),
-					cc.Visibility.Eq(shipment.CommentVisibilityCustomer),
+					cc.Visibility.Eq(shipmentvocab.CommentVisibilityCustomer),
 					cc.DeletedAt.IsNull(),
 				).
 				Order(cc.CreatedAt.Desc()).
@@ -313,8 +314,8 @@ func (r *factRepository) Descriptors(
 				Pick(cr.Name).
 				Where(
 					sm.ShipmentID.EqCol(sp.ID),
-					sm.Status.Ne(shipment.MoveStatusCanceled),
-					ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+					sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
+					ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 				).
 				Order(sm.Sequence.Desc()).
 				Limit(1)

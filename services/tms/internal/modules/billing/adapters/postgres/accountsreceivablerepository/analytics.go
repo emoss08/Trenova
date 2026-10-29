@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -419,10 +422,10 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 
 	inv := invoicedb.Invoices
 	cp := customerpaymentdb.Payments
-	fsi := factoringdb.SubmissionItems
-	fs := factoringdb.Submissions
+	fsi := factoringsubmissiondb.SubmissionItems
+	fs := factoringsubmissiondb.Submissions
 	agr := factoringdb.Agreements
-	reserved := factoringdb.SubmissionItems.As("reserved")
+	reserved := factoringsubmissiondb.SubmissionItems.As("reserved")
 	reservedInv := invoicedb.Invoices.As("reserved_inv")
 	advanceAt := fs.SentAt.Add(agr.FundingDays.Mul(keel.Int64(secondsPerDay))).
 		Greatest(keel.Int64(req.AsOfDate))
@@ -453,8 +456,8 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 				Join(fs, fs.ID.EqCol(fsi.SubmissionID)).
 				Join(agr, agr.ID.EqCol(fs.AgreementID)).
 				Where(
-					fsi.Status.Eq(factoring.SubmissionItemStatusPending),
-					fs.Status.In(factoring.SubmissionStatusSent, factoring.SubmissionStatusPartially),
+					fsi.Status.Eq(factoringsubmission.SubmissionItemStatusPending),
+					fs.Status.In(factoringsubmission.SubmissionStatusSent, factoringsubmission.SubmissionStatusPartially),
 					fs.SentAt.IsNotNull(),
 					inWeek(advanceAt),
 				),
@@ -463,7 +466,7 @@ func cashFlowQuery(req customerledgerports.ListARCashFlowRequest) *keel.Query[*k
 				Pick(reserved.ReserveMinor.Sum()).
 				Join(reservedInv, reservedInv.ID.EqCol(reserved.InvoiceID)).
 				Where(
-					reserved.Status.Eq(factoring.SubmissionItemStatusFunded),
+					reserved.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
 					reservedInv.DueDate.IsNotNull(),
 					inWeek(releaseAt),
 				))),
@@ -672,11 +675,11 @@ func worklistQuery(
 	req customerledgerports.ListARCollectionsWorklistRequest,
 ) *keel.Query[*keel.Row] {
 	inv := invoicedb.Invoices
-	od := invoicedb.InvoiceDisputes.As("od")
+	od := invoicedisputedb.InvoiceDisputes.As("od")
 	items := keel.CTE("items", worklistColumns, inv.
 		LeftJoinLateral(od.
 			Pick(od.ID, od.ReasonCode, od.DisputedAmountMinor, od.OpenedAt).
-			Where(od.InvoiceID.EqCol(inv.ID), od.Status.Eq(invoice.DisputeCaseStatusOpen)).
+			Where(od.InvoiceID.EqCol(inv.ID), od.Status.Eq(invoicedispute.DisputeCaseStatusOpen)).
 			Order(od.OpenedAt.Desc()).
 			Limit(1)).
 		Pick(

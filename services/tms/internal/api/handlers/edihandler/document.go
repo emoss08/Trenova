@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,7 +26,7 @@ func (h *Handler) registerDocumentRoutes(documents *gin.RouterGroup) {
 
 func (h *Handler) previewDocument(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.PreviewEDIDocumentRequest)
+	req := new(edioutbound.PreviewEDIDocumentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -36,7 +36,7 @@ func (h *Handler) previewDocument(c *gin.Context) {
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
-	preview, err := h.service.PreviewDocument(c.Request.Context(), req)
+	preview, err := h.outbound.PreviewDocument(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -46,7 +46,7 @@ func (h *Handler) previewDocument(c *gin.Context) {
 
 func (h *Handler) generateDocument(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(ediservice.GenerateEDIDocumentRequest)
+	req := new(edioutbound.GenerateEDIDocumentRequest)
 	if err := authctx.BindJSON(c, authCtx, req); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -57,7 +57,7 @@ func (h *Handler) generateDocument(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 	req.GeneratedByID = authCtx.UserID
-	message, err := h.service.GenerateDocument(c.Request.Context(), req)
+	message, err := h.outbound.GenerateDocument(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

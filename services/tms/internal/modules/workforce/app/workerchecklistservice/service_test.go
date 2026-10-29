@@ -4,14 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,31 +29,31 @@ import (
 const day = int64(86400)
 
 type fakeRepo struct {
-	templates  map[pulid.ID]*worker.WorkerChecklistTemplate
-	checklists map[pulid.ID]*worker.WorkerChecklist
-	items      map[pulid.ID]*worker.WorkerChecklistItem
+	templates  map[pulid.ID]*workerchecklist.WorkerChecklistTemplate
+	checklists map[pulid.ID]*workerchecklist.WorkerChecklist
+	items      map[pulid.ID]*workerchecklist.WorkerChecklistItem
 }
 
 func newFakeRepo() *fakeRepo {
 	return &fakeRepo{
-		templates:  map[pulid.ID]*worker.WorkerChecklistTemplate{},
-		checklists: map[pulid.ID]*worker.WorkerChecklist{},
-		items:      map[pulid.ID]*worker.WorkerChecklistItem{},
+		templates:  map[pulid.ID]*workerchecklist.WorkerChecklistTemplate{},
+		checklists: map[pulid.ID]*workerchecklist.WorkerChecklist{},
+		items:      map[pulid.ID]*workerchecklist.WorkerChecklistItem{},
 	}
 }
 
 func (f *fakeRepo) ListTemplates(
 	context.Context,
-	*workerports.ListChecklistTemplatesRequest,
-) (*pagination.CursorListResult[*worker.WorkerChecklistTemplate], error) {
-	return &pagination.CursorListResult[*worker.WorkerChecklistTemplate]{}, nil
+	*workerchecklistports.ListChecklistTemplatesRequest,
+) (*pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate], error) {
+	return &pagination.CursorListResult[*workerchecklist.WorkerChecklistTemplate]{}, nil
 }
 
 func (f *fakeRepo) ListActiveTemplates(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*worker.WorkerChecklistTemplate, error) {
-	out := make([]*worker.WorkerChecklistTemplate, 0, len(f.templates))
+) ([]*workerchecklist.WorkerChecklistTemplate, error) {
+	out := make([]*workerchecklist.WorkerChecklistTemplate, 0, len(f.templates))
 	for _, t := range f.templates {
 		out = append(out, t)
 	}
@@ -58,8 +62,8 @@ func (f *fakeRepo) ListActiveTemplates(
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *workerports.GetChecklistTemplateByIDRequest,
-) (*worker.WorkerChecklistTemplate, error) {
+	req *workerchecklistports.GetChecklistTemplateByIDRequest,
+) (*workerchecklist.WorkerChecklistTemplate, error) {
 	t, ok := f.templates[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("template")
@@ -69,8 +73,8 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) GetDefaultTemplate(
 	_ context.Context,
-	req *workerports.GetDefaultChecklistTemplateRequest,
-) (*worker.WorkerChecklistTemplate, error) {
+	req *workerchecklistports.GetDefaultChecklistTemplateRequest,
+) (*workerchecklist.WorkerChecklistTemplate, error) {
 	for _, t := range f.templates {
 		if t.IsDefault && t.Trigger == req.Trigger && t.Status == domaintypes.StatusActive {
 			return t, nil
@@ -81,15 +85,15 @@ func (f *fakeRepo) GetDefaultTemplate(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*workerports.ChecklistTemplateCodeExistsRequest,
+	*workerchecklistports.ChecklistTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
 
 func (f *fakeRepo) CreateTemplate(
 	_ context.Context,
-	entity *worker.WorkerChecklistTemplate,
-) (*worker.WorkerChecklistTemplate, error) {
+	entity *workerchecklist.WorkerChecklistTemplate,
+) (*workerchecklist.WorkerChecklistTemplate, error) {
 	entity.ID = pulid.MustNew("wclt_")
 	for _, item := range entity.Items {
 		item.ID = pulid.MustNew("wclti_")
@@ -100,8 +104,8 @@ func (f *fakeRepo) CreateTemplate(
 
 func (f *fakeRepo) UpdateTemplate(
 	_ context.Context,
-	entity *worker.WorkerChecklistTemplate,
-) (*worker.WorkerChecklistTemplate, error) {
+	entity *workerchecklist.WorkerChecklistTemplate,
+) (*workerchecklist.WorkerChecklistTemplate, error) {
 	entity.Version++
 	f.templates[entity.ID] = entity
 	return entity, nil
@@ -109,30 +113,30 @@ func (f *fakeRepo) UpdateTemplate(
 
 func (f *fakeRepo) ClearDefaultTemplate(
 	context.Context,
-	*workerports.ClearDefaultChecklistTemplateRequest,
+	*workerchecklistports.ClearDefaultChecklistTemplateRequest,
 ) error {
 	return nil
 }
 
 func (f *fakeRepo) CountOpenChecklists(
 	context.Context,
-	*workerports.CountOpenChecklistsRequest,
+	*workerchecklistports.CountOpenChecklistsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
 func (f *fakeRepo) CountOpenChecklistsByTemplateIDs(
 	context.Context,
-	*workerports.CountOpenChecklistsByTemplateIDsRequest,
+	*workerchecklistports.CountOpenChecklistsByTemplateIDsRequest,
 ) (map[pulid.ID]int, error) {
 	return map[pulid.ID]int{}, nil
 }
 
 func (f *fakeRepo) ListForWorker(
 	_ context.Context,
-	req *workerports.ListWorkerChecklistsRequest,
-) ([]*worker.WorkerChecklist, error) {
-	out := make([]*worker.WorkerChecklist, 0, len(f.checklists))
+	req *workerchecklistports.ListWorkerChecklistsRequest,
+) ([]*workerchecklist.WorkerChecklist, error) {
+	out := make([]*workerchecklist.WorkerChecklist, 0, len(f.checklists))
 	for _, c := range f.checklists {
 		if c.WorkerID != req.WorkerID {
 			continue
@@ -147,8 +151,8 @@ func (f *fakeRepo) ListForWorker(
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	req *workerports.GetWorkerChecklistByIDRequest,
-) (*worker.WorkerChecklist, error) {
+	req *workerchecklistports.GetWorkerChecklistByIDRequest,
+) (*workerchecklist.WorkerChecklist, error) {
 	c, ok := f.checklists[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("checklist")
@@ -158,8 +162,8 @@ func (f *fakeRepo) GetByID(
 
 func (f *fakeRepo) GetItemByID(
 	_ context.Context,
-	req *workerports.GetWorkerChecklistItemByIDRequest,
-) (*worker.WorkerChecklistItem, error) {
+	req *workerchecklistports.GetWorkerChecklistItemByIDRequest,
+) (*workerchecklist.WorkerChecklistItem, error) {
 	item, ok := f.items[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("item")
@@ -169,8 +173,8 @@ func (f *fakeRepo) GetItemByID(
 
 func (f *fakeRepo) Create(
 	_ context.Context,
-	entity *worker.WorkerChecklist,
-) (*worker.WorkerChecklist, error) {
+	entity *workerchecklist.WorkerChecklist,
+) (*workerchecklist.WorkerChecklist, error) {
 	entity.ID = pulid.MustNew("wcl_")
 	for _, item := range entity.Items {
 		item.ID = pulid.MustNew("wcli_")
@@ -183,14 +187,17 @@ func (f *fakeRepo) Create(
 
 func (f *fakeRepo) Update(
 	_ context.Context,
-	entity *worker.WorkerChecklist,
-) (*worker.WorkerChecklist, error) {
+	entity *workerchecklist.WorkerChecklist,
+) (*workerchecklist.WorkerChecklist, error) {
 	entity.Version++
 	f.checklists[entity.ID] = entity
 	return entity, nil
 }
 
-func (f *fakeRepo) UpdateItems(_ context.Context, items []*worker.WorkerChecklistItem) error {
+func (f *fakeRepo) UpdateItems(
+	_ context.Context,
+	items []*workerchecklist.WorkerChecklistItem,
+) error {
 	for _, item := range items {
 		item.Version++
 		f.items[item.ID] = item
@@ -199,14 +206,14 @@ func (f *fakeRepo) UpdateItems(_ context.Context, items []*worker.WorkerChecklis
 }
 
 type fakeCredentialRepo struct {
-	workerports.WorkerCredentialRepository
-	credentials []*worker.WorkerCredential
+	workercredentialports.WorkerCredentialRepository
+	credentials []*workercredential.WorkerCredential
 }
 
 func (f *fakeCredentialRepo) ListForWorker(
 	context.Context,
-	*workerports.ListWorkerCredentialsRequest,
-) ([]*worker.WorkerCredential, error) {
+	*workercredentialports.ListWorkerCredentialsRequest,
+) ([]*workercredential.WorkerCredential, error) {
 	return f.credentials, nil
 }
 
@@ -218,7 +225,7 @@ type harness struct {
 	workerRepo *workerportsmock.MockWorkerRepository
 	tenant     pagination.TenantInfo
 	wrk        *worker.Worker
-	template   *worker.WorkerChecklistTemplate
+	template   *workerchecklist.WorkerChecklistTemplate
 	credType   pulid.ID
 	docType    pulid.ID
 	userID     pulid.ID
@@ -259,40 +266,40 @@ func newHarness(t *testing.T) *harness {
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	h.template = &worker.WorkerChecklistTemplate{
+	h.template = &workerchecklist.WorkerChecklistTemplate{
 		ID:             pulid.MustNew("wclt_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
 		Code:           "ONB",
 		Name:           "Driver onboarding",
-		Kind:           worker.ChecklistKindOnboarding,
-		Trigger:        worker.ChecklistTriggerHired,
+		Kind:           workerchecklist.ChecklistKindOnboarding,
+		Trigger:        workerchecklist.ChecklistTriggerHired,
 		Status:         domaintypes.StatusActive,
 		IsDefault:      true,
-		Items: []*worker.WorkerChecklistTemplateItem{
+		Items: []*workerchecklist.WorkerChecklistTemplateItem{
 			{
 				ID:               pulid.MustNew("wclti_"),
 				Label:            "CDL on file",
-				Kind:             worker.ChecklistItemCredential,
+				Kind:             workerchecklist.ChecklistItemCredential,
 				Required:         true,
-				Owner:            worker.ChecklistOwnerSafety,
+				Owner:            workerchecklist.ChecklistOwnerSafety,
 				CredentialTypeID: h.credType,
 				DueOffsetDays:    3,
 			},
 			{
 				ID:            pulid.MustNew("wclti_"),
 				Label:         "Fuel card",
-				Kind:          worker.ChecklistItemEquipment,
+				Kind:          workerchecklist.ChecklistItemEquipment,
 				Required:      true,
-				Owner:         worker.ChecklistOwnerFleet,
+				Owner:         workerchecklist.ChecklistOwnerFleet,
 				DueOffsetDays: 2,
 			},
 			{
 				ID:       pulid.MustNew("wclti_"),
 				Label:    "Dash invite",
-				Kind:     worker.ChecklistItemPortalAccess,
+				Kind:     workerchecklist.ChecklistItemPortalAccess,
 				Required: false,
-				Owner:    worker.ChecklistOwnerDispatch,
+				Owner:    workerchecklist.ChecklistOwnerDispatch,
 			},
 		},
 	}
@@ -310,9 +317,9 @@ func newHarness(t *testing.T) *harness {
 }
 
 func (h *harness) itemByLabel(
-	checklist *worker.WorkerChecklist,
+	checklist *workerchecklist.WorkerChecklist,
 	label string,
-) *worker.WorkerChecklistItem {
+) *workerchecklist.WorkerChecklistItem {
 	for _, item := range checklist.Items {
 		if item.Label == label {
 			return item
@@ -325,33 +332,41 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 	h := newHarness(t)
 	h.wrk.UserID = pulid.MustNew("usr_")
 	expiry := int64(2_000_000_000)
-	h.creds.credentials = []*worker.WorkerCredential{
+	h.creds.credentials = []*workercredential.WorkerCredential{
 		{
 			ID:               pulid.MustNew("wcred_"),
 			CredentialTypeID: h.credType,
-			Status:           worker.CredentialStatusActive,
+			Status:           workercredential.CredentialStatusActive,
 			ExpiresAt:        &expiry,
 		},
 	}
-	event := &worker.WorkerEmploymentEvent{
+	event := &employment.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
-		Kind:        worker.EmploymentEventHired,
+		Kind:        employment.EmploymentEventHired,
 		EffectiveAt: 1_800_000_000,
 	}
 
 	checklist, err := h.svc.SpawnForEvent(context.Background(), event, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.NotNil(t, checklist)
-	assert.Equal(t, worker.ChecklistStatusOpen, checklist.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusOpen, checklist.Status)
 	assert.Equal(t, event.ID, checklist.SourceEventID)
 	assert.Equal(t, int64(1_800_000_000), checklist.StartedAt)
 
 	cdl := h.itemByLabel(checklist, "CDL on file")
-	assert.Equal(t, worker.ChecklistItemDone, cdl.Status)
+	assert.Equal(t, workerchecklist.ChecklistItemDone, cdl.Status)
 	assert.True(t, cdl.AutoCompleted)
 	assert.Equal(t, h.creds.credentials[0].ID, cdl.EvidenceCredentialID)
-	assert.Equal(t, worker.ChecklistItemDone, h.itemByLabel(checklist, "Dash invite").Status)
-	assert.Equal(t, worker.ChecklistItemPending, h.itemByLabel(checklist, "Fuel card").Status)
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistItemDone,
+		h.itemByLabel(checklist, "Dash invite").Status,
+	)
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistItemPending,
+		h.itemByLabel(checklist, "Fuel card").Status,
+	)
 	assert.Empty(t, h.qualified, "the required equipment item keeps onboarding open")
 
 	again, err := h.svc.SpawnForEvent(context.Background(), event, h.wrk, h.userID)
@@ -365,7 +380,7 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 
 	none, err := h.svc.SpawnForEvent(
 		context.Background(),
-		&worker.WorkerEmploymentEvent{Kind: worker.EmploymentEventPromoted},
+		&employment.WorkerEmploymentEvent{Kind: employment.EmploymentEventPromoted},
 		h.wrk,
 		h.userID,
 	)
@@ -376,11 +391,11 @@ func TestSpawnForEvent_UsesDefaultTemplateAndAutoSatisfies(t *testing.T) {
 func TestCompleteItem_ClosesChecklistAndFlagsQualification(t *testing.T) {
 	h := newHarness(t)
 	expiry := int64(2_000_000_000)
-	h.creds.credentials = []*worker.WorkerCredential{
+	h.creds.credentials = []*workercredential.WorkerCredential{
 		{
 			ID:               pulid.MustNew("wcred_"),
 			CredentialTypeID: h.credType,
-			Status:           worker.CredentialStatusActive,
+			Status:           workercredential.CredentialStatusActive,
 			ExpiresAt:        &expiry,
 		},
 	}
@@ -402,7 +417,7 @@ func TestCompleteItem_ClosesChecklistAndFlagsQualification(t *testing.T) {
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistStatusCompleted, updated.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusCompleted, updated.Status)
 	require.NotNil(t, updated.CompletedAt)
 	assert.Equal(t, []bool{true}, h.qualified, "closing onboarding marks the worker DQF-ready")
 	done := h.itemByLabel(updated, "Fuel card")
@@ -446,11 +461,11 @@ func TestSkipItem_NeedsNoteAndEvidenceMustBelongToWorker(t *testing.T) {
 func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
 	h := newHarness(t)
 	expiry := int64(2_000_000_000)
-	h.creds.credentials = []*worker.WorkerCredential{
+	h.creds.credentials = []*workercredential.WorkerCredential{
 		{
 			ID:               pulid.MustNew("wcred_"),
 			CredentialTypeID: h.credType,
-			Status:           worker.CredentialStatusActive,
+			Status:           workercredential.CredentialStatusActive,
 			ExpiresAt:        &expiry,
 		},
 	}
@@ -463,7 +478,7 @@ func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
 		ID: fuel.ID, TenantInfo: h.tenant, Version: fuel.Version, UserID: h.userID,
 	})
 	require.NoError(t, err)
-	require.Equal(t, worker.ChecklistStatusCompleted, completed.Status)
+	require.Equal(t, workerchecklist.ChecklistStatusCompleted, completed.Status)
 
 	reopened, err := h.svc.ReopenItem(
 		context.Background(),
@@ -472,9 +487,13 @@ func TestReopenItem_ReopensCompletedChecklist(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistStatusOpen, reopened.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusOpen, reopened.Status)
 	assert.Nil(t, reopened.CompletedAt)
-	assert.Equal(t, worker.ChecklistItemPending, h.itemByLabel(reopened, "Fuel card").Status)
+	assert.Equal(
+		t,
+		workerchecklist.ChecklistItemPending,
+		h.itemByLabel(reopened, "Fuel card").Status,
+	)
 }
 
 func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
@@ -488,7 +507,7 @@ func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
 		ID: checklist.ID, TenantInfo: h.tenant, Reason: "Hire fell through", Version: checklist.Version, UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistStatusCancelled, cancelled.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, cancelled.Status)
 	assert.Equal(t, "Hire fell through", cancelled.CancelReason)
 	assert.Len(t, cancelled.Items, 3)
 
@@ -502,9 +521,9 @@ func TestCancel_LeavesItemsAndRefusesInactiveTemplate(t *testing.T) {
 }
 
 func TestProgressWindow(t *testing.T) {
-	template := &worker.WorkerChecklistTemplate{
-		Items: []*worker.WorkerChecklistTemplateItem{
-			{Label: "x", Kind: worker.ChecklistItemTask, Required: true, DueOffsetDays: 1},
+	template := &workerchecklist.WorkerChecklistTemplate{
+		Items: []*workerchecklist.WorkerChecklistTemplateItem{
+			{Label: "x", Kind: workerchecklist.ChecklistItemTask, Required: true, DueOffsetDays: 1},
 		},
 	}
 	checklist := template.Instantiate(pulid.MustNew("wrk_"), 100, pulid.Nil, pulid.Nil)
@@ -526,22 +545,22 @@ func TestStart_RefusesTriggeredTemplateByHand(t *testing.T) {
 	assert.Contains(t, err.Error(), "started by the employment event")
 	assert.Empty(t, h.repo.checklists)
 
-	manual := &worker.WorkerChecklistTemplate{
+	manual := &workerchecklist.WorkerChecklistTemplate{
 		ID:             pulid.MustNew("wclt_"),
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		Code:           "AUDIT",
 		Name:           "Annual file audit",
-		Kind:           worker.ChecklistKindCustom,
-		Trigger:        worker.ChecklistTriggerManual,
+		Kind:           workerchecklist.ChecklistKindCustom,
+		Trigger:        workerchecklist.ChecklistTriggerManual,
 		Status:         domaintypes.StatusActive,
-		Items: []*worker.WorkerChecklistTemplateItem{
+		Items: []*workerchecklist.WorkerChecklistTemplateItem{
 			{
 				ID:       pulid.MustNew("wclti_"),
 				Label:    "Review file",
-				Kind:     worker.ChecklistItemTask,
+				Kind:     workerchecklist.ChecklistItemTask,
 				Required: true,
-				Owner:    worker.ChecklistOwnerHR,
+				Owner:    workerchecklist.ChecklistOwnerHR,
 			},
 		},
 	}
@@ -568,9 +587,9 @@ func TestStart_RefusesTriggeredTemplateByHand(t *testing.T) {
 // old one is on the record; the same event never spawns twice.
 func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 	h := newHarness(t)
-	hired := &worker.WorkerEmploymentEvent{
+	hired := &employment.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
-		Kind:        worker.EmploymentEventHired,
+		Kind:        employment.EmploymentEventHired,
 		EffectiveAt: 1_700_000_000,
 	}
 	first, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
@@ -584,7 +603,7 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.ChecklistStatusCancelled, cancelled.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, cancelled.Status)
 
 	again, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
 	require.NoError(t, err)
@@ -595,49 +614,49 @@ func TestSpawnForEvent_OncePerEvent(t *testing.T) {
 		"the same event returns the checklist it already spawned, closed or not",
 	)
 
-	rehired := &worker.WorkerEmploymentEvent{
+	rehired := &employment.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
-		Kind:        worker.EmploymentEventRehired,
+		Kind:        employment.EmploymentEventRehired,
 		EffectiveAt: 1_800_000_000,
 	}
-	h.template.Trigger = worker.ChecklistTriggerRehired
+	h.template.Trigger = workerchecklist.ChecklistTriggerRehired
 	fresh, err := h.svc.SpawnForEvent(context.Background(), rehired, h.wrk, h.userID)
 	require.NoError(t, err)
 	require.NotNil(t, fresh)
 	assert.NotEqual(t, first.ID, fresh.ID, "a new employment gets its own onboarding")
 	assert.Equal(t, rehired.ID, fresh.SourceEventID)
-	assert.Equal(t, worker.ChecklistStatusOpen, fresh.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusOpen, fresh.Status)
 }
 
 func TestCloseForEvent_CancelsWhatTheEventMakesMoot(t *testing.T) {
 	h := newHarness(t)
-	hired := &worker.WorkerEmploymentEvent{
+	hired := &employment.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
-		Kind:        worker.EmploymentEventHired,
+		Kind:        employment.EmploymentEventHired,
 		EffectiveAt: 1_700_000_000,
 	}
 	onboarding, err := h.svc.SpawnForEvent(context.Background(), hired, h.wrk, h.userID)
 	require.NoError(t, err)
-	require.Equal(t, worker.ChecklistStatusOpen, onboarding.Status)
+	require.Equal(t, workerchecklist.ChecklistStatusOpen, onboarding.Status)
 
-	promoted := &worker.WorkerEmploymentEvent{
+	promoted := &employment.WorkerEmploymentEvent{
 		ID:   pulid.MustNew("wee_"),
-		Kind: worker.EmploymentEventPromoted,
+		Kind: employment.EmploymentEventPromoted,
 	}
 	closed, err := h.svc.CloseForEvent(context.Background(), promoted, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, closed, "a promotion leaves onboarding running")
 
-	terminated := &worker.WorkerEmploymentEvent{
+	terminated := &employment.WorkerEmploymentEvent{
 		ID:          pulid.MustNew("wee_"),
-		Kind:        worker.EmploymentEventTerminated,
+		Kind:        employment.EmploymentEventTerminated,
 		EffectiveAt: 1_750_000_000,
 	}
 	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)
 	require.NoError(t, err)
 	assert.Equal(t, 1, closed)
 	stored := h.repo.checklists[onboarding.ID]
-	assert.Equal(t, worker.ChecklistStatusCancelled, stored.Status)
+	assert.Equal(t, workerchecklist.ChecklistStatusCancelled, stored.Status)
 	assert.Equal(t, "Superseded by terminated event", stored.CancelReason)
 
 	closed, err = h.svc.CloseForEvent(context.Background(), terminated, h.wrk, h.userID)

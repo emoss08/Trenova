@@ -11,7 +11,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/errcode"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -30,14 +31,14 @@ const (
 type CostBudgetParams struct {
 	fx.In
 
-	Config  *config.Config
-	Logger  *zap.Logger
-	Metrics *metrics.Registry
+	SecurityConfig *securityconfig.Config
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry
 }
 
 type CostBudgetExtension struct {
-	cfg     config.GraphQLCostBudgetConfig
-	metrics *metrics.GraphQL
+	cfg     securityconfig.GraphQLCostBudgetConfig
+	metrics *httpmetrics.GraphQL
 	l       *zap.Logger
 	now     func() time.Time
 
@@ -58,15 +59,15 @@ var _ interface {
 
 func NewCostBudgetExtension(p CostBudgetParams) *CostBudgetExtension {
 	return newCostBudgetExtension(
-		p.Config.Security.GraphQL.CostBudget,
+		p.SecurityConfig.GraphQL.CostBudget,
 		p.Metrics.GraphQL,
 		p.Logger.Named("api.graphql.costbudget"),
 	)
 }
 
 func newCostBudgetExtension(
-	cfg config.GraphQLCostBudgetConfig,
-	graphQLMetrics *metrics.GraphQL,
+	cfg securityconfig.GraphQLCostBudgetConfig,
+	graphQLMetrics *httpmetrics.GraphQL,
 	logger *zap.Logger,
 ) *CostBudgetExtension {
 	return &CostBudgetExtension{

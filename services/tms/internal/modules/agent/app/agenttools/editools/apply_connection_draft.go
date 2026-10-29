@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/edispec"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -30,16 +33,19 @@ var (
 type connectionDrafts interface {
 	PreviewConnectionDraft(
 		ctx context.Context,
-		req *ediports.ConnectionDraftRequest,
-	) (*ediports.ConnectionDraftPlan, error)
+		req *ediconnectiondraftports.ConnectionDraftRequest,
+	) (*ediconnectiondraftports.ConnectionDraftPlan, error)
 	ApplyConnectionDraft(
 		ctx context.Context,
-		req *ediports.ApplyConnectionDraftRequest,
-	) (*ediports.AppliedConnectionDraft, error)
+		req *ediconnectiondraftports.ApplyConnectionDraftRequest,
+	) (*ediconnectiondraftports.AppliedConnectionDraft, error)
 }
 
 type specReader interface {
-	Read(ctx context.Context, req *edispec.ReadRequest) (*ediports.SpecDocument, error)
+	Read(
+		ctx context.Context,
+		req *edispec.ReadRequest,
+	) (*ediconnectiondraftports.SpecDocument, error)
 }
 
 type ApplyConnectionDraftTool struct {
@@ -50,7 +56,7 @@ type ApplyConnectionDraftTool struct {
 func NewApplyConnectionDraftTool(
 	drafts connectionDrafts,
 	documents specReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ApplyConnectionDraftTool{drafts: drafts, documents: documents}
 }
 
@@ -87,18 +93,18 @@ func (t *ApplyConnectionDraftTool) ParamSchema() map[string]any {
 	return edispec.ParamSchema(true)
 }
 
-func (t *ApplyConnectionDraftTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ApplyConnectionDraftTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceEDI,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadAlways,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadAlways,
 		Source:        agent.TaintSourceAttachment,
 		Artifact:      ediPartnerRecordEntity,
 		Rationale: "Sets up a trading partner from a guide the partner wrote, so a person " +
@@ -109,9 +115,9 @@ func (t *ApplyConnectionDraftTool) Policy() agentports.ToolPolicy {
 
 func (t *ApplyConnectionDraftTool) input(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*edispec.Input, error) {
-	input, err := edispec.Parse(params.Params, common.TenantFrom(*params))
+	input, err := edispec.Parse(params.Params, toolparams.TenantFrom(params))
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +125,7 @@ func (t *ApplyConnectionDraftTool) input(
 		return nil, fmt.Errorf("parameter %q is required", edispec.ParamDocumentDigest)
 	}
 	document, err := t.documents.Read(ctx, &edispec.ReadRequest{
-		Tenant:     common.TenantFrom(*params),
+		Tenant:     toolparams.TenantFrom(params),
 		DocumentID: input.DocumentID,
 		ThreadID:   params.ThreadID,
 	})
@@ -132,8 +138,8 @@ func (t *ApplyConnectionDraftTool) input(
 
 func (t *ApplyConnectionDraftTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*edispec.Input, *ediports.ConnectionDraftPlan, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*edispec.Input, *ediconnectiondraftports.ConnectionDraftPlan, error) {
 	input, err := t.input(ctx, params)
 	if err != nil {
 		return nil, nil, err
@@ -145,7 +151,7 @@ func (t *ApplyConnectionDraftTool) plan(
 	return input, plan, nil
 }
 
-func readiness(input *edispec.Input, draft *ediports.ConnectionDraft) error {
+func readiness(input *edispec.Input, draft *ediconnectiondraftports.ConnectionDraft) error {
 	if draft.DocumentDigest != input.Digest {
 		return errDraftDigest
 	}
@@ -157,19 +163,19 @@ func readiness(input *edispec.Input, draft *ediports.ConnectionDraft) error {
 
 func (t *ApplyConnectionDraftTool) ResolveSelection(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) (map[string]any, error) {
 	return edispec.RedactQuotes(params.Params), nil
 }
 
 func (t *ApplyConnectionDraftTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardPreview(t, &params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return err
 	}
-	input, plan, err := t.plan(ctx, &params)
+	input, plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -178,7 +184,7 @@ func (t *ApplyConnectionDraftTool) Validate(
 
 func (t *ApplyConnectionDraftTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 	return err
@@ -186,31 +192,36 @@ func (t *ApplyConnectionDraftTool) Execute(
 
 func (t *ApplyConnectionDraftTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrEDIDecisionNeedsAPerson
 	}
 
-	input, err := t.input(ctx, &params)
+	input, err := t.input(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	applied, err := t.drafts.ApplyConnectionDraft(ctx, &ediports.ApplyConnectionDraftRequest{
-		Draft:                  input.Draft,
-		ExpectedDocumentDigest: input.Digest,
-		Actor:                  params.Actor,
-	})
+	applied, err := t.drafts.ApplyConnectionDraft(
+		ctx,
+		&ediconnectiondraftports.ApplyConnectionDraftRequest{
+			Draft:                  input.Draft,
+			ExpectedDocumentDigest: input.Digest,
+			Actor:                  params.Actor,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("write the EDI connection: %w", err)
 	}
 	return appliedResult(applied), nil
 }
 
-func appliedResult(applied *ediports.AppliedConnectionDraft) *agent.ToolExecutionResult {
+func appliedResult(
+	applied *ediconnectiondraftports.AppliedConnectionDraft,
+) *agentrecord.ToolExecutionResult {
 	action := "updated"
 	if applied.Created {
 		action = "created"
@@ -219,12 +230,12 @@ func appliedResult(applied *ediports.AppliedConnectionDraft) *agent.ToolExecutio
 	if applied.Draft != nil {
 		name = draftPartnerName(applied.Draft)
 	}
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "EDI connection",
 		Name:   name,
 		IDs:    map[string]string{"ediPartnerId": applied.PartnerID.String()},
-		Record: &agent.RecordRef{
+		Record: &agentrecord.RecordRef{
 			EntityType: ediPartnerRecordEntity,
 			ID:         applied.PartnerID.String(),
 		},
@@ -232,7 +243,7 @@ func appliedResult(applied *ediports.AppliedConnectionDraft) *agent.ToolExecutio
 	}
 }
 
-func appliedState(applied *ediports.AppliedConnectionDraft) string {
+func appliedState(applied *ediconnectiondraftports.AppliedConnectionDraft) string {
 	order := make([]string, 0, len(applied.Writes))
 	counts := make(map[string]int, len(applied.Writes))
 	for _, write := range applied.Writes {

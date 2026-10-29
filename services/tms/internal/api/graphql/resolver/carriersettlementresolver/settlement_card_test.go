@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/settlementloaders"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,8 +46,16 @@ func TestCostSummaryIsNullWhenTheLinesWereNotRead(t *testing.T) {
 
 	groups, err := resolver.CostSummary(t.Context(), &carriersettlement.CarrierSettlement{
 		Lines: []*carriersettlement.CarrierSettlementLine{
-			{EventType: carriersettlement.CostEventTypeFuelSurcharge, Description: "Fuel surcharge", AmountMinor: 100},
-			{EventType: carriersettlement.CostEventTypeFuelSurcharge, Description: "Fuel surcharge", AmountMinor: 250},
+			{
+				EventType:   carriersettlement.CostEventTypeFuelSurcharge,
+				Description: "Fuel surcharge",
+				AmountMinor: 100,
+			},
+			{
+				EventType:   carriersettlement.CostEventTypeFuelSurcharge,
+				Description: "Fuel surcharge",
+				AmountMinor: 250,
+			},
 		},
 	})
 	require.NoError(t, err)
@@ -70,8 +78,10 @@ func TestMoveInvoicesReadsEveryMovesInvoicesInOneBatch(t *testing.T) {
 		invoiced: {match},
 	}}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	ctx := loaders.NewCarrierInvoiceMatchesByMoveIDLoaderFactory(
-		loaders.CarrierInvoiceMatchesByMoveIDLoaderFactoryParams{CarrierInvoiceMatchRepo: repo},
+	ctx := settlementloaders.NewCarrierInvoiceMatchesByMoveIDLoaderFactory(
+		settlementloaders.CarrierInvoiceMatchesByMoveIDLoaderFactoryParams{
+			CarrierInvoiceMatchRepo: repo,
+		},
 	).Attach(t.Context(), tenant)
 
 	invoices, err := (&CarrierSettlementResolver{&Deps{}}).MoveInvoices(

@@ -1,8 +1,6 @@
 package modeladapter
 
 import (
-	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -57,9 +55,9 @@ func (e *StreamInterrupted) Unwrap() error { return e.Err }
 // errStreamCut is a stream that closed before the provider said the reply
 // was over: no finish reason and no closing marker. The connection dropped,
 // and what arrived is the start of a reply, not the whole of one.
-var errStreamCut = fmt.Errorf("the stream ended before the reply finished: %w", io.ErrUnexpectedEOF)
+var ErrStreamCut = fmt.Errorf("the stream ended before the reply finished: %w", io.ErrUnexpectedEOF)
 
-func interrupted(err error, model string) error {
+func Interrupted(err error, model string) error {
 	if err == nil || model == "" {
 		return err
 	}
@@ -89,99 +87,10 @@ func IsRetryable(err error) bool {
 	return !errors.As(err, &business)
 }
 
-// postJSON sends body to url and decodes the reply into out. Headers are applied
-// by the caller because each protocol authenticates differently.
-func postJSON(
-	ctx context.Context,
-	client *http.Client,
-	url string,
-	headers map[string]string,
-	body any,
-	out any,
-) error {
-	encoded, err := requestJSON.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("encode provider request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(encoded))
-	if err != nil {
-		return fmt.Errorf("build provider request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	for key, value := range headers {
-		if value != "" {
-			req.Header.Set(key, value)
-		}
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("execute provider request: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	payload, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("read provider response: %w", err)
-	}
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return transportError(resp, payload)
-	}
-
-	if err = sonic.Unmarshal(payload, out); err != nil {
-		return fmt.Errorf("decode provider response: %w", err)
-	}
-
-	return nil
-}
-
-func getJSON(
-	ctx context.Context,
-	client *http.Client,
-	url string,
-	headers map[string]string,
-	out any,
-) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return fmt.Errorf("build provider request: %w", err)
-	}
-
-	for key, value := range headers {
-		if value != "" {
-			req.Header.Set(key, value)
-		}
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("execute provider request: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	payload, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("read provider response: %w", err)
-	}
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return transportError(resp, payload)
-	}
-
-	if err = sonic.Unmarshal(payload, out); err != nil {
-		return fmt.Errorf("decode provider response: %w", err)
-	}
-
-	return nil
-}
-
 // errorEnvelope covers the shapes providers actually return. OpenAI-compatible
 // servers nest under "error", some self-hosted servers return a bare "error"
 // string, and others return neither, in which case the raw body is the message.
-type errorEnvelope struct {
+type ErrorEnvelope struct {
 	Error struct {
 		Type    string `json:"type"`
 		Message string `json:"message"`
@@ -197,13 +106,13 @@ type errorEnvelope struct {
 // transportError reads a non-2xx reply into a TransportError: the status,
 // whether it is worth another attempt, the provider's message, and how long
 // it asked to be left alone.
-func transportError(resp *http.Response, payload []byte) *TransportError {
+func NewTransportError(resp *http.Response, payload []byte) *TransportError {
 	return &TransportError{
 		StatusCode: resp.StatusCode,
 		Retryable: resp.StatusCode == http.StatusTooManyRequests ||
 			resp.StatusCode >= http.StatusInternalServerError,
 		Message:    parseErrorMessage(payload),
-		RetryAfter: retryAfterFrom(resp.Header, payload),
+		RetryAfter: RetryAfterFrom(resp.Header, payload),
 	}
 }
 
@@ -211,7 +120,7 @@ func transportError(resp *http.Response, payload []byte) *TransportError {
 // Retry-After header as seconds or as a date, or failing that Google's
 // RetryInfo detail in the body ("retryDelay": "34s"). A value it cannot
 // read is zero, and the caller's own backoff applies.
-func retryAfterFrom(header http.Header, payload []byte) time.Duration {
+func RetryAfterFrom(header http.Header, payload []byte) time.Duration {
 	if raw := strings.TrimSpace(header.Get("Retry-After")); raw != "" {
 		if seconds, err := strconv.Atoi(raw); err == nil && seconds > 0 {
 			return time.Duration(seconds) * time.Second
@@ -223,7 +132,7 @@ func retryAfterFrom(header http.Header, payload []byte) time.Duration {
 		}
 	}
 
-	var envelope errorEnvelope
+	var envelope ErrorEnvelope
 	if err := sonic.Unmarshal(payload, &envelope); err != nil {
 		return 0
 	}
@@ -240,7 +149,7 @@ func retryAfterFrom(header http.Header, payload []byte) time.Duration {
 }
 
 func parseErrorMessage(payload []byte) string {
-	var envelope errorEnvelope
+	var envelope ErrorEnvelope
 	if err := sonic.Unmarshal(payload, &envelope); err == nil {
 		if msg := strings.TrimSpace(envelope.Error.Message); msg != "" {
 			return msg

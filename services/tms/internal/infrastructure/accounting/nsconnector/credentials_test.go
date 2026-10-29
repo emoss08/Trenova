@@ -8,9 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +32,7 @@ func TestNormalizeAccountIDAcceptsNetSuiteAccountForms(t *testing.T) {
 		assert.Equal(t, want, got)
 	}
 	_, err := conn.NormalizeAccountID("1234567-s3")
-	require.ErrorIs(t, err, netsuite.ErrInvalidAccountID)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidAccountID)
 }
 
 func TestPrepareCertificateIsValidForTwoYears(t *testing.T) {
@@ -51,7 +53,7 @@ func TestPrepareCertificateIsValidForTwoYears(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = conn.PrepareCertificate("   ")
-	require.ErrorIs(t, err, netsuite.ErrSubjectRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrSubjectRequired)
 }
 
 func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
@@ -69,14 +71,14 @@ func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
 
 	grant, err := conn.TokenFromCertificate(
 		t.Context(),
-		&accountingsyncports.AccountingCertificateGrant{
+		&accountingconnectorports.AccountingCertificateGrant{
 			RealmID:       testRef().String(),
 			CertificateID: "cert-0001",
 			PrivateKeyPEM: cert.PrivateKeyPEM,
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, &accountingsyncports.AccountingTokenGrant{
+	assert.Equal(t, &accountingconnectorports.AccountingTokenGrant{
 		AccessToken:    "eyJraWQiOiJjLjEyMzQ1NjcifQ.m2m-access.sig",
 		AccessTokenTTL: time.Hour,
 	}, grant)
@@ -88,18 +90,24 @@ func TestTokenFromCertificateSignsAnAssertionForTheRealmAccount(t *testing.T) {
 	assert.Len(t, strings.Split(call.Form.Get("client_assertion"), "."), 3)
 	assert.Empty(t, call.Auth)
 
-	_, err = conn.TokenFromCertificate(t.Context(), &accountingsyncports.AccountingCertificateGrant{
-		RealmID:       testAccount + "-sX",
-		CertificateID: "cert-0001",
-		PrivateKeyPEM: cert.PrivateKeyPEM,
-	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
-	_, err = conn.TokenFromCertificate(t.Context(), &accountingsyncports.AccountingCertificateGrant{
-		RealmID:       testAccount,
-		CertificateID: "cert-0001",
-		PrivateKeyPEM: []byte("not a key"),
-	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidPrivateKey)
+	_, err = conn.TokenFromCertificate(
+		t.Context(),
+		&accountingconnectorports.AccountingCertificateGrant{
+			RealmID:       testAccount + "-sX",
+			CertificateID: "cert-0001",
+			PrivateKeyPEM: cert.PrivateKeyPEM,
+		},
+	)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
+	_, err = conn.TokenFromCertificate(
+		t.Context(),
+		&accountingconnectorports.AccountingCertificateGrant{
+			RealmID:       testAccount,
+			CertificateID: "cert-0001",
+			PrivateKeyPEM: []byte("not a key"),
+		},
+	)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidPrivateKey)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 
@@ -114,13 +122,13 @@ func TestTokenFromCertificateRefusedIsRevoked(t *testing.T) {
 		require.NoError(t, err)
 		_, err = conn.TokenFromCertificate(
 			t.Context(),
-			&accountingsyncports.AccountingCertificateGrant{
+			&accountingconnectorports.AccountingCertificateGrant{
 				RealmID:       testAccount,
 				CertificateID: "cert-0001",
 				PrivateKeyPEM: cert.PrivateKeyPEM,
 			},
 		)
-		require.ErrorIs(t, err, errCertificateRevoked, fixture)
+		require.ErrorIs(t, err, nsbinding.ErrCertificateRevoked, fixture)
 		assert.Equal(t, accountingsync.ErrorCategoryRevoked, conn.ClassifyError(err), fixture)
 		assert.Equal(t, accountingsync.SyncErrorAuth, conn.ClassifyDocumentError(err).Category)
 	}

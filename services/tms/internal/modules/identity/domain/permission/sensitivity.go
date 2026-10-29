@@ -88,3 +88,7 @@ func (s DataScope) IsValid() bool {
 		return false
 	}
 }
+
+func (s DataScope) IsNarrow() bool {
+	return s == DataScopeOwn || s == DataScopeTeam
+}

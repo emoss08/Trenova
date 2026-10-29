@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editconflict"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
@@ -59,7 +60,7 @@ func (s *Service) explainConflict(ctx context.Context, req *conflictRequest) err
 	if !errortypes.IsVersionMismatchError(req.cause) {
 		return req.cause
 	}
-	current, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	current, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.providerID,
 		TenantInfo: req.tenantInfo,
 	})
@@ -79,7 +80,7 @@ func (s *Service) explainConflict(ctx context.Context, req *conflictRequest) err
 			Current:        current.Redacted(),
 			CurrentVersion: current.Version,
 			UpdatedAt:      current.UpdatedAt,
-			Rules:          aiprovider.ChangeRules,
+			Rules:          aiproviderchange.ChangeRules,
 			Cause:          req.cause,
 		},
 	)

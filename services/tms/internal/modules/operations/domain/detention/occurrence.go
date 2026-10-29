@@ -4,19 +4,28 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/shared/money"
-
-	"github.com/emoss08/trenova/shared/intutils"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
+)
+
+const (
+	// evidenceHeadLength is the width of the hex-encoded SHA-256 digest that
+	// heads the occurrence's evidence chain.
+	evidenceHeadLength = 64
+	// currencyCodeLength is the width of an ISO 4217 code.
+	currencyCodeLength = 3
 )
 
 // DetentionOccurrence is the detention event at exactly one stop. It is the
@@ -34,37 +43,37 @@ type DetentionOccurrence struct {
 	CustomerID     pulid.ID `keel:"customer_id"                json:"customerId"`
 	LocationID     pulid.ID `keel:"location_id"                json:"locationId"`
 
-	DetentionPolicyID *pulid.ID         `json:"detentionPolicyId" keel:"detention_policy_id"`
-	PolicySnapshot    *PolicySnapshot   `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
-	CalculationTrace  *CalculationTrace `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
+	DetentionPolicyID *pulid.ID                       `json:"detentionPolicyId" keel:"detention_policy_id"`
+	PolicySnapshot    *detentionpolicy.PolicySnapshot `json:"policySnapshot"    keel:"policy_snapshot,jsonb"`
+	CalculationTrace  *CalculationTrace               `json:"calculationTrace"  keel:"calculation_trace,jsonb"`
 
-	StopType           shipment.StopType         `json:"stopType"           keel:"stop_type"`
-	ScheduleType       shipment.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
-	AppointmentStart   *int64                    `json:"appointmentStart"   keel:"appointment_start"`
-	AppointmentEnd     *int64                    `json:"appointmentEnd"     keel:"appointment_end"`
-	ArrivedAt          *int64                    `json:"arrivedAt"          keel:"arrived_at"`
-	DepartedAt         *int64                    `json:"departedAt"         keel:"departed_at"`
-	ClockStartAt       int64                     `json:"clockStartAt"       keel:"clock_start_at"`
-	ClockStopAt        *int64                    `json:"clockStopAt"        keel:"clock_stop_at"`
-	FreeTimeExpiresAt  int64                     `json:"freeTimeExpiresAt"  keel:"free_time_expires_at"`
-	NoticeDueAt        *int64                    `json:"noticeDueAt"        keel:"notice_due_at"`
-	NoticeDeadlineAt   *int64                    `json:"noticeDeadlineAt"   keel:"notice_deadline_at"`
-	IsOpen             bool                      `json:"isOpen"             keel:"is_open"`
-	ArrivedLate        bool                      `json:"arrivedLate"        keel:"arrived_late"`
-	LateByMinutes      int32                     `json:"lateByMinutes"      keel:"late_by_minutes"`
-	FreeMinutesGranted int32                     `json:"freeMinutesGranted" keel:"free_minutes_granted"`
-	RawDwellMinutes    int32                     `json:"rawDwellMinutes"    keel:"raw_dwell_minutes"`
-	BillableMinutes    int32                     `json:"billableMinutes"    keel:"billable_minutes"`
-	RoundedMinutes     int32                     `json:"roundedMinutes"     keel:"rounded_minutes"`
-	BillableUnits      decimal.Decimal           `json:"billableUnits"      keel:"billable_units"`
-	GrossAmount        decimal.Decimal           `json:"grossAmount"        keel:"gross_amount"`
-	BillableAmount     decimal.Decimal           `json:"billableAmount"     keel:"billable_amount"`
-	DriverPayMinutes   int32                     `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
-	DriverPayAmount    decimal.NullDecimal       `json:"driverPayAmount"    keel:"driver_pay_amount,default"`
-	NetMargin          decimal.NullDecimal       `json:"netMargin"          keel:"net_margin"`
-	CapApplied         CapKind                   `json:"capApplied"         keel:"cap_applied"`
-	ConvertedToLayover bool                      `json:"convertedToLayover" keel:"converted_to_layover"`
-	Currency           string                    `json:"currency"           keel:"currency"`
+	StopType           shipmentvocab.StopType         `json:"stopType"           keel:"stop_type"`
+	ScheduleType       shipmentvocab.StopScheduleType `json:"scheduleType"       keel:"schedule_type"`
+	AppointmentStart   *int64                         `json:"appointmentStart"   keel:"appointment_start"`
+	AppointmentEnd     *int64                         `json:"appointmentEnd"     keel:"appointment_end"`
+	ArrivedAt          *int64                         `json:"arrivedAt"          keel:"arrived_at"`
+	DepartedAt         *int64                         `json:"departedAt"         keel:"departed_at"`
+	ClockStartAt       int64                          `json:"clockStartAt"       keel:"clock_start_at"`
+	ClockStopAt        *int64                         `json:"clockStopAt"        keel:"clock_stop_at"`
+	FreeTimeExpiresAt  int64                          `json:"freeTimeExpiresAt"  keel:"free_time_expires_at"`
+	NoticeDueAt        *int64                         `json:"noticeDueAt"        keel:"notice_due_at"`
+	NoticeDeadlineAt   *int64                         `json:"noticeDeadlineAt"   keel:"notice_deadline_at"`
+	IsOpen             bool                           `json:"isOpen"             keel:"is_open"`
+	ArrivedLate        bool                           `json:"arrivedLate"        keel:"arrived_late"`
+	LateByMinutes      int32                          `json:"lateByMinutes"      keel:"late_by_minutes"`
+	FreeMinutesGranted int32                          `json:"freeMinutesGranted" keel:"free_minutes_granted"`
+	RawDwellMinutes    int32                          `json:"rawDwellMinutes"    keel:"raw_dwell_minutes"`
+	BillableMinutes    int32                          `json:"billableMinutes"    keel:"billable_minutes"`
+	RoundedMinutes     int32                          `json:"roundedMinutes"     keel:"rounded_minutes"`
+	BillableUnits      decimal.Decimal                `json:"billableUnits"      keel:"billable_units"`
+	GrossAmount        decimal.Decimal                `json:"grossAmount"        keel:"gross_amount"`
+	BillableAmount     decimal.Decimal                `json:"billableAmount"     keel:"billable_amount"`
+	DriverPayMinutes   int32                          `json:"driverPayMinutes"   keel:"driver_pay_minutes"`
+	DriverPayAmount    decimal.NullDecimal            `json:"driverPayAmount"    keel:"driver_pay_amount,default"`
+	NetMargin          decimal.NullDecimal            `json:"netMargin"          keel:"net_margin"`
+	CapApplied         CapKind                        `json:"capApplied"         keel:"cap_applied"`
+	ConvertedToLayover bool                           `json:"convertedToLayover" keel:"converted_to_layover"`
+	Currency           string                         `json:"currency"           keel:"currency"`
 
 	Status             OccurrenceStatus   `json:"status"             keel:"status"`
 	NotificationStatus NotificationStatus `json:"notificationStatus" keel:"notification_status"`
@@ -93,11 +102,11 @@ type DetentionOccurrence struct {
 	CustomerName      string `json:"customerName,omitempty"      keel:"customer_name,computed"`
 	ShipmentProNumber string `json:"shipmentProNumber,omitempty" keel:"shipment_pro_number,computed"`
 
-	BusinessUnit    *tenant.BusinessUnit `json:"-"`
-	Organization    *tenant.Organization `json:"-"`
-	DetentionPolicy *DetentionPolicy     `json:"detentionPolicy,omitempty" keel:"belongs:detention_policy_id"`
-	Evidence        []*DetentionEvidence `json:"evidence,omitempty"        keel:"many:detention_occurrence_id"`
-	Notices         []*DetentionNotice   `json:"notices,omitempty"         keel:"many:detention_occurrence_id"`
+	BusinessUnit    *tenant.BusinessUnit                   `json:"-"`
+	Organization    *tenant.Organization                   `json:"-"`
+	DetentionPolicy *detentionpolicy.DetentionPolicy       `json:"detentionPolicy,omitempty" keel:"belongs:detention_policy_id"`
+	Evidence        []*detentionevidence.DetentionEvidence `json:"evidence,omitempty"        keel:"many:detention_occurrence_id"`
+	Notices         []*detentionnotice.DetentionNotice     `json:"notices,omitempty"         keel:"many:detention_occurrence_id"`
 }
 
 func (o *DetentionOccurrence) GetID() pulid.ID { return o.ID }
@@ -201,8 +210,8 @@ func (o *DetentionOccurrence) BillingHoldReason() BillingHoldReason {
 			o.BillableAmount.GreaterThan(snap.RequireApprovalOverAmount.Decimal) {
 			return BillingHoldReasonOverApprovalThreshold
 		}
-		if snap.NotificationRequirement == NotificationRequirementRequired &&
-			snap.UnnotifiedBehavior == UnnotifiedBehaviorFlag &&
+		if snap.NotificationRequirement == detentionpolicy.NotificationRequirementRequired &&
+			snap.UnnotifiedBehavior == detentionpolicy.UnnotifiedBehaviorFlag &&
 			!o.NotificationStatus.SatisfiesRequirement() {
 			return BillingHoldReasonNoticeNotSent
 		}
@@ -374,7 +383,7 @@ func (o *DetentionOccurrence) Validate(multiErr *errortypes.MultiError) {
 				Error("Currency must be a three letter code"),
 		),
 		validation.Field(&o.EvidenceHead,
-			validation.Length(hashLength, hashLength).
+			validation.Length(evidenceHeadLength, evidenceHeadLength).
 				Error("Evidence head must be a 64 character digest"),
 		),
 		// A waiver writes off money, so the reason it was written off is part of

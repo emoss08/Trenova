@@ -7,10 +7,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -36,7 +38,7 @@ type Params struct {
 	Inliner       documenttemplateports.AssetInliner
 	Customers     customerports.CustomerRepository
 	Shipments     shipmentports.ShipmentRepository
-	Comments      shipmentports.ShipmentCommentService
+	Comments      shipmentcommentports.ShipmentCommentService
 }
 
 type Service struct {
@@ -46,7 +48,7 @@ type Service struct {
 	inliner       documenttemplateports.AssetInliner
 	customers     customerports.CustomerRepository
 	shipments     shipmentports.ShipmentRepository
-	comments      shipmentports.ShipmentCommentService
+	comments      shipmentcommentports.ShipmentCommentService
 	now           func() int64
 }
 
@@ -126,7 +128,7 @@ func (s *Service) NotifyDelay(
 	}
 
 	body := strings.TrimSpace(req.Message)
-	data := documenttemplate.AgentEmailContext{
+	data := portaltemplate.AgentEmailContext{
 		AgentSubject:      "Delivery update for shipment " + sp.ProNumber,
 		AgentBody:         body,
 		CustomerName:      customerName,

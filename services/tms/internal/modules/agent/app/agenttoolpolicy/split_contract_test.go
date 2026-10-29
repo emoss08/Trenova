@@ -3,7 +3,7 @@ package agenttoolpolicy_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,13 +18,18 @@ func TestEveryRecordSplitterSplitsIntoSingleRecordCalls(t *testing.T) {
 
 	splitters := 0
 	for _, tool := range buildRegistered(t).Actions {
-		splitter, splits := tool.(agentports.ToolRecordSplitter)
+		splitter, splits := tool.(agenttoolports.ToolRecordSplitter)
 		if !splits {
 			continue
 		}
 		splitters++
-		targeted, isTargeted := tool.(agentports.TargetedTool)
-		require.True(t, isTargeted, "%s: a record splitter names the record each call changes", tool.Name())
+		targeted, isTargeted := tool.(agenttoolports.TargetedTool)
+		require.True(
+			t,
+			isTargeted,
+			"%s: a record splitter names the record each call changes",
+			tool.Name(),
+		)
 
 		param := subsetParam(t, tool)
 		ids := []pulid.ID{pulid.MustNew("rec_"), pulid.MustNew("rec_"), pulid.MustNew("rec_")}
@@ -48,7 +53,7 @@ func TestEveryRecordSplitterSplitsIntoSingleRecordCalls(t *testing.T) {
 	assert.Positive(t, splitters, "the record-subset batch tools split")
 }
 
-func subsetParam(t *testing.T, tool agentports.AgentTool) string {
+func subsetParam(t *testing.T, tool agenttoolports.AgentTool) string {
 	t.Helper()
 
 	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)

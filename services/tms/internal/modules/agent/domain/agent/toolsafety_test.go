@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +61,7 @@ func TestRunTaint_AddDedupesAndBounds(t *testing.T) {
 		Source:   TaintSourceInboundMessage,
 		ToolName: "inbox_get_inbound_message",
 		CallID:   "call_1",
-		Ref:      &RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: "inbound_message", ID: "imsg_1"},
 	}
 	assert.True(t, taint.Add(mark))
 	assert.True(t, taint.Tainted())
@@ -85,9 +86,13 @@ func TestRunTaint_Merge(t *testing.T) {
 	t.Parallel()
 
 	first := &RunTaint{}
-	first.Add(TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"})
+	first.Add(
+		TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"},
+	)
 	second := &RunTaint{}
-	second.Add(TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"})
+	second.Add(
+		TaintMark{Source: TaintSourceWeather, ToolName: "insight_list_weather_alerts", CallID: "a"},
+	)
 	second.Add(TaintMark{Source: TaintSourceMemory, ToolName: "agent_list_memories", CallID: "b"})
 
 	first.Merge(second)

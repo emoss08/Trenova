@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -21,7 +21,7 @@ type egressTool struct {
 	carriesTaint bool
 }
 
-func (t *egressTool) Policy() agentports.ToolPolicy {
+func (t *egressTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.recordingTool.Policy()
 	policy.Egress = []agent.EgressClass{t.egress}
 	policy.CarriesTaint = t.carriesTaint
@@ -29,7 +29,7 @@ func (t *egressTool) Policy() agentports.ToolPolicy {
 	return policy
 }
 
-func (t *egressTool) Execute(ctx context.Context, params agentports.ToolExecuteParams) error {
+func (t *egressTool) Execute(ctx context.Context, params *agenttoolports.ToolExecuteParams) error {
 	return t.recordingTool.Execute(ctx, params)
 }
 
@@ -231,7 +231,8 @@ func TestExecute_AnUnattendedExecutionIsRecordedAgainstTheSystemUser(t *testing.
 	bare := &fakeProposalRepo{}
 	tool = newEgressTool("dispatch_assign_move", agent.EgressInternal)
 	require.NoError(t, newExecutor(tool, bare, &fakePermissions{allowed: true}).
-		Execute(t.Context(), proposal, nil, principal(permissionports.PrincipalTypeAgent, orgID, buID)))
+		Execute(t.Context(), proposal, nil, principal(permissionports.PrincipalTypeAgent, orgID, buID)),
+	)
 	require.Len(t, bare.recorded, 1)
 	assert.True(t, bare.recorded[0].by.IsNil(), "an agent with no account names nobody")
 }

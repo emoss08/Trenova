@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile/captureprofiledb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -32,17 +32,17 @@ func NewProfileRepository(p Params) captureports.CaptureProfileRepository {
 func (r *profileRepository) List(
 	ctx context.Context,
 	req *captureports.ListCaptureProfilesRequest,
-) (*pagination.ListResult[*capture.CaptureProfile], error) {
+) (*pagination.ListResult[*captureprofile.CaptureProfile], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*capture.CaptureProfile], error) {
-			p := capturedb.CaptureProfiles
+		func(ctx context.Context) (*pagination.ListResult[*captureprofile.CaptureProfile], error) {
+			p := captureprofiledb.CaptureProfiles
 			return listquery.List(
 				ctx,
 				r.db.Keel(ctx),
 				p.Where(keel.When(req.Status != "", p.Status.Eq(req.Status))),
-				&listquery.Request[capture.CaptureProfile]{
+				&listquery.Request[captureprofile.CaptureProfile]{
 					Filter: req.Filter,
 					Then:   []keel.Order{p.IsDefault.Desc(), p.Name.Asc()},
 				},
@@ -54,9 +54,9 @@ func (r *profileRepository) List(
 func (r *profileRepository) GetByID(
 	ctx context.Context,
 	req captureports.GetCaptureProfileByIDRequest,
-) (*capture.CaptureProfile, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
-		entity, err := capturedb.CaptureProfiles.Get(ctx, r.db.Keel(ctx), req.ID)
+) (*captureprofile.CaptureProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*captureprofile.CaptureProfile, error) {
+		entity, err := captureprofiledb.CaptureProfiles.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, profileErrors.Map(err, req.ID.String())
 		}
@@ -68,10 +68,10 @@ func (r *profileRepository) GetByID(
 func (r *profileRepository) GetDefault(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) (*capture.CaptureProfile, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
-		p := capturedb.CaptureProfiles
-		entity, err := p.Where(p.IsDefault.IsTrue(), p.Status.Eq(capture.ProfileActive)).
+) (*captureprofile.CaptureProfile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*captureprofile.CaptureProfile, error) {
+		p := captureprofiledb.CaptureProfiles
+		entity, err := p.Where(p.IsDefault.IsTrue(), p.Status.Eq(captureprofile.ProfileActive)).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, profileErrors.Map(err, "")
@@ -83,9 +83,9 @@ func (r *profileRepository) GetDefault(
 
 func (r *profileRepository) Create(
 	ctx context.Context,
-	entity *capture.CaptureProfile,
-) (*capture.CaptureProfile, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+	entity *captureprofile.CaptureProfile,
+) (*captureprofile.CaptureProfile, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*captureprofile.CaptureProfile, error) {
 		db := r.db.Keel(ctx)
 		if entity.IsDefault {
 			if err := clearDefault(ctx, db, entity); err != nil {
@@ -93,7 +93,7 @@ func (r *profileRepository) Create(
 			}
 		}
 
-		if err := capturedb.CaptureProfiles.Create(ctx, db, entity); err != nil {
+		if err := captureprofiledb.CaptureProfiles.Create(ctx, db, entity); err != nil {
 			return nil, err
 		}
 
@@ -103,9 +103,9 @@ func (r *profileRepository) Create(
 
 func (r *profileRepository) Update(
 	ctx context.Context,
-	entity *capture.CaptureProfile,
-) (*capture.CaptureProfile, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureProfile, error) {
+	entity *captureprofile.CaptureProfile,
+) (*captureprofile.CaptureProfile, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*captureprofile.CaptureProfile, error) {
 		db := r.db.Keel(ctx)
 		if entity.IsDefault {
 			if err := clearDefault(ctx, db, entity); err != nil {
@@ -113,7 +113,7 @@ func (r *profileRepository) Update(
 			}
 		}
 
-		if err := capturedb.CaptureProfiles.Save(ctx, db, entity); err != nil {
+		if err := captureprofiledb.CaptureProfiles.Save(ctx, db, entity); err != nil {
 			return nil, profileErrors.Map(err, entity.ID.String())
 		}
 
@@ -125,8 +125,8 @@ func (r *profileRepository) Update(
 // partial unique index would refuse the write otherwise, and failing the
 // save because another profile is the default would make "set as default"
 // a two-step chore.
-func clearDefault(ctx context.Context, db *keel.DB, entity *capture.CaptureProfile) error {
-	p := capturedb.CaptureProfiles
+func clearDefault(ctx context.Context, db *keel.DB, entity *captureprofile.CaptureProfile) error {
+	p := captureprofiledb.CaptureProfiles
 	_, err := p.Where(
 		p.IsDefault.IsTrue(),
 		keel.When(entity.ID.IsNotNil(), p.ID.Ne(entity.ID)),
@@ -140,7 +140,7 @@ func (r *profileRepository) Delete(
 	req captureports.DeleteCaptureProfileRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		p := capturedb.CaptureProfiles
+		p := captureprofiledb.CaptureProfiles
 		n, err := p.Where(p.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return err

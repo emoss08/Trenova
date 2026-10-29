@@ -5,7 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,13 +21,16 @@ type booksOf struct {
 	asked    pulid.ID
 }
 
-func (b *booksOf) GetByOrgID(_ context.Context, orgID pulid.ID) (*tenant.AccountingControl, error) {
+func (b *booksOf) GetByOrgID(
+	_ context.Context,
+	orgID pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
 	b.asked = orgID
 	if b.err != nil {
 		return nil, b.err
 	}
 
-	return &tenant.AccountingControl{FunctionalCurrencyCode: b.currency}, nil
+	return &accountingcontrol.AccountingControl{FunctionalCurrencyCode: b.currency}, nil
 }
 
 func TestAgentMoneyCurrency_IsTheOrganizationsFunctionalCurrency(t *testing.T) {
@@ -34,7 +38,7 @@ func TestAgentMoneyCurrency_IsTheOrganizationsFunctionalCurrency(t *testing.T) {
 
 	books := &booksOf{currency: " cad "}
 	resolver := &AgentControlResolver{&Deps{AccountingControlRepo: books}}
-	control := &tenant.AgentControl{OrganizationID: pulid.MustNew("org_")}
+	control := &agentcontrol.AgentControl{OrganizationID: pulid.MustNew("org_")}
 
 	currency, err := resolver.AgentMoneyCurrency(t.Context(), control)
 	require.NoError(t, err)
@@ -45,8 +49,10 @@ func TestAgentMoneyCurrency_IsTheOrganizationsFunctionalCurrency(t *testing.T) {
 func TestAgentMoneyCurrency_ReportsBooksThatCannotBeRead(t *testing.T) {
 	t.Parallel()
 
-	resolver := &AgentControlResolver{&Deps{AccountingControlRepo: &booksOf{err: errors.New("down")}}}
+	resolver := &AgentControlResolver{
+		&Deps{AccountingControlRepo: &booksOf{err: errors.New("down")}},
+	}
 
-	_, err := resolver.AgentMoneyCurrency(t.Context(), &tenant.AgentControl{})
+	_, err := resolver.AgentMoneyCurrency(t.Context(), &agentcontrol.AgentControl{})
 	require.Error(t, err, "a currency is never guessed")
 }

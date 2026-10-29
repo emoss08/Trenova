@@ -3,13 +3,13 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type PasswordResetTokenRepository interface {
 	// Create stores a freshly minted token.
-	Create(ctx context.Context, token *tenant.PasswordResetToken) error
+	Create(ctx context.Context, token *passwordreset.PasswordResetToken) error
 
 	// FindRedeemableByHash returns the token behind a link, or a not-found error when
 	// the digest is unknown, already used, superseded, or past its expiry. The four
@@ -19,7 +19,7 @@ type PasswordResetTokenRepository interface {
 		ctx context.Context,
 		tokenHash string,
 		now int64,
-	) (*tenant.PasswordResetToken, error)
+	) (*passwordreset.PasswordResetToken, error)
 
 	// MarkUsed redeems a token, and reports whether it was still redeemable at the
 	// moment of the write. Two requests racing on the same link must not both win, so

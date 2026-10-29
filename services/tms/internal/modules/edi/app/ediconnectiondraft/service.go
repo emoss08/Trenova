@@ -4,9 +4,13 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -28,23 +32,23 @@ type setupService interface {
 	) (*edi.EDIPartner, error)
 	CreateCommunicationProfile(
 		ctx context.Context,
-		req *ediservice.UpsertEDICommunicationProfileRequest,
+		req *edisetup.UpsertEDICommunicationProfileRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDICommunicationProfile, error)
 	UpdateCommunicationProfile(
 		ctx context.Context,
-		req *ediservice.UpsertEDICommunicationProfileRequest,
+		req *edisetup.UpsertEDICommunicationProfileRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDICommunicationProfile, error)
 	SaveMappingProfile(
 		ctx context.Context,
-		req *ediports.SaveMappingItemsRequest,
+		req *edipartnerports.SaveMappingItemsRequest,
 	) ([]*edi.EDIMappingProfileItem, error)
 	StartControlNumber(
 		ctx context.Context,
-		req *ediports.ResetEDIControlNumberRequest,
+		req *edipartnerports.ResetEDIControlNumberRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.EDIControlNumberSequence, error)
+	) (*edidocument.EDIControlNumberSequence, error)
 }
 
 type projectStore interface {
@@ -52,21 +56,21 @@ type projectStore interface {
 		ctx context.Context,
 		req *edilading.ImportRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.LadingVersion, error)
+	) (*ladingproject.LadingVersion, error)
 	Samples(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		version *edi.LadingVersion,
+		version *ladingproject.LadingVersion,
 	) ([]lading.Sample, error)
 }
 
 type Params struct {
 	fx.In
 
-	Repo          ediports.EDIConnectionDraftRepository
-	DocumentTypes ediports.EDIDocumentTypeRepository
-	Setup         *ediservice.Service
-	Validator     *ediservice.Validator
+	Repo          ediconnectiondraftports.EDIConnectionDraftRepository
+	DocumentTypes edipartnerports.EDIDocumentTypeRepository
+	Setup         *edisetup.Service
+	Validator     *edivalidation.Validator
 	Lading        *edilading.Runtime
 	Projects      *edilading.Projects
 	DB            kernelports.Transactor
@@ -74,17 +78,17 @@ type Params struct {
 }
 
 type Service struct {
-	repo          ediports.EDIConnectionDraftRepository
-	documentTypes ediports.EDIDocumentTypeRepository
+	repo          ediconnectiondraftports.EDIConnectionDraftRepository
+	documentTypes edipartnerports.EDIDocumentTypeRepository
 	setup         setupService
-	validator     *ediservice.Validator
+	validator     *edivalidation.Validator
 	lading        *edilading.Runtime
 	projects      projectStore
 	db            kernelports.Transactor
 	l             *zap.Logger
 }
 
-var _ ediports.EDIConnectionDraftService = (*Service)(nil)
+var _ ediconnectiondraftports.EDIConnectionDraftService = (*Service)(nil)
 
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{

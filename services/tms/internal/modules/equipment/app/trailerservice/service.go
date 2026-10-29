@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
@@ -15,9 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
@@ -40,18 +43,18 @@ type Params struct {
 	Logger                    *zap.Logger
 	DB                        kernelports.Transactor
 	Repo                      trailerports.TrailerRepository
-	AssignmentRepo            shipmentports.AssignmentRepository
+	AssignmentRepo            assignmentports.AssignmentRepository
 	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	ShipmentRepo              shipmentports.ShipmentRepository
 	UserRepo                  tenantports.UserRepository
-	ShipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	ShipmentCommentRepo       shipmentcommentports.ShipmentCommentRepository
 	ControlRepo               tenantports.ShipmentControlRepository
 	LocationRepo              locationports.LocationRepository
 	Validator                 *Validator
 	AuditService              auditports.AuditService
-	Realtime                  agentports.RealtimeService
+	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
-	ShipmentValidator         *shipmentservice.Validator
+	ShipmentValidator         *shipmentvalidator.Validator
 	Coordinator               *shipmentstate.Coordinator
 	Commercial                *shipmentcommercial.Calculator
 }
@@ -60,18 +63,18 @@ type Service struct {
 	l                         *zap.Logger
 	db                        kernelports.Transactor
 	repo                      trailerports.TrailerRepository
-	assignmentRepo            shipmentports.AssignmentRepository
+	assignmentRepo            assignmentports.AssignmentRepository
 	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
 	shipmentRepo              shipmentports.ShipmentRepository
 	userRepo                  tenantports.UserRepository
-	shipmentCommentRepo       shipmentports.ShipmentCommentRepository
+	shipmentCommentRepo       shipmentcommentports.ShipmentCommentRepository
 	controlRepo               tenantports.ShipmentControlRepository
 	locationRepo              locationports.LocationRepository
 	validator                 *Validator
 	auditService              auditports.AuditService
-	realtime                  agentports.RealtimeService
+	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
-	shipmentValidator         *shipmentservice.Validator
+	shipmentValidator         *shipmentvalidator.Validator
 	coordinator               *shipmentstate.Coordinator
 	commercial                *shipmentcommercial.Calculator
 }
@@ -446,7 +449,7 @@ func (s *Service) Locate( //nolint:gocognit // legacy workflow
 			BusinessUnitID:  req.TenantInfo.BuID,
 			ShipmentMoveID:  newMove.ID,
 			TrailerID:       &req.TrailerID,
-			Status:          shipment.AssignmentStatusCompleted,
+			Status:          shipmentvocab.AssignmentStatusCompleted,
 			PrimaryWorkerID: nil,
 			TractorID:       nil,
 		})
@@ -500,7 +503,7 @@ func appendLocateMove(
 		ShipmentID:     entity.ID,
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
-		Status:         shipment.MoveStatusCompleted,
+		Status:         shipmentvocab.MoveStatusCompleted,
 		Loaded:         false,
 		Sequence:       int64(len(entity.Moves)),
 		Stops: []*shipment.Stop{
@@ -508,9 +511,9 @@ func appendLocateMove(
 				OrganizationID:       entity.OrganizationID,
 				BusinessUnitID:       entity.BusinessUnitID,
 				LocationID:           current.CurrentLocationID,
-				Status:               shipment.StopStatusCompleted,
-				Type:                 shipment.StopTypePickup,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypePickup,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             0,
 				ScheduledWindowStart: timing.pickupArrival,
 				ScheduledWindowEnd:   &timing.pickupDeparture,
@@ -521,9 +524,9 @@ func appendLocateMove(
 				OrganizationID:       entity.OrganizationID,
 				BusinessUnitID:       entity.BusinessUnitID,
 				LocationID:           req.NewLocationID,
-				Status:               shipment.StopStatusCompleted,
-				Type:                 shipment.StopTypeDelivery,
-				ScheduleType:         shipment.StopScheduleTypeOpen,
+				Status:               shipmentvocab.StopStatusCompleted,
+				Type:                 shipmentvocab.StopTypeDelivery,
+				ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 				Sequence:             1,
 				ScheduledWindowStart: timing.deliveryArrival,
 				ScheduledWindowEnd:   &timing.deliveryDeparture,
@@ -588,10 +591,10 @@ func (s *Service) createLocateComment(
 		OrganizationID: shipmentEntity.OrganizationID,
 		BusinessUnitID: shipmentEntity.BusinessUnitID,
 		UserID:         actorUserID,
-		Type:           shipment.CommentTypeDispatch,
-		Visibility:     shipment.CommentVisibilityOperations,
-		Priority:       shipment.CommentPriorityNormal,
-		Source:         shipment.CommentSourceSystem,
+		Type:           shipmentvocab.CommentTypeDispatch,
+		Visibility:     shipmentvocab.CommentVisibilityOperations,
+		Priority:       shipmentvocab.CommentPriorityNormal,
+		Source:         shipmentvocab.CommentSourceSystem,
 		Metadata: map[string]any{
 			"trailerId":      trailerEntity.ID,
 			"fromLocationId": fromLocationID,

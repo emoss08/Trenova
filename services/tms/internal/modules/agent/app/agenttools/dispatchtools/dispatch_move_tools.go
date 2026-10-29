@@ -6,13 +6,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,11 +32,11 @@ const fieldMoveIDs = "moveIds"
 
 // moveUnassigner is the slice of the assignment service unassigning uses.
 type moveUnassigner interface {
-	Unassign(ctx context.Context, req *shipmentports.UnassignShipmentMoveRequest) error
+	Unassign(ctx context.Context, req *assignmentports.UnassignShipmentMoveRequest) error
 	PreviewUnassign(
 		ctx context.Context,
-		req *shipmentports.UnassignShipmentMoveRequest,
-	) (*shipmentports.AssignmentPlan, error)
+		req *assignmentports.UnassignShipmentMoveRequest,
+	) (*assignmentports.AssignmentPlan, error)
 }
 
 // moveStatusSetter is the slice of the shipment move service a status change
@@ -39,16 +44,16 @@ type moveUnassigner interface {
 type moveStatusSetter interface {
 	UpdateStatus(
 		ctx context.Context,
-		req *shipmentports.UpdateMoveStatusRequest,
+		req *shipmentmoveports.UpdateMoveStatusRequest,
 	) (*shipment.ShipmentMove, error)
 	BulkUpdateStatus(
 		ctx context.Context,
-		req *shipmentports.BulkUpdateMoveStatusRequest,
+		req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 	) ([]*shipment.ShipmentMove, error)
 	PreviewUpdateStatus(
 		ctx context.Context,
-		req *shipmentports.BulkUpdateMoveStatusRequest,
-	) (*shipmentports.MoveStatusPlan, error)
+		req *shipmentmoveports.BulkUpdateMoveStatusRequest,
+	) (*shipmentmoveports.MoveStatusPlan, error)
 }
 
 // unassignMovesTool takes the driver and equipment off moves that have not
@@ -57,7 +62,7 @@ type UnassignMovesTool struct {
 	assignments moveUnassigner
 }
 
-func NewUnassignMovesTool(assignments shipmentports.AssignmentService) agentports.AgentTool {
+func NewUnassignMovesTool(assignments assignmentports.AssignmentService) agenttoolports.AgentTool {
 	return &UnassignMovesTool{assignments: assignments}
 }
 
@@ -83,20 +88,20 @@ func (t *UnassignMovesTool) ParamSchema() map[string]any {
 	}, fieldMoveIDs)
 }
 
-func (t *UnassignMovesTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UnassignMovesTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUnassign,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		ReadsExternal: agenttooltrust.ExternalReadNever,
+		Condition: &agenttoolports.TierCondition{
 			Description: "Only one move at a time, still freshly assigned, is taken off its " +
 				"driver without a decision; several moves, a move the service would refuse " +
 				"and a move that cannot be read each wait for a person.",
@@ -110,9 +115,9 @@ func (t *UnassignMovesTool) Policy() agentports.ToolPolicy {
 
 func (t *UnassignMovesTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil || len(requests) != 1 {
 		return agent.TierPropose
 	}
@@ -125,9 +130,9 @@ func (t *UnassignMovesTool) tierLimit(
 
 func (t *UnassignMovesTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil {
 		return err
 	}
@@ -145,13 +150,13 @@ func (t *UnassignMovesTool) Validate(
 // every move that was not unassigned and how many were.
 func (t *UnassignMovesTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	requests, err := t.requests(&params)
+	requests, err := t.requests(params)
 	if err != nil {
 		return err
 	}
@@ -169,15 +174,15 @@ func (t *UnassignMovesTool) Execute(
 	return fmt.Errorf(
 		"unassigned %d of %s: %w",
 		len(requests)-len(failures),
-		common.CountOf(len(requests), "move"),
+		changepreview.CountOf(len(requests), "move"),
 		errors.Join(failures...),
 	)
 }
 
 func (t *UnassignMovesTool) requests(
-	params *agentports.ToolExecuteParams,
-) ([]*shipmentports.UnassignShipmentMoveRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) ([]*assignmentports.UnassignShipmentMoveRequest, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -186,10 +191,10 @@ func (t *UnassignMovesTool) requests(
 		return nil, err
 	}
 
-	requests := make([]*shipmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
+	requests := make([]*assignmentports.UnassignShipmentMoveRequest, 0, len(moveIDs))
 	for _, moveID := range moveIDs {
-		requests = append(requests, &shipmentports.UnassignShipmentMoveRequest{
-			TenantInfo:     common.TenantFrom(*params),
+		requests = append(requests, &assignmentports.UnassignShipmentMoveRequest{
+			TenantInfo:     toolparams.TenantFrom(params),
 			ShipmentMoveID: moveID,
 		})
 	}
@@ -204,7 +209,7 @@ type UpdateMoveStatusTool struct {
 	moves moveStatusSetter
 }
 
-func NewUpdateMoveStatusTool(moves shipmentports.ShipmentMoveService) agentports.AgentTool {
+func NewUpdateMoveStatusTool(moves shipmentmoveports.ShipmentMoveService) agenttoolports.AgentTool {
 	return &UpdateMoveStatusTool{moves: moves}
 }
 
@@ -233,27 +238,27 @@ func (t *UpdateMoveStatusTool) ParamSchema() map[string]any {
 			jsonschemautils.String(0),
 			maxMovesPerDispatchChange,
 		), permission.ResourceShipmentMove),
-		common.FieldStatus: agenttoolschema.Enum(
+		changepreview.FieldStatus: agenttoolschema.Enum(
 			"The status to set. Completed releases the move's equipment for the next load; "+
 				"Canceled is final.",
 			agenttoolschema.SettableMoveStatuses,
 		),
-	}, fieldMoveIDs, common.FieldStatus)
+	}, fieldMoveIDs, changepreview.FieldStatus)
 }
 
-func (t *UpdateMoveStatusTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *UpdateMoveStatusTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
-		Condition: &agentports.TierCondition{
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
+		Condition: &agenttoolports.TierCondition{
 			Description: "Canceling a move ends it for good, so a cancellation is a proposal " +
 				"a person decides; any other status runs once a person approves it.",
 			Limit: moveStatusTierLimit,
@@ -266,10 +271,10 @@ func (t *UpdateMoveStatusTool) Policy() agentports.ToolPolicy {
 
 func moveStatusTierLimit(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	status, err := moveStatusArg(params.Params)
-	if err != nil || status == shipment.MoveStatusCanceled {
+	if err != nil || status == shipmentvocab.MoveStatusCanceled {
 		return agent.TierPropose
 	}
 
@@ -278,9 +283,9 @@ func moveStatusTierLimit(
 
 func (t *UpdateMoveStatusTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -296,19 +301,19 @@ func (t *UpdateMoveStatusTool) Validate(
 // every move in one transaction or none.
 func (t *UpdateMoveStatusTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
 	if len(request.MoveIDs) == 1 {
-		_, err = t.moves.UpdateStatus(ctx, &shipmentports.UpdateMoveStatusRequest{
+		_, err = t.moves.UpdateStatus(ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 			TenantInfo: request.TenantInfo,
 			MoveID:     request.MoveIDs[0],
 			Status:     request.Status,
@@ -323,9 +328,9 @@ func (t *UpdateMoveStatusTool) Execute(
 }
 
 func (t *UpdateMoveStatusTool) request(
-	params *agentports.ToolExecuteParams,
-) (*shipmentports.BulkUpdateMoveStatusRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*shipmentmoveports.BulkUpdateMoveStatusRequest, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -338,8 +343,8 @@ func (t *UpdateMoveStatusTool) request(
 		return nil, err
 	}
 
-	return &shipmentports.BulkUpdateMoveStatusRequest{
-		TenantInfo: common.TenantFrom(*params),
+	return &shipmentmoveports.BulkUpdateMoveStatusRequest{
+		TenantInfo: toolparams.TenantFrom(params),
 		MoveIDs:    moveIDs,
 		Status:     status,
 	}, nil
@@ -348,16 +353,18 @@ func (t *UpdateMoveStatusTool) request(
 // moveStatusArg refuses anything but the three statuses a person sets by
 // hand. Assigned and New follow from covering and uncovering a move, which
 // have tools of their own.
-func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
-	raw := common.OptionalString(params, common.FieldStatus)
+func moveStatusArg(params map[string]any) (shipmentvocab.MoveStatus, error) {
+	raw := toolparams.OptionalString(params, changepreview.FieldStatus)
 	//nolint:exhaustive // New and Assigned follow from covering a move, never from this tool
-	switch status := shipment.MoveStatus(raw); status {
-	case shipment.MoveStatusInTransit, shipment.MoveStatusCompleted, shipment.MoveStatusCanceled:
+	switch status := shipmentvocab.MoveStatus(raw); status {
+	case shipmentvocab.MoveStatusInTransit,
+		shipmentvocab.MoveStatusCompleted,
+		shipmentvocab.MoveStatusCanceled:
 		return status, nil
 	default:
 		return "", fmt.Errorf(
 			"parameter %q must be exactly InTransit, Completed or Canceled, not %q",
-			common.FieldStatus, raw,
+			changepreview.FieldStatus, raw,
 		)
 	}
 }
@@ -365,7 +372,7 @@ func moveStatusArg(params map[string]any) (shipment.MoveStatus, error) {
 // uniqueMoveIDs reads the bounded list of moves a dispatch change names and
 // refuses one named twice, which the service would refuse after reading.
 func uniqueMoveIDs(params map[string]any) ([]pulid.ID, error) {
-	moveIDs, err := common.RequirePulidSlice(params, fieldMoveIDs, maxMovesPerDispatchChange)
+	moveIDs, err := toolparams.RequirePulidSlice(params, fieldMoveIDs, maxMovesPerDispatchChange)
 	if err != nil {
 		return nil, err
 	}

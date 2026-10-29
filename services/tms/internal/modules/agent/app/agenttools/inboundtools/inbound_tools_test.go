@@ -6,12 +6,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,9 +23,9 @@ import (
 type fakeInboundDesk struct {
 	message   *inboundmessage.InboundMessage
 	linkErr   error
-	checked   *inboundmessageservice.LinkRequest
-	linked    *inboundmessageservice.LinkRequest
-	reviewed  *inboundmessageservice.ReviewRequest
+	checked   *inboundqueue.LinkRequest
+	linked    *inboundqueue.LinkRequest
+	reviewed  *inboundqueue.ReviewRequest
 	requested *inboundmessageports.GetInboundMessageByIDRequest
 }
 
@@ -42,25 +43,25 @@ func (f *fakeInboundDesk) GetByID(
 
 func (f *fakeInboundDesk) CheckLink(
 	_ context.Context,
-	req inboundmessageservice.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) error {
-	f.checked = &req
+	f.checked = req
 	return f.linkErr
 }
 
 func (f *fakeInboundDesk) Link(
 	_ context.Context,
-	req inboundmessageservice.LinkRequest,
+	req *inboundqueue.LinkRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	f.linked = &req
+	f.linked = req
 	return f.message, f.linkErr
 }
 
 func (f *fakeInboundDesk) Review(
 	_ context.Context,
-	req inboundmessageservice.ReviewRequest,
+	req *inboundqueue.ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	f.reviewed = &req
+	f.reviewed = req
 	return f.message, nil
 }
 
@@ -88,7 +89,7 @@ func TestLinkInboundMessage_ChecksBeforeProposingAndLinksInTheActorsTenant(t *te
 		"reason":     "The PRO in the subject is this load's.",
 	})
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.NotNil(t, desk.checked)
 	assert.Equal(t, shipmentID, desk.checked.ShipmentID)
 
@@ -109,11 +110,14 @@ func TestLinkInboundMessage_RefusesARecordTheServiceCannotFind(t *testing.T) {
 	}
 	tool := NewLinkInboundMessageTool(desk)
 
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"messageId":  desk.message.ID.String(),
-		"shipmentId": pulid.MustNew("shp_").String(),
-		"reason":     "Guessing.",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.DeskParams(map[string]any{
+			"messageId":  desk.message.ID.String(),
+			"shipmentId": pulid.MustNew("shp_").String(),
+			"reason":     "Guessing.",
+		}),
+	)
 
 	require.Error(t, err)
 }
@@ -170,7 +174,10 @@ func TestMarkInboundMessage_Refuses(t *testing.T) {
 
 			require.Error(
 				t,
-				tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.DeskParams(tc.params)),
+				tool.(agenttoolports.ToolValidator).Validate(
+					t.Context(),
+					agenttoolstest.DeskParams(tc.params),
+				),
 			)
 			require.Error(t, tool.Execute(t.Context(), agenttoolstest.DeskParams(tc.params)))
 			assert.Nil(t, desk.reviewed)
@@ -182,7 +189,7 @@ func replyTool(
 	desk *fakeInboundDesk,
 	mailer *agenttoolstest.FakeMailer,
 	renderer *agenttoolstest.FakeRenderer,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &ReplyToInboundMessageTool{
 		inbox: desk,
 		deps:  inboundReplier{email: mailer, templates: renderer},
@@ -223,7 +230,7 @@ func TestReplyToInboundMessage_AnswersTheSenderInTheThread(t *testing.T) {
 
 	require.NotNil(t, renderer.Req)
 	assert.Equal(t, documenttemplate.KindAgentInboundReplyEmail, renderer.Req.Kind)
-	data := renderer.Req.Data.(documenttemplate.AgentEmailContext)
+	data := renderer.Req.Data.(portaltemplate.AgentEmailContext)
 	assert.Equal(t, "Re: Where is 88213?", data.AgentSubject)
 
 	require.NotNil(t, desk.reviewed, "a reply settles the message")
@@ -240,7 +247,11 @@ func TestReplyToInboundMessage_LeavesTheThreadWhenTheSendersIDIsUnsafe(t *testin
 
 	require.NoError(
 		t,
-		replyTool(desk, mailer, &agenttoolstest.FakeRenderer{}).Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{
+		replyTool(
+			desk,
+			mailer,
+			&agenttoolstest.FakeRenderer{},
+		).Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{
 			"messageId": desk.message.ID.String(),
 			"profileId": pulid.MustNew("emp_").String(),
 			"body":      "Answer.",
@@ -283,7 +294,7 @@ func TestReplyToInboundMessage_Refuses(t *testing.T) {
 				"body":      "Answer.",
 			})
 
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 			require.Error(t, tool.Execute(t.Context(), params))
 			assert.Nil(t, mailer.Sent, "nothing may be sent")
 			assert.Nil(t, desk.reviewed)
@@ -297,7 +308,11 @@ func TestReplyToInboundMessage_DoesNotSettleAMessageWhoseReplyFailed(t *testing.
 	desk := &fakeInboundDesk{message: inboundMessage()}
 	mailer := &agenttoolstest.FakeMailer{Err: assert.AnError}
 
-	err := replyTool(desk, mailer, &agenttoolstest.FakeRenderer{}).Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{
+	err := replyTool(
+		desk,
+		mailer,
+		&agenttoolstest.FakeRenderer{},
+	).Execute(t.Context(), agenttoolstest.DeskParams(map[string]any{
 		"messageId": desk.message.ID.String(),
 		"profileId": pulid.MustNew("emp_").String(),
 		"body":      "Answer.",
@@ -376,9 +391,11 @@ func TestInboundTools_AreOnlyAsAutonomousAsTheMailbox(t *testing.T) {
 
 			desk := &fakeInboundDesk{message: inboundMessage()}
 			tc.mutate(desk.message)
-			params := agenttoolstest.DeskParams(map[string]any{"messageId": desk.message.ID.String()})
+			params := agenttoolstest.DeskParams(
+				map[string]any{"messageId": desk.message.ID.String()},
+			)
 
-			for _, tool := range []agentports.AgentTool{
+			for _, tool := range []agenttoolports.AgentTool{
 				NewLinkInboundMessageTool(desk),
 				NewMarkInboundMessageTool(desk),
 				replyTool(desk, &agenttoolstest.FakeMailer{}, &agenttoolstest.FakeRenderer{}),
@@ -397,16 +414,20 @@ func TestInboundTools_AMessageThatCannotBeReadIsAProposal(t *testing.T) {
 	desk := &fakeInboundDesk{}
 	condition := NewMarkInboundMessageTool(desk).Policy().Condition
 
-	assert.Equal(t, agent.TierPropose, condition.Limit(t.Context(), agenttoolstest.DeskParams(map[string]any{
-		"messageId": pulid.MustNew("imsg_").String(),
-	})))
+	assert.Equal(
+		t,
+		agent.TierPropose,
+		condition.Limit(t.Context(), agenttoolstest.DeskParams(map[string]any{
+			"messageId": pulid.MustNew("imsg_").String(),
+		})),
+	)
 }
 
 // A load is never created unattended, whatever the desk has earned.
 func TestCreateShipment_IsNeverCreatedUnattended(t *testing.T) {
 	t.Parallel()
 
-	policy := (&operationstools.CreateShipmentTool{}).Policy()
+	policy := (&intaketools.CreateShipmentTool{}).Policy()
 	assert.False(t, policy.MaxTier.Above(agent.TierActWithApproval))
-	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy))
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(&policy))
 }

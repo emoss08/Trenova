@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -88,16 +89,6 @@ func (p *Provider) CheckAdvisor() error {
 	return nil
 }
 
-// AdvisorSettingsChanged reports a change that makes an earlier refusal stale:
-// the advisor turned on, another advisor, or another model it advises.
-func AdvisorSettingsChanged(before, after *Provider) bool {
-	return before.AdvisorEnabled != after.AdvisorEnabled ||
-		!strings.EqualFold(before.namedAdvisorModel(), after.namedAdvisorModel()) ||
-		!strings.EqualFold(before.Model, after.Model) ||
-		before.Kind != after.Kind ||
-		before.ResolvedPlatform() != after.ResolvedPlatform()
-}
-
 func (p *Provider) validateAgentSettings(multiErr *errortypes.MultiError) {
 	if len(p.AdvisorModel) > maxModelLength {
 		multiErr.Add("advisorModel", errortypes.ErrInvalid,
@@ -110,14 +101,14 @@ func (p *Provider) validateAgentSettings(multiErr *errortypes.MultiError) {
 		multiErr.Add("scriptWrites", errortypes.ErrInvalid,
 			"Scripts may propose writes only when scripts are turned on")
 	}
-	if p.Scripts && !p.ServesTask(TaskAssistantChat) {
+	if p.Scripts && !p.ServesTask(aitask.TaskAssistantChat) {
 		multiErr.Add("scripts", errortypes.ErrInvalid,
 			"Scripts apply only to a provider that handles assistant chat")
 	}
 }
 
 func (p *Provider) validateAdvisor(multiErr *errortypes.MultiError) {
-	if !p.ServesTask(TaskAssistantChat) {
+	if !p.ServesTask(aitask.TaskAssistantChat) {
 		multiErr.Add("advisorEnabled", errortypes.ErrInvalid,
 			"The advisor applies only to a provider that handles assistant chat")
 		return

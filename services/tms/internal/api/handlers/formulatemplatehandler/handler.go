@@ -4,10 +4,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -16,8 +20,11 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
-	PageAssistant        agentports.PageAssistant       `optional:"true"`
-	StudioAssist         agentports.FormulaStudioAssist `optional:"true"`
+	Reviews              *formulatemplatereviewservice.Service
+	StudioService        *formulatemplatestudioservice.Service
+	Imports              *formulatemplateimportservice.Service
+	PageAssistant        assistantports.PageAssistant           `optional:"true"`
+	StudioAssist         formulastudioports.FormulaStudioAssist `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     permissionports.PermissionEngine
@@ -25,8 +32,11 @@ type Params struct {
 
 type Handler struct {
 	service       *formulatemplateservice.Service
-	pageAssistant agentports.PageAssistant
-	studio        agentports.FormulaStudioAssist
+	reviews       *formulatemplatereviewservice.Service
+	studioService *formulatemplatestudioservice.Service
+	imports       *formulatemplateimportservice.Service
+	pageAssistant assistantports.PageAssistant
+	studio        formulastudioports.FormulaStudioAssist
 	eh            *helpers.ErrorHandler
 	pm            *middleware.PermissionMiddleware
 	permEngine    permissionports.PermissionEngine
@@ -35,6 +45,9 @@ type Handler struct {
 func New(p Params) *Handler {
 	return &Handler{
 		service:       p.Service,
+		reviews:       p.Reviews,
+		studioService: p.StudioService,
+		imports:       p.Imports,
 		pageAssistant: p.PageAssistant,
 		studio:        p.StudioAssist,
 		eh:            p.ErrorHandler,

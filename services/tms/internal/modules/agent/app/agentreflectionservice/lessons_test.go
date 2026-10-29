@@ -6,8 +6,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,10 +23,10 @@ import (
 )
 
 type fakeMemories struct {
-	agentports.AgentMemoryService
-	mode       agent.MemorySavingMode
+	agentmemoryports.AgentMemoryService
+	mode       agentmemory.MemorySavingMode
 	roles      []pulid.ID
-	remembered []*agentports.RememberRequest
+	remembered []*agentmemoryports.RememberRequest
 	refuse     error
 }
 
@@ -29,9 +34,9 @@ func (f *fakeMemories) SavingMode(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (agent.MemorySavingMode, error) {
+) (agentmemory.MemorySavingMode, error) {
 	if f.mode == "" {
-		return agent.MemorySavingAutomatic, nil
+		return agentmemory.MemorySavingAutomatic, nil
 	}
 
 	return f.mode, nil
@@ -41,25 +46,25 @@ func (f *fakeMemories) Reader(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	userID pulid.ID,
-) (agent.MemoryReader, error) {
-	return agent.MemoryReader{UserID: userID, RoleIDs: f.roles}, nil
+) (agentmemory.MemoryReader, error) {
+	return agentmemory.MemoryReader{UserID: userID, RoleIDs: f.roles}, nil
 }
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
-	req *agentports.RememberRequest,
+	req *agentmemoryports.RememberRequest,
 	_ *permissionports.RequestActor,
-) (*agent.Memory, error) {
+) (*agentmemory.Memory, error) {
 	if f.refuse != nil {
 		return nil, f.refuse
 	}
 	f.remembered = append(f.remembered, req)
-	status := agent.MemoryStatusActive
+	status := agentmemory.MemoryStatusActive
 	if req.Suggest {
-		status = agent.MemoryStatusSuggested
+		status = agentmemory.MemoryStatusSuggested
 	}
 
-	return &agent.Memory{
+	return &agentmemory.Memory{
 		ID:           pulid.MustNew("amem_"),
 		Kind:         req.Kind,
 		Scope:        req.Scope,
@@ -70,36 +75,36 @@ func (f *fakeMemories) Remember(
 }
 
 type fakeReflections struct {
-	agentports.AgentReflectionRepository
-	stored *agent.Reflection
+	agentreflectionports.AgentReflectionRepository
+	stored *agentreflection.Reflection
 }
 
 func (f *fakeReflections) GetByID(
 	context.Context,
-	agentports.GetAgentReflectionRequest,
-) (*agent.Reflection, error) {
+	agentreflectionports.GetAgentReflectionRequest,
+) (*agentreflection.Reflection, error) {
 	return f.stored, nil
 }
 
 func (f *fakeReflections) Update(
 	_ context.Context,
-	entity *agent.Reflection,
-) (*agent.Reflection, error) {
+	entity *agentreflection.Reflection,
+) (*agentreflection.Reflection, error) {
 	f.stored = entity
 
 	return entity, nil
 }
 
 type fakeConversations struct {
-	agentports.ConversationRepository
-	added []agentports.AddSavedMemoriesRequest
+	conversationports.ConversationRepository
+	added []conversationports.AddSavedMemoriesRequest
 }
 
 func (f *fakeConversations) AddSavedMemories(
 	_ context.Context,
-	req agentports.AddSavedMemoriesRequest,
+	req *conversationports.AddSavedMemoriesRequest,
 ) error {
-	f.added = append(f.added, req)
+	f.added = append(f.added, *req)
 
 	return nil
 }
@@ -112,28 +117,32 @@ func lessonService(memories *fakeMemories) *Service {
 	}
 }
 
-func threadPlan() *agentports.ReflectionPlan {
-	return &agentports.ReflectionPlan{
+func threadPlan() *agentreflectionports.ReflectionPlan {
+	return &agentreflectionports.ReflectionPlan{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
 		ReflectionID:      pulid.MustNew("arfl_"),
-		Subject:           agent.ReflectionSubjectThread,
+		Subject:           agentreflection.ReflectionSubjectThread,
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 		ThreadID:          pulid.MustNew("athr_"),
 		PersonUserID:      pulid.MustNew("usr_"),
 		Taint:             &agent.RunTaint{},
-		Signals: agent.ReflectionSignals{
-			{Kind: agent.ReflectionSignalToolRecovered, Count: 1, Detail: "dispatch_assign_move"},
+		Signals: agentreflection.ReflectionSignals{
+			{
+				Kind:   agentreflection.ReflectionSignalToolRecovered,
+				Count:  1,
+				Detail: "dispatch_assign_move",
+			},
 		},
 		ToolNames: []string{"dispatch_assign_move"},
 	}
 }
 
-func runPlan() *agentports.ReflectionPlan {
+func runPlan() *agentreflectionports.ReflectionPlan {
 	plan := threadPlan()
-	plan.Subject = agent.ReflectionSubjectRun
+	plan.Subject = agentreflection.ReflectionSubjectRun
 	plan.ThreadID = pulid.Nil
 	plan.PersonUserID = pulid.Nil
 	plan.RunID = pulid.MustNew("arun_")
@@ -143,7 +152,7 @@ func runPlan() *agentports.ReflectionPlan {
 
 func procedure(audience string) *lesson {
 	return &lesson{
-		Kind:     string(agent.MemoryKindProcedure),
+		Kind:     string(agentmemory.MemoryKindProcedure),
 		Content:  "1. Read the move with shipment_get. 2. Pass its move id to dispatch_assign_move.",
 		Audience: audience,
 		ToolName: "dispatch_assign_move",
@@ -158,7 +167,7 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 	svc := lessonService(&fakeMemories{})
 	cases := []struct {
 		name   string
-		plan   *agentports.ReflectionPlan
+		plan   *agentreflectionports.ReflectionPlan
 		lesson *lesson
 		reason string
 	}{
@@ -244,29 +253,29 @@ func TestLessonRequest_SharedLessonsFollowWhoTheyReach(t *testing.T) {
 
 	agentWide, _, err := svc.lessonRequest(t.Context(), plan, procedure(audienceAgent))
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeAgent, agentWide.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeAgent, agentWide.Scope)
 	assert.False(t, agentWide.Suggest, "an agent's own lesson follows the person's preference")
 
 	team, _, err := svc.lessonRequest(t.Context(), plan, procedure(audienceTeam))
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeRole, team.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeRole, team.Scope)
 	assert.Equal(t, role, team.RoleID)
 	assert.True(t, team.Suggest, "a team lesson is always offered")
 
 	organization, _, err := svc.lessonRequest(t.Context(), plan, procedure(audienceOrganization))
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, organization.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, organization.Scope)
 	assert.True(t, organization.Suggest, "an organization lesson is always offered")
 }
 
 func TestLessonRequest_APersonWhoAskedToBeAskedIsOfferedEverything(t *testing.T) {
 	t.Parallel()
 
-	svc := lessonService(&fakeMemories{mode: agent.MemorySavingAskFirst})
+	svc := lessonService(&fakeMemories{mode: agentmemory.MemorySavingAskFirst})
 
 	req, _, err := svc.lessonRequest(t.Context(), threadPlan(), procedure(audienceMe))
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeUser, req.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeUser, req.Scope)
 	assert.True(t, req.Suggest)
 }
 
@@ -298,7 +307,7 @@ func TestLessonRequest_ARunOffersLessonsForItsAgent(t *testing.T) {
 		req, reason, err := svc.lessonRequest(t.Context(), runPlan(), procedure(audience))
 		require.NoError(t, err)
 		require.Empty(t, reason)
-		assert.Equal(t, agent.MemoryScopeAgent, req.Scope, audience)
+		assert.Equal(t, agentmemory.MemoryScopeAgent, req.Scope, audience)
 		assert.True(t, req.Suggest,
 			"a lesson nobody watched being learned waits for a person: %s", audience)
 	}
@@ -309,7 +318,7 @@ func TestLessonRequest_ARunOffersLessonsForItsAgent(t *testing.T) {
 		procedure(audienceOrganization),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, agent.MemoryScopeOrganization, organization.Scope)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, organization.Scope)
 	assert.True(t, organization.Suggest)
 }
 
@@ -319,8 +328,8 @@ func TestLessonRequest_ASubjectAndAReplacementTheWorkVouchesFor(t *testing.T) {
 	plan := threadPlan()
 	customer := pulid.MustNew("cus_")
 	known := pulid.MustNew("amem_")
-	plan.Subjects = []agentports.ReflectionSubjectRef{
-		{Type: agent.MemorySubjectCustomer, ID: customer},
+	plan.Subjects = []agentreflectionports.ReflectionSubjectRef{
+		{Type: agentmemory.MemorySubjectCustomer, ID: customer},
 	}
 	plan.KnownMemoryIDs = []pulid.ID{known}
 	svc := lessonService(&fakeMemories{})
@@ -335,7 +344,7 @@ func TestLessonRequest_ASubjectAndAReplacementTheWorkVouchesFor(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Empty(t, reason)
-	assert.Equal(t, agent.MemorySubjectCustomer, req.SubjectType)
+	assert.Equal(t, agentmemory.MemorySubjectCustomer, req.SubjectType)
 	assert.Equal(t, customer, req.SubjectID)
 	assert.Equal(t, known, req.Replaces)
 }
@@ -349,8 +358,8 @@ func TestParseReply(t *testing.T) {
 	_, err = ParseReply("not json")
 	require.Error(t, err)
 
-	lessons := make([]string, 0, agent.MaxReflectionLessons+2)
-	for range agent.MaxReflectionLessons + 2 {
+	lessons := make([]string, 0, agentreflection.MaxReflectionLessons+2)
+	for range agentreflection.MaxReflectionLessons + 2 {
 		lessons = append(
 			lessons,
 			`{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}`,
@@ -358,7 +367,7 @@ func TestParseReply(t *testing.T) {
 	}
 	reply, err := ParseReply(`{"lessons":[` + strings.Join(lessons, ",") + `],"notes":"Kept one."}`)
 	require.NoError(t, err)
-	assert.Len(t, reply.Lessons, agent.MaxReflectionLessons)
+	assert.Len(t, reply.Lessons, agentreflection.MaxReflectionLessons)
 	assert.Equal(t, "Kept one.", reply.Notes)
 }
 
@@ -367,9 +376,9 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 
 	plan := threadPlan()
 	plan.ReplyMessageID = pulid.MustNew("amsg_")
-	reflections := &fakeReflections{stored: &agent.Reflection{
+	reflections := &fakeReflections{stored: &agentreflection.Reflection{
 		ID:     plan.ReflectionID,
-		Status: agent.ReflectionStatusRunning,
+		Status: agentreflection.ReflectionStatusRunning,
 	}}
 	conversations := &fakeConversations{}
 	memories := &fakeMemories{}
@@ -377,7 +386,7 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = conversations
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
 		Text: `{"lessons":[` +
 			`{"kind":"Procedure","content":"Pass the move id to dispatch_assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"dispatch_assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
 			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}` +
@@ -388,14 +397,14 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.ReflectionStatusCompleted, outcome.Status)
+	assert.Equal(t, agentreflection.ReflectionStatusCompleted, outcome.Status)
 	assert.Equal(t, 1, outcome.Kept)
 	assert.Equal(t, 1, outcome.Refused)
 
 	stored := reflections.stored
 	require.Len(t, stored.Changes, 2)
-	assert.Equal(t, agent.ReflectionActionSaved, stored.Changes[0].Action)
-	assert.Equal(t, agent.ReflectionActionRefused, stored.Changes[1].Action)
+	assert.Equal(t, agentreflection.ReflectionActionSaved, stored.Changes[0].Action)
+	assert.Equal(t, agentreflection.ReflectionActionRefused, stored.Changes[1].Action)
 	assert.Equal(t, "test-model", stored.Model)
 	assert.Equal(t, 1200, stored.InputTokens)
 	assert.Equal(t, "One procedure kept.", stored.Notes)
@@ -418,9 +427,9 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	t.Parallel()
 
 	plan := threadPlan()
-	reflections := &fakeReflections{stored: &agent.Reflection{
+	reflections := &fakeReflections{stored: &agentreflection.Reflection{
 		ID:     plan.ReflectionID,
-		Status: agent.ReflectionStatusRunning,
+		Status: agentreflection.ReflectionStatusRunning,
 	}}
 	memories := &fakeMemories{refuse: errortypes.NewValidationError(
 		"subjectId", errortypes.ErrInvalid, "No customer with that id is visible to you",
@@ -429,7 +438,7 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	svc.repo = reflections
 	svc.conversations = &fakeConversations{}
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
 		Text: `{"lessons":[{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}],"notes":""}`,
 	})
 	require.NoError(t, err)
@@ -441,15 +450,15 @@ func TestFinish_AnUnreadableAnswerFailsTheLookBack(t *testing.T) {
 	t.Parallel()
 
 	plan := threadPlan()
-	reflections := &fakeReflections{stored: &agent.Reflection{
+	reflections := &fakeReflections{stored: &agentreflection.Reflection{
 		ID:     plan.ReflectionID,
-		Status: agent.ReflectionStatusRunning,
+		Status: agentreflection.ReflectionStatusRunning,
 	}}
 	svc := lessonService(&fakeMemories{})
 	svc.repo = reflections
 
-	outcome, err := svc.Finish(t.Context(), plan, &agentports.StructuredCompletionResult{Text: "{"})
+	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{Text: "{"})
 	require.NoError(t, err)
-	assert.Equal(t, agent.ReflectionStatusFailed, outcome.Status)
+	assert.Equal(t, agentreflection.ReflectionStatusFailed, outcome.Status)
 	assert.NotEmpty(t, reflections.stored.ErrorMessage)
 }

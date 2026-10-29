@@ -3,15 +3,21 @@ package triageshipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -46,15 +52,15 @@ type shipmentCreator interface {
 type holdCreator interface {
 	Create(
 		ctx context.Context,
-		req *shipmentports.CreateShipmentHoldRequest,
+		req *shipmentholdports.CreateShipmentHoldRequest,
 		actor *permissionports.RequestActor,
-	) (*shipment.ShipmentHold, error)
+	) (*shipmenthold.ShipmentHold, error)
 }
 
 type commentCreator interface {
 	CreateSystem(
 		ctx context.Context,
-		req *shipmentports.CreateSystemShipmentCommentRequest,
+		req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 	) (*shipment.ShipmentComment, error)
 }
 
@@ -68,23 +74,23 @@ type occurrenceReader interface {
 type detentionDecider interface {
 	Waive(
 		ctx context.Context,
-		p detentionservice.WaiveParams,
+		p *detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	WaiveUninvoiced(
 		ctx context.Context,
-		p *detentionservice.WaiveParams,
+		p *detentionreview.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
 	Dispute(
 		ctx context.Context,
-		p detentionservice.DisputeParams,
+		p *detentionreview.DisputeParams,
 	) (*detention.DetentionOccurrence, error)
 }
 
 type disputeRecorder interface {
 	DisputeRecord(
 		ctx context.Context,
-		p *detentionservice.DisputeRecordParams,
-	) (*detentionservice.DisputeRecord, error)
+		p *detentionnoticeservice.DisputeRecordParams,
+	) (*detentionnoticeservice.DisputeRecord, error)
 }
 
 type Params struct {
@@ -93,12 +99,13 @@ type Params struct {
 	Logger      *zap.Logger
 	Tracking    shipmenttrackingports.ShipmentTrackingReader
 	Shipments   shipmentports.ShipmentRepository
-	Lookup      shipmentports.TriageLookupRepository
-	Creator     shipmentports.ShipmentService
-	Holds       shipmentports.ShipmentHoldService
-	Comments    shipmentports.ShipmentCommentService
+	Lookup      triagelookupports.TriageLookupRepository
+	Creator     shipmentserviceports.ShipmentWriter
+	Holds       shipmentholdports.ShipmentHoldService
+	Comments    shipmentcommentports.ShipmentCommentService
 	Occurrences detentionports.DetentionOccurrenceRepository
-	Detention   *detentionservice.Service
+	Review      *detentionreview.Service
+	Notices     *detentionnoticeservice.Service
 	Credits     detentionports.BilledDetentionCreditor `optional:"true"`
 }
 
@@ -106,7 +113,7 @@ type Service struct {
 	l           *zap.Logger
 	tracking    trackingReader
 	summaries   summaryReader
-	lookup      shipmentports.TriageLookupRepository
+	lookup      triagelookupports.TriageLookupRepository
 	creator     shipmentCreator
 	holds       holdCreator
 	comments    commentCreator
@@ -127,19 +134,19 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		holds:       p.Holds,
 		comments:    p.Comments,
 		occurrences: p.Occurrences,
-		detention:   p.Detention,
-		records:     p.Detention,
+		detention:   p.Review,
+		records:     p.Notices,
 		credits:     p.Credits,
 		now:         timeutils.NowUnix,
 	}
 }
 
 var (
-	_ inboundmessageports.TriageShipmentPeeker   = (*Service)(nil)
-	_ inboundmessageports.TriageStopTimesReader  = (*Service)(nil)
-	_ inboundmessageports.TriageLoadCreator      = (*Service)(nil)
-	_ inboundmessageports.TriageExceptionLogger  = (*Service)(nil)
-	_ inboundmessageports.TriageDetentionSettler = (*Service)(nil)
+	_ triageworkports.TriageShipmentPeeker   = (*Service)(nil)
+	_ triageworkports.TriageStopTimesReader  = (*Service)(nil)
+	_ triageworkports.TriageLoadCreator      = (*Service)(nil)
+	_ triageworkports.TriageExceptionLogger  = (*Service)(nil)
+	_ triageworkports.TriageDetentionSettler = (*Service)(nil)
 
-	_ inboundmessageports.TriageDetentionEvidenceSource = (*Service)(nil)
+	_ triageworkports.TriageDetentionEvidenceSource = (*Service)(nil)
 )

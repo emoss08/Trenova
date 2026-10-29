@@ -5,12 +5,12 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,37 +26,37 @@ const (
 )
 
 type fakeRetrievalRepo struct {
-	agentports.AIRetrievalRepository
+	retrievalports.AIRetrievalRepository
 
 	mu           sync.Mutex
 	availability airetrieval.Availability
 	settings     *airetrieval.Settings
 	updated      []*airetrieval.Settings
-	paused       []agentports.SetAIRetrievalPausedRequest
-	marked       []agentports.MarkAIRetrievalStaleRequest
+	paused       []retrievalports.SetAIRetrievalPausedRequest
+	marked       []retrievalports.MarkAIRetrievalStaleRequest
 	claim        []*airetrieval.IndexEntry
-	claims       []agentports.ClaimIndexEntriesRequest
-	hashes       map[pulid.ID][]agentports.EmbeddingChunkHash
-	replaced     []agentports.ReplaceEmbeddingChunksRequest
-	deleted      []agentports.AIRetrievalSourceRef
-	indexed      []agentports.IndexEntryOutcome
-	skipped      []agentports.IndexEntryOutcome
-	failed       []agentports.IndexEntryOutcome
+	claims       []retrievalports.ClaimIndexEntriesRequest
+	hashes       map[pulid.ID][]retrievalports.EmbeddingChunkHash
+	replaced     []retrievalports.ReplaceEmbeddingChunksRequest
+	deleted      []retrievalports.AIRetrievalSourceRef
+	indexed      []retrievalports.IndexEntryOutcome
+	skipped      []retrievalports.IndexEntryOutcome
+	failed       []retrievalports.IndexEntryOutcome
 	stale        map[string][]pulid.ID
-	counts       []agentports.IndexEntryCount
-	swapped      []agentports.SwapAIRetrievalModelRequest
-	purges       []agentports.PurgeAIRetrievalModelResult
+	counts       []retrievalports.IndexEntryCount
+	swapped      []retrievalports.SwapAIRetrievalModelRequest
+	purges       []retrievalports.PurgeAIRetrievalModelResult
 	purged       int
-	search       []agentports.VectorSearchHit
+	search       []retrievalports.VectorSearchHit
 	searchErr    error
-	searches     []agentports.VectorSearchRequest
+	searches     []retrievalports.VectorSearchRequest
 }
 
 func newFakeRetrievalRepo(settings *airetrieval.Settings) *fakeRetrievalRepo {
 	return &fakeRetrievalRepo{
 		availability: airetrieval.Availability{Available: true},
 		settings:     settings,
-		hashes:       map[pulid.ID][]agentports.EmbeddingChunkHash{},
+		hashes:       map[pulid.ID][]retrievalports.EmbeddingChunkHash{},
 		stale:        map[string][]pulid.ID{},
 	}
 }
@@ -93,7 +93,7 @@ func (f *fakeRetrievalRepo) UpdateSettings(
 
 func (f *fakeRetrievalRepo) SetPaused(
 	_ context.Context,
-	req *agentports.SetAIRetrievalPausedRequest,
+	req *retrievalports.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -109,7 +109,7 @@ func (f *fakeRetrievalRepo) SetPaused(
 
 func (f *fakeRetrievalRepo) MarkStale(
 	_ context.Context,
-	req *agentports.MarkAIRetrievalStaleRequest,
+	req *retrievalports.MarkAIRetrievalStaleRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -121,7 +121,7 @@ func (f *fakeRetrievalRepo) MarkStale(
 
 func (f *fakeRetrievalRepo) ClaimIndexEntries(
 	_ context.Context,
-	req *agentports.ClaimIndexEntriesRequest,
+	req *retrievalports.ClaimIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
 	f.claims = append(f.claims, *req)
 	claimed := f.claim
@@ -132,59 +132,59 @@ func (f *fakeRetrievalRepo) ClaimIndexEntries(
 
 func (f *fakeRetrievalRepo) ListChunkHashes(
 	_ context.Context,
-	req *agentports.ListEmbeddingChunkHashesRequest,
-) ([]agentports.EmbeddingChunkHash, error) {
+	req *retrievalports.ListEmbeddingChunkHashesRequest,
+) ([]retrievalports.EmbeddingChunkHash, error) {
 	return f.hashes[req.Source.SourceID], nil
 }
 
 func (f *fakeRetrievalRepo) ReplaceChunks(
 	_ context.Context,
-	req *agentports.ReplaceEmbeddingChunksRequest,
-) (agentports.ReplaceEmbeddingChunksResult, error) {
+	req *retrievalports.ReplaceEmbeddingChunksRequest,
+) (retrievalports.ReplaceEmbeddingChunksResult, error) {
 	f.replaced = append(f.replaced, *req)
 
-	return agentports.ReplaceEmbeddingChunksResult{Written: len(req.Chunks)}, nil
+	return retrievalports.ReplaceEmbeddingChunksResult{Written: len(req.Chunks)}, nil
 }
 
 func (f *fakeRetrievalRepo) DeleteSource(
 	_ context.Context,
-	source *agentports.AIRetrievalSourceRef,
-) (agentports.DeleteAIRetrievalSourceResult, error) {
+	source *retrievalports.AIRetrievalSourceRef,
+) (retrievalports.DeleteAIRetrievalSourceResult, error) {
 	f.deleted = append(f.deleted, *source)
 
-	return agentports.DeleteAIRetrievalSourceResult{IndexEntries: 1}, nil
+	return retrievalports.DeleteAIRetrievalSourceResult{IndexEntries: 1}, nil
 }
 
 func (f *fakeRetrievalRepo) MarkIndexed(
 	_ context.Context,
-	req agentports.MarkIndexEntriesRequest,
-) (agentports.MarkIndexEntriesResult, error) {
+	req retrievalports.MarkIndexEntriesRequest,
+) (retrievalports.MarkIndexEntriesResult, error) {
 	f.indexed = append(f.indexed, req.Outcomes...)
 
-	return agentports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
+	return retrievalports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
 }
 
 func (f *fakeRetrievalRepo) MarkSkipped(
 	_ context.Context,
-	req agentports.MarkIndexEntriesRequest,
-) (agentports.MarkIndexEntriesResult, error) {
+	req retrievalports.MarkIndexEntriesRequest,
+) (retrievalports.MarkIndexEntriesResult, error) {
 	f.skipped = append(f.skipped, req.Outcomes...)
 
-	return agentports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
+	return retrievalports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
 }
 
 func (f *fakeRetrievalRepo) MarkFailed(
 	_ context.Context,
-	req agentports.MarkIndexEntriesRequest,
-) (agentports.MarkIndexEntriesResult, error) {
+	req retrievalports.MarkIndexEntriesRequest,
+) (retrievalports.MarkIndexEntriesResult, error) {
 	f.failed = append(f.failed, req.Outcomes...)
 
-	return agentports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
+	return retrievalports.MarkIndexEntriesResult{Applied: len(req.Outcomes)}, nil
 }
 
 func (f *fakeRetrievalRepo) FindStaleSources(
 	_ context.Context,
-	req *agentports.FindStaleAIRetrievalSourcesRequest,
+	req *retrievalports.FindStaleAIRetrievalSourcesRequest,
 ) ([]pulid.ID, error) {
 	key := string(req.SourceType) + "|" + req.ModelKey
 	ids := f.stale[key]
@@ -195,15 +195,15 @@ func (f *fakeRetrievalRepo) FindStaleSources(
 
 func (f *fakeRetrievalRepo) CountIndexEntries(
 	context.Context,
-	agentports.CountIndexEntriesRequest,
-) ([]agentports.IndexEntryCount, error) {
+	retrievalports.CountIndexEntriesRequest,
+) ([]retrievalports.IndexEntryCount, error) {
 	return f.counts, nil
 }
 
 func (f *fakeRetrievalRepo) SwapModel(
 	_ context.Context,
-	req agentports.SwapAIRetrievalModelRequest,
-) (*agentports.SwapAIRetrievalModelResult, error) {
+	req retrievalports.SwapAIRetrievalModelRequest,
+) (*retrievalports.SwapAIRetrievalModelResult, error) {
 	f.swapped = append(f.swapped, req)
 	retired := f.settings.ActiveModelKey
 	f.settings.ActiveModelKey = f.settings.PendingModelKey
@@ -213,7 +213,7 @@ func (f *fakeRetrievalRepo) SwapModel(
 
 	copied := *f.settings
 
-	return &agentports.SwapAIRetrievalModelResult{
+	return &retrievalports.SwapAIRetrievalModelResult{
 		Settings:        &copied,
 		RetiredModelKey: retired,
 	}, nil
@@ -221,7 +221,7 @@ func (f *fakeRetrievalRepo) SwapModel(
 
 func (f *fakeRetrievalRepo) ListIndexedTenants(
 	context.Context,
-	agentports.ListIndexedRetrievalTenantsRequest,
+	retrievalports.ListIndexedRetrievalTenantsRequest,
 ) ([]pagination.TenantInfo, error) {
 	if f.settings == nil || !f.settings.HasActiveModel() {
 		return []pagination.TenantInfo{}, nil
@@ -235,11 +235,11 @@ func (f *fakeRetrievalRepo) ListIndexedTenants(
 
 func (f *fakeRetrievalRepo) PurgeModel(
 	context.Context,
-	agentports.PurgeAIRetrievalModelRequest,
-) (agentports.PurgeAIRetrievalModelResult, error) {
+	retrievalports.PurgeAIRetrievalModelRequest,
+) (retrievalports.PurgeAIRetrievalModelResult, error) {
 	f.purged++
 	if len(f.purges) == 0 {
-		return agentports.PurgeAIRetrievalModelResult{}, nil
+		return retrievalports.PurgeAIRetrievalModelResult{}, nil
 	}
 	next := f.purges[0]
 	f.purges = f.purges[1:]
@@ -249,55 +249,55 @@ func (f *fakeRetrievalRepo) PurgeModel(
 
 func (f *fakeRetrievalRepo) Search(
 	_ context.Context,
-	req *agentports.VectorSearchRequest,
-) ([]agentports.VectorSearchHit, error) {
+	req *retrievalports.VectorSearchRequest,
+) ([]retrievalports.VectorSearchHit, error) {
 	f.searches = append(f.searches, *req)
 
 	return f.search, f.searchErr
 }
 
 type fakeSources struct {
-	agentports.RetrievalSourceRepository
+	retrievalports.RetrievalSourceRepository
 
-	memories  []*agent.Memory
-	documents []*agentports.RetrievalDocumentSource
+	memories  []*agentmemory.Memory
+	documents []*retrievalports.RetrievalDocumentSource
 	messages  []*inboundmessage.InboundMessage
 	keys      []string
 	ids       []pulid.ID
-	keyword   []agentports.RetrievalKeywordHit
-	listed    []agentports.ListRetrievalSourceIDsRequest
-	searched  []agentports.RetrievalKeywordSearchRequest
+	keyword   []retrievalports.RetrievalKeywordHit
+	listed    []retrievalports.ListRetrievalSourceIDsRequest
+	searched  []retrievalports.RetrievalKeywordSearchRequest
 }
 
 func (f *fakeSources) ListModelKeys(
 	context.Context,
-	agentports.ListRetrievalModelKeysRequest,
+	retrievalports.ListRetrievalModelKeysRequest,
 ) ([]string, error) {
 	return f.keys, nil
 }
 
 func (f *fakeSources) GetMemories(
 	_ context.Context,
-	req agentports.RetrievalSourcesRequest,
-) ([]*agent.Memory, error) {
-	return slices.DeleteFunc(slices.Clone(f.memories), func(memory *agent.Memory) bool {
+	req retrievalports.RetrievalSourcesRequest,
+) ([]*agentmemory.Memory, error) {
+	return slices.DeleteFunc(slices.Clone(f.memories), func(memory *agentmemory.Memory) bool {
 		return !slices.Contains(req.IDs, memory.ID)
 	}), nil
 }
 
 func (f *fakeSources) GetDocuments(
 	_ context.Context,
-	req *agentports.RetrievalDocumentsRequest,
-) ([]*agentports.RetrievalDocumentSource, error) {
+	req *retrievalports.RetrievalDocumentsRequest,
+) ([]*retrievalports.RetrievalDocumentSource, error) {
 	return slices.DeleteFunc(slices.Clone(f.documents),
-		func(source *agentports.RetrievalDocumentSource) bool {
+		func(source *retrievalports.RetrievalDocumentSource) bool {
 			return !slices.Contains(req.IDs, source.Document.ID)
 		}), nil
 }
 
 func (f *fakeSources) GetInboundMessages(
 	_ context.Context,
-	req agentports.RetrievalSourcesRequest,
+	req retrievalports.RetrievalSourcesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	return slices.DeleteFunc(slices.Clone(f.messages),
 		func(message *inboundmessage.InboundMessage) bool {
@@ -307,7 +307,7 @@ func (f *fakeSources) GetInboundMessages(
 
 func (f *fakeSources) ListSourceIDs(
 	_ context.Context,
-	req *agentports.ListRetrievalSourceIDsRequest,
+	req *retrievalports.ListRetrievalSourceIDsRequest,
 ) ([]pulid.ID, error) {
 	f.listed = append(f.listed, *req)
 
@@ -316,16 +316,16 @@ func (f *fakeSources) ListSourceIDs(
 
 func (f *fakeSources) SearchDocuments(
 	context.Context,
-	agentports.RetrievalKeywordSearchRequest,
-) ([]agentports.RetrievalKeywordHit, error) {
+	*retrievalports.RetrievalKeywordSearchRequest,
+) ([]retrievalports.RetrievalKeywordHit, error) {
 	return f.keyword, nil
 }
 
 func (f *fakeSources) SearchInboundMessages(
 	_ context.Context,
-	req agentports.RetrievalKeywordSearchRequest,
-) ([]agentports.RetrievalKeywordHit, error) {
-	f.searched = append(f.searched, req)
+	req *retrievalports.RetrievalKeywordSearchRequest,
+) ([]retrievalports.RetrievalKeywordHit, error) {
+	f.searched = append(f.searched, *req)
 
 	return f.keyword, nil
 }
@@ -427,7 +427,7 @@ func newTestService(settings *airetrieval.Settings) *testService {
 		Repo:       repo,
 		Sources:    sources,
 		Usage:      usage,
-		Registry:   permission.NewRegistry(),
+		Registry:   permissioncatalog.NewRegistry(),
 		Embeddings: embeddings,
 		Signals:    signals,
 	})

@@ -169,7 +169,7 @@ that test tells you what the new worst case actually is.
 
 ### Dataloader Batching
 
-Dataloaders (`internal/api/graphql/loaders`) run on `vikstrous/dataloadgen`
+Dataloaders (`internal/api/graphql/loaders/*`, batching in `loadercore`) run on `vikstrous/dataloadgen`
 with a 1ms batching window and a batch capacity equal to the maximum page
 size, so one page of rows resolves a relation in one query. When tracing is on
 each batch emits `dataloadgen.wait` and fetch spans under the

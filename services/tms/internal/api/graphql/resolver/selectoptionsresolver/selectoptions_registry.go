@@ -2,23 +2,30 @@ package selectoptionsresolver
 
 import (
 	"context"
-	"strconv"
-
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/accountingselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/agentselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/documentsselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ediselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/identityselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/operationsselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/partiesselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/placesselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/ratingselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/settlementselectoptions"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/workforceselectoptions"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type SelectOptionRegistryEntry struct {
-	Resolve  func(context.Context, *SelectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
+	Resolve  func(context.Context, *selectoption.Request) (*gqlmodel.SelectOptionConnection, error)
 	parseIDs func([]string) ([]pulid.ID, error)
 }
 
@@ -26,19 +33,7 @@ func (e SelectOptionRegistryEntry) IDs(values []string) ([]pulid.ID, error) {
 	if e.parseIDs != nil {
 		return e.parseIDs(values)
 	}
-	return base.ParseIDs(values)
-}
-
-type SelectOptionsRequest struct {
-	TenantInfo  pagination.TenantInfo
-	SelectQuery *pagination.SelectQueryRequest
-	IDs         []pulid.ID
-	Filters     map[string]any
-}
-
-type selectOptionConnectionItem struct {
-	option *gqlmodel.SelectOption
-	cursor pagination.PositionCursor
+	return gqlid.ParseIDs(values)
 }
 
 func (r *Deps) RequireAuthContext(ctx context.Context) (*authctx.AuthContext, error) {
@@ -52,620 +47,269 @@ func (r *Deps) RequireAuthContext(ctx context.Context) (*authctx.AuthContext, er
 
 //nolint:funlen // one table entry per select-option resource
 func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOptionRegistryEntry {
+	equipment := &equipmentselectoptions.Sources{
+		EquipmentTypeService:         r.EquipmentTypeService,
+		EquipmentManufacturerService: r.EquipmentManufacturerService,
+		TrailerService:               r.TrailerService,
+		TractorService:               r.TractorService,
+		FleetCodeService:             r.FleetCodeService,
+	}
+	ediSources := &ediselectoptions.Sources{
+		EdiSetupService:    r.EdiSetupService,
+		EdiTransferService: r.EdiTransferService,
+	}
+	places := &placesselectoptions.Sources{
+		UsStateService:          r.UsStateService,
+		LocationService:         r.LocationService,
+		RateZoneService:         r.RateZoneService,
+		LocationCategoryService: r.LocationCategoryService,
+		DistanceProfileService:  r.DistanceProfileService,
+	}
+	operations := &operationsselectoptions.Sources{
+		ShipmentTypeService:         r.ShipmentTypeService,
+		ServiceTypeService:          r.ServiceTypeService,
+		CommodityService:            r.CommodityService,
+		HazardousMaterialService:    r.HazardousMaterialService,
+		OrderService:                r.OrderService,
+		ShipmentReader:              r.ShipmentReader,
+		ServiceFailureReasonCodeSvc: r.ServiceFailureReasonCodeSvc,
+	}
+	workforce := &workforceselectoptions.Sources{
+		WorkerService:            r.WorkerService,
+		SchedulingService:        r.SchedulingService,
+		SelfServiceService:       r.SelfServiceService,
+		OrgStructureService:      r.OrgStructureService,
+		WorkerCredentialService:  r.WorkerCredentialService,
+		WorkerTrainingService:    r.WorkerTrainingService,
+		PerformanceReviewService: r.PerformanceReviewService,
+		PtoPolicyService:         r.PtoPolicyService,
+		BenefitsService:          r.BenefitsService,
+	}
+	identity := &identityselectoptions.Sources{
+		OrganizationService: r.OrganizationService,
+		UserService:         r.UserService,
+		RoleService:         r.RoleService,
+	}
+	rating := &ratingselectoptions.Sources{
+		RateMatrixService:        r.RateMatrixService,
+		RateAgreementService:     r.RateAgreementService,
+		AccessorialChargeService: r.AccessorialChargeService,
+		DetentionPolicyService:   r.DetentionPolicyService,
+		FormulaTemplateService:   r.FormulaTemplateService,
+		FuelIndexRepo:            r.FuelIndexRepo,
+		FuelSurchargeProgramRepo: r.FuelSurchargeProgramRepo,
+	}
+	accounting := &accountingselectoptions.Sources{
+		FiscalYearRepo:      r.FiscalYearRepo,
+		FiscalPeriodRepo:    r.FiscalPeriodRepo,
+		GlAccountRepo:       r.GlAccountRepo,
+		JournalEntryService: r.JournalEntryService,
+		AccountTypeService:  r.AccountTypeService,
+	}
+	settlement := &settlementselectoptions.Sources{
+		FuelPurchaseService: r.FuelPurchaseService,
+		IftaService:         r.IftaService,
+		DriverPayService:    r.DriverPayService,
+	}
+	parties := &partiesselectoptions.Sources{
+		CarrierRepo:          r.CarrierRepo,
+		CustomerRepo:         r.CustomerRepo,
+		FactoringCompanyRepo: r.FactoringCompanyRepo,
+	}
+	documents := &documentsselectoptions.Sources{
+		CaptureProfileService: r.CaptureProfileService,
+		CaptureDeviceService:  r.CaptureDeviceService,
+		DocumentTypeService:   r.DocumentTypeService,
+		EmailService:          r.EmailService,
+	}
+	agent := &agentselectoptions.Sources{Core: r.Core, AiProviderService: r.AiProviderService}
+
 	return map[gqlmodel.SelectOptionResource]SelectOptionRegistryEntry{
 		gqlmodel.SelectOptionResourceCarrier: {
-			Resolve: r.resolveCarrierSelectOptions,
+			Resolve: parties.Carrier,
 		},
 		gqlmodel.SelectOptionResourceCustomer: {
-			Resolve: r.resolveCustomerSelectOptions,
+			Resolve: parties.Customer,
 		},
 		gqlmodel.SelectOptionResourceEDIConnection: {
-			Resolve: r.resolveEDIConnectionSelectOptions,
+			Resolve: ediSources.EDIConnection,
 		},
 		gqlmodel.SelectOptionResourceEquipmentType: {
-			Resolve: r.resolveEquipmentTypeSelectOptions,
+			Resolve: equipment.EquipmentType,
 		},
 		gqlmodel.SelectOptionResourceEquipmentManufacturer: {
-			Resolve: r.resolveEquipmentManufacturerSelectOptions,
+			Resolve: equipment.EquipmentManufacturer,
 		},
 		gqlmodel.SelectOptionResourceTrailer: {
-			Resolve: r.resolveTrailerSelectOptions,
+			Resolve: equipment.Trailer,
 		},
 		gqlmodel.SelectOptionResourceTractor: {
-			Resolve: r.resolveTractorSelectOptions,
+			Resolve: equipment.Tractor,
 		},
 		gqlmodel.SelectOptionResourceFuelCard: {
-			Resolve: r.resolveFuelCardSelectOptions,
+			Resolve: settlement.FuelCard,
 		},
 		gqlmodel.SelectOptionResourceWorker: {
-			Resolve: r.resolveWorkerSelectOptions,
+			Resolve: workforce.Worker,
 		},
 		gqlmodel.SelectOptionResourceUsState: {
-			Resolve: r.resolveUSStateSelectOptions,
+			Resolve: places.USState,
 		},
 		gqlmodel.SelectOptionResourceShipment: {
-			Resolve: r.resolveShipmentSelectOptions,
+			Resolve: operations.Shipment,
 		},
 		gqlmodel.SelectOptionResourceOrder: {
-			Resolve: r.resolveOrderSelectOptions,
+			Resolve: operations.Order,
 		},
 		gqlmodel.SelectOptionResourceEDITransfer: {
-			Resolve: r.resolveEDITransferSelectOptions,
+			Resolve: ediSources.EDITransfer,
 		},
 		gqlmodel.SelectOptionResourceFuelIndex: {
-			Resolve: r.resolveFuelIndexSelectOptions,
+			Resolve: rating.FuelIndex,
 		},
 		gqlmodel.SelectOptionResourceFuelSurchargeProgram: {
-			Resolve: r.resolveFuelSurchargeProgramSelectOptions,
+			Resolve: rating.FuelSurchargeProgram,
 		},
 		gqlmodel.SelectOptionResourceFactoringCompany: {
-			Resolve: r.resolveFactoringCompanySelectOptions,
+			Resolve: parties.FactoringCompany,
 		},
 		gqlmodel.SelectOptionResourceFiscalYear: {
-			Resolve: r.resolveFiscalYearSelectOptions,
+			Resolve: accounting.FiscalYear,
 		},
 		gqlmodel.SelectOptionResourceFiscalPeriod: {
-			Resolve: r.resolveFiscalPeriodSelectOptions,
+			Resolve: accounting.FiscalPeriod,
 		},
 		gqlmodel.SelectOptionResourceGlAccount: {
-			Resolve: r.resolveGLAccountSelectOptions,
+			Resolve: accounting.GLAccount,
 		},
 		gqlmodel.SelectOptionResourceJournalEntry: {
-			Resolve: r.resolveJournalEntrySelectOptions,
+			Resolve: accounting.JournalEntry,
 		},
 		gqlmodel.SelectOptionResourceIFTAFuelType: {
-			Resolve:  r.resolveIFTAFuelTypeSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			Resolve:  settlement.IFTAFuelType,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceLocation: {
-			Resolve: r.resolveLocationSelectOptions,
+			Resolve: places.Location,
 		},
 		gqlmodel.SelectOptionResourceRateZone: {
-			Resolve: r.resolveRateZoneSelectOptions,
+			Resolve: places.RateZone,
 		},
 		gqlmodel.SelectOptionResourceFleetCode: {
-			Resolve: r.resolveFleetCodeSelectOptions,
+			Resolve: equipment.FleetCode,
 		},
 		gqlmodel.SelectOptionResourceShipmentType: {
-			Resolve: r.resolveShipmentTypeSelectOptions,
+			Resolve: operations.ShipmentType,
 		},
 		gqlmodel.SelectOptionResourceServiceType: {
-			Resolve: r.resolveServiceTypeSelectOptions,
+			Resolve: operations.ServiceType,
 		},
 		gqlmodel.SelectOptionResourceLocationCategory: {
-			Resolve: r.resolveLocationCategorySelectOptions,
+			Resolve: places.LocationCategory,
 		},
 		gqlmodel.SelectOptionResourceDistanceProfile: {
-			Resolve: r.resolveDistanceProfileSelectOptions,
+			Resolve: places.DistanceProfile,
 		},
 		gqlmodel.SelectOptionResourceOrganization: {
-			Resolve: r.resolveOrganizationSelectOptions,
+			Resolve: identity.Organization,
 		},
 		gqlmodel.SelectOptionResourceUser: {
-			Resolve: r.resolveUserSelectOptions,
+			Resolve: identity.User,
 		},
 		gqlmodel.SelectOptionResourceRole: {
-			Resolve: r.resolveRoleSelectOptions,
+			Resolve: identity.Role,
 		},
 		gqlmodel.SelectOptionResourceAiProvider: {
-			Resolve: r.resolveAIProviderSelectOptions,
+			Resolve: agent.AIProvider,
 		},
 		gqlmodel.SelectOptionResourceRateMatrix: {
-			Resolve: r.resolveRateMatrixSelectOptions,
+			Resolve: rating.RateMatrix,
 		},
 		gqlmodel.SelectOptionResourceRateAgreement: {
-			Resolve: r.resolveRateAgreementSelectOptions,
+			Resolve: rating.RateAgreement,
 		},
 		gqlmodel.SelectOptionResourceAccessorialCharge: {
-			Resolve: r.resolveAccessorialChargeSelectOptions,
+			Resolve: rating.AccessorialCharge,
 		},
 		gqlmodel.SelectOptionResourceAccountType: {
-			Resolve: r.resolveAccountTypeSelectOptions,
+			Resolve: accounting.AccountType,
 		},
 		gqlmodel.SelectOptionResourceCommodity: {
-			Resolve: r.resolveCommoditySelectOptions,
+			Resolve: operations.Commodity,
 		},
 		gqlmodel.SelectOptionResourceDocumentType: {
-			Resolve: r.resolveDocumentTypeSelectOptions,
+			Resolve: documents.DocumentType,
 		},
 		gqlmodel.SelectOptionResourceCaptureDevice: {
-			Resolve: r.resolveCaptureDeviceSelectOptions,
+			Resolve: documents.CaptureDevice,
 		},
 		gqlmodel.SelectOptionResourceCaptureProfile: {
-			Resolve: r.resolveCaptureProfileSelectOptions,
+			Resolve: documents.CaptureProfile,
 		},
 		gqlmodel.SelectOptionResourceDetentionPolicy: {
-			Resolve: r.resolveDetentionPolicySelectOptions,
+			Resolve: rating.DetentionPolicy,
 		},
 		gqlmodel.SelectOptionResourceShiftTemplate: {
-			Resolve: r.resolveShiftTemplateSelectOptions,
+			Resolve: workforce.ShiftTemplate,
 		},
 		gqlmodel.SelectOptionResourceWorkerPolicy: {
-			Resolve: r.resolveWorkerPolicySelectOptions,
+			Resolve: workforce.WorkerPolicy,
 		},
 		gqlmodel.SelectOptionResourceJobPosition: {
-			Resolve: r.resolveJobPositionSelectOptions,
+			Resolve: workforce.JobPosition,
 		},
 		gqlmodel.SelectOptionResourceFormulaTemplate: {
-			Resolve: r.resolveFormulaTemplateSelectOptions,
+			Resolve: rating.FormulaTemplate,
 		},
 		gqlmodel.SelectOptionResourceHazardousMaterial: {
-			Resolve: r.resolveHazardousMaterialSelectOptions,
+			Resolve: operations.HazardousMaterial,
 		},
 		gqlmodel.SelectOptionResourceServiceFailureReasonCode: {
-			Resolve: r.resolveServiceFailureReasonCodeSelectOptions,
+			Resolve: operations.ServiceFailureReasonCode,
 		},
 		gqlmodel.SelectOptionResourceEDICommunicationProfile: {
-			Resolve: r.resolveEDICommunicationProfileSelectOptions,
+			Resolve: ediSources.EDICommunicationProfile,
 		},
 		gqlmodel.SelectOptionResourceEDIDocumentType: {
-			Resolve:  r.resolveEDIDocumentTypeSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			Resolve:  ediSources.EDIDocumentType,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceEDIMappingProfile: {
-			Resolve: r.resolveEDIMappingProfileSelectOptions,
+			Resolve: ediSources.EDIMappingProfile,
 		},
 		gqlmodel.SelectOptionResourceEDIPartner: {
-			Resolve: r.resolveEDIPartnerSelectOptions,
+			Resolve: ediSources.EDIPartner,
 		},
 		gqlmodel.SelectOptionResourceEDITransactionSet: {
-			Resolve:  r.resolveEDITransactionSetSelectOptions,
-			parseIDs: base.ParseCatalogIDs,
+			Resolve:  ediSources.EDITransactionSet,
+			parseIDs: gqlid.ParseCatalogIDs,
 		},
 		gqlmodel.SelectOptionResourceEmailProfile: {
-			Resolve: r.resolveEmailProfileSelectOptions,
+			Resolve: documents.EmailProfile,
 		},
 		gqlmodel.SelectOptionResourcePayCode: {
-			Resolve: r.resolvePayCodeSelectOptions,
+			Resolve: settlement.PayCode,
 		},
 		gqlmodel.SelectOptionResourcePayProfile: {
-			Resolve: r.resolvePayProfileSelectOptions,
+			Resolve: settlement.PayProfile,
 		},
 		gqlmodel.SelectOptionResourceWorkerCredentialType: {
-			Resolve: r.resolveWorkerCredentialTypeSelectOptions,
+			Resolve: workforce.WorkerCredentialType,
 		},
 		gqlmodel.SelectOptionResourceTrainingCourse: {
-			Resolve: r.resolveTrainingCourseSelectOptions,
+			Resolve: workforce.TrainingCourse,
 		},
 		gqlmodel.SelectOptionResourcePerformanceReviewTemplate: {
-			Resolve: r.resolvePerformanceReviewTemplateSelectOptions,
+			Resolve: workforce.PerformanceReviewTemplate,
 		},
 		gqlmodel.SelectOptionResourcePTOPolicy: {
-			Resolve: r.resolvePTOPolicySelectOptions,
+			Resolve: workforce.PTOPolicy,
 		},
 		gqlmodel.SelectOptionResourceBenefitPlan: {
-			Resolve: r.resolveBenefitPlanSelectOptions,
+			Resolve: workforce.BenefitPlan,
 		},
 		gqlmodel.SelectOptionResourceIFTAJurisdiction: {
-			Resolve: r.resolveIFTAJurisdictionSelectOptions,
+			Resolve: settlement.IFTAJurisdiction,
 		},
 	}
-}
-
-// selectOptionCustomerFilter extracts an optional customerId scope from select-option
-// filters (used to restrict the shipment picker to an order's customer).
-func selectOptionCustomerFilter(filters map[string]any) pulid.ID {
-	return selectOptionIDFilter(filters, "customerId")
-}
-
-func selectOptionIDFilter(filters map[string]any, key string) pulid.ID {
-	value, ok := filters[key]
-	if !ok {
-		return pulid.Nil
-	}
-	str, ok := value.(string)
-	if !ok || str == "" {
-		return pulid.Nil
-	}
-	id, err := pulid.Parse(str)
-	if err != nil {
-		return pulid.Nil
-	}
-	return id
-}
-
-func selectOptionBoolFilter(filters map[string]any, key string) bool {
-	value, ok := filters[key]
-	if !ok {
-		return false
-	}
-	switch v := value.(type) {
-	case bool:
-		return v
-	case string:
-		return v == "true"
-	default:
-		return false
-	}
-}
-
-func selectOptionInt16Filter(filters map[string]any, key string) int16 {
-	value, ok := filters[key]
-	if !ok {
-		return 0
-	}
-	switch v := value.(type) {
-	case float64:
-		return int16(v)
-	case int:
-		return int16(v) //nolint:gosec // callers pass calendar years
-	case int64:
-		return int16(v) //nolint:gosec // callers pass calendar years
-	case string:
-		parsed, err := strconv.ParseInt(v, 10, 16)
-		if err != nil {
-			return 0
-		}
-		return int16(parsed)
-	default:
-		return 0
-	}
-}
-
-func selectOptionStringFilter(filters map[string]any, key string) string {
-	value, ok := filters[key]
-	if !ok {
-		return ""
-	}
-	str, ok := value.(string)
-	if !ok {
-		return ""
-	}
-	return str
-}
-
-func equipmentTypeClassesFilter(filters map[string]any) []string {
-	value, ok := filters["classes"]
-	if !ok {
-		value, ok = filters["class"]
-	}
-	if !ok {
-		return nil
-	}
-
-	switch typed := value.(type) {
-	case string:
-		if typed == "" {
-			return nil
-		}
-		return []string{typed}
-	case []string:
-		return typed
-	case []any:
-		classes := make([]string, 0, len(typed))
-		for _, item := range typed {
-			class, isString := item.(string)
-			if isString && class != "" {
-				classes = append(classes, class)
-			}
-		}
-		return classes
-	default:
-		return nil
-	}
-}
-
-func selectOptionListConnection[T any](
-	result *pagination.ListResult[T],
-	page pagination.Info,
-	mapper func(T) selectOptionConnectionItem,
-) (*gqlmodel.SelectOptionConnection, error) {
-	items := make([]selectOptionConnectionItem, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, mapper(item))
-	}
-
-	return selectOptionPage(items, selectOptionTotal{
-		count:       result.Total,
-		exact:       result.TotalExact,
-		hasNextPage: pagination.HasMore(result, page),
-	})
-}
-
-func selectOptionConnection(
-	items []selectOptionConnectionItem,
-	total int,
-	offset int,
-) (*gqlmodel.SelectOptionConnection, error) {
-	return selectOptionPage(items, selectOptionTotal{
-		count:       total,
-		exact:       true,
-		hasNextPage: offset+len(items) < total,
-	})
-}
-
-type selectOptionTotal struct {
-	count       int
-	exact       bool
-	hasNextPage bool
-}
-
-func selectOptionPage(
-	items []selectOptionConnectionItem,
-	total selectOptionTotal,
-) (*gqlmodel.SelectOptionConnection, error) {
-	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
-	for i, item := range items {
-		cursor, err := pagination.EncodePositionCursor(item.cursor)
-		if err != nil {
-			return nil, err
-		}
-		edges[i] = &gqlmodel.SelectOptionEdge{
-			Node:   item.option,
-			Cursor: cursor,
-		}
-	}
-
-	return &gqlmodel.SelectOptionConnection{
-		Edges: edges,
-		PageInfo: base.PageInfo(
-			total.hasNextPage,
-			base.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
-				return edge.Cursor
-			}),
-		),
-		TotalCount:      new(total.count),
-		TotalCountExact: total.exact,
-	}, nil
-}
-
-func orderedSelectOptionItems[T any](
-	ids []pulid.ID,
-	entities []T,
-	id func(T) pulid.ID,
-	mapper func(T) selectOptionConnectionItem,
-) []selectOptionConnectionItem {
-	byID := make(map[pulid.ID]T, len(entities))
-	for _, entity := range entities {
-		byID[id(entity)] = entity
-	}
-
-	items := make([]selectOptionConnectionItem, 0, len(entities))
-	for _, requestedID := range ids {
-		entity, ok := byID[requestedID]
-		if ok {
-			items = append(items, mapper(entity))
-		}
-	}
-
-	return items
-}
-
-func selectOptionConnectionItemFor(
-	option *gqlmodel.SelectOption,
-	createdAt int64,
-	id pulid.ID,
-) selectOptionConnectionItem {
-	return selectOptionConnectionItem{
-		option: option,
-		cursor: pagination.PositionCursor{
-			At: createdAt,
-			ID: id,
-		},
-	}
-}
-
-func usStateSelectOptionItem(entity *usstate.UsState) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		usStateSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:    entity.ID.String(),
-		Label: entity.Name,
-		Meta: map[string]any{
-			"abbreviation": entity.Abbreviation,
-			"countryIso3":  entity.CountryIso3,
-		},
-	}
-}
-
-func ediCommunicationProfileSelectOptionItem(
-	entity *edi.EDICommunicationProfile,
-) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediCommunicationProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediCommunicationProfileSelectOption(
-	entity *edi.EDICommunicationProfile,
-) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       entity.Name,
-		Description: stringutils.Ptr(string(entity.Method)),
-		Meta: map[string]any{
-			"method": string(entity.Method),
-			"status": string(entity.Status),
-		},
-	}
-}
-
-func ediDocumentTypeSelectOptionItem(entity *edi.EDIDocumentType) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediDocumentTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediDocumentTypeSelectOption(entity *edi.EDIDocumentType) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:    entity.ID.String(),
-		Label: entity.Code + " - " + entity.Name,
-		Description: stringutils.Ptr(
-			string(entity.TransactionSet) + " / " + string(entity.Direction),
-		),
-		Meta: map[string]any{
-			"code":           entity.Code,
-			"transactionSet": string(entity.TransactionSet),
-			"direction":      string(entity.Direction),
-			"defaultVersion": entity.DefaultVersion,
-		},
-	}
-}
-
-func ediTransactionSetSelectOptionItem(entity *edi.EDITransactionSet) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediTransactionSetSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediTransactionSetSelectOption(entity *edi.EDITransactionSet) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       string(entity.Code) + " - " + entity.Name,
-		Description: stringutils.Ptr(entity.Description),
-		Meta: map[string]any{
-			"code":           string(entity.Code),
-			"standard":       string(entity.Standard),
-			"defaultVersion": entity.DefaultVersion,
-			"status":         string(entity.Status),
-		},
-	}
-}
-
-func ediMappingProfileSelectOptionItem(entity *edi.EDIMappingProfile) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediMappingProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediMappingProfileSelectOption(entity *edi.EDIMappingProfile) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       entity.Name,
-		Description: stringutils.Ptr(entity.Description),
-	}
-}
-
-func ediPartnerSelectOptionItem(entity *edi.EDIPartner) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediPartnerSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       entity.Code + " - " + entity.Name,
-		Description: stringutils.Ptr(string(entity.Kind)),
-		Meta: map[string]any{
-			"code": entity.Code,
-			"kind": string(entity.Kind),
-		},
-	}
-}
-
-func ediTransferSelectOptionItemFor(
-	orgID pulid.ID,
-) func(*edi.EDITransfer) selectOptionConnectionItem {
-	return func(entity *edi.EDITransfer) selectOptionConnectionItem {
-		return selectOptionConnectionItemFor(
-			ediTransferSelectOption(entity, orgID),
-			entity.CreatedAt,
-			entity.ID,
-		)
-	}
-}
-
-func ediTransferSelectOption(entity *edi.EDITransfer, orgID pulid.ID) *gqlmodel.SelectOption {
-	label := entity.TenderPayload.BOL
-	if label == "" {
-		label = "Load tender " + entity.ID.String()
-	}
-
-	meta := map[string]any{
-		"status":        string(entity.Status),
-		"bol":           entity.TenderPayload.BOL,
-		"customerLabel": entity.TenderPayload.CustomerLabel,
-	}
-	if partner := entity.Counterparty(orgID); partner != nil {
-		meta["partner"] = partner.Name
-	}
-
-	description := entity.TenderPayload.CustomerLabel
-	if description == "" {
-		description = entity.TenderPayload.ServiceTypeLabel
-	}
-
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       label,
-		Description: stringutils.Ptr(description),
-		Meta:        meta,
-	}
-}
-
-func ediConnectionSelectOptionItem(entity *edi.EDIConnection) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediConnectionSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediConnectionSelectOption(entity *edi.EDIConnection) *gqlmodel.SelectOption {
-	source := ""
-	if entity.SourceOrganization != nil {
-		source = entity.SourceOrganization.Name
-	}
-	if source == "" {
-		source = entity.SourceOrganizationID.String()
-	}
-	target := ""
-	if entity.TargetOrganization != nil {
-		target = entity.TargetOrganization.Name
-	}
-	if target == "" {
-		target = entity.TargetOrganizationID.String()
-	}
-	label := source + " → " + target
-
-	description := string(entity.Method) + " \u00b7 " + string(entity.Status)
-
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       label,
-		Description: stringutils.Ptr(description),
-		Meta: map[string]any{
-			"method":                 string(entity.Method),
-			"status":                 string(entity.Status),
-			"sourceOrganizationId":   entity.SourceOrganizationID.String(),
-			"targetOrganizationId":   entity.TargetOrganizationID.String(),
-			"sourceOrganizationName": source,
-			"targetOrganizationName": target,
-			"sourcePartnerId":        optionalIDMeta(entity.SourcePartnerID),
-			"targetPartnerId":        optionalIDMeta(entity.TargetPartnerID),
-		},
-	}
-}
-
-func ediConnectionID(entity *edi.EDIConnection) pulid.ID {
-	return entity.ID
-}
-
-func ediTransferID(entity *edi.EDITransfer) pulid.ID {
-	return entity.ID
-}
-
-func optionalIDMeta(id pulid.ID) any {
-	if id.IsNil() {
-		return nil
-	}
-
-	return id.String()
 }

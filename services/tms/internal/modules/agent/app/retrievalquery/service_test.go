@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +25,8 @@ func newVectorizer(
 	return New(Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings})
 }
 
-func queryRequest(tenant pagination.TenantInfo, text string) *agentports.QueryVectorRequest {
-	return &agentports.QueryVectorRequest{
+func queryRequest(tenant pagination.TenantInfo, text string) *retrievalports.QueryVectorRequest {
+	return &retrievalports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       text,
 		Attribution: aiusageports.AIUsageAttribution{
@@ -143,7 +144,7 @@ func TestVectorize_ReportsWhyRetrievalIsUnavailable(t *testing.T) {
 			name: "no provider embeds and nothing is indexed",
 			repo: func() *fakeRepository { return newFakeRepository(unindexed) },
 			embeddings: func() *fakeEmbeddings {
-				return &fakeEmbeddings{configured: agentports.ErrNoProviderConfigured}
+				return &fakeEmbeddings{configured: llmports.ErrNoProviderConfigured}
 			},
 			want: airetrieval.UnavailableReasonNoProvider,
 		},
@@ -152,7 +153,7 @@ func TestVectorize_ReportsWhyRetrievalIsUnavailable(t *testing.T) {
 			repo: func() *fakeRepository { return newFakeRepository(activeSettings(tenant)) },
 			embeddings: func() *fakeEmbeddings {
 				return &fakeEmbeddings{
-					err: fmt.Errorf("route: %w", agentports.ErrNoProviderConfigured),
+					err: fmt.Errorf("route: %w", llmports.ErrNoProviderConfigured),
 				}
 			},
 			want: airetrieval.UnavailableReasonNoProvider,
@@ -250,10 +251,10 @@ func TestVectorize_ReturnsWhatACallerMustSee(t *testing.T) {
 
 	service := newVectorizer(newFakeRepository(activeSettings(tenant)), embeddings)
 	_, err := service.Vectorize(t.Context(), queryRequest(tenant, "   "))
-	require.ErrorIs(t, err, agentports.ErrQueryTextRequired)
+	require.ErrorIs(t, err, retrievalports.ErrQueryTextRequired)
 
 	_, err = service.Vectorize(t.Context(), queryRequest(pagination.TenantInfo{}, "who"))
-	require.ErrorIs(t, err, agentports.ErrQueryTenantRequired)
+	require.ErrorIs(t, err, retrievalports.ErrQueryTenantRequired)
 
 	broken := newFakeRepository(nil)
 	broken.settingsErr = errors.New("connection refused")
@@ -284,13 +285,13 @@ func TestVectorize_BoundsTheTextItSends(t *testing.T) {
 
 	_, err := service.Vectorize(
 		t.Context(),
-		queryRequest(tenant, strings.Repeat("é", agentports.MaxQueryTextRunes+50)),
+		queryRequest(tenant, strings.Repeat("é", retrievalports.MaxQueryTextRunes+50)),
 	)
 	require.NoError(t, err)
 
 	calls := embeddings.calls()
 	require.Len(t, calls, 1)
-	assert.Len(t, []rune(calls[0].Inputs[0]), agentports.MaxQueryTextRunes)
+	assert.Len(t, []rune(calls[0].Inputs[0]), retrievalports.MaxQueryTextRunes)
 }
 
 func TestAvailability(t *testing.T) {
@@ -317,7 +318,7 @@ func TestAvailability(t *testing.T) {
 
 	unprovided := newVectorizer(
 		newFakeRepository(activeSettings(tenant)),
-		&fakeEmbeddings{configured: agentports.ErrNoProviderConfigured},
+		&fakeEmbeddings{configured: llmports.ErrNoProviderConfigured},
 	)
 	availability, err = unprovided.Availability(t.Context(), tenant)
 	require.NoError(t, err)
@@ -331,5 +332,5 @@ func TestAvailability(t *testing.T) {
 	require.Error(t, err)
 
 	_, err = ready.Availability(t.Context(), pagination.TenantInfo{})
-	require.ErrorIs(t, err, agentports.ErrQueryTenantRequired)
+	require.ErrorIs(t, err, retrievalports.ErrQueryTenantRequired)
 }

@@ -9,11 +9,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -35,22 +37,22 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           workerports.WorkerChecklistRepository
+	Repo           workerchecklistports.WorkerChecklistRepository
 	WorkerRepo     workerports.WorkerRepository
-	CredentialRepo workerports.WorkerCredentialRepository
+	CredentialRepo workercredentialports.WorkerCredentialRepository
 	DocumentRepo   documentports.DocumentRepository
 	AuditService   auditports.AuditService
-	Realtime       agentports.RealtimeService `optional:"true"`
+	Realtime       realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l              *zap.Logger
-	repo           workerports.WorkerChecklistRepository
+	repo           workerchecklistports.WorkerChecklistRepository
 	workerRepo     workerports.WorkerRepository
-	credentialRepo workerports.WorkerCredentialRepository
+	credentialRepo workercredentialports.WorkerCredentialRepository
 	documentRepo   documentports.DocumentRepository
 	auditService   auditports.AuditService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 	refreshLocks   sync.Map
 }
 
@@ -134,10 +136,6 @@ func (s *Service) publish(
 	}
 }
 
-func templateTenant(entity *worker.WorkerChecklistTemplate) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
-func checklistTenant(entity *worker.WorkerChecklist) pagination.TenantInfo {
+func templateTenant(entity *workerchecklist.WorkerChecklistTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

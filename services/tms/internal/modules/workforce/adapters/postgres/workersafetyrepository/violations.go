@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety/fleetsafetydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/zap"
@@ -17,9 +17,9 @@ import (
 var violationErrors = dberror.Mapping{Entity: "WorkerSafetyViolation"}
 
 func violationsQuery(
-	req *workerports.ListWorkerSafetyViolationsRequest,
-) *keel.Query[*worker.WorkerSafetyViolation] {
-	v := workerdb.WorkerSafetyViolations
+	req *workersafetyports.ListWorkerSafetyViolationsRequest,
+) *keel.Query[*fleetsafety.WorkerSafetyViolation] {
+	v := fleetsafetydb.WorkerSafetyViolations
 
 	return v.Where(
 		keel.When(len(req.SafetyEventIDs) > 0, v.SafetyEventID.In(req.SafetyEventIDs...)),
@@ -32,67 +32,91 @@ func violationsQuery(
 
 func (r *repository) ListViolations(
 	ctx context.Context,
-	req *workerports.ListWorkerSafetyViolationsRequest,
-) ([]*worker.WorkerSafetyViolation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerSafetyViolation, error) {
-		entities, err := violationsQuery(req).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list worker safety violations", zap.Error(err))
-			return nil, fmt.Errorf("list worker safety violations: %w", err)
-		}
+	req *workersafetyports.ListWorkerSafetyViolationsRequest,
+) ([]*fleetsafety.WorkerSafetyViolation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*fleetsafety.WorkerSafetyViolation, error) {
+			entities, err := violationsQuery(req).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list worker safety violations", zap.Error(err))
+				return nil, fmt.Errorf("list worker safety violations: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetViolationByID(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
-) (*worker.WorkerSafetyViolation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyViolation, error) {
-		entity, err := workerdb.WorkerSafetyViolations.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, violationErrors.Map(err, req.ID.String())
-		}
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
+) (*fleetsafety.WorkerSafetyViolation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fleetsafety.WorkerSafetyViolation, error) {
+			entity, err := fleetsafetydb.WorkerSafetyViolations.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, violationErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateViolation(
 	ctx context.Context,
-	entity *worker.WorkerSafetyViolation,
-) (*worker.WorkerSafetyViolation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyViolation, error) {
-		if err := workerdb.WorkerSafetyViolations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create worker safety violation", zap.Error(err))
-			return nil, violationErrors.Map(err, entity.ID.String())
-		}
+	entity *fleetsafety.WorkerSafetyViolation,
+) (*fleetsafety.WorkerSafetyViolation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fleetsafety.WorkerSafetyViolation, error) {
+			if err := fleetsafetydb.WorkerSafetyViolations.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to create worker safety violation", zap.Error(err))
+				return nil, violationErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateViolation(
 	ctx context.Context,
-	entity *worker.WorkerSafetyViolation,
-) (*worker.WorkerSafetyViolation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerSafetyViolation, error) {
-		if err := workerdb.WorkerSafetyViolations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update worker safety violation", zap.Error(err))
-			return nil, violationErrors.Map(err, entity.ID.String())
-		}
+	entity *fleetsafety.WorkerSafetyViolation,
+) (*fleetsafety.WorkerSafetyViolation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*fleetsafety.WorkerSafetyViolation, error) {
+			if err := fleetsafetydb.WorkerSafetyViolations.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to update worker safety violation", zap.Error(err))
+				return nil, violationErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) DeleteViolation(
 	ctx context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		v := workerdb.WorkerSafetyViolations
+		v := fleetsafetydb.WorkerSafetyViolations
 		rows, err := v.Where(v.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete worker safety violation", zap.Error(err))

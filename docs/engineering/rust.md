@@ -195,7 +195,7 @@ WebAssembly crate, and the pattern for any later one. `trenova-scripts`
   the error sentinels and the metrics observer, described once in rules-engine.md ("The Go
   host"). A module's package (`pkg/rules`, `pkg/x12`) is a `wasmmodule.Spec` (name, bytes,
   version operation, cache directory and its environment variable) and typed calls on a
-  `Runtime` that embeds `*wasmmodule.Runtime`. Metrics come from one `metrics.NewWasmModule`
+  `Runtime` that embeds `*wasmmodule.Runtime`. Metrics come from one `platformmetrics.NewWasmModule`
   per module (`trenova_rules_*`, `trenova_edi_module_*`).
 
 - **A module the browser runs is `wasm32-unknown-unknown` with no imports at all** (no WASI, no

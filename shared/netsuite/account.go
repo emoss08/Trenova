@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 const (
@@ -26,7 +28,7 @@ type CompanyRef struct {
 func NormalizeAccountID(raw string) (string, error) {
 	value := strings.ToUpper(strings.TrimSpace(raw))
 	if value == "" || len(value) > maxAccountIDLength || !accountIDPattern.MatchString(value) {
-		return "", ErrInvalidAccountID
+		return "", netsuiteerrors.ErrInvalidAccountID
 	}
 	return value, nil
 }
@@ -72,7 +74,7 @@ func NewCompanyRef(accountID, subsidiaryID string) (CompanyRef, error) {
 	}
 	subsidiary := strings.TrimSpace(subsidiaryID)
 	if subsidiary != "" && !validSubsidiaryID(subsidiary) {
-		return CompanyRef{}, ErrInvalidSubsidiaryID
+		return CompanyRef{}, netsuiteerrors.ErrInvalidSubsidiaryID
 	}
 	return CompanyRef{AccountID: account, SubsidiaryID: subsidiary}, nil
 }
@@ -83,13 +85,13 @@ func ParseCompanyRef(raw string) (CompanyRef, error) {
 	if found {
 		rest, ok := strings.CutPrefix(subsidiary, subsidiaryMarker[1:])
 		if !ok || rest == "" {
-			return CompanyRef{}, ErrInvalidCompanyRef
+			return CompanyRef{}, netsuiteerrors.ErrInvalidCompanyRef
 		}
 		subsidiary = rest
 	}
 	ref, err := NewCompanyRef(account, subsidiary)
 	if err != nil {
-		return CompanyRef{}, fmt.Errorf("%w: %w", ErrInvalidCompanyRef, err)
+		return CompanyRef{}, fmt.Errorf("%w: %w", netsuiteerrors.ErrInvalidCompanyRef, err)
 	}
 	return ref, nil
 }

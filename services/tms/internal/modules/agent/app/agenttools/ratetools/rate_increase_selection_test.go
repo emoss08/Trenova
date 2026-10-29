@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,27 +24,33 @@ func TestApplyRateIncrease_SetsAsideTheScopesNamedAgreementsWereFoundBy(t *testi
 	tool := NewApplyRateIncreaseTool(agreements)
 	named := pulid.MustNew("rag_")
 	params := map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramAgreementIDs:         []any{named.String()},
-		common.ParamCustomerID:    pulid.MustNew("cus_").String(),
-		common.ParamCarrierID:     "the carrier on the page",
-		paramPartyType:            "Customer",
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramAgreementIDs:             []any{named.String()},
+		toolparams.ParamCustomerID:    pulid.MustNew("cus_").String(),
+		toolparams.ParamCarrierID:     "the carrier on the page",
+		paramPartyType:                "Customer",
+		paramPercentChange:            "3.5",
 	}
 
-	resolved, err := tool.(agentports.ToolSelectionResolver).ResolveSelection(
+	resolved, err := tool.(agenttoolports.ToolSelectionResolver).ResolveSelection(
 		t.Context(), agenttoolstest.ExecuteParams(params),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramAgreementIDs:         []any{named.String()},
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramAgreementIDs:             []any{named.String()},
+		paramPercentChange:            "3.5",
 	}, resolved)
 	assert.Len(t, params, 6, "the model's own call is left as it sent it")
 
-	require.NoError(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(params)),
-		"a scope beside named agreements is never read, so it cannot refuse the call")
+	require.NoError(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(params),
+		),
+		"a scope beside named agreements is never read, so it cannot refuse the call",
+	)
 
 	approved := agenttoolstest.ExecuteParams(params)
 	approved.ProposalID = pulid.MustNew("ap_")
@@ -61,18 +67,24 @@ func TestApplyRateIncrease_LeavesAScopedCallAsItIs(t *testing.T) {
 
 	tool := NewApplyRateIncreaseTool(&fakeAgreements{guard: &agenttoolstest.WriteGuard{}})
 	params := map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		common.ParamCustomerID:    pulid.MustNew("cus_").String(),
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		toolparams.ParamCustomerID:    pulid.MustNew("cus_").String(),
+		paramPercentChange:            "3.5",
 	}
 
-	resolved, err := tool.(agentports.ToolSelectionResolver).ResolveSelection(
+	resolved, err := tool.(agenttoolports.ToolSelectionResolver).ResolveSelection(
 		t.Context(), agenttoolstest.ExecuteParams(params),
 	)
 	require.NoError(t, err)
 	assert.Equal(t, params, resolved)
 
-	params[common.ParamCustomerID] = "acme"
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(params)),
-		"without named agreements the scope is read, and a bad one is refused")
+	params[toolparams.ParamCustomerID] = "acme"
+	require.Error(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(params),
+		),
+		"without named agreements the scope is read, and a bad one is refused",
+	)
 }

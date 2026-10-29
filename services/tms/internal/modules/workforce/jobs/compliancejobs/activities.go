@@ -6,18 +6,21 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdrugalcoholservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
@@ -51,13 +54,13 @@ var reminderSteps = []int64{30, 14, 7}
 type ActivitiesParams struct {
 	fx.In
 
-	CredentialRepo  workerports.WorkerCredentialRepository
+	CredentialRepo  workercredentialports.WorkerCredentialRepository
 	Credentials     *workercredentialservice.Service
-	TrainingRepo    workerports.WorkerTrainingRepository
+	TrainingRepo    workertrainingports.WorkerTrainingRepository
 	Training        *workertrainingservice.Service
-	SafetyRepo      workerports.WorkerSafetyRepository
+	SafetyRepo      workersafetyports.WorkerSafetyRepository
 	Safety          *workersafetyservice.Service
-	DrugAlcoholRepo workerports.WorkerDrugAlcoholRepository
+	DrugAlcoholRepo workerdotports.WorkerDrugAlcoholRepository
 	DrugAlcohol     *workerdrugalcoholservice.Service
 	DashControlRepo tenantports.DashControlRepository
 	Notifications   *notificationservice.Service
@@ -66,16 +69,16 @@ type ActivitiesParams struct {
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers credentials, once for the
 	// driver rather than once for each paper.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Activities struct {
-	credentialRepo  workerports.WorkerCredentialRepository
+	credentialRepo  workercredentialports.WorkerCredentialRepository
 	credentials     *workercredentialservice.Service
-	trainingRepo    workerports.WorkerTrainingRepository
-	safetyRepo      workerports.WorkerSafetyRepository
-	drugAlcoholRepo workerports.WorkerDrugAlcoholRepository
+	trainingRepo    workertrainingports.WorkerTrainingRepository
+	safetyRepo      workersafetyports.WorkerSafetyRepository
+	drugAlcoholRepo workerdotports.WorkerDrugAlcoholRepository
 	training        *workertrainingservice.Service
 	safety          *workersafetyservice.Service
 	drugAlcohol     *workerdrugalcoholservice.Service
@@ -83,7 +86,7 @@ type Activities struct {
 	notifications   *notificationservice.Service
 	driverNotify    *drivernotificationservice.Service
 	watchtower      watchtowerports.WatchtowerProjector
-	publisher       agentports.AgentEventPublisher
+	publisher       agenteventports.AgentEventPublisher
 	logger          *zap.Logger
 }
 
@@ -139,7 +142,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 	for {
 		page, err := a.credentialRepo.ListExpiring(
 			ctx,
-			&workerports.ListExpiringWorkerCredentialsRequest{
+			&workercredentialports.ListExpiringWorkerCredentialsRequest{
 				HorizonDays: sweepHorizonDays,
 				GraceDays:   sweepGraceDays,
 				AfterID:     after,
@@ -184,7 +187,7 @@ func (a *Activities) CredentialExpirySweepActivity(
 // recordDueDriver files one paper under its driver. The map is what makes
 // the raise once per driver per pass however many papers reached a mark.
 func (s *sweepState) recordDueDriver(
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	tenantInfo pagination.TenantInfo,
 	daysLeft int64,
 ) {
@@ -225,8 +228,8 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 				},
 			))
 		}
-		agentports.PublishAgentEvent(tenantCtx, a.publisher, agentports.AgentEvent{
-			Kind:       agent.EventWorkerCredentialExpiring,
+		agenteventports.PublishAgentEvent(tenantCtx, a.publisher, agenteventports.AgentEvent{
+			Kind:       agenttrigger.EventWorkerCredentialExpiring,
 			SubjectID:  workerID,
 			TenantInfo: driver.tenantInfo,
 		})
@@ -236,7 +239,7 @@ func (a *Activities) raiseDueDrivers(ctx context.Context, state *sweepState) {
 func (a *Activities) sweepCredential(
 	ctx context.Context,
 	state *sweepState,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 ) error {
 	if cred.Worker == nil || cred.CredentialType == nil || cred.ExpiresAt == nil {
 		return nil
@@ -248,7 +251,7 @@ func (a *Activities) sweepCredential(
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
 	state.touchedWorkers[cred.WorkerID] = tenantInfo
 
-	daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
+	daysLeft := workercredential.DaysUntil(*cred.ExpiresAt, state.now)
 	if daysLeft > sweepHorizonDays || daysLeft < -sweepGraceDays {
 		return nil
 	}
@@ -336,7 +339,7 @@ func (a *Activities) driverRemindersEnabled(
 // acts on rather than a clock time, so this formats the calendar date in UTC —
 // which is the day the compliance sweep itself used to decide the credential was
 // expiring.
-func credentialExpiryDate(cred *worker.WorkerCredential) string {
+func credentialExpiryDate(cred *workercredential.WorkerCredential) string {
 	if cred.ExpiresAt == nil {
 		return ""
 	}
@@ -363,7 +366,7 @@ func (a *Activities) alreadySent(
 func (a *Activities) notifyDriver(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	daysLeft int64,
 ) (bool, error) {
 	correlation := fmt.Sprintf("cred-driver-%s", cred.ID)
@@ -377,7 +380,7 @@ func (a *Activities) notifyDriver(
 		WorkerID:   cred.WorkerID,
 		EventType:  eventDriverExpiring,
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			CredentialName: cred.CredentialType.Name,
 			ExpiresInDays:  int(daysLeft),
 			ExpiresAt:      credentialExpiryDate(cred),
@@ -390,7 +393,7 @@ func (a *Activities) notifyDriver(
 func (a *Activities) alertCompliance(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	cred *worker.WorkerCredential,
+	cred *workercredential.WorkerCredential,
 	daysLeft int64,
 	expired bool,
 ) (bool, error) {

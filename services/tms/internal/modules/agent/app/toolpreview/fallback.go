@@ -1,7 +1,7 @@
 package toolpreview
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
@@ -14,7 +14,7 @@ func Parameters(
 	resource permission.Resource,
 	params map[string]any,
 	opts ...Option,
-) *agent.ToolPreview {
+) *agentpreview.ToolPreview {
 	preview := Describe(toolName, params)
 	o := newOptions(opts)
 	for i := range preview.Changes {
@@ -29,8 +29,8 @@ func Parameters(
 func stamped(
 	o *options,
 	resource permission.Resource,
-	fields []agent.PreviewFieldChange,
-) []agent.PreviewFieldChange {
+	fields []agentpreview.PreviewFieldChange,
+) []agentpreview.PreviewFieldChange {
 	kept := fields[:0]
 	for i := range fields {
 		level := fieldsensitivity.Level(o.registry, resource, topLevel(fields[i].Path))

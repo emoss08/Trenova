@@ -162,6 +162,23 @@ internal log lines into the catalog. They are told apart structurally: a log cal
 its value (it is an `ExprStmt`), while an ozzo rule is always built to be passed into
 `validation.Field`. See `discardedCalls`.
 
+**`nonMessageTypes` — struct literals whose fields are not interface text.** `messageFields`
+reads a field by its name alone, so a literal of a type whose `Description`, `Summary`, `Label`
+or `Title` is read by the model (the agent tool specs: `masterdatakit.*Spec`, `listtool.Spec`,
+`readspec.Get`/`List`) or by code (`ediconnectionfield.Spec`, `agentaccess.PageSubject`,
+`carrierintelservice.NotificationRequest`) is listed by its `package.Type`. An elided element
+of a slice or map of that type (`[]readspec.Get{{Summary: …}}`) is skipped with it. A type
+whose fields were unexported and become exported when its package splits belongs here, or the
+split quietly adds its strings to the catalog.
+
+**Test code is skipped**: `_test.go` files, and every directory whose name ends in `test`
+(`agenttest`, `billingtest`, `resolvertest`, …), the same test-support convention the
+`testcode` depguard rule exempts. Moving a helper out of a `_test.go` file into a `<name>test`
+package leaves the catalog unchanged.
+
+**A label is a method.** `labelMethods` reads `func (t T) Label() string`; a package-level
+`func Label(t T) string` is not read, so an enum keeps its caption as a method.
+
 **Generated files are skipped, except `labelledGeneratedFiles`.** A `*_gen.go` file holds no
 interface text as a rule; `viewwords_gen.go` (the role editor's words for each reference view)
 does, so its `Label:` values are read. The report catalog's labels, descriptions, categories and

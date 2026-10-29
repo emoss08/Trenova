@@ -1,207 +1,36 @@
 package assistantservice
 
 import (
-	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
-	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-type stubRunRepo struct {
-	agentports.AgentRunRepository
-
-	created []*agent.AgentRun
-	err     error
-	// byID serves reads for runs this stub did not create; reads counts them.
-	byID  map[pulid.ID]*agent.AgentRun
-	reads int
-
-	transcripts     map[pulid.ID]*agent.RunTranscript
-	transcriptReads []agentports.ListAgentRunsByIDsRequest
-}
-
-func (r *stubRunRepo) ListTranscriptsByIDs(
-	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
-) ([]*agent.AgentRun, error) {
-	r.transcriptReads = append(r.transcriptReads, req)
-	runs := make([]*agent.AgentRun, 0, len(req.IDs))
-	for _, id := range req.IDs {
-		if transcript, ok := r.transcripts[id]; ok {
-			runs = append(runs, &agent.AgentRun{ID: id, Transcript: transcript})
-		}
-	}
-
-	return runs, nil
-}
-
-func (r *stubRunRepo) GetByID(
-	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
-) (*agent.AgentRun, error) {
-	r.reads++
-	if run, ok := r.byID[req.ID]; ok {
-		return run, nil
-	}
-	for _, run := range r.created {
-		if run.ID == req.ID {
-			return run, nil
-		}
-	}
-
-	return nil, errortypes.NewNotFoundError("Agent run not found")
-}
-
-type stubControlRepo struct {
-	tenantports.AgentControlRepository
-
-	paused bool
-}
-
-func (r stubControlRepo) GetOrCreate(
-	context.Context,
-	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
-	return &tenant.AgentControl{ShadowMode: r.paused}, nil
-}
-
-type stubDefinitionRepo struct {
-	agentdefinitionports.AgentDefinitionRepository
-
-	definition *agentdefinition.Definition
-}
-
-func (r stubDefinitionRepo) GetByID(
-	_ context.Context,
-	req agentdefinitionports.GetAgentDefinitionByIDRequest,
-) (*agentdefinition.Definition, error) {
-	if r.definition == nil || r.definition.ID != req.ID {
-		return nil, errortypes.NewNotFoundError("Agent definition not found")
-	}
-
-	return r.definition, nil
-}
-
-// shadowSwitches is the pair of switches a proposal can be held behind.
-type shadowSwitches struct {
-	organizationPaused bool
-	definition         *agentdefinition.Definition
-}
-
-func (r *stubRunRepo) Create(
-	_ context.Context,
-	entity *agent.AgentRun,
-) (*agent.AgentRun, error) {
-	if r.err != nil {
-		return nil, r.err
-	}
-
-	entity.ID = pulid.MustNew("ar_")
-	r.created = append(r.created, entity)
-
-	return entity, nil
-}
-
-type stubProposalRepo struct {
-	created  []*agent.AgentProposal
-	byThread []*agent.AgentProposal
-	err      error
-	listErr  error
-	lastList agentports.ListAgentProposalsByThreadRequest
-
-	byRun   []*agent.AgentProposal
-	lastRun agentports.ListAgentProposalsByRunRequest
-
-	expiredThreads []pulid.ID
-}
-
-func (r *stubProposalRepo) ListByRun(
-	_ context.Context,
-	req agentports.ListAgentProposalsByRunRequest,
-) ([]*agent.AgentProposal, error) {
-	r.lastRun = req
-	if r.listErr != nil {
-		return nil, r.listErr
-	}
-
-	return r.byRun, nil
-}
-
-func (r *stubProposalRepo) Create(
-	_ context.Context,
-	entity *agent.AgentProposal,
-) (*agent.AgentProposal, error) {
-	if r.err != nil {
-		return nil, r.err
-	}
-
-	entity.ID = pulid.MustNew("ap_")
-	r.created = append(r.created, entity)
-
-	return entity, nil
-}
-
-func (r *stubProposalRepo) ListByThread(
-	_ context.Context,
-	req agentports.ListAgentProposalsByThreadRequest,
-) ([]*agent.AgentProposal, error) {
-	r.lastList = req
-	if r.listErr != nil {
-		return nil, r.listErr
-	}
-
-	return r.byThread, nil
-}
-
-// The conversation repository is embedded rather than implemented: this suite
-// only reads a thread, and an unexpected call panics on the nil interface, which
-// is exactly the failure a test wants.
-type stubConversationRepo struct {
-	agentports.ConversationRepository
-
-	thread *conversation.Thread
-	getErr error
-}
-
-func (r *stubConversationRepo) GetThread(
-	_ context.Context,
-	_ agentports.GetThreadRequest,
-) (*conversation.Thread, error) {
-	if r.getErr != nil {
-		return nil, r.getErr
-	}
-
-	return r.thread, nil
-}
-
 func newProposalService(
-	runs *stubRunRepo,
-	proposals *stubProposalRepo,
-	conversations *stubConversationRepo,
+	runs *assistanttest.StubRunRepo,
+	proposals *assistanttest.StubProposalRepo,
+	conversations *assistanttest.StubConversationRepo,
 ) *Service {
-	return newProposalServiceBehind(runs, proposals, conversations, shadowSwitches{})
+	return newProposalServiceBehind(runs, proposals, conversations, assistanttest.ShadowSwitches{})
 }
 
 func newProposalServiceBehind(
-	runs *stubRunRepo,
-	proposals *stubProposalRepo,
-	conversations *stubConversationRepo,
-	switches shadowSwitches,
+	runs *assistanttest.StubRunRepo,
+	proposals *assistanttest.StubProposalRepo,
+	conversations *assistanttest.StubConversationRepo,
+	switches assistanttest.ShadowSwitches,
 ) *Service {
 	return &Service{
 		logger:        zap.NewNop(),
@@ -209,27 +38,27 @@ func newProposalServiceBehind(
 		proposals:     proposals,
 		conversations: conversations,
 		shadow: agentshadow.New(agentshadow.Params{
-			Control:     stubControlRepo{paused: switches.organizationPaused},
+			Control:     assistanttest.StubControlRepo{Paused: switches.OrganizationPaused},
 			Runs:        runs,
-			Definitions: stubDefinitionRepo{definition: switches.definition},
+			Definitions: assistanttest.StubDefinitionRepo{Definition: switches.Definition},
 		}),
 	}
 }
 
 func proposalTestParams(
-	actions []agentports.PendingAction,
+	actions []agentruntimeports.PendingAction,
 	saved []conversation.Message,
 ) persistProposalsParams {
 	return persistProposalsParams{
 		Definition: &agentdefinition.Definition{
 			ID:              pulid.MustNew("agd_"),
 			Name:            "Dispatch helper",
-			Template:        agentdefinition.TemplateDispatchAssistant,
+			Template:        agenttemplate.TemplateDispatchAssistant,
 			AutonomyCeiling: agent.TierPropose,
 			Version:         3,
 		},
 		Thread:  &conversation.Thread{ID: pulid.MustNew("thr_")},
-		Actor:   testActor(),
+		Actor:   assistanttest.Actor(),
 		Saved:   saved,
 		Actions: actions,
 		Model:   "test-model",
@@ -240,16 +69,16 @@ func proposalTestParams(
 func TestPersistProposals_SavesNothingWhenTheTurnProposedNothing(t *testing.T) {
 	t.Parallel()
 
-	runs := &stubRunRepo{}
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(runs, proposals, &stubConversationRepo{})
+	runs := &assistanttest.StubRunRepo{}
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(runs, proposals, &assistanttest.StubConversationRepo{})
 
 	saved, err := svc.persistProposals(t.Context(), proposalTestParams(nil, nil))
 	require.NoError(t, err)
 
 	assert.Nil(t, saved)
-	assert.Empty(t, runs.created, "a turn that proposed nothing must not open an agent run")
-	assert.Empty(t, proposals.created)
+	assert.Empty(t, runs.Created, "a turn that proposed nothing must not open an agent run")
+	assert.Empty(t, proposals.Created)
 }
 
 // A turn that failed or was stopped after a write ran used to record nothing:
@@ -258,31 +87,36 @@ func TestPersistProposals_SavesNothingWhenTheTurnProposedNothing(t *testing.T) {
 func TestPersistProposals_RecordsTheWritesOfATurnThatFailed(t *testing.T) {
 	t.Parallel()
 
-	runs := &stubRunRepo{}
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(runs, proposals, &stubConversationRepo{})
+	runs := &assistanttest.StubRunRepo{}
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(runs, proposals, &assistanttest.StubConversationRepo{})
 
-	params := proposalTestParams([]agentports.PendingAction{
-		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierAutoExecute, Executed: true},
+	params := proposalTestParams([]agentruntimeports.PendingAction{
+		{
+			ToolName:  "hold_shipment",
+			Rationale: "Consignee closed",
+			Tier:      agent.TierAutoExecute,
+			Executed:  true,
+		},
 	}, nil)
 	params.Failed = true
 
 	_, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
 
-	require.Len(t, runs.created, 1)
-	assert.Equal(t, agent.RunStatusFailed, runs.created[0].Status)
-	assert.Len(t, proposals.created, 1)
+	require.Len(t, runs.Created, 1)
+	assert.Equal(t, agent.RunStatusFailed, runs.Created[0].Status)
+	assert.Len(t, proposals.Created, 1)
 }
 
 func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	t.Parallel()
 
-	runs := &stubRunRepo{}
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(runs, proposals, &stubConversationRepo{})
+	runs := &assistanttest.StubRunRepo{}
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(runs, proposals, &assistanttest.StubConversationRepo{})
 
-	params := proposalTestParams([]agentports.PendingAction{
+	params := proposalTestParams([]agentruntimeports.PendingAction{
 		{ToolName: "reassign_move", Rationale: "Driver is out of hours", Tier: agent.TierPropose},
 		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierPropose},
 	}, nil)
@@ -290,8 +124,8 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	_, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
 
-	require.Len(t, runs.created, 1, "both proposals belong to the one turn that raised them")
-	run := runs.created[0]
+	require.Len(t, runs.Created, 1, "both proposals belong to the one turn that raised them")
+	run := runs.Created[0]
 	assert.Equal(t, agent.TypeAssistantChat, run.AgentType)
 	assert.Equal(t, agent.SubjectAssistantThread, run.SubjectType)
 	assert.Equal(t, params.Thread.ID, run.SubjectID)
@@ -300,8 +134,8 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	assert.Equal(t, "test-model", run.ModelIdentifier)
 	assert.NotEmpty(t, run.InputContextHash)
 
-	require.Len(t, proposals.created, 2)
-	for _, proposal := range proposals.created {
+	require.Len(t, proposals.Created, 2)
+	for _, proposal := range proposals.Created {
 		assert.Equal(t, run.ID, proposal.RunID)
 		assert.Equal(t, agent.ProposalStatusPending, proposal.Status)
 	}
@@ -312,21 +146,28 @@ func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 func TestPersistProposals_RecordsThePendingStatusAndTier(t *testing.T) {
 	t.Parallel()
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-			Tier:      agent.TierActWithApproval,
-		},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+				Tier:      agent.TierActWithApproval,
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 1)
-	saved := proposals.created[0]
+	require.Len(t, proposals.Created, 1)
+	saved := proposals.Created[0]
 	assert.Equal(t, agent.ProposalStatusPending, saved.Status)
 	assert.Equal(t, agent.TierActWithApproval, saved.AutonomyTier)
 	assert.Equal(t, "mv_1", saved.ToolParams["moveId"])
@@ -347,11 +188,15 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 		ToolCalls: []conversation.ToolCallRecord{{ID: "call_2", Name: "hold_shipment"}},
 	}
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
 	_, err := svc.persistProposals(t.Context(), proposalTestParams(
-		[]agentports.PendingAction{
+		[]agentruntimeports.PendingAction{
 			{ToolName: "hold_shipment", Rationale: "Consignee closed", ToolCallID: "call_2"},
 			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_1"},
 		},
@@ -363,9 +208,9 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 	))
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 2)
-	assert.Equal(t, secondTurn.ID, proposals.created[0].SourceMessageID)
-	assert.Equal(t, firstTurn.ID, proposals.created[1].SourceMessageID)
+	require.Len(t, proposals.Created, 2)
+	assert.Equal(t, secondTurn.ID, proposals.Created[0].SourceMessageID)
+	assert.Equal(t, firstTurn.ID, proposals.Created[1].SourceMessageID)
 }
 
 // The column is not-null, so a tool taking no arguments must still store an
@@ -373,17 +218,24 @@ func TestPersistProposals_TiesEachProposalToTheMessageThatAskedForIt(t *testing.
 func TestPersistProposals_StoresEmptyArgumentsAsAnObject(t *testing.T) {
 	t.Parallel()
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "close_period", Rationale: "Month end"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "close_period", Rationale: "Month end"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 1)
-	assert.NotNil(t, proposals.created[0].ToolParams)
-	assert.Empty(t, proposals.created[0].ToolParams)
+	require.Len(t, proposals.Created, 1)
+	assert.NotNil(t, proposals.Created[0].ToolParams)
+	assert.Empty(t, proposals.Created[0].ToolParams)
 }
 
 // An unset tier must never mean "no restriction". It falls back to the tier that
@@ -391,16 +243,23 @@ func TestPersistProposals_StoresEmptyArgumentsAsAnObject(t *testing.T) {
 func TestPersistProposals_FallsBackToTheMostRestrictiveTier(t *testing.T) {
 	t.Parallel()
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 1)
-	assert.Equal(t, agent.TierPropose, proposals.created[0].AutonomyTier)
+	require.Len(t, proposals.Created, 1)
+	assert.Equal(t, agent.TierPropose, proposals.Created[0].AutonomyTier)
 }
 
 // An approver who wants more than the rationale needs a way back to the exchange
@@ -414,11 +273,15 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 		ToolCalls: []conversation.ToolCallRecord{{ID: "call_1", Name: "reassign_move"}},
 	}
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
 	params := proposalTestParams(
-		[]agentports.PendingAction{{
+		[]agentruntimeports.PendingAction{{
 			ToolName:   "reassign_move",
 			Rationale:  "Out of hours",
 			Tier:       agent.TierPropose,
@@ -430,8 +293,8 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 	_, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 1)
-	evidence := proposals.created[0].Evidence
+	require.Len(t, proposals.Created, 1)
+	evidence := proposals.Created[0].Evidence
 	require.Len(t, evidence, 2)
 	assert.Equal(t, evidenceTypeThread, evidence[0].Type)
 	assert.Equal(t, params.Thread.ID.String(), evidence[0].ID)
@@ -444,89 +307,46 @@ func TestPersistProposals_CitesTheConversationAsEvidence(t *testing.T) {
 func TestPersistProposals_CitesOnlyTheThreadWhenTheMessageIsUnknown(t *testing.T) {
 	t.Parallel()
 
-	proposals := &stubProposalRepo{}
-	svc := newProposalService(&stubRunRepo{}, proposals, &stubConversationRepo{})
+	proposals := &assistanttest.StubProposalRepo{}
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		proposals,
+		&assistanttest.StubConversationRepo{},
+	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
-	}, nil))
+	_, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours", ToolCallID: "call_missing"},
+		}, nil),
+	)
 	require.NoError(t, err)
 
-	require.Len(t, proposals.created, 1)
-	require.Len(t, proposals.created[0].Evidence, 1)
-	assert.Equal(t, evidenceTypeThread, proposals.created[0].Evidence[0].Type)
-	assert.True(t, proposals.created[0].SourceMessageID.IsNil())
+	require.Len(t, proposals.Created, 1)
+	require.Len(t, proposals.Created[0].Evidence, 1)
+	assert.Equal(t, evidenceTypeThread, proposals.Created[0].Evidence[0].Type)
+	assert.True(t, proposals.Created[0].SourceMessageID.IsNil())
 }
 
 func TestPersistProposals_FailsWhenTheRunCannotBeOpened(t *testing.T) {
 	t.Parallel()
 
-	proposals := &stubProposalRepo{}
+	proposals := &assistanttest.StubProposalRepo{}
 	svc := newProposalService(
-		&stubRunRepo{err: errors.New("database is down")},
+		&assistanttest.StubRunRepo{Err: errors.New("database is down")},
 		proposals,
-		&stubConversationRepo{},
+		&assistanttest.StubConversationRepo{},
 	)
 
-	_, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{ToolName: "reassign_move", Rationale: "Out of hours"},
-	}, nil))
-
-	require.Error(t, err)
-	assert.Empty(t, proposals.created, "no proposal may exist without the run it belongs to")
-}
-
-func TestListThreadProposals_ScopesToTheThreadAndReportsExecution(t *testing.T) {
-	t.Parallel()
-
-	executedAt := int64(1700000000)
-	threadID := pulid.MustNew("thr_")
-	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{
-		{
-			ID:             pulid.MustNew("ap_"),
-			ToolName:       "reassign_move",
-			ToolParams:     map[string]any{"moveId": "mv_1"},
-			Status:         agent.ProposalStatusExecuted,
-			ExecutedAt:     &executedAt,
-			ExecutionError: "",
-		},
-		{
-			ID:             pulid.MustNew("ap_"),
-			ToolName:       "hold_shipment",
-			Status:         agent.ProposalStatusExecutionFailed,
-			ExecutionError: "shipment is already delivered",
-		},
-	}}
-	conversations := &stubConversationRepo{thread: &conversation.Thread{ID: threadID}}
-	svc := newProposalService(&stubRunRepo{}, proposals, conversations)
-
-	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
-	require.NoError(t, err)
-
-	assert.Equal(t, threadID, proposals.lastList.ThreadID)
-	require.Len(t, result, 2)
-	assert.Equal(t, agent.ProposalStatusExecuted, result[0].Status)
-	require.NotNil(t, result[0].ExecutedAt)
-	assert.Equal(t, executedAt, *result[0].ExecutedAt)
-	assert.Equal(t, "shipment is already delivered", result[1].ExecutionError)
-}
-
-// Reading the thread is the authorization check. Someone else's thread is not
-// found, and its proposals must never be reached.
-func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
-	t.Parallel()
-
-	proposals := &stubProposalRepo{}
-	conversations := &stubConversationRepo{getErr: errors.New("thread not found")}
-	svc := newProposalService(&stubRunRepo{}, proposals, conversations)
-
-	_, err := svc.ListThreadProposals(
+	_, err := svc.persistProposals(
 		t.Context(),
-		agentports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{ToolName: "reassign_move", Rationale: "Out of hours"},
+		}, nil),
 	)
 
 	require.Error(t, err)
-	assert.Empty(t, proposals.lastList.ThreadID, "the proposal query must not run at all")
+	assert.Empty(t, proposals.Created, "no proposal may exist without the run it belongs to")
 }
 
 // A proposal made while the organization's pause is on arrives on hold, naming
@@ -534,16 +354,23 @@ func TestListThreadProposals_RefusesAThreadTheReaderCannotSee(t *testing.T) {
 func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T) {
 	t.Parallel()
 
-	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
-		shadowSwitches{organizationPaused: true})
+	svc := newProposalServiceBehind(
+		&assistanttest.StubRunRepo{},
+		&assistanttest.StubProposalRepo{},
+		&assistanttest.StubConversationRepo{},
+		assistanttest.ShadowSwitches{OrganizationPaused: true},
+	)
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-		},
-	}, nil))
+	saved, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, saved, 1)
@@ -557,7 +384,7 @@ func TestPersistProposals_HoldsAProposalBehindTheOrganizationPause(t *testing.T)
 func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 	t.Parallel()
 
-	params := proposalTestParams([]agentports.PendingAction{
+	params := proposalTestParams([]agentruntimeports.PendingAction{
 		{
 			ToolName:  "reassign_move",
 			Arguments: map[string]any{"moveId": "mv_1"},
@@ -565,8 +392,12 @@ func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 		},
 	}, nil)
 	params.Definition.ShadowMode = true
-	svc := newProposalServiceBehind(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{},
-		shadowSwitches{})
+	svc := newProposalServiceBehind(
+		&assistanttest.StubRunRepo{},
+		&assistanttest.StubProposalRepo{},
+		&assistanttest.StubConversationRepo{},
+		assistanttest.ShadowSwitches{},
+	)
 
 	saved, err := svc.persistProposals(t.Context(), params)
 	require.NoError(t, err)
@@ -580,76 +411,24 @@ func TestPersistProposals_HoldsAProposalBehindTheAgentSwitch(t *testing.T) {
 func TestPersistProposals_LeavesALiveProposalUnheld(t *testing.T) {
 	t.Parallel()
 
-	svc := newProposalService(&stubRunRepo{}, &stubProposalRepo{}, &stubConversationRepo{})
+	svc := newProposalService(
+		&assistanttest.StubRunRepo{},
+		&assistanttest.StubProposalRepo{},
+		&assistanttest.StubConversationRepo{},
+	)
 
-	saved, err := svc.persistProposals(t.Context(), proposalTestParams([]agentports.PendingAction{
-		{
-			ToolName:  "reassign_move",
-			Arguments: map[string]any{"moveId": "mv_1"},
-			Rationale: "Driver is out of hours",
-		},
-	}, nil))
+	saved, err := svc.persistProposals(
+		t.Context(),
+		proposalTestParams([]agentruntimeports.PendingAction{
+			{
+				ToolName:  "reassign_move",
+				Arguments: map[string]any{"moveId": "mv_1"},
+				Rationale: "Driver is out of hours",
+			},
+		}, nil),
+	)
 	require.NoError(t, err)
 
 	require.Len(t, saved, 1)
 	assert.Nil(t, saved[0].Hold)
-}
-
-// Reading the thread back decides the hold from the run's agent as it is now,
-// not as it was when the proposal was made: turning the switch off is what
-// releases the card. A proposal already decided is history and is never held,
-// and its run is not even read.
-func TestListThreadProposals_HoldsOnlyWhatIsStillPending(t *testing.T) {
-	t.Parallel()
-
-	def := &agentdefinition.Definition{
-		ID:         pulid.MustNew("agd_"),
-		Name:       "Dispatch desk",
-		ShadowMode: true,
-	}
-	heldRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
-	decidedRun := &agent.AgentRun{ID: pulid.MustNew("ar_"), AgentDefinitionID: def.ID}
-	runs := &stubRunRepo{
-		byID: map[pulid.ID]*agent.AgentRun{heldRun.ID: heldRun, decidedRun.ID: decidedRun},
-	}
-	threadID := pulid.MustNew("thr_")
-	proposals := &stubProposalRepo{byThread: []*agent.AgentProposal{
-		{
-			ID:       pulid.MustNew("ap_"),
-			RunID:    heldRun.ID,
-			ToolName: "reassign_move",
-			Status:   agent.ProposalStatusPending,
-		},
-		{
-			ID:       pulid.MustNew("ap_"),
-			RunID:    decidedRun.ID,
-			ToolName: "hold_shipment",
-			Status:   agent.ProposalStatusRejected,
-		},
-	}}
-	svc := newProposalServiceBehind(
-		runs,
-		proposals,
-		&stubConversationRepo{thread: &conversation.Thread{ID: threadID}},
-		shadowSwitches{definition: def},
-	)
-
-	result, err := svc.ListThreadProposals(t.Context(), agentports.GetThreadRequest{ID: threadID})
-	require.NoError(t, err)
-
-	require.Len(t, result, 2)
-	require.NotNil(t, result[0].Hold)
-	assert.Equal(t, string(agentshadow.CauseDefinition), result[0].Hold.Reason)
-	assert.Equal(t, "Dispatch desk", result[0].Hold.AgentName)
-	assert.Nil(t, result[1].Hold, "a decided proposal is never held")
-	assert.Equal(t, 1, runs.reads, "only the pending proposal's run is read")
-}
-
-func (r *stubProposalRepo) ExpirePendingByThread(
-	_ context.Context,
-	req agentports.ExpireAgentProposalsByThreadRequest,
-) (int, error) {
-	r.expiredThreads = append(r.expiredThreads, req.ThreadID)
-
-	return 0, nil
 }

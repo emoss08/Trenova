@@ -1,0 +1,136 @@
+package workerreviewports
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+type ListReviewTemplatesRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"cursor"`
+	Status string                   `json:"status"`
+}
+
+type GetReviewTemplateByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type GetReviewTemplatesByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	TemplateIDs []pulid.ID            `json:"templateIds"`
+}
+
+type ReviewTemplateSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+}
+
+type ReviewTemplateCodeExistsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Code       string                `json:"code"`
+	ExcludeID  pulid.ID              `json:"excludeId"`
+}
+
+type CountReviewsByTemplateRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	TemplateID pulid.ID              `json:"templateId"`
+	OpenOnly   bool                  `json:"openOnly"`
+}
+
+type CountReviewsByTemplateIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	TemplateIDs []pulid.ID            `json:"templateIds"`
+	OpenOnly    bool                  `json:"openOnly"`
+}
+
+type ListPerformanceReviewsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	WorkerID   pulid.ID              `json:"workerId"`
+	// Statuses limits the list; empty means every status.
+	Statuses        []workerreview.ReviewStatus `json:"statuses"`
+	IncludeTemplate bool                        `json:"includeTemplate"`
+	IncludeReviewer bool                        `json:"includeReviewer"`
+}
+
+// CountPerformanceReviewsRequest counts reviews across the organisation rather
+// than for one worker, which is what the home screen needs and the per-worker
+// list cannot answer.
+type CountPerformanceReviewsRequest struct {
+	TenantInfo pagination.TenantInfo       `json:"tenantInfo"`
+	Statuses   []workerreview.ReviewStatus `json:"statuses"`
+}
+
+type GetPerformanceReviewByIDRequest struct {
+	ID              pulid.ID              `json:"id"`
+	TenantInfo      pagination.TenantInfo `json:"tenantInfo"`
+	IncludeTemplate bool                  `json:"includeTemplate"`
+	IncludeWorker   bool                  `json:"includeWorker"`
+	IncludeReviewer bool                  `json:"includeReviewer"`
+}
+
+type PerformanceReviewRepository interface {
+	ListTemplates(
+		ctx context.Context,
+		req *ListReviewTemplatesRequest,
+	) (*pagination.CursorListResult[*workerreview.PerformanceReviewTemplate], error)
+	ListActiveTemplates(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*workerreview.PerformanceReviewTemplate, error)
+	TemplateSelectOptions(
+		ctx context.Context,
+		req *ReviewTemplateSelectOptionsRequest,
+	) (*pagination.ListResult[*workerreview.PerformanceReviewTemplate], error)
+	GetTemplateByID(
+		ctx context.Context,
+		req *GetReviewTemplateByIDRequest,
+	) (*workerreview.PerformanceReviewTemplate, error)
+	GetTemplatesByIDs(
+		ctx context.Context,
+		req *GetReviewTemplatesByIDsRequest,
+	) ([]*workerreview.PerformanceReviewTemplate, error)
+	TemplateCodeExists(ctx context.Context, req *ReviewTemplateCodeExistsRequest) (bool, error)
+	CreateTemplate(
+		ctx context.Context,
+		entity *workerreview.PerformanceReviewTemplate,
+	) (*workerreview.PerformanceReviewTemplate, error)
+	UpdateTemplate(
+		ctx context.Context,
+		entity *workerreview.PerformanceReviewTemplate,
+	) (*workerreview.PerformanceReviewTemplate, error)
+	ClearDefaultTemplate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		exceptID pulid.ID,
+	) error
+	CountReviewsByTemplate(ctx context.Context, req *CountReviewsByTemplateRequest) (int, error)
+	CountReviewsByTemplateIDs(
+		ctx context.Context,
+		req *CountReviewsByTemplateIDsRequest,
+	) (map[pulid.ID]int, error)
+
+	ListReviews(
+		ctx context.Context,
+		req *ListPerformanceReviewsRequest,
+	) ([]*workerreview.PerformanceReview, error)
+	CountReviews(
+		ctx context.Context,
+		req *CountPerformanceReviewsRequest,
+	) (int, error)
+	GetReviewByID(
+		ctx context.Context,
+		req *GetPerformanceReviewByIDRequest,
+	) (*workerreview.PerformanceReview, error)
+	CreateReview(
+		ctx context.Context,
+		entity *workerreview.PerformanceReview,
+	) (*workerreview.PerformanceReview, error)
+	UpdateReview(
+		ctx context.Context,
+		entity *workerreview.PerformanceReview,
+	) (*workerreview.PerformanceReview, error)
+	DeleteReview(ctx context.Context, req *GetPerformanceReviewByIDRequest) error
+}

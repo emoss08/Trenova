@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,17 +18,17 @@ import (
 )
 
 type holidayLister struct {
-	workerports.OrgHolidayRepository
+	orgholidayports.OrgHolidayRepository
 
 	mu       sync.Mutex
-	requests []workerports.ListOrgHolidaysRequest
-	rows     []*worker.OrgHoliday
+	requests []orgholidayports.ListOrgHolidaysRequest
+	rows     []*pto.OrgHoliday
 }
 
 func (h *holidayLister) List(
 	_ context.Context,
-	req *workerports.ListOrgHolidaysRequest,
-) ([]*worker.OrgHoliday, error) {
+	req *orgholidayports.ListOrgHolidaysRequest,
+) ([]*pto.OrgHoliday, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.requests = append(h.requests, *req)
@@ -38,10 +38,10 @@ func (h *holidayLister) List(
 func TestRecordSourceLoadsHolidaysOncePerOrganizationAndYearInABatch(t *testing.T) {
 	t.Parallel()
 
-	lister := &holidayLister{rows: []*worker.OrgHoliday{{
+	lister := &holidayLister{rows: []*pto.OrgHoliday{{
 		Name:           "Christmas Day",
 		HolidayDate:    time.Date(2020, time.December, 25, 0, 0, 0, 0, time.UTC).Unix(),
-		Kind:           worker.HolidayKindHoliday,
+		Kind:           pto.HolidayKindHoliday,
 		RecursAnnually: true,
 	}}}
 	source := tariff.NewRecordSource(tariff.RecordSourceParams{Holidays: lister})

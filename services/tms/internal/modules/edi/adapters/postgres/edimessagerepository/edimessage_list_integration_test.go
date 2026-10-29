@@ -12,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimessagerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/emoss08/trenova/internal/modules/edi/editest"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -23,7 +25,7 @@ import (
 )
 
 type messageListFixture struct {
-	repo    ediports.EDIMessageRepository
+	repo    edimessageports.EDIMessageRepository
 	tenant  pagination.TenantInfo
 	ids     map[string]pulid.ID
 	now     int64
@@ -34,8 +36,8 @@ type messageListFixture struct {
 
 type listedMessage struct {
 	name       string
-	ack        edi.MessageAcknowledgmentStatus
-	set        edi.TransactionSet
+	ack        edimessage.MessageAcknowledgmentStatus
+	set        edidocument.TransactionSet
 	onShipment bool
 	onInvoice  bool
 	age        int64
@@ -49,12 +51,25 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 	var shipmentID, customerID, orgID, buID string
 	require.NoError(t, db.Pool().QueryRow(ctx,
 		"SELECT id, customer_id, organization_id, business_unit_id FROM shipments ORDER BY id LIMIT 1",
-	).Scan(&shipmentID, &customerID, &orgID, &buID))
-	shipment := struct{ ID, CustomerID pulid.ID }{ID: pulid.ID(shipmentID), CustomerID: pulid.ID(customerID)}
-	scope := editest.TenantOf(ctx, pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)})
+	).
+		Scan(&shipmentID, &customerID, &orgID, &buID))
+	shipment := struct{ ID, CustomerID pulid.ID }{
+		ID:         pulid.ID(shipmentID),
+		CustomerID: pulid.ID(customerID),
+	}
+	scope := editest.TenantOf(
+		ctx,
+		pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)},
+	)
 	ctx = scope.Ctx
 	org := scope.Info
-	documentType := findDocumentType(t, ctx, db, edi.TransactionSet204, edi.DocumentDirectionOutbound)
+	documentType := findDocumentType(
+		t,
+		ctx,
+		db,
+		edidocument.TransactionSet204,
+		edidocument.DocumentDirectionOutbound,
+	)
 
 	fixture := &messageListFixture{
 		repo: edimessagerepository.New(edimessagerepository.Params{
@@ -111,33 +126,33 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 	fixture.invID = inv.ID
 
 	messages := []listedMessage{
-		{name: "pendingNewest", ack: edi.MessageAcknowledgmentStatusPending,
-			set: edi.TransactionSet210, onShipment: true, onInvoice: true, age: 60},
-		{name: "pendingHour", ack: edi.MessageAcknowledgmentStatusPending,
-			set: edi.TransactionSet214, onShipment: true, age: 60 * 60},
-		{name: "acceptedInvoice", ack: edi.MessageAcknowledgmentStatusAccepted,
-			set: edi.TransactionSet210, onInvoice: true, age: 2 * 60 * 60},
-		{name: "acceptedWithErrors", ack: edi.MessageAcknowledgmentStatusAcceptedWithErrors,
-			set: edi.TransactionSet214, onShipment: true, age: 3 * 60 * 60},
-		{name: "rejectedOld", ack: edi.MessageAcknowledgmentStatusRejected,
-			set: edi.TransactionSet214, age: 2 * 24 * 60 * 60},
+		{name: "pendingNewest", ack: edimessage.MessageAcknowledgmentStatusPending,
+			set: edidocument.TransactionSet210, onShipment: true, onInvoice: true, age: 60},
+		{name: "pendingHour", ack: edimessage.MessageAcknowledgmentStatusPending,
+			set: edidocument.TransactionSet214, onShipment: true, age: 60 * 60},
+		{name: "acceptedInvoice", ack: edimessage.MessageAcknowledgmentStatusAccepted,
+			set: edidocument.TransactionSet210, onInvoice: true, age: 2 * 60 * 60},
+		{name: "acceptedWithErrors", ack: edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
+			set: edidocument.TransactionSet214, onShipment: true, age: 3 * 60 * 60},
+		{name: "rejectedOld", ack: edimessage.MessageAcknowledgmentStatusRejected,
+			set: edidocument.TransactionSet214, age: 2 * 24 * 60 * 60},
 	}
 	for index, entry := range messages {
-		message := &edi.EDIMessage{
+		message := &edimessage.EDIMessage{
 			BusinessUnitID:           org.BuID,
 			OrganizationID:           org.OrgID,
 			EDIPartnerID:             partner.ID,
 			DocumentTypeID:           documentType.ID,
-			Direction:                edi.DocumentDirectionOutbound,
-			Standard:                 edi.EDIStandardX12,
+			Direction:                edidocument.DocumentDirectionOutbound,
+			Standard:                 edidocument.EDIStandardX12,
 			TransactionSet:           entry.set,
-			X12Version:               edi.DefaultX12204Version,
-			Status:                   edi.MessageStatusGenerated,
+			X12Version:               edidocument.DefaultX12204Version,
+			Status:                   edimessage.MessageStatusGenerated,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: fmt.Sprintf("%09d", index+1),
 			GroupControlNumber:       fmt.Sprintf("%d", index+1),
 			TransactionControlNumber: fmt.Sprintf("%04d", index+1),
-			DeliveryStatus:           edi.MessageDeliveryStatusSent,
+			DeliveryStatus:           edimessage.MessageDeliveryStatusSent,
 			AckStatus:                entry.ack,
 			GeneratedAt:              fixture.now - entry.age,
 		}
@@ -159,13 +174,13 @@ func seedMessageListFixture(t *testing.T) (context.Context, *messageListFixture)
 func (f *messageListFixture) list(
 	ctx context.Context,
 	t *testing.T,
-	configure func(req *ediports.ListEDIMessagesRequest),
+	configure func(req *edimessageports.ListEDIMessagesRequest),
 ) []pulid.ID {
 	t.Helper()
 
 	cursor, err := pagination.NewCursorInfo(50, "")
 	require.NoError(t, err)
-	req := &ediports.ListEDIMessagesRequest{
+	req := &edimessageports.ListEDIMessagesRequest{
 		Filter:    &pagination.QueryOptions{TenantInfo: f.tenant},
 		Cursor:    cursor,
 		PartnerID: f.partner,
@@ -197,12 +212,12 @@ func TestListMessagesCursor_FiltersOnAcknowledgmentRecordsAndCreationTime(t *tes
 
 	cases := []struct {
 		name      string
-		configure func(req *ediports.ListEDIMessagesRequest)
+		configure func(req *edimessageports.ListEDIMessagesRequest)
 		want      []string
 	}{
 		{
 			name:      "no new filter keeps every message newest first",
-			configure: func(*ediports.ListEDIMessagesRequest) {},
+			configure: func(*edimessageports.ListEDIMessagesRequest) {},
 			want: []string{
 				"pendingNewest", "pendingHour", "acceptedInvoice",
 				"acceptedWithErrors", "rejectedOld",
@@ -210,56 +225,56 @@ func TestListMessagesCursor_FiltersOnAcknowledgmentRecordsAndCreationTime(t *tes
 		},
 		{
 			name: "ack status pending",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
-				req.AckStatus = edi.MessageAcknowledgmentStatusPending
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusPending
 			},
 			want: []string{"pendingNewest", "pendingHour"},
 		},
 		{
 			name: "ack status accepted leaves out accepted with errors",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
-				req.AckStatus = edi.MessageAcknowledgmentStatusAccepted
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusAccepted
 			},
 			want: []string{"acceptedInvoice"},
 		},
 		{
 			name: "ack status accepted with errors",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
-				req.AckStatus = edi.MessageAcknowledgmentStatusAcceptedWithErrors
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusAcceptedWithErrors
 			},
 			want: []string{"acceptedWithErrors"},
 		},
 		{
 			name: "shipment",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.ShipmentID = f.shipID
 			},
 			want: []string{"pendingNewest", "pendingHour", "acceptedWithErrors"},
 		},
 		{
 			name: "invoice",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.InvoiceID = f.invID
 			},
 			want: []string{"pendingNewest", "acceptedInvoice"},
 		},
 		{
 			name: "created after is inclusive",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.CreatedAfter = f.now - 2*60*60
 			},
 			want: []string{"pendingNewest", "pendingHour", "acceptedInvoice"},
 		},
 		{
 			name: "created before is exclusive",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.CreatedBefore = f.now - 2*60*60
 			},
 			want: []string{"acceptedWithErrors", "rejectedOld"},
 		},
 		{
 			name: "a window",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.CreatedAfter = f.now - 4*60*60
 				req.CreatedBefore = f.now - 30*60
 			},
@@ -267,33 +282,33 @@ func TestListMessagesCursor_FiltersOnAcknowledgmentRecordsAndCreationTime(t *tes
 		},
 		{
 			name: "shipment, ack status and a window together",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.ShipmentID = f.shipID
-				req.AckStatus = edi.MessageAcknowledgmentStatusPending
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusPending
 				req.CreatedAfter = f.now - 30*60
 			},
 			want: []string{"pendingNewest"},
 		},
 		{
 			name: "invoice with the transaction set and delivery filters it already had",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.InvoiceID = f.invID
-				req.TransactionSet = edi.TransactionSet210
-				req.AckStatus = edi.MessageAcknowledgmentStatusAccepted
+				req.TransactionSet = edidocument.TransactionSet210
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusAccepted
 			},
 			want: []string{"acceptedInvoice"},
 		},
 		{
 			name: "nothing matches",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.ShipmentID = f.shipID
-				req.AckStatus = edi.MessageAcknowledgmentStatusRejected
+				req.AckStatus = edimessage.MessageAcknowledgmentStatusRejected
 			},
 			want: []string{},
 		},
 		{
 			name: "a window with nothing in it",
-			configure: func(req *ediports.ListEDIMessagesRequest) {
+			configure: func(req *edimessageports.ListEDIMessagesRequest) {
 				req.CreatedAfter = f.now + 60
 			},
 			want: []string{},
@@ -312,7 +327,7 @@ func TestListMessagesCursor_PagesThroughAFilteredListInOrder(t *testing.T) {
 
 	first, err := pagination.NewCursorInfo(2, "")
 	require.NoError(t, err)
-	req := &ediports.ListEDIMessagesRequest{
+	req := &edimessageports.ListEDIMessagesRequest{
 		Filter:     &pagination.QueryOptions{TenantInfo: f.tenant},
 		Cursor:     first,
 		PartnerID:  f.partner,
@@ -340,14 +355,14 @@ func TestListMessagesCursor_PagesThroughAFilteredListInOrder(t *testing.T) {
 func TestListMessages_AppliesTheSameFilters(t *testing.T) {
 	ctx, f := seedMessageListFixture(t)
 
-	result, err := f.repo.ListMessages(ctx, &ediports.ListEDIMessagesRequest{
+	result, err := f.repo.ListMessages(ctx, &edimessageports.ListEDIMessagesRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: f.tenant,
 			Pagination: pagination.Info{Limit: 20},
 		},
 		PartnerID:    f.partner,
 		ShipmentID:   f.shipID,
-		AckStatus:    edi.MessageAcknowledgmentStatusAcceptedWithErrors,
+		AckStatus:    edimessage.MessageAcknowledgmentStatusAcceptedWithErrors,
 		CreatedAfter: f.now - 4*60*60,
 	})
 	require.NoError(t, err)

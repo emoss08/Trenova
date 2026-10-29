@@ -21,6 +21,7 @@ func TestObservabilityModule_BuildsTheTracerWhetherOrNotAnythingAsksForIt(t *tes
 	app := fxtest.New(t,
 		fx.NopLogger,
 		fx.Supply(cfg, zap.NewNop()),
+		config.SectionProviders,
 		ObservabilityModule,
 	)
 	app.RequireStart()

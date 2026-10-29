@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
@@ -23,30 +27,30 @@ import (
 
 func (t *EmailCustomerTool) compose(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*common.CustomerEmail, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*outboundpreview.CustomerEmail, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := common.RequirePulid(params.Params, common.PreviewFieldShipmentID)
+	shipmentID, err := toolparams.RequirePulid(params.Params, changepreview.PreviewFieldShipmentID)
 	if err != nil {
 		return nil, err
 	}
-	profileID, err := common.OptionalID(params.Params, "profileId")
+	profileID, err := toolparams.OptionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}
-	subject, err := common.RequireString(params.Params, common.PreviewFieldSubject)
+	subject, err := toolparams.RequireString(params.Params, changepreview.PreviewFieldSubject)
 	if err != nil {
 		return nil, err
 	}
-	body, err := common.RequireString(params.Params, "body")
+	body, err := toolparams.RequireString(params.Params, "body")
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
+	tenant := toolparams.TenantFrom(params)
 	sp, err := t.Deps.Shipments.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenant,
@@ -56,7 +60,7 @@ func (t *EmailCustomerTool) compose(
 		return nil, err
 	}
 
-	composed := &common.CustomerEmail{Shipment: sp, Tenant: tenant}
+	composed := &outboundpreview.CustomerEmail{Shipment: sp, Tenant: tenant}
 
 	// The customer update desk is woken by every arrival and every
 	// departure, so a shipment crossing a yard can raise several runs in a
@@ -80,7 +84,7 @@ func (t *EmailCustomerTool) compose(
 	}
 	composed.Recipients = recipients
 
-	composed.Data = documenttemplate.AgentEmailContext{
+	composed.Data = portaltemplate.AgentEmailContext{
 		AgentSubject:      strings.TrimSpace(subject),
 		AgentBody:         strings.TrimSpace(body),
 		CustomerName:      customerName,
@@ -118,9 +122,9 @@ func (t *EmailCustomerTool) compose(
 
 func (t *EmailCustomerTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	composed, err := t.compose(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -130,14 +134,14 @@ func (t *EmailCustomerTool) Preview(
 			"Would send nothing: the customer was already emailed about %s within the hour.",
 			composed.Shipment.ProNumber,
 		))
-		toolpreview.Warn(preview, agent.PreviewWarningAlreadyToldCustomer,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningAlreadyToldCustomer,
 			"This customer was already emailed about this shipment within the hour.",
 			composed.Shipment.ProNumber)
 
 		return preview, nil
 	}
 
-	sender, err := common.ResolveEmailSender(ctx, t.Deps.Senders, composed.Send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.Deps.Senders, composed.Send)
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +152,13 @@ func (t *EmailCustomerTool) Preview(
 			ID:       composed.Shipment.CustomerID,
 			Label:    composed.Data.CustomerName,
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(composed.Send, composed.VersionID),
+			outboundpreview.RenderedEmailPreview(composed.Send, composed.VersionID),
 		),
 	)
 
-	comment := common.CustomerUpdateComment(composed)
+	comment := outboundpreview.CustomerUpdateComment(composed)
 	recorded, err := toolpreview.Create(
 		toolpreview.Record{
 			Resource: permission.ResourceShipmentComment,
@@ -179,8 +183,12 @@ func (t *EmailCustomerTool) Preview(
 		send,
 		recorded,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
-	common.WarnSensitiveContent(preview, composed.Data.AgentSubject, composed.Data.AgentBody)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSensitiveContent(
+		preview,
+		composed.Data.AgentSubject,
+		composed.Data.AgentBody,
+	)
 
 	return preview, nil
 }

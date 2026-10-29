@@ -3,26 +3,35 @@
 package shipmentresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
+	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	shipmentimportassistantports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AnalyticsService            kernelports.AnalyticsService
-	ShipmentService             shipmentports.ShipmentService
-	ShipmentCommentService      shipmentports.ShipmentCommentService
-	ShipmentRatingReviewService shipmentports.RatingReviewService
+	ShipmentReader              shipmentserviceports.ShipmentReader
+	ShipmentWriter              shipmentserviceports.ShipmentWriter
+	ShipmentLifecycle           shipmentserviceports.ShipmentLifecycleService
+	ShipmentReadiness           shipmentserviceports.ShipmentBillingReadinessReader
+	ShipmentBillingTransfer     shipmentserviceports.ShipmentBillingTransferService
+	ShipmentAutoRater           shipmentserviceports.ShipmentAutoRater
+	ShipmentLoadingPlanner      shipmentserviceports.ShipmentLoadingPlanner
+	ShipmentCommentService      shipmentcommentports.ShipmentCommentService
+	ShipmentRatingReviewService ratingreviewports.RatingReviewService
 	ShipmentEventService        shipmenteventports.ShipmentEventService
 	TrackingEventService        trackingeventports.TrackingEventService
-	ShipmentImportAssistant     shipmentports.ShipmentImportAssistantService
-	InvoiceService              invoiceports.InvoiceService
+	ShipmentImportAssistant     shipmentimportassistantports.ShipmentImportAssistantService
+	InvoiceQueryService         invoiceports.InvoiceQueryService
 	DriverSettlementRepo        driversettlementports.DriverSettlementRepository
 	CarrierSettlementRepo       carriersettlementports.CarrierSettlementRepository
 }

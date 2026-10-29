@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/lrucache"
@@ -41,15 +41,15 @@ type Service struct {
 	logger  *zap.Logger
 	files   documentports.ConversationFileReader
 	imaging kernelports.Imaging
-	cache   lrucache.Cache[string, *agentports.MessageFileContent]
+	cache   lrucache.Cache[string, *conversationports.MessageFileContent]
 }
 
-func New(p Params) agentports.MessageFileReader {
+func New(p Params) conversationports.MessageFileReader {
 	return &Service{
 		logger:  p.Logger.Named("message-files"),
 		files:   p.Files,
 		imaging: p.Imaging,
-		cache: lrucache.NewExpirable[string, *agentports.MessageFileContent](
+		cache: lrucache.NewExpirable[string, *conversationports.MessageFileContent](
 			cachedFiles,
 			cachedFileTTL,
 		),
@@ -58,8 +58,8 @@ func New(p Params) agentports.MessageFileReader {
 
 func (s *Service) ReadMessageFile(
 	ctx context.Context,
-	req *agentports.ReadMessageFileRequest,
-) (*agentports.MessageFileContent, error) {
+	req *conversationports.ReadMessageFileRequest,
+) (*conversationports.MessageFileContent, error) {
 	key := req.TenantInfo.OrgID.String() + "/" + req.TenantInfo.BuID.String() + "/" +
 		req.DocumentID.String()
 	if cached, ok := s.cache.Get(key); ok {
@@ -74,12 +74,12 @@ func (s *Service) ReadMessageFile(
 		return nil, err
 	}
 
-	content := &agentports.MessageFileContent{
+	content := &conversationports.MessageFileContent{
 		Data:        file.Data,
 		ContentType: file.Document.FileType,
 	}
 	counted := true
-	if aiprovider.MediaType(file.Document.FileType) == "application/pdf" {
+	if aimodel.MediaType(file.Document.FileType) == "application/pdf" {
 		content.PageCount, content.Unreadable, counted = s.pages(ctx, file.Data)
 	}
 	if counted && len(content.Data) <= cachedFileBytes {

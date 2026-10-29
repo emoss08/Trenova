@@ -10,11 +10,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -74,7 +76,7 @@ func (r *MutationResolver) PatchEquipmentType(ctx context.Context, id string, in
 
 	existing, err := r.EquipmentTypeService.Get(ctx, equipmenttypeports.GetEquipmentTypeByIDRequest{
 		ID:         equipmentTypeID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -98,7 +100,7 @@ func (r *MutationResolver) BulkUpdateEquipmentTypeStatus(ctx context.Context, in
 		return nil, err
 	}
 
-	equipmentTypeIDs, err := base.ParseIDs(input.EquipmentTypeIds)
+	equipmentTypeIDs, err := gqlid.ParseIDs(input.EquipmentTypeIds)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +108,7 @@ func (r *MutationResolver) BulkUpdateEquipmentTypeStatus(ctx context.Context, in
 	entities, err := r.EquipmentTypeService.BulkUpdateStatus(
 		ctx,
 		&equipmenttypeports.BulkUpdateEquipmentTypeStatusRequest{
-			TenantInfo:       base.TenantInfo(authCtx),
+			TenantInfo:       resolvercore.TenantInfo(authCtx),
 			EquipmentTypeIDs: equipmentTypeIDs,
 			Status:           input.Status,
 		},
@@ -124,7 +126,7 @@ func (r *QueryResolver) EquipmentTypes(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +157,6 @@ func (r *QueryResolver) EquipmentType(ctx context.Context, id string) (*equipmen
 
 	return r.EquipmentTypeService.Get(ctx, equipmenttypeports.GetEquipmentTypeByIDRequest{
 		ID:         equipmentTypeID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }

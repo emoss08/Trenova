@@ -5,21 +5,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 )
 
 var alertViewLabels = map[string]string{
-	"table":             "Watches",
-	"events":            "On",
-	"watchedColumns":    "Only when these change",
-	"conditions":        "When",
-	"match":             "Conditions that must hold",
-	common.FieldMessage: "Message",
+	"table":                    "Watches",
+	"events":                   "On",
+	"watchedColumns":           "Only when these change",
+	"conditions":               "When",
+	"match":                    "Conditions that must hold",
+	changepreview.FieldMessage: "Message",
 }
 
 type alertView struct {
@@ -50,7 +51,7 @@ func alertViewOf(subscription *tablechangealert.TCASubscription) *alertView {
 			"%s %s %s",
 			condition.Field,
 			condition.Operator,
-			agent.PreviewValueText(condition.Value),
+			agentpreview.PreviewValueText(condition.Value),
 		)))
 	}
 
@@ -59,13 +60,13 @@ func alertViewOf(subscription *tablechangealert.TCASubscription) *alertView {
 
 func (t *CreateTableChangeAlertTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	subscription := alertSubscription(&params)
+	subscription := alertSubscription(params)
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceTableChangeAlert,
 		Label:    subscription.Name,
@@ -84,7 +85,7 @@ func (t *CreateTableChangeAlertTool) Preview(
 		err = t.alerts.CheckSubscription(ctx, subscription)
 	}
 
-	return common.WarnRefusal(preview, err)
+	return changepreview.WarnRefusal(preview, err)
 }
 
 func alertEventWords(events []string) string {

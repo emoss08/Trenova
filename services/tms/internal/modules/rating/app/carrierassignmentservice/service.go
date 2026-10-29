@@ -8,10 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentvalidator"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -37,18 +42,18 @@ type Params struct {
 
 	Logger            *zap.Logger
 	DB                kernelports.Transactor
-	Repo              shipmentports.CarrierAssignmentRepository
-	AssignmentRepo    shipmentports.AssignmentRepository
+	Repo              carrierassignmentports.CarrierAssignmentRepository
+	AssignmentRepo    assignmentports.AssignmentRepository
 	CarrierRepo       carrierports.CarrierRepository
 	ShipmentRepo      shipmentports.ShipmentRepository
-	HoldRepo          shipmentports.ShipmentHoldRepository
+	HoldRepo          shipmentholdports.ShipmentHoldRepository
 	ControlRepo       tenantports.ShipmentControlRepository
 	RateConRepo       rateconfirmationports.RateConfirmationRepository
-	ShipmentValidator *shipmentservice.Validator
+	ShipmentValidator *shipmentvalidator.Validator
 	Coordinator       *shipmentstate.Coordinator
 	EventService      shipmenteventports.ShipmentEventService
 	AuditService      auditports.AuditService
-	Invalidator       shipmentports.ShipmentInvalidator
+	Invalidator       shipmentinvalidationports.ShipmentInvalidator
 	CostAccrual       carrierports.CarrierCostAccrual `optional:"true"`
 	TenderGuard       tenderports.TenderGuard         `optional:"true"`
 	RateEngine        ratequoteports.RateEngine       `optional:"true"`
@@ -61,18 +66,18 @@ type Params struct {
 type Service struct {
 	l                 *zap.Logger
 	db                kernelports.Transactor
-	repo              shipmentports.CarrierAssignmentRepository
-	assignmentRepo    shipmentports.AssignmentRepository
+	repo              carrierassignmentports.CarrierAssignmentRepository
+	assignmentRepo    assignmentports.AssignmentRepository
 	carrierRepo       carrierports.CarrierRepository
 	shipmentRepo      shipmentports.ShipmentRepository
-	holdRepo          shipmentports.ShipmentHoldRepository
+	holdRepo          shipmentholdports.ShipmentHoldRepository
 	controlRepo       tenantports.ShipmentControlRepository
 	rateConRepo       rateconfirmationports.RateConfirmationRepository
-	shipmentValidator *shipmentservice.Validator
+	shipmentValidator *shipmentvalidator.Validator
 	coordinator       *shipmentstate.Coordinator
 	eventService      shipmenteventports.ShipmentEventService
 	auditService      auditports.AuditService
-	invalidator       shipmentports.ShipmentInvalidator
+	invalidator       shipmentinvalidationports.ShipmentInvalidator
 	costAccrual       carrierports.CarrierCostAccrual
 	tenderGuard       tenderports.TenderGuard
 	rateEngine        ratequoteports.RateEngine
@@ -114,7 +119,7 @@ var _ tenderports.CarrierMoveAssigner = (*Service)(nil)
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *shipmentports.GetCarrierAssignmentByIDRequest,
+	req *carrierassignmentports.GetCarrierAssignmentByIDRequest,
 ) (*shipment.CarrierAssignment, error) {
 	return s.repo.GetByID(ctx, req)
 }
@@ -188,7 +193,7 @@ func (s *Service) refreshIntel(
 
 func (s *Service) AssignToMove(
 	ctx context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 ) (*shipment.CarrierAssignment, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -247,10 +252,13 @@ func (s *Service) AssignToMove(
 			return txErr
 		}
 
-		result, txErr = s.repo.GetByID(txCtx, &shipmentports.GetCarrierAssignmentByIDRequest{
-			TenantInfo:          req.TenantInfo,
-			CarrierAssignmentID: saved.ID,
-		})
+		result, txErr = s.repo.GetByID(
+			txCtx,
+			&carrierassignmentports.GetCarrierAssignmentByIDRequest{
+				TenantInfo:          req.TenantInfo,
+				CarrierAssignmentID: saved.ID,
+			},
+		)
 		return txErr
 	})
 	if err != nil {
@@ -275,10 +283,10 @@ func (s *Service) AssignToMove(
 		Comment:    "Carrier " + carrierEntity.Name + " assigned to move",
 		Current:    result,
 	})
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(
+		shipmentinvalidationports.ShipmentInvalidationByUser(
 			req.TenantInfo,
 			shipmentIDOf(result),
 			"carrier_assigned",
@@ -303,15 +311,15 @@ func (s *Service) ConfirmAssignment(
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
 ) error {
-	entity, err := s.repo.GetByID(ctx, &shipmentports.GetCarrierAssignmentByIDRequest{
+	entity, err := s.repo.GetByID(ctx, &carrierassignmentports.GetCarrierAssignmentByIDRequest{
 		TenantInfo:          tenantInfo,
 		CarrierAssignmentID: assignmentID,
 	})
 	if err != nil {
 		return err
 	}
-	if entity.Status != shipment.CarrierAssignmentStatusPending {
-		if entity.Status == shipment.CarrierAssignmentStatusConfirmed {
+	if entity.Status != shipmentvocab.CarrierAssignmentStatusPending {
+		if entity.Status == shipmentvocab.CarrierAssignmentStatusConfirmed {
 			return nil
 		}
 		return errortypes.NewBusinessError(
@@ -321,7 +329,7 @@ func (s *Service) ConfirmAssignment(
 
 	previous := *entity
 	now := timeutils.NowUnix()
-	entity.Status = shipment.CarrierAssignmentStatusConfirmed
+	entity.Status = shipmentvocab.CarrierAssignmentStatusConfirmed
 	entity.ConfirmedAt = &now
 	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
@@ -363,7 +371,7 @@ func (s *Service) withdrawLiveTender(
 
 func (s *Service) Cancel(
 	ctx context.Context,
-	req *shipmentports.CancelCarrierAssignmentRequest,
+	req *carrierassignmentports.CancelCarrierAssignmentRequest,
 ) error {
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
@@ -425,10 +433,14 @@ func (s *Service) Cancel(
 		Comment:    "Carrier assignment canceled: " + req.Reason,
 		Current:    canceled,
 	})
-	shipmentports.InvalidateShipments(
+	shipmentinvalidationports.InvalidateShipments(
 		ctx,
 		s.invalidator,
-		shipmentports.ShipmentInvalidationByUser(req.TenantInfo, shipmentID, "carrier_unassigned"),
+		shipmentinvalidationports.ShipmentInvalidationByUser(
+			req.TenantInfo,
+			shipmentID,
+			"carrier_unassigned",
+		),
 	)
 	s.reaccrueMove(ctx, req.TenantInfo, req.ShipmentMoveID)
 
@@ -455,7 +467,7 @@ func (s *Service) applyCoverageChange(
 }
 
 func (s *Service) buildAssignment(
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 	move *shipment.ShipmentMove,
 ) *shipment.CarrierAssignment {
 	accessorials := make([]*shipment.CarrierAssignmentAccessorial, 0, len(req.Accessorials))
@@ -480,7 +492,7 @@ func (s *Service) buildAssignment(
 		BusinessUnitID:        req.TenantInfo.BuID,
 		ShipmentMoveID:        req.ShipmentMoveID,
 		CarrierID:             req.CarrierID,
-		Status:                shipment.CarrierAssignmentStatusPending,
+		Status:                shipmentvocab.CarrierAssignmentStatusPending,
 		RateMethod:            req.RateMethod,
 		BaseRate:              req.BaseRate,
 		FuelSurcharge:         req.FuelSurcharge,
@@ -579,8 +591,8 @@ func (s *Service) reaccrueMove(
 	}
 }
 
-func validatePerMileDistance(rateMethod shipment.CarrierRateMethod, distance *float64) error {
-	if rateMethod != shipment.CarrierRateMethodPerMile {
+func validatePerMileDistance(rateMethod shipmentvocab.CarrierRateMethod, distance *float64) error {
+	if rateMethod != shipmentvocab.CarrierRateMethodPerMile {
 		return nil
 	}
 	if distance == nil || *distance <= 0 {

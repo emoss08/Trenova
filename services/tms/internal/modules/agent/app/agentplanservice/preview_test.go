@@ -5,15 +5,18 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakePreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	stale     bool
 	staleStep int
@@ -22,18 +25,21 @@ type fakePreviews struct {
 
 func (f *fakePreviews) ForPlan(
 	_ context.Context,
-	req *agentports.PlanPreviewRequest,
-) (*agent.PlanPreview, error) {
+	req *agentruntimeports.PlanPreviewRequest,
+) (*agentpreview.PlanPreview, error) {
 	f.asked++
-	preview := &agent.PlanPreview{PlanID: req.Plan.ID, Stale: f.stale, Digest: "plan-digest"}
+	preview := &agentpreview.PlanPreview{PlanID: req.Plan.ID, Stale: f.stale, Digest: "plan-digest"}
 	for _, step := range req.Steps {
-		stepPreview := &agent.ProposalPreview{ProposalID: step.ID, Digest: "step-" + step.ID.String()}
+		stepPreview := &agentpreview.ProposalPreview{
+			ProposalID: step.ID,
+			Digest:     "step-" + step.ID.String(),
+		}
 		if f.stale && (f.staleStep == 0 || f.staleStep == step.PlanStep) {
-			stepPreview.Staleness = &agent.PreviewStaleness{
+			stepPreview.Staleness = &agentpreview.PreviewStaleness{
 				Pinned: true, ProposedVersion: 3, CurrentVersion: 4,
 			}
 		}
-		preview.Steps = append(preview.Steps, agent.PlanStepPreview{
+		preview.Steps = append(preview.Steps, agentpreview.PlanStepPreview{
 			ProposalID: step.ID,
 			Step:       step.PlanStep,
 			Preview:    stepPreview,
@@ -44,11 +50,14 @@ func (f *fakePreviews) ForPlan(
 }
 
 type recordedFollowUps struct {
-	requests []agentports.DecisionFollowUpRequest
+	requests []assistantports.DecisionFollowUpRequest
 }
 
-func (r *recordedFollowUps) FollowUp(_ context.Context, req agentports.DecisionFollowUpRequest) {
-	r.requests = append(r.requests, req)
+func (r *recordedFollowUps) FollowUp(
+	_ context.Context,
+	req *assistantports.DecisionFollowUpRequest,
+) {
+	r.requests = append(r.requests, *req)
 }
 
 func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
@@ -63,25 +72,29 @@ func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err, "a refused plan is the plan's outcome, not an error to the caller")
 
-	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusFailed, plan.Status)
 	assert.Equal(t, 0, plan.CompletedSteps)
 	require.NotNil(t, plan.FailedStep)
 	assert.Equal(t, 2, *plan.FailedStep)
 	assert.Contains(t, plan.FailureError, "nothing ran")
 	assert.Contains(t, plan.FailureError, "step 2: the record changed since this was proposed")
-	assert.True(t, agent.PlanTargetChanged(plan),
+	assert.True(t, agentplan.PlanTargetChanged(plan),
 		"the plan reads as refused over a changed record, not as a step that failed")
 
 	require.Len(t, h.decider.decided, 1, "only the stale step is decided, and it runs nothing")
 	refused := h.decider.decided[0]
 	assert.Equal(t, h.steps.steps[1].ID, refused.ProposalID)
 	assert.True(t, refused.WithinPlan)
-	assert.True(t, refused.StepPreview.IsStale(), "the step is refused on the preview it moved on in")
+	assert.True(
+		t,
+		refused.StepPreview.IsStale(),
+		"the step is refused on the preview it moved on in",
+	)
 	assert.Equal(t, 1, h.steps.skipped, "the steps that were not stale are skipped, never run")
 
 	require.Len(t, h.plans.statuses, 1)
-	assert.Equal(t, agent.PlanStatusApproved, h.plans.statuses[0].Status)
-	assert.Equal(t, agent.PlanStatusPending, h.plans.statuses[0].FromStatus,
+	assert.Equal(t, agentplan.PlanStatusApproved, h.plans.statuses[0].Status)
+	assert.Equal(t, agentplan.PlanStatusPending, h.plans.statuses[0].FromStatus,
 		"the claim is conditional, so a second decision cannot refuse it again")
 	assert.Equal(t, 1, h.decider.signals, "the run hears the plan is no longer waiting")
 	require.Len(t, followUps.requests, 1, "the conversation is told why nothing ran")
@@ -130,7 +143,7 @@ func TestDecide_EachStepRecordsThePreviewThePlanWasApprovedOn(t *testing.T) {
 
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 
 	require.Len(t, h.decider.decided, 2)
 	for i, decided := range h.decider.decided {
@@ -147,11 +160,11 @@ func TestDecide_ARejectedPlanNeedsNoPreview(t *testing.T) {
 	h := newHarness(t, 2, false)
 	previews := &fakePreviews{stale: true}
 	h.svc.previews = previews
-	h.req.Decision = agent.DecisionRejected
+	h.req.Decision = agentdecision.DecisionRejected
 
 	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
 	require.NoError(t, err)
 
-	assert.Equal(t, agent.PlanStatusRejected, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, plan.Status)
 	assert.Zero(t, previews.asked)
 }

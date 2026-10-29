@@ -8,7 +8,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/numberguard"
@@ -71,8 +71,8 @@ func systemPrompt(subject agentprofile.Subject) string {
 
 // contextSections lays out what the profile is written from. Every section is
 // untrusted: customer and location names and people's own words pass through.
-func contextSections(in *writerInput) agentports.DelimitedContext {
-	sections := make([]agentports.ContextSection, 0, 3)
+func contextSections(in *writerInput) llmports.DelimitedContext {
+	sections := make([]llmports.ContextSection, 0, 3)
 
 	var facts strings.Builder
 	if name := strings.TrimSpace(in.Organization); name != "" {
@@ -85,7 +85,7 @@ func contextSections(in *writerInput) agentports.DelimitedContext {
 		facts.WriteString(fact.Text)
 		facts.WriteString("\n")
 	}
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title:   "Facts from the records",
 		Trusted: false,
 		Content: facts.String(),
@@ -98,7 +98,7 @@ func contextSections(in *writerInput) agentports.DelimitedContext {
 			guidance.WriteString(strings.TrimSpace(line.Content))
 			guidance.WriteString("\n")
 		}
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "Guidance from people",
 			Trusted: false,
 			Content: guidance.String(),
@@ -106,14 +106,14 @@ func contextSections(in *writerInput) agentports.DelimitedContext {
 	}
 
 	if in.Current.IsCurrent() && strings.TrimSpace(in.Current.Content) != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title:   "Current profile",
 			Trusted: false,
 			Content: in.Current.Content,
 		})
 	}
 
-	return agentports.DelimitedContext{Sections: sections}
+	return llmports.DelimitedContext{Sections: sections}
 }
 
 func outputSchema() map[string]any {

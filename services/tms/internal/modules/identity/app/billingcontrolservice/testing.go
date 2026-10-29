@@ -1,14 +1,13 @@
 package billingcontrolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 )
 
 func NewTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*tenant.BillingControl]().
+		validator: tenantedvalidation.NewBuilder[*billingcontrol.BillingControl]().
 			WithModelName("BillingControl").
 			WithCustomRule(createTransferAutomationRule()).
 			WithCustomRule(createInvoiceAutomationRule()).

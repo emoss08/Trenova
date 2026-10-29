@@ -13,9 +13,14 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/netsuite"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -131,7 +136,7 @@ func (f *fakeNS) defaultReply(t *testing.T, call nsCall) reply {
 	switch {
 	case call.Path == suiteQLPath:
 		return reply{status: http.StatusOK, body: emptyRows}
-	case call.Method == http.MethodGet && call.Query.Get("fields") == fieldTranID:
+	case call.Method == http.MethodGet && call.Query.Get("fields") == nsdocsync.FieldTranID:
 		id := call.Path[strings.LastIndexByte(call.Path, '/')+1:]
 		return reply{status: http.StatusOK, body: `{"id":"` + id + `","tranId":"DOC-` + id + `"}`}
 	case call.Method == http.MethodPatch, call.Method == http.MethodDelete:
@@ -206,23 +211,21 @@ func readFixture(t *testing.T, name string) string {
 	return string(data)
 }
 
-func newProvider(t *testing.T, cfg config.NetSuiteConfig) *Provider {
+func newProvider(t *testing.T, cfg accountingconfig.NetSuiteConfig) *Provider {
 	t.Helper()
 	provider, err := New(Params{
-		Config: &config.Config{
-			App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-			Accounting: config.AccountingConfig{NetSuite: cfg},
-		},
-		Logger: zap.NewNop(),
+		AccountingConfig: &accountingconfig.Config{NetSuite: cfg},
+		AppConfig:        &appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Logger:           zap.NewNop(),
 	})
 	require.NoError(t, err)
 	return provider
 }
 
-func tenantApp() *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
-		Source:       accountingsync.AppSourceTenant,
-		Environment:  accountingsync.AppEnvironmentProduction,
+func tenantApp() *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
+		Source:       accountingconnection.AppSourceTenant,
+		Environment:  accountingprovider.AppEnvironmentProduction,
 		ClientID:     testClientID,
 		ClientSecret: "tenant-secret",
 	}
@@ -233,23 +236,27 @@ func testConnector(t *testing.T, fake *fakeNS) *Connector {
 	fake.server = httptest.NewServer(fake.handler(t))
 	t.Cleanup(fake.server.Close)
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	provider.oauthOpts = []netsuite.Option{
 		netsuite.WithBaseURL(fake.server.URL),
 		netsuite.WithLoginURL(fake.server.URL),
 		netsuite.WithHTTPClient(fake.server.Client()),
 	}
 	provider.now = func() time.Time { return testNow }
-	provider.books = newCurrencyBooks(provider.now)
+	provider.books = nsbinding.NewCurrencyBooks(provider.now)
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{
-		Transport: provider.gate.transport(fake.server.Client().Transport),
-	}
-	conn.apiOpts = []netsuite.Option{
-		netsuite.WithBaseURL(fake.server.URL),
-		netsuite.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Binding = *nsbinding.NewBinding(nsbinding.BindingParams{
+		APIOpts: []netsuite.Option{
+			netsuite.WithBaseURL(fake.server.URL),
+			netsuite.WithRetry(restx.RetryConfig{}),
+		},
+		HTTPClient: &http.Client{
+			Transport: provider.gate.transport(fake.server.Client().Transport),
+		},
+		Books: provider.books,
+		Now:   provider.now,
+	})
 	return conn
 }
 
@@ -257,8 +264,8 @@ func testRef() netsuite.CompanyRef {
 	return netsuite.CompanyRef{AccountID: testAccount, SubsidiaryID: testSubsidiary}
 }
 
-func testAuth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{
+func testAuth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     testRef().String(),
 		AccessToken: "access-token",
 		CompanyCode: "USD",

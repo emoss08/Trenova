@@ -6,13 +6,16 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatakit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
@@ -29,28 +32,35 @@ const schemaItems = "items"
 type scheduleWriter interface {
 	CreateSchedule(
 		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
+		req *reportscheduleservice.SaveScheduleRequest,
 	) (*report.ReportSchedule, error)
+	PreviewSchedule(
+		ctx context.Context,
+		req *reportscheduleservice.SaveScheduleRequest,
+	) (*reportscheduleservice.SchedulePreview, error)
+	ListSchedules(
+		ctx context.Context,
+		req *reportscheduleservice.ListSchedulesRequest,
+	) ([]*report.ReportSchedule, error)
+}
+
+type scheduledReportReader interface {
 	GetDefinition(
 		ctx context.Context,
 		req *reporting.GetDefinitionRequest,
 	) (*report.ReportDefinition, error)
-	PreviewSchedule(
-		ctx context.Context,
-		req *reporting.SaveScheduleRequest,
-	) (*reporting.SchedulePreview, error)
-	ListSchedules(
-		ctx context.Context,
-		req *reporting.ListSchedulesRequest,
-	) ([]*report.ReportSchedule, error)
 }
 
 type ScheduleReportTool struct {
 	schedules scheduleWriter
+	reports   scheduledReportReader
 }
 
-func NewScheduleReportTool(schedules *reporting.Service) agentports.AgentTool {
-	return &ScheduleReportTool{schedules: schedules}
+func NewScheduleReportTool(
+	schedules *reportscheduleservice.Service,
+	reports *reporting.Service,
+) agenttoolports.AgentTool {
+	return &ScheduleReportTool{schedules: schedules, reports: reports}
 }
 
 func (t *ScheduleReportTool) Name() string { return "report_create_schedule" }
@@ -97,7 +107,7 @@ func (t *ScheduleReportTool) ParamSchema() map[string]any {
 			},
 			"formats": map[string]any{
 				"type":        "array",
-				schemaItems:   agenttoolschema.Enum("", common.ReportFormats),
+				schemaItems:   agenttoolschema.Enum("", toolparams.ReportFormats),
 				"description": "Which formats to attach. Defaults to xlsx, as the schedule form does.",
 			},
 			"attach": map[string]any{
@@ -110,20 +120,20 @@ func (t *ScheduleReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *ScheduleReportTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ScheduleReportTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceReport,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Emails a report on a schedule to whatever addresses the call names, " +
 			"which may be outside the organization.",
 	}
@@ -131,7 +141,7 @@ func (t *ScheduleReportTool) Policy() agentports.ToolPolicy {
 
 func (t *ScheduleReportTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	if err := t.validateArgs(params.Params); err != nil {
 		return err
@@ -140,11 +150,11 @@ func (t *ScheduleReportTool) Validate(
 	// The report is looked up now, not when the schedule first fires: a
 	// schedule on a report that does not exist is refused at save anyway,
 	// and after approval is too late for the model to find the right one.
-	raw := common.OptionalString(params.Params, "definitionId")
+	raw := toolparams.OptionalString(params.Params, "definitionId")
 	definitionID, err := pulid.Parse(raw)
 	if err == nil {
-		_, err = t.schedules.GetDefinition(ctx, &reporting.GetDefinitionRequest{
-			Request:      reporting.Request{TenantInfo: common.TenantFrom(params)},
+		_, err = t.reports.GetDefinition(ctx, &reporting.GetDefinitionRequest{
+			Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 			DefinitionID: definitionID,
 		})
 	}
@@ -157,7 +167,7 @@ func (t *ScheduleReportTool) Validate(
 		return multiErr
 	}
 
-	return t.refuseRepeat(ctx, &params, definitionID)
+	return t.refuseRepeat(ctx, params, definitionID)
 }
 
 // refuseRepeat refuses a schedule the report already has: the same time, zone
@@ -165,11 +175,11 @@ func (t *ScheduleReportTool) Validate(
 // Monday schedules piled up on one report before this.
 func (t *ScheduleReportTool) refuseRepeat(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	definitionID pulid.ID,
 ) error {
-	existing, err := t.schedules.ListSchedules(ctx, &reporting.ListSchedulesRequest{
-		Request:      reporting.Request{TenantInfo: common.TenantFrom(*params)},
+	existing, err := t.schedules.ListSchedules(ctx, &reportscheduleservice.ListSchedulesRequest{
+		Request:      reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 		DefinitionID: definitionID,
 		EnabledOnly:  true,
 		Limit:        maxSchedulesCompared,
@@ -178,9 +188,9 @@ func (t *ScheduleReportTool) refuseRepeat(
 		return err
 	}
 
-	expression := strings.TrimSpace(common.OptionalString(params.Params, "cronExpression"))
-	timezone := strings.TrimSpace(common.OptionalString(params.Params, "timezone"))
-	recipients := common.StringSliceParam(params.Params, "emailRecipients")
+	expression := strings.TrimSpace(toolparams.OptionalString(params.Params, "cronExpression"))
+	timezone := strings.TrimSpace(toolparams.OptionalString(params.Params, "timezone"))
+	recipients := toolparams.StringSliceParam(params.Params, "emailRecipients")
 	for _, schedule := range existing {
 		if schedule == nil || schedule.CronExpression != expression ||
 			!strings.EqualFold(schedule.Timezone, timezone) ||
@@ -214,30 +224,30 @@ func sendsTo(delivery *report.ScheduleDelivery, recipients []string) bool {
 func (t *ScheduleReportTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
-	if common.OptionalString(params, "definitionId") == "" {
+	if toolparams.OptionalString(params, "definitionId") == "" {
 		multiErr.Add("definitionId", errortypes.ErrRequired, "Name the report to run")
 	}
 
 	// A cron nobody parsed is a schedule that silently never fires.
-	expression := common.OptionalString(params, "cronExpression")
+	expression := toolparams.OptionalString(params, "cronExpression")
 	switch {
 	case expression == "":
 		multiErr.Add("cronExpression", errortypes.ErrRequired, "Say when it should run")
 	default:
 		// The same check the service runs, run early so a bad expression is
 		// refused on the card rather than at the moment it should have fired.
-		timezone := common.OptionalString(params, "timezone")
+		timezone := toolparams.OptionalString(params, "timezone")
 		if _, err := cronutils.NextRun(expression, timezone, timeutils.NowUnix()); err != nil {
 			multiErr.Add("cronExpression", errortypes.ErrInvalid,
 				fmt.Sprintf("%q is not a schedule: %s", expression, err.Error()))
 		}
 	}
 
-	if len(common.StringSliceParam(params, "emailRecipients")) == 0 {
+	if len(toolparams.StringSliceParam(params, "emailRecipients")) == 0 {
 		multiErr.Add("emailRecipients", errortypes.ErrRequired, "Say who it goes to")
 	}
 
-	for i, format := range common.ScheduleFormats(params) {
+	for i, format := range toolparams.ScheduleFormats(params) {
 		if !report.Format(format).IsValid() {
 			multiErr.Add(fmt.Sprintf("formats[%d]", i), errortypes.ErrInvalid,
 				fmt.Sprintf("%q is not a report format; use xlsx, csv, pdf or json", format))
@@ -253,9 +263,9 @@ func (t *ScheduleReportTool) validateArgs(params map[string]any) error {
 
 func (t *ScheduleReportTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -267,13 +277,13 @@ func (t *ScheduleReportTool) Execute(
 
 // request is the schedule the preview shows and the write creates.
 func (t *ScheduleReportTool) request(
-	params *agentports.ToolExecuteParams,
-) (*reporting.SaveScheduleRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*reportscheduleservice.SaveScheduleRequest, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	definitionID, err := common.RequirePulid(params.Params, "definitionId")
+	definitionID, err := toolparams.RequirePulid(params.Params, "definitionId")
 	if err != nil {
 		return nil, err
 	}
@@ -283,20 +293,20 @@ func (t *ScheduleReportTool) request(
 		attach = raw
 	}
 
-	return &reporting.SaveScheduleRequest{
-		Request:         reporting.Request{TenantInfo: common.TenantFrom(*params)},
+	return &reportscheduleservice.SaveScheduleRequest{
+		Request:         reporting.Request{TenantInfo: toolparams.TenantFrom(params)},
 		DefinitionID:    definitionID,
-		CronExpression:  common.OptionalString(params.Params, "cronExpression"),
-		Timezone:        common.OptionalString(params.Params, "timezone"),
-		Formats:         common.ScheduleFormats(params.Params),
-		EmailRecipients: common.StringSliceParam(params.Params, "emailRecipients"),
+		CronExpression:  toolparams.OptionalString(params.Params, "cronExpression"),
+		Timezone:        toolparams.OptionalString(params.Params, "timezone"),
+		Formats:         toolparams.ScheduleFormats(params.Params),
+		EmailRecipients: toolparams.StringSliceParam(params.Params, "emailRecipients"),
 		EmailAttach:     attach,
 		Enabled:         true,
 	}, nil
 }
 
-func (t *ScheduleReportTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "definitionId", permission.ResourceReport)
+func (t *ScheduleReportTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "definitionId", permission.ResourceReport)
 }
 
 type alertWriter interface {
@@ -313,7 +323,7 @@ type CreateTableChangeAlertTool struct {
 
 func NewCreateTableChangeAlertTool(
 	alerts *tablechangealertservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CreateTableChangeAlertTool{alerts: alerts}
 }
 
@@ -331,8 +341,8 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"required": []string{
-			masterdatatools.MdName,
-			masterdatatools.AlertTableName,
+			masterdatakit.MdName,
+			alertTableName,
 			"eventTypes",
 		},
 		"properties":           alertProperties(""),
@@ -342,11 +352,11 @@ func (t *CreateTableChangeAlertTool) ParamSchema() map[string]any {
 
 func alertProperties(keep string) map[string]any {
 	return map[string]any{
-		masterdatatools.MdName: map[string]any{
+		masterdatakit.MdName: map[string]any{
 			"type":        "string",
 			"description": "What the alert is called, in the words of the thing watched." + keep,
 		},
-		masterdatatools.AlertTableName: map[string]any{
+		alertTableName: map[string]any{
 			"type":        "string",
 			"description": "The table to watch, e.g. shipments, customers, workers." + keep,
 		},
@@ -384,7 +394,7 @@ func alertProperties(keep string) map[string]any {
 			"Whether every condition must hold, or any one. Defaults to all."+keep,
 			alertConditionMatches,
 		),
-		masterdatatools.AlertCustomMessage: map[string]any{
+		alertCustomMessage: map[string]any{
 			"type":        "string",
 			"description": "What the notification should say." + keep,
 		},
@@ -418,26 +428,26 @@ var alertConditionMatches = agenttoolschema.Source(
 	[]string{"all", "any"},
 )
 
-func (t *CreateTableChangeAlertTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateTableChangeAlertTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceTableChangeAlert,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Creates an alert whose notices go to people inside the organization.",
 	}
 }
 
 func (t *CreateTableChangeAlertTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	return t.validateArgs(params.Params)
 }
@@ -445,14 +455,14 @@ func (t *CreateTableChangeAlertTool) Validate(
 func (t *CreateTableChangeAlertTool) validateArgs(params map[string]any) error {
 	multiErr := errortypes.NewMultiError()
 
-	if common.OptionalString(params, "name") == "" {
+	if toolparams.OptionalString(params, "name") == "" {
 		multiErr.Add("name", errortypes.ErrRequired, "Give the alert a name")
 	}
-	if common.OptionalString(params, "tableName") == "" {
+	if toolparams.OptionalString(params, "tableName") == "" {
 		multiErr.Add("tableName", errortypes.ErrRequired, "Say which table to watch")
 	}
 
-	events := common.StringSliceParam(params, "eventTypes")
+	events := toolparams.StringSliceParam(params, "eventTypes")
 	if len(events) == 0 {
 		multiErr.Add("eventTypes", errortypes.ErrRequired,
 			"Say whether to watch inserts, updates or deletes")
@@ -491,8 +501,10 @@ func alertConditions(params map[string]any) []tablechangealert.Condition {
 			continue
 		}
 		condition := tablechangealert.Condition{
-			Field:    common.OptionalString(object, "field"),
-			Operator: tablechangealert.ConditionOperator(common.OptionalString(object, "operator")),
+			Field: toolparams.OptionalString(object, "field"),
+			Operator: tablechangealert.ConditionOperator(
+				toolparams.OptionalString(object, "operator"),
+			),
 		}
 		if value, present := object["value"]; present {
 			condition.Value = value
@@ -505,24 +517,24 @@ func alertConditions(params map[string]any) []tablechangealert.Condition {
 
 func (t *CreateTableChangeAlertTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(&params))
+	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(params))
 
 	return err
 }
 
-func alertSubscription(params *agentports.ToolExecuteParams) *tablechangealert.TCASubscription {
-	match := common.OptionalString(params.Params, "conditionMatch")
+func alertSubscription(params *agenttoolports.ToolExecuteParams) *tablechangealert.TCASubscription {
+	match := toolparams.OptionalString(params.Params, "conditionMatch")
 	if match == "" {
 		match = "all"
 	}
 
-	events := common.StringSliceParam(params.Params, "eventTypes")
+	events := toolparams.StringSliceParam(params.Params, "eventTypes")
 	for i, event := range events {
 		events[i] = strings.ToUpper(event)
 	}
@@ -531,13 +543,13 @@ func alertSubscription(params *agentports.ToolExecuteParams) *tablechangealert.T
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		UserID:         params.Actor.UserID,
-		Name:           common.OptionalString(params.Params, "name"),
-		TableName:      common.OptionalString(params.Params, "tableName"),
+		Name:           toolparams.OptionalString(params.Params, "name"),
+		TableName:      toolparams.OptionalString(params.Params, "tableName"),
 		EventTypes:     events,
-		WatchedColumns: common.StringSliceParam(params.Params, "watchedColumns"),
+		WatchedColumns: toolparams.StringSliceParam(params.Params, "watchedColumns"),
 		Conditions:     alertConditions(params.Params),
 		ConditionMatch: match,
-		CustomMessage:  common.OptionalString(params.Params, "customMessage"),
+		CustomMessage:  toolparams.OptionalString(params.Params, "customMessage"),
 		Status:         tablechangealert.SubscriptionStatusActive,
 	}
 }

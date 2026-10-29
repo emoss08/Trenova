@@ -3,7 +3,7 @@ package iamservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -51,7 +51,11 @@ func TestIdentityProviderIssuerMustBeAPublicHTTPSAddress(t *testing.T) {
 		"https://169.254.169.254/latest/meta-data",
 		"https://admin:pw@idp.example.com/realms/trenova",
 	} {
-		_, err := svc.identityProviderFromRequest(tenantInfo, identityProviderRequest(issuer), existing)
+		_, err := svc.identityProviderFromRequest(
+			tenantInfo,
+			identityProviderRequest(issuer),
+			existing,
+		)
 		require.True(t, fieldHasError(err, "oidcIssuerUrl"), issuer)
 	}
 
@@ -64,9 +68,9 @@ func TestIdentityProviderIssuerMustBeAPublicHTTPSAddress(t *testing.T) {
 
 	private := New(Params{
 		Logger: zap.NewNop(),
-		Config: &config.Config{Security: config.SecurityConfig{
-			SSO: config.SSOSecurityConfig{AllowPrivateNetworkIssuers: true},
-		}},
+		SecurityConfig: &securityconfig.Config{
+			SSO: securityconfig.SSOConfig{AllowPrivateNetworkIssuers: true},
+		},
 	}).(*service)
 	_, err = private.identityProviderFromRequest(
 		tenantInfo,

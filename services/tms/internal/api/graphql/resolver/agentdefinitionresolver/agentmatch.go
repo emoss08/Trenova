@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,16 +34,16 @@ func parseCurrentAgentID(raw *string) (pulid.ID, error) {
 
 func matchAgent(
 	ctx context.Context,
-	recommender agentports.AgentRecommender,
+	recommender agentrecommendationports.AgentRecommender,
 	actor *permissionports.RequestActor,
 	input agentMatchInput,
-) (*agentports.AgentMatch, error) {
+) (*agentrecommendationports.AgentMatch, error) {
 	currentAgentID, err := parseCurrentAgentID(input.currentAgentID)
 	if err != nil {
 		return nil, err
 	}
 
-	return recommender.MatchAgent(ctx, &agentports.AgentMatchRequest{
+	return recommender.MatchAgent(ctx, &agentrecommendationports.AgentMatchRequest{
 		Actor:          actor,
 		Text:           input.text,
 		CurrentAgentID: currentAgentID,
@@ -51,7 +51,7 @@ func matchAgent(
 	})
 }
 
-func toMyAgentMatch(found *agentports.AgentMatch) *gqlmodel.MyAgentMatch {
+func toMyAgentMatch(found *agentrecommendationports.AgentMatch) *gqlmodel.MyAgentMatch {
 	tools := make([]*gqlmodel.AgentMatchTool, 0, len(found.Tools))
 	for _, tool := range found.Tools {
 		tools = append(tools, &gqlmodel.AgentMatchTool{Name: tool.Name, Summary: tool.Summary})

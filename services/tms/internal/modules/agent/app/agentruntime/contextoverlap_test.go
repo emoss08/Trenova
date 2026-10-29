@@ -6,10 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,19 +59,19 @@ func (m *meetingOrganizations) GetByID(
 }
 
 type meetingVectorizer struct {
-	agentports.QueryVectorizer
+	retrievalports.QueryVectorizer
 
 	meeting *meeting
 }
 
 func (m *meetingVectorizer) Vectorize(
 	ctx context.Context,
-	_ *agentports.QueryVectorRequest,
-) (agentports.QueryVector, error) {
+	_ *retrievalports.QueryVectorRequest,
+) (retrievalports.QueryVector, error) {
 	close(m.meeting.vectorStarted)
 	m.meeting.vectorSawOrg.Store(meet(ctx, m.meeting.orgStarted))
 
-	return agentports.QueryVector{}, nil
+	return retrievalports.QueryVector{}, nil
 }
 
 /*
@@ -81,35 +85,35 @@ func TestContextBuilder_ReadsTheOrganizationWhileTheQuestionIsEmbedded(t *testin
 	t.Parallel()
 
 	m := &meeting{orgStarted: make(chan struct{}), vectorStarted: make(chan struct{})}
-	memories := &fakeMemories{answer: &agentports.MemoryContext{}}
-	builder := &ContextBuilder{
-		logger: zap.NewNop(),
-		organizations: &meetingOrganizations{
+	memories := &fakeMemories{answer: &agentmemoryports.MemoryContext{}}
+	builder := runtimecontext.NewBuilder(runtimecontext.BuilderParams{
+		Logger: zap.NewNop(),
+		Organizations: &meetingOrganizations{
 			meeting: m,
 			org:     &tenant.Organization{Timezone: "America/Chicago"},
 		},
-		users:      &stubUsers{user: &tenant.User{Name: "Dana", Timezone: "UTC"}},
-		vectorizer: &meetingVectorizer{meeting: m},
-		memories:   memories,
-		runtime: newRuntime(
+		Users:      &runtimetest.StubUsers{User: &tenant.User{Name: "Dana", Timezone: "UTC"}},
+		Vectorizer: &meetingVectorizer{meeting: m},
+		Memories:   memories,
+		Runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
 			&stubActionRegistry{},
 			nil,
 		),
-	}
-	actor := testActor()
-	definition := testDefinition()
+	})
+	actor := runtimetest.Actor()
+	definition := runtimetest.Definition()
 	definition.ContextProviders = []agentdefinition.ContextProvider{
 		agentdefinition.ContextUser,
 		agentdefinition.ContextMemory,
 	}
 
-	rc, err := builder.Build(t.Context(), &agentports.RuntimeContextRequest{
+	rc, err := builder.Build(t.Context(), &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
-		Query: agentports.QueryVectorRequest{
+		Query: retrievalports.QueryVectorRequest{
 			TenantInfo: actor.TenantInfo(),
 			Text:       "where is S1",
 		},

@@ -2,20 +2,20 @@ package bankreceiptservice
 
 import (
 	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptworkitemportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"testing"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/testutil"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,11 +26,11 @@ import (
 )
 
 type recordingEvents struct {
-	published []agentports.AgentEvent
+	published []agenteventports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event agentports.AgentEvent) {
-	r.published = append(r.published, event)
+func (r *recordingEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.published = append(r.published, *event)
 }
 
 // An import that ends in an exception tells the agents, with the receipt as
@@ -87,7 +87,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 		Once()
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{ReconciliationMode: tenant.ReconciliationModeWarnOnly}, nil).
+		Return(&accountingcontrol.AccountingControl{ReconciliationMode: accountingcontrol.ReconciliationModeWarnOnly}, nil).
 		Once()
 
 	events := &recordingEvents{}
@@ -119,7 +119,7 @@ func TestImportAnnouncesAnExceptionAndOpensItsWorkItem(t *testing.T) {
 	assert.Equal(t, bankreceiptworkitem.StatusOpen, opened.Status)
 
 	require.Len(t, events.published, 1)
-	assert.Equal(t, agent.EventBankReceiptException, events.published[0].Kind)
+	assert.Equal(t, agenttrigger.EventBankReceiptException, events.published[0].Kind)
 	assert.Equal(t, stored.ID, events.published[0].SubjectID)
 	assert.Equal(t, pagination.TenantInfo{OrgID: orgID, BuID: buID}, events.published[0].TenantInfo)
 }

@@ -9,8 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -24,14 +27,14 @@ type ValidatorParams struct {
 	fx.In
 
 	DB       *postgres.Connection `optional:"true"`
-	Registry *documenttemplate.Registry
+	Registry *templatecatalog.Registry
 }
 
 type Validator struct {
-	registry   *documenttemplate.Registry
-	template   validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplate]
-	version    validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateVersion]
-	assignment validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateAssignment]
+	registry   *templatecatalog.Registry
+	template   tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplate]
+	version    tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateVersion]
+	assignment tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateAssignment]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -48,15 +51,15 @@ func NewValidator(p ValidatorParams) *Validator {
 // the framework simply skips those stages, which is what lets the domain rules
 // be exercised without a database.
 func withCheckers[T validationframework.TenantedEntity](
-	builder *validationframework.TenantedValidatorBuilder[T],
+	builder *tenantedvalidation.Builder[T],
 	db *postgres.Connection,
 	table *schema.Table,
-) *validationframework.TenantedValidatorBuilder[T] {
+) *tenantedvalidation.Builder[T] {
 	if db == nil {
 		return builder
 	}
 
-	checker := validationframework.NewKeelChecker(db, table)
+	checker := keelcheck.NewChecker(db, table)
 
 	return builder.
 		WithUniquenessChecker(checker).
@@ -65,9 +68,8 @@ func withCheckers[T validationframework.TenantedEntity](
 
 func buildTemplateValidator(
 	p ValidatorParams,
-) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplate] {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplate]().
+) tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplate] {
+	builder := tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplate]().
 		WithModelName("DocumentTemplate").
 		WithUniqueField(
 			"code",
@@ -94,10 +96,9 @@ func buildTemplateValidator(
 
 func buildVersionValidator(
 	p ValidatorParams,
-) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateVersion] {
+) tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateVersion] {
 	return withCheckers(
-		validationframework.
-			NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplateVersion]().
+		tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateVersion]().
 			WithModelName("DocumentTemplateVersion").
 			WithReferenceCheck(
 				"templateId",
@@ -123,15 +124,14 @@ func buildVersionValidator(
 
 func buildAssignmentValidator(
 	p ValidatorParams,
-) validationframework.TenantedEntityValidator[*documenttemplate.DocumentTemplateAssignment] {
+) tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateAssignment] {
 	return withCheckers(
-		validationframework.
-			NewTenantedValidatorBuilder[*documenttemplate.DocumentTemplateAssignment]().
+		tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateAssignment]().
 			WithModelName("DocumentTemplateAssignment").
 			WithCompositeUniqueFields(
 				"customerKind",
 				"That customer already has a template assigned for this kind",
-				validationframework.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
+				tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
 					FieldName: "customerId",
 					Column:    "customer_id",
 					GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
@@ -139,7 +139,7 @@ func buildAssignmentValidator(
 					},
 					CaseSensitive: true,
 				},
-				validationframework.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
+				tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
 					FieldName: fieldKind,
 					Column:    fieldKind,
 					GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
@@ -172,7 +172,7 @@ func buildAssignmentValidator(
 // kind has no variable catalog, no sample context, and no starter — it would be
 // unrenderable from the moment it was saved.
 func newKindRegisteredRule(
-	registry *documenttemplate.Registry,
+	registry *templatecatalog.Registry,
 ) validationframework.TenantedRule[*documenttemplate.DocumentTemplate] {
 	return validationframework.
 		NewTenantedRule[*documenttemplate.DocumentTemplate]("kind_registered").
@@ -314,7 +314,7 @@ func (v *Validator) ValidateVersion(
 // saved, and never understand why it is not in the output.
 func (v *Validator) checkChannelsBelong(
 	entity *documenttemplate.DocumentTemplateVersion,
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	multiErr *errortypes.MultiError,
 ) {
 	if entity.Subject != "" &&

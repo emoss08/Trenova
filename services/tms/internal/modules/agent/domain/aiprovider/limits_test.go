@@ -4,7 +4,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aimodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -40,7 +43,13 @@ func TestValidate_TimeoutMustBeBetweenFiveSecondsAndTenMinutes(t *testing.T) {
 	for _, tc := range cases {
 		provider := validProvider()
 		provider.TimeoutSeconds = tc.seconds
-		assert.Equal(t, tc.invalid, fieldErrors(t, provider)["timeoutSeconds"], "timeout %d", tc.seconds)
+		assert.Equal(
+			t,
+			tc.invalid,
+			fieldErrors(t, provider)["timeoutSeconds"],
+			"timeout %d",
+			tc.seconds,
+		)
 	}
 }
 
@@ -115,7 +124,11 @@ func TestResolvedLimits_FallBackToTheDefaults(t *testing.T) {
 	t.Parallel()
 
 	provider := &aiprovider.Provider{}
-	assert.Equal(t, time.Duration(aiprovider.DefaultTimeoutSeconds)*time.Second, provider.ResolvedTimeout())
+	assert.Equal(
+		t,
+		time.Duration(aiprovider.DefaultTimeoutSeconds)*time.Second,
+		provider.ResolvedTimeout(),
+	)
 	assert.Equal(t, aiprovider.DefaultMaxConcurrent, provider.ResolvedMaxConcurrent())
 	assert.Equal(t, aiprovider.CapActionNext, provider.ResolvedOnCap())
 
@@ -135,7 +148,7 @@ func TestReplaceAPIKey_KeepsTheReplacedKeyForADayWhenAsked(t *testing.T) {
 	user := pulid.MustNew("usr_")
 	now := int64(1_800_000_000)
 
-	provider.ReplaceAPIKey(aiprovider.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted:    "enc-new",
 		Prefix:       "sk-ant-",
 		LastFour:     "9876",
@@ -147,14 +160,14 @@ func TestReplaceAPIKey_KeepsTheReplacedKeyForADayWhenAsked(t *testing.T) {
 	assert.Equal(t, "enc-new", provider.APIKey)
 	assert.Equal(t, "enc-old", provider.PreviousAPIKey)
 	require.NotNil(t, provider.RotationExpiresAt)
-	assert.Equal(t, now+int64(aiprovider.RotationGrace/time.Second), *provider.RotationExpiresAt)
+	assert.Equal(t, now+int64(aiproviderkey.RotationGrace/time.Second), *provider.RotationExpiresAt)
 	assert.Equal(t, "sk-ant-", provider.APIKeyPrefix)
 	assert.Equal(t, "9876", provider.APIKeyLastFour)
 	assert.Equal(t, user, provider.APIKeyAddedByID)
 	require.NotNil(t, provider.APIKeyAddedAt)
 	assert.Equal(t, now, *provider.APIKeyAddedAt)
-	assert.True(t, provider.PreviousKeyUsable(now+1))
-	assert.False(t, provider.PreviousKeyUsable(*provider.RotationExpiresAt))
+	assert.True(t, aiproviderkey.PreviousKeyUsable(provider, now+1))
+	assert.False(t, aiproviderkey.PreviousKeyUsable(provider, *provider.RotationExpiresAt))
 }
 
 func TestReplaceAPIKey_DropsThePreviousKeyUnlessAsked(t *testing.T) {
@@ -168,7 +181,7 @@ func TestReplaceAPIKey_DropsThePreviousKeyUnlessAsked(t *testing.T) {
 	used := int64(1_799_999_000)
 	provider.APIKeyLastUsedAt = &used
 
-	provider.ReplaceAPIKey(aiprovider.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted: "enc-new",
 		LastFour:  "1234",
 		Now:       1_800_000_000,
@@ -183,14 +196,17 @@ func TestReplaceAPIKey_ClearingTheKeyForgetsEverythingAboutIt(t *testing.T) {
 	t.Parallel()
 
 	provider := validProvider()
-	provider.ReplaceAPIKey(aiprovider.KeyReplacement{
+	aiproviderkey.ReplaceAPIKey(provider, &aiproviderkey.KeyReplacement{
 		Encrypted: "enc-old",
 		Prefix:    "sk-",
 		LastFour:  "1111",
 		AddedByID: pulid.MustNew("usr_"),
 		Now:       1_800_000_000,
 	})
-	provider.ReplaceAPIKey(aiprovider.KeyReplacement{Now: 1_800_000_500, KeepPrevious: true})
+	aiproviderkey.ReplaceAPIKey(
+		provider,
+		&aiproviderkey.KeyReplacement{Now: 1_800_000_500, KeepPrevious: true},
+	)
 
 	assert.Empty(t, provider.APIKey)
 	assert.Empty(t, provider.PreviousAPIKey, "clearing the key never keeps the old one")
@@ -198,7 +214,7 @@ func TestReplaceAPIKey_ClearingTheKeyForgetsEverythingAboutIt(t *testing.T) {
 	assert.Empty(t, provider.APIKeyLastFour)
 	assert.Nil(t, provider.APIKeyAddedAt)
 	assert.True(t, provider.APIKeyAddedByID.IsNil())
-	assert.Nil(t, provider.KeyInfo(1_800_000_600))
+	assert.Nil(t, aiproviderkey.Describe(provider, 1_800_000_600))
 }
 
 func TestForgetExpiredPreviousKey_ClearsOnlyAnExpiredRotation(t *testing.T) {
@@ -209,10 +225,10 @@ func TestForgetExpiredPreviousKey_ClearsOnlyAnExpiredRotation(t *testing.T) {
 	provider.PreviousAPIKey = "enc-old"
 	provider.RotationExpiresAt = &expires
 
-	assert.False(t, provider.ForgetExpiredPreviousKey(999))
+	assert.False(t, aiproviderkey.ForgetExpiredPreviousKey(provider, 999))
 	assert.Equal(t, "enc-old", provider.PreviousAPIKey)
 
-	assert.True(t, provider.ForgetExpiredPreviousKey(1_000))
+	assert.True(t, aiproviderkey.ForgetExpiredPreviousKey(provider, 1_000))
 	assert.Empty(t, provider.PreviousAPIKey)
 	assert.Nil(t, provider.RotationExpiresAt)
 }
@@ -229,32 +245,45 @@ func TestKeyInfo_DescribesTheKeyWithoutTheSecret(t *testing.T) {
 	provider.PreviousAPIKey = "enc-old"
 	provider.RotationExpiresAt = &expires
 
-	info := provider.KeyInfo(1_800_000_000)
+	info := aiproviderkey.Describe(provider, 1_800_000_000)
 	require.NotNil(t, info)
 	assert.Equal(t, "gsk_", info.Prefix)
 	assert.Equal(t, "4321", info.LastFour)
-	assert.Equal(t, int64(1_700_000_000), info.AddedAt, "a key stored before its ends were recorded reads as added with the provider")
+	assert.Equal(
+		t,
+		int64(1_700_000_000),
+		info.AddedAt,
+		"a key stored before its ends were recorded reads as added with the provider",
+	)
 	require.NotNil(t, info.PreviousKeyExpiresAt)
 	assert.Equal(t, expires, *info.PreviousKeyExpiresAt)
 
-	assert.Nil(t, provider.KeyInfo(expires).PreviousKeyExpiresAt, "an expired rotation is not reported")
+	assert.Nil(
+		t,
+		aiproviderkey.Describe(provider, expires).PreviousKeyExpiresAt,
+		"an expired rotation is not reported",
+	)
 
 	redacted := provider.Redacted()
 	assert.Empty(t, redacted.APIKey)
 	assert.Empty(t, redacted.PreviousAPIKey)
-	assert.NotNil(t, redacted.KeyInfo(1_800_000_000), "the redacted copy still describes the key")
+	assert.NotNil(
+		t,
+		aiproviderkey.Describe(redacted, 1_800_000_000),
+		"the redacted copy still describes the key",
+	)
 }
 
 func TestKnownContextWindow_ReportsOnlyFamiliesItCanPlace(t *testing.T) {
 	t.Parallel()
 
-	tokens, ok := aiprovider.KnownContextWindow("claude-sonnet-4-5")
+	tokens, ok := aimodel.KnownContextWindow("claude-sonnet-4-5")
 	assert.True(t, ok)
 	assert.Equal(t, 200_000, tokens)
 
-	_, ok = aiprovider.KnownContextWindow("my-private-finetune")
+	_, ok = aimodel.KnownContextWindow("my-private-finetune")
 	assert.False(t, ok)
-	assert.Equal(t, aiprovider.DefaultContextWindow, aiprovider.ContextWindowFor("my-private-finetune"))
+	assert.Equal(t, aimodel.DefaultContextWindow, aimodel.ContextWindowFor("my-private-finetune"))
 }
 
 func TestChangeRules_NameALimitOrKeyChange(t *testing.T) {
@@ -276,7 +305,7 @@ func TestChangeRules_NameALimitOrKeyChange(t *testing.T) {
 func ruleFor(t *testing.T, field string) editchange.Rule[aiprovider.Provider] {
 	t.Helper()
 
-	for _, rule := range aiprovider.ChangeRules {
+	for _, rule := range aiproviderchange.ChangeRules {
 		if rule.Field == field {
 			return rule
 		}

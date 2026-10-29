@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -37,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.ShipmentMoveJurisdictionMileRepository {
+func New(p Params) shipmentdistanceports.ShipmentMoveJurisdictionMileRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-move-jurisdiction-mile-repository"),
@@ -93,7 +94,7 @@ func (r *repository) replace(
 
 func (r *repository) ListByMoveIDs(
 	ctx context.Context,
-	req shipmentports.ListJurisdictionMilesByMoveIDsRequest,
+	req shipmentdistanceports.ListJurisdictionMilesByMoveIDsRequest,
 ) ([]*shipment.ShipmentMoveJurisdictionMile, error) {
 	return dbtx.Read(
 		ctx,
@@ -122,12 +123,12 @@ type unattributedTotals struct {
 
 func (r *repository) ListUnattributedMoves(
 	ctx context.Context,
-	req shipmentports.UnattributedMovesRequest,
-) (*shipmentports.UnattributedMovesPage, error) {
+	req *shipmentdistanceports.UnattributedMovesRequest,
+) (*shipmentdistanceports.UnattributedMovesPage, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.UnattributedMovesPage, error) {
+		func(ctx context.Context) (*shipmentdistanceports.UnattributedMovesPage, error) {
 			if req.Start >= req.End {
 				return nil, errortypes.NewBusinessError("Period start must be before period end")
 			}
@@ -151,7 +152,7 @@ func (r *repository) ListUnattributedMoves(
 				return nil, fmt.Errorf("count unattributed moves: %w", err)
 			}
 
-			page := &shipmentports.UnattributedMovesPage{
+			page := &shipmentdistanceports.UnattributedMovesPage{
 				MoveIDs:    make([]pulid.ID, 0, req.PageSize()),
 				TotalMoves: int(totals.TotalMoves),
 				TotalMiles: totals.TotalMiles,
@@ -184,7 +185,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 
 	body := sm.LeftJoin(st, st.ShipmentMoveID.EqCol(sm.ID)).
 		Where(
-			sm.Status.Eq(shipment.MoveStatusCompleted),
+			sm.Status.Eq(shipmentvocab.MoveStatusCompleted),
 			sm.Distance.Gt(0),
 			keel.NotExists(jm.Where(jm.ShipmentMoveID.EqCol(sm.ID))),
 		).
@@ -193,7 +194,7 @@ func completedMovesWithoutBreakdown() *keel.CTETable {
 			sm.ID,
 			keel.CaseFloat64().
 				When(
-					sm.DistanceUnits.Eq(shipment.JurisdictionDistanceUnitsKilometers),
+					sm.DistanceUnits.Eq(shipmentvocab.JurisdictionDistanceUnitsKilometers),
 					sm.Distance.Div(keel.Float64(kilometersPerMile)),
 				).
 				Else(sm.Distance),

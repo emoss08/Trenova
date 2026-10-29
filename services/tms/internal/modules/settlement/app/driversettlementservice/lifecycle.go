@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
@@ -33,7 +33,7 @@ func transitionError(from, to driversettlement.Status) error {
 	)
 }
 
-func (s *Service) getForUpdate(
+func (s *Service) GetForUpdate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	settlementID pulid.ID,
@@ -51,10 +51,10 @@ func (s *Service) SubmitForApproval(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement submission"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement submission"); err != nil {
 		return nil, err
 	}
-	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
+	entity, err := s.GetForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *Service) SubmitForApproval(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpSubmit,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpSubmit,
 		"Settlement submitted for approval")
 	return updated, nil
 }
@@ -81,6 +81,15 @@ func (s *Service) Approve(
 	return s.approveInternal(ctx, tenantInfo, settlementID, actor, false)
 }
 
+func (s *Service) SubmitAndApprove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	settlementID pulid.ID,
+	actor *permissionports.RequestActor,
+) (*driversettlement.Settlement, error) {
+	return s.approveInternal(ctx, tenantInfo, settlementID, actor, true)
+}
+
 func (s *Service) approveInternal(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -88,14 +97,14 @@ func (s *Service) approveInternal(
 	actor *permissionports.RequestActor,
 	fromDraft bool,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement approval"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement approval"); err != nil {
 		return nil, err
 	}
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.GetForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -113,7 +122,7 @@ func (s *Service) approveInternal(
 		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 			return txErr
 		}
-		if txErr = s.applyDeductionSideEffects(txCtx, entity, actor); txErr != nil {
+		if txErr = s.recurring.Apply(txCtx, entity, actor); txErr != nil {
 			return txErr
 		}
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
@@ -122,7 +131,7 @@ func (s *Service) approveInternal(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpApprove,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpApprove,
 		"Settlement approved")
 
 	control, controlErr := s.settlementControl.GetOrCreate(ctx, tenantInfo)
@@ -145,7 +154,7 @@ func (s *Service) Reject(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement rejection"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement rejection"); err != nil {
 		return nil, err
 	}
 	if reason == "" {
@@ -155,7 +164,7 @@ func (s *Service) Reject(
 			"A rejection reason is required",
 		)
 	}
-	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
+	entity, err := s.GetForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +177,7 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpReject,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpReject,
 		"Settlement rejected: "+reason)
 	return updated, nil
 }
@@ -178,7 +187,7 @@ func (s *Service) MarkPaid(
 	req *carriersettlementports.MarkSettlementPaidRequest,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement payment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement payment"); err != nil {
 		return nil, err
 	}
 	tenantInfo := req.TenantInfo
@@ -194,7 +203,7 @@ func (s *Service) MarkPaid(
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, req.SettlementID)
+		entity, txErr := s.GetForUpdate(txCtx, tenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -219,7 +228,7 @@ func (s *Service) MarkPaid(
 		}, &entity.PaidExchangeRate, &entity.PaidExchangeRateDate); txErr != nil {
 			return txErr
 		}
-		if entity.PaidJournalBatchID, txErr = s.postPaymentJournal(
+		if entity.PaidJournalBatchID, txErr = s.journals.PostPayment(
 			txCtx,
 			entity,
 			actor.UserID,
@@ -244,7 +253,7 @@ func (s *Service) MarkPaid(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Settlement marked paid via "+paymentMethod)
 	if s.driverNotify != nil {
 		s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
@@ -252,7 +261,7 @@ func (s *Service) MarkPaid(
 			WorkerID:   updated.WorkerID,
 			EventType:  "dash.settlement_paid",
 			Priority:   notification.PriorityHigh,
-			Context: documenttemplate.SettlementNotificationContext{
+			Context: notificationtemplate.SettlementNotificationContext{
 				SettlementNumber: updated.SettlementNumber,
 				PaymentMethod:    paymentMethod,
 				Amount: money.FormatMinor(
@@ -276,7 +285,7 @@ func (s *Service) Void(
 	reason string,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement void"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement void"); err != nil {
 		return nil, err
 	}
 	if reason == "" {
@@ -290,7 +299,7 @@ func (s *Service) Void(
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.GetForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -302,13 +311,13 @@ func (s *Service) Void(
 		wasApproved := entity.Status == driversettlement.StatusApproved ||
 			entity.Status == driversettlement.StatusPosted
 		if wasApproved {
-			if txErr = s.reverseDeductionSideEffects(txCtx, entity, actor); txErr != nil {
+			if txErr = s.recurring.Reverse(txCtx, entity, actor); txErr != nil {
 				return txErr
 			}
 		}
 		wasPosted := entity.Status == driversettlement.StatusPosted
 		if wasPosted {
-			if txErr = s.postVoidReversal(txCtx, entity, actor); txErr != nil {
+			if txErr = s.journals.PostVoidReversal(txCtx, entity, actor); txErr != nil {
 				return txErr
 			}
 		}
@@ -337,7 +346,7 @@ func (s *Service) Void(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpCancel,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpCancel,
 		"Settlement voided: "+reason)
 	return updated, nil
 }
@@ -348,14 +357,14 @@ func (s *Service) Recalculate(
 	settlementID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement recalculation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement recalculation"); err != nil {
 		return nil, err
 	}
 
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.GetForUpdate(txCtx, tenantInfo, settlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -370,7 +379,7 @@ func (s *Service) Recalculate(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Settlement recalculated")
 	return updated, nil
 }
@@ -417,7 +426,7 @@ func (s *Service) rebuildDraftSettlementTx(
 	return s.settlementRepo.Update(txCtx, entity)
 }
 
-func (s *Service) refreshOpenDraftForWorker(
+func (s *Service) RefreshOpenDraftForWorker(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
@@ -433,7 +442,7 @@ func (s *Service) refreshOpenDraftForWorker(
 		return nil //nolint:nilerr // no open draft means nothing to attach to
 	}
 	return s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, draft.ID)
+		entity, txErr := s.GetForUpdate(txCtx, tenantInfo, draft.ID)
 		if txErr != nil {
 			return txErr
 		}
@@ -461,14 +470,14 @@ func (s *Service) AddAdjustmentLine(
 	input *AdjustmentLineInput,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement adjustment"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement adjustment"); err != nil {
 		return nil, err
 	}
 	if err := checkAdjustmentInput(input); err != nil {
 		return nil, err
 	}
 
-	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
+	entity, err := s.GetForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -497,7 +506,7 @@ func (s *Service) AddAdjustmentLine(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Manual adjustment added: "+input.Description)
 	return updated, nil
 }
@@ -508,10 +517,10 @@ func (s *Service) RemoveAdjustmentLine(
 	settlementID, lineID pulid.ID,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement adjustment removal"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement adjustment removal"); err != nil {
 		return nil, err
 	}
-	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
+	entity, err := s.GetForUpdate(ctx, tenantInfo, settlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -527,323 +536,7 @@ func (s *Service) RemoveAdjustmentLine(
 	if err != nil {
 		return nil, err
 	}
-	s.logSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
+	s.LogSettlementAudit(ctx, updated, &previous, actor.UserID, permission.OpUpdate,
 		"Manual adjustment removed")
 	return updated, nil
-}
-
-func (s *Service) applyDeductionSideEffects(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	actor *permissionports.RequestActor,
-) error {
-	for _, line := range entity.Lines {
-		if line == nil {
-			continue
-		}
-		amount := -line.AmountMinor
-		switch line.Category {
-		case driversettlement.LineCategoryDeduction:
-			if err := s.applyRecurringDeduction(ctx, entity, line, amount); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryEscrowContribution:
-			if err := s.applyEscrowContribution(ctx, entity, line, amount,
-				actor); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryAdvanceRecovery:
-			if err := s.applyAdvanceRecovery(ctx, entity, line, amount); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryEarning,
-			driversettlement.LineCategoryReimbursement:
-			if err := s.applyRecurringEarning(ctx, entity, line); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryGuaranteeTopUp,
-			driversettlement.LineCategoryCarryForward,
-			driversettlement.LineCategoryAdjustment:
-		}
-	}
-	return nil
-}
-
-func (s *Service) applyRecurringEarning(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-) error {
-	if line.RecurringEarningID == nil || line.RecurringEarningID.IsNil() {
-		return nil
-	}
-	earning, err := s.earningRepo.GetByID(
-		ctx,
-		driverpayports.GetRecurringEarningByIDRequest{
-			ID: *line.RecurringEarningID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	earning.PaidToDateMinor += line.AmountMinor
-	if remaining := earning.RemainingCapMinor(); remaining != nil && *remaining == 0 {
-		earning.Status = driverpay.EarningStatusCompleted
-	}
-	_, err = s.earningRepo.Update(ctx, earning)
-	return err
-}
-
-func (s *Service) applyRecurringDeduction(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-	amount int64,
-) error {
-	if line.RecurringDeductionID == nil || line.RecurringDeductionID.IsNil() {
-		return nil
-	}
-	deduction, err := s.deductionRepo.GetByID(
-		ctx,
-		driverpayports.GetRecurringDeductionByIDRequest{
-			ID: *line.RecurringDeductionID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	deduction.DeductedToDateMinor += amount
-	if remaining := deduction.RemainingCapMinor(); remaining != nil && *remaining == 0 {
-		deduction.Status = driverpay.DeductionStatusCompleted
-	}
-	_, err = s.deductionRepo.Update(ctx, deduction)
-	return err
-}
-
-func (s *Service) applyEscrowContribution(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-	amount int64,
-	actor *permissionports.RequestActor,
-) error {
-	if line.EscrowAccountID == nil || line.EscrowAccountID.IsNil() {
-		return nil
-	}
-	if err := s.applyRecurringDeduction(ctx, entity, line, amount); err != nil {
-		return err
-	}
-	return s.appendEscrowTransaction(ctx, entity, *line.EscrowAccountID,
-		driverpay.EscrowTransactionTypeContribution, amount,
-		"Escrow contribution from settlement "+entity.SettlementNumber, actor)
-}
-
-func (s *Service) applyAdvanceRecovery(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-	amount int64,
-) error {
-	if line.AdvanceID == nil || line.AdvanceID.IsNil() {
-		return nil
-	}
-	advance, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
-		ID: *line.AdvanceID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	advance.RecoveredMinor += amount
-	advance.SyncStatus()
-	_, err = s.advanceRepo.Update(ctx, advance)
-	return err
-}
-
-func (s *Service) reverseDeductionSideEffects(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	actor *permissionports.RequestActor,
-) error {
-	for _, line := range entity.Lines {
-		if line == nil {
-			continue
-		}
-		amount := -line.AmountMinor
-		switch line.Category {
-		case driversettlement.LineCategoryDeduction:
-			if err := s.reverseRecurringDeduction(ctx, entity, line, amount); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryEscrowContribution:
-			if err := s.reverseRecurringDeduction(ctx, entity, line, amount); err != nil {
-				return err
-			}
-			if line.EscrowAccountID != nil && !line.EscrowAccountID.IsNil() {
-				if err := s.appendEscrowTransaction(ctx, entity, *line.EscrowAccountID,
-					driverpay.EscrowTransactionTypeAdjustment, -amount,
-					"Escrow contribution reversed; settlement "+
-						entity.SettlementNumber+" voided", actor); err != nil {
-					return err
-				}
-			}
-		case driversettlement.LineCategoryAdvanceRecovery:
-			if err := s.reverseAdvanceRecovery(ctx, entity, line, amount); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryEarning,
-			driversettlement.LineCategoryReimbursement:
-			if err := s.reverseRecurringEarning(ctx, entity, line); err != nil {
-				return err
-			}
-		case driversettlement.LineCategoryGuaranteeTopUp,
-			driversettlement.LineCategoryCarryForward,
-			driversettlement.LineCategoryAdjustment:
-		}
-	}
-	return nil
-}
-
-func (s *Service) reverseRecurringEarning(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-) error {
-	if line.RecurringEarningID == nil || line.RecurringEarningID.IsNil() {
-		return nil
-	}
-	earning, err := s.earningRepo.GetByID(
-		ctx,
-		driverpayports.GetRecurringEarningByIDRequest{
-			ID: *line.RecurringEarningID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	earning.PaidToDateMinor = max(earning.PaidToDateMinor-line.AmountMinor, 0)
-	if earning.Status == driverpay.EarningStatusCompleted {
-		if remaining := earning.RemainingCapMinor(); remaining == nil || *remaining > 0 {
-			earning.Status = driverpay.EarningStatusActive
-		}
-	}
-	_, err = s.earningRepo.Update(ctx, earning)
-	return err
-}
-
-func (s *Service) reverseRecurringDeduction(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-	amount int64,
-) error {
-	if line.RecurringDeductionID == nil || line.RecurringDeductionID.IsNil() {
-		return nil
-	}
-	deduction, err := s.deductionRepo.GetByID(
-		ctx,
-		driverpayports.GetRecurringDeductionByIDRequest{
-			ID: *line.RecurringDeductionID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-		},
-	)
-	if err != nil {
-		return err
-	}
-	deduction.DeductedToDateMinor = max(deduction.DeductedToDateMinor-amount, 0)
-	if deduction.Status == driverpay.DeductionStatusCompleted {
-		if remaining := deduction.RemainingCapMinor(); remaining == nil || *remaining > 0 {
-			deduction.Status = driverpay.DeductionStatusActive
-		}
-	}
-	_, err = s.deductionRepo.Update(ctx, deduction)
-	return err
-}
-
-func (s *Service) reverseAdvanceRecovery(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	line *driversettlement.SettlementLine,
-	amount int64,
-) error {
-	if line.AdvanceID == nil || line.AdvanceID.IsNil() {
-		return nil
-	}
-	advance, err := s.advanceRepo.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
-		ID: *line.AdvanceID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	advance.RecoveredMinor = max(advance.RecoveredMinor-amount, 0)
-	advance.SyncStatus()
-	_, err = s.advanceRepo.Update(ctx, advance)
-	return err
-}
-
-func (s *Service) appendEscrowTransaction(
-	ctx context.Context,
-	entity *driversettlement.Settlement,
-	accountID pulid.ID,
-	txType driverpay.EscrowTransactionType,
-	amount int64,
-	description string,
-	actor *permissionports.RequestActor,
-) error {
-	account, err := s.escrowRepo.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
-		ID: accountID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		return err
-	}
-	settlementID := entity.ID
-	tx := &driverpay.EscrowTransaction{
-		OrganizationID:    account.OrganizationID,
-		BusinessUnitID:    account.BusinessUnitID,
-		EscrowAccountID:   account.ID,
-		Type:              txType,
-		AmountMinor:       amount,
-		BalanceAfterMinor: account.BalanceMinor + amount,
-		OccurredDate:      timeutils.NowUnix(),
-		Description:       description,
-		SettlementID:      &settlementID,
-		CreatedByID:       actor.UserIDOrNil(),
-	}
-	multiErr := errortypes.NewMultiError()
-	tx.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	if _, err = s.escrowRepo.AppendTransaction(ctx, tx); err != nil {
-		return err
-	}
-	account.BalanceMinor = tx.BalanceAfterMinor
-	_, err = s.escrowRepo.Update(ctx, account)
-	return err
 }

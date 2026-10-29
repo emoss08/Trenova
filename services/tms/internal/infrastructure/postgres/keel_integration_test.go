@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
@@ -44,7 +44,12 @@ func keelCodes(ctx context.Context, db *keel.DB) ([]string, error) {
 const insertFleetCodeSQL = "INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) " +
 	"VALUES ($1, $2, $3, $4, $5)"
 
-func rawInsertFleetCode(ctx context.Context, conn *Connection, tenant dbscope.Tenant, code string) error {
+func rawInsertFleetCode(
+	ctx context.Context,
+	conn *Connection,
+	tenant dbscope.Tenant,
+	code string,
+) error {
 	_, err := keel.Exec(ctx, conn.Keel(ctx), insertFleetCodeSQL,
 		pulid.MustNew("fc_").String(), code, tenant.OrganizationID.String(),
 		tenant.BusinessUnitID.String(), tenant.UserID.String(),
@@ -58,7 +63,7 @@ func keelFleetCode(tenant dbscope.Tenant, code string) *keeltest.FleetCode {
 }
 
 func TestKeel_RawAndTypedWritesInOneDbtxWriteCommitTogether(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -76,7 +81,12 @@ func TestKeel_RawAndTypedWritesInOneDbtxWriteCommitTogether(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		assert.Equal(t, []string{"FCA", "KEEL", "RAW"}, seen, "a typed read sees the raw write of its transaction")
+		assert.Equal(
+			t,
+			[]string{"FCA", "KEEL", "RAW"},
+			seen,
+			"a typed read sees the raw write of its transaction",
+		)
 
 		return row, nil
 	})
@@ -91,7 +101,7 @@ func TestKeel_RawAndTypedWritesInOneDbtxWriteCommitTogether(t *testing.T) {
 }
 
 func TestKeel_RawAndTypedWritesInOneDbtxWriteRollBackTogether(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -116,7 +126,7 @@ func TestKeel_RawAndTypedWritesInOneDbtxWriteRollBackTogether(t *testing.T) {
 }
 
 func TestKeel_AfterCommitRunsOnceTheSharedTransactionCommits(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -135,7 +145,7 @@ func TestKeel_AfterCommitRunsOnceTheSharedTransactionCommits(t *testing.T) {
 }
 
 func TestKeel_NestedDbtxCallsShareTheOuterTransaction(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -160,7 +170,7 @@ func TestKeel_NestedDbtxCallsShareTheOuterTransaction(t *testing.T) {
 }
 
 func TestKeel_SavepointKeepsTheSharedTransactionUsable(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -184,7 +194,7 @@ func TestKeel_SavepointKeepsTheSharedTransactionUsable(t *testing.T) {
 }
 
 func TestKeel_InsideDbtxIsRowLevelSecurityScoped(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 
@@ -200,10 +210,13 @@ func TestKeel_InsideDbtxIsRowLevelSecurityScoped(t *testing.T) {
 
 	err = dbtx.WriteErr(ctx, conn, func(ctx context.Context) error {
 		_, err := keel.Exec(
-			ctx, conn.Keel(ctx),
+			ctx,
+			conn.Keel(ctx),
 			"INSERT INTO fleet_codes (id, code, organization_id, business_unit_id, manager_id) VALUES ($1, 'X', $2, $3, $4)",
-			pulid.MustNew("fc_").String(), f.tenantB.OrganizationID.String(),
-			f.tenantB.BusinessUnitID.String(), f.tenantB.UserID.String(),
+			pulid.MustNew("fc_").String(),
+			f.tenantB.OrganizationID.String(),
+			f.tenantB.BusinessUnitID.String(),
+			f.tenantB.UserID.String(),
 		)
 		return err
 	})
@@ -212,31 +225,39 @@ func TestKeel_InsideDbtxIsRowLevelSecurityScoped(t *testing.T) {
 }
 
 func TestKeel_ChangingScopeInsideASharedTransactionOpensANewOne(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
-	err := dbtx.WriteErr(dbscope.WithTenant(t.Context(), f.tenantA), conn, func(ctx context.Context) error {
-		other, err := dbtx.Read(dbscope.WithTenant(ctx, f.tenantB), conn, func(ctx context.Context) ([]string, error) {
-			return keelCodes(ctx, conn.Keel(ctx))
-		})
-		if err != nil {
-			return err
-		}
-		assert.Equal(t, []string{"FCB"}, other)
+	err := dbtx.WriteErr(
+		dbscope.WithTenant(t.Context(), f.tenantA),
+		conn,
+		func(ctx context.Context) error {
+			other, err := dbtx.Read(
+				dbscope.WithTenant(ctx, f.tenantB),
+				conn,
+				func(ctx context.Context) ([]string, error) {
+					return keelCodes(ctx, conn.Keel(ctx))
+				},
+			)
+			if err != nil {
+				return err
+			}
+			assert.Equal(t, []string{"FCB"}, other)
 
-		outer, err := keelCodes(ctx, conn.Keel(ctx))
-		if err != nil {
-			return err
-		}
-		assert.Equal(t, []string{"FCA"}, outer)
+			outer, err := keelCodes(ctx, conn.Keel(ctx))
+			if err != nil {
+				return err
+			}
+			assert.Equal(t, []string{"FCA"}, outer)
 
-		return nil
-	})
+			return nil
+		},
+	)
 	require.NoError(t, err)
 }
 
 func TestKeel_WriteWithAScopedContextIsRowLevelSecurityScoped(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 	db := conn.Keel(ctx)
@@ -257,7 +278,12 @@ func TestKeel_WriteWithAScopedContextIsRowLevelSecurityScoped(t *testing.T) {
 
 	implicit, err := keelCodes(dbscope.WithTenant(t.Context(), f.tenantB), db)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"FCB"}, implicit, "a statement outside a transaction runs in an implicit scoped one")
+	assert.Equal(
+		t,
+		[]string{"FCB"},
+		implicit,
+		"a statement outside a transaction runs in an implicit scoped one",
+	)
 
 	err = keel.Write(ctx, db, func(ctx context.Context) error {
 		_, err := keel.Exec(ctx, db,
@@ -274,7 +300,7 @@ func TestKeel_WriteWithAScopedContextIsRowLevelSecurityScoped(t *testing.T) {
 }
 
 func TestKeel_ReadScopeTravelsWithTheTenantScope(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
 	manager := pulid.MustNew("usr_")
@@ -287,18 +313,26 @@ func TestKeel_ReadScopeTravelsWithTheTenantScope(t *testing.T) {
 		},
 	)
 
-	scope, err := keel.QueryValue[string](ctx, conn.Keel(ctx), "SELECT trenova_rls.read_scope('worker')")
+	scope, err := keel.QueryValue[string](
+		ctx,
+		conn.Keel(ctx),
+		"SELECT trenova_rls.read_scope('worker')",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "team", scope)
 
 	plain := dbscope.WithTenant(t.Context(), f.tenantA)
-	scope, err = keel.QueryValue[string](plain, conn.Keel(plain), "SELECT coalesce(trenova_rls.read_scope('worker'), '')")
+	scope, err = keel.QueryValue[string](
+		plain,
+		conn.Keel(plain),
+		"SELECT coalesce(trenova_rls.read_scope('worker'), '')",
+	)
 	require.NoError(t, err)
 	assert.Empty(t, scope)
 }
 
 func TestKeel_SystemScopeUsesTheBypassPool(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
 	ctx := dbscope.WithSystem(t.Context(), "integration test sweep")
@@ -326,10 +360,14 @@ func TestKeel_SystemScopeUsesTheBypassPool(t *testing.T) {
 }
 
 func TestKeel_ObserveModeAllowsButPostgresRefusesUnscopedAccess(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeObserve)
+	f := newRLSFixture(t, databaseconfig.RLSModeObserve)
 	conn := f.connect(t)
 
-	count, err := keel.QueryValue[int64](t.Context(), conn.Keel(t.Context()), "SELECT count(*) FROM us_states")
+	count, err := keel.QueryValue[int64](
+		t.Context(),
+		conn.Keel(t.Context()),
+		"SELECT count(*) FROM us_states",
+	)
 	require.NoError(t, err)
 	assert.Positive(t, count)
 
@@ -339,7 +377,7 @@ func TestKeel_ObserveModeAllowsButPostgresRefusesUnscopedAccess(t *testing.T) {
 }
 
 func TestKeel_ErrorsMapThroughTheEntityMapping(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := dbscope.WithTenant(t.Context(), f.tenantA)
 	db := conn.Keel(ctx)

@@ -1,16 +1,16 @@
 package agenttoolstest
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func ExecuteParams(params map[string]any) agentports.ToolExecuteParams {
+func ExecuteParams(params map[string]any) *agenttoolports.ToolExecuteParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return agentports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &permissionports.RequestActor{

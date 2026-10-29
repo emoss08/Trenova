@@ -9,9 +9,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edivalidation"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -25,19 +29,19 @@ import (
 )
 
 type fakeRepo struct {
-	partners []*ediports.EDIPartnerSetup
-	identity *ediports.InterchangeIdentity
+	partners []*ediconnectiondraftports.EDIPartnerSetup
+	identity *ediconnectiondraftports.InterchangeIdentity
 	targets  map[edi.MappingEntityType]map[pulid.ID]string
 }
 
 func (f *fakeRepo) FindPartnerMatches(
 	_ context.Context,
-	req *ediports.FindEDIPartnerMatchesRequest,
-) ([]*ediports.EDIPartnerMatch, error) {
-	out := make([]*ediports.EDIPartnerMatch, 0)
+	req *ediconnectiondraftports.FindEDIPartnerMatchesRequest,
+) ([]*ediconnectiondraftports.EDIPartnerMatch, error) {
+	out := make([]*ediconnectiondraftports.EDIPartnerMatch, 0)
 	for _, setup := range f.partners {
 		partner := setup.Partner
-		match := &ediports.EDIPartnerMatch{
+		match := &ediconnectiondraftports.EDIPartnerMatch{
 			Partner:    partner,
 			ByCode:     req.Code != "" && strings.EqualFold(partner.Code, req.Code),
 			ByName:     req.Name != "" && strings.EqualFold(partner.Name, req.Name),
@@ -63,8 +67,8 @@ func (f *fakeRepo) FindPartnerMatches(
 
 func (f *fakeRepo) GetPartnerSetup(
 	_ context.Context,
-	req *ediports.GetEDIPartnerSetupRequest,
-) (*ediports.EDIPartnerSetup, error) {
+	req *ediconnectiondraftports.GetEDIPartnerSetupRequest,
+) (*ediconnectiondraftports.EDIPartnerSetup, error) {
 	for _, setup := range f.partners {
 		if setup.Partner.ID == req.PartnerID {
 			return setup, nil
@@ -76,16 +80,16 @@ func (f *fakeRepo) GetPartnerSetup(
 func (f *fakeRepo) GetInterchangeIdentity(
 	context.Context,
 	pagination.TenantInfo,
-) (*ediports.InterchangeIdentity, error) {
+) (*ediconnectiondraftports.InterchangeIdentity, error) {
 	if f.identity == nil {
-		return &ediports.InterchangeIdentity{}, nil
+		return &ediconnectiondraftports.InterchangeIdentity{}, nil
 	}
 	return f.identity, nil
 }
 
 func (f *fakeRepo) ResolveMappingTargets(
 	_ context.Context,
-	req *ediports.ResolveEDIMappingTargetsRequest,
+	req *ediconnectiondraftports.ResolveEDIMappingTargetsRequest,
 ) (map[edi.MappingEntityType]map[pulid.ID]string, error) {
 	out := make(map[edi.MappingEntityType]map[pulid.ID]string)
 	for entityType, ids := range req.Targets {
@@ -103,9 +107,9 @@ type fakeDocumentTypes struct{}
 
 func (fakeDocumentTypes) ListDocumentTypes(
 	_ context.Context,
-	req ediports.ListEDIDocumentTypesRequest,
-) ([]*edi.EDIDocumentType, error) {
-	return []*edi.EDIDocumentType{{
+	req edipartnerports.ListEDIDocumentTypesRequest,
+) ([]*edidocument.EDIDocumentType, error) {
+	return []*edidocument.EDIDocumentType{{
 		ID:             documentTypeID(req.TransactionSet, req.Direction),
 		TransactionSet: req.TransactionSet,
 		Direction:      req.Direction,
@@ -114,20 +118,23 @@ func (fakeDocumentTypes) ListDocumentTypes(
 
 func (fakeDocumentTypes) SelectDocumentTypeOptions(
 	context.Context,
-	*ediports.EDIDocumentTypeSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-	return &pagination.ListResult[*edi.EDIDocumentType]{}, nil
+	*edipartnerports.EDIDocumentTypeSelectOptionsRequest,
+) (*pagination.ListResult[*edidocument.EDIDocumentType], error) {
+	return &pagination.ListResult[*edidocument.EDIDocumentType]{}, nil
 }
 
-func documentTypeID(set edi.TransactionSet, direction edi.DocumentDirection) pulid.ID {
+func documentTypeID(
+	set edidocument.TransactionSet,
+	direction edidocument.DocumentDirection,
+) pulid.ID {
 	return pulid.ID("edidt_x12_" + string(set) + "_" + strings.ToLower(string(direction)))
 }
 
 type fakeSetup struct {
 	partners   []*edi.EDIPartner
-	transports []*ediservice.UpsertEDICommunicationProfileRequest
-	mappings   []*ediports.SaveMappingItemsRequest
-	controls   []*ediports.ResetEDIControlNumberRequest
+	transports []*edisetup.UpsertEDICommunicationProfileRequest
+	mappings   []*edipartnerports.SaveMappingItemsRequest
+	controls   []*edipartnerports.ResetEDIControlNumberRequest
 	failOn     string
 }
 
@@ -166,7 +173,7 @@ func (f *fakeSetup) UpdatePartner(
 
 func (f *fakeSetup) CreateCommunicationProfile(
 	_ context.Context,
-	req *ediservice.UpsertEDICommunicationProfileRequest,
+	req *edisetup.UpsertEDICommunicationProfileRequest,
 	_ *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	if err := f.fail("transport"); err != nil {
@@ -178,7 +185,7 @@ func (f *fakeSetup) CreateCommunicationProfile(
 
 func (f *fakeSetup) UpdateCommunicationProfile(
 	_ context.Context,
-	req *ediservice.UpsertEDICommunicationProfileRequest,
+	req *edisetup.UpsertEDICommunicationProfileRequest,
 	_ *permissionports.RequestActor,
 ) (*edi.EDICommunicationProfile, error) {
 	f.transports = append(f.transports, req)
@@ -187,7 +194,7 @@ func (f *fakeSetup) UpdateCommunicationProfile(
 
 func (f *fakeSetup) SaveMappingProfile(
 	_ context.Context,
-	req *ediports.SaveMappingItemsRequest,
+	req *edipartnerports.SaveMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
 	f.mappings = append(f.mappings, req)
 	return slices.Clone(req.Items), nil
@@ -195,11 +202,11 @@ func (f *fakeSetup) SaveMappingProfile(
 
 func (f *fakeSetup) StartControlNumber(
 	_ context.Context,
-	req *ediports.ResetEDIControlNumberRequest,
+	req *edipartnerports.ResetEDIControlNumberRequest,
 	_ *permissionports.RequestActor,
-) (*edi.EDIControlNumberSequence, error) {
+) (*edidocument.EDIControlNumberSequence, error) {
 	f.controls = append(f.controls, req)
-	return &edi.EDIControlNumberSequence{ID: pulid.MustNew("edicn_"), Kind: req.Kind}, nil
+	return &edidocument.EDIControlNumberSequence{ID: pulid.MustNew("edicn_"), Kind: req.Kind}, nil
 }
 
 type fakeProjects struct {
@@ -211,28 +218,28 @@ func (f *fakeProjects) Import(
 	_ context.Context,
 	req *edilading.ImportRequest,
 	_ *permissionports.RequestActor,
-) (*edi.LadingVersion, error) {
+) (*ladingproject.LadingVersion, error) {
 	if err := f.setup.fail("project"); err != nil {
 		return nil, err
 	}
 	f.imports = append(f.imports, req)
-	return &edi.LadingVersion{
+	return &ladingproject.LadingVersion{
 		ID:        pulid.MustNew("ldv_"),
 		ProjectID: pulid.MustNew("ldp_"),
 		Number:    1,
-		Status:    edi.LadingVersionStatusDraft,
+		Status:    ladingproject.LadingVersionStatusDraft,
 		Files:     req.Files,
 	}, nil
 }
 
 var storedSamples sync.Map
 
-func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
-	refs := make([]edi.LadingSampleRef, 0, len(samples))
+func storeSamples(samples []lading.Sample) []ladingproject.LadingSampleRef {
+	refs := make([]ladingproject.LadingSampleRef, 0, len(samples))
 	for _, sample := range samples {
 		digest := lading.Digest(sample.Content)
 		storedSamples.Store(digest, sample.Content)
-		refs = append(refs, edi.LadingSampleRef{
+		refs = append(refs, ladingproject.LadingSampleRef{
 			Path:   sample.Path,
 			Digest: digest,
 			Size:   len(sample.Content),
@@ -241,12 +248,16 @@ func storeSamples(samples []lading.Sample) []edi.LadingSampleRef {
 	return refs
 }
 
-func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
+func versionSamples(version *ladingproject.LadingVersion) ([]lading.Sample, error) {
 	samples := make([]lading.Sample, 0, len(version.Samples))
 	for _, ref := range version.Samples {
 		content, ok := storedSamples.Load(ref.Digest)
 		if !ok {
-			return nil, fmt.Errorf("lading sample %s of version %s is missing", ref.Path, version.ID)
+			return nil, fmt.Errorf(
+				"lading sample %s of version %s is missing",
+				ref.Path,
+				version.ID,
+			)
 		}
 		samples = append(samples, lading.Sample{Path: ref.Path, Content: content.(string)})
 	}
@@ -256,7 +267,7 @@ func versionSamples(version *edi.LadingVersion) ([]lading.Sample, error) {
 func (f *fakeProjects) Samples(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	version *edi.LadingVersion,
+	version *ladingproject.LadingVersion,
 ) ([]lading.Sample, error) {
 	return versionSamples(version)
 }
@@ -290,7 +301,7 @@ func newHarness(t *testing.T) *harness {
 		repo:          h.repo,
 		documentTypes: fakeDocumentTypes{},
 		setup:         h.setup,
-		validator:     ediservice.NewValidator(),
+		validator:     edivalidation.NewValidator(),
 		lading: edilading.NewRuntime(edilading.RuntimeParams{
 			Logger: zap.NewNop(),
 			Orgs:   orgs,

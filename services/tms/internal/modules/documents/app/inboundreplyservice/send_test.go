@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -48,7 +48,11 @@ func TestSendThreadsReplyFromMailbox(t *testing.T) {
 	assert.Equal(t, "dispatch@trenova.example", req.FromEmail)
 	assert.Equal(t, []string{"edi@partner.example"}, req.To)
 	assert.Equal(t, email.PurposeOperations, req.Purpose)
-	assert.Equal(t, inboundmessageports.InboundReplyIdempotencyPrefix+reply.ID.String(), req.IdempotencyKey)
+	assert.Equal(
+		t,
+		inboundreplyports.InboundReplyIdempotencyPrefix+reply.ID.String(),
+		req.IdempotencyKey,
+	)
 	assert.Equal(t, "<abc123@partner.example>", req.Headers["In-Reply-To"])
 	assert.Contains(t, req.Headers["References"], "<root@partner.example>")
 	assert.Contains(t, req.Headers["References"], "<abc123@partner.example>")
@@ -109,7 +113,9 @@ func TestSendRefusedRecipientSuggestsAlternate(t *testing.T) {
 
 	f := newFixture()
 	f.work.alternates = []string{"dispatch@partner.example"}
-	f.email.err = errortypes.NewBusinessError("Recipient edi@partner.example was rejected by the provider")
+	f.email.err = errortypes.NewBusinessError(
+		"Recipient edi@partner.example was rejected by the provider",
+	)
 
 	reply, err := f.service.Send(t.Context(), sendRequest(f, "key-refused"))
 	require.NoError(t, err)
@@ -219,7 +225,7 @@ func TestEmailMessageChangedBounceFailsReply(t *testing.T) {
 			OrganizationID: testOrgID,
 			BusinessUnitID: testBUID,
 			Status:         email.MessageStatusBounced,
-			IdempotencyKey: inboundmessageports.InboundReplyIdempotencyPrefix + reply.ID.String(),
+			IdempotencyKey: inboundreplyports.InboundReplyIdempotencyPrefix + reply.ID.String(),
 		},
 		Event: &email.Event{Raw: map[string]any{
 			"bounce": map[string]any{"description": "550 5.1.1 mailbox unavailable"},
@@ -244,7 +250,7 @@ func TestEmailMessageChangedDeliveredMarksSent(t *testing.T) {
 		OrganizationID: testOrgID,
 		BusinessUnitID: testBUID,
 		Status:         email.MessageStatusDelivered,
-		IdempotencyKey: inboundmessageports.InboundReplyIdempotencyPrefix + reply.ID.String(),
+		IdempotencyKey: inboundreplyports.InboundReplyIdempotencyPrefix + reply.ID.String(),
 	}}
 	f.service.EmailMessageChanged(t.Context(), change)
 	f.service.EmailMessageChanged(t.Context(), change)
@@ -266,10 +272,13 @@ func TestEmailMessageChangedIgnoresOtherMail(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	f.service.EmailMessageChanged(t.Context(), emailports.EmailMessageChange{Message: &email.Message{
-		Status:         email.MessageStatusBounced,
-		IdempotencyKey: "invoice:abc",
-	}})
+	f.service.EmailMessageChanged(
+		t.Context(),
+		emailports.EmailMessageChange{Message: &email.Message{
+			Status:         email.MessageStatusBounced,
+			IdempotencyKey: "invoice:abc",
+		}},
+	)
 	f.service.EmailMessageChanged(t.Context(), emailports.EmailMessageChange{})
 
 	assert.Empty(t, f.recorder.kinds())

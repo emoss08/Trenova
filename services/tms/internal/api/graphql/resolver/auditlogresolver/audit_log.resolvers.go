@@ -9,8 +9,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +40,7 @@ func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +70,7 @@ func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlm
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +103,7 @@ func (r *QueryResolver) AuditEntry(ctx context.Context, id string) (*audit.Entry
 
 	return r.AuditService.GetByID(ctx, auditports.GetAuditEntryByIDOptions{
 		EntryID:    entryID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -110,9 +112,9 @@ func (r *AuditEntryResolver) Changes(ctx context.Context, obj *audit.Entry) (map
 }
 
 func (r *AuditEntryResolver) PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
-	return permission.WithholdProtectedJSON(obj.Resource, obj.PreviousState, r.auditGroups(ctx)), nil
+	return protectedfield.WithholdJSON(obj.Resource, obj.PreviousState, r.auditGroups(ctx)), nil
 }
 
 func (r *AuditEntryResolver) CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error) {
-	return permission.WithholdProtectedJSON(obj.Resource, obj.CurrentState, r.auditGroups(ctx)), nil
+	return protectedfield.WithholdJSON(obj.Resource, obj.CurrentState, r.auditGroups(ctx)), nil
 }

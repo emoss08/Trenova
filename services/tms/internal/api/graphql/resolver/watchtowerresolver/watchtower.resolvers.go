@@ -10,8 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -20,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -37,7 +40,7 @@ func (r *MutationResolver) MarkWatchtowerSeen(ctx context.Context, seenAt *int) 
 
 	counts, err := r.WatchtowerService.MarkSeen(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 		at,
 	)
@@ -61,7 +64,7 @@ func (r *MutationResolver) DismissWatchtowerItem(ctx context.Context, id string)
 
 	return r.WatchtowerService.Dismiss(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		itemID,
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -79,7 +82,7 @@ func (r *MutationResolver) HandOffWatchtowerItem(ctx context.Context, id string,
 	}
 
 	req := watchtowerports.HandOffWatchtowerItemRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ItemID:     itemID,
 	}
 	if input.AgentDefinitionID != nil && *input.AgentDefinitionID != "" {
@@ -105,7 +108,7 @@ func (r *QueryResolver) WatchtowerItems(ctx context.Context, input gqlmodel.Watc
 	}
 
 	req := watchtowerports.ListWatchtowerItemsRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		Kinds:          input.Kinds,
 		Severities:     input.Severities,
 		UnresolvedOnly: true,
@@ -116,13 +119,13 @@ func (r *QueryResolver) WatchtowerItems(ctx context.Context, input gqlmodel.Watc
 		OrderByDue:     typeutils.ValueOrZero(input.OrderByDue),
 	}
 	if len(input.AssigneeIds) > 0 {
-		assignees, parseErr := base.ParseIDs(input.AssigneeIds)
+		assignees, parseErr := gqlid.ParseIDs(input.AssigneeIds)
 		if parseErr != nil {
 			return nil, parseErr
 		}
 		req.AssigneeIDs = assignees
 	}
-	if req.SubjectID, err = base.OptionalID(input.SubjectID); err != nil {
+	if req.SubjectID, err = gqlid.OptionalID(input.SubjectID); err != nil {
 		return nil, err
 	}
 	if input.UnresolvedOnly != nil {
@@ -172,7 +175,7 @@ func (r *QueryResolver) WatchtowerCounts(ctx context.Context) (*gqlmodel.Watchto
 
 	counts, err := r.WatchtowerService.Counts(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	)
 	if err != nil {
@@ -222,7 +225,7 @@ func (r *MutationResolver) AssignWatchtowerItem(ctx context.Context, id string, 
 		ExceptionTarget: target,
 		Note:            stringutils.FromPtr(input.Note),
 	}
-	if req.AssigneeID, err = base.OptionalID(input.AssigneeID); err != nil {
+	if req.AssigneeID, err = gqlid.OptionalID(input.AssigneeID); err != nil {
 		return nil, err
 	}
 
@@ -326,7 +329,7 @@ func (r *QueryResolver) WatchtowerItem(ctx context.Context, id string) (*watchto
 
 	return r.WatchtowerExceptions.GetException(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         itemID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -340,7 +343,7 @@ func (r *QueryResolver) WatchtowerItemHistory(ctx context.Context, id string, li
 		return nil, err
 	}
 	req := &watchtowerports.ExceptionHistoryRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ItemID:     itemID,
 	}
 	if limit != nil {
@@ -359,7 +362,7 @@ func (r *QueryResolver) WatchtowerResolutionCodes(ctx context.Context) ([]*watch
 }
 
 func (r *WatchtowerItemEventResolver) ActorID(ctx context.Context, obj *watchtower.Event) (*string, error) {
-	return base.IDPtr(obj.ActorID), nil
+	return gqlid.IDPtr(obj.ActorID), nil
 }
 
 func (r *WatchtowerItemEventResolver) Actor(ctx context.Context, obj *watchtower.Event) (*tenant.User, error) {
@@ -367,7 +370,7 @@ func (r *WatchtowerItemEventResolver) Actor(ctx context.Context, obj *watchtower
 }
 
 func (r *WatchtowerItemResolver) AssigneeID(ctx context.Context, obj *watchtower.Item) (*string, error) {
-	return base.IDPtr(obj.AssigneeID), nil
+	return gqlid.IDPtr(obj.AssigneeID), nil
 }
 
 func (r *WatchtowerItemResolver) Assignee(ctx context.Context, obj *watchtower.Item) (*tenant.User, error) {
@@ -397,7 +400,7 @@ func (r *WatchtowerItemResolver) ResolutionNote(ctx context.Context, obj *watcht
 }
 
 func (r *WatchtowerItemResolver) ResolvedByID(ctx context.Context, obj *watchtower.Item) (*string, error) {
-	return base.IDPtr(obj.ResolvedByID), nil
+	return gqlid.IDPtr(obj.ResolvedByID), nil
 }
 
 func (r *WatchtowerItemResolver) ResolvedBy(ctx context.Context, obj *watchtower.Item) (*tenant.User, error) {
@@ -416,7 +419,7 @@ func (r *MutationResolver) MarkWatchtowerItemSeen(ctx context.Context, id string
 
 	return r.WatchtowerService.MarkItemSeen(ctx, watchtowerports.GetWatchtowerItemRequest{
 		ID:         itemID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -439,7 +442,7 @@ func (r *QueryResolver) WatchtowerCleared(ctx context.Context, since int) (int, 
 
 	return r.WatchtowerService.Cleared(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 		int64(since),
 	)
@@ -453,7 +456,7 @@ func (r *QueryResolver) WatchtowerHandOffAgents(ctx context.Context) ([]*agentde
 
 	return r.WatchtowerService.HandOffAgents(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	)
 }
@@ -463,7 +466,7 @@ func (r *WatchtowerAgentWorkResolver) Agent(ctx context.Context, obj *watchtower
 }
 
 func (r *WatchtowerAgentWorkResolver) HandedByID(ctx context.Context, obj *watchtower.AgentWork) (*string, error) {
-	return base.IDPtr(obj.HandedByID), nil
+	return gqlid.IDPtr(obj.HandedByID), nil
 }
 
 func (r *WatchtowerAgentWorkResolver) HandedBy(ctx context.Context, obj *watchtower.AgentWork) (*tenant.User, error) {
@@ -496,7 +499,7 @@ func (r *WatchtowerItemResolver) SuggestedAgentID(ctx context.Context, obj *watc
 		return nil, err
 	}
 
-	return base.IDPtr(definition.ID), nil
+	return gqlid.IDPtr(definition.ID), nil
 }
 
 func (r *WatchtowerItemResolver) SuggestedAgent(ctx context.Context, obj *watchtower.Item) (*agentdefinition.Definition, error) {
@@ -507,7 +510,7 @@ func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.
 	if !obj.HasAgent() {
 		return nil, nil
 	}
-	run, err := base.OptionalMatch(loaders.AgentRunByID(ctx, obj.AgentRunID.String()))
+	run, err := loaderfields.OptionalMatch(agentloaders.AgentRunByID(ctx, obj.AgentRunID.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -524,5 +527,5 @@ func (r *WatchtowerRecordResolver) Noun(ctx context.Context, obj *watchtower.Rec
 		return "", nil
 	}
 
-	return stringutils.CapitalizeFirst(obj.Kind.Noun()), nil
+	return textcase.CapitalizeFirst(obj.Kind.Noun()), nil
 }

@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -70,7 +72,7 @@ func myAgentIDList(field string, ids []string) ([]any, error) {
 		)
 	}
 
-	parsed, err := base.ParseIDs(ids)
+	parsed, err := gqlid.ParseIDs(ids)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func myAgentIDList(field string, ids []string) ([]any, error) {
 func myAgentConnectionToModel(
 	result *pagination.CursorListResult[*agentdefinition.Definition],
 ) (*gqlmodel.MyAgentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agentdefinition.Definition, cursor string) *gqlmodel.MyAgentEdge {
 			return &gqlmodel.MyAgentEdge{Node: node, Cursor: cursor}
@@ -110,7 +112,7 @@ func emptyMyAgentConnection(ctx context.Context) *gqlmodel.MyAgentConnection {
 		Edges:    []*gqlmodel.MyAgentEdge{},
 		PageInfo: &gqlmodel.PageInfo{},
 	}
-	if base.ConnectionTotalRequested(ctx) {
+	if gqlconnection.ConnectionTotalRequested(ctx) {
 		zero := 0
 		connection.TotalCount = &zero
 		connection.TotalCountExact = true
@@ -189,7 +191,7 @@ func myAgentColumns(ctx context.Context, nodePathPrefix string) []string {
 	return definitionColumns(ctx, projection.MyAgentSpec, nodePathPrefix)
 }
 
-func definitionTemplate(obj *agentdefinition.Definition) *agentdefinition.Template {
+func definitionTemplate(obj *agentdefinition.Definition) *agenttemplate.Template {
 	if obj.Template == "" {
 		return nil
 	}

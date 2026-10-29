@@ -3,18 +3,19 @@ package documenttemplateservice_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/app/documenttemplateservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/templateengine"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -26,14 +27,14 @@ type harness struct {
 	inliner    *documenttemplateportsmock.MockAssetInliner
 	pdf        *documenttemplateportsmock.MockPDFRenderer
 	generated  *documenttemplateportsmock.MockGeneratedDocumentRepository
-	registry   *documenttemplate.Registry
+	registry   *templatecatalog.Registry
 	tenantInfo pagination.TenantInfo
 }
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	repo := documenttemplateportsmock.NewMockDocumentTemplateRepository(t)
 	versions := documenttemplateportsmock.NewMockDocumentTemplateVersionRepository(t)
 	inliner := documenttemplateportsmock.NewMockAssetInliner(t)
@@ -81,7 +82,7 @@ func newHarness(t *testing.T) *harness {
 func TestBuiltInStartersPassTheirOwnPublishGate(t *testing.T) {
 	t.Parallel()
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	for _, kind := range documenttemplate.AllKinds() {
 		t.Run(string(kind), func(t *testing.T) {
@@ -326,10 +327,12 @@ func TestContentHashDistinguishesWhereContentLives(t *testing.T) {
 	)
 }
 
-func publishableInvoice(t *testing.T) (*documenttemplate.KindDefinition, *documenttemplate.DocumentTemplateVersion) {
+func publishableInvoice(
+	t *testing.T,
+) (*templatecatalog.KindDefinition, *documenttemplate.DocumentTemplateVersion) {
 	t.Helper()
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	def, ok := registry.Get(documenttemplate.KindInvoicePDF)
 	require.True(t, ok)
 	starter, err := starters.For(documenttemplate.KindInvoicePDF)
@@ -375,7 +378,7 @@ func TestPublishGateRefusesAHostileRunningHeader(t *testing.T) {
 func TestSavingADraftRefusesAStylesheetThatLoadsRemoteContent(t *testing.T) {
 	t.Parallel()
 
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	validator := documenttemplateservice.NewValidator(
 		documenttemplateservice.ValidatorParams{Registry: registry},
 	)

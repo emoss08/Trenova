@@ -11,7 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +26,7 @@ import (
 type harness struct {
 	ctx      context.Context
 	db       *keel.DB
-	repo     shipmentports.ShipmentMoveRepository
+	repo     shipmentmoveports.ShipmentMoveRepository
 	tenant   pagination.TenantInfo
 	graph    *testutil.ShipmentGraph
 	otherCtx context.Context
@@ -44,7 +45,7 @@ func newHarness(t *testing.T) *harness {
 		BOL:          "BOL-MOVE",
 		ProNumber:    "PRO-MOVE",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "OT")
 
@@ -70,7 +71,7 @@ func (h *harness) shipmentWithMoves(moves ...*shipment.ShipmentMove) *shipment.S
 func (h *harness) moves(t *testing.T) []*shipment.ShipmentMove {
 	t.Helper()
 
-	moves, err := h.repo.GetMovesByShipmentID(h.ctx, &shipmentports.GetMovesByShipmentIDRequest{
+	moves, err := h.repo.GetMovesByShipmentID(h.ctx, &shipmentmoveports.GetMovesByShipmentIDRequest{
 		ShipmentID:        h.graph.Shipment.ID,
 		TenantInfo:        h.tenant,
 		ExpandMoveDetails: true,
@@ -83,16 +84,16 @@ func TestSyncForShipment_InsertsNewMovesAndStops(t *testing.T) {
 	h := newHarness(t)
 	existing := h.graph.Moves[0]
 	added := &shipment.ShipmentMove{
-		Status: shipment.MoveStatusNew,
+		Status: shipmentvocab.MoveStatusNew,
 		Stops: []*shipment.Stop{
 			{
 				LocationID:           existing.Stops[1].LocationID,
-				Type:                 shipment.StopTypePickup,
+				Type:                 shipmentvocab.StopTypePickup,
 				ScheduledWindowStart: existing.Stops[1].ScheduledWindowStart + 3_600,
 			},
 			{
 				LocationID:           existing.Stops[0].LocationID,
-				Type:                 shipment.StopTypeDelivery,
+				Type:                 shipmentvocab.StopTypeDelivery,
 				ScheduledWindowStart: existing.Stops[1].ScheduledWindowStart + 7_200,
 			},
 		},
@@ -105,10 +106,10 @@ func TestSyncForShipment_InsertsNewMovesAndStops(t *testing.T) {
 	require.Len(t, moves, 2)
 	assert.Equal(t, added.ID, moves[1].ID)
 	assert.Equal(t, int64(1), moves[1].Sequence)
-	assert.Equal(t, shipment.MoveCoverageTypeUnassigned, moves[1].CoverageType)
+	assert.Equal(t, shipmentvocab.MoveCoverageTypeUnassigned, moves[1].CoverageType)
 	require.Len(t, moves[1].Stops, 2)
-	assert.Equal(t, shipment.StopScheduleTypeOpen, moves[1].Stops[0].ScheduleType)
-	assert.Equal(t, shipment.StopStatusNew, moves[1].Stops[0].Status)
+	assert.Equal(t, shipmentvocab.StopScheduleTypeOpen, moves[1].Stops[0].ScheduleType)
+	assert.Equal(t, shipmentvocab.StopStatusNew, moves[1].Stops[0].Status)
 	require.NotNil(t, moves[1].Stops[0].Location)
 }
 
@@ -142,7 +143,7 @@ func TestSyncForShipment_RejectsAnUnknownMove(t *testing.T) {
 
 	err := h.repo.SyncForShipment(h.ctx, h.shipmentWithMoves(&shipment.ShipmentMove{
 		ID:     pulid.MustNew("sm_"),
-		Status: shipment.MoveStatusNew,
+		Status: shipmentvocab.MoveStatusNew,
 	}))
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -152,13 +153,13 @@ func TestUpdateStatus_UpdatesTheMoveUnderItsVersion(t *testing.T) {
 	h := newHarness(t)
 	move := h.graph.Moves[0]
 
-	updated, err := h.repo.UpdateStatus(h.ctx, &shipmentports.UpdateMoveStatusRequest{
+	updated, err := h.repo.UpdateStatus(h.ctx, &shipmentmoveports.UpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveID:     move.ID,
-		Status:     shipment.MoveStatusAssigned,
+		Status:     shipmentvocab.MoveStatusAssigned,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, shipment.MoveStatusAssigned, updated.Status)
+	assert.Equal(t, shipmentvocab.MoveStatusAssigned, updated.Status)
 	assert.Equal(t, move.Version+1, updated.Version)
 	assert.Len(t, updated.Stops, 2)
 }
@@ -167,19 +168,19 @@ func TestBulkUpdateStatus_UpdatesEveryMoveAndRefusesAMissingOne(t *testing.T) {
 	h := newHarness(t)
 	move := h.graph.Moves[0]
 
-	updated, err := h.repo.BulkUpdateStatus(h.ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	updated, err := h.repo.BulkUpdateStatus(h.ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveIDs:    []pulid.ID{move.ID},
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 	})
 	require.NoError(t, err)
 	require.Len(t, updated, 1)
-	assert.Equal(t, shipment.MoveStatusInTransit, updated[0].Status)
+	assert.Equal(t, shipmentvocab.MoveStatusInTransit, updated[0].Status)
 
-	_, err = h.repo.BulkUpdateStatus(h.ctx, &shipmentports.BulkUpdateMoveStatusRequest{
+	_, err = h.repo.BulkUpdateStatus(h.ctx, &shipmentmoveports.BulkUpdateMoveStatusRequest{
 		TenantInfo: h.tenant,
 		MoveIDs:    []pulid.ID{move.ID, pulid.MustNew("sm_")},
-		Status:     shipment.MoveStatusNew,
+		Status:     shipmentvocab.MoveStatusNew,
 	})
 	require.Error(t, err)
 }
@@ -189,7 +190,7 @@ func TestUpdateStopActuals_RefusesAStaleVersion(t *testing.T) {
 	stop := h.graph.Moves[0].Stops[0]
 	arrived := stop.ScheduledWindowStart
 	stop.ActualArrival = &arrived
-	stop.Status = shipment.StopStatusInTransit
+	stop.Status = shipmentvocab.StopStatusInTransit
 
 	saved, err := h.repo.UpdateStopActuals(h.ctx, h.tenant, stop)
 	require.NoError(t, err)
@@ -204,7 +205,7 @@ func TestUpdateStopActuals_RefusesAStaleVersion(t *testing.T) {
 func TestGetByID_IsInvisibleToAnotherTenant(t *testing.T) {
 	h := newHarness(t)
 
-	_, err := h.repo.GetByID(h.otherCtx, &shipmentports.GetMoveByIDRequest{
+	_, err := h.repo.GetByID(h.otherCtx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID: h.graph.Moves[0].ID,
 	})
 	require.Error(t, err)

@@ -3,20 +3,23 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type askEndRun struct {
-	result     *agentports.RunResult
+	result     *agentruntimeports.RunResult
 	completion *scriptedCompletion
 }
 
 func runAskEnd(
 	t *testing.T,
-	turns ...*agentports.ChatCompletionResult,
+	turns ...*llmports.ChatCompletionResult,
 ) askEndRun {
 	t.Helper()
 
@@ -28,9 +31,9 @@ func runAskEnd(
 		emit: func(kernelports.StreamEvent) {},
 	}
 
-	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "what is on my dashboard",
 	}), fx)
 	require.NoError(t, err)
@@ -38,8 +41,11 @@ func runAskEnd(
 	return askEndRun{result: result, completion: completion}
 }
 
-func askTurn(question string) *agentports.ChatCompletionResult {
-	return toolTurn(askUserName, map[string]any{"question": question, "allowOther": true})
+func askTurn(question string) *llmports.ChatCompletionResult {
+	return runtimetest.ToolTurn(
+		askuser.Name,
+		map[string]any{"question": question, "allowOther": true},
+	)
 }
 
 func TestRun_EndsTheTurnOnceAQuestionIsShown(t *testing.T) {
@@ -59,7 +65,7 @@ func TestRun_EndsTheTurnAfterEveryCallOfTheReplyThatAsked(t *testing.T) {
 	t.Parallel()
 
 	turn := askTurn("Which dashboard?")
-	turn.ToolCalls = append(turn.ToolCalls, agentports.ToolCall{
+	turn.ToolCalls = append(turn.ToolCalls, llmports.ToolCall{
 		ID: "call_2", Name: "report_list_dashboards", Arguments: map[string]any{},
 	})
 
@@ -79,8 +85,8 @@ func TestRun_KeepsWorkingAfterAQuestionThatWasNotShown(t *testing.T) {
 	t.Parallel()
 
 	run := runAskEnd(t,
-		toolTurn(askUserName, map[string]any{"question": "  "}),
-		textTurn("Your dashboard has three tiles."),
+		runtimetest.ToolTurn(askuser.Name, map[string]any{"question": "  "}),
+		runtimetest.TextTurn("Your dashboard has three tiles."),
 	)
 
 	assert.Equal(t, 2, run.completion.CallCount)

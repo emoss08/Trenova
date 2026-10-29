@@ -3,8 +3,19 @@ package agentquerytoolservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/agentrunquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqlread"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workerquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -12,23 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// pageRecord is a list's outcome as one object, whichever page carries it:
-// a page read beside other records, or one that pages by offset.
-func pageRecord(data any) (map[string]any, bool) {
-	switch outcome := data.(type) {
-	case map[string]any:
-		return outcome, true
-	case *besidePage:
-		record, err := outcome.record()
-		return record, err == nil
-	case *offsetPage:
-		return outcome.record, true
-	}
-
-	return nil, false
-}
-
-func workersAnswer() *agentports.GraphQLReadResult {
+func workersAnswer() *graphqlreadports.GraphQLReadResult {
 	edge := func(id, name, city, cursor string) map[string]any {
 		return map[string]any{"cursor": cursor, "node": map[string]any{
 			"id": id, "wholeName": name, "firstName": name, "city": city, "status": "Active",
@@ -37,7 +32,7 @@ func workersAnswer() *agentports.GraphQLReadResult {
 		}}
 	}
 
-	return &agentports.GraphQLReadResult{Data: map[string]any{"workers": map[string]any{
+	return &graphqlreadports.GraphQLReadResult{Data: map[string]any{"workers": map[string]any{
 		"edges": []any{
 			edge("wrk_1", "Ann", "Dallas", "c1"),
 			edge("wrk_2", "Bo", "Tulsa", "c2"),
@@ -47,13 +42,13 @@ func workersAnswer() *agentports.GraphQLReadResult {
 	}}}
 }
 
-func workerList(t *testing.T) (*graphQLListTool, *keyedReader) {
+func workerList(t *testing.T) (*graphqllisttool.Tool, *querytooltest.KeyedReader) {
 	t.Helper()
 
-	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+	reader := &querytooltest.KeyedReader{Answers: map[string]*graphqlreadports.GraphQLReadResult{
 		"DeskWorkers": workersAnswer(),
 	}}
-	tool, err := newGraphQLListTool(keyedSpec(t, toolWorkerList), reader,
+	tool, err := graphqllisttool.New(keyedSpec(t, querytool.ToolWorkerList), reader,
 		&mocks.DenyResourcesPermissionEngine{})
 	require.NoError(t, err)
 
@@ -66,22 +61,22 @@ func TestGraphQLListOutcome_ACutPageResumesAfterItsLastRow(t *testing.T) {
 	t.Parallel()
 
 	tool, _ := workerList(t)
-	call := keyedCall(map[string]any{})
+	call := querytooltest.KeyedCall(map[string]any{})
 	data, err := tool.Query(t.Context(), call)
 	require.NoError(t, err)
-	page, ok := data.(graphQLListOutcome)
+	page, ok := data.(graphqllisttool.Outcome)
 	require.True(t, ok)
 	require.Equal(t, 3, page.PageRows())
 	assert.False(t, page.HasMore)
 
 	cut, ok := page.CutPage(2)
 	require.True(t, ok)
-	short, _ := cut.(graphQLListOutcome)
+	short, _ := cut.(graphqllisttool.Outcome)
 	assert.Equal(t, 2, short.Count)
 	assert.Len(t, short.Items, 2)
 	assert.True(t, short.HasMore, "a cut page always has more")
 
-	scope, err := cursorScope(toolWorkerList, call.Params)
+	scope, err := querytool.CursorScope(querytool.ToolWorkerList, call.Params)
 	require.NoError(t, err)
 	resumed, err := pagination.DecodeKeyCursor(scope, short.NextCursor)
 	require.NoError(t, err)
@@ -97,9 +92,12 @@ func TestGraphQLListOutcome_RankedRowsAreNotCut(t *testing.T) {
 	t.Parallel()
 
 	tool, _ := workerList(t)
-	data, err := tool.Query(t.Context(), keyedCall(map[string]any{graphQLParamQuery: "bo"}))
+	data, err := tool.Query(
+		t.Context(),
+		querytooltest.KeyedCall(map[string]any{graphqlread.ParamQuery: "bo"}),
+	)
 	require.NoError(t, err)
-	page, ok := data.(graphQLListOutcome)
+	page, ok := data.(graphqllisttool.Outcome)
 	require.True(t, ok)
 
 	_, ok = page.CutPage(1)
@@ -114,25 +112,30 @@ func TestGraphQLList_FieldsLeaveTheListWhole(t *testing.T) {
 
 	tool, _ := workerList(t)
 	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
-	fields, ok := properties[paramFields].(map[string]any)
+	fields, ok := properties[agenttoolports.ListFieldsParam].(map[string]any)
 	require.True(t, ok, "a list with columns takes fields")
 	items, _ := fields[toolschema.KeyItems].(map[string]any)
 	assert.Contains(t, items[toolschema.KeyEnum], "wholeName")
 	assert.Contains(t, items[toolschema.KeyEnum], "profile")
-	assert.NotContains(t, items[toolschema.KeyEnum], recordIDField)
+	assert.Contains(t, items[toolschema.KeyEnum], workerquerytools.DispatchableField,
+		"what the list works out for every row may be named too")
+	assert.NotContains(t, items[toolschema.KeyEnum], querytool.RecordIDField)
 
-	data, err := tool.Query(t.Context(), keyedCall(map[string]any{
-		paramFields: []any{"wholeName"},
+	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
+		agenttoolports.ListFieldsParam: []any{"wholeName"},
 	}))
 	require.NoError(t, err)
-	page, _ := data.(graphQLListOutcome)
+	page, _ := data.(graphqllisttool.Outcome)
 	require.Len(t, page.Items, 3)
 	assert.Equal(t, "Dallas", page.Items[0]["city"], "the table keeps every column")
 	assert.Contains(t, page.Columns, "city")
 
-	plain, err := cursorScope(toolWorkerList, map[string]any{})
+	plain, err := querytool.CursorScope(querytool.ToolWorkerList, map[string]any{})
 	require.NoError(t, err)
-	narrowed, err := cursorScope(toolWorkerList, map[string]any{paramFields: []any{"wholeName"}})
+	narrowed, err := querytool.CursorScope(
+		querytool.ToolWorkerList,
+		map[string]any{agenttoolports.ListFieldsParam: []any{"wholeName"}},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, plain, narrowed, "the columns read never change which rows a page holds")
 }
@@ -144,11 +147,11 @@ func TestGraphQLList_WithoutCredentialReachesTheRoot(t *testing.T) {
 	tool, reader := workerList(t)
 	properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)
 	require.Contains(t, properties, "withoutCredential")
-	_, err := tool.Query(t.Context(), keyedCall(map[string]any{
+	_, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{
 		"withoutCredential": "ROAD_TEST",
 	}))
 	require.NoError(t, err)
-	sent := reader.sent("DeskWorkers")
+	sent := reader.Sent("DeskWorkers")
 	require.NotNil(t, sent)
 	assert.Equal(t, "ROAD_TEST", sent.Variables["withoutCredential"])
 }
@@ -156,35 +159,40 @@ func TestGraphQLList_WithoutCredentialReachesTheRoot(t *testing.T) {
 func TestSearchOutcome_ACutResumesByCursorOrOffset(t *testing.T) {
 	t.Parallel()
 
-	rows := []shipmentRow{{ID: "shp_1"}, {ID: "shp_2"}, {ID: "shp_3"}}
-	byCursor := searchOutcome{
+	rows := []shipmentquerytools.Row{{ID: "shp_1"}, {ID: "shp_2"}, {ID: "shp_3"}}
+	byCursor := querytool.SearchOutcome{
 		Count: 3, Items: rows,
-		resume: &pageResume{scope: "scope", cursors: []string{"k1", "k2", "k3"}},
+		Resume: &querytool.PageResume{Scope: "scope", Cursors: []string{"k1", "k2", "k3"}},
 	}
 	cut, ok := byCursor.CutPage(1)
 	require.True(t, ok)
-	short, _ := cut.(searchOutcome)
+	short, _ := cut.(querytool.SearchOutcome)
 	assert.Equal(t, 1, short.Count)
 	assert.True(t, short.HasMore)
 	key, err := pagination.DecodeKeyCursor("scope", short.NextCursor)
 	require.NoError(t, err)
 	assert.Equal(t, "k1", key)
 
-	byOffset := searchOutcome{Count: 3, Items: rows, Offset: 25, resume: &pageResume{byOffset: true}}
+	byOffset := querytool.SearchOutcome{
+		Count:  3,
+		Items:  rows,
+		Offset: 25,
+		Resume: &querytool.PageResume{ByOffset: true},
+	}
 	cut, ok = byOffset.CutPage(2)
 	require.True(t, ok)
-	short, _ = cut.(searchOutcome)
+	short, _ = cut.(querytool.SearchOutcome)
 	require.NotNil(t, short.NextOffset)
 	assert.Equal(t, 27, *short.NextOffset)
 
-	_, ok = searchOutcome{Count: 3, Items: rows}.CutPage(1)
+	_, ok = querytool.SearchOutcome{Count: 3, Items: rows}.CutPage(1)
 	assert.False(t, ok, "rows not in the list's order cannot be cut")
 
-	gated := gatedResult(&byCursor, nil)
+	gated := fieldgate.Result(&byCursor, nil)
 	gated.Withheld = []string{"totalCharge"}
 	cut, ok = gated.CutPage(2)
 	require.True(t, ok)
-	kept, _ := cut.(*gatedOutcome)
+	kept, _ := cut.(*fieldgate.Outcome)
 	require.NotNil(t, kept)
 	assert.Equal(t, []string{"totalCharge"}, kept.Withheld, "a gated page keeps what it withheld")
 	assert.Equal(t, 2, kept.Count)
@@ -196,23 +204,26 @@ func TestOffsetPage_ACutResumesAtTheRowAfter(t *testing.T) {
 	t.Parallel()
 
 	items := []map[string]any{{"id": "a"}, {"id": "c"}, {"id": "d"}}
-	page := &offsetPage{
-		record:    map[string]any{outcomeItems: items, outcomeCount: 3},
-		outside:   []agent.RecordRef{{EntityType: "x", ID: "d"}},
-		positions: []int{0, 2, 3},
-		window:    offsetWindow{scope: "scope", offset: 10, limit: 4},
+	page := &graphqllisttool.OffsetPage{
+		Record:    map[string]any{graphqlread.OutcomeItems: items, graphqlread.OutcomeCount: 3},
+		Outside:   []agentrecord.RecordRef{{EntityType: "x", ID: "d"}},
+		Positions: []int{0, 2, 3},
+		Window:    querytool.OffsetWindow{Scope: "scope", Offset: 10, Limit: 4},
 	}
 
 	cut, ok := page.CutPage(2)
 	require.True(t, ok)
-	short, _ := cut.(*offsetPage)
-	assert.Equal(t, 2, short.record[outcomeCount])
-	assert.Equal(t, true, short.record[outcomeHasMore])
-	key, err := pagination.DecodeKeyCursor("scope", short.record[outcomeNextCursor].(string))
+	short, _ := cut.(*graphqllisttool.OffsetPage)
+	assert.Equal(t, 2, short.Record[graphqlread.OutcomeCount])
+	assert.Equal(t, true, short.Record[graphqllisttool.OutcomeHasMore])
+	key, err := pagination.DecodeKeyCursor(
+		"scope",
+		short.Record[graphqllisttool.OutcomeNextCursor].(string),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "13", key)
 	assert.Empty(t, short.TaintedRecords(), "a marked row the cut left out is not in the page")
-	assert.Len(t, page.items(), 3, "the page cut from is unchanged")
+	assert.Len(t, page.Items(), 3, "the page cut from is unchanged")
 }
 
 // A page read beside other records cuts as its page does and keeps them.
@@ -220,16 +231,33 @@ func TestBesidePage_ACutKeepsWhatWasReadBeside(t *testing.T) {
 	t.Parallel()
 
 	tool, _ := workerList(t)
-	data, err := tool.Query(t.Context(), keyedCall(map[string]any{}))
+	data, err := tool.Query(t.Context(), querytooltest.KeyedCall(map[string]any{}))
 	require.NoError(t, err)
-	page, _ := data.(graphQLListOutcome)
-	beside, err := withBeside(&page, map[string]any{"catalog": []any{"x"}})
+	page, _ := data.(graphqllisttool.Outcome)
+	beside, err := graphqllisttool.WithBeside(&page, map[string]any{"catalog": []any{"x"}})
 	require.NoError(t, err)
 
-	cut, ok := beside.(agentports.PageCutter).CutPage(1)
+	cut, ok := beside.(agenttoolports.PageCutter).CutPage(1)
 	require.True(t, ok)
-	record, ok := pageRecord(cut)
+	record, ok := graphqllisttool.PageRecord(cut)
 	require.True(t, ok)
 	assert.Equal(t, []any{"x"}, record["catalog"])
-	assert.Len(t, record[outcomeItems], 1)
+	assert.Len(t, record[graphqlread.OutcomeItems], 1)
+}
+
+// A repository list offers fields as its row's columns but the id, so what
+// the model reads narrows as a GraphQL list's does; a list that declares no
+// row takes none.
+func TestRepositoryList_FieldsAreItsRowsColumns(t *testing.T) {
+	t.Parallel()
+
+	properties, _ := masterdataquerytools.NewListFleetCodesTool(nil).ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	fields, ok := properties[agenttoolports.ListFieldsParam].(map[string]any)
+	require.True(t, ok, "a list that declares its row takes fields")
+	items, _ := fields[toolschema.KeyItems].(map[string]any)
+	assert.Equal(t, []string{"code", "name", "description", "status"}, items[toolschema.KeyEnum])
+
+	spec := agentrunquerytools.AgentRunListSpec()
+	properties, _ = listtool.Build(&spec).ParamSchema()[toolschema.KeyProperties].(map[string]any)
+	assert.NotContains(t, properties, agenttoolports.ListFieldsParam)
 }

@@ -97,3 +97,12 @@ func TestFind_NamesEachIDOnceInOrder(t *testing.T) {
 	assert.Empty(t, Find(text, 0))
 	assert.Empty(t, Find("no ids here", 10))
 }
+
+func TestMentioned_FindsAnIDInAnyCase(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, Mentioned("look up shp_01M42BNHACKS99T13QKY88TVXV for me"))
+	assert.True(t, Mentioned("look up SHP_01m42bnhacks99t13qky88tvxv for me"))
+	assert.False(t, Mentioned("look up shipment 4512 for me"))
+	assert.False(t, Mentioned("xshp_01M42BNHACKS99T13QKY88TVXVx"))
+}

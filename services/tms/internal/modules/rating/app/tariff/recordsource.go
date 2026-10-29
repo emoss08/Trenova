@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
@@ -15,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -37,7 +38,7 @@ type RecordSourceParams struct {
 	Settings      *Settings
 	Shipments     shipmentports.ShipmentRepository
 	Hydrator      ratequoteports.ShipmentRatingHydrator
-	Holidays      workerports.OrgHolidayRepository
+	Holidays      orgholidayports.OrgHolidayRepository
 	Codes         *Codes
 }
 
@@ -48,7 +49,7 @@ type RecordSource struct {
 	settings      *Settings
 	shipments     shipmentports.ShipmentRepository
 	hydrator      ratequoteports.ShipmentRatingHydrator
-	holidays      workerports.OrgHolidayRepository
+	holidays      orgholidayports.OrgHolidayRepository
 	codes         *Codes
 }
 
@@ -165,7 +166,7 @@ func (s *RecordSource) Holidays(
 		"tariff.holidays:"+strconv.Itoa(year),
 		func(ctx context.Context) ([]record.Holiday, error) {
 			window := record.HolidayWindowFor(year)
-			rows, err := s.holidays.List(ctx, &workerports.ListOrgHolidaysRequest{
+			rows, err := s.holidays.List(ctx, &orgholidayports.ListOrgHolidaysRequest{
 				TenantInfo: tenant,
 				From:       window.From,
 				To:         window.To,
@@ -277,7 +278,7 @@ func (s *RecordSource) ShipmentRecord(
 	}
 	asOf := req.AsOf
 	if asOf == 0 {
-		asOf = entity.RatingAsOf(timeutils.NowUnix())
+		asOf = shipmentrating.AsOf(entity, timeutils.NowUnix())
 	}
 	return s.Build(ctx, &RecordRequest{
 		TenantInfo: req.TenantInfo,

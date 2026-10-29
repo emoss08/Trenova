@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,39 +23,48 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Connections           accountingsyncports.AccountingConnectionService
-	ConnectionsRepository accountingsyncports.AccountingConnectionRepository
-	Mappings              accountingsyncports.AccountingMappingService
-	Sync                  accountingsyncports.AccountingSyncService
+	Health                accountingconnectionports.AccountingHealthChecker
+	Subscriptions         accountingconnectionports.AccountingWebhookSubscriptionSyncer
+	ConnectionsRepository accountingconnectionports.AccountingConnectionRepository
+	Mappings              accountingmappingports.AccountingMappingScorer
+	Drainer               accountingsyncports.AccountingSyncDrainer
+	Sweeper               accountingsyncports.AccountingSyncSweeper
+	Backfills             accountingsyncports.AccountingBackfillService
 	Dispatcher            accountingsyncports.AccountingSyncDispatcher
-	Inbound               accountingsyncports.AccountingInboundService
-	Poller                accountingsyncports.AccountingChangePoller
-	Drift                 accountingsyncports.AccountingDriftReconciler
-	DriftChecker          accountingsyncports.AccountingDriftChecker
-	Publisher             agentports.AgentEventPublisher `optional:"true"`
+	Inbound               accountinginboundports.AccountingInboundService
+	Poller                accountinginboundports.AccountingChangePoller
+	Drift                 accountingdriftports.AccountingDriftReconciler
+	DriftChecker          accountingdriftports.AccountingDriftChecker
+	Publisher             agenteventports.AgentEventPublisher `optional:"true"`
 	Logger                *zap.Logger
 }
 
 type Activities struct {
-	connections  accountingsyncports.AccountingConnectionService
-	connRepo     accountingsyncports.AccountingConnectionRepository
-	mappings     accountingsyncports.AccountingMappingService
-	sync         accountingsyncports.AccountingSyncService
+	health       accountingconnectionports.AccountingHealthChecker
+	subs         accountingconnectionports.AccountingWebhookSubscriptionSyncer
+	connRepo     accountingconnectionports.AccountingConnectionRepository
+	mappings     accountingmappingports.AccountingMappingScorer
+	drainer      accountingsyncports.AccountingSyncDrainer
+	sweeper      accountingsyncports.AccountingSyncSweeper
+	backfills    accountingsyncports.AccountingBackfillService
 	dispatcher   accountingsyncports.AccountingSyncDispatcher
-	inbound      accountingsyncports.AccountingInboundService
-	poller       accountingsyncports.AccountingChangePoller
-	drift        accountingsyncports.AccountingDriftReconciler
-	driftChecker accountingsyncports.AccountingDriftChecker
-	publisher    agentports.AgentEventPublisher
+	inbound      accountinginboundports.AccountingInboundService
+	poller       accountinginboundports.AccountingChangePoller
+	drift        accountingdriftports.AccountingDriftReconciler
+	driftChecker accountingdriftports.AccountingDriftChecker
+	publisher    agenteventports.AgentEventPublisher
 	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		connections:  p.Connections,
+		health:       p.Health,
+		subs:         p.Subscriptions,
 		connRepo:     p.ConnectionsRepository,
 		mappings:     p.Mappings,
-		sync:         p.Sync,
+		drainer:      p.Drainer,
+		sweeper:      p.Sweeper,
+		backfills:    p.Backfills,
 		dispatcher:   p.Dispatcher,
 		inbound:      p.Inbound,
 		poller:       p.Poller,
@@ -67,7 +80,7 @@ func (a *Activities) CheckAccountingConnectionsActivity(
 ) (*HealthSweepResult, error) {
 	result := &HealthSweepResult{}
 	for page := range healthMaxPages {
-		sweep, err := a.connections.CheckDue(ctx, healthPageSize)
+		sweep, err := a.health.CheckDue(ctx, healthPageSize)
 		if err != nil {
 			return result, err
 		}
@@ -122,7 +135,7 @@ func (a *Activities) MarkAccountingReferenceRefreshFinishedActivity(
 func (a *Activities) PullAccountingReferenceActivity(
 	ctx context.Context,
 	payload *RefreshReferencePayload,
-	kind accountingsync.ReferenceKind,
+	kind accountingprovider.ReferenceKind,
 ) (*ReferenceKindResult, error) {
 	pull, err := a.mappings.PullReference(ctx, payload.TenantInfo(), payload.ConnectionID, kind)
 	if err != nil {
@@ -186,7 +199,7 @@ func (a *Activities) ListAccountingReferenceConnectionsActivity(
 ) (*ReferenceSweepPage, error) {
 	conns, err := a.connRepo.ListActive(
 		ctx,
-		accountingsyncports.ListActiveAccountingConnectionsRequest{
+		accountingconnectionports.ListActiveAccountingConnectionsRequest{
 			AfterID: afterID,
 			Limit:   referenceSweepPageSize,
 		},

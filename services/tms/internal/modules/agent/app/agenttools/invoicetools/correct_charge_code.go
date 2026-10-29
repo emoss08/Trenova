@@ -3,12 +3,16 @@ package invoicetools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -31,7 +35,7 @@ type billingProfileReader interface {
 func NewCorrectChargeCodeTool(
 	billing billingqueueports.BillingQueueService,
 	profiles billingProfileReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CorrectChargeCodeTool{billing: billing, profiles: profiles}
 }
 
@@ -53,7 +57,7 @@ func (t *CorrectChargeCodeTool) ParamSchema() map[string]any {
 				"The billing queue item whose charges are corrected, from "+
 					"billing_list_queue_items, billing_get_queue_item, this run's subject or "+
 					"the record on the page. Never guess one.",
-				permission.KindBillingQueueItem,
+				recordkind.BillingQueueItem,
 			),
 			"additionalCharges": map[string]any{
 				toolschema.KeyType:        toolschema.TypeArray,
@@ -83,7 +87,7 @@ func chargeLineSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			chargeLineID: agenttoolschema.KindID("The existing charge this line keeps or "+
 				"corrects, from the item's charges; leave it out for a charge that is new.",
-				permission.KindAdditionalCharge),
+				recordkind.AdditionalCharge),
 			chargeLineAccessorial: agenttoolschema.RecordIDText(
 				permission.ResourceAccessorialCharge,
 				"The accessorial, from masterdata_list_accessorial_charges.",
@@ -98,36 +102,36 @@ func chargeLineSchema() map[string]any {
 				toolschema.KeyMinimum:     1,
 				toolschema.KeyDescription: "How many units the charge covers; 1 for a flat charge.",
 			},
-			common.ParamAmount: map[string]any{
+			toolparams.ParamAmount: map[string]any{
 				toolschema.KeyType: []string{toolschema.TypeString, "number"},
 				toolschema.KeyDescription: "The charge's amount in major units, as a decimal " +
 					"such as 125.00.",
 			},
 		},
 		toolschema.KeyRequired: []string{
-			chargeLineAccessorial, chargeLineMethod, chargeLineUnit, common.ParamAmount,
+			chargeLineAccessorial, chargeLineMethod, chargeLineUnit, toolparams.ParamAmount,
 		},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CorrectChargeCodeTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:        t.Name(),
-		Kind:        agent.ToolKindAction,
+		Kind:        agenttooltrust.ToolKindAction,
 		Resource:    permission.ResourceBillingQueue,
 		Operation:   permission.OpUpdate,
-		Scope:       agent.ToolScopeTenant,
+		Scope:       agenttooltrust.ToolScopeTenant,
 		DefaultTier: agent.TierPropose,
 		MaxTier:     agent.TierAutoExecute,
 		Egress:      []agent.EgressClass{agent.EgressMoney},
-		Condition: &agentports.TierCondition{
+		Condition: &agenttoolports.TierCondition{
 			Description: correctChargeBoundText,
 			Bounds:      t.withinBounds,
 		},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Rewrites the accessorial charges a customer will be invoiced, so it " +
 			"moves money.",
 	}
@@ -135,9 +139,9 @@ func (t *CorrectChargeCodeTool) Policy() agentports.ToolPolicy {
 
 func (t *CorrectChargeCodeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -152,27 +156,27 @@ func (t *CorrectChargeCodeTool) Execute(
 // model before it is proposed.
 func (t *CorrectChargeCodeTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 // request is the charge edit the preview and the write both make: the
 // item's additional charges replaced by the set the call sends.
 func (t *CorrectChargeCodeTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*billingqueueports.UpdateChargesRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	itemID, err := common.RequirePulid(params.Params, "billingQueueItemId")
+	itemID, err := toolparams.RequirePulid(params.Params, "billingQueueItemId")
 	if err != nil {
 		return nil, err
 	}
 
 	var charges []*shipment.AdditionalCharge
-	if err = common.DecodeParam(params.Params, "additionalCharges", &charges); err != nil {
+	if err = toolparams.DecodeParam(params.Params, "additionalCharges", &charges); err != nil {
 		return nil, err
 	}
 
@@ -188,6 +192,6 @@ func (t *CorrectChargeCodeTool) request(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *CorrectChargeCodeTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "billingQueueItemId", permission.ResourceBillingQueue)
+func (t *CorrectChargeCodeTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "billingQueueItemId", permission.ResourceBillingQueue)
 }

@@ -3,13 +3,13 @@
 package agentscorecardresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentevaluationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 )
 
 type Deps struct {
-	*base.Core
-	AgentScorecardService agentports.AgentScorecardService
+	*resolvercore.Core
+	AgentScorecardService agentevaluationports.AgentScorecardService
 }
 
 type QueryResolver struct{ *Deps }

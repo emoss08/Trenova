@@ -13,6 +13,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -105,8 +108,8 @@ type idempotencyHarness struct {
 }
 
 type idempotencyHarnessOptions struct {
-	cfg     config.IdempotencyConfig
-	server  config.ServerConfig
+	cfg     securityconfig.IdempotencyConfig
+	server  serverconfig.Config
 	handler func(c *gin.Context, calls int)
 	userID  pulid.ID
 }
@@ -116,17 +119,18 @@ func newIdempotencyHarness(t *testing.T, opts idempotencyHarnessOptions) *idempo
 	gin.SetMode(gin.TestMode)
 
 	cfg := &config.Config{
-		App:      config.AppConfig{Debug: true},
+		App:      appconfig.Config{Debug: true},
 		Server:   opts.server,
-		Security: config.SecurityConfig{Idempotency: opts.cfg},
+		Security: securityconfig.Config{Idempotency: opts.cfg},
 	}
 	h := &idempotencyHarness{store: newMemoryIdempotencyStore()}
 	mw := NewIdempotencyMiddleware(IdempotencyParams{
-		Config: cfg,
-		Store:  h.store,
+		ServerConfig:   &cfg.Server,
+		SecurityConfig: &cfg.Security,
+		Store:          h.store,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		Logger: zap.NewNop(),
 	})
@@ -312,11 +316,20 @@ func TestIdempotencyGraphQLSystemErrorIsRetryable(t *testing.T) {
 	h := newIdempotencyHarness(t, idempotencyHarnessOptions{
 		handler: func(c *gin.Context, calls int) {
 			if calls == 1 {
-				c.Data(http.StatusOK, "application/json",
-					[]byte(`{"errors":[{"message":"x","extensions":{"code":"SYSTEM_ERROR"}}],"data":null}`))
+				c.Data(
+					http.StatusOK,
+					"application/json",
+					[]byte(
+						`{"errors":[{"message":"x","extensions":{"code":"SYSTEM_ERROR"}}],"data":null}`,
+					),
+				)
 				return
 			}
-			c.Data(http.StatusOK, "application/json", []byte(`{"data":{"createShipment":{"id":"shp_1"}}}`))
+			c.Data(
+				http.StatusOK,
+				"application/json",
+				[]byte(`{"data":{"createShipment":{"id":"shp_1"}}}`),
+			)
 		},
 	})
 
@@ -348,7 +361,7 @@ func TestIdempotencyGraphQLValidationErrorIsKept(t *testing.T) {
 func TestIdempotencyOversizedResponseIsNotReplayed(t *testing.T) {
 	large := strings.Repeat("x", 2048)
 	h := newIdempotencyHarness(t, idempotencyHarnessOptions{
-		cfg: config.IdempotencyConfig{MaxResponseBytes: 1024},
+		cfg: securityconfig.IdempotencyConfig{MaxResponseBytes: 1024},
 		handler: func(c *gin.Context, _ int) {
 			c.String(http.StatusCreated, large)
 		},
@@ -365,7 +378,7 @@ func TestIdempotencyOversizedResponseIsNotReplayed(t *testing.T) {
 
 func TestIdempotencyRejectsAnOversizedRequestBody(t *testing.T) {
 	h := newIdempotencyHarness(t, idempotencyHarnessOptions{
-		cfg: config.IdempotencyConfig{MaxRequestBytes: 1024},
+		cfg: securityconfig.IdempotencyConfig{MaxRequestBytes: 1024},
 	})
 
 	rec := h.do(http.MethodPost, "/api/v1/shipments/", "key-1", strings.Repeat("x", 2048))
@@ -408,8 +421,8 @@ func TestIdempotencyFailsOpenWhenTheStoreIsDown(t *testing.T) {
 
 func TestIdempotencyLockOutlastsTheRequestTimeout(t *testing.T) {
 	h := newIdempotencyHarness(t, idempotencyHarnessOptions{
-		cfg:    config.IdempotencyConfig{LockTTL: time.Second},
-		server: config.ServerConfig{RequestTimeout: time.Minute},
+		cfg:    securityconfig.IdempotencyConfig{LockTTL: time.Second},
+		server: serverconfig.Config{RequestTimeout: time.Minute},
 	})
 
 	h.do(http.MethodPost, "/api/v1/shipments/", "key-1", `{}`)

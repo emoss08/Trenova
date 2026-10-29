@@ -6,8 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,7 +17,7 @@ import (
 )
 
 type trackingSources struct {
-	assignments map[pulid.ID]*shipmentports.BoardMove
+	assignments map[pulid.ID]*dispatchboardports.BoardMove
 	positions   map[pulid.ID]*telematics.VehiclePosition
 	hos         map[pulid.ID]*telematics.WorkerHOSState
 	exempt      map[pulid.ID]bool
@@ -25,7 +26,7 @@ type trackingSources struct {
 
 func newTrackingSources() *trackingSources {
 	return &trackingSources{
-		assignments: make(map[pulid.ID]*shipmentports.BoardMove),
+		assignments: make(map[pulid.ID]*dispatchboardports.BoardMove),
 		positions:   make(map[pulid.ID]*telematics.VehiclePosition),
 		hos:         make(map[pulid.ID]*telematics.WorkerHOSState),
 		exempt:      make(map[pulid.ID]bool),
@@ -37,7 +38,7 @@ func openMoveIDs(entities []*shipment.Shipment) []pulid.ID {
 	moveIDs := make([]pulid.ID, 0, len(entities))
 	for _, entity := range entities {
 		for _, move := range entity.Moves {
-			if move != nil && move.Status != shipment.MoveStatusCanceled {
+			if move != nil && move.Status != shipmentvocab.MoveStatusCanceled {
 				moveIDs = append(moveIDs, move.ID)
 			}
 		}
@@ -100,10 +101,10 @@ func (s *Service) collectAssignments(
 	moveIDs []pulid.ID,
 	sources *trackingSources,
 ) error {
-	moves, err := s.board.ListBoardMoves(ctx, &shipmentports.DispatchBoardFilter{
+	moves, err := s.board.ListBoardMoves(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     tenantInfo,
 		MoveIDs:        moveIDs,
-		MoveStatuses:   shipment.MoveStatuses(),
+		MoveStatuses:   shipmentvocab.MoveStatuses(),
 		IncludeCovered: true,
 		Limit:          len(moveIDs),
 	})

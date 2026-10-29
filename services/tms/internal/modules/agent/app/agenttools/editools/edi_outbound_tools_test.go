@@ -5,14 +5,21 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,17 +27,17 @@ import (
 )
 
 type fakeLoadTenders struct {
-	plan      *ediservice.LoadTenderPlan
+	plan      *editenderservice.LoadTenderPlan
 	err       error
 	guard     *agenttoolstest.WriteGuard
-	submitted *ediservice.SubmitLoadTenderRequest
+	submitted *editenderservice.SubmitLoadTenderRequest
 	actor     *permissionports.RequestActor
 }
 
 func (f *fakeLoadTenders) PlanLoadTender(
 	_ context.Context,
-	req *ediservice.SubmitLoadTenderRequest,
-) (*ediservice.LoadTenderPlan, error) {
+	req *editenderservice.SubmitLoadTenderRequest,
+) (*editenderservice.LoadTenderPlan, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -43,36 +50,36 @@ func (f *fakeLoadTenders) PlanLoadTender(
 
 func (f *fakeLoadTenders) SubmitLoadTender(
 	_ context.Context,
-	req *ediservice.SubmitLoadTenderRequest,
+	req *editenderservice.SubmitLoadTenderRequest,
 	actor *permissionports.RequestActor,
-) (*edi.EDITransfer, error) {
+) (*editransfer.EDITransfer, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.submitted, f.actor = req, actor
 
-	return &edi.EDITransfer{ID: pulid.MustNew("edilt_")}, nil
+	return &editransfer.EDITransfer{ID: pulid.MustNew("edilt_")}, nil
 }
 
-func tenderPlan(status edi.TransferStatus) *ediservice.LoadTenderPlan {
-	return &ediservice.LoadTenderPlan{
+func tenderPlan(status editransfer.TransferStatus) *editenderservice.LoadTenderPlan {
+	return &editenderservice.LoadTenderPlan{
 		SourceShipment: &shipment.Shipment{
 			ID:        pulid.MustNew("shp_"),
 			ProNumber: "PRO-88",
-			Status:    shipment.StatusNew,
+			Status:    shipmentvocab.StatusNew,
 			Version:   7,
 		},
 		SourcePartner: &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: "Acme Brokerage"},
 		TargetPartner: &edi.EDIPartner{ID: pulid.MustNew("edip_"), Name: "Northwind Carrier"},
-		Payload: edi.LoadTenderPayload{
+		Payload: editransfer.LoadTenderPayload{
 			BOL:           "BOL-88",
 			CustomerLabel: "Acme Foods",
-			Moves: []edi.LoadTenderMove{{Stops: []edi.LoadTenderStop{
+			Moves: []editransfer.LoadTenderMove{{Stops: []editransfer.LoadTenderStop{
 				{Type: "Pickup", LocationLabel: "Dallas DC"},
 				{Type: "Delivery", LocationLabel: "Tulsa Store"},
 			}}},
 		},
-		Mapping: &ediservice.MappingPreview{},
+		Mapping: &editendermapping.MappingPreview{},
 		Status:  status,
 	}
 }
@@ -81,14 +88,14 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	t.Parallel()
 
 	tenders := &fakeLoadTenders{
-		plan:  tenderPlan(edi.TransferStatusPendingApproval),
+		plan:  tenderPlan(editransfer.TransferStatusPendingApproval),
 		guard: &agenttoolstest.WriteGuard{},
 	}
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
 	partnerID := pulid.MustNew("edip_")
 	args := map[string]any{
-		common.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
-		paramEDIPartnerID:      partnerID.String(),
+		changepreview.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
+		paramEDIPartnerID:             partnerID.String(),
 	}
 
 	policy := tool.Policy()
@@ -99,12 +106,16 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
-	assert.Equal(t, agent.MessageChannelEDI, sent.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, sent.Message.Channel)
 	assert.Equal(t, []string{"Acme Brokerage"}, sent.Message.To)
 	assert.Contains(t, sent.Message.Body, "Dallas DC")
 	marked := agenttoolstest.PreviewChange(t, preview, 1)
@@ -114,7 +125,11 @@ func TestSendEDILoadTender_PreviewsTheTenderAndTheShipmentThenSendsOnlyWhenAppro
 	assert.Equal(t, "Tendered", agenttoolstest.FieldByPath(t, marked, "tenderStatus").After)
 
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(args)))
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	require.NotNil(t, tenders.submitted)
 	assert.Equal(t, partnerID, tenders.submitted.EDIPartnerID)
@@ -125,17 +140,21 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 	t.Parallel()
 
 	tenders := &fakeLoadTenders{
-		plan:  tenderPlan(edi.TransferStatusMappingRequired),
+		plan:  tenderPlan(editransfer.TransferStatusMappingRequired),
 		guard: &agenttoolstest.WriteGuard{},
 	}
 	tool := NewSendEDILoadTenderTool(tenders).(*SendEDILoadTenderTool)
 	args := agenttoolstest.AgentParamsFor(map[string]any{
-		common.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
+		changepreview.FieldShipmentID: tenders.plan.SourceShipment.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), args)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), args)
+		},
+	)
 	assert.Contains(t, preview.Summary, "map")
 
 	tenders.err = errortypes.NewValidationError(
@@ -143,24 +162,28 @@ func TestSendEDILoadTender_WarnsWhenTheReceiverMustMapItFirst(t *testing.T) {
 		"Only New shipments without an active or accepted tender can be tendered.",
 	)
 	require.Error(t, tool.Validate(t.Context(), args))
-	refused := agenttoolstest.PreviewWithoutWrites(t, tenders.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), args)
-	})
-	agenttoolstest.RequireWarning(t, refused, agent.PreviewWarningWouldFail)
+	refused := agenttoolstest.PreviewWithoutWrites(
+		t,
+		tenders.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), args)
+		},
+	)
+	agenttoolstest.RequireWarning(t, refused, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeDocuments struct {
-	preview   *ediservice.EDIDocumentPreview
+	preview   *edioutbound.EDIDocumentPreview
 	err       error
 	guard     *agenttoolstest.WriteGuard
-	planned   *ediservice.GenerateEDIDocumentRequest
-	generated *ediservice.GenerateEDIDocumentRequest
+	planned   *edioutbound.GenerateEDIDocumentRequest
+	generated *edioutbound.GenerateEDIDocumentRequest
 }
 
 func (f *fakeDocuments) PlanGenerateDocument(
 	_ context.Context,
-	req *ediservice.GenerateEDIDocumentRequest,
-) (*ediservice.EDIDocumentPreview, error) {
+	req *edioutbound.GenerateEDIDocumentRequest,
+) (*edioutbound.EDIDocumentPreview, error) {
 	f.planned = req
 
 	return f.preview, f.err
@@ -168,26 +191,26 @@ func (f *fakeDocuments) PlanGenerateDocument(
 
 func (f *fakeDocuments) GenerateDocument(
 	_ context.Context,
-	req *ediservice.GenerateEDIDocumentRequest,
-) (*edi.EDIMessage, error) {
+	req *edioutbound.GenerateEDIDocumentRequest,
+) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.generated = req
 
-	return &edi.EDIMessage{ID: pulid.MustNew("edimsg_")}, nil
+	return &edimessage.EDIMessage{ID: pulid.MustNew("edimsg_")}, nil
 }
 
 func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *testing.T) {
 	t.Parallel()
 
 	documents := &fakeDocuments{
-		preview: &ediservice.EDIDocumentPreview{
+		preview: &edioutbound.EDIDocumentPreview{
 			RawX12:       "ISA*00*~ST*214*0001~B10*PRO-88*BOL-88~",
 			SegmentCount: 3,
 			PartnerName:  "Acme Trucking",
-			Diagnostics: []edi.Diagnostic{{
-				Severity: edi.ValidationSeverityWarning,
+			Diagnostics: []edidocument.Diagnostic{{
+				Severity: edidocument.ValidationSeverityWarning,
 				Message:  "AT7 reason code defaulted",
 			}},
 		},
@@ -197,9 +220,9 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	partnerID := pulid.MustNew("edip_")
 	shipmentID := pulid.MustNew("shp_")
 	args := map[string]any{
-		paramEDIPartnerID:      partnerID.String(),
-		common.FieldShipmentID: shipmentID.String(),
-		"payload":              map[string]any{"transactionSet": "214"},
+		paramEDIPartnerID:             partnerID.String(),
+		changepreview.FieldShipmentID: shipmentID.String(),
+		"payload":                     map[string]any{"transactionSet": "214"},
 	}
 
 	policy := tool.Policy()
@@ -207,9 +230,13 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.NotContains(t, tool.ParamSchema()["properties"], "payload")
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, documents.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		documents.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	sent := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, sent.Message)
 	assert.Contains(t, sent.Message.Body, "B10*PRO-88")
@@ -221,10 +248,14 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 		documents.planned.Payload,
 		"the document is built from the record, never the model",
 	)
-	assert.Equal(t, edi.TransactionSet214, documents.planned.TransactionSet)
-	assert.Equal(t, edi.DocumentDirectionOutbound, documents.planned.Direction)
+	assert.Equal(t, edidocument.TransactionSet214, documents.planned.TransactionSet)
+	assert.Equal(t, edidocument.DocumentDirectionOutbound, documents.planned.Direction)
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	approved := agenttoolstest.ApprovedParams(args)
 	require.NoError(t, tool.Execute(t.Context(), approved))
 	require.NotNil(t, documents.generated)
@@ -237,16 +268,16 @@ func TestSendEDIStatusUpdate_TakesExactlyOneSourceRecord(t *testing.T) {
 	t.Parallel()
 
 	tool := NewSendEDIStatusUpdateTool(&fakeDocuments{guard: &agenttoolstest.WriteGuard{}})
-	validator := tool.(agentports.ToolValidator)
+	validator := tool.(agenttoolports.ToolValidator)
 	partner := pulid.MustNew("edip_").String()
 
 	none := agenttoolstest.AgentParamsFor(map[string]any{paramEDIPartnerID: partner})
 	require.Error(t, validator.Validate(t.Context(), none))
 
 	two := agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIPartnerID:      partner,
-		common.FieldShipmentID: pulid.MustNew("shp_").String(),
-		ParamServiceFailureID:  pulid.MustNew("sf_").String(),
+		paramEDIPartnerID:             partner,
+		changepreview.FieldShipmentID: pulid.MustNew("shp_").String(),
+		ParamServiceFailureID:         pulid.MustNew("sf_").String(),
 	})
 	err := validator.Validate(t.Context(), two)
 	require.Error(t, err)

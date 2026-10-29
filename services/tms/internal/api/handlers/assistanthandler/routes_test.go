@@ -9,10 +9,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -46,38 +49,40 @@ func (e *readOnlyEngine) Check(
 
 // reachedService records that a request got past the permission middleware.
 type reachedService struct {
-	agentports.AssistantService
+	assistantports.AssistantService
+	assistantports.AssistantArtifactService
+	assistantports.AssistantProposalService
 
 	reached       bool
-	listed        *agentports.ListThreadsRequest
-	counted       *agentports.CountThreadShelvesRequest
-	commands      *agentports.CommandAvailabilityRequest
+	listed        *conversationports.ListThreadsRequest
+	counted       *conversationports.CountThreadShelvesRequest
+	commands      *assistantports.CommandAvailabilityRequest
 	commandsActor *permissionports.RequestActor
 }
 
 func (s *reachedService) ListThreads(
 	_ context.Context,
-	req agentports.ListThreadsRequest,
-) (*agentports.ThreadPage, error) {
+	req *conversationports.ListThreadsRequest,
+) (*conversationports.ThreadPage, error) {
 	s.reached = true
-	s.listed = &req
+	s.listed = req
 
-	return &agentports.ThreadPage{}, nil
+	return &conversationports.ThreadPage{}, nil
 }
 
 func (s *reachedService) CountThreadShelves(
 	_ context.Context,
-	req *agentports.CountThreadShelvesRequest,
-) (*agentports.ThreadShelfCounts, error) {
+	req *conversationports.CountThreadShelvesRequest,
+) (*conversationports.ThreadShelfCounts, error) {
 	s.reached = true
 	s.counted = req
 
-	return &agentports.ThreadShelfCounts{}, nil
+	return &conversationports.ThreadShelfCounts{}, nil
 }
 
 func (s *reachedService) UpdateThread(
 	context.Context,
-	*agentports.UpdateThreadRequest,
+	*assistantports.UpdateThreadRequest,
 	*permissionports.RequestActor,
 ) (*conversation.Thread, error) {
 	s.reached = true
@@ -85,7 +90,7 @@ func (s *reachedService) UpdateThread(
 	return &conversation.Thread{}, nil
 }
 
-func (s *reachedService) DeleteThread(context.Context, agentports.GetThreadRequest) error {
+func (s *reachedService) DeleteThread(context.Context, *conversationports.GetThreadRequest) error {
 	s.reached = true
 
 	return nil
@@ -93,36 +98,36 @@ func (s *reachedService) DeleteThread(context.Context, agentports.GetThreadReque
 
 func (s *reachedService) PinArtifact(
 	context.Context,
-	agentports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 	pulid.ID,
 	bool,
-) (*agentports.AssistantArtifact, error) {
+) (*assistantartifactports.AssistantArtifact, error) {
 	s.reached = true
 
-	return &agentports.AssistantArtifact{}, nil
+	return &assistantartifactports.AssistantArtifact{}, nil
 }
 
 func (s *reachedService) SaveProposalEdits(
 	context.Context,
-	agentports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 	pulid.ID,
 	map[string]any,
-) (*agentports.ProposalEdits, error) {
+) (*assistantproposalports.ProposalEdits, error) {
 	s.reached = true
 
-	return &agentports.ProposalEdits{}, nil
+	return &assistantproposalports.ProposalEdits{}, nil
 }
 
 func (s *reachedService) CommandAvailability(
 	_ context.Context,
-	req *agentports.CommandAvailabilityRequest,
+	req *assistantports.CommandAvailabilityRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.CommandAvailability, error) {
+) (*assistantports.CommandAvailability, error) {
 	s.reached = true
 	s.commands = req
 	s.commandsActor = actor
 
-	return &agentports.CommandAvailability{
+	return &assistantports.CommandAvailability{
 		Commands: []agentextension.Command{agentextension.CommandSearch},
 	}, nil
 }
@@ -133,11 +138,13 @@ func call(t *testing.T, method, path, body string) (*reachedService, int) {
 
 	service := &reachedService{}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	handler := New(Params{
-		Service: service,
+		Service:   service,
+		Artifacts: service,
+		Proposals: service,
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{
 				PermissionEngine: &readOnlyEngine{},

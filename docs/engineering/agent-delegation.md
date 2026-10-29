@@ -30,7 +30,7 @@ These were made by the product owner and the code enforces each one.
 | Decision | Where it is enforced |
 |---|---|
 | Who an agent may ask is a **per-agent allowlist** on its definition, set in AI Control. | `agentdefinition.Definition.DelegateIDs`, validated on save by the domain and by `agentdefinitionservice.validateDelegates` |
-| A task the agent hands out **only reads.** The delegate's turn holds the tools it holds whose effect is `lookup`, and no write, no `publish_artifact` and no proposal history. A task the person directed keeps the delegate's own autonomy: its tools, tier settings, ceiling and budget. | `assistantservice.OpenDelegate` sets `Delegation.ReadOnly` unless the call is `Directed`; `agentruntime.profileFor` opens a `ReadOnly` delegation as the `fan_out` profile, which keeps only lookups (`Service.looksUp`) |
+| A task the agent hands out **only reads.** The delegate's turn holds the tools it holds whose effect is `lookup`, and no write, no `publish_artifact` and no proposal history. A task the person directed keeps the delegate's own autonomy: its tools, tier settings, ceiling and budget. | `assistantservice.OpenDelegate` sets `Delegation.ReadOnly` unless the call is `Directed`; `toolaccess.Access.ProfileFor` opens a `ReadOnly` delegation as the `fan_out` profile, which keeps only lookups (`Service.looksUp`) |
 | **One level only.** Only the agent the person is talking to delegates. A delegate never holds `delegate_task`, and a call to it from a delegate is refused. | `RunRequest.MayDelegate`, `OpenTurn` (the tool is held only when it is true), `Service.delegate` (refuses when `RunRequest.Delegation` is set) |
 | **Taint crosses both ways.** A delegate opens with the taint of the turn that asked, and its own taint is folded back into that turn when it ends, because its reply enters that turn's context. Its proposals carry its turn's taint. | `DelegateCall.Taint` → `RunRequest.Taint` (`assistantservice.OpenDelegate`), `Turn.inheritDelegateTaint`, `DelegatedRun.Taint` → `persistDelegatedProposals` |
 | **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create`, a delegate the person may use (open to everyone, or granted to one of their roles), and a delegate that is enabled, chat-usable and in the same tenant |
@@ -73,7 +73,7 @@ set-up), keeping only delegates that person may use — the rule the turn applie
 (`ContextBuilder.delegates`): in the tenant, enabled, chat-usable, not the agent
 itself, and open to them or granted to one of their roles under
 `assistant:create`. It is read through the request's `UsableAgentByID` loader
-(`loaders/usableagentloader.go`), keyed by delegate id and built from the
+(`loaders/agentloaders/usableagentloader.go`), keyed by delegate id and built from the
 request's tenant and user: one `ListByIDs` and one `PermissionEngine.AgentsUsable`
 per batch, so a page of agents costs one query and one permission read for all
 their delegates. The chat client hands the thread agent's list to
@@ -82,7 +82,7 @@ marks still draws the delegate's icon and accent.
 
 ## What the primary agent is told
 
-`agentruntime.ContextBuilder` resolves the delegates for a conversation turn
+`runtimecontext.Builder` resolves the delegates for a conversation turn
 (`RuntimeContext.Delegates`): the allowlist, in order, keeping only agents in
 the tenant that are enabled and chat-usable and that the person may use (open to
 everyone, or restricted to roles and granted to one of theirs, through
@@ -105,7 +105,7 @@ do.
   conversation turn reaches every tool the person's other agents hold, so a
   match it cannot call is one no agent of theirs holds.
 - When nothing the turn reaches matched, the answer names the person's other
-  agents that hold it (`agentruntime.handOffNote`, from `OtherUsableAgents`: the
+  agents that hold it (`toolaccess.handOffNote`, from `OtherUsableAgents`: the
   enabled chat agents they may use, the same list the Desk's case checklist
   reads to say who can take a step) and tells the model to point the person
   to Hand off to another agent; only when none holds it does it fall back to
@@ -125,7 +125,7 @@ The same context is what `PreviewPrompt` shows in AI Control.
 | | |
 |---|---|
 | Name | `delegate_task` |
-| Effect | `delegate` (`agent.ToolEffectDelegate`) |
+| Effect | `delegate` (`agenttooltrust.ToolEffectDelegate`) |
 | Arguments | `agentId` (one of the turn's delegates), `task` (what to do and what to hand back, at most 4 000 characters), `records` (optional: the records the task is about, each `{entityType, id}`, at most 8), `shareResults` (optional: ids of calls this turn made whose results the delegate should work from, at most 4) |
 | Cost to the primary | one tool call of its own budget |
 | Limit | 3 per turn (`maxDelegationsPerTurn`); the fourth is refused and counted |
@@ -158,7 +158,7 @@ names what it is about instead:
 
 What was handed over rides `DelegateCall.Context` (`Records`, `Results`) to
 `OpenDelegateActivity` and `assistantservice.OpenDelegate`, which asks the
-delegate `agentruntime.DelegateInput(task, context)`: the task, a line saying
+delegate `delegation.Input(task, context)`: the task, a line saying
 what follows is data from the agent that asked, the records fenced in
 `<untrusted_data>`, and each result fenced as `Result from {tool} (call {id})`.
 The saved task step carries the same text; the thread shows the task as the
@@ -309,7 +309,7 @@ context is built.
 
 ### Record references
 
-A write's `result` is `agent.ToolExecutionResult`. `action`, `kind`, `name` and
+A write's `result` is `agentrecord.ToolExecutionResult`. `action`, `kind`, `name` and
 `ids` are for the model: `ids` names each id by the parameter the next tool
 takes it as. `record` is for a reader: the **one** record the write made or
 changed, as `entityType` — a key of the record-link registry
@@ -352,7 +352,7 @@ so; nothing ever claims a write did not happen.
   (`modelHistory`). The primary only ever sees its own call and its result.
   The messages API (and `done.messages`) returns them with `agentName`,
   `agentIcon` and `agentAccent` filled in, read for the whole page with one
-  `ListByIDs` (`assistantservice.nameDelegatedSteps`). `agentIcon` is empty for
+  `ListByIDs` (`attribution.Attributor.NameDelegatedSteps`). `agentIcon` is empty for
   an agent with no icon of its own or its starter's, so the client draws its
   initials; the client uses these before the conversation agent's delegate list
   and, last, a mark derived from the id.
@@ -443,7 +443,7 @@ the agent they chose takes the task inside it.
 
 - **Request.** `POST /assistant/threads/:threadID/turns/` (and `…/messages/`,
   and `…/queue/`) take `directedAgentId`. The content is the task, at most
-  `agentruntime.MaxDelegateTaskRunes`. It travels as
+  `delegation.MaxTaskRunes`. It travels as
   `SendMessageRequest.DirectedAgentID` → `AssistantTurnRequest.DirectedAgentID`
   → `QueuedRequest.DirectedAgentID`. A directed message never steers a reply
   under way. If one is running it waits in the queue, and sending it now is
@@ -575,7 +575,7 @@ each is enforced on the server.
 | What | Where |
 |---|---|
 | **Deciding a plan in your own conversation.** `decideMyPlan(id, input)` needs `assistant:update`, a plan whose run's subject is an assistant thread the caller owns (someone else's is *not found*), and access to every agent with a step in it — the one whose run the plan hangs on, and each agent a step was filed by, such as a delegate. It then goes through `agentplanservice.Decide`, so every step is decided by the decision service as the caller and each write is permission-checked against them when it runs. The in-thread plan card uses it; AI Control and the decisions queue keep `decideAgentPlan` (`agent_proposal:update`). | `agentplanservice.DecideOwn`, `resolver.DecideMyPlan`, `authzlint` (`TestAgentAccessResolversAreAuthorized`) |
-| **Why a conversation cannot continue.** A thread is served with `canContinue` and, when it is false, `cannotContinueReason`: `AgentDeleted`, `NoAccess` (the reader may not use the agent, or the assistant at all), `AgentDisabled`, or `AgentNotConversational` (it now runs on a schedule, an event or continuously), in that order of precedence, so a reader is never told an agent they could not use anyway was merely turned off. Worked out when served, never stored. | `assistantservice.markContinuable`, `conversation.ContinueRefusal` |
+| **Why a conversation cannot continue.** A thread is served with `canContinue` and, when it is false, `cannotContinueReason`: `AgentDeleted`, `NoAccess` (the reader may not use the agent, or the assistant at all), `AgentDisabled`, or `AgentNotConversational` (it now runs on a schedule, an event or continuously), in that order of precedence, so a reader is never told an agent they could not use anyway was merely turned off. Worked out when served, never stored. | `agentaccess.Access.MarkContinuable`, `conversation.ContinueRefusal` |
 | **Saving an agent with who may use it.** `POST`/`PUT /agent-definitions/` take `accessMode` and `accessRoleIds` together (both absent keeps access; one without the other is refused). The save and the access are one transaction (`AgentAccessService.SaveWithAccess`), so a restricted agent is created restricted and enabled in one request. Changing access needs `role:update` as well, as `setAgentAccess` does; access that already reads as asked needs nothing more, and the client sends it only when it changed. | `agentdefinitionservice.save`, `agentaccessservice.SaveWithAccess` |
 | **The audience of an unsaved form.** `agentAccessPreview(input)` works each role's coverage and, while the form says Everyone, the sensitive tools out of the tools and access the form holds (for a saved agent, its other settings as saved), writing nothing. The form asks it debounced, keyed by the normalized request. | `agentaccessservice.PreviewAudience` |
 

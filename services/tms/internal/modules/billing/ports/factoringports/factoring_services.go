@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -229,22 +230,25 @@ type RequestMissingDocumentsResult struct {
 }
 
 type ReadinessService interface {
-	GetReadiness(ctx context.Context, req GetReadinessRequest) (*factoring.InvoiceState, error)
+	GetReadiness(
+		ctx context.Context,
+		req GetReadinessRequest,
+	) (*factoringreadiness.InvoiceState, error)
 	Evaluate(ctx context.Context, req *EvaluateInvoicesRequest) (*EvaluateResult, error)
 	ListStates(
 		ctx context.Context,
 		req *ListInvoiceStateConnectionRequest,
-	) (*pagination.CursorListResult[*factoring.InvoiceState], error)
+	) (*pagination.CursorListResult[*factoringreadiness.InvoiceState], error)
 	GetStates(
 		ctx context.Context,
 		req *ListInvoiceStatesByInvoiceIDsRequest,
-	) (map[pulid.ID]*factoring.InvoiceState, error)
+	) (map[pulid.ID]*factoringreadiness.InvoiceState, error)
 	Summary(ctx context.Context, tenantInfo pagination.TenantInfo) (*Summary, error)
 	SetOverride(
 		ctx context.Context,
 		req *SetOverrideRequest,
 		actor *permissionports.RequestActor,
-	) (*factoring.InvoiceState, error)
+	) (*factoringreadiness.InvoiceState, error)
 	PlanOverride(ctx context.Context, req *SetOverrideRequest) (*OverridePlan, error)
 	RequestMissingDocuments(
 		ctx context.Context,

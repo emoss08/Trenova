@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment/carrierintelenrollmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -28,14 +28,14 @@ const (
 )
 
 var (
-	enrollPendingVendorStates = []carrierintel.VendorState{
-		carrierintel.VendorStateUnknown,
-		carrierintel.VendorStatePendingAdd,
+	enrollPendingVendorStates = []carrierintelenrollment.VendorState{
+		carrierintelenrollment.VendorStateUnknown,
+		carrierintelenrollment.VendorStatePendingAdd,
 	}
-	unenrollPendingVendorStates = []carrierintel.VendorState{
-		carrierintel.VendorStateActive,
-		carrierintel.VendorStatePendingRemove,
-		carrierintel.VendorStatePendingAdd,
+	unenrollPendingVendorStates = []carrierintelenrollment.VendorState{
+		carrierintelenrollment.VendorStateActive,
+		carrierintelenrollment.VendorStatePendingRemove,
+		carrierintelenrollment.VendorStatePendingAdd,
 	}
 )
 
@@ -54,16 +54,16 @@ func NewEnrollmentRepository(p Params) carrierintelports.CarrierMonitoringEnroll
 func (r *enrollmentRepository) ListBySubjects(
 	ctx context.Context,
 	req *carrierintelports.ListEnrollmentsBySubjectRequest,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 			if len(req.SubjectIDs) == 0 {
-				return []*carrierintel.CarrierMonitoringEnrollment{}, nil
+				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(
 				en.Provider.Eq(req.Provider),
 				en.SubjectType.Eq(req.SubjectType),
@@ -86,19 +86,19 @@ func (r *enrollmentRepository) GetByCarrierIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 			if len(carrierIDs) == 0 {
-				return []*carrierintel.CarrierMonitoringEnrollment{}, nil
+				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(en.CarrierID.In(carrierIDs...)).
 				Order(
-					keel.Desc(en.DesiredState.Eq(carrierintel.DesiredStateEnrolled)),
+					keel.Desc(en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled)),
 					en.UpdatedAt.Desc(),
 				).
 				All(ctx, r.db.Keel(ctx))
@@ -116,15 +116,15 @@ func (r *enrollmentRepository) ListDesired(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	provider integration.Type,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(
 				en.Provider.Eq(provider),
-				en.DesiredState.Eq(carrierintel.DesiredStateEnrolled),
+				en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled),
 			).
 				Order(en.ID.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -140,14 +140,14 @@ func (r *enrollmentRepository) ListDesired(
 
 func (r *enrollmentRepository) Upsert(
 	ctx context.Context,
-	entities []*carrierintel.CarrierMonitoringEnrollment,
+	entities []*carrierintelenrollment.CarrierMonitoringEnrollment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
 			return nil
 		}
 
-		en := carrierinteldb.CarrierMonitoringEnrollments
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 		_, err := en.Upsert(
 			ctx,
 			r.db.Keel(ctx),
@@ -182,14 +182,14 @@ func (r *enrollmentRepository) Upsert(
 
 func (r *enrollmentRepository) SaveSyncState(
 	ctx context.Context,
-	entities []*carrierintel.CarrierMonitoringEnrollment,
+	entities []*carrierintelenrollment.CarrierMonitoringEnrollment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(entities) == 0 {
 			return nil
 		}
 
-		en := carrierinteldb.CarrierMonitoringEnrollments
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 		db := r.db.Keel(ctx)
 		now := timeutils.NowUnix()
 		for _, entity := range entities {
@@ -226,12 +226,12 @@ func (r *enrollmentRepository) SaveSyncState(
 func (r *enrollmentRepository) ListNeedingSync(
 	ctx context.Context,
 	req *carrierintelports.ListEnrollmentsNeedingSyncRequest,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultNeedingSyncLimit),
 				1,
@@ -256,15 +256,15 @@ func (r *enrollmentRepository) ListNeedingSync(
 }
 
 func pendingSyncPredicate() keel.Pred {
-	en := carrierinteldb.CarrierMonitoringEnrollments
+	en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 
 	return keel.Or(
 		keel.And(
-			en.DesiredState.Eq(carrierintel.DesiredStateEnrolled),
+			en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled),
 			en.VendorState.In(enrollPendingVendorStates...),
 		),
 		keel.And(
-			en.DesiredState.Eq(carrierintel.DesiredStateNotEnrolled),
+			en.DesiredState.Eq(carrierintelenrollment.DesiredStateNotEnrolled),
 			en.VendorState.In(unenrollPendingVendorStates...),
 		),
 	)
@@ -273,12 +273,12 @@ func pendingSyncPredicate() keel.Pred {
 func (r *enrollmentRepository) ListActive(
 	ctx context.Context,
 	req *carrierintelports.ListActiveEnrollmentsRequest,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			limit := intutils.Clamp(
 				intutils.WithDefault(max(req.Limit, 0), defaultActiveLimit),
 				1,
@@ -295,8 +295,8 @@ func (r *enrollmentRepository) ListActive(
 
 			entities, err := en.Where(
 				en.Provider.Eq(req.Provider),
-				en.DesiredState.Eq(carrierintel.DesiredStateEnrolled),
-				en.VendorState.Eq(carrierintel.VendorStateActive),
+				en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled),
+				en.VendorState.Eq(carrierintelenrollment.VendorStateActive),
 				keel.When(req.Mode != "", en.Mode.Eq(req.Mode)),
 				confirmedBefore,
 				keel.When(!req.AfterID.IsNil(), en.ID.Gt(req.AfterID)),
@@ -319,16 +319,16 @@ func (r *enrollmentRepository) ListByProviderRefs(
 	_ pagination.TenantInfo,
 	provider integration.Type,
 	refs []string,
-) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*carrierintel.CarrierMonitoringEnrollment, error) {
+		func(ctx context.Context) ([]*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 			if len(refs) == 0 {
-				return []*carrierintel.CarrierMonitoringEnrollment{}, nil
+				return []*carrierintelenrollment.CarrierMonitoringEnrollment{}, nil
 			}
 
-			en := carrierinteldb.CarrierMonitoringEnrollments
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			entities, err := en.Where(en.Provider.Eq(provider), en.ProviderRef.In(refs...)).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
@@ -350,12 +350,12 @@ func (r *enrollmentRepository) ListByProviderRefs(
 func (r *enrollmentRepository) ListConnection(
 	ctx context.Context,
 	req *carrierintelports.ListEnrollmentConnectionRequest,
-) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
+) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*carrierintel.CarrierMonitoringEnrollment], error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
+		func(ctx context.Context) (*pagination.CursorListResult[*carrierintelenrollment.CarrierMonitoringEnrollment], error) {
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -364,7 +364,7 @@ func (r *enrollmentRepository) ListConnection(
 					keel.When(req.DesiredState != "", en.DesiredState.Eq(req.DesiredState)),
 					keel.When(len(req.VendorStates) > 0, en.VendorState.In(req.VendorStates...)),
 				),
-				&listquery.Request[carrierintel.CarrierMonitoringEnrollment]{
+				&listquery.Request[carrierintelenrollment.CarrierMonitoringEnrollment]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				},
@@ -384,8 +384,8 @@ func (r *enrollmentRepository) TouchConfirmed(
 	req *carrierintelports.TouchEnrollmentsConfirmedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		en := carrierinteldb.CarrierMonitoringEnrollments
-		scope := en.VendorState.Eq(carrierintel.VendorStateActive)
+		en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
+		scope := en.VendorState.Eq(carrierintelenrollment.VendorStateActive)
 		if len(req.SubjectIDs) > 0 {
 			scope = en.SubjectID.In(req.SubjectIDs...)
 		}
@@ -393,7 +393,7 @@ func (r *enrollmentRepository) TouchConfirmed(
 		_, err := en.Where(
 			en.Provider.Eq(req.Provider),
 			en.Mode.Eq(req.Mode),
-			en.DesiredState.Eq(carrierintel.DesiredStateEnrolled),
+			en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled),
 			scope,
 		).Update(
 			ctx,
@@ -420,8 +420,8 @@ func (r *enrollmentRepository) Counts(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelports.CarrierIntelEnrollmentCounts, error) {
-			en := carrierinteldb.CarrierMonitoringEnrollments
-			enrolled := en.DesiredState.Eq(carrierintel.DesiredStateEnrolled)
+			en := carrierintelenrollmentdb.CarrierMonitoringEnrollments
+			enrolled := en.DesiredState.Eq(carrierintelenrollment.DesiredStateEnrolled)
 			counts, err := keel.IntoOne[carrierintelports.CarrierIntelEnrollmentCounts](
 				ctx,
 				r.db.Keel(ctx),
@@ -429,10 +429,11 @@ func (r *enrollmentRepository) Counts(
 					keel.Count().Filter(enrolled),
 					keel.Count().Filter(keel.And(
 						enrolled,
-						en.VendorState.Eq(carrierintel.VendorStateActive),
+						en.VendorState.Eq(carrierintelenrollment.VendorStateActive),
 					)),
 					keel.Count().Filter(pendingSyncPredicate()),
-					keel.Count().Filter(en.VendorState.Eq(carrierintel.VendorStateFailed)),
+					keel.Count().
+						Filter(en.VendorState.Eq(carrierintelenrollment.VendorStateFailed)),
 				),
 			)
 			if err != nil {

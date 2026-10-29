@@ -3,8 +3,8 @@ package extractionrolloutservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -40,7 +40,7 @@ type Params struct {
 	Rollouts      extractionrolloutports.ExtractionRolloutRepository
 	Assignments   extractionrolloutports.RolloutAssignmentRepository
 	Corrections   aicorrectionports.AICorrectionRepository
-	Providers     agentports.AIProviderRepository
+	Providers     aiproviderports.AIProviderRepository
 	Retention     tenantports.DataRetentionRepository
 	Audit         auditports.AuditService
 	Notifications *notificationservice.Service `optional:"true"`
@@ -51,7 +51,7 @@ type Service struct {
 	rollouts    extractionrolloutports.ExtractionRolloutRepository
 	assignments extractionrolloutports.RolloutAssignmentRepository
 	corrections aicorrectionports.AICorrectionRepository
-	providers   agentports.AIProviderRepository
+	providers   aiproviderports.AIProviderRepository
 	retention   tenantports.DataRetentionRepository
 	audit       auditports.AuditService
 	notifier    haltNotifier

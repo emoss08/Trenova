@@ -3,18 +3,18 @@
 package dispatchconsoleresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	CarrierAssignmentService  *carrierassignmentservice.Service
-	DispatchConsoleService    agentports.DispatchConsoleService
-	DispatchAutoAssignService agentports.DispatchAutoAssignService
-	AssignmentService         shipmentports.AssignmentService
+	DispatchConsoleService    dispatchconsoleports.DispatchConsoleService
+	DispatchAutoAssignService dispatchconsoleports.DispatchAutoAssignService
+	AssignmentService         assignmentports.AssignmentService
 }
 
 type MutationResolver struct{ *Deps }

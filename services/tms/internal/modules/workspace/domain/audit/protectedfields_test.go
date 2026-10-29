@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -26,7 +27,7 @@ func TestAnAuditEntryWithholdsAMarginFromAReaderWithoutTheGroup(t *testing.T) {
 	t.Parallel()
 
 	entry := rateAgreementEntry()
-	withheld := entry.WithheldCopy(permission.FieldGroupSet(0).With(permission.FieldGroupPersonal))
+	withheld := entry.WithheldCopy(protectedfield.GroupSet(0).With(protectedfield.Personal))
 
 	assert.Nil(t, withheld.CurrentState["marginFloorPercent"])
 	assert.Nil(t, withheld.PreviousState["marginFloorPercent"])
@@ -38,7 +39,7 @@ func TestAnAuditEntryWithholdsAMarginFromAReaderWithoutTheGroup(t *testing.T) {
 
 	assert.Equal(t, "12", entry.CurrentState["marginFloorPercent"],
 		"an administrator with the group still reads the whole diff")
-	assert.Same(t, entry, entry.WithheldCopy(permission.AllFieldGroups()))
+	assert.Same(t, entry, entry.WithheldCopy(protectedfield.AllGroups()))
 }
 
 func TestAnAuditEntryWithholdsPersonalDetailsInsideAChangedObject(t *testing.T) {
@@ -57,7 +58,7 @@ func TestAnAuditEntryWithholdsPersonalDetailsInsideAChangedObject(t *testing.T) 
 		CurrentState: map[string]any{"profile": map[string]any{"twicCardNumber": "T-9"}},
 	}
 
-	withheld := entry.WithheldCopy(permission.FieldGroupSet(0).With(permission.FieldGroupMargins))
+	withheld := entry.WithheldCopy(protectedfield.GroupSet(0).With(protectedfield.Margins))
 
 	created := withheld.Changes["profile"].(map[string]any)["to"].(map[string]any)
 	assert.Nil(t, created["dob"])

@@ -737,6 +737,37 @@
             "description": "A link to the document in the accounting system. Only records whose external url contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "objectType",
+                "objectId",
+                "objectNumber",
+                "partyName",
+                "externalUrl",
+                "kind",
+                "currencyCode",
+                "trenovaMinor",
+                "providerMinor",
+                "differenceMinor",
+                "trenovaState",
+                "providerState",
+                "detail",
+                "providerModifiedAt",
+                "providerModifiedBy",
+                "status",
+                "resolution",
+                "resolutionNote",
+                "directions",
+                "pushed",
+                "detectedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_drift_findings.column"
+            },
+            "type": "array"
+          },
           "fixObjectType": {
             "description": "What the fix made: the record sent, or the memo, void or reversal posted. Only records whose fix object type is one of these.",
             "items": {
@@ -795,8 +826,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -1101,6 +1132,32 @@
             "description": "A link to the payment in the accounting system. Only records whose external url contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "kind",
+                "status",
+                "reason",
+                "resolution",
+                "externalNumber",
+                "externalUrl",
+                "providerModifiedBy",
+                "txnDate",
+                "amountMinor",
+                "currencyCode",
+                "partyName",
+                "partyObjectId",
+                "referenceNumber",
+                "methodName",
+                "lines",
+                "detectedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_inbound_changes.column"
+            },
+            "type": "array"
+          },
           "hasPartyObject": {
             "description": "The Trenova customer, carrier or driver it pays for, once matched. true for only records that have a party object, false for only those that have none.",
             "type": "boolean"
@@ -1119,8 +1176,8 @@
             "type": "array"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -1319,9 +1376,33 @@
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "targetType",
+                "trenovaObjectId",
+                "trenovaKey",
+                "targetLabel",
+                "providerKind",
+                "externalId",
+                "externalName",
+                "state",
+                "source",
+                "confidence",
+                "reason",
+                "required",
+                "candidates",
+                "confirmedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_mapping_gaps.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -1494,9 +1575,35 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "objectType",
+                "objectId",
+                "objectNumber",
+                "operation",
+                "sourceEvent",
+                "documentDate",
+                "status",
+                "attemptCount",
+                "nextAttemptAt",
+                "externalDocNumber",
+                "externalUrl",
+                "errorCategory",
+                "resolution",
+                "queuedAt",
+                "syncedAt",
+                "skippedReason"
+              ],
+              "type": "string",
+              "x-enumOf": "accounting_list_sync_records.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -2485,8 +2592,84 @@
       }
     },
     {
+      "name": "agent_create_schedule",
+      "description": "Repeat a request in this conversation every day, every weekday or one day a week, when the person asks for it on a schedule. For example, \"schedule this to run everyday at 9:30 AM EST\" or \"give me this board every Monday at 8\". Each run asks request again here, as the person, and the answer posts into this conversation. Write request in full so it stands alone: when they say \"this\", write out what they asked for. time is 24-hour HH:MM. timezone is the clock they named (America/New_York for EST or Eastern); leave it out for their own clock, which is the organization's unless your context names theirs. The person approves it before it is kept; then say in one line when it runs. It cannot run hourly or monthly: say so. To email a saved report to people, use report_create_schedule instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "repeat": {
+            "description": "How often it runs: day for every day, weekday for Monday to Friday, or one day of the week.",
+            "enum": [
+              "day",
+              "weekday",
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday",
+              "saturday",
+              "sunday"
+            ],
+            "type": "string",
+            "x-enumOf": "conversation_schedule_repeats"
+          },
+          "request": {
+            "description": "What each run asks, in the person's words and in full, at most 2000 characters: \"Give me today's operations board: active shipments, on-time %, at-risk, unassigned, revenue today\".",
+            "type": "string"
+          },
+          "time": {
+            "description": "When it runs, 24-hour HH:MM: 09:30, 17:00.",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The clock the time is on, as an IANA name (America/New_York, America/Chicago), when the person named one. Leave it out for their own clock, the one your context names as theirs.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request",
+          "repeat",
+          "time"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "schedule this",
+        "every day",
+        "everyday",
+        "daily",
+        "every morning",
+        "every weekday",
+        "run this again",
+        "ask this again",
+        "repeat this request"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "assistant",
+        "operation": "create",
+        "scope": "self",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "personal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "assistant_thread",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Repeats a request in the person's own conversation, asked as them with the access they have when it runs. A person approves every schedule, so an agent never sets its own workload."
+      }
+    },
+    {
       "name": "agent_create_wait",
-      "description": "Use it when someone asks to be told when something happens (\"let me know when it delivers\", \"tell me when the driver gets there\"): it parks the work until then, instead of checking back. It waits for a stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there or the time is recorded), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after giveUpAfterHours, you are started again here, told what happened and what you said you would do. A wait on something already true is refused with what is true now. After setting one, end your turn: say in one line what you wait for and what you will do then.",
+      "description": "Park your work until something happens (\"let me know when it delivers\", \"tell me when the driver gets there\") instead of checking back. It waits for a stop's arrival or departure (StopArrival, StopDeparture: met when the truck is seen there or the time is recorded), a reply about a shipment or from a carrier or customer (Reply), an appointment coming round (AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after giveUpAfterHours, you are started again here, told what happened and what you said you would do. A wait on something already true is refused with what is true now. After setting one, end your turn: say in one line what you wait for and what you will do then.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3393,10 +3576,1160 @@
             "type": "string"
           },
           "datasets": {
-            "description": "Tables the script reads in full, at most five, each bound to its name as a list of row dicts keyed by its column labels, numbers as numbers and times as dates; a text file is its text. Give each a name and exactly one of reportRunId or documentId.",
+            "description": "Tables the script reads in full, at most five, each bound to its name as a list of row dicts keyed by its column labels, numbers as numbers and times as dates; a text file is its text. Give each a name and exactly one of reportRunId, documentId or definition. A definition is the answer for more records than a script reads (5,000): the report engine groups and totals every record on the server, such as fuel spend by month and fuel type with a month bucket and a sum, and the script reads the grouped rows.",
             "items": {
               "additionalProperties": false,
               "properties": {
+                "definition": {
+                  "$defs": {
+                    "Band": {
+                      "additionalProperties": false,
+                      "description": "Band groups a number into ranges: a fixed width, or ascending boundaries where the last range is open-ended. A grouped value is the lower bound of its range.",
+                      "properties": {
+                        "edges": {
+                          "description": "Edges are ascending range boundaries.",
+                          "items": {
+                            "type": "number"
+                          },
+                          "type": "array"
+                        },
+                        "width": {
+                          "description": "Width is the size of every range.",
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Chart": {
+                      "additionalProperties": false,
+                      "description": "Chart draws columns the report already returns.",
+                      "properties": {
+                        "compare": {
+                          "description": "Compare is the value column a KPI tile compares with.",
+                          "type": "string"
+                        },
+                        "curved": {
+                          "description": "Curved smooths lines.",
+                          "type": "boolean"
+                        },
+                        "goal": {
+                          "$ref": "#/$defs/Goal",
+                          "description": "Goal draws a target line or a KPI target."
+                        },
+                        "hideLegend": {
+                          "description": "HideLegend hides the legend.",
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "description": "ID names the chart.",
+                          "type": "string"
+                        },
+                        "lat": {
+                          "description": "Lat is the latitude column of a map.",
+                          "type": "string"
+                        },
+                        "limit": {
+                          "description": "Limit caps the categories drawn; zero draws all.",
+                          "type": "integer"
+                        },
+                        "lng": {
+                          "description": "Lng is the longitude column of a map.",
+                          "type": "string"
+                        },
+                        "pointLabel": {
+                          "description": "PointLabel names each point of a map; empty uses the first dimension.",
+                          "type": "string"
+                        },
+                        "series": {
+                          "description": "Series are the value columns drawn.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "showValues": {
+                          "description": "ShowValues labels each mark with its value.",
+                          "type": "boolean"
+                        },
+                        "stacked": {
+                          "description": "Stacked stacks the series.",
+                          "type": "boolean"
+                        },
+                        "title": {
+                          "description": "Title is the chart heading.",
+                          "type": "string"
+                        },
+                        "type": {
+                          "description": "Type is the visual encoding.",
+                          "enum": [
+                            "bar",
+                            "hbar",
+                            "line",
+                            "area",
+                            "pie",
+                            "donut",
+                            "scatter",
+                            "kpi",
+                            "map"
+                          ],
+                          "type": "string"
+                        },
+                        "x": {
+                          "description": "X is the dimension column on the category axis, or the measure on a scatter plot's x axis.",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "type"
+                      ],
+                      "type": "object"
+                    },
+                    "Column": {
+                      "additionalProperties": false,
+                      "description": "Column is one column of a report: exactly one of a dimension, a measure, a calculation or a window over another column.",
+                      "properties": {
+                        "calc": {
+                          "$ref": "#/$defs/Formula",
+                          "description": "Calc computes the column from a formula over other columns, fields and parameters."
+                        },
+                        "dimension": {
+                          "$ref": "#/$defs/Dimension",
+                          "description": "Dimension groups by a field."
+                        },
+                        "display": {
+                          "description": "Display is the author's display spec, an object of the analytics/format package.",
+                          "type": "object"
+                        },
+                        "format": {
+                          "description": "Format is a format hint for the display spec, such as \"money\" or \"percent\".",
+                          "type": "string"
+                        },
+                        "hidden": {
+                          "description": "Hidden computes the column for other columns, having or sort without returning it.",
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "description": "ID names the column in formulas, sort, charts and output; letters, digits and underscores.",
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Label is the column heading; empty derives one from the field.",
+                          "type": "string"
+                        },
+                        "measure": {
+                          "$ref": "#/$defs/Measure",
+                          "description": "Measure aggregates a field."
+                        },
+                        "transform": {
+                          "$ref": "#/$defs/Transform",
+                          "description": "Transform rewrites the column's value in SQL."
+                        },
+                        "window": {
+                          "$ref": "#/$defs/Window",
+                          "description": "Window computes the column across the grouped rows."
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ],
+                      "type": "object"
+                    },
+                    "Count": {
+                      "description": "Count is a whole number or the name of an int parameter that supplies it. It encodes as a number, or as {\"param\": \"name\"}.",
+                      "oneOf": [
+                        {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "param": {
+                              "description": "The name of the parameter that supplies the value.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "param"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "DashboardFilter": {
+                      "additionalProperties": false,
+                      "description": "DashboardFilter is a dashboard-wide condition on a field. It narrows every tile whose report starts from the same entity, without the report declaring anything.",
+                      "properties": {
+                        "default": {
+                          "description": "Default is the value used before anyone picks one."
+                        },
+                        "entity": {
+                          "description": "Entity is the entity whose reports the filter narrows.",
+                          "type": "string"
+                        },
+                        "field": {
+                          "description": "Field is the dotted path of the field compared.",
+                          "type": "string"
+                        },
+                        "id": {
+                          "description": "ID names the filter; its value is supplied under this id.",
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Label is the filter's heading on the dashboard.",
+                          "type": "string"
+                        },
+                        "op": {
+                          "description": "Op is the comparison.",
+                          "enum": [
+                            "eq",
+                            "ne",
+                            "gt",
+                            "gte",
+                            "lt",
+                            "lte",
+                            "between",
+                            "contains",
+                            "starts_with",
+                            "ends_with",
+                            "like",
+                            "ilike",
+                            "in",
+                            "not_in",
+                            "is_null",
+                            "is_not_null",
+                            "last_n_days",
+                            "next_n_days",
+                            "today",
+                            "yesterday",
+                            "tomorrow",
+                            "this_week",
+                            "last_week",
+                            "this_month",
+                            "last_month",
+                            "this_quarter",
+                            "last_quarter",
+                            "this_year",
+                            "last_year"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "entity",
+                        "field",
+                        "op"
+                      ],
+                      "type": "object"
+                    },
+                    "Definition": {
+                      "additionalProperties": false,
+                      "description": "Definition is a report: the entity it starts from, its output columns, filters, layout, parameters and charts.",
+                      "properties": {
+                        "charts": {
+                          "description": "Charts draw the output; they never change what is queried.",
+                          "items": {
+                            "$ref": "#/$defs/Chart"
+                          },
+                          "type": "array"
+                        },
+                        "columns": {
+                          "description": "Columns are the report's columns in display order.",
+                          "items": {
+                            "$ref": "#/$defs/Column"
+                          },
+                          "type": "array"
+                        },
+                        "entity": {
+                          "description": "Entity is the catalog key of the entity the report starts from, such as \"shipment\".",
+                          "type": "string"
+                        },
+                        "filters": {
+                          "$ref": "#/$defs/Filter",
+                          "description": "Filters narrow the source rows before grouping."
+                        },
+                        "groupings": {
+                          "$ref": "#/$defs/Groupings",
+                          "description": "Groupings adds subtotal and total rows."
+                        },
+                        "having": {
+                          "$ref": "#/$defs/Filter",
+                          "description": "Having narrows the grouped rows by output columns."
+                        },
+                        "limit": {
+                          "$ref": "#/$defs/Count",
+                          "description": "Limit caps the number of output rows; zero means the runner's limit."
+                        },
+                        "page": {
+                          "$ref": "#/$defs/Page",
+                          "description": "Page asks for one page of the sorted output."
+                        },
+                        "parameters": {
+                          "description": "Parameters are the values the report asks for when it runs.",
+                          "items": {
+                            "$ref": "#/$defs/Parameter"
+                          },
+                          "type": "array"
+                        },
+                        "pivot": {
+                          "$ref": "#/$defs/Pivot",
+                          "description": "Pivot spreads measure columns across the values of a field."
+                        },
+                        "sort": {
+                          "description": "Sort orders the output rows.",
+                          "items": {
+                            "$ref": "#/$defs/Sort"
+                          },
+                          "type": "array"
+                        },
+                        "top": {
+                          "$ref": "#/$defs/Top",
+                          "description": "Top keeps the first N rows per group by a column."
+                        },
+                        "version": {
+                          "const": 2,
+                          "description": "Version is the definition format version; Decode upgrades older versions."
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "entity",
+                        "columns"
+                      ],
+                      "type": "object"
+                    },
+                    "Dimension": {
+                      "additionalProperties": false,
+                      "description": "Dimension groups the report by a field, optionally bucketed in time or banded into ranges.",
+                      "properties": {
+                        "band": {
+                          "$ref": "#/$defs/Band",
+                          "description": "Band groups a number into ranges."
+                        },
+                        "bucket": {
+                          "$ref": "#/$defs/Grain",
+                          "description": "Bucket truncates a date or time to a period, or names a parameter that chooses one."
+                        },
+                        "field": {
+                          "description": "Field is the dotted path of the field, such as \"customer.name\".",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "field"
+                      ],
+                      "type": "object"
+                    },
+                    "Filter": {
+                      "additionalProperties": false,
+                      "description": "Filter is a node of a filter tree: a group (And or Or, possibly empty) or a condition. A condition compares a subject, which is exactly one of Field, Calc or Column, with Op and a Value or a Param. A Calc with no Op is a condition when the formula is true.",
+                      "oneOf": [
+                        {
+                          "maxProperties": 1,
+                          "required": [
+                            "and"
+                          ]
+                        },
+                        {
+                          "maxProperties": 1,
+                          "required": [
+                            "or"
+                          ]
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "and"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "or"
+                                ]
+                              }
+                            ]
+                          },
+                          "required": [
+                            "field"
+                          ]
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "and"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "or"
+                                ]
+                              }
+                            ]
+                          },
+                          "required": [
+                            "calc"
+                          ]
+                        },
+                        {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "and"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "or"
+                                ]
+                              }
+                            ]
+                          },
+                          "required": [
+                            "column"
+                          ]
+                        }
+                      ],
+                      "properties": {
+                        "and": {
+                          "description": "And holds conditions that must all hold.",
+                          "items": {
+                            "$ref": "#/$defs/Filter"
+                          },
+                          "type": "array"
+                        },
+                        "calc": {
+                          "$ref": "#/$defs/Formula",
+                          "description": "Calc is a row-level formula compared, or a boolean formula used as the condition."
+                        },
+                        "column": {
+                          "description": "Column is the output column compared; in Having, or a row-level column in Filters.",
+                          "type": "string"
+                        },
+                        "field": {
+                          "description": "Field is the dotted path of the field compared.",
+                          "type": "string"
+                        },
+                        "op": {
+                          "description": "Op is the comparison.",
+                          "enum": [
+                            "eq",
+                            "ne",
+                            "gt",
+                            "gte",
+                            "lt",
+                            "lte",
+                            "between",
+                            "contains",
+                            "starts_with",
+                            "ends_with",
+                            "like",
+                            "ilike",
+                            "in",
+                            "not_in",
+                            "is_null",
+                            "is_not_null",
+                            "last_n_days",
+                            "next_n_days",
+                            "today",
+                            "yesterday",
+                            "tomorrow",
+                            "this_week",
+                            "last_week",
+                            "this_month",
+                            "last_month",
+                            "this_quarter",
+                            "last_quarter",
+                            "this_year",
+                            "last_year"
+                          ],
+                          "type": "string"
+                        },
+                        "or": {
+                          "description": "Or holds conditions of which one must hold.",
+                          "items": {
+                            "$ref": "#/$defs/Filter"
+                          },
+                          "type": "array"
+                        },
+                        "param": {
+                          "description": "Param names the parameter that supplies the value instead.",
+                          "type": "string"
+                        },
+                        "transform": {
+                          "$ref": "#/$defs/Transform",
+                          "description": "Transform rewrites the subject before it is compared."
+                        },
+                        "value": {
+                          "description": "Value is the value compared with: a scalar, a list for in and not_in, [from, to] for between, a day count for last_n_days and next_n_days."
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Formula": {
+                      "description": "Expr is a formula as it appears in a report definition: text a person typed, or an AST a structured editor built. It encodes in the form it was given: a JSON string for text, an object for an AST.",
+                      "oneOf": [
+                        {
+                          "description": "Formula text.",
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/$defs/FormulaNode"
+                        }
+                      ]
+                    },
+                    "FormulaNode": {
+                      "description": "Node is one node of a formula AST. Kind decides which other fields are set; in JSON a node is an object keyed by its kind, such as {\"column\": \"revenue\"} or {\"call\": \"round\", \"args\": […]}.",
+                      "oneOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "number": {
+                              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]+)?$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "number"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "string": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "string"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "bool": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "bool"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "null": {
+                              "const": true
+                            }
+                          },
+                          "required": [
+                            "null"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "date": {
+                              "format": "date",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "date"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "timestamp": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "timestamp"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "column": {
+                              "pattern": "^[A-Za-z0-9_]+$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "column"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "field": {
+                              "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "field"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "param": {
+                              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "param"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "args": {
+                              "items": {
+                                "$ref": "#/$defs/FormulaNode"
+                              },
+                              "maxItems": 2,
+                              "minItems": 1,
+                              "type": "array"
+                            },
+                            "op": {
+                              "enum": [
+                                "or",
+                                "and",
+                                "not",
+                                "=",
+                                "!=",
+                                "<",
+                                "<=",
+                                ">",
+                                ">=",
+                                "is null",
+                                "is not null",
+                                "||",
+                                "+",
+                                "-",
+                                "*",
+                                "/",
+                                "%"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "args",
+                            "op"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "args": {
+                              "items": {
+                                "$ref": "#/$defs/FormulaNode"
+                              },
+                              "type": "array"
+                            },
+                            "call": {
+                              "enum": [
+                                "if",
+                                "coalesce",
+                                "nullif",
+                                "round",
+                                "trunc",
+                                "floor",
+                                "ceil",
+                                "abs",
+                                "greatest",
+                                "least",
+                                "concat",
+                                "lower",
+                                "upper",
+                                "trim",
+                                "length",
+                                "date_trunc",
+                                "date_diff",
+                                "extract",
+                                "now",
+                                "today",
+                                "count",
+                                "count_distinct",
+                                "sum",
+                                "avg",
+                                "min",
+                                "max"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "args",
+                            "call"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "case": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "else": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                },
+                                "subject": {
+                                  "$ref": "#/$defs/FormulaNode"
+                                },
+                                "when": {
+                                  "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                      "if": {
+                                        "$ref": "#/$defs/FormulaNode"
+                                      },
+                                      "then": {
+                                        "$ref": "#/$defs/FormulaNode"
+                                      }
+                                    },
+                                    "required": [
+                                      "if",
+                                      "then"
+                                    ],
+                                    "type": "object"
+                                  },
+                                  "minItems": 1,
+                                  "type": "array"
+                                }
+                              },
+                              "required": [
+                                "when"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "case"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "Goal": {
+                      "additionalProperties": false,
+                      "description": "Goal is a chart target: a fixed number or a value column.",
+                      "properties": {
+                        "column": {
+                          "description": "Column is a value column holding the target.",
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Label names the target.",
+                          "type": "string"
+                        },
+                        "value": {
+                          "description": "Value is a fixed target.",
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Grain": {
+                      "description": "Grain is a bucket, or the name of a string parameter that chooses one when the report runs. It encodes as \"month\", or as {\"param\": \"name\"}.",
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "hour",
+                            "day",
+                            "week",
+                            "month",
+                            "quarter",
+                            "year"
+                          ],
+                          "type": "string"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "param": {
+                              "description": "The name of the parameter that supplies the value.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "param"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "Groupings": {
+                      "additionalProperties": false,
+                      "description": "Groupings adds subtotal rows and a grand total row, computed in the same statement as the rows.",
+                      "properties": {
+                        "subtotals": {
+                          "description": "Subtotals lists dimension columns; each adds rows grouped by that column and every dimension column before it.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "total": {
+                          "description": "Total adds a grand total row.",
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "Measure": {
+                      "additionalProperties": false,
+                      "description": "Measure aggregates a field over each group, optionally over a subset of its rows.",
+                      "properties": {
+                        "agg": {
+                          "description": "Agg is the aggregation.",
+                          "enum": [
+                            "count",
+                            "count_distinct",
+                            "sum",
+                            "avg",
+                            "min",
+                            "max"
+                          ],
+                          "type": "string"
+                        },
+                        "field": {
+                          "description": "Field is the dotted path of the aggregated field; empty counts rows.",
+                          "type": "string"
+                        },
+                        "filter": {
+                          "$ref": "#/$defs/Filter",
+                          "description": "Filter narrows the rows this measure aggregates without narrowing the report."
+                        }
+                      },
+                      "required": [
+                        "agg"
+                      ],
+                      "type": "object"
+                    },
+                    "Page": {
+                      "additionalProperties": false,
+                      "description": "Page asks for one page of the sorted output with keyset paging.",
+                      "properties": {
+                        "after": {
+                          "description": "After is the opaque cursor of the previous page's last row.",
+                          "type": "string"
+                        },
+                        "size": {
+                          "description": "Size is the number of rows in the page.",
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "size"
+                      ],
+                      "type": "object"
+                    },
+                    "Parameter": {
+                      "additionalProperties": false,
+                      "description": "Parameter is a value the report asks for when it runs.",
+                      "properties": {
+                        "allowed": {
+                          "description": "Allowed restricts the values that can be given.",
+                          "items": {},
+                          "type": "array"
+                        },
+                        "default": {
+                          "description": "Default is used when no value is given; a list when Multi."
+                        },
+                        "entity": {
+                          "description": "Entity is the catalog key of the entity a ref parameter points at.",
+                          "type": "string"
+                        },
+                        "label": {
+                          "description": "Label is the prompt shown to the person running the report.",
+                          "type": "string"
+                        },
+                        "multi": {
+                          "description": "Multi takes a list of values.",
+                          "type": "boolean"
+                        },
+                        "name": {
+                          "description": "Name is how filters, formulas and settings reference the parameter.",
+                          "type": "string"
+                        },
+                        "required": {
+                          "description": "Required refuses to run without a value or a default.",
+                          "type": "boolean"
+                        },
+                        "type": {
+                          "description": "Type is the value type.",
+                          "enum": [
+                            "string",
+                            "int",
+                            "decimal",
+                            "float",
+                            "bool",
+                            "date",
+                            "timestamp",
+                            "epoch",
+                            "enum",
+                            "ref",
+                            "json"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "type"
+                      ],
+                      "type": "object"
+                    },
+                    "Pivot": {
+                      "additionalProperties": false,
+                      "description": "Pivot spreads measure columns into one column per value of a field.",
+                      "properties": {
+                        "columns": {
+                          "description": "Columns are the measure columns to spread.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "field": {
+                          "description": "Field is the dotted path of the field whose values become columns.",
+                          "type": "string"
+                        },
+                        "labels": {
+                          "description": "Labels are column headings for listed values, in the same order.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "other": {
+                          "description": "Other adds a column for every value not listed or discovered, nulls included.",
+                          "type": "boolean"
+                        },
+                        "top": {
+                          "$ref": "#/$defs/PivotTop",
+                          "description": "Top discovers the values when the report runs: the first N by a measure."
+                        },
+                        "values": {
+                          "$ref": "#/$defs/Values",
+                          "description": "Values lists the values to spread, or names a multi-value parameter."
+                        }
+                      },
+                      "required": [
+                        "field",
+                        "columns"
+                      ],
+                      "type": "object"
+                    },
+                    "PivotTop": {
+                      "additionalProperties": false,
+                      "description": "PivotTop discovers pivot values: the N values with the largest measure.",
+                      "properties": {
+                        "by": {
+                          "description": "By is the measure column that ranks the values.",
+                          "type": "string"
+                        },
+                        "n": {
+                          "$ref": "#/$defs/Count",
+                          "description": "N is how many values to discover, or a parameter."
+                        }
+                      },
+                      "required": [
+                        "n",
+                        "by"
+                      ],
+                      "type": "object"
+                    },
+                    "Sort": {
+                      "additionalProperties": false,
+                      "description": "Sort orders the output by a column.",
+                      "properties": {
+                        "column": {
+                          "description": "Column is an output column id, or a pivot cell \"column:value\".",
+                          "type": "string"
+                        },
+                        "desc": {
+                          "description": "Desc sorts largest first.",
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "column"
+                      ],
+                      "type": "object"
+                    },
+                    "Top": {
+                      "additionalProperties": false,
+                      "description": "Top keeps the first N rows of each group, ranked by a column.",
+                      "properties": {
+                        "bottom": {
+                          "description": "Bottom keeps the smallest values instead of the largest.",
+                          "type": "boolean"
+                        },
+                        "by": {
+                          "description": "By is the column that ranks the rows.",
+                          "type": "string"
+                        },
+                        "n": {
+                          "$ref": "#/$defs/Count",
+                          "description": "N is how many rows to keep, or a parameter."
+                        },
+                        "per": {
+                          "description": "Per lists the dimension columns that form the groups; empty ranks the whole result.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": [
+                        "n",
+                        "by"
+                      ],
+                      "type": "object"
+                    },
+                    "Transform": {
+                      "additionalProperties": false,
+                      "description": "Transform rewrites a value in SQL, so exports, sorting and filters see the rewritten value.",
+                      "properties": {
+                        "factor": {
+                          "description": "Factor is the multiplier for scale.",
+                          "type": "number"
+                        },
+                        "op": {
+                          "description": "Op is the transform.",
+                          "enum": [
+                            "round",
+                            "ceil",
+                            "floor",
+                            "truncate",
+                            "abs",
+                            "scale",
+                            "upper",
+                            "lower",
+                            "title",
+                            "trim"
+                          ],
+                          "type": "string"
+                        },
+                        "precision": {
+                          "description": "Precision is the number of decimal places for round, ceil, floor and truncate.",
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "op"
+                      ],
+                      "type": "object"
+                    },
+                    "Values": {
+                      "description": "Values is a list of values or the name of a multi-value parameter that supplies them. It encodes as an array, or as {\"param\": \"name\"}.",
+                      "oneOf": [
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "param": {
+                              "description": "The name of the parameter that supplies the value.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "param"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    },
+                    "Window": {
+                      "additionalProperties": false,
+                      "description": "Window computes a value across the grouped rows from another column.",
+                      "properties": {
+                        "desc": {
+                          "description": "Desc ranks the largest value first.",
+                          "type": "boolean"
+                        },
+                        "fn": {
+                          "description": "Fn is the window function.",
+                          "enum": [
+                            "running_total",
+                            "percent_of_total",
+                            "rank",
+                            "dense_rank",
+                            "moving_avg",
+                            "change",
+                            "percent_change",
+                            "first",
+                            "last"
+                          ],
+                          "type": "string"
+                        },
+                        "of": {
+                          "description": "Of is the column the window reads.",
+                          "type": "string"
+                        },
+                        "offset": {
+                          "description": "Offset is how many rows back change and percent_change compare with; zero means one.",
+                          "type": "integer"
+                        },
+                        "over": {
+                          "description": "Over is the column that orders the rows, for running, moving, change and first/last.",
+                          "type": "string"
+                        },
+                        "partition": {
+                          "description": "Partition restarts the window for each combination of these dimension columns.",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "size": {
+                          "description": "Size is the number of rows a moving average spans.",
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "of",
+                        "fn"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "$id": "https://github.com/emoss08/keel/analytics/ir/definition.schema.json",
+                  "$ref": "#/$defs/Definition",
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "description": "A report in keel analytics IR version 2, whole: its entity, columns, filters and sort all go here and nowhere else. Fields are dotted paths from the entity, such as customer.name. A dimension column groups, a measure column aggregates, and a report with only dimensions lists rows.",
+                  "title": "Definition"
+                },
                 "documentId": {
                   "description": "A CSV, XLSX or text file the person attached to this conversation, from agent_read_attachment.",
                   "type": "string",
@@ -3908,6 +5241,27 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "status",
+                "billType",
+                "proNumber",
+                "billTo",
+                "assignedBiller",
+                "amount",
+                "exceptionReason",
+                "ageDays",
+                "queuedAt",
+                "invoiceId"
+              ],
+              "type": "string",
+              "x-enumOf": "billing_list_queue_items.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -5577,6 +6931,59 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "stateId",
+                "remitStateId",
+                "status",
+                "code",
+                "name",
+                "dbaName",
+                "carrierType",
+                "dotNumber",
+                "mcNumber",
+                "scac",
+                "complianceStatus",
+                "safetyRating",
+                "qualifiedAt",
+                "disqualifiedReason",
+                "taxId",
+                "taxIdType",
+                "w9OnFile",
+                "is1099Eligible",
+                "paymentMethod",
+                "paymentTermDays",
+                "remitToName",
+                "remitAddressLine1",
+                "remitAddressLine2",
+                "remitCity",
+                "remitPostalCode",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "phone",
+                "email",
+                "externalId",
+                "notes",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "contacts",
+                "insurancePolicies",
+                "intelRiskLevel",
+                "intelReviewRequired",
+                "intelBlockingCount"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list.column"
+            },
+            "type": "array"
+          },
           "hasRemitState": {
             "description": "true for only records that have a remit state, false for only those that have none.",
             "type": "boolean"
@@ -5606,8 +7013,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -5917,6 +7324,34 @@
             "type": "string",
             "x-recordOf": "equipment_type"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "carrierId",
+                "originLocationId",
+                "originStateId",
+                "originRadiusMiles",
+                "destinationStateId",
+                "equipmentTypeId",
+                "availableFrom",
+                "availableTo",
+                "truckCount",
+                "rateMethod",
+                "rate",
+                "source",
+                "version",
+                "carrier",
+                "originLocation",
+                "originState",
+                "destinationState",
+                "equipmentType"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list_capacity_postings.column"
+            },
+            "type": "array"
+          },
           "hasDestinationState": {
             "description": "true for only records that have a destination state, false for only those that have none.",
             "type": "boolean"
@@ -5934,8 +7369,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -6168,9 +7603,32 @@
             "description": "Only records whose dot number contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "subjectType",
+                "carrierId",
+                "dotNumber",
+                "subjectName",
+                "category",
+                "severity",
+                "action",
+                "summary",
+                "detectedAt",
+                "status",
+                "acknowledgedAt",
+                "resolvedAt",
+                "resolution"
+              ],
+              "type": "string",
+              "x-enumOf": "carrier_list_intelligence_events.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -7512,6 +8970,39 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "stateId",
+                "status",
+                "code",
+                "name",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "isGeocoded",
+                "longitude",
+                "latitude",
+                "placeId",
+                "externalId",
+                "allowConsolidation",
+                "exclusiveConsolidation",
+                "consolidationPriority",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "billingProfile",
+                "emailProfile"
+              ],
+              "type": "string",
+              "x-enumOf": "customer_list.column"
+            },
+            "type": "array"
+          },
           "isGeocoded": {
             "description": "true for only the records whose isGeocoded is true, false for only those whose isGeocoded is false.",
             "type": "boolean"
@@ -7525,8 +9016,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -8824,13 +10315,25 @@
     },
     {
       "name": "dispatch_get_board",
-      "description": "The dispatch board: every move in the window with its urgency and coverage, and every driver with availability, hours remaining and last position. Urgency is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and its pickup and delivery windows. This is the one call for \"what is late\", \"what is uncovered\" and \"who is free\". Urgency follows the move's next stop: the pickup window until it is picked up, then the delivery window. Each late move's lateTo says whether it is late to pick up or to deliver, and lateBy how long past the window's close it is, the way to say it; check shipment_get_tracking on a late move before acting on it, since arrivals are sometimes recorded late. A rundown or a list answers from the board as it stands, saying what each is late to do, rather than tracking each move. To act on one load, such as a note or a change, find it with shipment_list.",
+      "description": "The dispatch board: moves in the window, furthest behind first, with urgency and coverage, and drivers with availability, hours left and position. Urgency (Late, Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked up, then delivery window. The one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo (late to pick up or to deliver) and lateBy (how far past the window). Answer a rundown from the board as it stands, not by tracking each move; check shipment_get_tracking before acting on a late move, since arrivals are sometimes recorded late. summary counts every move in the window, listed or not; on a board, show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, find it with shipment_list.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "after": {
+            "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
+            "type": "string"
+          },
+          "drivers": {
+            "description": "List the drivers beside the moves. Default true, and false with late; leave them out when the question is only about loads.",
+            "type": "boolean"
+          },
           "hoursAhead": {
             "description": "How far ahead the window reaches, in hours. Default 24, at most 168.",
             "type": "integer"
+          },
+          "late": {
+            "description": "Only the moves late now: past the pickup window's close with no arrival, or past the delivery window's close once picked up, the same rule as shipment_list's late. A move inside its window is due now, not late. Every late move and no others, a page at a time. Default false.",
+            "type": "boolean"
           },
           "limit": {
             "description": "How many rows to return: 40 unless you ask, at most 100.",
@@ -9817,13 +11320,35 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "name",
+                "description",
+                "color",
+                "documentClassification",
+                "documentCategory",
+                "isSystem",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "document_list_types.column"
+            },
+            "type": "array"
+          },
           "isSystem": {
             "description": "true for only the records whose isSystem is true, false for only those whose isSystem is false. true for the types Trenova defines and an operator cannot remove.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -11655,6 +13180,29 @@
             "description": "Only records whose failure reason contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "ediPartnerId",
+                "method",
+                "fileName",
+                "sizeBytes",
+                "interchangeControlNumber",
+                "isaSenderId",
+                "status",
+                "failureReason",
+                "transactionCount",
+                "receivedAt",
+                "processedAt",
+                "partner",
+                "rawPurgedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_inbound_files.column"
+            },
+            "type": "array"
+          },
           "fileName": {
             "description": "Only records whose file name contains this text.",
             "type": "string"
@@ -11684,8 +13232,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -12015,6 +13563,38 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "ediPartnerId",
+                "shipmentId",
+                "transferId",
+                "inboundFileId",
+                "direction",
+                "transactionSet",
+                "x12Version",
+                "status",
+                "interchangeControlNumber",
+                "groupControlNumber",
+                "transactionControlNumber",
+                "segmentCount",
+                "deliveryStatus",
+                "deliveryAttempts",
+                "deliverySentAt",
+                "deliveryLastError",
+                "ackStatus",
+                "ackLastError",
+                "generatedAt",
+                "partner",
+                "invoiceId",
+                "rawPurgedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_messages.column"
+            },
+            "type": "array"
+          },
           "generatedAtFrom": {
             "description": "Only records whose generated at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -12068,8 +13648,8 @@
             "x-recordOf": "invoice"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -12261,6 +13841,24 @@
             "description": "true for only the records whose enabledForOutbound is true, false for only those whose enabledForOutbound is false.",
             "type": "boolean"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "kind",
+                "status",
+                "code",
+                "name",
+                "customerId",
+                "enabledForInbound",
+                "enabledForOutbound",
+                "internalOrganization"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_partners.column"
+            },
+            "type": "array"
+          },
           "hasCustomer": {
             "description": "true for only records that have a customer, false for only those that have none.",
             "type": "boolean"
@@ -12291,8 +13889,8 @@
             "type": "array"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -12563,6 +14161,30 @@
             "description": "Only records whose failure reason contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "sourceShipmentId",
+                "targetShipmentId",
+                "inboundMessageId",
+                "status",
+                "rejectionReason",
+                "failureReason",
+                "submittedAt",
+                "processedAt",
+                "direction",
+                "counterparty",
+                "bol",
+                "customerLabel",
+                "serviceTypeLabel",
+                "stopCount"
+              ],
+              "type": "string",
+              "x-enumOf": "edi_list_transfers.column"
+            },
+            "type": "array"
+          },
           "hasInboundMessage": {
             "description": "true for only records that have a inbound message, false for only those that have none.",
             "type": "boolean"
@@ -12583,8 +14205,8 @@
             ]
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -13571,9 +15193,27 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "name",
+                "description",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_manufacturers.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -13753,6 +15393,51 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "primaryWorkerId",
+                "equipmentTypeId",
+                "equipmentManufacturerId",
+                "stateId",
+                "fleetCodeId",
+                "secondaryWorkerId",
+                "status",
+                "unitNumber",
+                "model",
+                "make",
+                "year",
+                "licensePlateNumber",
+                "registrationNumber",
+                "registrationExpiry",
+                "vin",
+                "externalId",
+                "lastKnownLocationId",
+                "lastKnownLocationName",
+                "inProgressMoveId",
+                "inProgressProNumber",
+                "inProgressDueAt",
+                "fuelType",
+                "iftaQualified",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customFields",
+                "equipmentType",
+                "equipmentManufacturer",
+                "fleetCode",
+                "state",
+                "primaryWorker",
+                "secondaryWorker"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_tractors.column"
+            },
+            "type": "array"
+          },
           "fleetCodeId": {
             "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
             "type": "string",
@@ -13860,8 +15545,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -14088,6 +15773,47 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "equipmentTypeId",
+                "equipmentManufacturerId",
+                "registrationStateId",
+                "fleetCodeId",
+                "status",
+                "unitNumber",
+                "model",
+                "make",
+                "year",
+                "licensePlateNumber",
+                "vin",
+                "externalId",
+                "registrationNumber",
+                "maxLoadWeight",
+                "lastInspectionDate",
+                "registrationExpiry",
+                "lastKnownLocationId",
+                "lastKnownLocationName",
+                "inProgressMoveId",
+                "inProgressProNumber",
+                "inProgressDueAt",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customFields",
+                "equipmentType",
+                "equipmentManufacturer",
+                "fleetCode",
+                "registrationState"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_trailers.column"
+            },
+            "type": "array"
+          },
           "fleetCodeId": {
             "description": "The fleet code, from masterdata_list_fleet_codes. Never guess one.",
             "type": "string",
@@ -14171,8 +15897,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -14421,6 +16147,27 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "class",
+                "color",
+                "interiorLength",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "equipment_list_types.column"
+            },
+            "type": "array"
+          },
           "interiorLengthMax": {
             "description": "Only records whose interior length is at most this. Write it as a decimal, such as 1250.00.",
             "type": "string"
@@ -14430,8 +16177,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -15428,13 +17175,40 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "label",
+                "description",
+                "category",
+                "appliesTo",
+                "defaultStatusCode",
+                "defaultReasonCode",
+                "defaultExceptionCode",
+                "defaultNote",
+                "active",
+                "sortOrder",
+                "externalMap",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "exception_list_service_failure_reason_codes.column"
+            },
+            "type": "array"
+          },
           "label": {
             "description": "Only records whose label contains this text.",
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -15579,6 +17353,39 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "shipmentId",
+                "shipmentMoveId",
+                "stopId",
+                "reasonCodeId",
+                "number",
+                "type",
+                "source",
+                "status",
+                "stopType",
+                "scheduledCutoff",
+                "actualArrival",
+                "gracePeriodMinutes",
+                "lateMinutes",
+                "notes",
+                "internalNotes",
+                "x12StatusCodeOverride",
+                "x12ReasonCodeOverride",
+                "x12ExceptionCode",
+                "detectedAt",
+                "version",
+                "shipment",
+                "stop",
+                "reasonCode"
+              ],
+              "type": "string",
+              "x-enumOf": "exception_list_service_failures.column"
+            },
+            "type": "array"
+          },
           "gracePeriodMinutesMax": {
             "description": "Only records whose grace period minutes is at most this.",
             "type": "integer"
@@ -15604,8 +17411,8 @@
             "type": "integer"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -17095,13 +18902,35 @@
             "type": "string",
             "x-recordOf": "factoring_company"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "factoringCompanyId",
+                "status",
+                "sentAt",
+                "sentTo",
+                "acknowledgedAt",
+                "expiresAt",
+                "releasedAt",
+                "releaseReason",
+                "version",
+                "customer",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_noas.column"
+            },
+            "type": "array"
+          },
           "hasSignedDocument": {
             "description": "The customer's signed copy, a document on this notice. true for only records that have a signed document, false for only those that have none.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -17288,13 +19117,32 @@
             "description": "Only records whose failed checks is at least this.",
             "type": "integer"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "invoiceId",
+                "factoringCompanyId",
+                "customerId",
+                "verdict",
+                "checks",
+                "failedChecks",
+                "openBalanceMinor",
+                "readySince",
+                "evaluatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_readiness.column"
+            },
+            "type": "array"
+          },
           "hasFactoringCompany": {
             "description": "true for only records that have a factoring company, false for only those that have none.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -17503,6 +19351,36 @@
             "type": "string",
             "x-recordOf": "factoring_company"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "factoringCompanyId",
+                "fileName",
+                "source",
+                "sourceFormat",
+                "status",
+                "defaultKind",
+                "remittedOn",
+                "currencyCode",
+                "unmappedHeaders",
+                "lineCount",
+                "matchedCount",
+                "exceptionCount",
+                "appliedCount",
+                "totalCashMinor",
+                "error",
+                "stagedAt",
+                "appliedAt",
+                "discardReason",
+                "version",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_remittances.column"
+            },
+            "type": "array"
+          },
           "fileName": {
             "description": "Only records whose file name contains this text.",
             "type": "string"
@@ -17524,8 +19402,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -17828,6 +19706,35 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "factoringCompanyId",
+                "status",
+                "currencyCode",
+                "invoiceCount",
+                "faceMinor",
+                "expectedAdvanceMinor",
+                "expectedFeeMinor",
+                "expectedReserveMinor",
+                "transportMethod",
+                "transportTarget",
+                "attempts",
+                "lastError",
+                "sentAt",
+                "failedAt",
+                "cancelReason",
+                "version",
+                "createdAt",
+                "factoringCompany"
+              ],
+              "type": "string",
+              "x-enumOf": "factoring_list_submissions.column"
+            },
+            "type": "array"
+          },
           "fundedAtFrom": {
             "description": "When the factor's funding was first recorded. Only records whose funded at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -17869,8 +19776,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -19211,6 +21118,22 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "path",
+                "description",
+                "testCount",
+                "status",
+                "currentVersionNumber"
+              ],
+              "type": "string",
+              "x-enumOf": "formula_list_libraries.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -19224,8 +21147,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -19424,6 +21347,21 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "description",
+                "testCount",
+                "status",
+                "currentVersionNumber"
+              ],
+              "type": "string",
+              "x-enumOf": "formula_list_templates.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -19437,8 +21375,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -20501,6 +22439,27 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "provider",
+                "lastFour",
+                "label",
+                "assignedWorkerId",
+                "assignedTractorId",
+                "status",
+                "expiresAt",
+                "cancelledAt",
+                "discoveredAt",
+                "assignedWorker",
+                "assignedTractor"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_cards.column"
+            },
+            "type": "array"
+          },
           "hasAssignedTractor": {
             "description": "true for only records that have a assigned tractor, false for only those that have none.",
             "type": "boolean"
@@ -20518,8 +22477,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -20705,6 +22664,28 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "tractorId",
+                "jurisdictionId",
+                "traveledAt",
+                "year",
+                "quarter",
+                "miles",
+                "loaded",
+                "source",
+                "shipmentMoveId",
+                "notes",
+                "tractor",
+                "jurisdiction"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_ifta_mileage_entries.column"
+            },
+            "type": "array"
+          },
           "hasCreatedBy": {
             "description": "true for only records that have a created by, false for only those that have none.",
             "type": "boolean"
@@ -20729,8 +22710,8 @@
             ]
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -20944,6 +22925,29 @@
             "description": "Only records whose currency code contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "year",
+                "quarter",
+                "amendmentNumber",
+                "status",
+                "totalMiles",
+                "totalGallons",
+                "totalTaxPaidGallons",
+                "netDue",
+                "currencyCode",
+                "problems",
+                "finalizedAt",
+                "filedAt",
+                "filingReference"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_ifta_returns.column"
+            },
+            "type": "array"
+          },
           "filedAtFrom": {
             "description": "Only records whose filed at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -20997,8 +23001,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -21363,6 +23367,27 @@
             "description": "What the sync read: the remote file path for a file feed, or the request window\nfor an API feed. Only records whose feed reference contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "provider",
+                "origin",
+                "fileName",
+                "status",
+                "summary",
+                "rowCount",
+                "errorCount",
+                "committedCount",
+                "error",
+                "stagedAt",
+                "committedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_purchase_imports.column"
+            },
+            "type": "array"
+          },
           "fileName": {
             "description": "Only records whose file name contains this text.",
             "type": "string"
@@ -21388,8 +23413,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -21609,6 +23634,37 @@
             "description": "Only records whose currency code contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "tractorId",
+                "workerId",
+                "jurisdictionId",
+                "fuelCardId",
+                "cardLastFour",
+                "purchasedAt",
+                "vendor",
+                "vendorCity",
+                "fuelType",
+                "quantity",
+                "quantityUnit",
+                "gallons",
+                "totalAmount",
+                "currencyCode",
+                "transactionReference",
+                "source",
+                "importBatchId",
+                "taxPaid",
+                "tractor",
+                "worker",
+                "jurisdiction"
+              ],
+              "type": "string",
+              "x-enumOf": "fuel_list_purchases.column"
+            },
+            "type": "array"
+          },
           "fuelCardId": {
             "description": "The fuel card, from fuel_list_cards. Never guess one.",
             "type": "string",
@@ -21715,8 +23771,8 @@
             ]
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -23518,6 +25574,29 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "source",
+                "status",
+                "sourceName",
+                "jobName",
+                "receivedPageCount",
+                "itemCount",
+                "filedItemCount",
+                "openItemCount",
+                "failureMessage",
+                "isEditable",
+                "items",
+                "version",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_capture_batches.column"
+            },
+            "type": "array"
+          },
           "limit": {
             "description": "How many rows to return: 5 unless you ask, at most 10.",
             "maximum": 10,
@@ -23649,9 +25728,25 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "description",
+                "senderName",
+                "senderEmail",
+                "replyToEmail",
+                "status"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_email_profiles.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -23797,6 +25892,35 @@
             "description": "Show one row per thread: the newest message of it in the folder.",
             "type": "boolean"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "mailboxId",
+                "mailbox",
+                "fromAddress",
+                "fromName",
+                "subject",
+                "receivedAt",
+                "classification",
+                "confidence",
+                "status",
+                "matchedCustomerId",
+                "matchedShipmentId",
+                "matchReason",
+                "attachmentCount",
+                "preview",
+                "needsReview",
+                "threadKey",
+                "threadCount",
+                "ownerId",
+                "dueAt"
+              ],
+              "type": "string",
+              "x-enumOf": "inbox_list_inbound_messages.column"
+            },
+            "type": "array"
+          },
           "lane": {
             "description": "The folder. Absent keeps the older status filter. Only records whose lane is this.",
             "enum": [
@@ -23812,8 +25936,8 @@
             "x-enumOf": "graphql.TriageLane"
           },
           "limit": {
-            "description": "How many to return: 5 when you give words, at most 25; 25 otherwise, at most 50.",
-            "maximum": 50,
+            "description": "How many to return: 5 when you give words, at most 25; 25 otherwise, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -26139,6 +28263,28 @@
             "description": "Why the invoice stays out of factoring; null unless it is excluded. Only records whose factoring override reason contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "number",
+                "billType",
+                "status",
+                "currencyCode",
+                "invoiceDate",
+                "dueDate",
+                "shipmentProNumber",
+                "billToName",
+                "totalAmount",
+                "settlementStatus",
+                "disputeStatus"
+              ],
+              "type": "string",
+              "x-enumOf": "invoice_list.column"
+            },
+            "type": "array"
+          },
           "hasFactoringAgreement": {
             "description": "The agreement in force when the invoice posted. true for only records that have a factoring agreement, false for only those that have none.",
             "type": "boolean"
@@ -26220,8 +28366,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -26783,6 +28929,30 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "number",
+                "status",
+                "source",
+                "cycle",
+                "periodStart",
+                "periodEnd",
+                "invoiceDate",
+                "groupCount",
+                "itemCount",
+                "excludedCount",
+                "invoiceCount",
+                "totalAmount",
+                "currency",
+                "failureReason"
+              ],
+              "type": "string",
+              "x-enumOf": "invoice_list_runs.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -28272,6 +30442,28 @@
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "accountCode",
+                "name",
+                "accountType",
+                "category",
+                "status",
+                "description",
+                "parentId",
+                "isSystem",
+                "allowManualJe",
+                "currentBalance",
+                "debitBalance",
+                "creditBalance"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_accounts.column"
+            },
+            "type": "array"
+          },
           "filters": {
             "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
             "items": {
@@ -28475,13 +30667,35 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fiscalYearId",
+                "periodNumber",
+                "periodType",
+                "status",
+                "name",
+                "startDate",
+                "endDate",
+                "isAdjusting",
+                "lockedAt",
+                "closedAt",
+                "reopenedAt",
+                "reopenReason"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_fiscal_periods.column"
+            },
+            "type": "array"
+          },
           "isAdjusting": {
             "description": "true for only the records whose isAdjusting is true, false for only those whose isAdjusting is false.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -28754,6 +30968,29 @@
             "description": "Only records whose entry type is exactly this. Such as Standard, Adjusting, Closing or Reversal.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fiscalPeriodId",
+                "entryNumber",
+                "entryDate",
+                "entryType",
+                "status",
+                "accountingDate",
+                "description",
+                "referenceType",
+                "totalDebit",
+                "totalCredit",
+                "isReversal",
+                "referenceNumber",
+                "isAutoGenerated"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_journal_entries.column"
+            },
+            "type": "array"
+          },
           "fiscalPeriodId": {
             "description": "The fiscal period, from ledger_list_fiscal_periods. Never guess one.",
             "type": "string",
@@ -28796,8 +31033,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -29029,6 +31266,28 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "originalJournalEntryId",
+                "reversalJournalEntryId",
+                "status",
+                "requestedAccountingDate",
+                "resolvedFiscalPeriodId",
+                "reasonCode",
+                "reasonText",
+                "approvedAt",
+                "rejectionReason",
+                "cancelReason",
+                "postedAt",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_journal_reversals.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -29054,8 +31313,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -29316,6 +31575,31 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "requestNumber",
+                "status",
+                "description",
+                "reason",
+                "accountingDate",
+                "requestedFiscalPeriodId",
+                "currencyCode",
+                "totalDebit",
+                "totalCredit",
+                "isBalanced",
+                "approvedAt",
+                "rejectionReason",
+                "cancelReason",
+                "postedBatchId",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "ledger_list_manual_journals.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -29341,8 +31625,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -30058,6 +32342,37 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "locationCategoryId",
+                "stateId",
+                "status",
+                "code",
+                "name",
+                "description",
+                "addressLine1",
+                "addressLine2",
+                "city",
+                "postalCode",
+                "placeId",
+                "isGeocoded",
+                "longitude",
+                "latitude",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "state",
+                "locationCategory"
+              ],
+              "type": "string",
+              "x-enumOf": "location_list.column"
+            },
+            "type": "array"
+          },
           "geofenceRadiusMetersMax": {
             "description": "Only records whose geofence radius meters is at most this. Write it as a decimal, such as 1250.00.",
             "type": "string"
@@ -30094,8 +32409,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -30378,6 +32693,30 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "name",
+                "description",
+                "type",
+                "facilityType",
+                "color",
+                "hasSecureParking",
+                "requiresAppointment",
+                "allowsOvernight",
+                "hasRestroom",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "location_list_categories.column"
+            },
+            "type": "array"
+          },
           "hasRestroom": {
             "description": "true for only the records whose hasRestroom is true, false for only those whose hasRestroom is false.",
             "type": "boolean"
@@ -30387,8 +32726,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -30981,9 +33320,30 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "method",
+                "rateUnit",
+                "amount",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_accessorial_charges.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -31129,6 +33489,34 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "hazardousMaterialId",
+                "status",
+                "name",
+                "description",
+                "minTemperature",
+                "maxTemperature",
+                "weightPerUnit",
+                "linearFeetPerUnit",
+                "maxQuantityPerShipment",
+                "freightClass",
+                "loadingInstructions",
+                "stackable",
+                "fragile",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_commodities.column"
+            },
+            "type": "array"
+          },
           "fragile": {
             "description": "true for only the records whose fragile is true, false for only those whose fragile is false.",
             "type": "boolean"
@@ -31172,8 +33560,8 @@
             "x-recordOf": "hazardous_material"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -31365,9 +33753,33 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "managerId",
+                "status",
+                "code",
+                "description",
+                "revenueGoal",
+                "deadheadGoal",
+                "mileageGoal",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "manager"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_fleet_codes.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -31550,6 +33962,41 @@
             "description": "Only records whose erg guide number contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "name",
+                "description",
+                "class",
+                "unNumber",
+                "packingGroup",
+                "subsidiaryHazardClass",
+                "ergGuideNumber",
+                "labelCodes",
+                "specialProvisions",
+                "properShippingName",
+                "handlingInstructions",
+                "emergencyContact",
+                "emergencyContactPhoneNumber",
+                "quantityThreshold",
+                "placardRequired",
+                "isReportableQuantity",
+                "marinePollutant",
+                "inhalationHazard",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_hazardous_materials.column"
+            },
+            "type": "array"
+          },
           "handlingInstructions": {
             "description": "Only records whose handling instructions contains this text.",
             "type": "string"
@@ -31567,8 +34014,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -31783,13 +34230,39 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "type",
+                "code",
+                "label",
+                "description",
+                "active",
+                "defaultSeverity",
+                "defaultBlocksDispatch",
+                "defaultBlocksDelivery",
+                "defaultBlocksBilling",
+                "defaultVisibleToCustomer",
+                "sortOrder",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_hold_reasons.column"
+            },
+            "type": "array"
+          },
           "label": {
             "description": "Only records whose label contains this text.",
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -31929,9 +34402,28 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_service_types.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -32054,9 +34546,28 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "status",
+                "code",
+                "description",
+                "color",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "masterdata_list_shipment_types.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -33047,6 +35558,32 @@
             "type": "string",
             "x-recordOf": "customer"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "customerId",
+                "ownerId",
+                "status",
+                "orderNumber",
+                "poNumber",
+                "bol",
+                "currencyCode",
+                "quotedAmount",
+                "baseAmount",
+                "totalAmount",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "customer"
+              ],
+              "type": "string",
+              "x-enumOf": "order_list.column"
+            },
+            "type": "array"
+          },
           "hasEnteredBy": {
             "description": "true for only records that have a entered by, false for only those that have none.",
             "type": "boolean"
@@ -33056,8 +35593,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -34610,6 +37147,30 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "partyType",
+                "customerId",
+                "carrierId",
+                "code",
+                "name",
+                "agreementType",
+                "status",
+                "contractRef",
+                "priority",
+                "effectiveFrom",
+                "effectiveTo",
+                "autoRenew",
+                "currency",
+                "inputs"
+              ],
+              "type": "string",
+              "x-enumOf": "rate_list_agreements.column"
+            },
+            "type": "array"
+          },
           "hasApprovedBy": {
             "description": "true for only records that have a approved by, false for only those that have none.",
             "type": "boolean"
@@ -34631,8 +37192,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -36444,6 +39005,28 @@
             "description": "Units of the organization's functional currency per one unit of the payment\ncurrency, fixed when the payment posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "customerId",
+                "paymentDate",
+                "amountMinor",
+                "appliedAmountMinor",
+                "unappliedAmountMinor",
+                "status",
+                "paymentMethod",
+                "referenceNumber",
+                "memo",
+                "currencyCode",
+                "reversedAt",
+                "applications"
+              ],
+              "type": "string",
+              "x-enumOf": "receivable_list_customer_payments.column"
+            },
+            "type": "array"
+          },
           "hasPostedBatch": {
             "description": "true for only records that have a posted batch, false for only those that have none.",
             "type": "boolean"
@@ -36461,8 +39044,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -39726,6 +42309,25 @@
             "type": "string",
             "x-recordOf": "report"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "definitionId",
+                "cannedKey",
+                "format",
+                "status",
+                "rowCount",
+                "truncated",
+                "rowsStored",
+                "completedAt",
+                "createdAt"
+              ],
+              "type": "string",
+              "x-enumOf": "report_list_runs.column"
+            },
+            "type": "array"
+          },
           "format": {
             "description": "Only records whose format is exactly this.",
             "type": "string"
@@ -39735,8 +42337,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -39907,9 +42509,26 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "name",
+                "tableName",
+                "eventTypes",
+                "conditions",
+                "conditionMatch",
+                "watchedColumns",
+                "status"
+              ],
+              "type": "string",
+              "x-enumOf": "report_list_table_change_alerts.column"
+            },
+            "type": "array"
+          },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -44241,6 +46860,32 @@
             "description": "Only records whose currency code contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "status",
+                "source",
+                "reference",
+                "issuedDate",
+                "amount",
+                "recovered",
+                "writtenOff",
+                "outstanding",
+                "writeOffReason",
+                "notes",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_advances.column"
+            },
+            "type": "array"
+          },
           "issuedDateFrom": {
             "description": "Only records whose issued date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -44258,8 +46903,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -44485,6 +47130,34 @@
             "description": "Units of the organization's functional currency per one unit of the\nsettlement currency, fixed when the settlement posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "carrierId",
+                "batchId",
+                "settlementNumber",
+                "status",
+                "periodStart",
+                "periodEnd",
+                "payDate",
+                "grossCost",
+                "adjustments",
+                "netPayable",
+                "shipmentCount",
+                "currencyCode",
+                "paymentMethod",
+                "paymentReference",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "carrier"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_carrier.column"
+            },
+            "type": "array"
+          },
           "grossCostMax": {
             "description": "Only records whose gross cost is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -44530,8 +47203,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -44933,6 +47606,39 @@
             "description": "Units of the organization's functional currency per one unit of the\nsettlement currency, fixed when the settlement posted. Null when both are the same. Only records whose exchange rate is at least this. Write it as a decimal, such as 1250.00.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "batchId",
+                "settlementNumber",
+                "status",
+                "classification",
+                "payProfileName",
+                "periodStart",
+                "periodEnd",
+                "payDate",
+                "grossEarnings",
+                "reimbursements",
+                "deductions",
+                "carryForwardIn",
+                "carryForwardOut",
+                "netPay",
+                "totalMiles",
+                "shipmentCount",
+                "currencyCode",
+                "hasExceptions",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_driver.column"
+            },
+            "type": "array"
+          },
           "grossEarningsMax": {
             "description": "Only records whose gross earnings is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -44974,8 +47680,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -45337,6 +48043,32 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "shipmentId",
+                "status",
+                "amount",
+                "currencyCode",
+                "description",
+                "incurredDate",
+                "receiptDocumentId",
+                "reviewNote",
+                "reviewedAt",
+                "settlementLineId",
+                "version",
+                "createdAt",
+                "worker",
+                "payCode",
+                "reviewedBy"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_driver_expenses.column"
+            },
+            "type": "array"
+          },
           "hasPayCode": {
             "description": "true for only records that have a pay code, false for only those that have none.",
             "type": "boolean"
@@ -45374,8 +48106,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -45560,6 +48292,29 @@
             "description": "Only records whose currency code contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "status",
+                "targetAmount",
+                "balance",
+                "annualInterestRate",
+                "lastInterestAccrualDate",
+                "openedDate",
+                "closedDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_escrow_accounts.column"
+            },
+            "type": "array"
+          },
           "lastInterestAccrualDateFrom": {
             "description": "Only records whose last interest accrual date is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
             "examples": [
@@ -45577,8 +48332,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -45827,6 +48582,35 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "shipmentId",
+                "moveId",
+                "settlementId",
+                "status",
+                "eventDate",
+                "grossAmount",
+                "totalMiles",
+                "currencyCode",
+                "components",
+                "proNumber",
+                "onHold",
+                "holdReason",
+                "voidedAt",
+                "voidReason",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_pay_events.column"
+            },
+            "type": "array"
+          },
           "grossAmountMax": {
             "description": "Only records whose gross amount is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -45852,8 +48636,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -46047,6 +48831,31 @@
             "description": "Only records whose description contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "organizationId",
+                "businessUnitId",
+                "status",
+                "name",
+                "description",
+                "classification",
+                "currencyCode",
+                "guaranteedPeriodMinimum",
+                "perDiemRatePerMile",
+                "perDiemDailyCap",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "components",
+                "activeAssignmentCount"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_pay_profiles.column"
+            },
+            "type": "array"
+          },
           "guaranteedPeriodMinimumMax": {
             "description": "Only records whose guaranteed period minimum is at most this. Write it as a decimal in the record's currency, such as 1250.00.",
             "type": "string"
@@ -46056,8 +48865,8 @@
             "type": "string"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -46267,6 +49076,33 @@
             "type": "string",
             "x-recordOf": "escrow_account"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "payCodeId",
+                "escrowAccountId",
+                "status",
+                "frequency",
+                "description",
+                "amount",
+                "totalCap",
+                "deductedToDate",
+                "startDate",
+                "endDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "payCode"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_recurring_deductions.column"
+            },
+            "type": "array"
+          },
           "frequency": {
             "description": "Only records whose frequency is one of these.",
             "items": {
@@ -46285,8 +49121,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -46472,6 +49308,32 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "payCodeId",
+                "status",
+                "frequency",
+                "description",
+                "amount",
+                "totalCap",
+                "paidToDate",
+                "startDate",
+                "endDate",
+                "currencyCode",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "payCode"
+              ],
+              "type": "string",
+              "x-enumOf": "settlement_list_recurring_earnings.column"
+            },
+            "type": "array"
+          },
           "frequency": {
             "description": "Only records whose frequency is one of these.",
             "items": {
@@ -46486,8 +49348,8 @@
             "type": "array"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -48929,13 +51791,36 @@
     },
     {
       "name": "shipment_list",
-      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call. For more, pass every load you need to shipment_get at once.",
+      "description": "Find shipments (loads) by the words people use for them, by status, by holds, or by filters on dates, charges and transfer status. Words match a pro number, BOL, the customer's PO or reference number, a customer's name or code, a stop's place or city, the driver or what it carries; several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through Chicago, and a word that names several things narrows to any of them. With no words and no filters it lists the newest. Each row has the first pickup, the final stop, who drives each move, what it carries and the holds in force, each with its note, when it started and the holdId shipment_release_hold takes, so onHold lists held loads and why in one call, and late lists the loads behind schedule by their stops, whatever their status. For more, pass every load you need to shipment_get at once.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "after": {
             "description": "The nextCursor of the previous page, with every other argument unchanged; omit for the first page.",
             "type": "string"
+          },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "proNumber",
+                "bol",
+                "status",
+                "customer",
+                "pickup",
+                "delivery",
+                "drivers",
+                "carrying",
+                "totalCharge",
+                "actualShipDate",
+                "actualDeliveryDate",
+                "billingStatus",
+                "activeHolds"
+              ],
+              "type": "string",
+              "x-enumOf": "shipment_list.column"
+            },
+            "type": "array"
           },
           "filters": {
             "description": "Conditions beside status, combined with AND: billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled; isnull means never transferred), freightTerms (Prepaid|Collect|ThirdParty), customerId (from customer_list, never guessed), proNumber, bol, the dates actualShipDate, actualDeliveryDate, billedAt, canceledAt and createdAt, and the numbers totalChargeAmount and weight. Give value for one comparison, values for in and notin, days for nextndays and lastndays, and nothing for isnull, isnotnull, today, yesterday and tomorrow. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
@@ -49016,6 +51901,10 @@
             "maxItems": 10,
             "type": "array"
           },
+          "late": {
+            "description": "true lists only shipments running late now: a stop not yet reached whose window has closed, the loads behind schedule. Delayed is a status a person sets, and a late load may not carry it; this reads the stops. Combine with status, words and filters.",
+            "type": "boolean"
+          },
           "limit": {
             "description": "How many rows to return: 10 when you give words, 25 otherwise, at most 50.",
             "maximum": 50,
@@ -49054,7 +51943,7 @@
             "x-enumOf": "list.sortDirection"
           },
           "status": {
-            "description": "Only shipments in these statuses, all in one call; omit for every status. Not picked up yet is New, PartiallyAssigned and Assigned; on the road is InTransit and Delayed. A load the person calls late or running behind is Delayed. There is no Delivered: a delivered load is Completed, ReadyToInvoice or Invoiced.",
+            "description": "Only shipments in these statuses, all in one call; omit for every status. Not picked up yet is New, PartiallyAssigned and Assigned; on the road is InTransit and Delayed. For a load the person calls late or running behind, pass late rather than Delayed, which only some late loads carry. There is no Delivered: a delivered load is Completed, ReadyToInvoice or Invoiced.",
             "items": {
               "enum": [
                 "New",
@@ -49230,6 +52119,29 @@
             "minItems": 1,
             "type": "array"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "sourceShipmentId",
+                "customerId",
+                "lastGeneratedShipmentId",
+                "name",
+                "status",
+                "cronExpression",
+                "timezone",
+                "autoGenerate",
+                "nextOccurrenceAt",
+                "generationCount",
+                "customer",
+                "originLocation",
+                "destinationLocation"
+              ],
+              "type": "string",
+              "x-enumOf": "shipment_list_recurring.column"
+            },
+            "type": "array"
+          },
           "generationCountMax": {
             "description": "Only records whose generation count is at most this.",
             "type": "integer"
@@ -49304,8 +52216,8 @@
             "type": "integer"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -52804,7 +55716,7 @@
     },
     {
       "name": "worker_list",
-      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Credentials due: worker_list_credentials. \"none on file\" was never recorded: worse than expiring soon. dispatchable says if a driver can take a load; canBeAssigned false is already off dispatch, so no hold. Filters: canBeAssigned, createdAtFrom/To, driverType, externalId, firstName, fleetCodeId, hasFleetCode, hasPosition, lastName, status, type, updatedAtFrom/To, wholeName, dispatchable; profile fields, each named profile and the field (profileCdlClass): cdlClass, cdlRestrictions, complianceStatus, createdAtFrom/To, eldExempt, endorsement, hazmatExpiryFrom/To, isQualified, lastComplianceCheckFrom/To, lastMvrCheckFrom/To, licenseExpiryFrom/To, medicalCardExpiryFrom/To, mvrDueDateFrom/To, physicalDueDateFrom/To, shortHaulExempt, twicExpiryFrom/To, updatedAtFrom/To.",
+      "description": "Find workers (drivers) by name, closest first, or the roster by employment or qualification. Lacking a credential: withoutCredential; due: worker_list_credentials. \"none on file\" was never recorded, worse than expiring soon. dispatchable: can take a load now. Filters: canBeAssigned, createdAtFrom/To, driverType, externalId, firstName, fleetCodeId, hasFleetCode, hasPosition, lastName, status, type, updatedAtFrom/To, wholeName, withoutCredential, dispatchable; profile fields, each named profile and the field (profileCdlClass): cdlClass, cdlRestrictions, complianceStatus, createdAtFrom/To, eldExempt, endorsement, hazmatExpiryFrom/To, isQualified, lastComplianceCheckFrom/To, lastMvrCheckFrom/To, licenseExpiryFrom/To, medicalCardExpiryFrom/To, mvrDueDateFrom/To, physicalDueDateFrom/To, shortHaulExempt, twicExpiryFrom/To, updatedAtFrom/To.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -52879,6 +55791,33 @@
             "description": "Only records whose external id contains this text.",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "fleetCodeId",
+                "status",
+                "type",
+                "driverType",
+                "firstName",
+                "lastName",
+                "wholeName",
+                "city",
+                "externalId",
+                "assignmentBlocked",
+                "canBeAssigned",
+                "availableForDispatch",
+                "createdAt",
+                "fleetCode",
+                "profile",
+                "dispatchable",
+                "notDispatchableBecause"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list.column"
+            },
+            "type": "array"
+          },
           "firstName": {
             "description": "Only records whose first name contains this text.",
             "type": "string"
@@ -52935,8 +55874,8 @@
             "type": "array"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -53414,6 +56353,10 @@
           "wholeName": {
             "description": "Only records whose whole name contains this text.",
             "type": "string"
+          },
+          "withoutCredential": {
+            "description": "Only workers with no valid credential of this type, by its code, such as ROAD_TEST or MED_CARD, in any case: none on file, archived, or expired.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -53492,7 +56435,7 @@
     },
     {
       "name": "worker_list_credentials",
-      "description": "List worker credentials: one worker's licences, medical cards and endorsements, or those falling due across the organization. With a worker and no expiry window it returns every credential the worker holds, with its dates and whether it is verified, and the credential types the organization tracks; a required type with nothing on file was never recorded, worse than expiring soon. Without a worker, or with expiringWithinDays or includeExpired, it lists active credentials expiring within that many days from now, soonest first, a page at a time: the tool for any question about who is expiring, lapsed or out of compliance by a date. Narrow by credentialTypeCode, such as MED_CARD or CDL. Each row's worker says if dispatchable; canBeAssigned false is already off dispatch, so no hold. It yields the credentialId and credentialTypeId the credential tools take.",
+      "description": "List worker credentials: the licences, medical cards and endorsements workers hold, those falling due, or who holds a type. With workerIds and no expiry window: every credential those workers hold, in one call, with dates, verification and the organization's types; a required type with nothing on file was never recorded, worse than expiring soon. With expiringWithinDays or includeExpired, or no worker and no type: active credentials expiring within that many days, soonest first, paged: who is expiring, lapsed or out of compliance by a date. credentialTypeCode alone: who holds that type. Who lacks one: worker_list withoutCredential, never a call per worker. Each row's worker says if dispatchable; canBeAssigned false is already off dispatch: no hold. It yields the credentialId and credentialTypeId the credential tools take.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -53501,11 +56444,11 @@
             "type": "string"
           },
           "credentialTypeCode": {
-            "description": "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case.",
+            "description": "Only credentials of this type, by its code, such as MED_CARD or CDL, in any case. Named with no worker and no window, every active one of the type: who holds it, those that never expire included.",
             "type": "string"
           },
           "expiringWithinDays": {
-            "description": "Only active credentials expiring within this many days from now, from 1 to 365. 30 when no worker is named.",
+            "description": "Only active credentials expiring within this many days from now, from 1 to 365. 30 when neither a worker nor a type is named.",
             "type": "integer"
           },
           "includeArchived": {
@@ -53527,10 +56470,15 @@
             "description": "Only credential types the organization marks required.",
             "type": "boolean"
           },
-          "workerId": {
-            "description": "The worker, from worker_list. Never guess one. Leave it out for the credentials falling due across the organization.",
-            "type": "string",
-            "x-recordOf": "worker"
+          "workerIds": {
+            "description": "The worker, from worker_list. Never guess one. Leave it out for the credentials across the organization.",
+            "items": {
+              "type": "string",
+              "x-recordOf": "worker"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
           }
         },
         "type": "object"
@@ -53995,6 +56943,39 @@
             "format": "date",
             "type": "string"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "workerId",
+                "organizationId",
+                "businessUnitId",
+                "approverId",
+                "rejectorId",
+                "cancelledById",
+                "status",
+                "type",
+                "startDate",
+                "endDate",
+                "reason",
+                "rejectionReason",
+                "cancellationReason",
+                "days",
+                "balanceAfterDays",
+                "autoApproved",
+                "version",
+                "createdAt",
+                "updatedAt",
+                "worker",
+                "approver",
+                "rejector",
+                "cancelledBy"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_time_off.column"
+            },
+            "type": "array"
+          },
           "hasApprover": {
             "description": "true for only records that have a approver, false for only those that have none.",
             "type": "boolean"
@@ -54012,8 +56993,8 @@
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true
@@ -54296,13 +57277,45 @@
             "description": "Only records whose duration minutes is at least this.",
             "type": "integer"
           },
+          "fields": {
+            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "items": {
+              "enum": [
+                "businessUnitId",
+                "organizationId",
+                "code",
+                "name",
+                "description",
+                "category",
+                "status",
+                "delivery",
+                "contentUrl",
+                "durationMinutes",
+                "passingScore",
+                "validityMonths",
+                "renewalWindowDays",
+                "isRequired",
+                "requiredForDriverTypes",
+                "dueDaysAfterAssignment",
+                "requiresAcknowledgement",
+                "sortOrder",
+                "openRecordCount",
+                "version",
+                "createdAt",
+                "updatedAt"
+              ],
+              "type": "string",
+              "x-enumOf": "worker_list_training_courses.column"
+            },
+            "type": "array"
+          },
           "isRequired": {
             "description": "true for only the records whose isRequired is true, false for only those whose isRequired is false.",
             "type": "boolean"
           },
           "limit": {
-            "description": "How many rows to return: 25 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 25 unless you ask, at most 100.",
+            "maximum": 100,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true

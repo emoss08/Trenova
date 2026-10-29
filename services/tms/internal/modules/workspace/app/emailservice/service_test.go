@@ -3,18 +3,18 @@ package emailservice
 import (
 	"context"
 	"errors"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -418,10 +418,10 @@ func TestSyncInvoiceAttemptsPublishesEachUpdatedInvoice(t *testing.T) {
 		Return([]*invoice.Invoice{updated}, nil).
 		Once()
 
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(
-			func(req *agentports.PublishResourceInvalidationRequest) bool {
+			func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 				return req.Resource == "invoice" &&
 					req.Action == "send.updated" &&
 					req.RecordID == updated.ID

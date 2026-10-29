@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func fiscalYearColumns(ctx context.Context, nodePathPrefix string) []string {
 func fiscalYearConnectionToModel(
 	result *pagination.CursorListResult[*fiscalyear.FiscalYear],
 ) (*gqlmodel.FiscalYearConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *fiscalyear.FiscalYear, cursor string) *gqlmodel.FiscalYearEdge {
 			return &gqlmodel.FiscalYearEdge{

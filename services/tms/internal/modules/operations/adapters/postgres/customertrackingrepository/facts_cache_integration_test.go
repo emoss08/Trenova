@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/customertrackingrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,7 +20,7 @@ import (
 
 func TestNotifyingCustomersAreCachedPerTenantUntilAProfileChanges(t *testing.T) {
 	h := newHarness(t)
-	graph := h.shipment(t, "NC-1", shipment.StatusInTransit)
+	graph := h.shipment(t, "NC-1", shipmentvocab.StatusInTransit)
 	other := seedtest.SeedAdditionalTenant(t, t.Context(), h.db, "NC")
 
 	cached := cachetest.Open(t, t.Context(), h.dsn)

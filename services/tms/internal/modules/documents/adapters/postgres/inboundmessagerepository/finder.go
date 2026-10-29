@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -83,7 +84,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 	address string,
 ) (pulid.ID, bool, error) {
 	return dbtx.Read2(ctx, f.db, func(ctx context.Context) (pulid.ID, bool, error) {
-		address = stringutils.NormalizeEmailAddress(address)
+		address = mailtext.NormalizeEmailAddress(address)
 		if address == "" {
 			return pulid.Nil, false, nil
 		}
@@ -142,7 +143,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 // listsAddress confirms the address is a whole entry in a recipient list, so
 // "ops@acme.com" does not match "cops@acme.com" or "ops@acme.com.au".
 func listsAddress(list, address string) bool {
-	for _, entry := range stringutils.SplitEmailList(list) {
+	for _, entry := range mailtext.SplitEmailList(list) {
 		if entry == address {
 			return true
 		}
@@ -157,7 +158,7 @@ func (f *RecordFinder) FindCarrierByEmail(
 	address string,
 ) (pulid.ID, bool, error) {
 	return dbtx.Read2(ctx, f.db, func(ctx context.Context) (pulid.ID, bool, error) {
-		address = stringutils.NormalizeEmailAddress(address)
+		address = mailtext.NormalizeEmailAddress(address)
 		if address == "" {
 			return pulid.Nil, false, nil
 		}

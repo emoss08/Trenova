@@ -1,7 +1,6 @@
 package bankreceiptbatchhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptbatchportsmock"
 	"context"
 	"net/http"
 	"testing"
@@ -9,12 +8,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/bankreceiptbatchportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -31,8 +32,10 @@ func setupHandler(
 	t.Helper()
 
 	logger := zap.NewNop()
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
+	)
 	pm := middleware.NewPermissionMiddleware(
 		middleware.PermissionMiddlewareParams{
 			PermissionEngine: &mocks.AllowAllPermissionEngine{},

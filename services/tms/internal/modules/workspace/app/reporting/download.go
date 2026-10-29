@@ -17,7 +17,7 @@ import (
 
 const (
 	downloadURLExpiry  = 60 * time.Second
-	maxDownloadNameLen = 120
+	MaxDownloadNameLen = 120
 )
 
 type RunDownload struct {
@@ -91,7 +91,7 @@ func (s *Service) downloadFileName(
 	stamp := time.Unix(run.CreatedAt, 0).UTC().Format("2006-01-02")
 	return fmt.Sprintf(
 		"%s %s.%s",
-		fileutils.SanitizeDisplayFilename(base, "report", maxDownloadNameLen),
+		fileutils.SanitizeDisplayFilename(base, "report", MaxDownloadNameLen),
 		stamp,
 		run.Format.Extension(),
 	)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -20,7 +21,7 @@ func (r *repository) ListBillingTransferCandidateIDs(
 		r.db,
 		func(ctx context.Context) (*shipmentports.BillingTransferCandidateIDsResult, error) {
 			sp := shipmentdb.Shipments
-			q := sp.Where(BillingTransferCandidateCondition())
+			q := sp.Where(shipmentpredicate.BillingTransferCandidateCondition())
 			if req.Status != "" {
 				q = q.Where(sp.Status.Eq(req.Status))
 			}

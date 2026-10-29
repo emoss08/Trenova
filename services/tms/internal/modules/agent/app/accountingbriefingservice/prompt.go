@@ -6,9 +6,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -36,11 +36,11 @@ Rules:
 func buildContext(
 	facts accountingbrief.Facts,
 	plain []accountingbriefports.AccountingBriefingSegment,
-) agentports.DelimitedContext {
+) llmports.DelimitedContext {
 	var findings strings.Builder
 
 	if facts.BrokenPromises > 0 {
-		value := stringutils.CountNoun(facts.BrokenPromises, "promise", "promises") +
+		value := inflect.CountNoun(facts.BrokenPromises, "promise", "promises") +
 			" to pay lapsed unpaid, " + dollars(facts.BrokenPromiseMinor) + " still owed"
 		if _, name, ok := facts.CustomerFor(accountingbrief.LinkBrokenPromise); ok {
 			value += ", by " + name
@@ -71,8 +71,12 @@ func buildContext(
 		if facts.OldestDraftDays > 0 {
 			value += ", the oldest " + days(facts.OldestDraftDays) + " old"
 		}
-		writeLine(&findings, "Invoices still in draft, so not yet sent and not yet earning their due date",
-			value, accountingbrief.LinkDrafts)
+		writeLine(
+			&findings,
+			"Invoices still in draft, so not yet sent and not yet earning their due date",
+			value,
+			accountingbrief.LinkDrafts,
+		)
 	}
 	if facts.FollowUpsDue > 0 {
 		writeLine(&findings, "Collections follow-ups due", strconv.Itoa(facts.FollowUpsDue),
@@ -81,7 +85,7 @@ func buildContext(
 	if facts.PromisesDue > 0 {
 		writeLine(&findings, "Promises to pay coming due in the next "+
 			days(accountingbrief.PromiseLookaheadDays),
-			stringutils.CountNoun(facts.PromisesDue, "promise", "promises")+", "+
+			inflect.CountNoun(facts.PromisesDue, "promise", "promises")+", "+
 				dollars(facts.PromisesDueMinor),
 			accountingbrief.LinkPromisesDue)
 	}
@@ -148,8 +152,8 @@ func buildContext(
 		plainText.WriteString(segment.Text)
 	}
 
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{
 			{Title: findingsSection, Trusted: false, Content: findings.String()},
 			{Title: headlineSection, Trusted: false, Content: background.String()},
 			{Title: plainWordingSection, Trusted: false, Content: plainText.String()},

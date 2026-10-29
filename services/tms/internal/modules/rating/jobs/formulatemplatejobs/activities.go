@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -24,14 +24,14 @@ type ExpireStaleSubmissionsResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	TemplateService *formulatemplateservice.Service
+	TemplateService *formulatemplatereviewservice.Service
 	LibraryService  *formulalibraryservice.Service
 	MatrixService   *ratematrixservice.Service
 	Logger          *zap.Logger
 }
 
 type Activities struct {
-	templates *formulatemplateservice.Service
+	templates *formulatemplatereviewservice.Service
 	libraries *formulalibraryservice.Service
 	matrices  *ratematrixservice.Service
 	logger    *zap.Logger
@@ -53,7 +53,7 @@ func (a *Activities) ExpireStaleSubmissionsActivity(
 	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
 	result, err := a.templates.ExpireStaleSubmissions(
 		ctx,
-		&formulatemplateservice.ExpireStaleSubmissionsRequest{Limit: limit},
+		&formulatemplatereviewservice.ExpireStaleSubmissionsRequest{Limit: limit},
 	)
 	if err != nil {
 		return nil, err

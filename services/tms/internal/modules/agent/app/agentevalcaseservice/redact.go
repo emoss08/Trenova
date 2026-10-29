@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
@@ -19,14 +19,14 @@ type sensitivityReader interface {
 
 type Redactor struct {
 	sensitivity sensitivityReader
-	queryTools  agentports.AgentQueryToolRegistry
-	actionTools agentports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
+	actionTools agenttoolports.AgentToolRegistry
 }
 
 func NewRedactor(
 	sensitivity sensitivityReader,
-	queryTools agentports.AgentQueryToolRegistry,
-	actionTools agentports.AgentToolRegistry,
+	queryTools agenttoolports.AgentQueryToolRegistry,
+	actionTools agenttoolports.AgentToolRegistry,
 ) *Redactor {
 	return &Redactor{sensitivity: sensitivity, queryTools: queryTools, actionTools: actionTools}
 }
@@ -129,7 +129,7 @@ func (r *Redactor) restricted(
 }
 
 func (r *Redactor) toolContent(tool, content string, out *redaction) string {
-	name, payload, fenced := agentruntime.UnfenceToolResult(content)
+	name, payload, fenced := toolresult.Unfence(content)
 	if !fenced {
 		return content
 	}
@@ -137,7 +137,7 @@ func (r *Redactor) toolContent(tool, content string, out *redaction) string {
 		name = tool
 	}
 
-	return agentruntime.FenceToolResult(name, r.payload(name, payload, out))
+	return toolresult.Fence(name, r.payload(name, payload, out))
 }
 
 func (r *Redactor) payload(tool, payload string, out *redaction) string {
@@ -167,7 +167,7 @@ func (r *Redactor) decodedResult(tool, content string, failed bool, out *redacti
 		return strings.TrimSpace(content)
 	}
 
-	name, payload, fenced := agentruntime.UnfenceToolResult(content)
+	name, payload, fenced := toolresult.Unfence(content)
 	if !fenced {
 		payload = content
 		name = tool

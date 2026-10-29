@@ -6,7 +6,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundprocessing"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundupkeep"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -22,16 +24,18 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Inbound   *inboundmessageservice.Service
-	Tenants   tenantports.TenantSyncRepository
-	Logger    *zap.Logger
-	Conflicts *triageconflictservice.Service `optional:"true"`
+	Processing *inboundprocessing.Service
+	Intake     *inboundintake.Service
+	Upkeep     *inboundupkeep.Service
+	Tenants    tenantports.TenantSyncRepository
+	Logger     *zap.Logger
+	Conflicts  *triageconflictservice.Service `optional:"true"`
 }
 
 // settledPurger is the retention slice of the inbox, narrow so the sweep can be
 // tested against the tenants it walks rather than a database.
 type settledPurger interface {
-	PurgeSettled(ctx context.Context, req inboundmessageservice.PurgeSettledRequest) (int, error)
+	PurgeSettled(ctx context.Context, req inboundupkeep.PurgeSettledRequest) (int, error)
 }
 
 type conflictChecker interface {
@@ -39,19 +43,23 @@ type conflictChecker interface {
 }
 
 type Activities struct {
-	inbound   *inboundmessageservice.Service
-	purger    settledPurger
-	conflicts conflictChecker
-	tenants   tenantports.TenantSyncRepository
-	l         *zap.Logger
+	processing *inboundprocessing.Service
+	intake     *inboundintake.Service
+	upkeep     *inboundupkeep.Service
+	purger     settledPurger
+	conflicts  conflictChecker
+	tenants    tenantports.TenantSyncRepository
+	l          *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	activities := &Activities{
-		inbound: p.Inbound,
-		purger:  p.Inbound,
-		tenants: p.Tenants,
-		l:       p.Logger.Named("inbound-activities"),
+		processing: p.Processing,
+		intake:     p.Intake,
+		upkeep:     p.Upkeep,
+		purger:     p.Upkeep,
+		tenants:    p.Tenants,
+		l:          p.Logger.Named("inbound-activities"),
 	}
 	if p.Conflicts != nil {
 		activities.conflicts = p.Conflicts
@@ -83,7 +91,7 @@ func (a *Activities) SettleInboundMessageActivity(
 	ctx context.Context,
 	payload *ProcessInboundMessagePayload,
 ) (*ProcessInboundMessageResult, error) {
-	result, err := a.inbound.ProcessMessage(
+	result, err := a.processing.ProcessMessage(
 		ctx,
 		payload.MessageID,
 		pagination.TenantInfo{
@@ -93,11 +101,11 @@ func (a *Activities) SettleInboundMessageActivity(
 		// A model that could not be asked is asked again, the way the
 		// provider's answer says, until the last attempt sends the message
 		// to review.
-		inboundmessageservice.RetryModelFailures(func(err error) bool {
+		inboundprocessing.RetryModelFailures(func(err error) bool {
 			return modelcall.Transient(err) && !modelcall.FinalAttempt(ctx, settleAttempts)
 		}),
 	)
-	if errors.Is(err, inboundmessageservice.ErrClassificationUnavailable) {
+	if errors.Is(err, inboundprocessing.ErrClassificationUnavailable) {
 		return nil, modelcall.Classify(err)
 	}
 	if err != nil {
@@ -129,7 +137,7 @@ func (a *Activities) FetchInboundContentActivity(
 ) (*FetchInboundContentResult, error) {
 	tenantInfo := tenantOf(payload.BasePayload)
 
-	err := a.inbound.FetchContent(ctx, payload.MessageID, tenantInfo)
+	err := a.intake.FetchContent(ctx, payload.MessageID, tenantInfo)
 	if err == nil {
 		return &FetchInboundContentResult{Readable: true}, nil
 	}
@@ -148,8 +156,8 @@ func (a *Activities) FetchInboundContentActivity(
 
 	a.l.Warn("inbound message content could not be read",
 		zap.String("messageId", payload.MessageID.String()), zap.Error(err))
-	if markErr := a.inbound.MarkContentUnavailable(
-		ctx, payload.MessageID, tenantInfo, inboundmessageservice.ContentFailureText(err),
+	if markErr := a.intake.MarkContentUnavailable(
+		ctx, payload.MessageID, tenantInfo, inboundintake.ContentFailureText(err),
 	); markErr != nil {
 		return nil, markErr
 	}
@@ -165,8 +173,8 @@ func (a *Activities) FailInboundMessageActivity(
 	ctx context.Context,
 	payload *FailInboundMessagePayload,
 ) error {
-	if payload.Code == inboundmessageservice.ContentUnavailableCode {
-		return a.inbound.MarkContentUnavailable(
+	if payload.Code == inboundintake.ContentUnavailableCode {
+		return a.intake.MarkContentUnavailable(
 			ctx,
 			payload.MessageID,
 			tenantOf(payload.BasePayload),
@@ -174,7 +182,7 @@ func (a *Activities) FailInboundMessageActivity(
 		)
 	}
 
-	return a.inbound.MarkFailed(
+	return a.processing.MarkFailed(
 		ctx,
 		payload.MessageID,
 		pagination.TenantInfo{
@@ -195,7 +203,7 @@ func (a *Activities) ListInboundAttachmentsActivity(
 	ctx context.Context,
 	payload *ProcessInboundMessagePayload,
 ) (*ListInboundAttachmentsResult, error) {
-	refs, err := a.inbound.PendingAttachments(ctx, payload.MessageID, tenantOf(payload.BasePayload))
+	refs, err := a.intake.PendingAttachments(ctx, payload.MessageID, tenantOf(payload.BasePayload))
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +216,7 @@ func (a *Activities) RecordInboundAttachmentActivity(
 	ctx context.Context,
 	payload *RecordInboundAttachmentPayload,
 ) error {
-	return a.inbound.RecordAttachmentDocument(
+	return a.intake.RecordAttachmentDocument(
 		ctx,
 		payload.Attachment,
 		payload.DocumentID,
@@ -225,7 +233,7 @@ func (a *Activities) PollInboundAttachmentActivity(
 ) (*AttachmentExtractionState, error) {
 	tenantInfo := tenantOf(payload.BasePayload)
 
-	state, err := a.inbound.PollAttachmentExtraction(ctx, payload.Attachment, tenantInfo)
+	state, err := a.intake.PollAttachmentExtraction(ctx, payload.Attachment, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +241,7 @@ func (a *Activities) PollInboundAttachmentActivity(
 		return state, nil
 	}
 
-	if err = a.inbound.GiveUpOnAttachment(
+	if err = a.intake.GiveUpOnAttachment(
 		ctx, payload.Attachment, state.Status, tenantInfo,
 	); err != nil {
 		a.l.Error("could not record that an attachment ran out of time",
@@ -269,7 +277,7 @@ func (a *Activities) InboundMessageRetentionActivity(
 		return nil, fmt.Errorf("list organizations: %w", err)
 	}
 
-	before := timeutils.NowUnix() - inboundmessageservice.RetentionDays*24*60*60
+	before := timeutils.NowUnix() - inboundupkeep.RetentionDays*24*60*60
 	result := &InboundMessageRetentionResult{}
 	for _, org := range organizations {
 		activity.RecordHeartbeat(ctx, org.ID.String())
@@ -279,7 +287,7 @@ func (a *Activities) InboundMessageRetentionActivity(
 		for range inboundRetentionPasses {
 			deleted, pErr := a.purger.PurgeSettled(
 				tenantCtx,
-				inboundmessageservice.PurgeSettledRequest{
+				inboundupkeep.PurgeSettledRequest{
 					TenantInfo: tenant,
 					Before:     before,
 					Limit:      inboundRetentionBatch,
@@ -310,8 +318,8 @@ func (a *Activities) InboundMessageRetentionActivity(
 func (a *Activities) IngestFactorRemittanceActivity(
 	ctx context.Context,
 	payload *ProcessInboundMessagePayload,
-) (*inboundmessageservice.IngestRemittancesResult, error) {
-	result, err := a.inbound.IngestRemittances(ctx, payload.MessageID, pagination.TenantInfo{
+) (*inboundupkeep.IngestRemittancesResult, error) {
+	result, err := a.upkeep.IngestRemittances(ctx, payload.MessageID, pagination.TenantInfo{
 		OrgID: payload.OrganizationID,
 		BuID:  payload.BusinessUnitID,
 	})

@@ -4,7 +4,7 @@ import { documentContentSchema } from "@trenova/shared/types/document";
 /**
  * The extraction worker records the model's reading in
  * `structuredData.aiDiagnostics.acceptanceStatus` with one of four values
- * (`documentextractionjobs/types.go`): `not_attempted`, `pending` while the
+ * (`documentanalysis/types.go`): `not_attempted`, `pending` while the
  * model is still reading a document whose text is already in, `accepted` and
  * `rejected`. A value the parse refuses throws away the whole content, its
  * text included, so every one of them has to parse.

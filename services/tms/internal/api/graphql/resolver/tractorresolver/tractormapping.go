@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -102,7 +102,7 @@ func tractorRelationIncludesForFields(
 func tractorConnectionToModel(
 	result *pagination.CursorListResult[*tractor.Tractor],
 ) (*gqlmodel.TractorConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
 		func(node *tractor.Tractor, cursor string) *gqlmodel.TractorEdge {
@@ -115,14 +115,14 @@ func tractorConnectionToModel(
 	if err != nil {
 		return nil, err
 	}
-	endCursor := base.LastEdgeCursor(
+	endCursor := gqlconnection.LastEdgeCursor(
 		edges,
 		func(edge *gqlmodel.TractorEdge) string { return edge.Cursor },
 	)
 
 	return &gqlmodel.TractorConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
 			endCursor,
 		),

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite/agentqualitysuitedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -61,10 +61,10 @@ func clampLimit(limit, fallback, ceiling int) int {
 
 func (r *suiteRunRepository) Create(
 	ctx context.Context,
-	entity *agentquality.SuiteRun,
-) (*agentquality.SuiteRun, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		if err := agentqualitydb.SuiteRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *agentqualitysuite.SuiteRun,
+) (*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentqualitysuite.SuiteRun, error) {
+		if err := agentqualitysuitedb.SuiteRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			switch dberror.ExtractConstraintName(err) {
 			case constraintOneRunning:
 				return nil, agentqualityports.ErrSuiteRunAlreadyRunning
@@ -82,10 +82,10 @@ func (r *suiteRunRepository) Create(
 
 func (r *suiteRunRepository) Update(
 	ctx context.Context,
-	entity *agentquality.SuiteRun,
-) (*agentquality.SuiteRun, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		s := agentqualitydb.SuiteRuns
+	entity *agentqualitysuite.SuiteRun,
+) (*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentqualitysuite.SuiteRun, error) {
+		s := agentqualitysuitedb.SuiteRuns
 		err := s.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -125,9 +125,9 @@ func (r *suiteRunRepository) Update(
 func (r *suiteRunRepository) GetByID(
 	ctx context.Context,
 	req agentqualityports.GetAgentSuiteRunRequest,
-) (*agentquality.SuiteRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		entity, err := agentqualitydb.SuiteRuns.Get(ctx, r.db.Keel(ctx), req.ID)
+) (*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualitysuite.SuiteRun, error) {
+		entity, err := agentqualitysuitedb.SuiteRuns.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			return nil, suiteRunErrors.Map(err, req.ID.String())
 		}
@@ -139,9 +139,9 @@ func (r *suiteRunRepository) GetByID(
 func (r *suiteRunRepository) GetBySweepKey(
 	ctx context.Context,
 	req agentqualityports.GetAgentSuiteRunBySweepKeyRequest,
-) (*agentquality.SuiteRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		s := agentqualitydb.SuiteRuns
+) (*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualitysuite.SuiteRun, error) {
+		s := agentqualitysuitedb.SuiteRuns
 		entity, err := s.Where(s.SweepKey.Eq(req.SweepKey)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, suiteRunErrors.Map(err, req.SweepKey)
@@ -154,9 +154,9 @@ func (r *suiteRunRepository) GetBySweepKey(
 func (r *suiteRunRepository) Last(
 	ctx context.Context,
 	req agentqualityports.LastAgentSuiteRunRequest,
-) (*agentquality.SuiteRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.SuiteRun, error) {
-		s := agentqualitydb.SuiteRuns
+) (*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentqualitysuite.SuiteRun, error) {
+		s := agentqualitysuitedb.SuiteRuns
 		entity, err := s.Where(
 			s.AgentDefinitionID.Eq(req.AgentDefinitionID),
 			keel.When(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
@@ -179,12 +179,12 @@ func (r *suiteRunRepository) Last(
 func (r *suiteRunRepository) ListConnection(
 	ctx context.Context,
 	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
-) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
+) (*pagination.CursorListResult[*agentqualitysuite.SuiteRun], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
-			s := agentqualitydb.SuiteRuns
+		func(ctx context.Context) (*pagination.CursorListResult[*agentqualitysuite.SuiteRun], error) {
+			s := agentqualitysuitedb.SuiteRuns
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -192,7 +192,7 @@ func (r *suiteRunRepository) ListConnection(
 					req.AgentDefinitionID.IsNotNil(),
 					s.AgentDefinitionID.Eq(req.AgentDefinitionID),
 				)),
-				&listquery.Request[agentquality.SuiteRun]{
+				&listquery.Request[agentqualitysuite.SuiteRun]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
 				},
@@ -211,9 +211,9 @@ func (r *suiteRunRepository) ListConnection(
 func historyQuery(
 	req *agentqualityports.AgentSuiteRunHistoryRequest,
 	perAgent int,
-) *keel.Query[*agentquality.SuiteRun] {
-	s := agentqualitydb.SuiteRuns
-	ranked := agentqualitydb.SuiteRuns.As("ranked")
+) *keel.Query[*agentqualitysuite.SuiteRun] {
+	s := agentqualitysuitedb.SuiteRuns
+	ranked := agentqualitysuitedb.SuiteRuns.As("ranked")
 	history := keel.CTE(historyCTE, []string{"id", "history_rank"}, ranked.
 		Pick(
 			ranked.ID,
@@ -239,10 +239,10 @@ func historyQuery(
 func (r *suiteRunRepository) History(
 	ctx context.Context,
 	req agentqualityports.AgentSuiteRunHistoryRequest,
-) ([]*agentquality.SuiteRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.SuiteRun, error) {
+) ([]*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentqualitysuite.SuiteRun, error) {
 		if len(req.AgentDefinitionIDs) == 0 {
-			return []*agentquality.SuiteRun{}, nil
+			return []*agentqualitysuite.SuiteRun{}, nil
 		}
 
 		perAgent := clampLimit(req.PerAgent, defaultHistoryPerAgent, maxHistoryPerAgent)
@@ -257,19 +257,19 @@ func (r *suiteRunRepository) History(
 	})
 }
 
-func scoredStatuses() []agentquality.SuiteRunStatus {
-	return []agentquality.SuiteRunStatus{
-		agentquality.SuiteRunStatusCompleted,
-		agentquality.SuiteRunStatusBudgetStopped,
+func scoredStatuses() []agentqualitysuite.SuiteRunStatus {
+	return []agentqualitysuite.SuiteRunStatus{
+		agentqualitysuite.SuiteRunStatusCompleted,
+		agentqualitysuite.SuiteRunStatusBudgetStopped,
 	}
 }
 
 func (r *suiteRunRepository) Latest(
 	ctx context.Context,
 	req agentqualityports.LatestAgentSuiteRunsRequest,
-) ([]*agentquality.SuiteRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentquality.SuiteRun, error) {
-		s := agentqualitydb.SuiteRuns
+) ([]*agentqualitysuite.SuiteRun, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentqualitysuite.SuiteRun, error) {
+		s := agentqualitysuitedb.SuiteRuns
 		runs, err := s.DistinctOn(s.AgentDefinitionID).
 			Where(
 				keel.When(
@@ -297,7 +297,7 @@ func (r *suiteRunRepository) Overview(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentqualityports.AgentSuiteRunOverview, error) {
-			s := agentqualitydb.SuiteRuns
+			s := agentqualitysuitedb.SuiteRuns
 			overview, err := keel.IntoOne[agentqualityports.AgentSuiteRunOverview](
 				ctx,
 				r.db.Keel(ctx),

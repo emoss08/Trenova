@@ -13,14 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
@@ -43,7 +44,7 @@ type Repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.RecordSummarizer {
+func New(p Params) recordsummaryports.RecordSummarizer {
 	return &Repository{db: p.DB}
 }
 
@@ -166,7 +167,7 @@ func stopsQuery(ids []pulid.ID) projection {
 			stp.ScheduledWindowStart, stp.ScheduledWindowEnd, stp.ActualArrival,
 			eta.EstimatedArrival, text(loc.City), text(st.Abbreviation),
 		).
-		Where(sm.ShipmentID.In(ids...), stp.Status.Ne(shipment.StopStatusCanceled))
+		Where(sm.ShipmentID.In(ids...), stp.Status.Ne(shipmentvocab.StopStatusCanceled))
 }
 
 func invoicesQuery(ids []pulid.ID) projection {
@@ -188,26 +189,30 @@ func entriesQuery(ids []pulid.ID) projection {
 
 func (r *Repository) Summaries(
 	ctx context.Context,
-	req *agentports.RecordSummaryRequest,
-) (agentports.RecordSummaries, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (agentports.RecordSummaries, error) {
-		out := make(agentports.RecordSummaries, len(req.Refs))
-		for resource, ids := range req.Refs {
-			ids = distinct(ids)
-			if len(ids) == 0 {
-				continue
+	req *recordsummaryports.RecordSummaryRequest,
+) (recordsummaryports.RecordSummaries, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (recordsummaryports.RecordSummaries, error) {
+			out := make(recordsummaryports.RecordSummaries, len(req.Refs))
+			for resource, ids := range req.Refs {
+				ids = distinct(ids)
+				if len(ids) == 0 {
+					continue
+				}
+				read, err := r.read(ctx, resource, ids, req.Now)
+				if err != nil {
+					return nil, fmt.Errorf("read %s summaries: %w", resource, err)
+				}
+				if read != nil {
+					out[resource] = read
+				}
 			}
-			read, err := r.read(ctx, resource, ids, req.Now)
-			if err != nil {
-				return nil, fmt.Errorf("read %s summaries: %w", resource, err)
-			}
-			if read != nil {
-				out[resource] = read
-			}
-		}
 
-		return out, nil
-	})
+			return out, nil
+		},
+	)
 }
 
 func (r *Repository) read(
@@ -215,7 +220,7 @@ func (r *Repository) read(
 	resource permission.Resource,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	if resource == permission.ResourceShipment {
 		return r.shipments(ctx, ids, now)
 	}
@@ -227,15 +232,15 @@ func (r *Repository) read(
 	}
 	query, ok := plain[resource]
 	if !ok {
-		return map[pulid.ID]board.Summary{}, nil
+		return map[pulid.ID]boardassemble.Summary{}, nil
 	}
 	rows, err := keel.Into[summaryRow](ctx, r.db.Keel(ctx), query(ids))
 	if err != nil {
 		return nil, err
 	}
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,
@@ -249,7 +254,7 @@ func (r *Repository) shipments(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[shipmentRow](ctx, r.db.Keel(ctx), shipmentsQuery(ids))
 	if err != nil {
 		return nil, err
@@ -263,7 +268,7 @@ func (r *Repository) shipments(
 		byShipment[stop.ShipmentID] = append(byShipment[stop.ShipmentID], stop)
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		route := byShipment[row.ID]
 		slices.SortFunc(route, func(a, b stopRow) int {
@@ -282,7 +287,7 @@ func (r *Repository) shipments(
 		if late, ok := lateness(route, now); ok {
 			measures[board.MeasureLateness] = late
 		}
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: lane(route),
 			Status:   row.Status,
@@ -294,8 +299,8 @@ func (r *Repository) shipments(
 }
 
 func pickup(stop *stopRow) bool {
-	return stop.Type == string(shipment.StopTypePickup) ||
-		stop.Type == string(shipment.StopTypeSplitPickup)
+	return stop.Type == string(shipmentvocab.StopTypePickup) ||
+		stop.Type == string(shipmentvocab.StopTypeSplitPickup)
 }
 
 func place(stop *stopRow) string {
@@ -338,7 +343,7 @@ func lateness(route []stopRow, now int64) (board.RowMeasure, bool) {
 	}
 	for idx := range route {
 		stop := &route[idx]
-		if stop.Status == string(shipment.StopStatusCompleted) {
+		if stop.Status == string(shipmentvocab.StopStatusCompleted) {
 			continue
 		}
 		due := windowEnd(stop)
@@ -400,13 +405,13 @@ func (r *Repository) invoices(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[invoiceRow](ctx, r.db.Keel(ctx), invoicesQuery(ids))
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		due := board.RowMeasure{
 			Measure: board.MeasureAmountDue,
@@ -436,7 +441,7 @@ func (r *Repository) invoices(
 				At:      row.InvoiceDate,
 			}
 		}
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,
@@ -451,13 +456,13 @@ func (r *Repository) entries(
 	ctx context.Context,
 	ids []pulid.ID,
 	now int64,
-) (map[pulid.ID]board.Summary, error) {
+) (map[pulid.ID]boardassemble.Summary, error) {
 	rows, err := keel.Into[entryRow](ctx, r.db.Keel(ctx), entriesQuery(ids))
 	if err != nil {
 		return nil, err
 	}
 
-	out := make(map[pulid.ID]board.Summary, len(rows))
+	out := make(map[pulid.ID]boardassemble.Summary, len(rows))
 	for _, row := range rows {
 		pending := board.RowMeasure{
 			Measure: board.MeasurePendingFor,
@@ -477,7 +482,7 @@ func (r *Repository) entries(
 			Value:   money(row.Debit, ""),
 		}
 		measures[board.MeasurePendingFor] = pending
-		out[row.ID] = board.Summary{
+		out[row.ID] = boardassemble.Summary{
 			Label:    strings.TrimSpace(row.Label),
 			Subtitle: strings.TrimSpace(row.Subtitle),
 			Status:   row.Status,

@@ -14,11 +14,13 @@ page explains them.
 
 ## The rule
 
-The write tools live in `agenttools/inboundtools`, beside the ones that came before them
+The queue and sender tools live in `agenttools/triagequeuetools` and the reply, load, filing,
+exception and conflict tools in `agenttools/triageworktools`; both build on the shared triage
+pieces in `agenttools/inboundtools`, beside the tools that came before them
 (`inbox_link_inbound_message`, `inbox_mark_inbound_message`, `inbox_send_reply`); the reads
-(`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `agentquerytoolservice`.
+(`inbox_get_inbound_message`, `inbox_list_triage_assignees`) live in `querytools/inboxquerytools`.
 
-Every write calls the service its GraphQL mutation calls (`inboundmessageservice`,
+Every write calls the service its GraphQL mutation calls (`inboundqueue`,
 `triageworkservice`, `inboundreplyservice`, `triageconflictservice`) and never writes
 around it. Each service exposes the plan its write runs on, and the tool's preview and
 `Validate` run that plan:
@@ -56,7 +58,7 @@ and refuses.
 
 The bulk tools take at most 50 message ids and never a folder. The assign tools are gated
 on the assign operation, which is what lets them give a message to someone other than the
-caller, and the fixed agent table (`permission.IsAgentAllowed`) grants it on inbound
+caller, and the fixed agent table (`agentceiling.Allows`) grants it on inbound
 messages for them; the owner comes from `inbox_list_triage_assignees`, which also names the
 on-call person.
 `inbox_wake_inbound_message` reads how the message is parked and calls `Wake` or `StopWaiting`.

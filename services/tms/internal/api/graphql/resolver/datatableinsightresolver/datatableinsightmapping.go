@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/app/tableinsightservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -19,7 +20,11 @@ func insightScope(
 	filter *gqlmodel.DataTableConnectionInput,
 	options map[string]any,
 ) (permissionports.TableInsightScope, error) {
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, filter, base.TenantInfo(authCtx))
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(
+		ctx,
+		filter,
+		resolvercore.TenantInfo(authCtx),
+	)
 	if err != nil {
 		return permissionports.TableInsightScope{}, err
 	}

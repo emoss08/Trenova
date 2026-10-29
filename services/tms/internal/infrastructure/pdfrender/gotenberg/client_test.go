@@ -13,19 +13,20 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-func newTestClient(t *testing.T, baseURL string, mutate func(*config.RendererConfig)) *Client {
+func newTestClient(t *testing.T, baseURL string, mutate func(*rendererconfig.Config)) *Client {
 	t.Helper()
 
 	cfg := &config.Config{
-		Renderer: config.RendererConfig{
+		Renderer: rendererconfig.Config{
 			GotenbergURL:   baseURL,
 			RequestTimeout: 5 * time.Second,
 			HealthTimeout:  time.Second,
@@ -37,7 +38,7 @@ func newTestClient(t *testing.T, baseURL string, mutate func(*config.RendererCon
 		mutate(&cfg.Renderer)
 	}
 
-	return New(Params{Config: cfg, Logger: zap.NewNop()})
+	return New(Params{RendererConfig: &cfg.Renderer, Logger: zap.NewNop()})
 }
 
 // capturedRequest is the parsed multipart body the fake renderer received.
@@ -132,7 +133,11 @@ func TestRenderOmitsEmptyHeaderAndFooter(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
+	_, err := newTestClient(
+		t,
+		srv.URL,
+		nil,
+	).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:       "<p>body</p>",
 		HeaderHTML: "   ",
 	})
@@ -222,7 +227,11 @@ func TestRenderPageGeometry(t *testing.T) {
 			)
 			defer srv.Close()
 
-			_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
+			_, err := newTestClient(
+				t,
+				srv.URL,
+				nil,
+			).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 				HTML:        "<p>x</p>",
 				PageSize:    tt.pageSize,
 				Orientation: tt.orientation,
@@ -244,7 +253,11 @@ func TestRenderInvalidMarginsFallBackToDefault(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := newTestClient(t, srv.URL, nil).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
+	_, err := newTestClient(
+		t,
+		srv.URL,
+		nil,
+	).Render(t.Context(), &documenttemplateports.PDFRenderRequest{
 		HTML:    "<p>x</p>",
 		Margins: documenttemplate.Margins{Top: -5, Bottom: 900},
 	})
@@ -262,10 +275,25 @@ func TestRenderRetryMatrix(t *testing.T) {
 		wantCalls int32
 		wantErrIs error
 	}{
-		{"429 retries", http.StatusTooManyRequests, 3, documenttemplateports.ErrPDFRendererUnavailable},
+		{
+			"429 retries",
+			http.StatusTooManyRequests,
+			3,
+			documenttemplateports.ErrPDFRendererUnavailable,
+		},
 		{"502 retries", http.StatusBadGateway, 3, documenttemplateports.ErrPDFRendererUnavailable},
-		{"503 retries", http.StatusServiceUnavailable, 3, documenttemplateports.ErrPDFRendererUnavailable},
-		{"504 retries", http.StatusGatewayTimeout, 3, documenttemplateports.ErrPDFRendererUnavailable},
+		{
+			"503 retries",
+			http.StatusServiceUnavailable,
+			3,
+			documenttemplateports.ErrPDFRendererUnavailable,
+		},
+		{
+			"504 retries",
+			http.StatusGatewayTimeout,
+			3,
+			documenttemplateports.ErrPDFRendererUnavailable,
+		},
 		// Bad markup cannot be fixed by asking again.
 		{"400 does not retry", http.StatusBadRequest, 1, errBadRequest},
 		{"409 does not retry", http.StatusConflict, 1, errBadRequest},
@@ -283,11 +311,14 @@ func TestRenderRetryMatrix(t *testing.T) {
 			)
 			defer srv.Close()
 
-			client := newTestClient(t, srv.URL, func(c *config.RendererConfig) {
+			client := newTestClient(t, srv.URL, func(c *rendererconfig.Config) {
 				c.MaxRetries = 3
 			})
 
-			_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
+			_, err := client.Render(
+				t.Context(),
+				&documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"},
+			)
 			require.Error(t, err)
 			assert.ErrorIs(t, err, tt.wantErrIs)
 			assert.Contains(t, err.Error(), "renderer detail")
@@ -341,14 +372,17 @@ func TestRenderSemaphoreLimitsConcurrency(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL, func(c *config.RendererConfig) {
+	client := newTestClient(t, srv.URL, func(c *rendererconfig.Config) {
 		c.MaxConcurrent = maxConcurrent
 	})
 
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(func() {
-			_, err := client.Render(t.Context(), &documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"})
+			_, err := client.Render(
+				t.Context(),
+				&documenttemplateports.PDFRenderRequest{HTML: "<p>x</p>"},
+			)
 			assert.NoError(t, err)
 		})
 	}
@@ -365,7 +399,7 @@ func TestRenderRejectsOversizedPDF(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := newTestClient(t, srv.URL, func(c *config.RendererConfig) {
+	client := newTestClient(t, srv.URL, func(c *rendererconfig.Config) {
 		c.MaxPDFBytes = 64
 	})
 

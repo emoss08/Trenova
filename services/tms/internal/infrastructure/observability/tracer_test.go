@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,7 +58,7 @@ func TestCreateSampler(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := &config.TracingConfig{
+			cfg := &monitoringconfig.TracingConfig{
 				SamplingRate: tt.samplingRate,
 			}
 
@@ -77,12 +78,12 @@ func TestCreateSampler_FollowsTheParentsDecision(t *testing.T) {
 		Remote:     true,
 	})
 
-	sampled := createSampler(&config.TracingConfig{SamplingRate: 0.01}).
+	sampled := createSampler(&monitoringconfig.TracingConfig{SamplingRate: 0.01}).
 		ShouldSample(sdktrace.SamplingParameters{
 			ParentContext: trace.ContextWithRemoteSpanContext(t.Context(), parent),
 			TraceID:       parent.TraceID(),
 		})
-	dropped := createSampler(&config.TracingConfig{SamplingRate: 1}).
+	dropped := createSampler(&monitoringconfig.TracingConfig{SamplingRate: 1}).
 		ShouldSample(sdktrace.SamplingParameters{
 			ParentContext: trace.ContextWithRemoteSpanContext(
 				t.Context(),
@@ -105,9 +106,10 @@ func TestNewTracerProvider_AppliesTheAISamplingRate(t *testing.T) {
 	cfg.Monitoring.Tracing.AISamplingRate = &rate
 
 	tp, err := NewTracerProvider(TracerProviderParams{
-		Lifecycle: fxtest.NewLifecycle(t),
-		Config:    cfg,
-		Logger:    zap.NewNop(),
+		Lifecycle:        fxtest.NewLifecycle(t),
+		AppConfig:        &cfg.App,
+		MonitoringConfig: &cfg.Monitoring,
+		Logger:           zap.NewNop(),
 	})
 
 	require.NoError(t, err)
@@ -211,7 +213,7 @@ func TestTracerProvider_StartSpan(t *testing.T) {
 func TestCreateExporter_UnsupportedProvider(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.TracingConfig{
+	cfg := &monitoringconfig.TracingConfig{
 		Provider: "unsupported-provider",
 	}
 
@@ -224,7 +226,7 @@ func TestCreateExporter_UnsupportedProvider(t *testing.T) {
 func TestCreateExporter_Stdout(t *testing.T) {
 	t.Parallel()
 
-	cfg := &config.TracingConfig{
+	cfg := &monitoringconfig.TracingConfig{
 		Provider: "stdout",
 	}
 

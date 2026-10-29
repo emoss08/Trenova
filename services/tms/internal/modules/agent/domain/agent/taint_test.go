@@ -3,6 +3,7 @@ package agent
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,7 +88,7 @@ func TestAgentRun_RecordTaintMergesAndKeepsTheFirstTime(t *testing.T) {
 	assert.Len(t, run.Taint.Marks, 2)
 	assert.False(t, run.RecordTaint(second, 40), "nothing new")
 
-	assert.Equal(t, []RecordRef{{EntityType: TaintEntityAgentRun, ID: run.ID.String()}},
+	assert.Equal(t, []agentrecord.RecordRef{{EntityType: TaintEntityAgentRun, ID: run.ID.String()}},
 		run.TaintedRecords())
 	assert.Empty(t, (&AgentRun{}).TaintedRecords())
 }
@@ -101,32 +102,4 @@ func TestAgentProposal_RequiresAPersonOnlyWhenTaintedAndLeaving(t *testing.T) {
 		assert.Equal(t, class.Leaves(), tainted.RequiresPerson(class), class)
 		assert.False(t, clean.RequiresPerson(class), class)
 	}
-}
-
-/*
-Three instruction memories a person had approved still tainted every turn of
-every agent in the organization, so nothing ever wrote on its own and nothing
-said why. A person who reviews a tainted memory makes it the organization's
-own: it says where it came from, but taints nothing and is followed.
-*/
-func TestMemory_AReviewedMemoryNoLongerTaints(t *testing.T) {
-	t.Parallel()
-
-	reviewer := pulid.MustNew("usr_")
-	at := int64(1_791_600_000)
-	memory := &Memory{ID: pulid.MustNew("amem_"), Tainted: true}
-
-	assert.True(t, memory.Taints())
-	assert.True(t, memory.DrawnFromOutside())
-	assert.Len(t, memory.TaintedRecords(), 1)
-
-	memory.ReviewedByUserID = &reviewer
-	memory.ReviewedAt = &at
-
-	assert.True(t, memory.Reviewed())
-	assert.True(t, memory.Tainted, "where it came from is kept")
-	assert.False(t, memory.Taints())
-	assert.False(t, memory.DrawnFromOutside(), "followed as the organization's own")
-	assert.Empty(t, memory.TaintedRecords())
-	assert.False(t, (&Memory{ReviewedByUserID: &reviewer}).Reviewed(), "a review has a time")
 }

@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,7 +20,7 @@ func TestChangeFeedLimitsAndCursorAt(t *testing.T) {
 	t.Parallel()
 
 	conn := testConnector(t, &fakeBC{})
-	assert.Equal(t, accountingsyncports.AccountingChangeFeedLimits{
+	assert.Equal(t, accountingconnectorports.AccountingChangeFeedLimits{
 		MaxLookback:    0,
 		ReportsDeletes: false,
 		MaxPerRead:     businesscentral.MaxPageSize,
@@ -104,20 +105,20 @@ func changesResponder(t *testing.T) func(call bcCall) (int, string) {
 	}
 }
 
-func changesRequest(cursor string) *accountingsyncports.ReadAccountingChangesRequest {
-	return &accountingsyncports.ReadAccountingChangesRequest{
+func changesRequest(cursor string) *accountingconnectorports.ReadAccountingChangesRequest {
+	return &accountingconnectorports.ReadAccountingChangesRequest{
 		Auth:         testAuth(),
 		Cursor:       cursor,
 		Now:          pollNow.Add(10 * time.Minute),
 		Payments:     true,
 		BillPayments: true,
 		Documents:    true,
-		ReferenceKinds: []accountingsync.ReferenceKind{
-			accountingsync.ReferenceKindAccount,
-			accountingsync.ReferenceKindItem,
-			accountingsync.ReferenceKindCustomer,
-			accountingsync.ReferenceKindVendor,
-			accountingsync.ReferenceKindTerm,
+		ReferenceKinds: []accountingprovider.ReferenceKind{
+			accountingprovider.ReferenceKindAccount,
+			accountingprovider.ReferenceKindItem,
+			accountingprovider.ReferenceKindCustomer,
+			accountingprovider.ReferenceKindVendor,
+			accountingprovider.ReferenceKindTerm,
 		},
 	}
 }
@@ -136,23 +137,23 @@ func TestReadChangesReadsDocumentsAndReferencesButNeverPayments(t *testing.T) {
 
 	require.Len(t, page.Documents, 3)
 	assert.Equal(t, testInvoice, page.Documents[0].ExternalID)
-	assert.Equal(t, accountingsyncports.AccountingChangeUpsert, page.Documents[0].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeUpsert, page.Documents[0].Operation)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo,
 	}, page.Documents[0].ObjectTypes)
-	assert.Equal(t, accountingsyncports.AccountingChangeVoid, page.Documents[1].Operation)
+	assert.Equal(t, accountingconnectorports.AccountingChangeVoid, page.Documents[1].Operation)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectCarrierBill, accountingsync.SyncObjectDriverBill,
 	}, page.Documents[2].ObjectTypes)
 
 	require.Len(t, page.References, 5)
-	kinds := make(map[accountingsync.ReferenceKind]int, 2)
+	kinds := make(map[accountingprovider.ReferenceKind]int, 2)
 	for _, ref := range page.References {
 		kinds[ref.Object.Kind]++
 		assert.False(t, ref.Deleted)
 	}
-	assert.Equal(t, 3, kinds[accountingsync.ReferenceKindAccount])
-	assert.Equal(t, 2, kinds[accountingsync.ReferenceKindCustomer])
+	assert.Equal(t, 3, kinds[accountingprovider.ReferenceKindAccount])
+	assert.Equal(t, 2, kinds[accountingprovider.ReferenceKindCustomer])
 
 	assert.Equal(t, "2026-10-06T12:04:59Z", page.NextCursor)
 	for _, call := range fake.all() {
@@ -213,11 +214,14 @@ func TestReadChangesWithNothingToReadKeepsTheCursor(t *testing.T) {
 
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	page, err := conn.ReadChanges(t.Context(), &accountingsyncports.ReadAccountingChangesRequest{
-		Auth:     testAuth(),
-		Cursor:   "2026-10-01T00:00:00Z",
-		Payments: true,
-	})
+	page, err := conn.ReadChanges(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingChangesRequest{
+			Auth:     testAuth(),
+			Cursor:   "2026-10-01T00:00:00Z",
+			Payments: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "2026-10-01T00:00:00Z", page.NextCursor)
 	assert.Empty(t, fake.all())

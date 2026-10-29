@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentaccessservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,16 +23,16 @@ import (
 )
 
 type fakeTrust struct {
-	rows  map[pulid.ID][]*agent.ToolTrust
+	rows  map[pulid.ID][]*agenttooltrust.ToolTrust
 	calls int
 }
 
 func (f *fakeTrust) ListByDefinitionIDs(
 	_ context.Context,
-	req agentports.ListToolTrustByDefinitionsRequest,
-) (map[pulid.ID][]*agent.ToolTrust, error) {
+	req agenttoolports.ListToolTrustByDefinitionsRequest,
+) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
 	f.calls++
-	out := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
+	out := make(map[pulid.ID][]*agenttooltrust.ToolTrust, len(req.AgentDefinitionIDs))
 	for _, id := range req.AgentDefinitionIDs {
 		if rows, ok := f.rows[id]; ok {
 			out[id] = rows
@@ -42,11 +43,11 @@ func (f *fakeTrust) ListByDefinitionIDs(
 }
 
 func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
-	policies := make([]agentports.ToolPolicy, 0, count)
+	policies := make([]agenttoolports.ToolPolicy, 0, count)
 	for idx := count - 1; idx >= 0; idx-- {
 		policies = append(policies, policy(
 			fmt.Sprintf("tool_%03d", idx),
-			agent.ToolKindAction,
+			agenttooltrust.ToolKindAction,
 			agent.EgressInternal,
 		))
 	}
@@ -55,34 +56,38 @@ func manyPoliciesService(count int, defs *fakeDefinitions) *Service {
 		policies:    newFakePolicies(policies...),
 		holder:      fakeHolder{},
 		definitions: defs,
-		controls:    &fakeControls{control: &tenant.AgentControl{}},
+		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       &fakeTrust{},
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
 	})
 }
 
 func surveyService(defs *fakeDefinitions, trust *fakeTrust) *Service {
-	lookup := policy("shipment_get", agent.ToolKindQuery, agent.EgressNone)
-	lookup.Effect = agent.ToolEffectLookup
-	personal := policy("home_add_widget", agent.ToolKindAction, agent.EgressPersonal)
-	personal.Scope = agent.ToolScopeSelf
+	lookup := policy("shipment_get", agenttooltrust.ToolKindQuery, agent.EgressNone)
+	lookup.Effect = agenttooltrust.ToolEffectLookup
+	personal := policy("home_add_widget", agenttooltrust.ToolKindAction, agent.EgressPersonal)
+	personal.Scope = agenttooltrust.ToolScopeSelf
 
 	return newService(serviceDeps{
 		policies: newFakePolicies(
 			lookup,
-			policy("dispatch_assign_move", agent.ToolKindAction, agent.EgressInternal),
-			policy("customer_send_email", agent.ToolKindAction, agent.EgressExternalRecipient),
+			policy("dispatch_assign_move", agenttooltrust.ToolKindAction, agent.EgressInternal),
+			policy(
+				"customer_send_email",
+				agenttooltrust.ToolKindAction,
+				agent.EgressExternalRecipient,
+			),
 			personal,
 		),
 		holder:      fakeHolder{},
 		definitions: defs,
-		controls:    &fakeControls{control: &tenant.AgentControl{}},
+		controls:    &fakeControls{control: &agentcontrol.AgentControl{}},
 		trust:       trust,
 		sensitive:   agentaccessservice.LeavesOrganizationRule(),
 	})
 }
 
-func pageNames(page *agentports.AgentToolPolicyPage) []string {
+func pageNames(page *agenttoolports.AgentToolPolicyPage) []string {
 	out := make([]string, 0, len(page.Edges))
 	for _, edge := range page.Edges {
 		out = append(out, edge.View.Policy.Name)
@@ -99,10 +104,10 @@ func listRules(
 	t *testing.T,
 	svc *Service,
 	table memtable.Request,
-) *agentports.AgentToolPolicyPage {
+) *agenttoolports.AgentToolPolicyPage {
 	t.Helper()
 
-	page, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	page, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		Table: table,
 	})
 	require.NoError(t, err)
@@ -191,7 +196,7 @@ spellings name the same class.
 func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	list := func(table memtable.Request) []string {
 		t.Helper()
 		table.IncludeTotalCount = true
@@ -249,7 +254,7 @@ func TestListToolPoliciesFiltersByClassResourceKindAndSearch(t *testing.T) {
 func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	page := listRules(t, svc, memtable.Request{
 		FieldFilters: []domaintypes.FieldFilter{eq("kind", "Action")},
@@ -264,7 +269,7 @@ func TestListToolPoliciesOrsWithinAGroupAndAndsAcrossThem(t *testing.T) {
 func TestListToolPoliciesSortsByClassAndTierThenName(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	byClass := listRules(t, svc, memtable.Request{
 		Sort: []domaintypes.SortField{{Field: "egress", Direction: dbtype.SortDirectionDesc}},
@@ -317,7 +322,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 	assert.Equal(t, listed, defs.pages, "no agent is read when nobody asked")
 	assert.Nil(t, unasked.Edges[0].RunsWithoutPerson)
 
-	shown, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	shown, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		WithAttendance: true,
 	})
 	require.NoError(t, err)
@@ -330,7 +335,7 @@ func TestListToolPoliciesFiltersByWhatRunsWithoutAPerson(t *testing.T) {
 func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	for name, table := range map[string]memtable.Request{
 		"garbage cursor": {After: "%%%"},
@@ -355,13 +360,13 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 		},
 		"search too long": {Query: string(make([]byte, memtable.MaxQueryLength+1))},
 	} {
-		_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+		_, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 			Table: table,
 		})
 		require.Error(t, err, name)
 	}
 
-	_, err := svc.ListToolPolicies(t.Context(), &agentports.ListAgentToolPoliciesRequest{
+	_, err := svc.ListToolPolicies(t.Context(), &agenttoolports.ListAgentToolPoliciesRequest{
 		Table: memtable.Request{After: "%%%"},
 	})
 	var validation *errortypes.Error
@@ -372,7 +377,7 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 func TestListToolPoliciesPastTheLastRuleIsAnEmptyPage(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	page := listRules(t, svc, memtable.Request{
 		After: pagination.EncodeOffsetCursor(toolRuleCursorScope, 40),
 	})
@@ -394,9 +399,9 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	defs := &fakeDefinitions{all: []*agentdefinition.Definition{dispatcher, auditor}}
 	svc := surveyService(defs, &fakeTrust{})
 
-	list := func(table memtable.Request) *agentports.AgentToolSafetyPage {
+	list := func(table memtable.Request) *agenttoolports.AgentToolSafetyPage {
 		t.Helper()
-		page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+		page, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 			AgentIDs: []pulid.ID{dispatcher.ID, auditor.ID},
 			Table:    table,
 		})
@@ -404,7 +409,7 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 
 		return page
 	}
-	rows := func(page *agentports.AgentToolSafetyPage) []string {
+	rows := func(page *agenttoolports.AgentToolSafetyPage) []string {
 		out := make([]string, 0, len(page.Edges))
 		for _, edge := range page.Edges {
 			out = append(out, edge.Node.AgentName+"/"+edge.Node.PolicyName)
@@ -414,8 +419,13 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 	}
 
 	all := list(memtable.Request{IncludeTotalCount: true})
-	assert.Equal(t,
-		[]string{"Auditor/dispatch_assign_move", "Dispatcher/shipment_get", "Dispatcher/customer_send_email"},
+	assert.Equal(
+		t,
+		[]string{
+			"Auditor/dispatch_assign_move",
+			"Dispatcher/shipment_get",
+			"Dispatcher/customer_send_email",
+		},
 		rows(all),
 	)
 	require.NotNil(t, all.TotalCount)
@@ -445,21 +455,21 @@ func TestListAgentToolsListsEveryPickedAgentsTools(t *testing.T) {
 func TestListAgentToolsNamesBetweenOneAndTenAgents(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
-	_, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{})
+	_, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{})
 	require.Error(t, err)
 
 	tooMany := make([]pulid.ID, 0, MaxComparedAgents+1)
 	for range MaxComparedAgents + 1 {
 		tooMany = append(tooMany, pulid.MustNew("agdef_"))
 	}
-	_, err = svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+	_, err = svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 		AgentIDs: tooMany,
 	})
 	require.Error(t, err)
 
-	page, err := svc.ListAgentTools(t.Context(), &agentports.ListAgentToolSafetyRequest{
+	page, err := svc.ListAgentTools(t.Context(), &agenttoolports.ListAgentToolSafetyRequest{
 		AgentIDs: []pulid.ID{pulid.MustNew("agdef_")},
 		Table:    memtable.Request{IncludeTotalCount: true},
 	})
@@ -487,7 +497,12 @@ func TestSummaryCountsOverEveryToolAndAgent(t *testing.T) {
 	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
 	assert.Equal(t, 4, summary.ToolCount)
-	assert.Equal(t, 1, summary.RunWithoutPerson, "dispatch_assign_move runs unattended on Back office")
+	assert.Equal(
+		t,
+		1,
+		summary.RunWithoutPerson,
+		"dispatch_assign_move runs unattended on Back office",
+	)
 	assert.Equal(t, 1, summary.LeaveOrganization)
 	assert.Equal(t, 2, summary.OpenWithSensitive)
 	assert.Equal(t, []string{GeneralResource, permission.ResourceShipment.String()},
@@ -511,7 +526,7 @@ func TestSummaryWithNoAgentsReadsNoControlOrTrust(t *testing.T) {
 func TestToolPolicyLooksUpOneRuleByName(t *testing.T) {
 	t.Parallel()
 
-	svc := testService(&fakeDefinitions{}, &tenant.AgentControl{})
+	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 
 	view, ok := svc.ToolPolicy("customer_send_email")
 	require.True(t, ok)

@@ -5,22 +5,24 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/chargeallocationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -67,7 +69,7 @@ func newSplitShipment() *splitShipment {
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
 		CustomerID:          acme,
-		Status:              shipment.StatusReadyToInvoice,
+		Status:              shipmentvocab.StatusReadyToInvoice,
 		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(2850)),
 		TariffInputs:        tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(2850))},
 		OtherChargeAmount:   decimal.NewNullDecimal(decimal.RequireFromString("1154.38")),
@@ -79,9 +81,9 @@ func newSplitShipment() *splitShipment {
 				OrganizationID:   tenantInfo.OrgID,
 				BusinessUnitID:   tenantInfo.BuID,
 				ShipmentID:       &shipmentID,
-				ChargeKind:       shipment.ChargeAllocationKindFreight,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 				BillToCustomerID: peak,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(1500)),
 			},
 			{
@@ -89,9 +91,9 @@ func newSplitShipment() *splitShipment {
 				OrganizationID:   tenantInfo.OrgID,
 				BusinessUnitID:   tenantInfo.BuID,
 				ShipmentID:       &shipmentID,
-				ChargeKind:       shipment.ChargeAllocationKindFreight,
+				ChargeKind:       shipmentvocab.ChargeAllocationKindFreight,
 				BillToCustomerID: acme,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(1350)),
 				Sequence:         1,
 			},
@@ -150,15 +152,19 @@ func TestReconcileQueueItems_CreatesForNewPayersAndCancelsForPayersWithNothing(t
 
 	f := newSplitShipment()
 	carrier := pulid.MustNew("cus_")
-	resolution := &shipment.ShareResolution{Shares: []*shipment.PayerShare{
+	resolution := &chargeallocation.ShareResolution{Shares: []*chargeallocation.PayerShare{
 		{PayerID: f.acme},
 		{
 			PayerID: f.peak,
-			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindFreight}},
+			Charges: []chargeallocation.AllocatedCharge{
+				{Kind: shipmentvocab.ChargeAllocationKindFreight},
+			},
 		},
 		{
 			PayerID: carrier,
-			Charges: []shipment.AllocatedCharge{{Kind: shipment.ChargeAllocationKindAccessorial}},
+			Charges: []chargeallocation.AllocatedCharge{
+				{Kind: shipmentvocab.ChargeAllocationKindAccessorial},
+			},
 		},
 	}}
 
@@ -178,10 +184,10 @@ func TestReassignRows_WholeChargeToTheShipmentPayerIsNoRows(t *testing.T) {
 
 	f := newSplitShipment()
 	rows, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
-		ChargeKind: shipment.ChargeAllocationKindFreight,
+		ChargeKind: shipmentvocab.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: f.acme,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}, nil)
@@ -195,12 +201,12 @@ func TestReassignRows_RefusesARowIDFromAnotherCharge(t *testing.T) {
 
 	f := newSplitShipment()
 	_, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
-		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+		ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
 			ID:               f.shipment.ChargeAllocations[0].ID,
 			BillToCustomerID: f.peak,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}, f.detention)
@@ -216,17 +222,17 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 	existing := f.shipment.ChargeAllocations[0]
 	existing.Version = 4
 	rows, err := reassignRows(t.Context(), f.shipment, &billingqueueports.ReassignChargeRequest{
-		ChargeKind: shipment.ChargeAllocationKindFreight,
+		ChargeKind: shipmentvocab.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{
 			{
 				ID:               existing.ID,
 				BillToCustomerID: f.peak,
-				Method:           shipment.ChargeAllocationMethodPercent,
+				Method:           shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(50)),
 			},
 			{
 				BillToCustomerID: f.acme,
-				Method:           shipment.ChargeAllocationMethodPercent,
+				Method:           shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:          decimal.NewNullDecimal(decimal.NewFromInt(50)),
 			},
 		},
@@ -243,12 +249,12 @@ func TestReassignRows_KeepsTheIdentityOfARowAlreadyOnTheCharge(t *testing.T) {
 
 type reassignHarness struct {
 	f            *splitShipment
-	svc          *service
+	svc          *Service
 	repo         *billingqueueportsmock.MockBillingQueueRepository
 	shipmentRepo *shipmentportsmock.MockShipmentRepository
 	customerRepo *customerportsmock.MockCustomerRepository
 	invoiceRepo  *invoiceportsmock.MockInvoiceRepository
-	allocRepo    *shipmentportsmock.MockChargeAllocationRepository
+	allocRepo    *chargeallocationportsmock.MockChargeAllocationRepository
 }
 
 func newReassignHarness(t *testing.T) *reassignHarness {
@@ -260,14 +266,14 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
 		customerRepo: customerportsmock.NewMockCustomerRepository(t),
 		invoiceRepo:  invoiceportsmock.NewMockInvoiceRepository(t),
-		allocRepo:    shipmentportsmock.NewMockChargeAllocationRepository(t),
+		allocRepo:    chargeallocationportsmock.NewMockChargeAllocationRepository(t),
 	}
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	h.svc = &service{
+	h.svc = wired(&Service{
 		l:                    zap.NewNop(),
 		db:                   passthroughDB{},
 		repo:                 h.repo,
@@ -279,7 +285,7 @@ func newReassignHarness(t *testing.T) *reassignHarness {
 		auditService:         audit,
 		realtime:             realtime,
 		validator:            testValidator(),
-	}
+	})
 
 	h.invoiceRepo.EXPECT().
 		ListByShipmentIDs(mock.Anything, mock.Anything).
@@ -359,11 +365,11 @@ func TestReassignCharge_MovingDetentionToPeakKeepsBothItemsAndSyncsTheSplit(t *t
 	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
-		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+		ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: f.peak,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}, testActor(f.tenantInfo))
@@ -374,7 +380,7 @@ func TestReassignCharge_MovingDetentionToPeakKeepsBothItemsAndSyncsTheSplit(t *t
 	require.Len(t, synced, 3, "the two freight rows stay and detention gains one row")
 	var detentionRow *shipment.ChargeAllocation
 	for _, row := range synced {
-		if row.ChargeKind == shipment.ChargeAllocationKindAccessorial {
+		if row.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial {
 			detentionRow = row
 		}
 	}
@@ -408,7 +414,7 @@ func TestReassignCharge_GivingPeakFreightBackToAcmeCancelsPeaksItem(t *testing.T
 	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:      f.peakItem.ID,
 		TenantInfo:  f.tenantInfo,
-		ChargeKind:  shipment.ChargeAllocationKindFreight,
+		ChargeKind:  shipmentvocab.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{},
 	}, testActor(f.tenantInfo))
 
@@ -458,11 +464,11 @@ func TestReassignCharge_ANewPayerGetsTheirOwnQueueItem(t *testing.T) {
 	result, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
-		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+		ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: carrier,
-			Method:           shipment.ChargeAllocationMethodAmount,
+			Method:           shipmentvocab.ChargeAllocationMethodAmount,
 			Amount:           decimal.NewNullDecimal(decimal.RequireFromString("1154.38")),
 		}},
 	}, testActor(f.tenantInfo))
@@ -489,11 +495,11 @@ func TestReassignCharge_RefusesWhileASiblingIsApproved(t *testing.T) {
 	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:             f.acmeItem.ID,
 		TenantInfo:         f.tenantInfo,
-		ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+		ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 		AdditionalChargeID: f.detention.ID,
 		Allocations: []*shipment.ChargeAllocation{{
 			BillToCustomerID: f.peak,
-			Method:           shipment.ChargeAllocationMethodPercent,
+			Method:           shipmentvocab.ChargeAllocationMethodPercent,
 			Percent:          decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		}},
 	}, testActor(f.tenantInfo))
@@ -512,16 +518,16 @@ func TestReassignCharge_RefusesASplitThatDoesNotAddUp(t *testing.T) {
 	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:     f.acmeItem.ID,
 		TenantInfo: f.tenantInfo,
-		ChargeKind: shipment.ChargeAllocationKindFreight,
+		ChargeKind: shipmentvocab.ChargeAllocationKindFreight,
 		Allocations: []*shipment.ChargeAllocation{
 			{
 				BillToCustomerID: f.peak,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 			},
 			{
 				BillToCustomerID: f.acme,
-				Method:           shipment.ChargeAllocationMethodAmount,
+				Method:           shipmentvocab.ChargeAllocationMethodAmount,
 				Amount:           decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 			},
 		},
@@ -544,7 +550,7 @@ func TestReassignCharge_RefusesAnItemPastReview(t *testing.T) {
 	_, err := h.svc.ReassignCharge(t.Context(), &billingqueueports.ReassignChargeRequest{
 		ItemID:     posted.ID,
 		TenantInfo: f.tenantInfo,
-		ChargeKind: shipment.ChargeAllocationKindFreight,
+		ChargeKind: shipmentvocab.ChargeAllocationKindFreight,
 	}, testActor(f.tenantInfo))
 
 	require.Error(t, err)
@@ -563,9 +569,9 @@ func splitDetentionByAmount(f *splitShipment) {
 			BusinessUnitID:     f.tenantInfo.BuID,
 			ShipmentID:         &shipmentID,
 			AdditionalChargeID: &chargeID,
-			ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 			BillToCustomerID:   f.peak,
-			Method:             shipment.ChargeAllocationMethodAmount,
+			Method:             shipmentvocab.ChargeAllocationMethodAmount,
 			Amount:             decimal.NewNullDecimal(decimal.RequireFromString("154.38")),
 		},
 		&shipment.ChargeAllocation{
@@ -574,9 +580,9 @@ func splitDetentionByAmount(f *splitShipment) {
 			BusinessUnitID:     f.tenantInfo.BuID,
 			ShipmentID:         &shipmentID,
 			AdditionalChargeID: &chargeID,
-			ChargeKind:         shipment.ChargeAllocationKindAccessorial,
+			ChargeKind:         shipmentvocab.ChargeAllocationKindAccessorial,
 			BillToCustomerID:   f.acme,
-			Method:             shipment.ChargeAllocationMethodAmount,
+			Method:             shipmentvocab.ChargeAllocationMethodAmount,
 			Amount:             decimal.NewNullDecimal(decimal.NewFromInt(1000)),
 			Sequence:           1,
 		},
@@ -639,16 +645,16 @@ func TestUpdateCharges_ConvertsTheStaleSplitAndSavesWhenAsked(t *testing.T) {
 	require.NotNil(t, saved)
 	var percents []string
 	for _, row := range saved.ChargeAllocations {
-		if row.ChargeKind != shipment.ChargeAllocationKindAccessorial {
+		if row.ChargeKind != shipmentvocab.ChargeAllocationKindAccessorial {
 			assert.Equal(
 				t,
-				shipment.ChargeAllocationMethodAmount,
+				shipmentvocab.ChargeAllocationMethodAmount,
 				row.Method,
 				"the balanced freight split is left alone",
 			)
 			continue
 		}
-		assert.Equal(t, shipment.ChargeAllocationMethodPercent, row.Method)
+		assert.Equal(t, shipmentvocab.ChargeAllocationMethodPercent, row.Method)
 		percents = append(percents, row.Percent.Decimal.StringFixed(6))
 	}
 	assert.Equal(t, []string{"13.373413", "86.626587"}, percents)
@@ -662,7 +668,11 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	stale := cloneShipment(f.shipment)
 	stale.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(3000))
 
-	rebalance, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	rebalance, err := chargeallocation.RebalanceAmountSplits(
+		t.Context(),
+		stale,
+		stale.ChargeAllocations,
+	)
 	require.NoError(t, err)
 	refused := staleAmountSplitError(rebalance.Stale, accessorialNames(stale.AdditionalCharges))
 	require.Len(t, refused.Errors, 1)
@@ -670,7 +680,11 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	assert.Contains(t, refused.Error(), "total 2850.00 but the charge is now 3000.00")
 
 	assert.Equal(t, 1, rebalance.ConvertToPercent())
-	after, err := shipment.RebalanceAmountSplits(t.Context(), stale, stale.ChargeAllocations)
+	after, err := chargeallocation.RebalanceAmountSplits(
+		t.Context(),
+		stale,
+		stale.ChargeAllocations,
+	)
 	require.NoError(t, err)
 	assert.Empty(t, after.Stale)
 	assert.Equal(

@@ -23,7 +23,7 @@ the sentence that says what it shows. The Desk draws it there as a link in the b
 | Part | Owner |
 |---|---|
 | What an artifact is called | `assistantartifact/naming.go`. Every title passes `NormalizeTitle` when the recorder saves it: sentence case, no markdown, quotes or trailing punctuation, at most 120 characters. A record card is `RecordTitle` (the record kind's noun from the permission registry, then the record's label: "Formula template Per CWT (Hundredweight)"); a table is `RecordsTitle` ("Shipments", "DOT random pools"); a name built from an identifier is `PhraseTitle`, which keeps initialisms ("Send EDI status"). |
-| The words of a link | The artifact's title, always. `FinishTurn` rewrites every link in the turn's replies with `agentruntime.NameArtifactLinks` before saving, so the transcript, search, exports and the next turn's context read the same name. A link to an id the thread does not hold is saved as its words. |
+| The words of a link | The artifact's title, always. `FinishTurn` rewrites every link in the turn's replies with `replycheck.NameArtifactLinks` before saving, so the transcript, search, exports and the next turn's context read the same name. A link to an id the thread does not hold is saved as its words. |
 | The link | `DeskInlineArtifact` draws `artifact.title`, never the reply's words, so a reply still streaming already shows the right name. |
 | Where a link may stand | Inside a sentence (`agentruntime/placement.go`); see "Reply passes" in [agent-runtime.md](agent-runtime.md). A link standing apart from any sentence (on its own line, after a list, after a sentence that has ended) is cut and joined, in parentheses, to the reply's own prose line nearest above where it stood, without asking the model again; only a link in a table, a heading or a fenced block, an id nobody holds, or a reply with no prose to join is asked for again. |
 | Which artifacts a reply must name | `ShownArtifact.MustBeLinked`: a published document, an EDI connection draft, a written record, and a table that is long, ranked, worked from, pages (`Paged`: its list has more rows than it holds, or the agent read more than one page into it) or opens the live view. Only the newest version is held to it: a call that shows the next version of an artifact the turn already showed (a second draft of the same guide, whichever partner the agent named, a table read again, a revised document; `ShownArtifact.Lineage`, from `assistantartifact.LineageKeyFor`) takes the earlier one's place in `Turn.keepShown`, so the reply is never asked for the version it replaced. The note the model reads with the result (`shownNote`) says so for each of them: one that must be named is never told that pointing to it is optional. A reply that still leaves one out has it linked from its own first sentence, in parentheses, with no words of the server's own (the server does not know the reply's language); it is not asked again for that alone. |
@@ -35,7 +35,7 @@ from the reply's text.
 Adding an artifact kind: build its title with the functions above, never with
 `HumanizeSnakeCase` or `CapitalizeFirst` by hand, and decide whether `MustBeLinked` covers it.
 The Desk Bench checks every turn that shows an artifact for stray links, links whose words are
-not the title, and replies that needed a correction (`deskbench/checks.go`).
+not the title, and replies that needed a correction (`internal/deskbench/benchcheck/checks.go`).
 
 ## Layout
 
@@ -107,7 +107,7 @@ is not a lookup: it is kept whether or not the reply names it, and the reply mus
 `portal_task` is a portal task an agent ran in a cloud browser (see
 [agent-portal-automation.md](agent-portal-automation.md)): a `web_read_portal` call,
 titled by its question, or an approved `web_use_portal`, titled "Portal action on"
-its site (`assistantservice/portal_task_artifact.go`). The payload is only what the
+its site (`assistantservice/toolartifacts/portal_task_artifact.go`). The payload is only what the
 agent was told; `kinds/portal/` reads the run itself (`agentExtension.portalRun`)
 and reads it again every few seconds while its browser is open, so the card is
 the task as it stands: running, with a way to watch the live browser; waiting on
@@ -135,7 +135,7 @@ are listed for the person to enter and never shown with a value. Saving is the
 reviewed; the card asks for it (`proposeQuestion`) only once the draft is ready. The recorder
 drops the note meant for the model, cuts each sample's parse to its version and counts, and
 trims mappings, samples and gaps to the payload limit with the full mapping count kept
-(`assistantservice/edi_connection_draft.go`). A redraft of the same guide is a new version,
+(`assistantservice/toolartifacts/edi_connection_draft.go`). A redraft of the same guide is a new version,
 and the reply must always link it (`ShownArtifact.MustBeLinked`).
 
 ## The plan
@@ -153,7 +153,7 @@ recorded at its decision). `plan-card-model.ts` holds every reading as pure func
 - **The track**: a segment a step under the plan's name (`CardHead`'s `under` slot), and the
   steps down a line, each node coloured by its own proposal's status (`stepTone`): waiting, up
   next, running, ran, did not go through, not run.
-- **How it runs**: `AssistantPlan.runMode` is `agent.PlanRunModeOf(steps)`, the same function
+- **How it runs**: `AssistantPlan.runMode` is `agentplan.PlanRunModeOf(steps)`, the same function
   the executor calls, so the card's "stops at the first failure" or "every step runs on its
   own" can never disagree with what runs.
 - **Folding**: before a decision, and while an approval can still be undone, every change is
@@ -221,7 +221,7 @@ it (or the image itself) for search and print. While page 1 is drawn the upload'
 stands in for it, blurred, with the boxes already on it; any other page stands as its skeleton in
 the page's own shape, from the payload's `pages` sizes.
 
-**The boxes.** A box is a fraction of the page. `assistantservice/extraction.go` finds each value
+**The boxes.** A box is a fraction of the page. `assistantservice/extractionartifact/extraction.go` finds each value
 in the page's layout lines (`documentcontent.LayoutLine`): first on the line the reading quoted
 as its evidence (read from the stored draft, not from the tool result the model sees), then on a
 line that carries the field's label before the value (so "Bill to" is not boxed on a letterhead
@@ -546,7 +546,7 @@ has none of its own, and bills from the ones filed on its shipment.
 A list is read a page at a time, and the table it makes is the whole list paged, not the page
 the agent read. `tableArtifact` keeps the agent's rows with where the list goes on from them
 (`hasMore`, `nextCursor` or `nextOffset`, `pages`, and `total` when the read counted), in
-`assistantservice/artifact_paging.go`.
+`assistantservice/artifactpayload/artifact_paging.go`.
 
 - **The agent's later pages join the table.** A list call that starts after a cursor or at an
   offset the conversation's newest table of that lineage handed out (`continueTable`) adds its
@@ -652,11 +652,11 @@ A `board` is an answer the agent laid out with `show_board`: a title, a verdict,
 blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note; two notes
 at most). The agent writes only words; every value is read by the server.
 
-- **The layout is a JSON spec, validated in Go** (`domain/board`, `board.Parse`): blocks name
+- **The layout is a JSON spec, validated in Go** (`domain/board`, `boardparse.Parse`): blocks name
   records by ID, Home metrics by their key (`board.MetricKeys`, from the Home layout), an
   analysis's table or chart by its artifact and index, a table view, or one record's history.
   Limits: 25 records a list, 120 a board, 12 checks; every text field's limit is its schema's
-  `maxLength`, so the model writes within it the first time. Words are plain: `board.Parse`
+  `maxLength`, so the model writes within it the first time. Words are plain: `boardparse.Parse`
   drops markdown emphasis (`**`, `__`, backticks), since the board draws text as text, and
   refuses a figure written into the words (`board.Figures`: a duration, an amount, a percentage
   or a count; record numbers, times of day and dates pass), since every figure is read live
@@ -700,21 +700,21 @@ scenario: live, moved, reading) serves three boards, and
 
 1. The record kind has an entry in `client/apps/web/src/config/record-links.ts`
    (regenerate the product guide). The server then keeps each row's id in a list
-   tool's table (`recordEntity`, `assistantservice/artifact_display.go`), and the
+   tool's table (`recordEntity`, `assistantservice/artifactpayload/artifact_display.go`), and the
    ↗ link on a row opens the record's page.
 2. The kind has an entry in `cards/registry.tsx`. `DeskTableBody` then opens a
    clicked row as the card in place of the table, steps through the rows in the
    order the table shows them, and goes back to the table as it was left.
 3. A table whose rows open in place has to be kept beside the conversation even
    when it is short, or the reply answers it inline and there is nothing to open.
-   `opensRecords` in `assistantservice/artifacts.go` marks it (`ShownArtifact.OpensRecords`)
+   `opensRecords` in `assistantservice/toolartifacts/artifacts.go` marks it (`ShownArtifact.OpensRecords`)
    for every kind with a card: the product guide generator reads the registry's keys
    into the catalog (`deskCard`), so the server needs no change. `shownNote` tells the
    model to point to it however few rows it has.
 
 A list or search that found exactly one record of a kind with a card is drawn as
 that card, not as a table of one row (`soleRecordCard` in
-`assistantservice/artifacts.go`). Asked to show a template by name, the agent finds
+`assistantservice/toolartifacts/artifacts.go`). Asked to show a template by name, the agent finds
 it with `formula_list_templates`, and the person sees the template rather than a row
 to open; a search that found one shipment is the shipment's card the same way. A page of one with more behind it (`hasMore`, or a larger `count`) stays a
 table.

@@ -6,10 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,10 +34,18 @@ func TestStopTimesOf(t *testing.T) {
 		LateByMinutes:  -5,
 		RoundedMinutes: 90,
 		BillableAmount: decimal.RequireFromString("112.5"),
-		PolicySnapshot: &detention.PolicySnapshot{LateArrivalRule: detention.LateArrivalRuleForfeit},
-		Evidence: []*detention.DetentionEvidence{
-			{Kind: detention.EvidenceKind("Departure"), Source: detention.EvidenceSourceManual},
-			{Kind: detention.EvidenceKindArrival, Source: detention.EvidenceSourceTelematics},
+		PolicySnapshot: &detentionpolicy.PolicySnapshot{
+			LateArrivalRule: detentionpolicy.LateArrivalRuleForfeit,
+		},
+		Evidence: []*detentionevidence.DetentionEvidence{
+			{
+				Kind:   detentionevidence.EvidenceKind("Departure"),
+				Source: detentionevidence.EvidenceSourceManual,
+			},
+			{
+				Kind:   detentionevidence.EvidenceKindArrival,
+				Source: detentionevidence.EvidenceSourceTelematics,
+			},
 		},
 	}
 
@@ -71,14 +81,14 @@ func (f *fakeOccurrences) GetByShipment(
 }
 
 type fakeDecider struct {
-	waived     []detentionservice.WaiveParams
-	uninvoiced []detentionservice.WaiveParams
-	disputed   []detentionservice.DisputeParams
+	waived     []detentionreview.WaiveParams
+	uninvoiced []detentionreview.WaiveParams
+	disputed   []detentionreview.DisputeParams
 }
 
 func (f *fakeDecider) WaiveUninvoiced(
 	_ context.Context,
-	p *detentionservice.WaiveParams,
+	p *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
 	f.uninvoiced = append(f.uninvoiced, *p)
 
@@ -92,9 +102,9 @@ func (f *fakeDecider) WaiveUninvoiced(
 
 func (f *fakeDecider) Waive(
 	_ context.Context,
-	p detentionservice.WaiveParams,
+	p *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.waived = append(f.waived, p)
+	f.waived = append(f.waived, *p)
 
 	return &detention.DetentionOccurrence{
 		ID:           p.OccurrenceID,
@@ -106,9 +116,9 @@ func (f *fakeDecider) Waive(
 
 func (f *fakeDecider) Dispute(
 	_ context.Context,
-	p detentionservice.DisputeParams,
+	p *detentionreview.DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.disputed = append(f.disputed, p)
+	f.disputed = append(f.disputed, *p)
 
 	return &detention.DetentionOccurrence{
 		ID:             p.OccurrenceID,
@@ -168,13 +178,13 @@ func newSettleFixture(status detention.OccurrenceStatus) *settleFixture {
 func (f *settleFixture) settle(
 	t *testing.T,
 	decision inboundmessage.StopsDecision,
-) (*inboundmessageports.SettledTriageDetention, error) {
+) (*triageworkports.SettledTriageDetention, error) {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	tenantInfo.UserID = pulid.MustNew("usr_")
 
-	return f.service.SettleDetention(t.Context(), &inboundmessageports.SettleTriageDetentionRequest{
+	return f.service.SettleDetention(t.Context(), &triageworkports.SettleTriageDetentionRequest{
 		TenantInfo: tenantInfo,
 		Actor:      permissionports.UserActor(tenantInfo),
 		ShipmentID: f.occurrence.ShipmentID,
@@ -338,7 +348,12 @@ func TestDisputedOccurrenceStaysOnTheWaivedCharge(t *testing.T) {
 		occurrences: []*detention.DetentionOccurrence{f.occurrence, later},
 	}
 
-	chosen, err := f.service.disputedOccurrence(t.Context(), pagination.TenantInfo{}, f.occurrence.ShipmentID, false)
+	chosen, err := f.service.disputedOccurrence(
+		t.Context(),
+		pagination.TenantInfo{},
+		f.occurrence.ShipmentID,
+		false,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, f.occurrence.ID, chosen.ID)
 }

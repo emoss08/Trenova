@@ -11,14 +11,19 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/bootstrap/crossref"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/equipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/formulaquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/masterdataquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/partyquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/workerquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/fleetcoderepository"
@@ -95,7 +100,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldvaluerepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -131,7 +138,7 @@ type referenceCase struct {
 	write                func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error)
 	marked               map[string]any
 	oldMarked            map[string]any
-	old                  agentports.AgentQueryTool
+	old                  agenttoolports.AgentQueryTool
 	// readsWith attaches what a read of the case needs beside the tenant,
 	// such as the loader a card's counts resolve through.
 	readsWith func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
@@ -349,8 +356,8 @@ func convertedListCases(
 		}),
 	}
 
-	formulaStats := loaders.NewFormulaTemplateStatsLoaderFactory(
-		loaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
+	formulaStats := ratingloaders.NewFormulaTemplateStatsLoaderFactory(
+		ratingloaders.FormulaTemplateStatsLoaderFactoryParams{TemplateRepo: formulaTemplates})
 	systemTyped, systemOld := boolFilter("isSystem", true)
 	parkingTyped, parkingOld := boolFilter("hasSecureParking", true)
 	retiredTyped, retiredOld := boolFilter("active", false)
@@ -361,7 +368,7 @@ func convertedListCases(
 	cases := []referenceCase{
 		{
 			tool: "equipment_list_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListEquipmentTypesTool(equipmentTypes),
+			old: masterdataquerytools.NewListEquipmentTypesTool(equipmentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := equipmentTypes.Create(ctx, &equipmenttype.EquipmentType{
@@ -373,7 +380,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_fleet_codes", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListFleetCodesTool(fleetCodes),
+			old: masterdataquerytools.NewListFleetCodesTool(fleetCodes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := fleetCodes.Create(ctx, &fleetcode.FleetCode{
@@ -385,7 +392,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_service_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListServiceTypesTool(serviceTypes),
+			old: masterdataquerytools.NewListServiceTypesTool(serviceTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := serviceTypes.Create(ctx, &servicetype.ServiceType{
@@ -396,7 +403,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_shipment_types", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListShipmentTypesTool(shipmentTypes),
+			old: masterdataquerytools.NewListShipmentTypesTool(shipmentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := shipmentTypes.Create(ctx, &shipmenttype.ShipmentType{
@@ -407,7 +414,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_commodities", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCommoditiesTool(commodities),
+			old: masterdataquerytools.NewListCommoditiesTool(commodities),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := commodities.Create(ctx, &commodity.Commodity{
@@ -419,7 +426,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_hazardous_materials", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListHazardousMaterialsTool(hazmat),
+			old: masterdataquerytools.NewListHazardousMaterialsTool(hazmat),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := hazmat.Create(ctx, &hazardousmaterial.HazardousMaterial{
@@ -432,7 +439,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_accessorial_charges", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListAccessorialChargesTool(accessorials),
+			old: masterdataquerytools.NewListAccessorialChargesTool(accessorials),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := accessorials.Create(ctx, &accessorialcharge.AccessorialCharge{
@@ -445,7 +452,7 @@ func convertedListCases(
 		},
 		{
 			tool: "document_list_types", marked: systemTyped, oldMarked: systemOld,
-			old: agentquerytoolservice.NewListDocumentTypesTool(documentTypes),
+			old: masterdataquerytools.NewListDocumentTypesTool(documentTypes),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := documentTypes.Create(ctx, &documenttype.DocumentType{
@@ -458,7 +465,7 @@ func convertedListCases(
 		},
 		{
 			tool: "location_list_categories", marked: parkingTyped, oldMarked: parkingOld,
-			old: agentquerytoolservice.NewListLocationCategoriesTool(categories),
+			old: masterdataquerytools.NewListLocationCategoriesTool(categories),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := categories.Create(ctx, &locationcategory.LocationCategory{
@@ -472,7 +479,7 @@ func convertedListCases(
 		},
 		{
 			tool: "masterdata_list_hold_reasons", marked: retiredTyped, oldMarked: retiredOld,
-			old: agentquerytoolservice.NewListHoldReasonsTool(holdReasons),
+			old: masterdataquerytools.NewListHoldReasonsTool(holdReasons),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := holdReasons.Create(ctx, &holdreason.HoldReason{
@@ -486,7 +493,7 @@ func convertedListCases(
 		},
 		{
 			tool: "customer_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCustomersTool(customers),
+			old: partyquerytools.NewListCustomersTool(customers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := customers.Create(ctx, &customer.Customer{
@@ -499,7 +506,7 @@ func convertedListCases(
 		},
 		{
 			tool: "location_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListLocationsTool(locations),
+			old: partyquerytools.NewListLocationsTool(locations),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				category, err := categories.Create(ctx, &locationcategory.LocationCategory{
@@ -521,7 +528,7 @@ func convertedListCases(
 		},
 		{
 			tool: "carrier_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListCarriersTool(carriers),
+			old: partyquerytools.NewListCarriersTool(carriers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
 				row, err := carriers.Create(ctx, &carrier.Carrier{
@@ -534,7 +541,10 @@ func convertedListCases(
 		},
 		{
 			tool: "worker_list", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListWorkersTool(workers, &mocks.DenyResourcesPermissionEngine{}),
+			old: workerquerytools.NewListWorkersTool(
+				workers,
+				&mocks.DenyResourcesPermissionEngine{},
+			),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				row, err := workers.Create(ctx, testWorker(tenant, "W"+label, marked, pulid.Nil))
 				return created(row, err)
@@ -542,7 +552,10 @@ func convertedListCases(
 		},
 		{
 			tool: "equipment_list_tractors", marked: outOfService, oldMarked: oldOutOfService,
-			old: agentquerytoolservice.NewListTractorsTool(tractors, &mocks.DenyResourcesPermissionEngine{}),
+			old: equipmentquerytools.NewListTractorsTool(
+				tractors,
+				&mocks.DenyResourcesPermissionEngine{},
+			),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				typeID, makeID, driverID, err := parts.write(ctx, tenant, "P"+label)
 				if err != nil {
@@ -559,7 +572,7 @@ func convertedListCases(
 		},
 		{
 			tool: "equipment_list_trailers", marked: outOfService, oldMarked: oldOutOfService,
-			old: agentquerytoolservice.NewListTrailersTool(trailers),
+			old: equipmentquerytools.NewListTrailersTool(trailers),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				typeID, makeID, _, err := parts.write(ctx, tenant, "R"+label)
 				if err != nil {
@@ -577,10 +590,10 @@ func convertedListCases(
 			tool: "worker_list_training_courses", marked: inactive, readsActiveByDefault: true,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				row, err := training.CreateCourse(ctx, &worker.TrainingCourse{
+				row, err := training.CreateCourse(ctx, &workertraining.TrainingCourse{
 					BusinessUnitID: bu, OrganizationID: org, Status: statusOf(marked),
-					Code: label, Name: "Course " + label, Category: worker.TrainingCategorySafety,
-					Delivery: worker.TrainingDeliveryOnline, DurationMinutes: 30,
+					Code: label, Name: "Course " + label, Category: workertraining.TrainingCategorySafety,
+					Delivery: workertraining.TrainingDeliveryOnline, DurationMinutes: 30,
 				})
 				return created(row, err)
 			},
@@ -597,7 +610,7 @@ func convertedListCases(
 		},
 		{
 			tool: "formula_list_templates", marked: inactive, oldMarked: oldInactive,
-			old: agentquerytoolservice.NewListFormulaTemplatesTool(formulaTemplates),
+			old: formulaquerytools.NewListFormulaTemplatesTool(formulaTemplates),
 			readsWith: func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
 				return formulaStats.Attach(ctx, pagination.TenantInfo{
 					OrgID:  tenant.Actor.OrganizationID,
@@ -653,7 +666,9 @@ func convertedListCases(
 					BusinessUnitID: bu, OrganizationID: org, TractorID: tractorID,
 					JurisdictionID: jurisdictionID, PurchasedAt: timeutils.NowUnix() - 86400,
 					Vendor: "Pilot", FuelType: domaintypes.IFTAFuelTypeDiesel,
-					Quantity: decimal.NewFromInt(100), QuantityUnit: fuelpurchase.QuantityUnitGallon,
+					Quantity: decimal.NewFromInt(
+						100,
+					), QuantityUnit: fuelpurchase.QuantityUnitGallon,
 					Gallons: decimal.NewFromInt(100), TotalAmountMinor: 38990, CurrencyCode: "USD",
 					TransactionReference: "ref-" + label, Source: fuelpurchase.PurchaseSourceManual,
 					TaxPaid: marked, CreatedByID: tenant.Actor.UserID,
@@ -696,7 +711,9 @@ func convertedListCases(
 					Status: status, FinalizedAt: finalizedAt, Timezone: "America/Chicago",
 					PeriodStart: 1, PeriodEnd: 2,
 					CurrencyCode: "USD",
-					Problems:     []ifta.Problem{{Code: ifta.ProblemMissingRate, Message: "No rate"}},
+					Problems: []ifta.Problem{
+						{Code: ifta.ProblemMissingRate, Message: "No rate"},
+					},
 				})
 				return created(row, err)
 			},
@@ -773,7 +790,7 @@ func (p *fuelParts) write(
 // running, which the default window reads only because it overlaps.
 func writeLeaveUnderWay(
 	ctx context.Context,
-	repo workerports.WorkerPTORepository,
+	repo workerptoports.WorkerPTORepository,
 	driver *worker.Worker,
 	marked bool,
 ) (pulid.ID, error) {
@@ -891,13 +908,13 @@ func writeReferenceRows(
 func callTool(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 ) map[string]any {
 	t.Helper()
 
-	data, err := tool.Query(ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -915,7 +932,7 @@ func callTool(
 func walk(
 	t *testing.T,
 	ctx context.Context,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	actor *permissionports.RequestActor,
 	args map[string]any,
 ) (ids []string, pages int) {
@@ -951,7 +968,10 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 	cases, services := convertedListCases(conn, admin)
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 
 	env := &convertedListEnv{
 		engine: engine,
@@ -970,8 +990,8 @@ func TestConvertedLists_ReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *t
 // and readers at the default data access and at Public, and two tenants.
 type convertedListEnv struct {
 	engine permissionports.PermissionEngine
-	reader agentports.GraphQLReader
-	public agentports.GraphQLReader
+	reader graphqlreadports.GraphQLReader
+	public graphqlreadports.GraphQLReader
 	mine   *agentreadtest.Tenant
 	theirs *agentreadtest.Tenant
 	// attach adds to a tenant's context the loaders an operation's resolvers
@@ -980,7 +1000,10 @@ type convertedListEnv struct {
 }
 
 // within is the context a tenant's rows are read in.
-func (e *convertedListEnv) within(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
+func (e *convertedListEnv) within(
+	ctx context.Context,
+	tenant *agentreadtest.Tenant,
+) context.Context {
 	if e.attach == nil {
 		return ctx
 	}
@@ -1075,7 +1098,11 @@ func TestConvertedLists_ATractorsDriversShowTheirReferenceView(t *testing.T) {
 		Denied: []string{permission.ResourceWorker.String()},
 	}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	converted, err := agentquerytoolservice.ConvertedListTool("equipment_list_tractors", reader, engine)
+	converted, err := agentquerytoolservice.ConvertedListTool(
+		"equipment_list_tractors",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 
 	page := callTool(t, ours.ctx, converted, tenant.Actor, map[string]any{"limit": 50})
@@ -1170,7 +1197,7 @@ func TestConvertedLists_WorkerListIsNarrowedToTheTeamOnBothPaths(t *testing.T) {
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
 	converted, err := agentquerytoolservice.ConvertedListTool("worker_list", reader, engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListWorkersTool(workers, engine)
+	old := workerquerytools.NewListWorkersTool(workers, engine)
 
 	before, _ := walk(t, scoped, old, tenant.Actor, nil)
 	after, _ := walk(t, scoped, converted, tenant.Actor, nil)

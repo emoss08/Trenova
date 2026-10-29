@@ -1,7 +1,6 @@
 package assignmenthandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"net/http"
 	"testing"
 
@@ -9,8 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -21,20 +22,20 @@ import (
 
 func setupAssignmentHandler(
 	t *testing.T,
-	service *shipmentportsmock.MockAssignmentService,
+	service *assignmentportsmock.MockAssignmentService,
 ) *assignmenthandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
@@ -53,9 +54,9 @@ func TestAssignmentHandler_Unassign_Success(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := shipmentportsmock.NewMockAssignmentService(t)
+	service := assignmentportsmock.NewMockAssignmentService(t)
 	service.EXPECT().
-		Unassign(mock.Anything, mock.MatchedBy(func(req *shipmentports.UnassignShipmentMoveRequest) bool {
+		Unassign(mock.Anything, mock.MatchedBy(func(req *assignmentports.UnassignShipmentMoveRequest) bool {
 			return req.ShipmentMoveID == moveID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID &&
@@ -80,7 +81,7 @@ func TestAssignmentHandler_Unassign_Success(t *testing.T) {
 func TestAssignmentHandler_Unassign_InvalidMoveID(t *testing.T) {
 	t.Parallel()
 
-	handler := setupAssignmentHandler(t, shipmentportsmock.NewMockAssignmentService(t))
+	handler := setupAssignmentHandler(t, assignmentportsmock.NewMockAssignmentService(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodDelete).
@@ -97,9 +98,9 @@ func TestAssignmentHandler_Unassign_ServiceError(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("sm_")
-	service := shipmentportsmock.NewMockAssignmentService(t)
+	service := assignmentportsmock.NewMockAssignmentService(t)
 	service.EXPECT().
-		Unassign(mock.Anything, mock.AnythingOfType("*shipmentports.UnassignShipmentMoveRequest")).
+		Unassign(mock.Anything, mock.AnythingOfType("*assignmentports.UnassignShipmentMoveRequest")).
 		Return(errortypes.NewBusinessError("Only fresh assigned shipment moves can be unassigned")).
 		Once()
 

@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -51,12 +51,15 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.Preview(c.Request.Context(), &formulatemplateservice.PreviewRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		Source:     req.Source,
-		Inputs:     req.Inputs,
-		ShipmentID: shipmentID,
-	})
+	result, err := h.studioService.Preview(
+		c.Request.Context(),
+		&formulatemplatestudioservice.PreviewRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Source:     req.Source,
+			Inputs:     req.Inputs,
+			ShipmentID: shipmentID,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -79,7 +82,7 @@ type scaffoldTestRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body scaffoldTestRequest true "The source, the shipment and the test's name"
-// @Success 200 {object} formulatemplateservice.ScaffoldTestResponse
+// @Success 200 {object} formulatemplatestudioservice.ScaffoldTestResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -108,9 +111,9 @@ func (h *Handler) scaffoldTest(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.ScaffoldTest(
+	result, err := h.studioService.ScaffoldTest(
 		c.Request.Context(),
-		&formulatemplateservice.ScaffoldTestRequest{
+		&formulatemplatestudioservice.ScaffoldTestRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Source:     req.Source,
 			Inputs:     req.Inputs,
@@ -131,7 +134,7 @@ func (h *Handler) scaffoldTest(c *gin.Context) {
 // @ID getFormulaTemplateContext
 // @Tags Formula Templates
 // @Produce json
-// @Success 200 {object} formulatemplateservice.StudioContext
+// @Success 200 {object} formulatemplatestudioservice.StudioContext
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
@@ -140,7 +143,10 @@ func (h *Handler) scaffoldTest(c *gin.Context) {
 func (h *Handler) getContext(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	result, err := h.service.StudioContext(c.Request.Context(), pagination.FromAuthAsUser(authCtx))
+	result, err := h.studioService.StudioContext(
+		c.Request.Context(),
+		pagination.FromAuthAsUser(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -177,9 +183,9 @@ func (h *Handler) getContextCells(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.StudioCells(
+	result, err := h.studioService.StudioCells(
 		c.Request.Context(),
-		&formulatemplateservice.StudioCellsRequest{
+		&formulatemplatestudioservice.StudioCellsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Needs:      req.Needs,
 			Whole:      req.Whole,

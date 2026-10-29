@@ -70,6 +70,16 @@ func (s *service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *service) GetByIDs(
+	ctx context.Context,
+	req servicefailureports.GetServiceFailureReasonCodesByIDsRequest,
+) ([]*servicefailure.ReasonCode, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+	return s.repo.GetByIDs(ctx, req)
+}
+
 func (s *service) SelectOptions(
 	ctx context.Context,
 	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,

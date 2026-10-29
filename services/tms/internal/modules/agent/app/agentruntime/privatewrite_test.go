@@ -6,8 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,16 +23,16 @@ type privateActionTool struct {
 	private bool
 }
 
-func (t *privateActionTool) Policy() agentports.ToolPolicy {
+func (t *privateActionTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.StubActionTool.Policy()
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal}
 	policy.PersonalRunsUnasked = true
-	policy.Classify = func(agentports.ToolExecuteParams) agentports.CallPolicy {
+	policy.Classify = func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
 		if t.private {
-			return agentports.CallPolicy{Egress: agent.EgressPersonal}
+			return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 		}
 
-		return agentports.CallPolicy{Egress: agent.EgressInternal}
+		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
 	return policy
@@ -37,8 +41,8 @@ func (t *privateActionTool) Policy() agentports.ToolPolicy {
 func runPrivate(
 	t *testing.T,
 	tool *privateActionTool,
-	configure func(*agentports.RunRequest),
-) *agentports.RunResult {
+	configure func(*agentruntimeports.RunRequest),
+) *agentruntimeports.RunResult {
 	t.Helper()
 
 	return runPrivateWithTrust(t, tool, nil, configure)
@@ -47,21 +51,21 @@ func runPrivate(
 func runPrivateWithTrust(
 	t *testing.T,
 	tool *privateActionTool,
-	trust agentports.AgentToolTrustRepository,
-	configure func(*agentports.RunRequest),
-) *agentports.RunResult {
+	trust agenttoolports.AgentToolTrustRepository,
+	configure func(*agentruntimeports.RunRequest),
+) *agentruntimeports.RunResult {
 	t.Helper()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_create", map[string]any{"name": "Late loads"}),
-		textTurn("Saved."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
+		runtimetest.TextTurn("Saved."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
-	rt.trust = trust
-	req := &agentports.RunRequest{
-		Definition: testDefinition("report_create"),
-		Actor:      testActor(),
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
+	rewire(rt, func(p *Params) { p.Trust = trust })
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Save a report of late loads",
 	}
 	if configure != nil {
@@ -118,36 +122,36 @@ func TestRun_APrivateWriteKeepsAnAgentsOwnSettingAndNeedsAPerson(t *testing.T) {
 		}
 	}
 
-	set := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
+	set := runPrivate(t, newTool(), func(req *agentruntimeports.RunRequest) {
 		req.Definition.ToolTiers = map[string]agent.AutonomyTier{"report_create": agent.TierPropose}
 	})
 	assert.Equal(t, agent.TierPropose, set.Actions[0].Tier)
 
-	unattended := runPrivate(t, newTool(), func(req *agentports.RunRequest) {
+	unattended := runPrivate(t, newTool(), func(req *agentruntimeports.RunRequest) {
 		req.Unattended = true
 	})
 	assert.Equal(t, agent.TierPropose, unattended.Actions[0].Tier)
 }
 
 type ledgerTrust struct {
-	agentports.AgentToolTrustRepository
+	agenttoolports.AgentToolTrustRepository
 
-	rows []*agent.ToolTrust
+	rows []*agenttooltrust.ToolTrust
 	err  error
 	asks int
 }
 
 func (l *ledgerTrust) ListByDefinition(
 	_ context.Context,
-	_ agentports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+	_ agenttoolports.ListToolTrustRequest,
+) ([]*agenttooltrust.ToolTrust, error) {
 	l.asks++
 
 	return l.rows, l.err
 }
 
-func onRecordedAgent(tier agent.AutonomyTier) func(*agentports.RunRequest) {
-	return func(req *agentports.RunRequest) {
+func onRecordedAgent(tier agent.AutonomyTier) func(*agentruntimeports.RunRequest) {
+	return func(req *agentruntimeports.RunRequest) {
 		req.Definition.ID = pulid.MustNew("agdef_")
 		req.Definition.OrganizationID = pulid.MustNew("org_")
 		req.Definition.BusinessUnitID = pulid.MustNew("bu_")
@@ -168,7 +172,7 @@ func TestRun_APrivateWriteKeepsItsExemptionThroughATierTrustEarned(t *testing.T)
 		StubActionTool: actionTool("report_create", agent.TierAutoExecute, nil),
 		private:        true,
 	}
-	ledger := &ledgerTrust{rows: []*agent.ToolTrust{
+	ledger := &ledgerTrust{rows: []*agenttooltrust.ToolTrust{
 		{ToolName: "dispatch_assign_move", EarnedTier: agent.TierPropose},
 		{ToolName: "report_create", EarnedTier: agent.TierActWithApproval},
 	}}
@@ -184,10 +188,10 @@ func TestRun_APrivateWriteKeepsATierAPersonMovedAfterTrust(t *testing.T) {
 	t.Parallel()
 
 	for name, ledger := range map[string]*ledgerTrust{
-		"a person moved it since": {rows: []*agent.ToolTrust{
+		"a person moved it since": {rows: []*agenttooltrust.ToolTrust{
 			{ToolName: "report_create", EarnedTier: agent.TierAutoExecute},
 		}},
-		"trust never earned a tier": {rows: []*agent.ToolTrust{{ToolName: "report_create"}}},
+		"trust never earned a tier": {rows: []*agenttooltrust.ToolTrust{{ToolName: "report_create"}}},
 		"the ledger has no row":     {},
 		"the ledger cannot be read": {err: errors.New("connection refused")},
 	} {
@@ -232,5 +236,5 @@ func TestRun_OnlyATierTheAgentNamesReadsTheLedger(t *testing.T) {
 	}
 	result = runPrivateWithTrust(t, unset, unnamed, nil)
 	assert.Zero(t, unnamed.asks)
-	assert.Equal(t, agent.TierSourcePersonalExemption, result.Actions[0].TierSource)
+	assert.Equal(t, agenttooltrust.TierSourcePersonalExemption, result.Actions[0].TierSource)
 }

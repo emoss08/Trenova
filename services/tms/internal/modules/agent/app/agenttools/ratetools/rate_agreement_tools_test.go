@@ -5,9 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
@@ -251,12 +254,12 @@ func rateValue(amount string) rules.RawJSON {
 
 func agreementDraftParams(customerID pulid.ID) map[string]any {
 	return map[string]any{
-		paramPartyType:            "Customer",
-		common.ParamCustomerID:    customerID.String(),
-		paramAgreementCode:        "ACME-2027",
-		paramAgreementName:        "Acme dry van 2027",
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramInputs:               map[string]any{"minimumCharge": "$150"},
+		paramPartyType:                "Customer",
+		toolparams.ParamCustomerID:    customerID.String(),
+		paramAgreementCode:            "ACME-2027",
+		paramAgreementName:            "Acme dry van 2027",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramInputs:                   map[string]any{"minimumCharge": "$150"},
 		paramLanes: []any{map[string]any{
 			paramLaneLabel:         "Texas out",
 			paramOriginScopeType:   "State",
@@ -278,15 +281,15 @@ func TestDraftRateAgreement_DraftsLanesItCanReadAndPricesNothing(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
-			return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would draft the customer rate agreement ACME-2027 "+
 		"with 1 lane")
 	assert.Contains(t, preview.Summary, "it prices nothing until it is approved")
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "drafted", result.Action)
 	require.Len(t, agreements.created.Rules, 1)
@@ -322,7 +325,7 @@ func TestDraftRateAgreement_RefusesWhatItCannotRead(t *testing.T) {
 			p[paramPartyType] = "Carrier"
 		},
 		"a day that is not a day": func(p map[string]any) {
-			p[common.ParamEffectiveFrom] = "January 2027"
+			p[toolparams.ParamEffectiveFrom] = "January 2027"
 		},
 		"an input that is not a Tariff value": func(p map[string]any) {
 			p[paramInputs] = map[string]any{"minimumCharge": "a lot"}
@@ -335,7 +338,7 @@ func TestDraftRateAgreement_RefusesWhatItCannotRead(t *testing.T) {
 			t.Parallel()
 			params := agreementDraftParams(pulid.MustNew("cus_"))
 			change(params)
-			require.Error(t, tool.(agentports.ToolValidator).Validate(
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(
 				t.Context(),
 				agenttoolstest.ExecuteParams(params),
 			))
@@ -360,10 +363,14 @@ func TestReviseRateAgreementDraft_KeepsNamedLanesAndRevisesOnlyDrafts(t *testing
 		}},
 	})
 
-	agenttoolstest.PreviewWithoutWrites(t, agreements.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	agenttoolstest.PreviewWithoutWrites(
+		t,
+		agreements.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, agreements.updated.Rules, 1)
 	assert.Equal(t, kept.ID, agreements.updated.Rules[0].ID)
@@ -378,13 +385,13 @@ func TestReviseRateAgreementDraft_KeepsNamedLanesAndRevisesOnlyDrafts(t *testing
 		paramRateAgreementID: agreements.stored.ID.String(),
 		paramLanes:           []any{map[string]any{paramRuleID: pulid.MustNew("rar_").String()}},
 	})
-	require.ErrorContains(t, tool.(agentports.ToolValidator).Validate(t.Context(), unknown),
+	require.ErrorContains(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), unknown),
 		"is not a lane of this agreement")
 
 	active := NewReviseRateAgreementDraftTool(&fakeAgreements{
 		stored: storedAgreement(rateagreement.StatusActive),
 	}, texasStates())
-	require.ErrorIs(t, active.(agentports.ToolValidator).Validate(t.Context(), params),
+	require.ErrorIs(t, active.(agenttoolports.ToolValidator).Validate(t.Context(), params),
 		errOnlyDraftsRevise)
 }
 
@@ -404,21 +411,21 @@ func TestDuplicateRateAgreement_CopiesIntoADraft(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
-			return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Equal(t, "Would copy the rate agreement ACME-2026 into the draft ACME-2027 with 1 lane.",
 		preview.Summary)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Equal(t, "duplicated", result.Action)
 	assert.Equal(t, "ACME-2027", agreements.copied.Code)
 	assert.Equal(t, permission.OpDuplicate, tool.Policy().Operation)
 }
 
-func reviewTool(t *testing.T, agreements *fakeAgreements, name string) agentports.AgentTool {
+func reviewTool(t *testing.T, agreements *fakeAgreements, name string) agenttoolports.AgentTool {
 	t.Helper()
 
 	for _, step := range AgreementReviewSteps() {
@@ -446,8 +453,8 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
-			return approve.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		func() (*agentpreview.ToolPreview, error) {
+			return approve.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "Would approve the rate agreement ACME-2026")
@@ -456,18 +463,18 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 		"Active",
 		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
 	)
-	require.ErrorIs(t, approve.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, approve.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	assert.Empty(t, agreements.reviewed)
 
-	_, err := approve.(agentports.ToolPreviewer).Preview(
+	_, err := approve.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.AgentParamsFor(params.Params),
 	)
-	require.ErrorIs(t, err, common.ErrAgentCannotApprove)
+	require.ErrorIs(t, err, toolguard.ErrAgentCannotApprove)
 
-	approved := params
+	approved := *params
 	approved.ProposalID = pulid.MustNew("ap_")
-	require.NoError(t, approve.Execute(t.Context(), approved))
+	require.NoError(t, approve.Execute(t.Context(), &approved))
 	assert.Equal(t, []rateagreementservice.Review{rateagreementservice.ReviewApprove},
 		agreements.reviewed)
 
@@ -488,7 +495,7 @@ func TestAgreementReviewTools_OnlyAPersonTurnsPricingOnOrOff(t *testing.T) {
 	}
 
 	for _, name := range []string{"rate_reject_agreement", "rate_suspend_agreement"} {
-		require.Error(t, reviewTool(t, agreements, name).(agentports.ToolValidator).Validate(
+		require.Error(t, reviewTool(t, agreements, name).(agenttoolports.ToolValidator).Validate(
 			t.Context(), params,
 		), name)
 	}
@@ -507,9 +514,9 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	}
 	tool := NewAmendRateAgreementRulesTool(agreements, texasStates())
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		paramRateAgreementID:      agreements.stored.ID.String(),
-		common.ParamEffectiveFrom: "2026-11-01",
-		paramSupersededRuleIDs:    []any{agreements.stored.Rules[0].ID.String()},
+		paramRateAgreementID:          agreements.stored.ID.String(),
+		toolparams.ParamEffectiveFrom: "2026-11-01",
+		paramSupersededRuleIDs:        []any{agreements.stored.Rules[0].ID.String()},
 		paramLanes: []any{map[string]any{
 			paramLaneLabel:         "Texas out",
 			paramOriginScopeType:   "State",
@@ -522,8 +529,8 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
-			return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary, "close out 1 lane and add 1 lane")
@@ -532,7 +539,7 @@ func TestAmendRateAgreementRules_ShowsTheRatesBeforeAndAfter(t *testing.T) {
 	assert.Nil(t, change.Money, "negotiated rates are confidential and never carried")
 	assert.NotContains(t, preview.Summary, "2.49")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.Len(t, agreements.amended.Rules, 1)
@@ -548,16 +555,16 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	agreements := &fakeAgreements{guard: &agenttoolstest.WriteGuard{}}
 	tool := NewApplyRateIncreaseTool(agreements)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamEffectiveFrom: "2027-01-01",
-		paramPartyType:            "Customer",
-		paramPercentChange:        "3.5",
+		toolparams.ParamEffectiveFrom: "2027-01-01",
+		paramPartyType:                "Customer",
+		paramPercentChange:            "3.5",
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
 		agreements.guard,
-		func() (*agent.ToolPreview, error) {
-			return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
 	assert.Contains(t, preview.Summary,
@@ -566,12 +573,12 @@ func TestApplyRateIncrease_ProposesTheLaneMovesItWouldMake(t *testing.T) {
 	assert.NotContains(t, preview.Summary, "2.43", "negotiated rates are confidential")
 	assert.Contains(t, preview.Summary, "2 lanes with no money inputs are left as they are")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), params), common.ErrNeedsAPersonsApproval)
+	require.ErrorIs(t, tool.Execute(t.Context(), params), toolspec.ErrNeedsAPersonsApproval)
 	params.ProposalID = pulid.MustNew("ap_")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, rateagreement.PartyTypeCustomer, agreements.increased.PartyType)
 	assert.Equal(t, "3.5", agreements.increased.Adjustment.PercentChange.Decimal.String())
 
 	params.Params[paramPartyType] = "Shipper"
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

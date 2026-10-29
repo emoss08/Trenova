@@ -4,12 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,21 +26,21 @@ type Params struct {
 
 	Logger       *zap.Logger
 	DB           kernelports.Transactor
-	Repo         shipmentports.RatingReviewRepository
+	Repo         ratingreviewports.RatingReviewRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
 	db           kernelports.Transactor
-	repo         shipmentports.RatingReviewRepository
+	repo         ratingreviewports.RatingReviewRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	now          func() int64
 }
 
-var _ shipmentports.RatingReviewService = (*Service)(nil)
+var _ ratingreviewports.RatingReviewService = (*Service)(nil)
 
 //nolint:gocritic // fx param structs are passed by value
 func New(p Params) *Service {
@@ -55,7 +56,7 @@ func New(p Params) *Service {
 
 func (s *Service) Approve(
 	ctx context.Context,
-	req *shipmentports.ApproveRatingReviewRequest,
+	req *ratingreviewports.ApproveRatingReviewRequest,
 	actor *permissionports.RequestActor,
 ) (*shipment.Shipment, error) {
 	if req == nil || req.ShipmentID.IsNil() {
@@ -91,7 +92,7 @@ func (s *Service) Approve(
 		before.RatingDetail = entity.RatingDetail
 		entity.RatingDetail = &detail
 
-		changed, err := detail.ApproveReview(actor.UserID, s.now())
+		changed, err := shipmentrating.ApproveReview(&detail, actor.UserID, s.now())
 		if err != nil {
 			return err
 		}
@@ -123,7 +124,7 @@ func (s *Service) audit(
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActor()
-	reasons := updated.RatingDetail.ReviewReasons()
+	reasons := shipmentrating.ReviewReasons(updated.RatingDetail)
 	if err := s.auditService.LogAction(&auditports.LogActionParams{
 		Resource:       permission.ResourceShipment,
 		ResourceID:     updated.ID.String(),

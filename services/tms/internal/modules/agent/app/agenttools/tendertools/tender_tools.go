@@ -6,12 +6,14 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercreate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,20 +27,20 @@ const maxTenderLines = 10
 type tenderStarter interface {
 	CreateWaterfall(
 		ctx context.Context,
-		req *tenderservice.CreateWaterfallTenderRequest,
-	) (*tenderservice.CreateWaterfallResult, error)
+		req *tendercreate.CreateWaterfallTenderRequest,
+	) (*tendercreate.CreateWaterfallResult, error)
 	CreateSpot(
 		ctx context.Context,
-		req *tenderservice.CreateSpotTenderRequest,
+		req *tendercreate.CreateSpotTenderRequest,
 	) (*tender.Tender, error)
 	PreviewWaterfall(
 		ctx context.Context,
-		req *tenderservice.CreateWaterfallTenderRequest,
-	) (*tenderservice.TenderPreview, error)
+		req *tendercreate.CreateWaterfallTenderRequest,
+	) (*tendercreate.TenderPreview, error)
 	PreviewSpot(
 		ctx context.Context,
-		req *tenderservice.CreateSpotTenderRequest,
-	) (*tenderservice.TenderPreview, error)
+		req *tendercreate.CreateSpotTenderRequest,
+	) (*tendercreate.TenderPreview, error)
 }
 
 // tenderToRoutingGuideTool offers a move down its routing guide, carrier by
@@ -50,7 +52,7 @@ type TenderToRoutingGuideTool struct {
 	tenders tenderStarter
 }
 
-func NewTenderToRoutingGuideTool(tenders tenderStarter) agentports.AgentTool {
+func NewTenderToRoutingGuideTool(tenders tenderStarter) agenttoolports.AgentTool {
 	return &TenderToRoutingGuideTool{tenders: tenders}
 }
 
@@ -81,29 +83,29 @@ func (t *TenderToRoutingGuideTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *TenderToRoutingGuideTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *TenderToRoutingGuideTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceTender,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Offers the load to carriers outside the organization.",
 	}
 }
 
 func (t *TenderToRoutingGuideTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -114,22 +116,22 @@ func (t *TenderToRoutingGuideTool) Execute(
 }
 
 func (t *TenderToRoutingGuideTool) request(
-	params *agentports.ToolExecuteParams,
-) (*tenderservice.CreateWaterfallTenderRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*tendercreate.CreateWaterfallTenderRequest, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
 	}
 
-	req := &tenderservice.CreateWaterfallTenderRequest{
-		TenantInfo:     common.TenantFrom(*params),
+	req := &tendercreate.CreateWaterfallTenderRequest{
+		TenantInfo:     toolparams.TenantFrom(params),
 		ShipmentMoveID: moveID,
 	}
-	if guideID, ok, pErr := common.OptionalPulid(params.Params, "routingGuideId"); pErr != nil {
+	if guideID, ok, pErr := toolparams.OptionalPulid(params.Params, "routingGuideId"); pErr != nil {
 		return nil, pErr
 	} else if ok {
 		req.RoutingGuideID = &guideID
@@ -138,8 +140,8 @@ func (t *TenderToRoutingGuideTool) request(
 	return req, nil
 }
 
-func (t *TenderToRoutingGuideTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+func (t *TenderToRoutingGuideTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }
 
 // tenderToCarriersTool offers a move to named carriers at named rates, either
@@ -149,7 +151,7 @@ type TenderToCarriersTool struct {
 	tenders tenderStarter
 }
 
-func NewTenderToCarriersTool(tenders tenderStarter) agentports.AgentTool {
+func NewTenderToCarriersTool(tenders tenderStarter) agenttoolports.AgentTool {
 	return &TenderToCarriersTool{tenders: tenders}
 }
 
@@ -224,20 +226,20 @@ func (t *TenderToCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *TenderToCarriersTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *TenderToCarriersTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceTender,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Offers the load to carriers outside the organization.",
 	}
 }
@@ -253,9 +255,9 @@ type tenderLineParam struct {
 
 func (t *TenderToCarriersTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -266,23 +268,27 @@ func (t *TenderToCarriersTool) Execute(
 }
 
 func (t *TenderToCarriersTool) request(
-	params *agentports.ToolExecuteParams,
-) (*tenderservice.CreateSpotTenderRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*tendercreate.CreateSpotTenderRequest, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	moveID, err := common.RequirePulid(params.Params, "shipmentMoveId")
+	moveID, err := toolparams.RequirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
 		return nil, err
 	}
-	mode, err := common.RequireEnum(params.Params, "mode", agenttoolschema.SpotTenderModes.Values)
+	mode, err := toolparams.RequireEnum(
+		params.Params,
+		"mode",
+		agenttoolschema.SpotTenderModes.Values,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	var lineParams []tenderLineParam
-	if err = common.DecodeParam(params.Params, "lines", &lineParams); err != nil {
+	if err = toolparams.DecodeParam(params.Params, "lines", &lineParams); err != nil {
 		return nil, err
 	}
 	if len(lineParams) == 0 || len(lineParams) > maxTenderLines {
@@ -293,35 +299,38 @@ func (t *TenderToCarriersTool) request(
 		)
 	}
 
-	lines := make([]tenderservice.SpotTenderLine, 0, len(lineParams))
-	for idx, line := range lineParams {
-		parsed, lineErr := spotTenderLineOf(idx, line)
+	lines := make([]tendercreate.SpotTenderLine, 0, len(lineParams))
+	for idx := range lineParams {
+		parsed, lineErr := spotTenderLineOf(idx, &lineParams[idx])
 		if lineErr != nil {
 			return nil, lineErr
 		}
 		lines = append(lines, parsed)
 	}
 
-	return &tenderservice.CreateSpotTenderRequest{
-		TenantInfo:                common.TenantFrom(*params),
-		ShipmentMoveID:            moveID,
-		Mode:                      mode,
-		Lines:                     lines,
-		OverrideInsuranceWarnings: common.OptionalBool(params.Params, "overrideInsuranceWarnings"),
+	return &tendercreate.CreateSpotTenderRequest{
+		TenantInfo:     toolparams.TenantFrom(params),
+		ShipmentMoveID: moveID,
+		Mode:           mode,
+		Lines:          lines,
+		OverrideInsuranceWarnings: toolparams.OptionalBool(
+			params.Params,
+			"overrideInsuranceWarnings",
+		),
 	}, nil
 }
 
-func spotTenderLineOf(idx int, line tenderLineParam) (tenderservice.SpotTenderLine, error) {
+func spotTenderLineOf(idx int, line *tenderLineParam) (tendercreate.SpotTenderLine, error) {
 	carrierID, err := pulid.Parse(line.CarrierID)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, fmt.Errorf(
+		return tendercreate.SpotTenderLine{}, fmt.Errorf(
 			"lines[%d].carrierId is not a carrier id",
 			idx,
 		)
 	}
 	rate, err := decimal.NewFromString(line.Rate)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, fmt.Errorf(
+		return tendercreate.SpotTenderLine{}, fmt.Errorf(
 			"lines[%d].rate is not a decimal amount",
 			idx,
 		)
@@ -334,14 +343,14 @@ func spotTenderLineOf(idx int, line tenderLineParam) (tenderservice.SpotTenderLi
 		agenttoolschema.CarrierRateMethods,
 	)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, err
+		return tendercreate.SpotTenderLine{}, err
 	}
 	channel, err := lineEnum(idx, "channel", line.Channel, agenttoolschema.TenderChannels)
 	if err != nil {
-		return tenderservice.SpotTenderLine{}, err
+		return tendercreate.SpotTenderLine{}, err
 	}
 
-	return tenderservice.SpotTenderLine{
+	return tendercreate.SpotTenderLine{
 		CarrierID:       carrierID,
 		RateMethod:      rateMethod,
 		Rate:            rate,
@@ -363,7 +372,7 @@ func lineEnum[T ~string](
 	}
 	value := T(strings.TrimSpace(raw))
 	if !slices.Contains(source.Values, value) {
-		return "", common.ErrUnknownValue(
+		return "", toolparams.ErrUnknownValue(
 			fmt.Sprintf("lines[%d].%s", idx, key),
 			raw,
 			source.Names(),
@@ -373,6 +382,6 @@ func lineEnum[T ~string](
 	return value, nil
 }
 
-func (t *TenderToCarriersTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
+func (t *TenderToCarriersTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "shipmentMoveId", permission.ResourceShipmentMove)
 }

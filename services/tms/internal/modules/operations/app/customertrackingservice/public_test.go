@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -93,7 +94,9 @@ func TestPreview_AddsWhatTheProfileTurnsOn(t *testing.T) {
 func TestPreview_StatusReadsDelayedWhenAStopIsAtRisk(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
-	h.etas.rows = []*stopeta.StopETA{{StopID: sh.Moves[0].Stops[1].ID, Verdict: stopeta.VerdictLate}}
+	h.etas.rows = []*stopeta.StopETA{
+		{StopID: sh.Moves[0].Stops[1].ID, Verdict: stopeta.VerdictLate},
+	}
 	token := h.issue(t, sh)
 
 	view, err := h.service.PreviewByToken(t.Context(), token)
@@ -112,7 +115,9 @@ func TestPreview_EveryDeadLinkAnswersTheSame(t *testing.T) {
 			require.NoError(t, err)
 		},
 		"expired": func(h *harness, _ *shipment.Shipment) {
-			h.now = testNow + int64(customertracking.DefaultLinkTTLDays)*customertracking.SecondsPerDay
+			h.now = testNow + int64(
+				customertracking.DefaultLinkTTLDays,
+			)*customertracking.SecondsPerDay
 		},
 		"moved to another customer": func(_ *harness, sh *shipment.Shipment) {
 			sh.CustomerID = pulid.MustNew("cus_")
@@ -172,8 +177,8 @@ func TestDownloadPod_OnlyWhenTheCustomerSeesProofOfDelivery(t *testing.T) {
 
 func TestIssueLink_RefusesWhatItCannotShare(t *testing.T) {
 	h := newHarness()
-	canceled := h.addShipment(shipment.StatusCanceled,
-		stopSpec{stopType: shipment.StopTypePickup, city: "Dallas", state: "TX"})
+	canceled := h.addShipment(shipmentvocab.StatusCanceled,
+		stopSpec{stopType: shipmentvocab.StopTypePickup, city: "Dallas", state: "TX"})
 	_, err := h.service.IssueLink(t.Context(), &customertrackingports.IssueLinkRequest{
 		TenantInfo: testTenant,
 		ShipmentID: canceled.ID,
@@ -188,7 +193,7 @@ func TestIssueLink_RefusesWhatItCannotShare(t *testing.T) {
 	})
 	assert.Contains(t, err.Error(), "turned off")
 
-	h.service.cfg.App.WebBaseURL = ""
+	h.service.appConfig.WebBaseURL = ""
 	open := pickedUpShipment(h)
 	_, err = h.service.IssueLink(t.Context(), &customertrackingports.IssueLinkRequest{
 		TenantInfo: testTenant,
@@ -220,7 +225,11 @@ func TestIssueLink_EmailsTheLinkWhenAskedTo(t *testing.T) {
 	assert.Equal(t, "lane@halstead.example", issued.Link.RecipientEmail)
 	require.Len(t, h.email.sent, 1)
 	assert.Equal(t, []string{"lane@halstead.example"}, h.email.sent[0].To)
-	assert.Equal(t, "customer-tracking-link-"+issued.Link.ID.String(), h.email.sent[0].IdempotencyKey)
+	assert.Equal(
+		t,
+		"customer-tracking-link-"+issued.Link.ID.String(),
+		h.email.sent[0].IdempotencyKey,
+	)
 }
 
 func TestRevokeLink_OneOrAll(t *testing.T) {
@@ -255,17 +264,20 @@ func TestUpdateProfile_CreatesThenGuardsTheVersion(t *testing.T) {
 	h := newHarness()
 	sh := pickedUpShipment(h)
 
-	created, err := h.service.UpdateProfile(t.Context(), &customertrackingports.UpdateProfileRequest{
-		TenantInfo: testTenant,
-		Profile: &customertracking.Profile{
-			CustomerID:    sh.CustomerID,
-			LinkEnabled:   true,
-			VisibleFields: []customertracking.Field{customertracking.FieldEta},
-			NotifyDelayed: true,
-			IncludeLink:   true,
-			Recipients:    "Ops@Halstead.example",
+	created, err := h.service.UpdateProfile(
+		t.Context(),
+		&customertrackingports.UpdateProfileRequest{
+			TenantInfo: testTenant,
+			Profile: &customertracking.Profile{
+				CustomerID:    sh.CustomerID,
+				LinkEnabled:   true,
+				VisibleFields: []customertracking.Field{customertracking.FieldEta},
+				NotifyDelayed: true,
+				IncludeLink:   true,
+				Recipients:    "Ops@Halstead.example",
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.False(t, created.ID.IsNil())
 	assert.Equal(t, "ops@halstead.example", created.Recipients)

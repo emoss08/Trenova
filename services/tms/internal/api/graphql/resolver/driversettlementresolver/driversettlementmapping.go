@@ -5,11 +5,19 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,7 +51,7 @@ func (r *MutationResolver) settlementAction(
 func payProfileConnectionToModel(
 	result *pagination.CursorListResult[*driverpay.PayProfile],
 ) (*gqlmodel.PayProfileConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *driverpay.PayProfile, cursor string) *gqlmodel.PayProfileEdge {
 			return &gqlmodel.PayProfileEdge{Node: node, Cursor: cursor}
@@ -62,11 +70,11 @@ func payProfileConnectionToModel(
 }
 
 func payCodeConnectionToModel(
-	result *pagination.CursorListResult[*driverpay.PayCode],
+	result *pagination.CursorListResult[*paycode.PayCode],
 ) (*gqlmodel.PayCodeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *driverpay.PayCode, cursor string) *gqlmodel.PayCodeEdge {
+		func(node *paycode.PayCode, cursor string) *gqlmodel.PayCodeEdge {
 			return &gqlmodel.PayCodeEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.PayCodeEdge) string { return edge.Cursor },
@@ -85,22 +93,22 @@ func payCodeConnectionToModel(
 func payCodeFromCreateInput(
 	input *gqlmodel.CreatePayCodeInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.PayCode, error) {
-	glAccountID, err := base.OptionalID(input.GlAccountID)
+) (*paycode.PayCode, error) {
+	glAccountID, err := gqlid.OptionalID(input.GlAccountID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.PayCode{
+	entity := &paycode.PayCode{
 		OrganizationID:        tenantInfo.OrgID,
 		BusinessUnitID:        tenantInfo.BuID,
 		Status:                domaintypes.StatusActive,
 		Direction:             input.Direction,
 		Code:                  strings.ToUpper(strings.TrimSpace(input.Code)),
 		Name:                  input.Name,
-		Description:           base.StringValue(input.Description),
+		Description:           gqlscalar.StringValue(input.Description),
 		Taxable:               true,
 		CountsTowardGuarantee: true,
-		DefaultAmountMinor:    base.Int64Ptr(input.DefaultAmountMinor),
+		DefaultAmountMinor:    gqlscalar.Int64Ptr(input.DefaultAmountMinor),
 	}
 	if input.Taxable != nil {
 		entity.Taxable = *input.Taxable
@@ -117,16 +125,16 @@ func payCodeFromCreateInput(
 func payCodeFromUpdateInput(
 	input *gqlmodel.UpdatePayCodeInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
 	payCodeID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, err
 	}
-	glAccountID, err := base.OptionalID(input.GlAccountID)
+	glAccountID, err := gqlid.OptionalID(input.GlAccountID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.PayCode{
+	entity := &paycode.PayCode{
 		ID:                    payCodeID,
 		OrganizationID:        tenantInfo.OrgID,
 		BusinessUnitID:        tenantInfo.BuID,
@@ -134,10 +142,10 @@ func payCodeFromUpdateInput(
 		Status:                input.Status,
 		Code:                  strings.ToUpper(strings.TrimSpace(input.Code)),
 		Name:                  input.Name,
-		Description:           base.StringValue(input.Description),
+		Description:           gqlscalar.StringValue(input.Description),
 		Taxable:               input.Taxable,
 		CountsTowardGuarantee: input.CountsTowardGuarantee,
-		DefaultAmountMinor:    base.Int64Ptr(input.DefaultAmountMinor),
+		DefaultAmountMinor:    gqlscalar.Int64Ptr(input.DefaultAmountMinor),
 	}
 	if !glAccountID.IsNil() {
 		entity.GLAccountID = &glAccountID
@@ -146,11 +154,11 @@ func payCodeFromUpdateInput(
 }
 
 func recurringDeductionConnectionToModel(
-	result *pagination.CursorListResult[*driverpay.RecurringDeduction],
+	result *pagination.CursorListResult[*recurringpay.RecurringDeduction],
 ) (*gqlmodel.RecurringDeductionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *driverpay.RecurringDeduction, cursor string) *gqlmodel.RecurringDeductionEdge {
+		func(node *recurringpay.RecurringDeduction, cursor string) *gqlmodel.RecurringDeductionEdge {
 			return &gqlmodel.RecurringDeductionEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.RecurringDeductionEdge) string { return edge.Cursor },
@@ -167,11 +175,11 @@ func recurringDeductionConnectionToModel(
 }
 
 func recurringEarningConnectionToModel(
-	result *pagination.CursorListResult[*driverpay.RecurringEarning],
+	result *pagination.CursorListResult[*recurringpay.RecurringEarning],
 ) (*gqlmodel.RecurringEarningConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *driverpay.RecurringEarning, cursor string) *gqlmodel.RecurringEarningEdge {
+		func(node *recurringpay.RecurringEarning, cursor string) *gqlmodel.RecurringEarningEdge {
 			return &gqlmodel.RecurringEarningEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.RecurringEarningEdge) string { return edge.Cursor },
@@ -188,11 +196,11 @@ func recurringEarningConnectionToModel(
 }
 
 func payAdvanceConnectionToModel(
-	result *pagination.CursorListResult[*driverpay.PayAdvance],
+	result *pagination.CursorListResult[*payadvance.PayAdvance],
 ) (*gqlmodel.PayAdvanceConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *driverpay.PayAdvance, cursor string) *gqlmodel.PayAdvanceEdge {
+		func(node *payadvance.PayAdvance, cursor string) *gqlmodel.PayAdvanceEdge {
 			return &gqlmodel.PayAdvanceEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.PayAdvanceEdge) string { return edge.Cursor },
@@ -209,11 +217,11 @@ func payAdvanceConnectionToModel(
 }
 
 func escrowAccountConnectionToModel(
-	result *pagination.CursorListResult[*driverpay.EscrowAccount],
+	result *pagination.CursorListResult[*payescrow.EscrowAccount],
 ) (*gqlmodel.EscrowAccountConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *driverpay.EscrowAccount, cursor string) *gqlmodel.EscrowAccountEdge {
+		func(node *payescrow.EscrowAccount, cursor string) *gqlmodel.EscrowAccountEdge {
 			return &gqlmodel.EscrowAccountEdge{Node: node, Cursor: cursor}
 		},
 		func(edge *gqlmodel.EscrowAccountEdge) string { return edge.Cursor },
@@ -232,7 +240,7 @@ func escrowAccountConnectionToModel(
 func driverSettlementConnectionToModel(
 	result *pagination.CursorListResult[*driversettlement.Settlement],
 ) (*gqlmodel.DriverSettlementConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *driversettlement.Settlement, cursor string) *gqlmodel.DriverSettlementEdge {
 			return &gqlmodel.DriverSettlementEdge{Node: node, Cursor: cursor}
@@ -253,7 +261,7 @@ func driverSettlementConnectionToModel(
 func settlementBatchConnectionToModel(
 	result *pagination.CursorListResult[*driversettlement.SettlementBatch],
 ) (*gqlmodel.SettlementBatchConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *driversettlement.SettlementBatch, cursor string) *gqlmodel.SettlementBatchEdge {
 			return &gqlmodel.SettlementBatchEdge{Node: node, Cursor: cursor}
@@ -274,7 +282,7 @@ func settlementBatchConnectionToModel(
 func driverPayEventConnectionToModel(
 	result *pagination.CursorListResult[*driversettlement.PayEvent],
 ) (*gqlmodel.DriverPayEventConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *driversettlement.PayEvent, cursor string) *gqlmodel.DriverPayEventEdge {
 			return &gqlmodel.DriverPayEventEdge{Node: node, Cursor: cursor}
@@ -296,7 +304,7 @@ func optionalDecimalFromString(value *string, field string) (decimal.Decimal, er
 	if value == nil || *value == "" {
 		return decimal.Zero, nil
 	}
-	return base.DecimalFromString(*value, field)
+	return gqldecimal.DecimalFromString(*value, field)
 }
 
 func mileageBandsFromInput(
@@ -310,7 +318,7 @@ func mileageBandsFromInput(
 		if input == nil {
 			continue
 		}
-		rate, err := base.DecimalFromString(input.Rate, "bands.rate")
+		rate, err := gqldecimal.DecimalFromString(input.Rate, "bands.rate")
 		if err != nil {
 			return nil, err
 		}
@@ -331,7 +339,7 @@ func payProfileComponentsFromInput(
 		if input == nil {
 			continue
 		}
-		rate, err := base.DecimalFromString(input.Rate, "components.rate")
+		rate, err := gqldecimal.DecimalFromString(input.Rate, "components.rate")
 		if err != nil {
 			return nil, err
 		}
@@ -342,12 +350,12 @@ func payProfileComponentsFromInput(
 		component := &driverpay.PayProfileComponent{
 			Kind:            input.Kind,
 			Method:          input.Method,
-			Description:     base.StringValue(input.Description),
+			Description:     gqlscalar.StringValue(input.Description),
 			Rate:            rate,
 			Bands:           bands,
-			FreeTimeMinutes: base.IntValue(input.FreeTimeMinutes),
-			MinAmountMinor:  base.Int64Ptr(input.MinAmountMinor),
-			MaxAmountMinor:  base.Int64Ptr(input.MaxAmountMinor),
+			FreeTimeMinutes: gqlscalar.IntValue(input.FreeTimeMinutes),
+			MinAmountMinor:  gqlscalar.Int64Ptr(input.MinAmountMinor),
+			MaxAmountMinor:  gqlscalar.Int64Ptr(input.MaxAmountMinor),
 			IsActive:        true,
 		}
 		if input.RevenueBasis != nil {
@@ -377,12 +385,12 @@ func payProfileFromCreateInput(
 		OrganizationID:               tenantInfo.OrgID,
 		BusinessUnitID:               tenantInfo.BuID,
 		Name:                         input.Name,
-		Description:                  base.StringValue(input.Description),
+		Description:                  gqlscalar.StringValue(input.Description),
 		Classification:               input.Classification,
 		CurrencyCode:                 money.DefaultCurrencyCode,
-		GuaranteedPeriodMinimumMinor: base.Int64Value(input.GuaranteedPeriodMinimumMinor),
+		GuaranteedPeriodMinimumMinor: gqlscalar.Int64Value(input.GuaranteedPeriodMinimumMinor),
 		PerDiemRatePerMile:           perDiemRate,
-		PerDiemDailyCapMinor:         base.Int64Value(input.PerDiemDailyCapMinor),
+		PerDiemDailyCapMinor:         gqlscalar.Int64Value(input.PerDiemDailyCapMinor),
 		Components:                   components,
 	}
 	if input.Status != nil {
@@ -418,12 +426,12 @@ func payProfileFromUpdateInput(
 		BusinessUnitID:               tenantInfo.BuID,
 		Version:                      int64(input.Version),
 		Name:                         input.Name,
-		Description:                  base.StringValue(input.Description),
+		Description:                  gqlscalar.StringValue(input.Description),
 		Classification:               input.Classification,
 		CurrencyCode:                 money.DefaultCurrencyCode,
-		GuaranteedPeriodMinimumMinor: base.Int64Value(input.GuaranteedPeriodMinimumMinor),
+		GuaranteedPeriodMinimumMinor: gqlscalar.Int64Value(input.GuaranteedPeriodMinimumMinor),
 		PerDiemRatePerMile:           perDiemRate,
-		PerDiemDailyCapMinor:         base.Int64Value(input.PerDiemDailyCapMinor),
+		PerDiemDailyCapMinor:         gqlscalar.Int64Value(input.PerDiemDailyCapMinor),
 		Components:                   components,
 	}
 	if input.Status != nil {
@@ -440,7 +448,7 @@ func payProfileFromUpdateInput(
 func workerPayAssignmentFromInput(
 	input *gqlmodel.AssignPayProfileInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -451,12 +459,12 @@ func workerPayAssignmentFromInput(
 	}
 	splitPercent := decimal.NewFromInt(100)
 	if input.SplitPercent != nil && *input.SplitPercent != "" {
-		splitPercent, err = base.DecimalFromString(*input.SplitPercent, "splitPercent")
+		splitPercent, err = gqldecimal.DecimalFromString(*input.SplitPercent, "splitPercent")
 		if err != nil {
 			return nil, err
 		}
 	}
-	overrides := make([]driverpay.RateOverride, 0, len(input.RateOverrides))
+	overrides := make([]payassignment.RateOverride, 0, len(input.RateOverrides))
 	for _, override := range input.RateOverrides {
 		if override == nil {
 			continue
@@ -469,32 +477,32 @@ func workerPayAssignmentFromInput(
 				"Invalid override component",
 			)
 		}
-		rate, rateErr := base.DecimalFromString(override.Rate, "rateOverrides.rate")
+		rate, rateErr := gqldecimal.DecimalFromString(override.Rate, "rateOverrides.rate")
 		if rateErr != nil {
 			return nil, rateErr
 		}
-		overrides = append(overrides, driverpay.RateOverride{
+		overrides = append(overrides, payassignment.RateOverride{
 			ComponentID: componentID,
 			Rate:        rate,
 		})
 	}
-	return &driverpay.WorkerPayAssignment{
+	return &payassignment.WorkerPayAssignment{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       workerID,
 		PayProfileID:   profileID,
 		EffectiveFrom:  int64(input.EffectiveFrom),
-		EffectiveTo:    base.Int64Ptr(input.EffectiveTo),
+		EffectiveTo:    gqlscalar.Int64Ptr(input.EffectiveTo),
 		SplitPercent:   splitPercent,
 		RateOverrides:  overrides,
-		Notes:          base.StringValue(input.Notes),
+		Notes:          gqlscalar.StringValue(input.Notes),
 	}, nil
 }
 
 func recurringDeductionFromCreateInput(
 	input *gqlmodel.CreateRecurringDeductionInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -503,22 +511,22 @@ func recurringDeductionFromCreateInput(
 	if err != nil {
 		return nil, err
 	}
-	escrowAccountID, err := base.OptionalID(input.EscrowAccountID)
+	escrowAccountID, err := gqlid.OptionalID(input.EscrowAccountID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.RecurringDeduction{
+	entity := &recurringpay.RecurringDeduction{
 		OrganizationID:      tenantInfo.OrgID,
 		BusinessUnitID:      tenantInfo.BuID,
 		WorkerID:            workerID,
 		PayCodeID:           payCodeID,
-		Status:              driverpay.DeductionStatusActive,
-		Frequency:           driverpay.DeductionFrequencyEverySettlement,
+		Status:              recurringpay.DeductionStatusActive,
+		Frequency:           recurringpay.DeductionFrequencyEverySettlement,
 		Description:         input.Description,
 		AmountMinor:         int64(input.AmountMinor),
-		TotalCapMinor:       base.Int64Ptr(input.TotalCapMinor),
+		TotalCapMinor:       gqlscalar.Int64Ptr(input.TotalCapMinor),
 		StartDate:           int64(input.StartDate),
-		EndDate:             base.Int64Ptr(input.EndDate),
+		EndDate:             gqlscalar.Int64Ptr(input.EndDate),
 		CurrencyCode:        money.DefaultCurrencyCode,
 		DeductedToDateMinor: 0,
 	}
@@ -537,7 +545,7 @@ func recurringDeductionFromCreateInput(
 func recurringDeductionFromUpdateInput(
 	input *gqlmodel.UpdateRecurringDeductionInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.RecurringDeduction, error) {
+) (*recurringpay.RecurringDeduction, error) {
 	deductionID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, err
@@ -550,11 +558,11 @@ func recurringDeductionFromUpdateInput(
 	if err != nil {
 		return nil, err
 	}
-	escrowAccountID, err := base.OptionalID(input.EscrowAccountID)
+	escrowAccountID, err := gqlid.OptionalID(input.EscrowAccountID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.RecurringDeduction{
+	entity := &recurringpay.RecurringDeduction{
 		ID:             deductionID,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -565,9 +573,9 @@ func recurringDeductionFromUpdateInput(
 		Frequency:      input.Frequency,
 		Description:    input.Description,
 		AmountMinor:    int64(input.AmountMinor),
-		TotalCapMinor:  base.Int64Ptr(input.TotalCapMinor),
+		TotalCapMinor:  gqlscalar.Int64Ptr(input.TotalCapMinor),
 		StartDate:      int64(input.StartDate),
-		EndDate:        base.Int64Ptr(input.EndDate),
+		EndDate:        gqlscalar.Int64Ptr(input.EndDate),
 		CurrencyCode:   money.DefaultCurrencyCode,
 	}
 	if !escrowAccountID.IsNil() {
@@ -582,7 +590,7 @@ func recurringDeductionFromUpdateInput(
 func recurringEarningFromCreateInput(
 	input *gqlmodel.CreateRecurringEarningInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -591,18 +599,18 @@ func recurringEarningFromCreateInput(
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.RecurringEarning{
+	entity := &recurringpay.RecurringEarning{
 		OrganizationID:  tenantInfo.OrgID,
 		BusinessUnitID:  tenantInfo.BuID,
 		WorkerID:        workerID,
 		PayCodeID:       payCodeID,
-		Status:          driverpay.EarningStatusActive,
-		Frequency:       driverpay.EarningFrequencyEverySettlement,
+		Status:          recurringpay.EarningStatusActive,
+		Frequency:       recurringpay.EarningFrequencyEverySettlement,
 		Description:     input.Description,
 		AmountMinor:     int64(input.AmountMinor),
-		TotalCapMinor:   base.Int64Ptr(input.TotalCapMinor),
+		TotalCapMinor:   gqlscalar.Int64Ptr(input.TotalCapMinor),
 		StartDate:       int64(input.StartDate),
-		EndDate:         base.Int64Ptr(input.EndDate),
+		EndDate:         gqlscalar.Int64Ptr(input.EndDate),
 		CurrencyCode:    money.DefaultCurrencyCode,
 		PaidToDateMinor: 0,
 	}
@@ -618,7 +626,7 @@ func recurringEarningFromCreateInput(
 func recurringEarningFromUpdateInput(
 	input *gqlmodel.UpdateRecurringEarningInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.RecurringEarning, error) {
+) (*recurringpay.RecurringEarning, error) {
 	earningID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, err
@@ -631,7 +639,7 @@ func recurringEarningFromUpdateInput(
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.RecurringEarning{
+	entity := &recurringpay.RecurringEarning{
 		ID:             earningID,
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
@@ -642,9 +650,9 @@ func recurringEarningFromUpdateInput(
 		Frequency:      input.Frequency,
 		Description:    input.Description,
 		AmountMinor:    int64(input.AmountMinor),
-		TotalCapMinor:  base.Int64Ptr(input.TotalCapMinor),
+		TotalCapMinor:  gqlscalar.Int64Ptr(input.TotalCapMinor),
 		StartDate:      int64(input.StartDate),
-		EndDate:        base.Int64Ptr(input.EndDate),
+		EndDate:        gqlscalar.Int64Ptr(input.EndDate),
 		CurrencyCode:   money.DefaultCurrencyCode,
 	}
 	if input.CurrencyCode != nil && *input.CurrencyCode != "" {
@@ -656,20 +664,20 @@ func recurringEarningFromUpdateInput(
 func payAdvanceFromIssueInput(
 	input *gqlmodel.IssuePayAdvanceInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.PayAdvance, error) {
+) (*payadvance.PayAdvance, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.PayAdvance{
+	entity := &payadvance.PayAdvance{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		WorkerID:       workerID,
 		Source:         input.Source,
-		Reference:      base.StringValue(input.Reference),
+		Reference:      gqlscalar.StringValue(input.Reference),
 		IssuedDate:     int64(input.IssuedDate),
 		AmountMinor:    int64(input.AmountMinor),
-		Notes:          base.StringValue(input.Notes),
+		Notes:          gqlscalar.StringValue(input.Notes),
 		CurrencyCode:   money.DefaultCurrencyCode,
 	}
 	if input.CurrencyCode != nil && *input.CurrencyCode != "" {
@@ -681,7 +689,7 @@ func payAdvanceFromIssueInput(
 func escrowAccountFromOpenInput(
 	input *gqlmodel.OpenEscrowAccountInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	workerID, err := pulid.MustParse(input.WorkerID)
 	if err != nil {
 		return nil, err
@@ -690,13 +698,13 @@ func escrowAccountFromOpenInput(
 	if err != nil {
 		return nil, err
 	}
-	entity := &driverpay.EscrowAccount{
+	entity := &payescrow.EscrowAccount{
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
 		WorkerID:           workerID,
 		TargetAmountMinor:  int64(input.TargetAmountMinor),
 		AnnualInterestRate: interestRate,
-		OpenedDate:         base.Int64Value(input.OpenedDate),
+		OpenedDate:         gqlscalar.Int64Value(input.OpenedDate),
 		CurrencyCode:       money.DefaultCurrencyCode,
 	}
 	if input.CurrencyCode != nil && *input.CurrencyCode != "" {
@@ -708,7 +716,7 @@ func escrowAccountFromOpenInput(
 func escrowAccountFromUpdateInput(
 	input *gqlmodel.UpdateEscrowAccountInput,
 	tenantInfo pagination.TenantInfo,
-) (*driverpay.EscrowAccount, error) {
+) (*payescrow.EscrowAccount, error) {
 	accountID, err := pulid.MustParse(input.ID)
 	if err != nil {
 		return nil, err
@@ -717,11 +725,14 @@ func escrowAccountFromUpdateInput(
 	if err != nil {
 		return nil, err
 	}
-	interestRate, err := base.DecimalFromString(input.AnnualInterestRate, "annualInterestRate")
+	interestRate, err := gqldecimal.DecimalFromString(
+		input.AnnualInterestRate,
+		"annualInterestRate",
+	)
 	if err != nil {
 		return nil, err
 	}
-	return &driverpay.EscrowAccount{
+	return &payescrow.EscrowAccount{
 		ID:                 accountID,
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
@@ -753,22 +764,22 @@ func parsePayEventIDs(rawIDs []string) ([]pulid.ID, error) {
 func settlementControlFromUpdateInput(
 	input *gqlmodel.UpdateSettlementControlInput,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.SettlementControl, error) {
-	varianceThreshold, err := base.DecimalFromString(
+) (*settlementcontrol.SettlementControl, error) {
+	varianceThreshold, err := gqldecimal.DecimalFromString(
 		input.VarianceThresholdPct,
 		"varianceThresholdPct",
 	)
 	if err != nil {
 		return nil, err
 	}
-	escrowInterestRate, err := base.DecimalFromString(
+	escrowInterestRate, err := gqldecimal.DecimalFromString(
 		input.DefaultEscrowInterestRate,
 		"defaultEscrowInterestRate",
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &tenant.SettlementControl{
+	return &settlementcontrol.SettlementControl{
 		OrganizationID:                tenantInfo.OrgID,
 		BusinessUnitID:                tenantInfo.BuID,
 		Version:                       int64(input.Version),

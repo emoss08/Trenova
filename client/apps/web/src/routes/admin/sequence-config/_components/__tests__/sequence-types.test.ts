@@ -4,9 +4,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { defaultConfigForType, sidebarGroups } from "../sequence-config-constants";
 
-const TENANT_DOMAIN = resolve(
+const SEQUENCE_CONFIG_DOMAIN = resolve(
   __dirname,
-  "../../../../../../../../../services/tms/internal/modules/identity/domain/tenant",
+  "../../../../../../../../../services/tms/internal/modules/identity/domain/sequenceconfig",
 );
 
 /**
@@ -15,7 +15,7 @@ const TENANT_DOMAIN = resolve(
  * constant its wire value.
  */
 function serverRequiredSequenceTypes(): string[] {
-  const enums = readFileSync(resolve(TENANT_DOMAIN, "enums.go"), "utf8");
+  const enums = readFileSync(resolve(SEQUENCE_CONFIG_DOMAIN, "enums.go"), "utf8");
   const wireValues = new Map(
     Array.from(enums.matchAll(/(SequenceType\w+)\s*=\s*SequenceType\("([a-z_]+)"\)/g), (m) => [
       m[1],
@@ -23,7 +23,7 @@ function serverRequiredSequenceTypes(): string[] {
     ]),
   );
 
-  const catalog = readFileSync(resolve(TENANT_DOMAIN, "sequencecatalog.go"), "utf8");
+  const catalog = readFileSync(resolve(SEQUENCE_CONFIG_DOMAIN, "sequencecatalog.go"), "utf8");
   const block = /var requiredSequenceTypes = \[\]SequenceType\{([^}]*)\}/.exec(catalog)?.[1];
   if (!block) {
     throw new Error("requiredSequenceTypes not found in sequencecatalog.go");

@@ -5,11 +5,20 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -35,7 +44,9 @@ func detentionJSONMap(v any) map[string]any {
 	return result
 }
 
-func detentionTierToModel(entity *detention.DetentionPolicyTier) *gqlmodel.DetentionPolicyTier {
+func detentionTierToModel(
+	entity *detentionpolicy.DetentionPolicyTier,
+) *gqlmodel.DetentionPolicyTier {
 	if entity == nil {
 		return nil
 	}
@@ -61,7 +72,7 @@ func detentionTierToModel(entity *detention.DetentionPolicyTier) *gqlmodel.Deten
 	return model
 }
 
-func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.DetentionPolicy {
+func detentionPolicyToModel(entity *detentionpolicy.DetentionPolicy) *gqlmodel.DetentionPolicy {
 	if entity == nil {
 		return nil
 	}
@@ -77,12 +88,12 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 		IsOrgDefault:                entity.IsOrgDefault,
 		Priority:                    int(entity.Priority),
 		SpecificityScore:            int(entity.SpecificityScore),
-		ShipmentTypeIds:             base.PulidsToStrings(entity.ShipmentTypeIDs),
-		ServiceTypeIds:              base.PulidsToStrings(entity.ServiceTypeIDs),
-		CommodityIds:                base.PulidsToStrings(entity.CommodityIDs),
+		ShipmentTypeIds:             gqlid.PulidsToStrings(entity.ShipmentTypeIDs),
+		ServiceTypeIds:              gqlid.PulidsToStrings(entity.ServiceTypeIDs),
+		CommodityIds:                gqlid.PulidsToStrings(entity.CommodityIDs),
 		AppointmentStopsOnly:        entity.AppointmentStopsOnly,
-		EffectiveStartDate:          base.Int64PtrToIntPtr(entity.EffectiveStartDate),
-		EffectiveEndDate:            base.Int64PtrToIntPtr(entity.EffectiveEndDate),
+		EffectiveStartDate:          gqlscalar.Int64PtrToIntPtr(entity.EffectiveStartDate),
+		EffectiveEndDate:            gqlscalar.Int64PtrToIntPtr(entity.EffectiveEndDate),
 		ClockStartBasis:             entity.ClockStartBasis,
 		LateArrivalRule:             entity.LateArrivalRule,
 		LateArrivalGraceMinutes:     int(entity.LateArrivalGraceMinutes),
@@ -96,12 +107,12 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 		RateSource:                  entity.RateSource,
 		AccessorialChargeID:         entity.AccessorialChargeID.String(),
 		MaxBillableMinutesPerStop:   int32PtrToIntPtr(entity.MaxBillableMinutesPerStop),
-		MaxChargePerStop:            base.NullDecimalToStringPtr(entity.MaxChargePerStop),
-		MaxChargePerDay:             base.NullDecimalToStringPtr(entity.MaxChargePerDay),
-		MaxChargePerShipment:        base.NullDecimalToStringPtr(entity.MaxChargePerShipment),
+		MaxChargePerStop:            gqldecimal.NullDecimalToStringPtr(entity.MaxChargePerStop),
+		MaxChargePerDay:             gqldecimal.NullDecimalToStringPtr(entity.MaxChargePerDay),
+		MaxChargePerShipment:        gqldecimal.NullDecimalToStringPtr(entity.MaxChargePerShipment),
 		DayBoundaryMode:             entity.DayBoundaryMode,
 		ConvertToLayoverAtMinutes:   int32PtrToIntPtr(entity.ConvertToLayoverAtMinutes),
-		LayoverAccessorialChargeID:  base.IDPtrFromPulidPtr(entity.LayoverAccessorialChargeID),
+		LayoverAccessorialChargeID:  gqlid.IDPtrFromPulidPtr(entity.LayoverAccessorialChargeID),
 		NotificationRequirement:     entity.NotificationRequirement,
 		NotificationLeadMinutes:     int(entity.NotificationLeadMinutes),
 		NotificationDeadlineMinutes: int(entity.NotificationDeadlineMinutes),
@@ -109,15 +120,19 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 		AutoSendNotice:              entity.AutoSendNotice,
 		AttachNoticePDF:             entity.AttachNoticePDF,
 		SendDepartureSummary:        entity.SendDepartureSummary,
-		RequireApprovalOverAmount:   base.NullDecimalToStringPtr(entity.RequireApprovalOverAmount),
-		AutoApproveUnderAmount:      base.NullDecimalToStringPtr(entity.AutoApproveUnderAmount),
-		Currency:                    entity.Currency,
-		Comments:                    entity.Comments,
-		Version:                     int(entity.Version),
-		CreatedAt:                   int(entity.CreatedAt),
-		UpdatedAt:                   int(entity.UpdatedAt),
-		CustomerID:                  base.IDPtrFromPulidPtr(entity.CustomerID),
-		LocationID:                  base.IDPtrFromPulidPtr(entity.LocationID),
+		RequireApprovalOverAmount: gqldecimal.NullDecimalToStringPtr(
+			entity.RequireApprovalOverAmount,
+		),
+		AutoApproveUnderAmount: gqldecimal.NullDecimalToStringPtr(
+			entity.AutoApproveUnderAmount,
+		),
+		Currency:   entity.Currency,
+		Comments:   entity.Comments,
+		Version:    int(entity.Version),
+		CreatedAt:  int(entity.CreatedAt),
+		UpdatedAt:  int(entity.UpdatedAt),
+		CustomerID: gqlid.IDPtrFromPulidPtr(entity.CustomerID),
+		LocationID: gqlid.IDPtrFromPulidPtr(entity.LocationID),
 	}
 
 	// Both lists are emitted as empty rather than nil: a policy with no rate
@@ -140,11 +155,11 @@ func detentionPolicyToModel(entity *detention.DetentionPolicy) *gqlmodel.Detenti
 }
 
 func detentionPolicyConnectionToModel(
-	result *pagination.CursorListResult[*detention.DetentionPolicy],
+	result *pagination.CursorListResult[*detentionpolicy.DetentionPolicy],
 ) (*gqlmodel.DetentionPolicyConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
-		func(node *detention.DetentionPolicy, cursor string) *gqlmodel.DetentionPolicyEdge {
+		func(node *detentionpolicy.DetentionPolicy, cursor string) *gqlmodel.DetentionPolicyEdge {
 			return &gqlmodel.DetentionPolicyEdge{
 				Node:   detentionPolicyToModel(node),
 				Cursor: cursor,
@@ -168,30 +183,30 @@ func detentionPolicyFromInput(
 	input *gqlmodel.DetentionPolicyInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*detention.DetentionPolicy, error) {
+) (*detentionpolicy.DetentionPolicy, error) {
 	accessorialChargeID, err := pulid.MustParse(input.AccessorialChargeID)
 	if err != nil {
 		return nil, invalidDetentionField("accessorialChargeId")
 	}
 
-	entity := &detention.DetentionPolicy{
+	entity := &detentionpolicy.DetentionPolicy{
 		ID:                      id,
 		OrganizationID:          tenantInfo.OrgID,
 		BusinessUnitID:          tenantInfo.BuID,
 		Name:                    input.Name,
 		Code:                    input.Code,
-		Status:                  detention.PolicyStatusDraft,
-		ClockStartBasis:         detention.ClockStartBasisLaterOfArrivalOrAppointment,
-		LateArrivalRule:         detention.LateArrivalRuleNoEffect,
+		Status:                  detentionpolicy.PolicyStatusDraft,
+		ClockStartBasis:         detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment,
+		LateArrivalRule:         detentionpolicy.LateArrivalRuleNoEffect,
 		BillingFreeMinutes:      120,
 		BillingIncrementMinutes: 15,
-		RoundingMode:            detention.RoundingModeUp,
-		RateSource:              detention.RateSourceAccessorial,
+		RoundingMode:            detentionpolicy.RoundingModeUp,
+		RateSource:              detentionpolicy.RateSourceAccessorial,
 		AccessorialChargeID:     accessorialChargeID,
-		DayBoundaryMode:         detention.CapScopePerStop,
-		NotificationRequirement: detention.NotificationRequirementNone,
+		DayBoundaryMode:         detentionpolicy.CapScopePerStop,
+		NotificationRequirement: detentionpolicy.NotificationRequirementNone,
 		NotificationLeadMinutes: 30,
-		UnnotifiedBehavior:      detention.UnnotifiedBehaviorBill,
+		UnnotifiedBehavior:      detentionpolicy.UnnotifiedBehaviorBill,
 		Currency:                "USD",
 	}
 
@@ -218,26 +233,26 @@ func detentionPolicyFromInput(
 	); err != nil {
 		return nil, err
 	}
-	if entity.ShipmentTypeIDs, err = base.PulidsFromStrings(
+	if entity.ShipmentTypeIDs, err = gqlid.PulidsFromStrings(
 		input.ShipmentTypeIds, "shipmentTypeIds",
 	); err != nil {
 		return nil, err
 	}
-	if entity.ServiceTypeIDs, err = base.PulidsFromStrings(
+	if entity.ServiceTypeIDs, err = gqlid.PulidsFromStrings(
 		input.ServiceTypeIds, "serviceTypeIds",
 	); err != nil {
 		return nil, err
 	}
-	if entity.CommodityIDs, err = base.PulidsFromStrings(
+	if entity.CommodityIDs, err = gqlid.PulidsFromStrings(
 		input.CommodityIds, "commodityIds",
 	); err != nil {
 		return nil, err
 	}
 
 	if len(input.StopTypes) > 0 {
-		entity.StopTypes = make([]shipment.StopType, 0, len(input.StopTypes))
+		entity.StopTypes = make([]shipmentvocab.StopType, 0, len(input.StopTypes))
 		for _, stopType := range input.StopTypes {
-			entity.StopTypes = append(entity.StopTypes, shipment.StopType(stopType))
+			entity.StopTypes = append(entity.StopTypes, shipmentvocab.StopType(stopType))
 		}
 	}
 
@@ -280,17 +295,17 @@ func detentionPolicyFromInput(
 	}
 
 	entity.MaxBillableMinutesPerStop = intPtrToInt32Ptr(input.MaxBillableMinutesPerStop)
-	if entity.MaxChargePerStop, err = base.NullDecimalFromStringPtr(
+	if entity.MaxChargePerStop, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MaxChargePerStop, "maxChargePerStop",
 	); err != nil {
 		return nil, err
 	}
-	if entity.MaxChargePerDay, err = base.NullDecimalFromStringPtr(
+	if entity.MaxChargePerDay, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MaxChargePerDay, "maxChargePerDay",
 	); err != nil {
 		return nil, err
 	}
-	if entity.MaxChargePerShipment, err = base.NullDecimalFromStringPtr(
+	if entity.MaxChargePerShipment, err = gqldecimal.NullDecimalFromStringPtr(
 		input.MaxChargePerShipment, "maxChargePerShipment",
 	); err != nil {
 		return nil, err
@@ -328,12 +343,12 @@ func detentionPolicyFromInput(
 	if input.SendDepartureSummary != nil {
 		entity.SendDepartureSummary = *input.SendDepartureSummary
 	}
-	if entity.RequireApprovalOverAmount, err = base.NullDecimalFromStringPtr(
+	if entity.RequireApprovalOverAmount, err = gqldecimal.NullDecimalFromStringPtr(
 		input.RequireApprovalOverAmount, "requireApprovalOverAmount",
 	); err != nil {
 		return nil, err
 	}
-	if entity.AutoApproveUnderAmount, err = base.NullDecimalFromStringPtr(
+	if entity.AutoApproveUnderAmount, err = gqldecimal.NullDecimalFromStringPtr(
 		input.AutoApproveUnderAmount, "autoApproveUnderAmount",
 	); err != nil {
 		return nil, err
@@ -354,29 +369,29 @@ func detentionPolicyFromInput(
 func detentionTiersFromInput(
 	inputs []*gqlmodel.DetentionTierInput,
 	tenantInfo pagination.TenantInfo,
-) ([]*detention.DetentionPolicyTier, error) {
+) ([]*detentionpolicy.DetentionPolicyTier, error) {
 	if len(inputs) == 0 {
 		return nil, nil
 	}
 
-	tiers := make([]*detention.DetentionPolicyTier, 0, len(inputs))
+	tiers := make([]*detentionpolicy.DetentionPolicyTier, 0, len(inputs))
 	for index, input := range inputs {
 		if input == nil {
 			continue
 		}
 
-		rate, err := base.DecimalFromString(input.Rate, "tiers")
+		rate, err := gqldecimal.DecimalFromString(input.Rate, "tiers")
 		if err != nil {
 			return nil, err
 		}
 
-		tier := &detention.DetentionPolicyTier{
+		tier := &detentionpolicy.DetentionPolicyTier{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			FromMinute:     intutils.SafeToInt32(input.FromMinute),
 			ToMinute:       intPtrToInt32Ptr(input.ToMinute),
 			Rate:           rate,
-			RateUnit:       detention.TierRateUnitHour,
+			RateUnit:       detentionpolicy.TierRateUnitHour,
 			SortOrder:      int32(index),
 		}
 
@@ -412,20 +427,20 @@ func detentionOccurrenceToModel(
 		StopID:              entity.StopID.String(),
 		CustomerID:          entity.CustomerID.String(),
 		LocationID:          entity.LocationID.String(),
-		DetentionPolicyID:   base.IDPtrFromPulidPtr(entity.DetentionPolicyID),
+		DetentionPolicyID:   gqlid.IDPtrFromPulidPtr(entity.DetentionPolicyID),
 		PolicySnapshot:      detentionJSONMap(entity.PolicySnapshot),
 		CalculationTrace:    detentionJSONMap(entity.CalculationTrace),
 		StopType:            string(entity.StopType),
 		ScheduleType:        string(entity.ScheduleType),
-		AppointmentStart:    base.Int64PtrToIntPtr(entity.AppointmentStart),
-		AppointmentEnd:      base.Int64PtrToIntPtr(entity.AppointmentEnd),
-		ArrivedAt:           base.Int64PtrToIntPtr(entity.ArrivedAt),
-		DepartedAt:          base.Int64PtrToIntPtr(entity.DepartedAt),
+		AppointmentStart:    gqlscalar.Int64PtrToIntPtr(entity.AppointmentStart),
+		AppointmentEnd:      gqlscalar.Int64PtrToIntPtr(entity.AppointmentEnd),
+		ArrivedAt:           gqlscalar.Int64PtrToIntPtr(entity.ArrivedAt),
+		DepartedAt:          gqlscalar.Int64PtrToIntPtr(entity.DepartedAt),
 		ClockStartAt:        int(entity.ClockStartAt),
-		ClockStopAt:         base.Int64PtrToIntPtr(entity.ClockStopAt),
+		ClockStopAt:         gqlscalar.Int64PtrToIntPtr(entity.ClockStopAt),
 		FreeTimeExpiresAt:   int(entity.FreeTimeExpiresAt),
-		NoticeDueAt:         base.Int64PtrToIntPtr(entity.NoticeDueAt),
-		NoticeDeadlineAt:    base.Int64PtrToIntPtr(entity.NoticeDeadlineAt),
+		NoticeDueAt:         gqlscalar.Int64PtrToIntPtr(entity.NoticeDueAt),
+		NoticeDeadlineAt:    gqlscalar.Int64PtrToIntPtr(entity.NoticeDeadlineAt),
 		IsOpen:              entity.IsOpen,
 		ArrivedLate:         entity.ArrivedLate,
 		LateByMinutes:       int(entity.LateByMinutes),
@@ -437,28 +452,28 @@ func detentionOccurrenceToModel(
 		GrossAmount:         entity.GrossAmount.String(),
 		BillableAmount:      entity.BillableAmount.String(),
 		DriverPayMinutes:    int(entity.DriverPayMinutes),
-		DriverPayAmount:     base.NullDecimalStringPtr(entity.DriverPayAmount),
-		NetMargin:           base.NullDecimalStringPtr(entity.NetMargin),
+		DriverPayAmount:     gqldecimal.NullDecimalStringPtr(entity.DriverPayAmount),
+		NetMargin:           gqldecimal.NullDecimalStringPtr(entity.NetMargin),
 		CapApplied:          entity.CapApplied,
 		ConvertedToLayover:  entity.ConvertedToLayover,
 		Currency:            entity.Currency,
 		Status:              entity.Status,
 		NotificationStatus:  entity.NotificationStatus,
-		NoticeSentAt:        base.Int64PtrToIntPtr(entity.NoticeSentAt),
+		NoticeSentAt:        gqlscalar.Int64PtrToIntPtr(entity.NoticeSentAt),
 		SuppressedByGate:    entity.SuppressedByGate,
 		RequiresApproval:    entity.RequiresApproval,
-		ApprovedByID:        base.IDPtrFromPulidPtr(entity.ApprovedByID),
-		ApprovedAt:          base.Int64PtrToIntPtr(entity.ApprovedAt),
+		ApprovedByID:        gqlid.IDPtrFromPulidPtr(entity.ApprovedByID),
+		ApprovedAt:          gqlscalar.Int64PtrToIntPtr(entity.ApprovedAt),
 		WaiverReason:        entity.WaiverReason,
 		WaiverNote:          entity.WaiverNote,
-		WaivedAt:            base.Int64PtrToIntPtr(entity.WaivedAt),
-		WaivedByID:          base.IDPtrFromPulidPtr(entity.WaivedByID),
+		WaivedAt:            gqlscalar.Int64PtrToIntPtr(entity.WaivedAt),
+		WaivedByID:          gqlid.IDPtrFromPulidPtr(entity.WaivedByID),
 		WaivedAmount:        entity.WaivedAmount.String(),
 		DisputeNote:         entity.DisputeNote,
-		DisputedAt:          base.Int64PtrToIntPtr(entity.DisputedAt),
+		DisputedAt:          gqlscalar.Int64PtrToIntPtr(entity.DisputedAt),
 		CollectabilityScore: int(entity.CollectabilityScore),
 		EvidenceHead:        entity.EvidenceHead,
-		AdditionalChargeID:  base.IDPtrFromPulidPtr(entity.AdditionalChargeID),
+		AdditionalChargeID:  gqlid.IDPtrFromPulidPtr(entity.AdditionalChargeID),
 		LocationName:        entity.LocationName,
 		CustomerName:        entity.CustomerName,
 		ShipmentProNumber:   entity.ShipmentProNumber,
@@ -482,7 +497,7 @@ func detentionOccurrencesToModel(
 }
 
 func detentionEvidenceToModel(
-	entity *detention.DetentionEvidence,
+	entity *detentionevidence.DetentionEvidence,
 ) *gqlmodel.DetentionEvidence {
 	if entity == nil {
 		return nil
@@ -497,8 +512,8 @@ func detentionEvidenceToModel(
 		Summary:               entity.Summary,
 		ObservedAt:            int(entity.ObservedAt),
 		RecordedAt:            int(entity.RecordedAt),
-		RecordedByID:          base.IDPtrFromPulidPtr(entity.RecordedByID),
-		DocumentID:            base.IDPtrFromPulidPtr(entity.DocumentID),
+		RecordedByID:          gqlid.IDPtrFromPulidPtr(entity.RecordedByID),
+		DocumentID:            gqlid.IDPtrFromPulidPtr(entity.DocumentID),
 		Payload:               entity.Payload,
 		PrevHash:              entity.PrevHash,
 		Hash:                  entity.Hash,
@@ -507,7 +522,7 @@ func detentionEvidenceToModel(
 }
 
 func detentionEvidenceListToModel(
-	entities []*detention.DetentionEvidence,
+	entities []*detentionevidence.DetentionEvidence,
 ) []*gqlmodel.DetentionEvidence {
 	result := make([]*gqlmodel.DetentionEvidence, 0, len(entities))
 	for _, entity := range entities {
@@ -519,7 +534,7 @@ func detentionEvidenceListToModel(
 	return result
 }
 
-func detentionNoticeToModel(entity *detention.DetentionNotice) *gqlmodel.DetentionNotice {
+func detentionNoticeToModel(entity *detentionnotice.DetentionNotice) *gqlmodel.DetentionNotice {
 	if entity == nil {
 		return nil
 	}
@@ -535,23 +550,23 @@ func detentionNoticeToModel(entity *detention.DetentionNotice) *gqlmodel.Detenti
 		Subject:               entity.Subject,
 		Body:                  entity.Body,
 		ScheduledFor:          int(entity.ScheduledFor),
-		SentAt:                base.Int64PtrToIntPtr(entity.SentAt),
-		DeliveredAt:           base.Int64PtrToIntPtr(entity.DeliveredAt),
-		OpenedAt:              base.Int64PtrToIntPtr(entity.OpenedAt),
-		FailedAt:              base.Int64PtrToIntPtr(entity.FailedAt),
+		SentAt:                gqlscalar.Int64PtrToIntPtr(entity.SentAt),
+		DeliveredAt:           gqlscalar.Int64PtrToIntPtr(entity.DeliveredAt),
+		OpenedAt:              gqlscalar.Int64PtrToIntPtr(entity.OpenedAt),
+		FailedAt:              gqlscalar.Int64PtrToIntPtr(entity.FailedAt),
 		FailureReason:         entity.FailureReason,
-		SentByID:              base.IDPtrFromPulidPtr(entity.SentByID),
+		SentByID:              gqlid.IDPtrFromPulidPtr(entity.SentByID),
 		WasAutomatic:          entity.WasAutomatic,
 		SatisfiesRequirement:  entity.SatisfiesRequirement,
 		QuotedFreeMinutes:     int(entity.QuotedFreeMinutes),
-		QuotedRate:            base.NullDecimalToStringPtr(entity.QuotedRate),
-		QuotedAmount:          base.NullDecimalToStringPtr(entity.QuotedAmount),
+		QuotedRate:            gqldecimal.NullDecimalToStringPtr(entity.QuotedRate),
+		QuotedAmount:          gqldecimal.NullDecimalToStringPtr(entity.QuotedAmount),
 		CreatedAt:             int(entity.CreatedAt),
 	}
 }
 
 func detentionNoticesToModel(
-	entities []*detention.DetentionNotice,
+	entities []*detentionnotice.DetentionNotice,
 ) []*gqlmodel.DetentionNotice {
 	result := make([]*gqlmodel.DetentionNotice, 0, len(entities))
 	for _, entity := range entities {
@@ -564,7 +579,7 @@ func detentionNoticesToModel(
 }
 
 func detentionCollectabilityToModel(
-	assessment detention.CollectabilityAssessment,
+	assessment detentioncollectability.CollectabilityAssessment,
 ) *gqlmodel.DetentionCollectability {
 	factors := make([]*gqlmodel.DetentionScoreFactor, 0, len(assessment.Factors))
 	for _, factor := range assessment.Factors {
@@ -588,7 +603,7 @@ func detentionCollectabilityToModel(
 }
 
 func detentionDeskEntryToModel(
-	entry *detentionservice.DeskEntry,
+	entry *detentionreview.DeskEntry,
 ) *gqlmodel.DetentionDeskEntry {
 	if entry == nil {
 		return nil
@@ -612,7 +627,7 @@ func detentionDeskEntryToModel(
 }
 
 func detentionOccurrenceDetailToModel(
-	detail *detentionservice.OccurrenceDetail,
+	detail *detentionreview.OccurrenceDetail,
 ) *gqlmodel.DetentionOccurrenceDetail {
 	if detail == nil {
 		return nil
@@ -628,7 +643,7 @@ func detentionOccurrenceDetailToModel(
 	}
 }
 
-func detentionClockPriceToModel(price *detentionservice.ClockPrice) *gqlmodel.DetentionClockPrice {
+func detentionClockPriceToModel(price *detentionreview.ClockPrice) *gqlmodel.DetentionClockPrice {
 	if price == nil {
 		return nil
 	}
@@ -641,7 +656,7 @@ func detentionClockPriceToModel(price *detentionservice.ClockPrice) *gqlmodel.De
 }
 
 func detentionDisputePacketToModel(
-	packet *detentionservice.DisputePacket,
+	packet *detentionreview.DisputePacket,
 ) *gqlmodel.DetentionDisputePacket {
 	if packet == nil {
 		return nil
@@ -675,8 +690,8 @@ func facilityDetentionStatToModel(
 		MedianDwellMinutes: stat.MedianDwellMinutes,
 		P90DwellMinutes:    stat.P90DwellMinutes,
 		BilledAmount:       stat.BilledAmount.String(),
-		DriverPayAmount:    base.NullDecimalStringPtr(stat.DriverPayAmount),
-		NetMargin:          base.NullDecimalStringPtr(stat.NetMargin),
+		DriverPayAmount:    gqldecimal.NullDecimalStringPtr(stat.DriverPayAmount),
+		NetMargin:          gqldecimal.NullDecimalStringPtr(stat.NetMargin),
 		WaivedAmount:       stat.WaivedAmount.String(),
 		DisputeCount:       stat.DisputeCount,
 		SuppressedCount:    stat.SuppressedCount,
@@ -696,8 +711,8 @@ func customerDetentionStatToModel(
 		StopCount:       stat.StopCount,
 		BreachCount:     stat.BreachCount,
 		BilledAmount:    stat.BilledAmount.String(),
-		DriverPayAmount: base.NullDecimalStringPtr(stat.DriverPayAmount),
-		NetMargin:       base.NullDecimalStringPtr(stat.NetMargin),
+		DriverPayAmount: gqldecimal.NullDecimalStringPtr(stat.DriverPayAmount),
+		NetMargin:       gqldecimal.NullDecimalStringPtr(stat.NetMargin),
 		WaivedAmount:    stat.WaivedAmount.String(),
 		DisputeCount:    stat.DisputeCount,
 		SuppressedCount: stat.SuppressedCount,
@@ -720,7 +735,7 @@ func detentionWaiverStatToModel(
 }
 
 func detentionBacktestBucketToModel(
-	bucket detentionservice.BacktestBucket,
+	bucket *detentionsimulation.BacktestBucket,
 ) *gqlmodel.DetentionBacktestBucket {
 	return &gqlmodel.DetentionBacktestBucket{
 		Key:             bucket.Key,
@@ -730,26 +745,26 @@ func detentionBacktestBucketToModel(
 		ProposedAmount:  bucket.ProposedAmount.String(),
 		BaselineAmount:  bucket.BaselineAmount.String(),
 		Delta:           bucket.Delta.String(),
-		DriverPayAmount: base.NullDecimalStringPtr(bucket.DriverPayAmount),
-		NetMargin:       base.NullDecimalStringPtr(bucket.NetMargin),
+		DriverPayAmount: gqldecimal.NullDecimalStringPtr(bucket.DriverPayAmount),
+		NetMargin:       gqldecimal.NullDecimalStringPtr(bucket.NetMargin),
 	}
 }
 
 func detentionBacktestResultToModel(
-	result *detentionservice.BacktestResult,
+	result *detentionsimulation.BacktestResult,
 ) *gqlmodel.DetentionBacktestResult {
 	if result == nil {
 		return nil
 	}
 
 	byCustomer := make([]*gqlmodel.DetentionBacktestBucket, 0, len(result.ByCustomer))
-	for _, bucket := range result.ByCustomer {
-		byCustomer = append(byCustomer, detentionBacktestBucketToModel(bucket))
+	for i := range result.ByCustomer {
+		byCustomer = append(byCustomer, detentionBacktestBucketToModel(&result.ByCustomer[i]))
 	}
 
 	byFacility := make([]*gqlmodel.DetentionBacktestBucket, 0, len(result.ByFacility))
-	for _, bucket := range result.ByFacility {
-		byFacility = append(byFacility, detentionBacktestBucketToModel(bucket))
+	for i := range result.ByFacility {
+		byFacility = append(byFacility, detentionBacktestBucketToModel(&result.ByFacility[i]))
 	}
 
 	return &gqlmodel.DetentionBacktestResult{
@@ -761,8 +776,8 @@ func detentionBacktestResultToModel(
 		ProposedRevenue:     result.ProposedRevenue.String(),
 		BaselineRevenue:     result.BaselineRevenue.String(),
 		RevenueDelta:        result.RevenueDelta.String(),
-		ProposedDriverPay:   base.NullDecimalStringPtr(result.ProposedDriverPay),
-		ProposedNetMargin:   base.NullDecimalStringPtr(result.ProposedNetMargin),
+		ProposedDriverPay:   gqldecimal.NullDecimalStringPtr(result.ProposedDriverPay),
+		ProposedNetMargin:   gqldecimal.NullDecimalStringPtr(result.ProposedNetMargin),
 		NegativeMarginStops: result.NegativeMarginStops,
 		ByCustomer:          byCustomer,
 		ByFacility:          byFacility,
@@ -773,7 +788,7 @@ func detentionBacktestResultToModel(
 }
 
 func detentionPreviewResultToModel(
-	result *detentionservice.PreviewResult,
+	result *detentionsimulation.PreviewResult,
 ) *gqlmodel.DetentionPreviewResult {
 	if result == nil {
 		return nil
@@ -787,8 +802,8 @@ func detentionPreviewResultToModel(
 		RoundedMinutes:     int(result.RoundedMinutes),
 		BillableAmount:     result.BillableAmount.String(),
 		GrossAmount:        result.GrossAmount.String(),
-		DriverPayAmount:    base.NullDecimalStringPtr(result.DriverPayAmount),
-		NetMargin:          base.NullDecimalStringPtr(result.NetMargin),
+		DriverPayAmount:    gqldecimal.NullDecimalStringPtr(result.DriverPayAmount),
+		NetMargin:          gqldecimal.NullDecimalStringPtr(result.NetMargin),
 		ArrivedLate:        result.ArrivedLate,
 		CapApplied:         result.CapApplied,
 		Status:             result.Status,
@@ -801,14 +816,14 @@ func detentionPreviewResultToModel(
 
 func detentionPreviewScenarioFromInput(
 	input *gqlmodel.DetentionPreviewScenarioInput,
-) detentionservice.PreviewScenario {
-	return detentionservice.PreviewScenario{
+) *detentionsimulation.PreviewScenario {
+	return &detentionsimulation.PreviewScenario{
 		ArrivedAt:        int64(input.ArrivedAt),
 		DepartedAt:       intPtrToInt64Ptr(input.DepartedAt),
 		AppointmentStart: intPtrToInt64Ptr(input.AppointmentStart),
 		AppointmentEnd:   intPtrToInt64Ptr(input.AppointmentEnd),
-		StopType:         shipment.StopType(input.StopType),
-		ScheduleType:     shipment.StopScheduleType(input.ScheduleType),
+		StopType:         shipmentvocab.StopType(input.StopType),
+		ScheduleType:     shipmentvocab.StopScheduleType(input.ScheduleType),
 		NoticeSentAt:     intPtrToInt64Ptr(input.NoticeSentAt),
 		DriverPayRate:    input.DriverPayRate,
 	}
@@ -859,7 +874,7 @@ func detentionStatsRequest(
 	input *gqlmodel.DetentionStatsInput,
 	tenantInfo pagination.TenantInfo,
 ) (*detentionports.DetentionStatsRequest, error) {
-	locationID, err := base.OptionalID(input.LocationID)
+	locationID, err := gqlid.OptionalID(input.LocationID)
 	if err != nil {
 		return nil, err
 	}
@@ -879,11 +894,11 @@ func detentionStatsRequest(
 }
 
 func loadSignoff(ctx context.Context, id *string) (*tenant.User, error) {
-	userID, err := base.OptionalID(id)
+	userID, err := gqlid.OptionalID(id)
 	if err != nil {
 		return nil, err
 	}
-	return base.LoadUser(ctx, userID)
+	return loaderfields.LoadUser(ctx, userID)
 }
 
 func detentionDeskFilter(
@@ -891,15 +906,15 @@ func detentionDeskFilter(
 	urgency *gqlmodel.DetentionDeskUrgency,
 	shipmentID *string,
 	proNumber *string,
-) (*detentionservice.DeskFilter, error) {
-	shipmentFilter, err := base.ParseOptionalIDField("shipmentId", shipmentID)
+) (*detentionreview.DeskFilter, error) {
+	shipmentFilter, err := gqlid.ParseOptionalIDField("shipmentId", shipmentID)
 	if err != nil {
 		return nil, err
 	}
-	filter := &detentionservice.DeskFilter{
-		IncludeAwaitingApproval: base.BoolValue(includeAwaitingApproval),
+	filter := &detentionreview.DeskFilter{
+		IncludeAwaitingApproval: gqlscalar.BoolValue(includeAwaitingApproval),
 		ShipmentID:              shipmentFilter,
-		ProNumber:               base.DerefString(proNumber),
+		ProNumber:               gqlscalar.DerefString(proNumber),
 	}
 	if urgency != nil {
 		filter.Urgency = string(*urgency)

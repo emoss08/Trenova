@@ -39,7 +39,7 @@ func main() {
 	flag.StringVar(&opts.execOut, "exec-out", "internal/api/graphql/agentread",
 		"where the read executor is written")
 	flag.StringVar(&opts.toolsOut, "tools-out",
-		"internal/modules/agent/app/agentquerytoolservice", "where the tool bindings are written")
+		"internal/modules/agent/app/querytools/graphqlread", "where the tool bindings are written")
 	flag.StringVar(&opts.config, "config", "gqlgen.yml", "gqlgen's configuration")
 	flag.Parse()
 

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -41,7 +41,9 @@ func (u *usersByID) GetByIDs(
 }
 
 func withUserLoader(ctx context.Context, users *usersByID) context.Context {
-	factory := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users})
+	factory := identityloaders.NewUserByIDLoaderFactory(
+		identityloaders.UserByIDLoaderFactoryParams{Repo: users},
+	)
 	return factory.Attach(ctx, pagination.TenantInfo{
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
@@ -49,7 +51,7 @@ func withUserLoader(ctx context.Context, users *usersByID) context.Context {
 }
 
 func peopleResolver(granted map[string]bool) *Deps {
-	return &Deps{Core: &base.Core{
+	return &Deps{Core: &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
 	}}
 }

@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
@@ -67,7 +68,7 @@ type generatePlan struct {
 // sendPlan is everything Send decides before it mints a link or sends.
 type sendPlan struct {
 	entity          *rateconfirmation.RateConfirmation
-	templateContext *documenttemplate.RateConfirmationContext
+	templateContext *rateconfirmationtemplate.RateConfirmationContext
 	recipients      []string
 }
 
@@ -375,7 +376,7 @@ func (s *Service) previewAssignment(
 ) error {
 	assignment, err := s.carrierAssignmentRepo.GetByID(
 		ctx,
-		&shipmentports.GetCarrierAssignmentByIDRequest{
+		&carrierassignmentports.GetCarrierAssignmentByIDRequest{
 			TenantInfo:          tenantInfo,
 			CarrierAssignmentID: out.Before.CarrierAssignmentID,
 		},
@@ -445,7 +446,8 @@ func dispatcherConfirmation(name string, at int64) rateconfirmation.Confirmation
 }
 
 func (s *Service) signLinkConfigured() bool {
-	return s.cfg != nil && s.cfg.PublicLinkBaseURL() != ""
+	return s.appConfig != nil && s.tenderingConfig != nil &&
+		s.tenderingConfig.PublicLinkBaseURL(s.appConfig) != ""
 }
 
 func copyRateCon(

@@ -6,9 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +27,7 @@ type fakeReportAdmin struct {
 	canceled   *reporting.GetRunRequest
 	deleted    []pulid.ID
 	reset      *reporting.GetDefinitionRequest
-	saved      *reporting.SaveScheduleRequest
+	saved      *reportscheduleservice.SaveScheduleRequest
 }
 
 func (f *fakeReportAdmin) PlanCancelRun(
@@ -92,14 +95,14 @@ func (f *fakeReportAdmin) ResetCannedFork(
 
 func (f *fakeReportAdmin) PlanDeleteDashboard(
 	context.Context,
-	*reporting.GetDashboardRequest,
+	*reportdashboardservice.GetDashboardRequest,
 ) (*report.Dashboard, error) {
 	return f.dashboard, nil
 }
 
 func (f *fakeReportAdmin) DeleteDashboard(
 	_ context.Context,
-	req *reporting.GetDashboardRequest,
+	req *reportdashboardservice.GetDashboardRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -111,14 +114,14 @@ func (f *fakeReportAdmin) DeleteDashboard(
 
 func (f *fakeReportAdmin) GetSchedule(
 	context.Context,
-	*reporting.GetScheduleRequest,
+	*reportscheduleservice.GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	copied := *f.schedule
 
 	return &copied, nil
 }
 
-func scheduleFrom(req *reporting.SaveScheduleRequest) *report.ReportSchedule {
+func scheduleFrom(req *reportscheduleservice.SaveScheduleRequest) *report.ReportSchedule {
 	return &report.ReportSchedule{
 		ID:             req.ScheduleID,
 		DefinitionID:   req.DefinitionID,
@@ -137,9 +140,9 @@ func scheduleFrom(req *reporting.SaveScheduleRequest) *report.ReportSchedule {
 
 func (f *fakeReportAdmin) PlanUpdateSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
-) (*reporting.ScheduleChange, error) {
-	return &reporting.ScheduleChange{
+	req *reportscheduleservice.SaveScheduleRequest,
+) (*reportscheduleservice.ScheduleChange, error) {
+	return &reportscheduleservice.ScheduleChange{
 		Before:     f.schedule,
 		After:      scheduleFrom(req),
 		Definition: f.definition,
@@ -148,7 +151,7 @@ func (f *fakeReportAdmin) PlanUpdateSchedule(
 
 func (f *fakeReportAdmin) UpdateSchedule(
 	_ context.Context,
-	req *reporting.SaveScheduleRequest,
+	req *reportscheduleservice.SaveScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
@@ -160,14 +163,14 @@ func (f *fakeReportAdmin) UpdateSchedule(
 
 func (f *fakeReportAdmin) PlanDeleteSchedule(
 	context.Context,
-	*reporting.GetScheduleRequest,
+	*reportscheduleservice.GetScheduleRequest,
 ) (*report.ReportSchedule, error) {
 	return f.schedule, nil
 }
 
 func (f *fakeReportAdmin) DeleteSchedule(
 	_ context.Context,
-	req *reporting.GetScheduleRequest,
+	req *reportscheduleservice.GetScheduleRequest,
 ) error {
 	if err := f.guard.Write(); err != nil {
 		return err
@@ -212,11 +215,17 @@ func TestCancelReportRun_StopsARunWithoutChangingAnything(t *testing.T) {
 
 	reports := adminReports()
 	tool := NewCancelReportRunTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramReportRunID: reports.run.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramReportRunID: reports.run.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, "Would cancel the report run that is running.", preview.Summary)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, reports.run.ID, reports.canceled.RunID)
@@ -229,27 +238,49 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 
 	reports := adminReports()
 	report := NewDeleteReportTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramDefinitionID: reports.definition.ID.String()})
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return report.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramDefinitionID: reports.definition.ID.String()},
+	)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return report.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, `Would delete the saved report "Late deliveries", which shows on every `+
 		"colleague's Reports page.", preview.Summary)
 	require.NoError(t, report.Execute(t.Context(), params))
 
 	dashboard := NewDeleteDashboardTool(reports)
-	board := agenttoolstest.ExecuteParams(map[string]any{paramDashboardID: reports.dashboard.ID.String()})
-	preview = agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return dashboard.(agentports.ToolPreviewer).Preview(t.Context(), board)
-	})
-	assert.Equal(t, permission.ResourceDashboard, agenttoolstest.PreviewChange(t, preview, 0).Resource)
+	board := agenttoolstest.ExecuteParams(
+		map[string]any{paramDashboardID: reports.dashboard.ID.String()},
+	)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return dashboard.(agenttoolports.ToolPreviewer).Preview(t.Context(), board)
+		},
+	)
+	assert.Equal(
+		t,
+		permission.ResourceDashboard,
+		agenttoolstest.PreviewChange(t, preview, 0).Resource,
+	)
 	require.NoError(t, dashboard.Execute(t.Context(), board))
 
 	schedule := NewDeleteReportScheduleTool(reports)
-	stop := agenttoolstest.ExecuteParams(map[string]any{paramReportScheduleID: reports.schedule.ID.String()})
-	preview = agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return schedule.(agentports.ToolPreviewer).Preview(t.Context(), stop)
-	})
+	stop := agenttoolstest.ExecuteParams(
+		map[string]any{paramReportScheduleID: reports.schedule.ID.String()},
+	)
+	preview = agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return schedule.(agenttoolports.ToolPreviewer).Preview(t.Context(), stop)
+		},
+	)
 	assert.Contains(t, preview.Summary, "runs 0 7 * * 1; the report is kept")
 	require.NoError(t, schedule.Execute(t.Context(), stop))
 
@@ -258,7 +289,7 @@ func TestReportDeletions_AreOnlyEverProposed(t *testing.T) {
 		reports.dashboard.ID,
 		reports.schedule.ID,
 	}, reports.deleted)
-	for _, tool := range []agentports.AgentTool{report, dashboard, schedule} {
+	for _, tool := range []agenttoolports.AgentTool{report, dashboard, schedule} {
 		assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier, tool.Name())
 	}
 }
@@ -268,11 +299,17 @@ func TestResetReportFork_ShowsWhatTheBuiltInPutsBack(t *testing.T) {
 
 	reports := adminReports()
 	tool := NewResetReportForkTool(reports)
-	params := agenttoolstest.ExecuteParams(map[string]any{paramDefinitionID: reports.definition.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{paramDefinitionID: reports.definition.ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "dropping the changes made to it")
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, reports.definition.ID, reports.reset.DefinitionID)
@@ -289,9 +326,13 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 		paramFormats:          []any{"xlsx"},
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, reports.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		reports.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t, `Would change the schedule of the report "Late deliveries" to run `+
 		"0 7 * * 1 (America/Chicago) and email it to 2 recipients.", preview.Summary)
 
@@ -309,5 +350,5 @@ func TestUpdateReportSchedule_KeepsWhatItIsNotGivenAndNeverLeavesUnasked(t *test
 	assert.Equal(t, permission.OpExport, policy.Operation)
 
 	params.Params[paramFormats] = []any{"docx"}
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 }

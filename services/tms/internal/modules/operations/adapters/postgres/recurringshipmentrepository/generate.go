@@ -9,9 +9,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentgraph"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
@@ -50,7 +51,7 @@ func (r *repository) applyDerivedFields(
 	entity *recurringshipment.RecurringShipment,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		source, err := shipmentrepository.LoadShipmentGraphSource(
+		source, err := shipmentrepository.LoadGraphSource(
 			ctx,
 			r.db.Keel(ctx),
 			pagination.TenantInfo{
@@ -323,7 +324,7 @@ func (r *repository) PlanGenerate(
 				return nil, err
 			}
 
-			source, err := shipmentrepository.LoadShipmentGraphSource(
+			source, err := shipmentrepository.LoadGraphSource(
 				ctx,
 				db,
 				pagination.TenantInfo{
@@ -340,9 +341,9 @@ func (r *repository) PlanGenerate(
 			if requestedBy.IsNil() {
 				requestedBy = series.EnteredByID
 			}
-			generated := shipmentrepository.CopyShipmentGraph(
+			generated := shipmentgraph.Copy(
 				source,
-				shipmentrepository.ShipmentCopySpec{
+				shipmentgraph.CopySpec{
 					BOL:         deriveRecurringBOL(source.BOL, occurrence.At, series.Timezone),
 					RequestedBy: requestedBy,
 					DateAnchor:  &occurrence.At,
@@ -651,7 +652,7 @@ func (r *repository) materializeOccurrence(
 	occurrence *recurringshipment.Occurrence,
 	req *recurringshipmentports.GenerateRecurringShipmentRequest,
 ) (*shipment.Shipment, error) {
-	source, err := shipmentrepository.LoadShipmentGraphSource(
+	source, err := shipmentrepository.LoadGraphSource(
 		ctx,
 		db,
 		pagination.TenantInfo{
@@ -674,7 +675,7 @@ func (r *repository) materializeOccurrence(
 	}
 
 	proNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-		Type:             tenant.SequenceTypeProNumber,
+		Type:             sequenceconfig.SequenceTypeProNumber,
 		OrgID:            series.OrganizationID,
 		BuID:             series.BusinessUnitID,
 		Count:            1,
@@ -686,7 +687,7 @@ func (r *repository) materializeOccurrence(
 	}
 
 	orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-		Type:             tenant.SequenceTypeOrder,
+		Type:             sequenceconfig.SequenceTypeOrder,
 		OrgID:            series.OrganizationID,
 		BuID:             series.BusinessUnitID,
 		Count:            1,
@@ -702,14 +703,14 @@ func (r *repository) materializeOccurrence(
 		requestedBy = series.EnteredByID
 	}
 
-	generated := shipmentrepository.CopyShipmentGraph(source, shipmentrepository.ShipmentCopySpec{
+	generated := shipmentgraph.Copy(source, shipmentgraph.CopySpec{
 		ProNumber:   proNumbers[0],
 		BOL:         deriveRecurringBOL(source.BOL, occurrence.At, series.Timezone),
 		RequestedBy: requestedBy,
 		DateAnchor:  &occurrence.At,
 	})
 
-	autoOrder := shipmentrepository.BuildAutoOrder(generated, orderNumbers[0])
+	autoOrder := shipmentgraph.BuildAutoOrder(generated, orderNumbers[0])
 	generated.OrderID = autoOrder.ID
 
 	if err = orderdb.Orders.Create(ctx, db, autoOrder); err != nil {

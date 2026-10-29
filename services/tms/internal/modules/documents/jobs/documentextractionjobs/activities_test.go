@@ -6,6 +6,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentanalysis"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionsupport"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
@@ -13,17 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttypeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -170,7 +173,7 @@ func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 		Return(doc, nil)
 	controlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			OrganizationID:             orgID,
 			BusinessUnitID:             buID,
 			EnableDocumentIntelligence: false,
@@ -179,10 +182,16 @@ func TestPlanDocumentExtractionActivity_SkipsWhenControlDisabled(t *testing.T) {
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
+		documentRepo: docRepo,
+		support: documentextractionsupport.New(documentextractionsupport.Params{
+			Logger: zap.NewNop(),
+			Metrics: &metrics.Registry{
+				Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+			},
+			DocumentControlRepo: controlRepo,
+		}),
 	}
 
 	plan, err := activities.PlanDocumentExtractionActivity(
@@ -239,7 +248,7 @@ func TestPlanDocumentExtractionActivity_RefusesAProfileThatIsNotRead(t *testing.
 	activities := &Activities{
 		logger: zap.NewNop(),
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), true),
 		},
 		documentRepo: docRepo,
 	}
@@ -285,7 +294,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 
@@ -317,17 +326,28 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
-		contentRepo:         contentRepo,
-		draftRepo:           draftRepo,
-		aiDocumentService:   noopAIDocumentService{},
-		searchProjection:    searchProjection,
-		workflowStarter:     noopWorkflowStarter{},
+		documentRepo:      docRepo,
+		contentRepo:       contentRepo,
+		draftRepo:         draftRepo,
+		aiDocumentService: documentextractionsupport.NoopAIDocumentService{},
+		workflowStarter:   noopWorkflowStarter{},
+		support: documentextractionsupport.New(documentextractionsupport.Params{
+			Logger: zap.NewNop(),
+			Metrics: &metrics.Registry{
+				Document: documentmetrics.NewDocument(
+					prometheus.NewRegistry(),
+					zap.NewNop(),
+					false,
+				),
+			},
+			DocumentControlRepo: controlRepo,
+			DraftRepo:           draftRepo,
+			SearchProjection:    searchProjection,
+		}),
 	}
 
 	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
@@ -336,7 +356,7 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 	require.NotNil(t, result)
 	require.Len(t, draftWrites, 1)
 	require.Len(t, docUpdates, 1)
-	assert.Equal(t, kindRateConfirmation, result.Kind)
+	assert.Equal(t, documentanalysis.KindRateConfirmation, result.Kind)
 	assert.Equal(t, documentshipmentdraft.StatusUnavailable, draftWrites[0].Status)
 	assert.Equal(t, document.ShipmentDraftStatusUnavailable, docUpdates[0].ShipmentDraftStatus)
 	assert.Nil(t, docUpdates[0].DocumentTypeID)
@@ -372,7 +392,7 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 
@@ -413,18 +433,29 @@ func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeFo
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
-		documentTypeRepo:    typeRepo,
-		contentRepo:         contentRepo,
-		draftRepo:           draftRepo,
-		aiDocumentService:   noopAIDocumentService{},
-		searchProjection:    searchProjection,
-		workflowStarter:     noopWorkflowStarter{},
+		documentRepo:      docRepo,
+		documentTypeRepo:  typeRepo,
+		contentRepo:       contentRepo,
+		draftRepo:         draftRepo,
+		aiDocumentService: documentextractionsupport.NoopAIDocumentService{},
+		workflowStarter:   noopWorkflowStarter{},
+		support: documentextractionsupport.New(documentextractionsupport.Params{
+			Logger: zap.NewNop(),
+			Metrics: &metrics.Registry{
+				Document: documentmetrics.NewDocument(
+					prometheus.NewRegistry(),
+					zap.NewNop(),
+					false,
+				),
+			},
+			DocumentControlRepo: controlRepo,
+			DraftRepo:           draftRepo,
+			SearchProjection:    searchProjection,
+		}),
 	}
 
 	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
@@ -468,7 +499,7 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
 
 	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
@@ -502,18 +533,29 @@ func TestAnalyzeConvertedDocumentActivity_AssociatesExistingDocumentTypeByName(t
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
+		cfg:    &aiconfig.Config{},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
-		documentTypeRepo:    typeRepo,
-		contentRepo:         contentRepo,
-		draftRepo:           draftRepo,
-		aiDocumentService:   noopAIDocumentService{},
-		searchProjection:    searchProjection,
-		workflowStarter:     noopWorkflowStarter{},
+		documentRepo:      docRepo,
+		documentTypeRepo:  typeRepo,
+		contentRepo:       contentRepo,
+		draftRepo:         draftRepo,
+		aiDocumentService: documentextractionsupport.NoopAIDocumentService{},
+		workflowStarter:   noopWorkflowStarter{},
+		support: documentextractionsupport.New(documentextractionsupport.Params{
+			Logger: zap.NewNop(),
+			Metrics: &metrics.Registry{
+				Document: documentmetrics.NewDocument(
+					prometheus.NewRegistry(),
+					zap.NewNop(),
+					false,
+				),
+			},
+			DocumentControlRepo: controlRepo,
+			DraftRepo:           draftRepo,
+			SearchProjection:    searchProjection,
+		}),
 	}
 
 	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
@@ -555,7 +597,7 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 		UploadedByID:      pulid.MustNew("usr_"),
 	}
 
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	control := documentcontrol.NewDefaultDocumentControl(orgID, buID)
 	contentWrites := make([]documentcontent.Content, 0, 1)
 
 	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
@@ -592,18 +634,29 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 
 	activities := &Activities{
 		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{DocumentExtraction: true},
+		cfg:    &aiconfig.Config{DocumentExtraction: true},
 		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+			Document: documentmetrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
-		documentTypeRepo:    typeRepo,
-		contentRepo:         contentRepo,
-		draftRepo:           draftRepo,
-		aiDocumentService:   asyncRouteOnlyAIDocumentService{},
-		searchProjection:    searchProjection,
-		workflowStarter:     workflowStarter,
+		documentRepo:      docRepo,
+		documentTypeRepo:  typeRepo,
+		contentRepo:       contentRepo,
+		draftRepo:         draftRepo,
+		aiDocumentService: asyncRouteOnlyAIDocumentService{},
+		workflowStarter:   workflowStarter,
+		support: documentextractionsupport.New(documentextractionsupport.Params{
+			Logger: zap.NewNop(),
+			Metrics: &metrics.Registry{
+				Document: documentmetrics.NewDocument(
+					prometheus.NewRegistry(),
+					zap.NewNop(),
+					false,
+				),
+			},
+			DocumentControlRepo: controlRepo,
+			DraftRepo:           draftRepo,
+			SearchProjection:    searchProjection,
+		}),
 	}
 
 	_, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
@@ -611,15 +664,15 @@ func TestAnalyzeConvertedDocumentActivity_EnqueuesAsyncAIExtraction(t *testing.T
 	require.NoError(t, err)
 	require.Len(t, contentWrites, 1)
 	diagnostics := contentWrites[0].StructuredData["aiDiagnostics"].(map[string]any)
-	assert.Equal(t, aiAcceptanceStatusPending, diagnostics["acceptanceStatus"])
+	assert.Equal(t, documentanalysis.AIAcceptanceStatusPending, diagnostics["acceptanceStatus"])
 }
 
 func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 	t.Parallel()
 
-	intelligence := &DocumentIntelligenceAnalysis{
+	intelligence := &documentanalysis.DocumentIntelligenceAnalysis{
 		ReviewStatus: "NeedsReview",
-		Fields: map[string]*ReviewField{
+		Fields: map[string]*documentanalysis.ReviewField{
 			"shipper": {
 				Value: "Anyco Clothes #425",
 			},
@@ -630,9 +683,9 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 				Value: "4500.00",
 			},
 		},
-		Stops: []*IntelligenceStop{
+		Stops: []*documentanalysis.IntelligenceStop{
 			{
-				Role:         stopRolePickup,
+				Role:         documentanalysis.StopRolePickup,
 				Name:         "Anyco Clothes #425",
 				AddressLine1: "Main Drive",
 				City:         "Houston",
@@ -642,7 +695,7 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 				TimeWindow:   "04:00",
 			},
 			{
-				Role:         stopRoleDelivery,
+				Role:         documentanalysis.StopRoleDelivery,
 				Name:         "Anyco Clothes #255",
 				AddressLine1: "1234 E 1st Ave",
 				City:         "Dallas",
@@ -654,38 +707,40 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 		},
 	}
 
-	require.True(t, hasUsableShipmentDraft(intelligence))
+	require.True(t, documentaiextractionjobs.HasUsableShipmentDraft(intelligence))
 }
 
 func TestHasUsableShipmentDraft_FalseForIncompleteDraft(t *testing.T) {
 	t.Parallel()
 
-	intelligence := &DocumentIntelligenceAnalysis{
+	intelligence := &documentanalysis.DocumentIntelligenceAnalysis{
 		ReviewStatus: "NeedsReview",
-		Fields:       map[string]*ReviewField{},
-		Stops: []*IntelligenceStop{
+		Fields:       map[string]*documentanalysis.ReviewField{},
+		Stops: []*documentanalysis.IntelligenceStop{
 			{
-				Role: stopRolePickup,
+				Role: documentanalysis.StopRolePickup,
 				Name: "",
 			},
 		},
 	}
 
-	require.False(t, hasUsableShipmentDraft(intelligence))
+	require.False(t, documentaiextractionjobs.HasUsableShipmentDraft(intelligence))
 }
 
 func TestShipmentDraftDataFromAIExtract_MatchesTheProductionDraftShape(t *testing.T) {
 	t.Parallel()
 
-	data := ShipmentDraftDataFromAIExtract(&documentaiextractionports.AIExtractResult{
-		DocumentKind: "RateConfirmation",
-		Fields: map[string]documentaiextractionports.AIDocumentField{
-			"Total Rate": {Label: "Total Rate", Value: "$1,850.00", Confidence: 0.9},
+	data := documentaiextractionjobs.ShipmentDraftDataFromAIExtract(
+		&documentaiextractionports.AIExtractResult{
+			DocumentKind: "RateConfirmation",
+			Fields: map[string]documentaiextractionports.AIDocumentField{
+				"Total Rate": {Label: "Total Rate", Value: "$1,850.00", Confidence: 0.9},
+			},
+			Stops: []*documentaiextractionports.AIDocumentStop{
+				{Sequence: 0, Role: "Shipper", Name: "Northwind Foods", City: "Dallas"},
+			},
 		},
-		Stops: []*documentaiextractionports.AIDocumentStop{
-			{Sequence: 0, Role: "Shipper", Name: "Northwind Foods", City: "Dallas"},
-		},
-	})
+	)
 
 	fields, ok := data["fields"].(map[string]any)
 	require.True(t, ok)
@@ -699,6 +754,6 @@ func TestShipmentDraftDataFromAIExtract_MatchesTheProductionDraftShape(t *testin
 	assert.Equal(t, "pickup", stops[0]["role"])
 	assert.Equal(t, "Northwind Foods", stops[0]["name"])
 
-	empty := ShipmentDraftDataFromAIExtract(nil)
+	empty := documentaiextractionjobs.ShipmentDraftDataFromAIExtract(nil)
 	assert.NotNil(t, empty["fields"])
 }

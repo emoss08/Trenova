@@ -3,7 +3,7 @@ package orderderivation
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
@@ -30,14 +30,14 @@ type Params struct {
 	Logger       *zap.Logger
 	ShipmentRepo shipmentports.ShipmentRepository
 	OrderRepo    orderports.OrderRepository
-	Realtime     agentports.RealtimeService
+	Realtime     realtimeports.RealtimeService
 }
 
 type Observer struct {
 	l            *zap.Logger
 	shipmentRepo shipmentReader
 	orderRepo    orderports.OrderRepository
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 type shipmentReader interface {

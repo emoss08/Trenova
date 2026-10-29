@@ -323,7 +323,7 @@ func (s *Service) PlanAction(
 	ctx context.Context,
 	req *settlementshared.ActionRequest,
 ) (*ActionPlan, error) {
-	entity, err := s.getForUpdate(ctx, req.TenantInfo, req.SettlementID)
+	entity, err := s.GetForUpdate(ctx, req.TenantInfo, req.SettlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func (s *Service) planPost(
 	if plan.Refusal = PlanPost(plan.After, userID, now); plan.Refused() {
 		return nil
 	}
-	draft, err := s.planSettlementJournal(ctx, plan.After, userID, false)
+	draft, err := s.journals.PlanSettlement(ctx, plan.After, userID, false)
 	if err != nil {
 		if settlementshared.IsRefusal(err) {
 			plan.Refusal = err
@@ -405,7 +405,7 @@ func (s *Service) planPost(
 		return err
 	}
 	if draft != nil {
-		plan.Journal = draft.plan
+		plan.Journal = draft.JournalPlan
 	}
 	return nil
 }
@@ -423,7 +423,7 @@ func (s *Service) planVoid(
 	if !wasPosted {
 		return nil
 	}
-	draft, err := s.planSettlementJournal(ctx, plan.Before, req.TenantInfo.UserID, true)
+	draft, err := s.journals.PlanSettlement(ctx, plan.Before, req.TenantInfo.UserID, true)
 	if err != nil {
 		if settlementshared.IsRefusal(err) {
 			plan.Refusal = err
@@ -432,7 +432,7 @@ func (s *Service) planVoid(
 		return err
 	}
 	if draft != nil {
-		plan.Journal = draft.plan
+		plan.Journal = draft.JournalPlan
 	}
 	return nil
 }

@@ -3,7 +3,7 @@ package extractionevaljobs
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
 )
 
 var _ aicorrectionports.ExtractionReplyReader = ReplyReader{}
@@ -23,6 +23,6 @@ func (r ReplyReader) ReadReply(text string) (*aicorrection.Prediction, error) {
 	}
 
 	return aicorrection.ReadPrediction(
-		documentextractionjobs.ShipmentDraftDataFromAIExtract(result),
+		documentaiextractionjobs.ShipmentDraftDataFromAIExtract(result),
 	), nil
 }

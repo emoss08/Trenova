@@ -3,8 +3,8 @@ package billingcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -42,15 +42,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	req tenantports.GetBillingControlRequest,
-) (*tenant.BillingControl, error) {
+) (*billingcontrol.BillingControl, error) {
 	return s.repo.GetByOrgID(ctx, req.TenantInfo.OrgID)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *tenant.BillingControl,
+	entity *billingcontrol.BillingControl,
 	userID pulid.ID,
-) (*tenant.BillingControl, error) {
+) (*billingcontrol.BillingControl, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
 		zap.String("orgID", entity.OrganizationID.String()),

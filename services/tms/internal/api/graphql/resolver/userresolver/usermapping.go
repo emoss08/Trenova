@@ -2,7 +2,8 @@ package userresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/usermapping"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -14,7 +15,7 @@ import (
 func userConnectionToModel(
 	result *pagination.CursorListResult[*tenant.User],
 ) (*gqlmodel.UserConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *tenant.User, cursor string) *gqlmodel.UserEdge {
 			return &gqlmodel.UserEdge{
@@ -40,7 +41,7 @@ func createUserRequestFromInput(
 	tenantInfo pagination.TenantInfo,
 	input *gqlmodel.CreateUserInput,
 ) (*userservice.CreateUserRequest, error) {
-	roleIDs, err := base.PulidsFromStrings(input.RoleIds, "roleIds")
+	roleIDs, err := gqlid.PulidsFromStrings(input.RoleIds, "roleIds")
 	if err != nil {
 		return nil, err
 	}

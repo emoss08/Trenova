@@ -15,6 +15,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentraldocs"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -144,17 +146,17 @@ func TestNewValidatesTokenAndCompany(t *testing.T) {
 	t.Parallel()
 
 	_, err := businesscentral.New(testRef(), " ")
-	require.ErrorIs(t, err, businesscentral.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, businesscentralerrors.ErrAccessTokenRequired)
 
 	bad := testRef()
 	bad.CompanyID = "not-a-guid"
 	_, err = businesscentral.New(bad, testAccessToken)
-	require.ErrorIs(t, err, businesscentral.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidCompanyRef)
 
 	bad = testRef()
 	bad.Environment = "bad env"
 	_, err = businesscentral.New(bad, testAccessToken)
-	require.ErrorIs(t, err, businesscentral.ErrInvalidEnvironment)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidEnvironment)
 
 	ref := testRef()
 	ref.TenantID = strings.ToUpper(strings.ReplaceAll(testTenant, "-", ""))
@@ -186,7 +188,7 @@ func TestCompanyInformationEmptyIsUnexpected(t *testing.T) {
 		_, _ = w.Write([]byte(`{"value":[]}`))
 	})
 	_, err := client.CompanyInformation(t.Context())
-	require.ErrorIs(t, err, businesscentral.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, businesscentralerrors.ErrUnexpectedPayload)
 }
 
 func TestGeneralLedgerSetupTreatsTheZeroDateAsUnset(t *testing.T) {
@@ -210,7 +212,7 @@ func TestGeneralLedgerSetupTreatsTheZeroDateAsUnset(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, allowed)
 	_, err = setup.AllowsPosting("10/01/2026")
-	require.ErrorIs(t, err, businesscentral.ErrInvalidDate)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidDate)
 }
 
 func TestAccountingPeriods(t *testing.T) {
@@ -273,7 +275,12 @@ func TestListingFollowsNextLink(t *testing.T) {
 		businesscentral.WithBaseURL(server.URL), fastRetry())
 	require.NoError(t, err)
 
-	docs, err := client.Documents(t.Context(), businesscentral.DocumentSalesInvoice, nil)
+	docs, err := businesscentraldocs.Documents(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		nil,
+	)
 	require.NoError(t, err)
 	require.Len(t, docs, 2)
 	assert.Equal(t, "TRN-1001", docs[0].ExternalDocumentNumber)
@@ -290,8 +297,13 @@ func TestListingRefusesANextLinkOnAnotherHost(t *testing.T) {
 		_, _ = w.Write([]byte(page))
 	})
 
-	_, err := client.Documents(t.Context(), businesscentral.DocumentSalesInvoice, nil)
-	require.ErrorIs(t, err, businesscentral.ErrForeignNextLink)
+	_, err := businesscentraldocs.Documents(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		nil,
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrForeignNextLink)
 }
 
 func TestListingPagesWithSkipWhenAPageIsFull(t *testing.T) {
@@ -369,9 +381,14 @@ func TestTransportErrorIsTransientAndWritesAreNotRetried(t *testing.T) {
 		_ = conn.Close()
 	})
 
-	err := client.PostDocument(t.Context(), businesscentral.DocumentSalesInvoice, testInvoice)
+	err := businesscentraldocs.PostDocument(
+		t.Context(),
+		client,
+		businesscentraldocs.DocumentSalesInvoice,
+		testInvoice,
+	)
 	require.Error(t, err)
-	assert.True(t, businesscentral.IsTransient(err))
+	assert.True(t, businesscentralerrors.IsTransient(err))
 	assert.Equal(t, int32(1), calls.Load(), "a post is never sent twice")
 	assert.NotContains(t, err.Error(), "super-secret-access")
 }

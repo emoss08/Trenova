@@ -5,12 +5,19 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -34,9 +41,9 @@ type ToolObserver interface {
 	ObserveTool(
 		ctx context.Context,
 		run RunContext,
-		observation agentports.ToolObservation,
+		observation *agentruntimeports.ToolObservation,
 		emit kernelports.AssistantStreamEmitter,
-	) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error)
+	) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
 
 // DelegateOpener opens another agent's turn on a task the run's agent handed
@@ -47,7 +54,7 @@ type DelegateOpener interface {
 	OpenDelegate(
 		ctx context.Context,
 		run RunContext,
-		call agentruntime.DelegateCall,
+		call *delegation.Call,
 	) (*DelegateOpening, error)
 }
 
@@ -63,23 +70,24 @@ type ActivitiesParams struct {
 
 	Logger    *zap.Logger
 	Runtime   *agentruntime.Service
-	Steps     agentports.RunStepLedger
-	Observer  ToolObserver                `optional:"true"`
-	Delegates DelegateOpener              `optional:"true"`
-	Metrics   *metrics.Registry           `optional:"true"`
-	Changes   agentports.RecordChangeFeed `optional:"true"`
-	Scopes    permissionports.ReadScopes  `optional:"true"`
+	Steps     agentruntimeports.RunStepLedger
+	Observer  ToolObserver                   `optional:"true"`
+	Delegates DelegateOpener                 `optional:"true"`
+	Metrics   *metrics.Registry              `optional:"true"`
+	Changes   realtimeports.RecordChangeFeed `optional:"true"`
+	Scopes    permissionports.ReadScopes     `optional:"true"`
 }
 
 // Activities are a turn's effects, one activity each.
 type Activities struct {
 	l         *zap.Logger
 	runtime   *agentruntime.Service
-	steps     agentports.RunStepLedger
+	steps     agentruntimeports.RunStepLedger
+	replies   *replystep.Ledger
 	observer  ToolObserver
 	delegates DelegateOpener
-	metrics   *metrics.Assistant
-	changes   agentports.RecordChangeFeed
+	metrics   *aimetrics.Assistant
+	changes   realtimeports.RecordChangeFeed
 	scopes    permissionports.ReadScopes
 }
 
@@ -88,6 +96,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		l:         p.Logger.Named("agentflow"),
 		runtime:   p.Runtime,
 		steps:     p.Steps,
+		replies:   replystep.NewLedger(p.Steps, p.Logger),
 		observer:  p.Observer,
 		delegates: p.Delegates,
 		metrics:   metrics.AssistantFrom(p.Metrics),
@@ -102,12 +111,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 func (a *Activities) CheckWorldActivity(
 	ctx context.Context,
 	in *WorldCheckInput,
-) (*agentports.RecordChanges, error) {
+) (*realtimeports.RecordChanges, error) {
 	if a.changes == nil {
-		return &agentports.RecordChanges{Cursor: in.Check.Cursor}, nil
+		return &realtimeports.RecordChanges{Cursor: in.Check.Cursor}, nil
 	}
 
-	return a.changes.Since(ctx, &agentports.RecordChangesRequest{
+	return a.changes.Since(ctx, &realtimeports.RecordChangesRequest{
 		OrganizationID: in.OrganizationID,
 		BusinessUnitID: in.BusinessUnitID,
 		Cursor:         in.Check.Cursor,
@@ -120,7 +129,7 @@ func (a *Activities) CheckWorldActivity(
 func (a *Activities) ModelCallActivity(
 	ctx context.Context,
 	in *ModelCallInput,
-) (*agentruntime.ModelReply, error) {
+) (*modelstream.Reply, error) {
 	// How long the call sat between being scheduled and a worker taking it:
 	// queue time the person spends watching nothing.
 	info := activity.GetInfo(ctx)
@@ -153,17 +162,30 @@ func (a *Activities) ModelCallActivity(
 		// run together.
 		if attempt := activity.GetInfo(ctx).Attempt; attempt > 1 {
 			publish(kernelports.StreamEvent{
-				Event: agentports.AssistantEventRetrying,
-				Data: agentports.AssistantRetryingEvent{
+				Event: assistantstreamports.AssistantEventRetrying,
+				Data: assistantstreamports.AssistantRetryingEvent{
 					Attempt: int(attempt) - 1,
 					Reason:  "The reply is being written again after an interruption.",
-					Kind:    agentports.RetryKindRestart,
+					Kind:    llmports.RetryKindRestart,
 				},
 			}, true)
 		}
 
 		var first firstWords
 		emit = func(event kernelports.StreamEvent) { publish(event, first.flush(event)) }
+	}
+
+	lookup := &replystep.Lookup{
+		Call:    in.Step,
+		Request: in.Request,
+		Key:     replystep.Key(in.Step, in.Request),
+	}
+	if kept, ok := a.replies.Recall(ctx, lookup); ok {
+		if kept.Completion.Text != "" {
+			emit(modelstream.DeltaEvent(kept.Completion.Text))
+		}
+
+		return &kept, nil
 	}
 
 	stopBeating := modelcall.Heartbeat(ctx)
@@ -177,6 +199,11 @@ func (a *Activities) ModelCallActivity(
 	if err != nil {
 		return nil, modelcall.Classify(err)
 	}
+	a.replies.Keep(ctx, &replystep.Kept{
+		Lookup:  lookup,
+		Attempt: int(info.Attempt),
+		Reply:   &reply,
+	})
 
 	return &reply, nil
 }
@@ -193,8 +220,8 @@ func (f *firstWords) flush(event kernelports.StreamEvent) bool {
 	if f.sent {
 		return false
 	}
-	if event.Event != agentports.AssistantEventDelta &&
-		event.Event != agentports.AssistantEventReasoning {
+	if event.Event != assistantstreamports.AssistantEventDelta &&
+		event.Event != assistantstreamports.AssistantEventReasoning {
 		return false
 	}
 	f.sent = true
@@ -207,7 +234,7 @@ func (a *Activities) FindToolsActivity(
 	ctx context.Context,
 	in *FindToolsInput,
 ) (*FindToolsResult, error) {
-	found := a.runtime.FindFor(ctx, in.Run.request(), in.Tools, in.Arguments)
+	found := a.runtime.FindFor(ctx, in.Run.request(), &in.Tools, in.Arguments)
 
 	return &FindToolsResult{
 		Content: found.Content,
@@ -234,7 +261,7 @@ func (a *Activities) OpenDelegateActivity(
 	ctx, span := startDelegateOpen(ctx, in)
 	defer span.End()
 
-	opening, err := a.delegates.OpenDelegate(ctx, in.Run, in.Call)
+	opening, err := a.delegates.OpenDelegate(ctx, in.Run, &in.Call)
 	if err != nil {
 		var declined *DelegateDeclinedError
 		if errors.As(err, &declined) {
@@ -312,7 +339,7 @@ func (a *Activities) runTool(
 	req.Steps = a.steps
 	req.Attempt = int(activity.GetInfo(ctx).Attempt)
 
-	outcome := a.runtime.DispatchStep(ctx, req, in.Call)
+	outcome := a.runtime.DispatchStep(ctx, req, &in.Call)
 	observe, kept, done := a.observing(ctx, &in.Run)
 	defer done()
 	outcome = a.runtime.ObserveDispatch(observe, &in.Call, &outcome)
@@ -339,7 +366,7 @@ func (a *Activities) PublishArtifactActivity(
 func (a *Activities) observing(
 	ctx context.Context,
 	run *RunContext,
-) (agentports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
+) (agentruntimeports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
 	kept := new([]*assistantartifact.Artifact)
 	if a.observer == nil || run.ThreadID.IsNil() || run.Inline {
 		return nil, kept, func() {}
@@ -362,8 +389,8 @@ func (a *Activities) observing(
 		}
 	}
 
-	observe := func(observation agentports.ToolObservation) (*agentports.ShownArtifact, error) {
-		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, observation, emit)
+	observe := func(observation agentruntimeports.ToolObservation) (*agentruntimeports.ShownArtifact, error) {
+		shown, artifacts, err := a.observer.ObserveTool(ctx, *run, &observation, emit)
 		*kept = append(*kept, artifacts...)
 
 		return shown, err

@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -23,7 +23,7 @@ import (
 func statusChangeFixture(
 	t *testing.T,
 	from billingqueue.Status,
-) (*service, *agenteventstest.Recorder, *billingqueue.BillingQueueItem, pagination.TenantInfo) {
+) (*Service, *agenteventstest.Recorder, *billingqueue.BillingQueueItem, pagination.TenantInfo) {
 	t.Helper()
 
 	tenantInfo := pagination.TenantInfo{
@@ -60,11 +60,11 @@ func statusChangeFixture(
 		Once()
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	recorder := &agenteventstest.Recorder{}
-	svc := &service{
+	svc := wired(&Service{
 		l:            zap.NewNop(),
 		db:           passthroughDB{},
 		repo:         repo,
@@ -73,7 +73,7 @@ func statusChangeFixture(
 		realtime:     realtime,
 		validator:    testValidator(),
 		agentEvents:  recorder,
-	}
+	})
 
 	return svc, recorder, item, tenantInfo
 }
@@ -105,7 +105,7 @@ func TestUpdateStatus_PublishesExceptionEvent(t *testing.T) {
 	require.NoError(t, err)
 	events := recorder.Published()
 	require.Len(t, events, 1)
-	require.Equal(t, agent.EventBillingQueueItemException, events[0].Kind)
+	require.Equal(t, agenttrigger.EventBillingQueueItemException, events[0].Kind)
 	require.Equal(t, item.ID, events[0].SubjectID)
 	require.Equal(t, tenantInfo.OrgID, events[0].TenantInfo.OrgID)
 	require.Equal(t, tenantInfo.BuID, events[0].TenantInfo.BuID)
@@ -125,7 +125,7 @@ func TestUpdateStatus_PublishesOnHoldEvent(t *testing.T) {
 	require.NoError(t, err)
 	events := recorder.Published()
 	require.Len(t, events, 1)
-	require.Equal(t, agent.EventBillingQueueItemOnHold, events[0].Kind)
+	require.Equal(t, agenttrigger.EventBillingQueueItemOnHold, events[0].Kind)
 }
 
 func TestUpdateStatus_DoesNotPublishForOtherTransitions(t *testing.T) {
@@ -141,4 +141,27 @@ func TestUpdateStatus_DoesNotPublishForOtherTransitions(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, recorder.Published())
+}
+
+// Approving an item a biller has but nobody started reviewing starts the
+// review on the way: it used to be refused from the item.
+func TestApproveFromReadyForReviewStartsTheReview(t *testing.T) {
+	t.Parallel()
+
+	svc, _, item, tenantInfo := statusChangeFixture(t, billingqueue.StatusReadyForReview)
+
+	approved, err := svc.UpdateStatus(
+		t.Context(),
+		&billingqueueports.UpdateBillingQueueStatusRequest{
+			ItemID:     item.ID,
+			NewStatus:  billingqueue.StatusApproved,
+			TenantInfo: tenantInfo,
+		},
+		userActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, billingqueue.StatusApproved, approved.Status)
+	assert.NotNil(t, approved.ReviewStartedAt)
+	assert.NotNil(t, approved.ReviewCompletedAt)
 }

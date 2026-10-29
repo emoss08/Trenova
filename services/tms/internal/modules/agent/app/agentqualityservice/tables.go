@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
@@ -413,7 +413,7 @@ func (s *Service) ListWorstRatedTable(
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (s *Service) ListWorstRatedTable(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             s.now() - int64(window)*secondsPerDay,
-		Timezone:          s.timezoneOf(ctx, control, req.TenantInfo),
+		Timezone:          s.settings.Timezone(ctx, control, req.TenantInfo),
 		Limit:             MaxWorstRatedAnswers,
 	})
 	if err != nil {
@@ -571,7 +571,7 @@ func commentOf(answer *agentqualityports.AgentWorstRatedAnswer) string {
 }
 
 func suiteRunStatusValues() []string {
-	statuses := agentquality.AllSuiteRunStatuses()
+	statuses := agentqualitysuite.AllSuiteRunStatuses()
 	out := make([]string, 0, len(statuses))
 	for _, status := range statuses {
 		out = append(out, string(status))
@@ -583,6 +583,6 @@ func suiteRunStatusValues() []string {
 func (s *Service) ListSuiteRunConnection(
 	ctx context.Context,
 	req *agentqualityports.ListAgentSuiteRunConnectionRequest,
-) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
+) (*pagination.CursorListResult[*agentqualitysuite.SuiteRun], error) {
 	return s.suiteRuns.ListConnection(ctx, req)
 }

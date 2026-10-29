@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -40,7 +40,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIConnectionRepository {
+func New(p Params) edipartnerports.EDIConnectionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-connection-repository"),
@@ -49,7 +49,7 @@ func New(p Params) ediports.EDIConnectionRepository {
 
 func (r *repository) ListConnections(
 	ctx context.Context,
-	req *ediports.ListEDIConnectionsRequest,
+	req *edipartnerports.ListEDIConnectionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Read(
 		ctx,
@@ -79,7 +79,7 @@ func (r *repository) ListConnections(
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
-	req *ediports.EDIConnectionSelectOptionsRequest,
+	req *edipartnerports.EDIConnectionSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIConnection], error) {
 	return dbtx.Read(
 		ctx,
@@ -124,7 +124,7 @@ func (r *repository) SelectOptions(
 
 func (r *repository) GetConnectionsByIDs(
 	ctx context.Context,
-	req ediports.GetEDIConnectionsByIDsRequest,
+	req edipartnerports.GetEDIConnectionsByIDsRequest,
 ) ([]*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIConnection, error) {
 		if len(req.ConnectionIDs) == 0 {
@@ -144,7 +144,7 @@ func (r *repository) GetConnectionsByIDs(
 
 func (r *repository) GetConnectionByID(
 	ctx context.Context,
-	req ediports.GetEDIConnectionByIDRequest,
+	req edipartnerports.GetEDIConnectionByIDRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		ec := edidb.EDIConnections
@@ -166,7 +166,7 @@ func (r *repository) GetConnectionByID(
 
 func (r *repository) GetConnectionForUpdate(
 	ctx context.Context,
-	req ediports.GetEDIConnectionForUpdateRequest,
+	req edipartnerports.GetEDIConnectionForUpdateRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		ec := edidb.EDIConnections
@@ -183,7 +183,7 @@ func (r *repository) GetConnectionForUpdate(
 
 func (r *repository) GetActiveConnectionForPartner(
 	ctx context.Context,
-	req ediports.GetActiveEDIConnectionForPartnerRequest,
+	req edipartnerports.GetActiveEDIConnectionForPartnerRequest,
 ) (*edi.EDIConnection, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIConnection, error) {
 		ec := edidb.EDIConnections
@@ -240,7 +240,7 @@ func (r *repository) UpdateConnection(
 
 func (r *repository) AcceptInternalConnection(
 	ctx context.Context,
-	req *ediports.CreateInternalEDIConnectionAcceptanceRequest,
+	req *edipartnerports.CreateInternalEDIConnectionAcceptanceRequest,
 ) (*edi.EDIConnection, error) {
 	ctx = dbscope.WithSystem(
 		ctx,

@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,8 +22,8 @@ func (s *Service) ListForWorker(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	includeClosed bool,
-) ([]*worker.WorkerTrainingRecord, error) {
-	return s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
+) ([]*workertraining.WorkerTrainingRecord, error) {
+	return s.repo.ListForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		IncludeClosed:   includeClosed,
@@ -35,8 +37,8 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerTrainingRecord, error) {
-	return s.repo.GetByID(ctx, &workerports.GetWorkerTrainingByIDRequest{
+) (*workertraining.WorkerTrainingRecord, error) {
+	return s.repo.GetByID(ctx, &workertrainingports.GetWorkerTrainingByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeCourse:   true,
@@ -54,7 +56,7 @@ func (s *Service) RefreshRollup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerTrainingSummary, error) {
+) (*workertraining.WorkerTrainingSummary, error) {
 	summary, err := s.Summary(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -77,7 +79,7 @@ func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerTrainingSummary, error) {
+) (*workertraining.WorkerTrainingSummary, error) {
 	wrk, err := s.loadWorker(ctx, tenantInfo, workerID)
 	if err != nil {
 		return nil, err
@@ -89,12 +91,12 @@ func (s *Service) summarize(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	wrk *worker.Worker,
-) (*worker.WorkerTrainingSummary, error) {
+) (*workertraining.WorkerTrainingSummary, error) {
 	courses, err := s.repo.ListActiveCourses(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	records, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
+	records, err := s.repo.ListForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        wrk.ID,
 		IncludeClosed:   true,
@@ -104,7 +106,7 @@ func (s *Service) summarize(
 	if err != nil {
 		return nil, err
 	}
-	return worker.BuildTrainingSummary(wrk, courses, records, timeutils.NowUnix()), nil
+	return workertraining.BuildTrainingSummary(wrk, courses, records, timeutils.NowUnix()), nil
 }
 
 type AssignRequest struct {
@@ -121,7 +123,7 @@ type AssignRequest struct {
 func (s *Service) Assign(
 	ctx context.Context,
 	req *AssignRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(
 		zap.String("operation", "Assign"),
 		zap.String("workerId", req.WorkerID.String()),
@@ -166,7 +168,7 @@ func (s *Service) AssignRequired(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	userID pulid.ID,
-) ([]*worker.WorkerTrainingRecord, error) {
+) ([]*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(
 		zap.String("operation", "AssignRequired"),
 		zap.String("workerId", workerID.String()),
@@ -182,7 +184,7 @@ func (s *Service) AssignRequired(
 	}
 
 	gaps := summary.RequiredGaps()
-	created := make([]*worker.WorkerTrainingRecord, 0, len(gaps))
+	created := make([]*workertraining.WorkerTrainingRecord, 0, len(gaps))
 	for _, course := range gaps {
 		record, assignErr := s.Assign(ctx, &AssignRequest{
 			TenantInfo: tenantInfo,
@@ -221,7 +223,7 @@ type CompleteRequest struct {
 func (s *Service) Complete(
 	ctx context.Context,
 	req *CompleteRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Complete"))
 
 	plan, err := s.PlanComplete(ctx, req)
@@ -231,7 +233,7 @@ func (s *Service) Complete(
 	record, original, course := plan.After, plan.Before, plan.After.Course
 	passed := record.Passed != nil && *record.Passed
 
-	var saved *worker.WorkerTrainingRecord
+	var saved *workertraining.WorkerTrainingRecord
 	if original == nil {
 		saved, err = s.repo.Create(ctx, record)
 	} else {
@@ -259,7 +261,7 @@ func (s *Service) Complete(
 func (s *Service) openRecordFor(
 	ctx context.Context,
 	req *CompleteRequest,
-) (record, original *worker.WorkerTrainingRecord, err error) {
+) (record, original *workertraining.WorkerTrainingRecord, err error) {
 	if !req.ID.IsNil() {
 		original, err = s.loadRecord(ctx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
@@ -283,7 +285,7 @@ func (s *Service) openRecordFor(
 			"Choose the course that was completed",
 		)
 	}
-	course, err := s.repo.GetCourseByID(ctx, &workerports.GetTrainingCourseByIDRequest{
+	course, err := s.repo.GetCourseByID(ctx, &workertrainingports.GetTrainingCourseByIDRequest{
 		ID:         req.CourseID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -293,7 +295,7 @@ func (s *Service) openRecordFor(
 	if _, err = s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, nil, err
 	}
-	open, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerTrainingRequest{
+	open, err := s.repo.ListForWorker(ctx, &workertrainingports.ListWorkerTrainingRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 	})
@@ -309,7 +311,7 @@ func (s *Service) openRecordFor(
 	}
 
 	now := timeutils.NowUnix()
-	return &worker.WorkerTrainingRecord{
+	return &workertraining.WorkerTrainingRecord{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
@@ -325,8 +327,8 @@ func (s *Service) loadRecord(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	version int64,
-) (*worker.WorkerTrainingRecord, error) {
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerTrainingByIDRequest{
+) (*workertraining.WorkerTrainingRecord, error) {
+	original, err := s.repo.GetByID(ctx, &workertrainingports.GetWorkerTrainingByIDRequest{
 		ID:            id,
 		TenantInfo:    tenantInfo,
 		IncludeCourse: true,
@@ -350,7 +352,7 @@ func (s *Service) loadRecord(
 func (s *Service) requireWorkerDocument(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 	documentID pulid.ID,
 ) error {
 	doc, err := s.documentRepo.GetByID(ctx, documentports.GetDocumentByIDRequest{
@@ -387,7 +389,7 @@ type StatusRequest struct {
 func (s *Service) Waive(
 	ctx context.Context,
 	req *StatusRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Waive"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanWaive(ctx, req)
@@ -415,7 +417,7 @@ func (s *Service) Waive(
 func (s *Service) Cancel(
 	ctx context.Context,
 	req *StatusRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Cancel"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanCancel(ctx, req)
@@ -456,7 +458,7 @@ type AttachDocumentRequest struct {
 func (s *Service) AttachDocument(
 	ctx context.Context,
 	req *AttachDocumentRequest,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "AttachDocument"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanAttachDocument(ctx, req)
@@ -486,18 +488,18 @@ func (s *Service) Start(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	workerID pulid.ID,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	original, err := s.ownRecord(ctx, tenantInfo, id, workerID)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.TrainingStatusAssigned {
+	if original.Status != workertraining.TrainingStatusAssigned {
 		return original, nil
 	}
 
 	now := timeutils.NowUnix()
 	updated := *original
-	updated.Status = worker.TrainingStatusInProgress
+	updated.Status = workertraining.TrainingStatusInProgress
 	updated.StartedAt = &now
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
@@ -517,7 +519,7 @@ func (s *Service) Acknowledge(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	workerID pulid.ID,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	log := s.l.With(zap.String("operation", "Acknowledge"), zap.String("id", id.String()))
 
 	original, err := s.ownRecord(ctx, tenantInfo, id, workerID)
@@ -544,12 +546,12 @@ func (s *Service) Acknowledge(
 	course := original.Course
 	if course.Delivery.SelfServe() && !course.PassingScore.Valid {
 		passed := true
-		updated.Status = worker.TrainingStatusCompleted
+		updated.Status = workertraining.TrainingStatusCompleted
 		updated.CompletedAt = &now
 		updated.Passed = &passed
 		updated.ExpiresAt = course.ExpiryFor(now)
 	} else {
-		updated.Status = worker.TrainingStatusInProgress
+		updated.Status = workertraining.TrainingStatusInProgress
 	}
 
 	saved, err := s.repo.Update(ctx, &updated)
@@ -568,7 +570,7 @@ func (s *Service) ownRecord(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	workerID pulid.ID,
-) (*worker.WorkerTrainingRecord, error) {
+) (*workertraining.WorkerTrainingRecord, error) {
 	original, err := s.loadRecord(ctx, tenantInfo, id, 0)
 	if err != nil {
 		return nil, err
@@ -583,14 +585,14 @@ func (s *Service) ownRecord(
 // be assigned. The sweep calls it; it is a no-op when nothing changed.
 func (s *Service) MarkExpired(
 	ctx context.Context,
-	record *worker.WorkerTrainingRecord,
-) (*worker.WorkerTrainingRecord, error) {
-	if record == nil || record.Status != worker.TrainingStatusCompleted ||
+	record *workertraining.WorkerTrainingRecord,
+) (*workertraining.WorkerTrainingRecord, error) {
+	if record == nil || record.Status != workertraining.TrainingStatusCompleted ||
 		record.ExpiresAt == nil || *record.ExpiresAt > timeutils.NowUnix() {
 		return record, nil
 	}
 	updated := *record
-	updated.Status = worker.TrainingStatusExpired
+	updated.Status = workertraining.TrainingStatusExpired
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
 		return nil, err

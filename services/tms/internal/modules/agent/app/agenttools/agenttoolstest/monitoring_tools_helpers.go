@@ -4,15 +4,17 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
@@ -166,16 +168,16 @@ func (f *FakeRenderer) RenderMessage(
 	f.Req = req
 
 	return &documenttemplateports.RenderedMessage{
-		Subject: "[Acme] " + req.Data.(documenttemplate.AgentEmailContext).AgentSubject,
+		Subject: "[Acme] " + req.Data.(portaltemplate.AgentEmailContext).AgentSubject,
 		HTML:    "<p>html</p>",
 		Text:    "text",
 	}, nil
 }
 
 type fakeCommentWriter struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 
-	Created *shipmentports.CreateSystemShipmentCommentRequest `json:"-"`
+	Created *shipmentcommentports.CreateSystemShipmentCommentRequest `json:"-"`
 	// existing is what the repeat guard reads back before a send. Empty
 	// means nothing has gone to this customer yet.
 	Existing []*shipment.ShipmentComment `json:"-"`
@@ -183,14 +185,14 @@ type fakeCommentWriter struct {
 
 func (f *fakeCommentWriter) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{Items: f.Existing}, nil
 }
 
 func (f *fakeCommentWriter) CreateSystem(
 	_ context.Context,
-	req *shipmentports.CreateSystemShipmentCommentRequest,
+	req *shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	f.Created = req
 
@@ -223,39 +225,39 @@ func CustomerEmailFixture() (*operationstools.EmailCustomerTool, *FakeMailer, *f
 }
 
 type FakeDetention struct {
-	Noticed  *detentionservice.SendOccurrenceNoticeParams `json:"-"`
-	Waived   *detentionservice.WaiveParams                `json:"-"`
-	Disputed *detentionservice.DisputeParams              `json:"-"`
-	Guard    *WriteGuard                                  `json:"-"`
+	Noticed  *detentionnoticeservice.SendOccurrenceNoticeParams `json:"-"`
+	Waived   *detentionreview.WaiveParams                       `json:"-"`
+	Disputed *detentionreview.DisputeParams                     `json:"-"`
+	Guard    *WriteGuard                                        `json:"-"`
 
-	PreviewedNotice *detentionservice.SendOccurrenceNoticeParams `json:"-"`
-	PreviewedWaive  *detentionservice.WaiveParams                `json:"-"`
-	Notice          *detentionservice.NoticePreview              `json:"-"`
-	Change          *detentionservice.OccurrenceChange           `json:"-"`
+	PreviewedNotice *detentionnoticeservice.SendOccurrenceNoticeParams `json:"-"`
+	PreviewedWaive  *detentionreview.WaiveParams                       `json:"-"`
+	Notice          *detentionnoticeservice.NoticePreview              `json:"-"`
+	Change          *detentionreview.OccurrenceChange                  `json:"-"`
 }
 
 func (f *FakeDetention) SendOccurrenceNotice(
 	_ context.Context,
-	params detentionservice.SendOccurrenceNoticeParams,
+	params *detentionnoticeservice.SendOccurrenceNoticeParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.Noticed = &params
+	f.Noticed = params
 
 	return &detention.DetentionOccurrence{}, nil
 }
 
 func (f *FakeDetention) Waive(
 	_ context.Context,
-	params detentionservice.WaiveParams,
+	params *detentionreview.WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	f.Waived = &params
+	f.Waived = params
 
 	return &detention.DetentionOccurrence{}, nil
 }
 
 func (f *FakeDetention) PreviewOccurrenceNotice(
 	_ context.Context,
-	params *detentionservice.SendOccurrenceNoticeParams,
-) (*detentionservice.NoticePreview, error) {
+	params *detentionnoticeservice.SendOccurrenceNoticeParams,
+) (*detentionnoticeservice.NoticePreview, error) {
 	f.PreviewedNotice = params
 
 	return f.Notice, nil
@@ -263,20 +265,20 @@ func (f *FakeDetention) PreviewOccurrenceNotice(
 
 func (f *FakeDetention) Dispute(
 	_ context.Context,
-	params detentionservice.DisputeParams,
+	params *detentionreview.DisputeParams,
 ) (*detention.DetentionOccurrence, error) {
 	if err := f.Guard.Write(); err != nil {
 		return nil, err
 	}
-	f.Disputed = &params
+	f.Disputed = params
 
 	return &detention.DetentionOccurrence{ID: params.OccurrenceID}, nil
 }
 
 func (f *FakeDetention) PreviewDispute(
 	_ context.Context,
-	params *detentionservice.DisputeParams,
-) (*detentionservice.OccurrenceChange, error) {
+	params *detentionreview.DisputeParams,
+) (*detentionreview.OccurrenceChange, error) {
 	if f.Change != nil {
 		return f.Change, nil
 	}
@@ -294,19 +296,23 @@ func (f *FakeDetention) PreviewDispute(
 		return nil, err
 	}
 
-	return &detentionservice.OccurrenceChange{Before: before, After: &after, Now: 1_700_000_000}, nil
+	return &detentionreview.OccurrenceChange{
+		Before: before,
+		After:  &after,
+		Now:    1_700_000_000,
+	}, nil
 }
 
 func (f *FakeDetention) PreviewWaive(
 	_ context.Context,
-	params *detentionservice.WaiveParams,
-) (*detentionservice.OccurrenceChange, error) {
+	params *detentionreview.WaiveParams,
+) (*detentionreview.OccurrenceChange, error) {
 	f.PreviewedWaive = params
 
 	return f.Change, nil
 }
 
-func ApprovedParams(params map[string]any) agentports.ToolExecuteParams {
+func ApprovedParams(params map[string]any) *agenttoolports.ToolExecuteParams {
 	execute := ExecuteParams(params)
 	execute.ProposalID = pulid.MustNew("agp_")
 

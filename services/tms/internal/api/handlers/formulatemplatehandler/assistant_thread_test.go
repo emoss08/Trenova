@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,14 +19,14 @@ import (
 )
 
 type formulaPageAssistant struct {
-	opened []*agentports.OpenPageThreadRequest
+	opened []*assistantports.OpenPageThreadRequest
 }
 
 func (p *formulaPageAssistant) OpenPageThread(
 	_ context.Context,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.PageThread, error) {
+) (*assistantports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_"), Origin: req.Origin}
 	if req.SubjectID.IsNotNil() {
@@ -34,9 +34,9 @@ func (p *formulaPageAssistant) OpenPageThread(
 		thread.SubjectID = req.SubjectID
 	}
 
-	return &agentports.PageThread{
+	return &assistantports.PageThread{
 		Thread: thread,
-		Agent:  agentports.PageAgent{Name: "Formula assistant", SystemKey: "formula_assistant"},
+		Agent:  assistantports.PageAgent{Name: "Formula assistant", SystemKey: "formula_assistant"},
 	}, nil
 }
 

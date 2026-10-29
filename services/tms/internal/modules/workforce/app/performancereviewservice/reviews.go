@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,9 +19,9 @@ func (s *Service) ListReviews(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	statuses []worker.ReviewStatus,
-) ([]*worker.PerformanceReview, error) {
-	return s.repo.ListReviews(ctx, &workerports.ListPerformanceReviewsRequest{
+	statuses []workerreview.ReviewStatus,
+) ([]*workerreview.PerformanceReview, error) {
+	return s.repo.ListReviews(ctx, &workerreviewports.ListPerformanceReviewsRequest{
 		TenantInfo:      tenantInfo,
 		WorkerID:        workerID,
 		Statuses:        statuses,
@@ -34,8 +34,8 @@ func (s *Service) GetReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.PerformanceReview, error) {
-	return s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
+) (*workerreview.PerformanceReview, error) {
+	return s.repo.GetReviewByID(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,
@@ -59,7 +59,7 @@ type CreateReviewRequest struct {
 func (s *Service) CreateReview(
 	ctx context.Context,
 	req *CreateReviewRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	log := s.l.With(
 		zap.String("operation", "CreateReview"),
 		zap.String("workerId", req.WorkerID.String()),
@@ -94,11 +94,11 @@ type UpdateReviewRequest struct {
 	Title        string
 	PeriodStart  int64
 	PeriodEnd    int64
-	Ratings      []worker.ReviewRating
+	Ratings      []workerreview.ReviewRating
 	Summary      string
 	Strengths    string
 	Improvements string
-	Goals        []worker.ReviewGoal
+	Goals        []workerreview.ReviewGoal
 	Version      int64
 	UserID       pulid.ID
 }
@@ -108,7 +108,7 @@ type UpdateReviewRequest struct {
 func (s *Service) UpdateReview(
 	ctx context.Context,
 	req *UpdateReviewRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	log := s.l.With(zap.String("operation", "UpdateReview"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanUpdateReview(ctx, req)
@@ -135,12 +135,12 @@ func (s *Service) UpdateReview(
 
 // mergeRatings keeps the template-derived shape and takes scores and
 // comments from the request by key; unknown keys are ignored.
-func mergeRatings(current, incoming []worker.ReviewRating) []worker.ReviewRating {
-	byKey := make(map[string]worker.ReviewRating, len(incoming))
+func mergeRatings(current, incoming []workerreview.ReviewRating) []workerreview.ReviewRating {
+	byKey := make(map[string]workerreview.ReviewRating, len(incoming))
 	for _, rating := range incoming {
 		byKey[rating.Key] = rating
 	}
-	merged := make([]worker.ReviewRating, 0, len(current))
+	merged := make([]workerreview.ReviewRating, 0, len(current))
 	for _, rating := range current {
 		next := rating
 		if in, ok := byKey[rating.Key]; ok {
@@ -152,8 +152,8 @@ func mergeRatings(current, incoming []worker.ReviewRating) []worker.ReviewRating
 	return merged
 }
 
-func normalizeGoals(goals []worker.ReviewGoal) []worker.ReviewGoal {
-	out := make([]worker.ReviewGoal, 0, len(goals))
+func normalizeGoals(goals []workerreview.ReviewGoal) []workerreview.ReviewGoal {
+	out := make([]workerreview.ReviewGoal, 0, len(goals))
 	for _, goal := range goals {
 		title := strings.TrimSpace(goal.Title)
 		if title == "" {
@@ -163,7 +163,7 @@ func normalizeGoals(goals []worker.ReviewGoal) []worker.ReviewGoal {
 			goal.ID = pulid.MustNew("goal_").String()
 		}
 		if goal.Status == "" {
-			goal.Status = worker.ReviewGoalStatusOpen
+			goal.Status = workerreview.ReviewGoalStatusOpen
 		}
 		goal.Title = title
 		out = append(out, goal)
@@ -183,14 +183,14 @@ type ReviewStatusRequest struct {
 func (s *Service) SubmitReview(
 	ctx context.Context,
 	req *ReviewStatusRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	log := s.l.With(zap.String("operation", "SubmitReview"), zap.String("id", req.ID.String()))
 
 	original, err := s.loadReview(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusDraft {
+	if original.Status != workerreview.ReviewStatusDraft {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -200,9 +200,9 @@ func (s *Service) SubmitReview(
 
 	now := timeutils.NowUnix()
 	updated := *original
-	updated.Status = worker.ReviewStatusSubmitted
+	updated.Status = workerreview.ReviewStatusSubmitted
 	updated.SubmittedAt = &now
-	updated.OverallScore = worker.ComputeOverallScore(updated.Ratings)
+	updated.OverallScore = workerreview.ComputeOverallScore(updated.Ratings)
 	multiErr := errortypes.NewMultiError()
 	updated.ValidateForSubmit(multiErr)
 	if multiErr.HasErrors() {
@@ -254,14 +254,14 @@ func (s *Service) reviewerName(
 func (s *Service) ReopenReview(
 	ctx context.Context,
 	req *ReviewStatusRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	log := s.l.With(zap.String("operation", "ReopenReview"), zap.String("id", req.ID.String()))
 
 	original, err := s.loadReview(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusSubmitted {
+	if original.Status != workerreview.ReviewStatusSubmitted {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -270,7 +270,7 @@ func (s *Service) ReopenReview(
 	}
 
 	updated := *original
-	updated.Status = worker.ReviewStatusDraft
+	updated.Status = workerreview.ReviewStatusDraft
 	updated.SubmittedAt = nil
 	saved, err := s.repo.UpdateReview(ctx, &updated)
 	if err != nil {
@@ -295,7 +295,7 @@ func (s *Service) AcknowledgeReview(
 	id pulid.ID,
 	workerID pulid.ID,
 	comment string,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	original, err := s.loadReview(ctx, tenantInfo, id, 0)
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (s *Service) AcknowledgeReview(
 	if original.WorkerID != workerID {
 		return nil, errortypes.NewNotFoundError("Review not found")
 	}
-	if original.Status != worker.ReviewStatusSubmitted {
+	if original.Status != workerreview.ReviewStatusSubmitted {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -313,7 +313,7 @@ func (s *Service) AcknowledgeReview(
 
 	now := timeutils.NowUnix()
 	updated := *original
-	updated.Status = worker.ReviewStatusAcknowledged
+	updated.Status = workerreview.ReviewStatusAcknowledged
 	updated.AcknowledgedAt = &now
 	updated.WorkerComment = strings.TrimSpace(comment)
 	saved, err := s.repo.UpdateReview(ctx, &updated)
@@ -331,15 +331,15 @@ func (s *Service) AcknowledgeReview(
 func (s *Service) CloseReview(
 	ctx context.Context,
 	req *ReviewStatusRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	log := s.l.With(zap.String("operation", "CloseReview"), zap.String("id", req.ID.String()))
 
 	original, err := s.loadReview(ctx, req.TenantInfo, req.ID, req.Version)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusSubmitted &&
-		original.Status != worker.ReviewStatusAcknowledged {
+	if original.Status != workerreview.ReviewStatusSubmitted &&
+		original.Status != workerreview.ReviewStatusAcknowledged {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -349,7 +349,7 @@ func (s *Service) CloseReview(
 
 	now := timeutils.NowUnix()
 	updated := *original
-	updated.Status = worker.ReviewStatusClosed
+	updated.Status = workerreview.ReviewStatusClosed
 	updated.ClosedAt = &now
 	updated.ClosedByID = req.UserID
 	updated.NextReviewAt = updated.NextReviewDate(original.Template)
@@ -382,7 +382,7 @@ func (s *Service) DeleteReview(
 	if err != nil {
 		return err
 	}
-	if err = s.repo.DeleteReview(ctx, &workerports.GetPerformanceReviewByIDRequest{
+	if err = s.repo.DeleteReview(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	}); err != nil {
@@ -404,8 +404,8 @@ func (s *Service) loadReview(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	version int64,
-) (*worker.PerformanceReview, error) {
-	original, err := s.repo.GetReviewByID(ctx, &workerports.GetPerformanceReviewByIDRequest{
+) (*workerreview.PerformanceReview, error) {
+	original, err := s.repo.GetReviewByID(ctx, &workerreviewports.GetPerformanceReviewByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		IncludeTemplate: true,

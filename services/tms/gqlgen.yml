@@ -68,7 +68,7 @@ models:
       - github.com/emoss08/trenova/shared/pulid.ID
   ProtectedFieldGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.FieldGroup
+      - github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield.Group
   Int:
     model:
       - github.com/99designs/gqlgen/graphql.Int
@@ -268,22 +268,22 @@ models:
         resolver: true
   PTOPolicyStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicyStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicyStatus
   PTOYearBasis:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOYearBasis
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOYearBasis
   PTOAccrualMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOAccrualMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOAccrualMethod
   PTOLedgerEntryType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOLedgerEntryType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOLedgerEntryType
   PTOLedgerActorType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOLedgerActorType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOLedgerActorType
   PTOPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicy
     fields:
       negativeFloorDays:
         resolver: true
@@ -291,7 +291,7 @@ models:
         resolver: true
   PTOPolicyRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOPolicyRule
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOPolicyRule
     fields:
       accrualAmountDays:
         resolver: true
@@ -301,16 +301,16 @@ models:
         resolver: true
   WorkerCredentialCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialCategory
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialCategory
   WorkerCredentialStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialStatus
   WorkerCredentialHealth:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialHealth
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialHealth
   WorkerCredentialType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredentialType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredentialType
     fields:
       profileField:
         resolver: true
@@ -321,7 +321,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/document.Document
   WorkerCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredential
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredential
     fields:
       documentId:
         resolver: true
@@ -335,10 +335,10 @@ models:
         resolver: true
   WorkerCredentialSummaryItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CredentialSummaryItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.CredentialSummaryItem
   WorkerCredentialSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerCredentialSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential.WorkerCredentialSummary
   CredentialExpiryForecastItem:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecastItem
@@ -347,7 +347,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice.ExpiryForecast
   PortalCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalCredential
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalCredential
     fields:
       id:
         resolver: true
@@ -355,10 +355,10 @@ models:
         resolver: true
   WorkerEmploymentEventKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentEventKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentEventKind
   WorkerEmploymentEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerEmploymentEvent
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.WorkerEmploymentEvent
     fields:
       fromValues:
         resolver: true
@@ -383,31 +383,31 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeremploymentservice.RecordResult
   WorkerChecklistKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistKind
   WorkerChecklistTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistTrigger
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistTrigger
   WorkerChecklistItemKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistItemKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistItemKind
   WorkerChecklistOwner:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistOwner
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistOwner
   WorkerChecklistStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistStatus
   WorkerChecklistItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistItemStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistItemStatus
   WorkerChecklistTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistTemplate
     fields:
       openChecklistCount:
         resolver: true
   WorkerChecklistTemplateItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistTemplateItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistTemplateItem
     fields:
       credentialTypeId:
         resolver: true
@@ -417,7 +417,7 @@ models:
         resolver: true
   WorkerChecklist:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklist
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklist
     fields:
       templateId:
         resolver: true
@@ -429,13 +429,13 @@ models:
         resolver: true
   WorkerChecklistProgress:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ChecklistProgress
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.ChecklistProgress
     fields:
       complete:
         resolver: true
   WorkerChecklistItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerChecklistItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist.WorkerChecklistItem
     fields:
       overdue:
         resolver: true
@@ -451,10 +451,10 @@ models:
         resolver: true
   PTOTerminationAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOTerminationAction
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOTerminationAction
   PTOAccrualTier:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOAccrualTier
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.PTOAccrualTier
     fields:
       accrualAmountDays:
         resolver: true
@@ -487,25 +487,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveType
   OrgHolidayKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.HolidayKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.HolidayKind
   OrgHoliday:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OrgHoliday
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.OrgHoliday
   TrainingCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingCategory
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingCategory
   TrainingDelivery:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingDelivery
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingDelivery
   WorkerTrainingStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingStatus
   WorkerTrainingHealth:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingHealth
   TrainingCourse:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingCourse
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingCourse
     fields:
       passingScore:
         resolver: true
@@ -513,7 +513,7 @@ models:
         resolver: true
   WorkerTrainingRecord:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerTrainingRecord
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.WorkerTrainingRecord
     fields:
       documentId:
         resolver: true
@@ -531,10 +531,10 @@ models:
         resolver: true
   WorkerTrainingSummaryItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TrainingSummaryItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.TrainingSummaryItem
   WorkerTrainingSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerTrainingSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining.WorkerTrainingSummary
   BulkAssignTrainingPayload:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignResult
@@ -543,7 +543,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice.BulkAssignOutcome
   PortalTraining:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalTraining
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalTraining
     fields:
       id:
         resolver: true
@@ -553,22 +553,22 @@ models:
         resolver: true
   LeaveMeasurementMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveMeasurementMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveMeasurementMethod
   LeaveCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveCaseStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveCaseStatus
   LeaveFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveFrequency
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveFrequency
   LeaveCertificationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveCertificationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveCertificationStatus
   LeaveWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveWindow
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveWindow
   LeaveControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveControl
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveControl
     fields:
       entitlementWeeks:
         resolver: true
@@ -578,7 +578,7 @@ models:
         resolver: true
   LeaveEntitlement:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.LeaveEntitlement
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.LeaveEntitlement
     fields:
       totalHours:
         resolver: true
@@ -594,7 +594,7 @@ models:
         resolver: true
   WorkerLeaveCase:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerLeaveCase
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.WorkerLeaveCase
     fields:
       endsAt:
         resolver: true
@@ -622,7 +622,7 @@ models:
         resolver: true
   WorkerLeaveEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerLeaveEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave.WorkerLeaveEntry
     fields:
       hours:
         resolver: true
@@ -630,31 +630,31 @@ models:
         resolver: true
   OSHACaseClassification:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHACaseClassification
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHACaseClassification
   OSHAIllnessType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHAIllnessType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHAIllnessType
   InjuryTreatment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InjuryTreatment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.InjuryTreatment
   InjuryCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InjuryCaseStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.InjuryCaseStatus
   WorkersCompClaimStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkersCompClaimStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.WorkersCompClaimStatus
   OSHASummaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHASummaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHASummaryStatus
   OSHASummaryTotals:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHASummaryTotals
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHASummaryTotals
   OSHALog:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice.OSHALog
   OSHAAnnualSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.OSHAAnnualSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.OSHAAnnualSummary
     fields:
       certifiedAt:
         resolver: true
@@ -670,7 +670,7 @@ models:
         resolver: true
   WorkerInjury:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerInjury
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury.WorkerInjury
     fields:
       recordable:
         resolver: true
@@ -690,19 +690,19 @@ models:
         resolver: true
   EmploymentVerificationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentVerificationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentVerificationStatus
   EmploymentVerificationMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.EmploymentVerificationMethod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.EmploymentVerificationMethod
   DQFSection:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFSection
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFSection
   DQFItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFItemStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFItemStatus
   DQFItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFItem
     fields:
       regulation:
         resolver: true
@@ -710,7 +710,7 @@ models:
         resolver: true
   DQFFile:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DQFFile
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.DQFFile
     fields:
       terminationDate:
         resolver: true
@@ -720,10 +720,10 @@ models:
         resolver: true
   DQFRetentionCandidate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.DQFRetentionCandidate
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports.DQFRetentionCandidate
   WorkerEmploymentVerification:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerEmploymentVerification
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/employment.WorkerEmploymentVerification
     fields:
       employedFrom:
         resolver: true
@@ -741,22 +741,22 @@ models:
         resolver: true
   DOTTestType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestType
   DOTTestSubstance:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestSubstance
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestSubstance
   DOTTestStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestStatus
   DOTTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTTestResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTTestResult
   DOTViolationType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTViolationType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTViolationType
   DOTViolationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTViolationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DOTViolationStatus
   ReturnToDutyStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReturnToDutyStatus
@@ -765,22 +765,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DrugAlcoholStatus
   ClearinghouseQueryType:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ClearinghouseQueryType
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.ClearinghouseQueryType
   ClearinghouseResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ClearinghouseResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.ClearinghouseResult
   RandomPeriod:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomPeriod
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomPeriod
   RandomDrawStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomDrawStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomDrawStatus
   RandomEntryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RandomEntryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.RandomEntryStatus
   WorkerDOTTest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDOTTest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerDOTTest
     fields:
       scheduledAt:
         resolver: true
@@ -804,7 +804,7 @@ models:
         resolver: true
   WorkerDOTViolation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDOTViolation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.WorkerDOTViolation
     fields:
       sourceTestId:
         resolver: true
@@ -828,7 +828,7 @@ models:
         resolver: true
   WorkerClearinghouseQuery:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerClearinghouseQuery
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse.WorkerClearinghouseQuery
     fields:
       consentObtainedAt:
         resolver: true
@@ -842,13 +842,13 @@ models:
         resolver: true
   DOTRandomPool:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomPool
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomPool
     fields:
       meetsDotMinimums:
         resolver: true
   DOTRandomDraw:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomDraw
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomDraw
     fields:
       drawnById:
         resolver: true
@@ -858,7 +858,7 @@ models:
         resolver: true
   DOTRandomDrawEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DOTRandomDrawEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom.DOTRandomDrawEntry
     fields:
       notifiedAt:
         resolver: true
@@ -868,7 +868,7 @@ models:
         resolver: true
   DrugAlcoholStanding:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DrugAlcoholStanding
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot.DrugAlcoholStanding
     fields:
       lastClearinghouseQueryAt:
         resolver: true
@@ -876,22 +876,22 @@ models:
         resolver: true
   SafetyEventKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyEventKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyEventKind
   SafetySeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetySeverity
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetySeverity
   SafetyEventStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyEventStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.SafetyEventStatus
   InspectionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.InspectionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.InspectionResult
   SafetyRating:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyRating
   CSABasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.CSABasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.CSABasic
   CarrierIntelSection:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Section
@@ -906,7 +906,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RiskLevel
   CarrierIntelReviewState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.ReviewState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot.ReviewState
   CarrierIntelDepth:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.LookupDepth
@@ -915,31 +915,31 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SubjectType
   CarrierIntelEventStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventStatus
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventStatus
   CarrierIntelEventResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventResolution
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventResolution
   CarrierIntelEventSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EventSource
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.EventSource
   CarrierIntelEnrollmentPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentPolicy
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.EnrollmentPolicy
   CarrierIntelOutagePolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.OutagePolicy
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.OutagePolicy
   CarrierIntelEnrollmentMode:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentMode
   CarrierIntelDesiredState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.DesiredState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.DesiredState
   CarrierIntelVendorState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.VendorState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.VendorState
   CarrierIntelEnrollmentReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.EnrollmentReason
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.EnrollmentReason
   CarrierIntelAuthorityStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.AuthorityStatus
@@ -954,19 +954,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.UnitType
   CarrierEquipmentVerificationResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.VerificationResult
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification.VerificationResult
   CarrierIntelFeedType:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.FeedType
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.FeedType
   CarrierIntelSyncField:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SyncField
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.SyncField
   CarrierIntelInsuranceChangeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.InsuranceChangeKind
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.InsuranceChangeKind
   CarrierIntelRuleParamType:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleParamType
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleParamType
   CarrierIntelAddress:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Address
@@ -1095,7 +1095,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Profile
   CarrierIntelFinding:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.Finding
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.Finding
     fields:
       code:
         resolver: true
@@ -1103,7 +1103,7 @@ models:
         resolver: true
   CarrierIntelSnapshot:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelSnapshot
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot.CarrierIntelSnapshot
     fields:
       carrierId:
         resolver: true
@@ -1119,7 +1119,7 @@ models:
         resolver: true
   CarrierIntelEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelEvent
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent.CarrierIntelEvent
     fields:
       carrierId:
         resolver: true
@@ -1143,7 +1143,7 @@ models:
         resolver: true
   CarrierMonitoringEnrollment:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierMonitoringEnrollment
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.CarrierMonitoringEnrollment
     fields:
       carrierId:
         resolver: true
@@ -1151,7 +1151,7 @@ models:
         resolver: true
   CarrierIntelOverride:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelOverride
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride.CarrierIntelOverride
     fields:
       ruleCode:
         resolver: true
@@ -1161,7 +1161,7 @@ models:
         resolver: true
   CarrierEquipmentVerification:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierEquipmentVerification
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification.CarrierEquipmentVerification
     fields:
       vin:
         fieldName: VIN
@@ -1175,7 +1175,7 @@ models:
         resolver: true
   CarrierIntelControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelControl
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol.CarrierIntelControl
     fields:
       primaryProvider:
         resolver: true
@@ -1187,19 +1187,19 @@ models:
         resolver: true
   CarrierIntelRuleParam:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleParamSpec
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleParamSpec
   CarrierIntelRuleDefinition:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.RuleDefinition
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule.RuleDefinition
     fields:
       code:
         resolver: true
   CarrierIntelFieldUpdate:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.FieldUpdate
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.FieldUpdate
   CarrierIntelInsuranceChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.InsuranceChange
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.InsuranceChange
     fields:
       policyId:
         resolver: true
@@ -1209,25 +1209,25 @@ models:
         resolver: true
   CarrierIntelSyncPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.SyncPlan
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync.SyncPlan
   CarrierIntelSuggestion:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports.CarrierIntelSuggestion
   CarrierSourcingResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingResult
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingResult
     fields:
       existingCarrierId:
         resolver: true
   CarrierSourcingPage:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingPage
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingPage
   CarrierSourcingSort:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice.SourcingSort
+      - github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice.SourcingSort
   CarrierIntelFeedState:
     model:
-      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel.CarrierIntelFeedState
+      - github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment.CarrierIntelFeedState
     fields:
       provider:
         resolver: true
@@ -1238,97 +1238,97 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.JobDepartment
   BenefitPlanType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitPlanType
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitPlanType
   BenefitEnrollmentStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitEnrollmentStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitEnrollmentStatus
   CoverageTier:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.CoverageTier
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.CoverageTier
   DeductionKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionKind
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionKind
   AvailabilityPreference:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.AvailabilityPreference
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.AvailabilityPreference
   ShiftSwapStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftSwapStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftSwapStatus
   ShiftTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftTemplate
     fields:
       activeAssignmentCount:
         resolver: true
   WorkerShiftAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerShiftAssignment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.WorkerShiftAssignment
   WorkerAvailabilityPreference:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerAvailabilityPreference
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.WorkerAvailabilityPreference
   ShiftSwapRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ShiftSwapRequest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.ShiftSwapRequest
   TimeEntrySource:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimeEntrySource
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimeEntrySource
   TimesheetStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimesheetStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimesheetStatus
   PayrollExportStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PayrollExportStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.PayrollExportStatus
   TimeClockEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.TimeClockEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.TimeClockEntry
   Timesheet:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Timesheet
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.Timesheet
   PayrollExport:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PayrollExport
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet.PayrollExport
   PayrollExportRow:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice.PayrollExportRow
   PolicyAudience:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PolicyAudience
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.PolicyAudience
   ProfileChangeStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ProfileChangeStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange.ProfileChangeStatus
   WorkerPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.WorkerPolicy
   WorkerPolicyAcknowledgement:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPolicyAcknowledgement
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy.WorkerPolicyAcknowledgement
   WorkerProfileChangeRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerProfileChangeRequest
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange.WorkerProfileChangeRequest
     fields:
       changes:
         resolver: true
   PortalPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPolicy
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalPolicy
   PortalSchedule:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalSchedule
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalSchedule
   PortalShiftDay:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftDay
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalShiftDay
   RotaDayState:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RotaDayState
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule.RotaDayState
   PortalShiftSwap:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalShiftSwap
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalShiftSwap
   BenefitPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.BenefitPlan
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.BenefitPlan
   WorkerBenefitEnrollment:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.WorkerBenefitEnrollment
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit.WorkerBenefitEnrollment
     fields:
       effectiveTo:
         resolver: true
@@ -1342,7 +1342,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice.TotalCompensation
   ApprovalScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ApprovalScope
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation.ApprovalScope
   JobPosition:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.JobPosition
@@ -1351,7 +1351,7 @@ models:
         resolver: true
   ApprovalDelegation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ApprovalDelegation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation.ApprovalDelegation
     fields:
       endsAt:
         resolver: true
@@ -1363,52 +1363,52 @@ models:
         resolver: true
   HeadcountRow:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.HeadcountRow
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports.HeadcountRow
   Headcount:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice.Headcount
   DriverDigestCadence:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DriverDigestCadence
+      - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DriverDigestCadence
   WorkerSafetyViolation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerSafetyViolation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.WorkerSafetyViolation
   FleetSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafety
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafety
   FleetSafetyBasic:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyBasic
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyBasic
   FleetSafetyKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyKind
   FleetSafetyTerminal:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyTerminal
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyTerminal
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyTrendPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyTrendPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyTrendPoint
   FleetSafetyRank:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyRank
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyRank
     fields:
       fleetCodeId:
         resolver: true
   FleetSafetyRatingCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.FleetSafetyRatingCount
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety.FleetSafetyRatingCount
   WorkerStanding:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Standing
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Standing
   WorkerConcernSeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ConcernSeverity
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.ConcernSeverity
   WorkerConcern:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.Concern
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance.Concern
   WorkerOverview:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice.Overview
@@ -1420,16 +1420,16 @@ models:
         resolver: true
   DisciplinaryLevel:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryLevel
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryLevel
   DisciplinaryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryStatus
   RecognitionKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.RecognitionKind
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.RecognitionKind
   WorkerSafetyEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerSafetyEvent
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety.WorkerSafetyEvent
     fields:
       activePoints:
         resolver: true
@@ -1453,7 +1453,7 @@ models:
         resolver: true
   SafetyScorecard:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.SafetyScorecard
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard.SafetyScorecard
     fields:
       highestDiscipline:
         resolver: true
@@ -1461,7 +1461,7 @@ models:
         resolver: true
   WorkerDisciplinaryAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerDisciplinaryAction
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.WorkerDisciplinaryAction
     fields:
       suspensionDays:
         resolver: true
@@ -1477,13 +1477,13 @@ models:
         resolver: true
   DisciplinaryLadder:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.DisciplinaryLadder
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.DisciplinaryLadder
     fields:
       highestLevel:
         resolver: true
   WorkerRecognition:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerRecognition
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline.WorkerRecognition
     fields:
       awardedById:
         resolver: true
@@ -1492,25 +1492,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice.IssueActionResult
   PerformanceReviewStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewStatus
   ReviewGoalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewGoalStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewGoalStatus
   ReviewItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewItem
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewItem
   ReviewRating:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewRating
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewRating
     fields:
       score:
         resolver: true
   ReviewGoal:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.ReviewGoal
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.ReviewGoal
   PerformanceReviewTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PerformanceReviewTemplate
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.PerformanceReviewTemplate
     fields:
       cadenceMonths:
         resolver: true
@@ -1518,7 +1518,7 @@ models:
         resolver: true
   PerformanceReview:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PerformanceReview
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview.PerformanceReview
     fields:
       reviewerId:
         resolver: true
@@ -1528,7 +1528,7 @@ models:
         resolver: true
   WorkerPTOPolicyAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTOPolicyAssignment
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.WorkerPTOPolicyAssignment
     fields:
       ptoPolicy:
         resolver: true
@@ -1536,7 +1536,7 @@ models:
         resolver: true
   WorkerPTOLedgerEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTOLedgerEntry
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/pto.WorkerPTOLedgerEntry
     fields:
       amountDays:
         resolver: true
@@ -1612,7 +1612,7 @@ models:
         resolver: true
   PTOBalanceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBalanceSummary
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports.PTOBalanceSummary
     fields:
       totalBalanceDays:
         resolver: true
@@ -1630,13 +1630,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice.AssignWorkersResult
   WorkerPTOBulkAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionType
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionType
   BulkWorkerPTOActionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionResult
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionResult
   BulkWorkerPTOActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOBulkActionPayload
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOBulkActionPayload
   WorkerType:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerType
@@ -1663,7 +1663,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PTOType
   PTOChartDataPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerports.PTOChartDataPoint
+      - github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports.PTOChartDataPoint
   BillingQueueStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.Status
@@ -1687,13 +1687,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.BillType
   FreightTerms:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.FreightTerms
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.FreightTerms
   ChargeAllocationKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocationKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.ChargeAllocationKind
   ChargeAllocationMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocationMethod
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.ChargeAllocationMethod
   ChargeAllocation:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.ChargeAllocation
@@ -1758,13 +1758,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.NoaStatus
   FactoringVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Verdict
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.Verdict
   FactoringCheckCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.CheckCode
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.CheckCode
   FactoringFixAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FixAction
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.FixAction
   InvoiceFactoringOverride:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.FactoringOverride
@@ -1797,7 +1797,7 @@ models:
         resolver: true
   FactoringCheck:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Check
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.Check
     fields:
       fix:
         resolver: true
@@ -1807,7 +1807,7 @@ models:
         resolver: true
   FactoringInvoiceState:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.InvoiceState
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness.InvoiceState
     fields:
       submission:
         resolver: true
@@ -1828,22 +1828,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RequestMissingDocumentsResult
   FactoringSubmissionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionStatus
   FactoringSubmissionItemStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItemStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionItemStatus
   FactoringTransportMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.TransportMethod
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.TransportMethod
   FactoringSftpAuthMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SftpAuthMethod
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SftpAuthMethod
   FactoringFunding:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Funding
   FactoringSubmissionItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.SubmissionItem
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.SubmissionItem
     fields:
       packetDocumentId:
         resolver: true
@@ -1853,7 +1853,7 @@ models:
         resolver: true
   FactoringSubmission:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Submission
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.Submission
     fields:
       schedulePdfDocumentId:
         resolver: true
@@ -1867,19 +1867,19 @@ models:
         resolver: true
   FactoringSubmissionPlanItem:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlanItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.SubmissionPlanItem
   FactoringSubmissionPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.SubmissionPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.SubmissionPlan
     fields:
       agreementId:
         resolver: true
   FactoringLiveSubmission:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.LiveItem
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.LiveItem
   FactoringTransport:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Transport
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission.Transport
     fields:
       emailRecipients:
         resolver: true
@@ -1887,19 +1887,19 @@ models:
         resolver: true
   FactoringTransportTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.TransportTestResult
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports.TransportTestResult
   FactoringFundingOutcome:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.FundingOutcome
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.FundingOutcome
   FactoringReserveEntryKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntryKind
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.ReserveEntryKind
   FactoringAccountRole:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.AccountRole
   FactoringReserveEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.ReserveEntry
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.ReserveEntry
     fields:
       reversesEntryId:
         resolver: true
@@ -1915,28 +1915,28 @@ models:
         resolver: true
   FactoringReserveBalance:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveBalance
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.ReserveBalance
   FactoringPlannedLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedLine
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.PlannedLine
     fields:
       account:
         resolver: true
   FactoringMovement:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Movement
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger.Movement
     fields:
       invoiceEffect:
         resolver: true
   FactoringPlannedMovement:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedMovement
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.PlannedMovement
     fields:
       fiscalPeriodId:
         resolver: true
   FactoringFundingPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.FundingPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.FundingPlan
     fields:
       submissionId:
         resolver: true
@@ -1944,7 +1944,7 @@ models:
         resolver: true
   FactoringReserveMovementPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.ReserveMovementPlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.ReserveMovementPlan
     fields:
       submissionId:
         resolver: true
@@ -1954,35 +1954,35 @@ models:
         resolver: true
   FactoringRemittanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceStatus
   FactoringRemittanceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSource
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceSource
   FactoringRemittanceFormat:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceFormat
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceFormat
   FactoringRemittanceLineKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLineKind
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceLineKind
   FactoringRemittanceMatchStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchStatus
   FactoringRemittanceMatchedBy:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchedBy
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchedBy
   FactoringRemittanceMatchReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceMatchReason
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceMatchReason
   FactoringRemittanceLineAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.RemittanceLineAction
   ReportSchedule:
     fields:
       mine:
         resolver: true
   FactoringRemittance:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.Remittance
     fields:
       documentId:
         resolver: true
@@ -2002,10 +2002,10 @@ models:
         resolver: true
   FactoringRemittanceSuggestion:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceSuggestion
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceSuggestion
   FactoringRemittanceLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.RemittanceLine
+      - github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance.RemittanceLine
     fields:
       matchedBy:
         resolver: true
@@ -2021,25 +2021,25 @@ models:
         resolver: true
   FactoringRemittancePlanLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.PlannedRemittanceLine
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.PlannedRemittanceLine
   FactoringRemittancePlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittancePlan
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports.RemittancePlan
     fields:
       remittanceId:
         resolver: true
   InvoiceDisputeCaseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeCaseStatus
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeCaseStatus
   InvoiceDisputeReasonCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeReasonCode
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeReasonCode
   InvoiceDisputeResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DisputeResolution
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.DisputeResolution
   InvoiceDispute:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.InvoiceDispute
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute.InvoiceDispute
     fields:
       disputedAmount:
         resolver: true
@@ -2119,7 +2119,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports.InvoiceAdjustmentOperationsSummary
   LateChargeAssessmentMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.LateChargeAssessmentMode
+      - github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol.LateChargeAssessmentMode
   LateChargeLine:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports.LateChargeLine
@@ -2202,7 +2202,7 @@ models:
         resolver: true
   InvoiceChargeGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/billing/domain/invoice.ChargeGroup
+      - github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup.ChargeGroup
     fields:
       chargeCode:
         resolver: true
@@ -2270,16 +2270,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ProposalStatus
   AgentPlanStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.PlanStatus
   AgentPlanRunMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanRunMode
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.PlanRunMode
   AgentPlanScript:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScriptOrigin
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.ScriptOrigin
   AgentPlan:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentPlan
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentplan.AgentPlan
     fields:
       run:
         resolver: true
@@ -2293,49 +2293,49 @@ models:
         fieldName: ApprovalPreviewDigest
   AgentMemoryKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryKind
   AgentMemorySource:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySource
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySource
   AgentMemoryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryStatus
   AgentMemorySubjectType:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySubjectType
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySubjectType
   AgentMemory:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Memory
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.Memory
   AgentMemoryEvidence:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryEvidence
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryEvidence
   AgentMemoryUsage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentMemoryUsage
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.AgentMemoryUsage
   AgentReflection:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Reflection
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.Reflection
   AgentReflectionSignal:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSignal
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSignal
   AgentReflectionChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionChange
   AgentReflectionSubject:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSubject
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSubject
   AgentReflectionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionStatus
   AgentReflectionSkip:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSkip
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSkip
   AgentReflectionSignalKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionSignalKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionSignalKind
   AgentReflectionAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ReflectionAction
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.ReflectionAction
   AICorrection:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection.Correction
@@ -2487,10 +2487,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports.AgentFeedbackWorstRated
   AgentEvaluationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EvaluationStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.EvaluationStatus
   AgentEvaluation:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Evaluation
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.Evaluation
   AgentEvalCaseSource:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.CaseSource
@@ -2502,13 +2502,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.EvalCase
   AgentSuiteRunStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRunStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRunStatus
   AgentSuiteRunTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRunTrigger
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRunTrigger
   AgentSuiteRun:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.SuiteRun
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite.SuiteRun
     fields:
       agentName:
         resolver: true
@@ -2516,7 +2516,7 @@ models:
         resolver: true
   AgentQualityControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentquality.Control
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol.Control
     fields:
       id:
         resolver: true
@@ -2546,10 +2546,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyTier
   AgentToolPromotion:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolPromotion
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports.ToolPromotion
   AgentRunEvent:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentRunEvent
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent.AgentRunEvent
   AIAuditEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit.AIAuditEvent
@@ -2616,34 +2616,34 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports.AIAuditExportDownload
   AgentScorecardWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScorecardWindow
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ScorecardWindow
   AgentToolOutcome:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolOutcomeCount
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolOutcomeCount
   AgentToolVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolVerdictCount
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolVerdictCount
   AgentToolVerdictReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolVerdictReason
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ToolVerdictReason
   AgentScorecardPoint:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ScorecardPoint
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation.ScorecardPoint
   AgentSeverity:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.Severity
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.Severity
   AgentResolutionState:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ResolutionState
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.ResolutionState
   AgentDecisionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.DecisionType
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision.DecisionType
   AgentExceptionCategory:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExceptionCategory
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.ExceptionCategory
   AgentEvidenceRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EvidenceRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence.EvidenceRef
   AgentRun:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentRun
@@ -2664,13 +2664,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintMark
   AgentTaintRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord.RecordRef
   AgentMemoryScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemoryScope
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryScope
   AgentMemorySavingMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MemorySavingMode
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemorySavingMode
   AIProvider:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Provider
@@ -2685,13 +2685,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.CapAction
   AIProviderKeyInfo:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.KeyInfo
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey.KeyInfo
     fields:
       addedBy:
         resolver: true
   AIProviderDraftTestResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TestAIProviderResult
+      - github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports.TestAIProviderResult
   AIProviderKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Kind
@@ -2700,34 +2700,34 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.StructuredOutputMode
   AIReasoningEffort:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ReasoningEffort
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning.ReasoningEffort
   AITask:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Task
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aitask.Task
   AIRouteChoice:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.RouteChoice
+      - github.com/emoss08/trenova/internal/modules/agent/domain/airouting.RouteChoice
     fields:
       providerId:
         resolver: true
   AITaskRoute:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.TaskRoute
+      - github.com/emoss08/trenova/internal/modules/agent/domain/airouting.TaskRoute
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.EmbeddingInputStyle
   AIThinkingStyle:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.ThinkingStyle
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning.ThinkingStyle
   AIProviderPlatform:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.Platform
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.Platform
   AIProviderPlatformAuth:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformAuth
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.PlatformAuth
   AIProviderPlatformSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider.PlatformSettings
+      - github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform.PlatformSettings
   AIRetrievalSourceType:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.SourceType
@@ -2742,28 +2742,28 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval.PauseReason
   AIRetrievalAvailability:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalAvailability
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalAvailability
   AIRetrievalSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSettings
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalSettings
   AIRetrievalSourceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalSourceStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalSourceStatus
   AIRetrievalModelChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalModelChange
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalModelChange
   AIRetrievalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalStatus
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalStatus
   AIRetrievalReindexEstimate:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalReindexEstimate
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalReindexEstimate
   AIRetrievalFailedEntry:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AIRetrievalFailedEntry
+      - github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports.AIRetrievalFailedEntry
   AgentStarter:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Starter
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter.Starter
   AgentDefinition:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Definition
@@ -2782,50 +2782,54 @@ models:
         resolver: true
       accessRoles:
         resolver: true
+      starters:
+        resolver: true
   MyAgent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Definition
     fields:
       template:
         resolver: true
+      starters:
+        resolver: true
       delegates:
         resolver: true
   AgentDefinitionVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.DefinitionVersion
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentversion.DefinitionVersion
   AgentShadowReport:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow.Report
   AgentTestPrompt:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TestPrompt
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt.TestPrompt
   AgentInstructionFinding:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentlint.Finding
   AgentCapabilityMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityMode
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityMode
   AgentCapabilityTool:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityTool
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityTool
   AgentCapabilityHandoff:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityHandoff
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityHandoff
   AgentCapabilityLimits:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilityLimits
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilityLimits
   AgentCapabilities:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentCapabilities
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports.AgentCapabilities
   AgentDraft:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraft
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraft
   AgentDraftNote:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentDraftNote
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.AgentDraftNote
   AgentInstructionsTightened:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.TightenedAgentInstructions
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports.TightenedAgentInstructions
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.AccessMode
@@ -2834,7 +2838,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.DataAccessCeiling
   AgentAudienceCoverage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.AudienceCoverage
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreach.AudienceCoverage
   AgentEgressClass:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.EgressClass
@@ -2855,52 +2859,52 @@ models:
         value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.EgressMoney
   AgentToolKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKind
     enum_values:
       Query:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindQuery
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindQuery
       Action:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindAction
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindAction
       Runtime:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolKindRuntime
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolKindRuntime
   AgentToolScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScope
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScope
     enum_values:
       Tenant:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeTenant
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeTenant
       Self:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeSelf
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeSelf
       Run:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolScopeRun
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolScopeRun
   AgentToolEffect:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffect
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffect
     enum_values:
       Lookup:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectLookup
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectLookup
       Change:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectChange
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectChange
       Navigate:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectNavigate
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectNavigate
       Discover:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectDiscover
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectDiscover
       Present:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectPresent
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectPresent
       Ask:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectAsk
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectAsk
       Delegate:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolEffectDelegate
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolEffectDelegate
   AgentExternalRead:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalRead
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalRead
     enum_values:
       Never:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadNever
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadNever
       Always:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadAlways
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadAlways
       Marked:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.ExternalReadMarked
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ExternalReadMarked
   AgentTaintSource:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintSource
@@ -2927,30 +2931,30 @@ models:
         value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.TaintSourceRecordNote
   AgentAutonomyAnswer:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyAnswer
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyAnswer
     enum_values:
       RUNS_ON_ITS_OWN:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyRunsOnItsOwn
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyRunsOnItsOwn
       CONDITIONAL:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyConditional
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyConditional
       NEEDS_APPROVAL:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyNeedsApproval
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyNeedsApproval
       PROPOSE_ONLY:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomyProposeOnly
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomyProposeOnly
       SIMULATED:
-        value: github.com/emoss08/trenova/internal/modules/agent/domain/agent.AutonomySimulated
+        value: github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.AutonomySimulated
   AgentReachWarningKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.ReachWarningKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentreach.ReachWarningKind
   AgentReachWarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentReachWarning
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentReachWarning
   AgentToolAutonomy:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.ToolAutonomy
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.ToolAutonomy
   AgentToolSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolSafety
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolSafety
     fields:
       id:
         resolver: true
@@ -2958,13 +2962,13 @@ models:
         resolver: true
   AgentSafetySummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySummary
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentSafetySummary
     fields:
       openSensitiveAgentIds:
         resolver: true
   AgentToolRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ToolRuleOverride
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust.ToolRuleOverride
     fields:
       maxTier:
         resolver: true
@@ -2974,19 +2978,19 @@ models:
         resolver: true
   AgentToolRuleImpact:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolRuleImpact
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolRuleImpact
   AgentToolHolders:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentToolHolders
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentToolHolders
     fields:
       agentIds:
         resolver: true
   AgentEgressCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentEgressCount
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentEgressCount
   AgentSafety:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/ports/agentports.AgentSafetySubject
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports.AgentSafetySubject
     fields:
       agentId:
         resolver: true
@@ -2998,7 +3002,7 @@ models:
         resolver: true
   AgentTemplate:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.Template
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate.Template
   AgentTriggerMode:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition.TriggerMode
@@ -3034,7 +3038,7 @@ models:
       - github.com/emoss08/trenova/pkg/toolschema.Kind
   AgentException:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentException
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentexception.AgentException
   Briefing:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Briefing
@@ -3199,19 +3203,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SourceInfo
   CapturePairingPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.PairingPreview
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturedevices.PairingPreview
     fields:
       osVersion:
         fieldName: OSVersion
   CaptureProfile:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureProfile
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.CaptureProfile
   CaptureRecordRef:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureRecordLabel
   CaptureRequest:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureRequest
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.CaptureRequest
     fields:
       failureCode:
         resolver: true
@@ -3277,7 +3281,7 @@ models:
         resolver: true
   CaptureAccess:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.Access
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturesupport.Access
   CaptureAgentRelease:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice.Release
@@ -3294,10 +3298,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/ports/captureports.CaptureQRCode
   CaptureItemFailure:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.FileItemFailure
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturefiling.FileItemFailure
   FileCaptureItemsResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/captureservice.FileItemsResult
+      - github.com/emoss08/trenova/internal/modules/documents/app/capturefiling.FileItemsResult
   CaptureCoverSheet:
     fields:
       target:
@@ -3313,13 +3317,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.Source
   CaptureRequestMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestMode
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestMode
   CaptureRequestStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestStatus
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestStatus
   CaptureRequestFailureCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.RequestFailureCode
+      - github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest.RequestFailureCode
   CaptureBatchStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.BatchStatus
@@ -3337,10 +3341,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.PixelType
   CaptureSeparatorStrategy:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SeparatorStrategy
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.SeparatorStrategy
   CaptureProfileStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/capture.ProfileStatus
+      - github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile.ProfileStatus
   CaptureSourceProtocol:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.SourceProtocol
@@ -3422,13 +3426,13 @@ models:
         fieldName: PONumber
   InboundMessageCounts:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.Counts
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.Counts
   InboundClassificationCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.ClassificationCount
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.ClassificationCount
   InboundMailboxCount:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.MailboxCount
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundreads.MailboxCount
   InboundAttachment:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage.InboundAttachment
@@ -3469,7 +3473,7 @@ models:
         resolver: true
   InboundMailboxCredentials:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice.MailboxCredentials
+      - github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox.MailboxCredentials
     fields:
       webhookPath:
         resolver: true
@@ -3761,7 +3765,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/triage.AttachableSource
   InboundReplyAttachable:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.ReplyAttachable
+      - github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports.ReplyAttachable
   TriageReplyTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/triage.ReplyTemplate
@@ -3807,46 +3811,46 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports.CustomerPeek
   AgentDecision:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.AgentDecision
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision.AgentDecision
     fields:
       preview:
         resolver: true
   AgentPreviewCoverage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewCoverage
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewCoverage
   AgentPreviewOperation:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewOperation
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewOperation
   AgentPreviewMessageChannel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessageChannel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessageChannel
   AgentPreviewWarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewWarning
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewWarning
   AgentPreviewReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewReason
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewReason
   AgentPreviewRecordLink:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord.RecordRef
   AgentPreviewRef:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewRef
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewRef
   AgentPreviewFieldChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewFieldChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewFieldChange
     fields:
       valueType:
         fieldName: Type
   AgentPreviewMessage:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MessagePreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MessagePreview
     fields:
       templateVersionId:
         resolver: true
   AgentPreviewMoneyLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyLine
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyLine
     fields:
       before:
         resolver: true
@@ -3854,7 +3858,7 @@ models:
         resolver: true
   AgentPreviewMoney:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.MoneyPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.MoneyPreview
     fields:
       totalBefore:
         resolver: true
@@ -3864,16 +3868,16 @@ models:
         resolver: true
   AgentPreviewRecordChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.RecordChange
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.RecordChange
     fields:
       entityId:
         resolver: true
   AgentPreviewStaleness:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PreviewStaleness
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewStaleness
   AgentProposalPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.ProposalPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.ProposalPreview
     fields:
       stale:
         fieldName: IsStale
@@ -3881,13 +3885,13 @@ models:
         fieldName: Staleness
   AgentPlanStepPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanStepPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PlanStepPreview
   AgentPlanPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/agent.PlanPreview
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PlanPreview
   AgentControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.AgentControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol.AgentControl
   AccessorialCharge:
     model:
       - github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge.AccessorialCharge
@@ -3898,7 +3902,7 @@ models:
         resolver: true
   Role:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/permission.Role
+      - github.com/emoss08/trenova/internal/modules/identity/domain/rbac.Role
     fields:
       coreResponsibility:
         resolver: true
@@ -3968,7 +3972,7 @@ models:
         resolver: true
   RateMatrixVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixVersion
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion.RateMatrixVersion
     fields:
       dimensions:
         resolver: true
@@ -3976,7 +3980,7 @@ models:
         resolver: true
   RateMatrixReview:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixReview
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview.RateMatrixReview
   RateMatrixUsage:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.MatrixUsage
@@ -4383,31 +4387,31 @@ models:
         resolver: true
   DetentionPolicyStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.PolicyStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.PolicyStatus
   DetentionClockStartBasis:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.ClockStartBasis
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.ClockStartBasis
   DetentionLateArrivalRule:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.LateArrivalRule
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.LateArrivalRule
   DetentionRoundingMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RoundingMode
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.RoundingMode
   DetentionRateSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RateSource
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.RateSource
   DetentionTierRateUnit:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.TierRateUnit
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.TierRateUnit
   DetentionNotificationRequirement:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NotificationRequirement
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.NotificationRequirement
   DetentionUnnotifiedBehavior:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.UnnotifiedBehavior
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.UnnotifiedBehavior
   DetentionCapScope:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.CapScope
   DetentionOccurrence:
     fields:
       calculationTrace:
@@ -4436,22 +4440,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.WaiverReason
   DetentionScoreBand:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.ScoreBand
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentioncollectability.ScoreBand
   DetentionNoticeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeKind
   DetentionNoticeChannel:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeChannel
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeChannel
   DetentionNoticeDeliveryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.NoticeDeliveryStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.NoticeDeliveryStatus
   DetentionEvidenceKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.EvidenceKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence.EvidenceKind
   DetentionEvidenceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/detention.EvidenceSource
+      - github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence.EvidenceSource
   EmailProvider:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/email.Provider
@@ -4487,7 +4491,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.Channel
   DocumentTemplateVariableType:
     model:
-      - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.VariableType
+      - github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog.VariableType
   DocumentTemplateSource:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate.TemplateSource
@@ -4540,22 +4544,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.ConnectionStatus
   EdiTransferStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.TransferStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.TransferStatus
   EdiDocumentDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.DocumentDirection
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.DocumentDirection
   EdiMessageStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageStatus
   EdiMessageDeliveryStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageDeliveryStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageDeliveryStatus
   EdiMessageAckStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MessageAcknowledgmentStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.MessageAcknowledgmentStatus
   EdiInboundFileStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.InboundFileStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile.InboundFileStatus
   EdiMappingEntityType:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MappingEntityType
@@ -4576,13 +4580,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDICommunicationProfile
   EdiTransfer:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITransfer
+      - github.com/emoss08/trenova/internal/modules/edi/domain/editransfer.EDITransfer
   EdiMessage:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMessage
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessage
   EdiInboundFile:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIInboundFile
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile.EDIInboundFile
   EdiMappingProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfile
@@ -4591,22 +4595,22 @@ models:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem
   EdiLadingVersionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersionStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingVersionStatus
   EdiFlowInstanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstanceStatus
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.FlowInstanceStatus
   EdiLadingReadiness:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingReadiness
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingReadiness
   EdiLadingVersion:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersion
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingVersion
   EdiLadingProject:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingProject
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.LadingProject
   EdiFlowInstance:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstance
+      - github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject.FlowInstance
   EquipmentManufacturer:
     model:
       - github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer.EquipmentManufacturer
@@ -4686,13 +4690,13 @@ models:
         resolver: true
   MoveCoverageType:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.MoveCoverageType
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.MoveCoverageType
   CarrierAssignmentStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierAssignmentStatus
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.CarrierAssignmentStatus
   CarrierRateMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierRateMethod
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.CarrierRateMethod
   CarrierAssignment:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.CarrierAssignment
@@ -4715,22 +4719,22 @@ models:
         resolver: true
   ShipmentStage:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Stage
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.Stage
   OperationType:
     model:
       - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OperationType
   ShipmentQuickFilter:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.QuickFilter
+      - github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter.QuickFilter
   ShipmentBoardGrouping:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.BoardGrouping
+      - github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping.BoardGrouping
   EtaVerdict:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/stopeta.Verdict
   UncoveredPickupWindow:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.PickupWindow
+      - github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow.PickupWindow
   CarrierCapacityRateMethod:
     model:
       - github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity.RateMethod
@@ -5093,52 +5097,52 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RevenueBasis
   PayCodeDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayCodeDirection
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paycode.PayCodeDirection
   PayCode:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayCode
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/paycode.PayCode
     fields:
       glAccount:
         resolver: true
   RecurringDeductionFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionFrequency
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionFrequency
   RecurringDeductionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.DeductionStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.DeductionStatus
   RecurringEarningFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EarningFrequency
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.EarningFrequency
   RecurringEarningStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EarningStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.EarningStatus
   PayAdvanceStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.AdvanceStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.AdvanceStatus
   PayAdvanceSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.AdvanceSource
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.AdvanceSource
   EscrowAccountStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowAccountStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowAccountStatus
   EscrowTransactionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowTransactionType
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowTransactionType
   DriverSettlementStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Status
   PortalInvitationStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PortalInvitationStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitationStatus
   PortalInvitation:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.PortalInvitation
+      - github.com/emoss08/trenova/internal/modules/workforce/domain/portalinvitation.PortalInvitation
   WorkerPortalStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalStatus
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice.PortalStatus
   InviteWorkerToPortalResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.InviteWorkerResult
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice.InviteWorkerResult
   SettlementDisputeStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.DisputeStatus
@@ -5165,7 +5169,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComment
   PortalStopAction:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports.StopActualAction
+      - github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports.StopActualAction
   PortalComplianceProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalComplianceProfile
@@ -5180,25 +5184,25 @@ models:
       - github.com/emoss08/trenova/internal/modules/workforce/domain/worker.WorkerPTO
   DriverExpenseStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.ExpenseStatus
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense.ExpenseStatus
   DriverExpense:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.Expense
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense.Expense
   PortalPayEstimate:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.MovePayEstimate
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice.MovePayEstimate
   DashControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.DashControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol.DashControl
   PortalFeatures:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalFeatures
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalFeatures
   PortalLeave:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeave
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalLeave
   PortalLeaveCase:
     model:
-      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalLeaveCase
+      - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice.PortalLeaveCase
   PortalPeriodSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice.PortalPeriodSummary
@@ -5216,10 +5220,10 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.PayEventStatus
   PayPeriodFrequency:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.PayPeriodFrequency
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.PayPeriodFrequency
   SettlementPayTrigger:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.PayTrigger
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.PayTrigger
   PayMileageBand:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.MileageBand
@@ -5234,25 +5238,25 @@ models:
         resolver: true
   PayRateOverride:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RateOverride
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment.RateOverride
   WorkerPayAssignment:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.WorkerPayAssignment
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment.WorkerPayAssignment
   RecurringDeduction:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RecurringDeduction
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.RecurringDeduction
   RecurringEarning:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.RecurringEarning
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay.RecurringEarning
   PayAdvance:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.PayAdvance
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance.PayAdvance
   EscrowTransaction:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowTransaction
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowTransaction
   EscrowAccount:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay.EscrowAccount
+      - github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow.EscrowAccount
   SettlementException:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.Exception
@@ -5284,31 +5288,31 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement.PayEvent
   SettlementControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.SettlementControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol.SettlementControl
   WorkerEarningsSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkerEarningsSummary
   WorkerYTDPaySummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkerYTDPaySummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.WorkerYTDPaySummary
   SettlementPeriodBounds:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.PeriodBounds
   SettlementWorkspaceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.WorkspaceSummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.WorkspaceSummary
   UnsettledWorkerSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports.UnsettledWorkerSummary
   BulkSettlementActionType:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionType
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionType
   BulkSettlementActionResult:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionResult
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionResult
   BulkSettlementActionPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice.BulkActionPayload
+      - github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice.BulkActionPayload
   CarrierSettlementStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.Status
@@ -5356,16 +5360,16 @@ models:
       - github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement.InvoiceMatch
   CarrierSettlementControl:
     model:
-      - github.com/emoss08/trenova/internal/modules/identity/domain/tenant.CarrierSettlementControl
+      - github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol.CarrierSettlementControl
   CarrierSettlementPeriodBounds:
     model:
       - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.PeriodBounds
   CarrierSettlementWorkspaceSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice.WorkspaceSummary
+      - github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice.WorkspaceSummary
   EdiCarrierInvoice:
     model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.CarrierInvoice
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice.CarrierInvoice
   CustomerPaymentStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment.Status
@@ -5572,13 +5576,13 @@ models:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/integration.Type
   AccountingConnectionStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ConnectionStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.ConnectionStatus
   AccountingErrorCategory:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ErrorCategory
   AccountingConnection:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingConnection
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AccountingConnection
     fields:
       lastErrorCategory:
         resolver: true
@@ -5594,10 +5598,10 @@ models:
         fieldName: ClientCertificateExpiresAt
   AccountingSyncStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingSyncStatus
   AccountingProviderProfile:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ProviderProfile
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.ProviderProfile
     fields:
       ledgerAvailable:
         fieldName: Ledger
@@ -5605,28 +5609,28 @@ models:
         fieldName: InboundPayments
   AccountingPreparedCertificate:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingPreparedCertificate
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingPreparedCertificate
   AccountingAuthMethod:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AuthMethod
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AuthMethod
   AccountingWebhookSubscriptionSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingWebhookSubscriptionSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingWebhookSubscriptionSummary
   AccountingCompany:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingCompany
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports.AccountingCompany
   CompleteAccountingAuthorizationPayload:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationCompletion
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAuthorizationCompletion
   AccountingSyncObjectType:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncObjectType
   AccountingSyncMode:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncMode
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.SyncMode
   AccountingLedgerGranularity:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.LedgerGranularity
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.LedgerGranularity
   AccountingSyncOperation:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncOperation
@@ -5644,7 +5648,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SyncAttemptOutcome
   AccountingBackfillStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.BackfillStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill.BackfillStatus
   AccountingBackfillAction:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingBackfillAction
@@ -5668,28 +5672,28 @@ models:
         resolver: true
   AccountingBackfill:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingBackfill
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill.AccountingBackfill
   AccountingInboundPaymentPolicy:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundPaymentPolicy
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.InboundPaymentPolicy
   AccountingInboundChangeKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeKind
   AccountingInboundChangeStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeStatus
   AccountingInboundChangeReason:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundChangeReason
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundChangeReason
   AccountingInboundDocumentKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundDocumentKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundDocumentKind
   AccountingAppliedObjectType:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppliedObjectType
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AppliedObjectType
   AccountingInboundLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.InboundLine
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.InboundLine
     fields:
       objectType:
         resolver: true
@@ -5697,10 +5701,10 @@ models:
         resolver: true
   AccountingAppliedObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppliedObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AppliedObject
   AccountingInboundChange:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingInboundChange
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound.AccountingInboundChange
     fields:
       reason:
         resolver: true
@@ -5718,37 +5722,37 @@ models:
         resolver: true
   AccountingInboundSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundSummary
   AccountingInboundOverview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundOverview
   AccountingInboundPostingLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundPostingLine
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundPostingLine
   AccountingInboundApplyPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingInboundApplyPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports.AccountingInboundApplyPreview
   AccountingDriftKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftKind
   AccountingDriftStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftStatus
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftStatus
   AccountingDriftResolution:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftResolution
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftResolution
   AccountingDriftDirection:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftDirection
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftDirection
   AccountingDriftFixObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftFixObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftFixObject
   AccountingDriftLine:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.DriftLine
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.DriftLine
   AccountingDriftFinding:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingDriftFinding
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift.AccountingDriftFinding
     fields:
       partyId:
         resolver: true
@@ -5772,10 +5776,10 @@ models:
         resolver: true
   AccountingDriftSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftSummary
   AccountingDriftOverview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftOverview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftOverview
   JournalReviewSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewSummary
@@ -5787,7 +5791,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports.JournalReviewOutcome
   AccountingDriftFixPreview:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingDriftFixPreview
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports.AccountingDriftFixPreview
     fields:
       direction:
         resolver: true
@@ -5812,19 +5816,19 @@ models:
       - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingSyncObjectState
   AccountingAppSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppSource
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AppSource
   AccountingAppEnvironment:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AppEnvironment
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.AppEnvironment
   AccountingAppCredential:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingAppCredential
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.AccountingAppCredential
     fields:
       hasWebhookVerifier:
         resolver: true
   AccountingAppSettings:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAppSettings
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAppSettings
     fields:
       activeSource:
         resolver: true
@@ -5834,22 +5838,22 @@ models:
         fieldName: RedirectURL
   AccountingSetupStep:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.SetupStep
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection.SetupStep
   AccountingReferenceKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.ReferenceKind
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider.ReferenceKind
   AccountingMappingTargetType:
     model:
       - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingTargetType
   AccountingMappingState:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingState
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingState
   AccountingMappingSource:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingSource
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingSource
   AccountingReferenceObject:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingReferenceObject
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.AccountingReferenceObject
     fields:
       label:
         resolver: true
@@ -5857,13 +5861,13 @@ models:
         resolver: true
   AccountingMappingCandidate:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MappingCandidate
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MappingCandidate
   AccountingMappingMatcher:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.MatcherSignal
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.MatcherSignal
   AccountingMapping:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync.AccountingMapping
+      - github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping.AccountingMapping
     fields:
       trenovaObjectId:
         resolver: true
@@ -5881,13 +5885,13 @@ models:
         resolver: true
   AccountingMappingGroup:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingGroup
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports.AccountingMappingGroup
   AccountingMappingSummary:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingMappingSummary
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports.AccountingMappingSummary
   AccountingAuthorizationStart:
     model:
-      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports.AccountingAuthorizationStart
+      - github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports.AccountingAuthorizationStart
   TrackingEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.TrackingEvent
@@ -5902,7 +5906,7 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent.Outcome
   StopVisitKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/operations/domain/shipment.VisitKind
+      - github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab.VisitKind
   CheckCall:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/checkcall.CheckCall

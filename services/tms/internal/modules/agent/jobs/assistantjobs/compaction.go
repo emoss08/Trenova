@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistantcompaction"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,8 +93,8 @@ type StartedCompaction struct {
 // SummarizedInput is a compaction's plan and what the model wrote for it.
 type SummarizedInput struct {
 	Payload *assistantcontract.CompactionPayload `json:"payload"`
-	Plan    *assistantservice.CompactionPlan     `json:"plan"`
-	Reply   *agentruntime.ModelReply             `json:"reply"`
+	Plan    *assistantcompaction.CompactionPlan  `json:"plan"`
+	Reply   *modelstream.Reply                   `json:"reply"`
 }
 
 // CompactionEndInput is how a compaction that saved nothing ended.
@@ -142,7 +143,7 @@ func (w *Workflows) compact(
 	payload *assistantcontract.CompactionPayload,
 ) CompactionEnding {
 	var a *Activities
-	var plan assistantservice.CompactionPlan
+	var plan assistantcompaction.CompactionPlan
 	err := workflow.ExecuteActivity(
 		workflow.WithActivityOptions(ctx, prepareCompactionOptions),
 		a.PrepareCompactionActivity, payload,
@@ -152,8 +153,8 @@ func (w *Workflows) compact(
 	}
 
 	stream.Publish(ctx, temporaltype.StreamItem{
-		Event: agentports.AssistantEventCompactionStarted,
-		Data: agentports.AssistantCompactionEvent{
+		Event: assistantstreamports.AssistantEventCompactionStarted,
+		Data: assistantstreamports.AssistantCompactionEvent{
 			TurnID:   payload.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     plan.Auto,
@@ -164,7 +165,7 @@ func (w *Workflows) compact(
 	})
 
 	var flow *agentflow.Activities
-	var reply agentruntime.ModelReply
+	var reply modelstream.Reply
 	summaryCtx := workflow.WithActivityOptions(ctx, withCompactionPriority(summaryOptions, payload))
 	err = workflow.ExecuteActivity(summaryCtx, flow.ModelCallActivity, &agentflow.ModelCallInput{
 		Request: plan.Request,
@@ -254,8 +255,8 @@ func rejectionMessage(err error) string {
 func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding {
 	if in.Status == conversation.AssistantTurnStatusStopped {
 		return CompactionEnding{Event: temporaltype.StreamItem{
-			Event: agentports.AssistantEventCompactionCancelled,
-			Data: agentports.AssistantCompactionEvent{
+			Event: assistantstreamports.AssistantEventCompactionCancelled,
+			Data: assistantstreamports.AssistantCompactionEvent{
 				TurnID:         in.Payload.TurnID,
 				ThreadID:       in.Payload.ThreadID,
 				Auto:           in.Payload.Auto,
@@ -265,7 +266,7 @@ func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding 
 	}
 
 	return CompactionEnding{Event: temporaltype.StreamItem{
-		Event: agentports.AssistantEventError,
+		Event: assistantstreamports.AssistantEventError,
 		Data: map[string]any{
 			"message":    in.Message,
 			"compaction": true,
@@ -278,14 +279,14 @@ func compactionEndingFor(in *CompactionEndInput, autoOff bool) CompactionEnding 
 func (a *Activities) PrepareCompactionActivity(
 	ctx context.Context,
 	payload *assistantcontract.CompactionPayload,
-) (*assistantservice.CompactionPlan, error) {
+) (*assistantcompaction.CompactionPlan, error) {
 	if payload.Actor.UserID.IsNil() {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"this compaction arrived without the person who asked for it", errTypeNoActor, nil,
 		)
 	}
 
-	plan, err := a.assistant.PrepareCompaction(ctx, &assistantservice.CompactRequest{
+	plan, err := a.compaction.PrepareCompaction(ctx, &assistantcompaction.CompactRequest{
 		ThreadID:   payload.ThreadID,
 		TurnID:     payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
@@ -313,7 +314,7 @@ func (a *Activities) FinishCompactionActivity(
 	payload := in.Payload
 	reply := compactionReply(in.Reply)
 
-	result, err := a.assistant.FinishCompaction(ctx, in.Plan, reply, &payload.Actor)
+	result, err := a.compaction.FinishCompaction(ctx, in.Plan, reply, &payload.Actor)
 	if err != nil {
 		if errortypes.IsBusinessError(err) {
 			return nil, temporal.NewNonRetryableApplicationError(
@@ -332,8 +333,8 @@ func (a *Activities) FinishCompactionActivity(
 	}
 
 	return &CompactionEnding{Event: temporaltype.StreamItem{
-		Event: agentports.AssistantEventCompactionFinished,
-		Data: agentports.AssistantCompactionEvent{
+		Event: assistantstreamports.AssistantEventCompactionFinished,
+		Data: assistantstreamports.AssistantCompactionEvent{
 			TurnID:   payload.TurnID,
 			ThreadID: payload.ThreadID,
 			Auto:     in.Plan.Auto,
@@ -355,7 +356,7 @@ func (a *Activities) EndCompactionActivity(
 	payload := in.Payload
 	autoOff := false
 	if in.Status == conversation.AssistantTurnStatusStopped && payload.Auto {
-		if err := a.assistant.StopCompactingItself(
+		if err := a.compaction.StopCompactingItself(
 			ctx,
 			payload.ThreadID,
 			payload.TenantInfo(),
@@ -384,7 +385,7 @@ func (a *Activities) closeCompaction(
 	status conversation.AssistantTurnStatus,
 	message string,
 ) {
-	turn, err := a.turnRepo.GetByID(ctx, agentports.GetAssistantTurnRequest{
+	turn, err := a.turnRepo.GetByID(ctx, &assistantturnports.GetAssistantTurnRequest{
 		ID:         payload.TurnID,
 		TenantInfo: payload.TenantInfo(),
 	})
@@ -443,8 +444,8 @@ func (a *Activities) StartAutoCompactionActivity(
 }
 
 // compactionReply is what the model wrote, as the conversation keeps it.
-func compactionReply(reply *agentruntime.ModelReply) *assistantservice.CompactionReply {
-	out := &assistantservice.CompactionReply{}
+func compactionReply(reply *modelstream.Reply) *assistantcompaction.CompactionReply {
+	out := &assistantcompaction.CompactionReply{}
 	if reply == nil || reply.Completion == nil {
 		return out
 	}

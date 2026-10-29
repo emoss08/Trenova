@@ -6,27 +6,30 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -111,7 +114,9 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		})
 	require.NoError(t, err)
 	period := ledgerFixturePeriod{ID: fiscalPeriod.ID, FiscalYearID: year.ID}
-	source := NewLedgerSource(LedgerSourceParams{DB: conn, Logger: zap.NewNop()})
+	source := accountingledgerrepository.NewLedgerSource(
+		accountingledgerrepository.LedgerSourceParams{DB: conn, Logger: zap.NewNop()},
+	)
 
 	carrierSettlement := &carriersettlement.CarrierSettlement{
 		ID:               pulid.MustNew("carstl_"),
@@ -295,7 +300,10 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 	}
 
 	t.Run("a reversal carries the party and number of the entry it reverses", func(t *testing.T) {
-		journal, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: reversed})
+		journal, getErr := source.GetJournal(
+			ctx,
+			&journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: reversed},
+		)
 		require.NoError(t, getErr)
 		assert.True(t, journal.IsReversal)
 		assert.Equal(t, "JE-LEDGER-1", journal.ReversalOfNumber)
@@ -313,9 +321,15 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 	})
 
 	t.Run("an unposted entry or another tenant's is not found", func(t *testing.T) {
-		_, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: pending})
+		_, getErr := source.GetJournal(
+			ctx,
+			&journalentryports.GetLedgerJournalRequest{TenantInfo: tenant, ID: pending},
+		)
 		assert.True(t, errortypes.IsNotFoundError(getErr))
-		_, getErr = source.GetJournal(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.GetLedgerJournalRequest{TenantInfo: other, ID: paid})
+		_, getErr = source.GetJournal(
+			dbscope.WithTenant(ctx, other.DBTenant()),
+			&journalentryports.GetLedgerJournalRequest{TenantInfo: other, ID: paid},
+		)
 		assert.True(t, errortypes.IsNotFoundError(getErr))
 	})
 
@@ -333,9 +347,12 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		assert.Equal(t, customerParty, journals[1].Lines[1].Party)
 		assert.True(t, journals[1].Lines[0].Party.IsZero())
 
-		journals, listErr = source.ListJournals(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.ListLedgerJournalsRequest{
-			TenantInfo: other, From: day, Before: next,
-		})
+		journals, listErr = source.ListJournals(
+			dbscope.WithTenant(ctx, other.DBTenant()),
+			&journalentryports.ListLedgerJournalsRequest{
+				TenantInfo: other, From: day, Before: next,
+			},
+		)
 		require.NoError(t, listErr)
 		assert.Empty(t, journals)
 	})
@@ -400,9 +417,12 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	t.Run("active accounts are those with posted lines since the date", func(t *testing.T) {
 		since := next
-		active, activeErr := source.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{
-			TenantInfo: tenant, Since: &since,
-		})
+		active, activeErr := source.ListActiveAccounts(
+			ctx,
+			&journalentryports.ListLedgerAccountsRequest{
+				TenantInfo: tenant, Since: &since,
+			},
+		)
 		require.NoError(t, activeErr)
 		ids := make([]pulid.ID, 0, len(active))
 		for idx := range active {
@@ -410,7 +430,10 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 		}
 		assert.Equal(t, []pulid.ID{acctA, acctC}, ids)
 
-		active, activeErr = source.ListActiveAccounts(ctx, &journalentryports.ListLedgerAccountsRequest{TenantInfo: tenant})
+		active, activeErr = source.ListActiveAccounts(
+			ctx,
+			&journalentryports.ListLedgerAccountsRequest{TenantInfo: tenant},
+		)
 		require.NoError(t, activeErr)
 		ids = ids[:0]
 		for idx := range active {
@@ -421,20 +444,25 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 
 	t.Run("posted journals without a record are candidates", func(t *testing.T) {
 		records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()})
-		connection, connErr := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()}).
-			Create(ctx, newConnection(tenant, userID, realm, 1_000))
+		connection, connErr := accountingconnectionrepository.NewConnectionRepository(
+			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+		).
+			Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 		require.NoError(t, connErr)
 		list := func(objectType accountingsync.SyncObjectType) []pulid.ID {
 			t.Helper()
-			found, listErr := records.ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
-				TenantInfo:   tenant,
-				ConnectionID: connection.ID,
-				ObjectType:   objectType,
-				Operation:    accountingsync.SyncOperationCreate,
-				DatedFrom:    day - 86_400,
-				Timezone:     "UTC",
-				Limit:        50,
-			})
+			found, listErr := records.ListCandidates(
+				ctx,
+				&accountingsyncports.ListAccountingSyncCandidatesRequest{
+					TenantInfo:   tenant,
+					ConnectionID: connection.ID,
+					ObjectType:   objectType,
+					Operation:    accountingsync.SyncOperationCreate,
+					DatedFrom:    day - 86_400,
+					Timezone:     "UTC",
+					Limit:        50,
+				},
+			)
 			require.NoError(t, listErr)
 			ids := make([]pulid.ID, 0, len(found))
 			for idx := range found {
@@ -478,102 +506,150 @@ func TestLedgerSource_ReadsPostedJournalsWithTheirParties(t *testing.T) {
 			"a day queued after its entries were posted covers them; one queued before does not")
 	})
 
-	t.Run("a fiscal close, its carried-forward entry and their reversals stay out", func(t *testing.T) {
-		closeDay := next + 3*86_400
-		opening := insert(&ledgerFixtureEntry{
-			number: "JE-FY-OPEN", entryType: journalentry.EntryTypeOpening, date: closeDay, posted: true,
-			lines: []ledgerFixtureLine{{account: acctA, debit: 4_000}, {account: acctB, credit: 4_000}},
-		})
-		closing := insert(&ledgerFixtureEntry{
-			number: "JE-FY-CLOSE", entryType: journalentry.EntryTypeClosing, date: closeDay, posted: true,
-			lines: []ledgerFixtureLine{{account: acctC, debit: 2_000}, {account: acctB, credit: 2_000}},
-		})
-		insert(&ledgerFixtureEntry{
-			number: "JE-FY-REOPEN-1", entryType: journalentry.EntryTypeReversal, date: closeDay + 86_400,
-			posted:     true,
-			reversalOf: opening,
-			lines:      []ledgerFixtureLine{{account: acctB, debit: 4_000}, {account: acctA, credit: 4_000}},
-		})
-		reopened := insert(&ledgerFixtureEntry{
-			number: "JE-FY-REOPEN-2", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
-			reversalOf: closing,
-			lines:      []ledgerFixtureLine{{account: acctB, debit: 2_000}, {account: acctC, credit: 2_000}},
-		})
-		undone := insert(&ledgerFixtureEntry{
-			number: "JE-FY-UNDO", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
-			reversalOf: paid,
-			lines:      []ledgerFixtureLine{{account: acctA, debit: 500}, {account: acctB, credit: 500}},
-		})
-
-		entryType, typeErr := source.GetEntryType(ctx, &journalentryports.GetLedgerJournalRequest{
-			TenantInfo: tenant, ID: closing,
-		})
-		require.NoError(t, typeErr)
-		assert.Equal(t, journalentry.EntryTypeClosing, entryType)
-		_, typeErr = source.GetEntryType(dbscope.WithTenant(ctx, other.DBTenant()), &journalentryports.GetLedgerJournalRequest{
-			TenantInfo: other, ID: closing,
-		})
-		assert.True(t, errortypes.IsNotFoundError(typeErr))
-		reopenedJournal, getErr := source.GetJournal(ctx, &journalentryports.GetLedgerJournalRequest{
-			TenantInfo: tenant, ID: reopened,
-		})
-		require.NoError(t, getErr)
-		assert.Equal(t, journalentry.EntryTypeClosing.String(), reopenedJournal.ReversesEntryType)
-		assert.Equal(t, "JE-FY-CLOSE", reopenedJournal.ReversalOfNumber)
-
-		journals, listErr := source.ListJournals(ctx, &journalentryports.ListLedgerJournalsRequest{
-			TenantInfo: tenant, From: closeDay, Before: closeDay + 86_400,
-		})
-		require.NoError(t, listErr)
-		require.Len(t, journals, 1)
-		assert.Equal(t, undone, journals[0].ID)
-		assert.Equal(t, journalentry.EntryTypeStandard.String(), journals[0].ReversesEntryType)
-
-		net := func(includeClosing bool, days int64) map[pulid.ID]int64 {
-			t.Helper()
-			from := closeDay
-			balances, sumErr := source.SumLines(ctx, &journalentryports.SumLedgerRequest{
-				TenantInfo: tenant, From: &from, Before: closeDay + days*86_400, IncludeClosing: includeClosing,
+	t.Run(
+		"a fiscal close, its carried-forward entry and their reversals stay out",
+		func(t *testing.T) {
+			closeDay := next + 3*86_400
+			opening := insert(&ledgerFixtureEntry{
+				number: "JE-FY-OPEN", entryType: journalentry.EntryTypeOpening, date: closeDay, posted: true,
+				lines: []ledgerFixtureLine{
+					{account: acctA, debit: 4_000},
+					{account: acctB, credit: 4_000},
+				},
 			})
-			require.NoError(t, sumErr)
-			out := make(map[pulid.ID]int64, len(balances))
-			for idx := range balances {
-				out[balances[idx].AccountID] += balances[idx].NetMinor()
+			closing := insert(&ledgerFixtureEntry{
+				number: "JE-FY-CLOSE", entryType: journalentry.EntryTypeClosing, date: closeDay, posted: true,
+				lines: []ledgerFixtureLine{
+					{account: acctC, debit: 2_000},
+					{account: acctB, credit: 2_000},
+				},
+			})
+			insert(&ledgerFixtureEntry{
+				number: "JE-FY-REOPEN-1", entryType: journalentry.EntryTypeReversal, date: closeDay + 86_400,
+				posted:     true,
+				reversalOf: opening,
+				lines: []ledgerFixtureLine{
+					{account: acctB, debit: 4_000},
+					{account: acctA, credit: 4_000},
+				},
+			})
+			reopened := insert(&ledgerFixtureEntry{
+				number: "JE-FY-REOPEN-2", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
+				reversalOf: closing,
+				lines: []ledgerFixtureLine{
+					{account: acctB, debit: 2_000},
+					{account: acctC, credit: 2_000},
+				},
+			})
+			undone := insert(&ledgerFixtureEntry{
+				number: "JE-FY-UNDO", entryType: journalentry.EntryTypeReversal, date: closeDay, posted: true,
+				reversalOf: paid,
+				lines: []ledgerFixtureLine{
+					{account: acctA, debit: 500},
+					{account: acctB, credit: 500},
+				},
+			})
+
+			entryType, typeErr := source.GetEntryType(
+				ctx,
+				&journalentryports.GetLedgerJournalRequest{
+					TenantInfo: tenant, ID: closing,
+				},
+			)
+			require.NoError(t, typeErr)
+			assert.Equal(t, journalentry.EntryTypeClosing, entryType)
+			_, typeErr = source.GetEntryType(
+				dbscope.WithTenant(ctx, other.DBTenant()),
+				&journalentryports.GetLedgerJournalRequest{
+					TenantInfo: other, ID: closing,
+				},
+			)
+			assert.True(t, errortypes.IsNotFoundError(typeErr))
+			reopenedJournal, getErr := source.GetJournal(
+				ctx,
+				&journalentryports.GetLedgerJournalRequest{
+					TenantInfo: tenant, ID: reopened,
+				},
+			)
+			require.NoError(t, getErr)
+			assert.Equal(
+				t,
+				journalentry.EntryTypeClosing.String(),
+				reopenedJournal.ReversesEntryType,
+			)
+			assert.Equal(t, "JE-FY-CLOSE", reopenedJournal.ReversalOfNumber)
+
+			journals, listErr := source.ListJournals(
+				ctx,
+				&journalentryports.ListLedgerJournalsRequest{
+					TenantInfo: tenant, From: closeDay, Before: closeDay + 86_400,
+				},
+			)
+			require.NoError(t, listErr)
+			require.Len(t, journals, 1)
+			assert.Equal(t, undone, journals[0].ID)
+			assert.Equal(t, journalentry.EntryTypeStandard.String(), journals[0].ReversesEntryType)
+
+			net := func(includeClosing bool, days int64) map[pulid.ID]int64 {
+				t.Helper()
+				from := closeDay
+				balances, sumErr := source.SumLines(ctx, &journalentryports.SumLedgerRequest{
+					TenantInfo: tenant, From: &from, Before: closeDay + days*86_400, IncludeClosing: includeClosing,
+				})
+				require.NoError(t, sumErr)
+				out := make(map[pulid.ID]int64, len(balances))
+				for idx := range balances {
+					out[balances[idx].AccountID] += balances[idx].NetMinor()
+				}
+				return out
 			}
-			return out
-		}
-		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500}, net(false, 2),
-			"only the ordinary reversal is sent")
-		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 1),
-			"a close and its reversal cancel; the carried-forward entry would count the balance sheet twice")
-		assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 2),
-			"undoing the carried-forward entry is left out with it")
+			assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500}, net(false, 2),
+				"only the ordinary reversal is sent")
+			assert.Equal(
+				t,
+				map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0},
+				net(true, 1),
+				"a close and its reversal cancel; the carried-forward entry would count the balance sheet twice",
+			)
+			assert.Equal(t, map[pulid.ID]int64{acctA: 500, acctB: -500, acctC: 0}, net(true, 2),
+				"undoing the carried-forward entry is left out with it")
 
-		connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
-		connection, connErr := connections.GetByType(ctx, accountingsyncports.GetAccountingConnectionRequest{
-			TenantInfo:      tenant,
-			IntegrationType: integration.TypeQuickBooksOnline,
-		})
-		if errortypes.IsNotFoundError(connErr) {
-			connection, connErr = connections.Create(ctx, newConnection(tenant, userID, realm, 1_000))
-		}
-		require.NoError(t, connErr)
-		connectionID := connection.ID
-		found, candErr := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: zap.NewNop()}).
-			ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
-				TenantInfo:   tenant,
-				ConnectionID: connectionID,
-				ObjectType:   accountingsync.SyncObjectJournalEntry,
-				Operation:    accountingsync.SyncOperationCreate,
-				DatedFrom:    closeDay,
-				Timezone:     "UTC",
-				Limit:        50,
-			})
-		require.NoError(t, candErr)
-		ids := make([]pulid.ID, 0, len(found))
-		for idx := range found {
-			ids = append(ids, found[idx].ObjectID)
-		}
-		assert.Equal(t, []pulid.ID{undone}, ids)
-	})
+			connections := accountingconnectionrepository.NewConnectionRepository(
+				accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+			)
+			connection, connErr := connections.GetByType(
+				ctx,
+				accountingconnectionports.GetAccountingConnectionRequest{
+					TenantInfo:      tenant,
+					IntegrationType: integration.TypeQuickBooksOnline,
+				},
+			)
+			if errortypes.IsNotFoundError(connErr) {
+				connection, connErr = connections.Create(
+					ctx,
+					accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000),
+				)
+			}
+			require.NoError(t, connErr)
+			connectionID := connection.ID
+			found, candErr := NewSyncRecordRepository(
+				SyncRecordParams{DB: conn, Logger: zap.NewNop()},
+			).
+				ListCandidates(ctx, &accountingsyncports.ListAccountingSyncCandidatesRequest{
+					TenantInfo:   tenant,
+					ConnectionID: connectionID,
+					ObjectType:   accountingsync.SyncObjectJournalEntry,
+					Operation:    accountingsync.SyncOperationCreate,
+					DatedFrom:    closeDay,
+					Timezone:     "UTC",
+					Limit:        50,
+				})
+			require.NoError(t, candErr)
+			ids := make([]pulid.ID, 0, len(found))
+			for idx := range found {
+				ids = append(ids, found[idx].ObjectID)
+			}
+			assert.Equal(t, []pulid.ID{undone}, ids)
+		},
+	)
 }

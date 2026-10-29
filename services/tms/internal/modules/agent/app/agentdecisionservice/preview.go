@@ -9,7 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -24,7 +28,7 @@ const (
 
 // shownPreview is what a decision records of the preview its decider saw.
 type shownPreview struct {
-	preview       *agent.ProposalPreview
+	preview       *agentpreview.ProposalPreview
 	digest        string
 	reviewed      bool
 	targetVersion *int64
@@ -53,12 +57,13 @@ type shownPreview struct {
 func (s *Service) settlePreview(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
 ) (*shownPreview, error) {
 	// A person can always reject, whatever the preview has become since they
 	// read it: the digest they saw is kept when it is one, and never checked.
-	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+	if req.Decision != agentdecision.DecisionAccepted &&
+		req.Decision != agentdecision.DecisionModified {
 		if !stringutils.IsLowerHexOfLength(req.PreviewDigest, sha256HexLength) {
 			return &shownPreview{}, nil
 		}
@@ -98,9 +103,9 @@ func (s *Service) settlePreview(
 		return nil, agent.ReviewRequiredError()
 	}
 
-	previewReq := &agentports.ProposalPreviewRequest{
+	previewReq := &agentruntimeports.ProposalPreviewRequest{
 		Proposal: proposal,
-		Viewer:   &agentports.PreviewViewer{Actor: actor},
+		Viewer:   &agentruntimeports.PreviewViewer{Actor: actor},
 		Deciding: true,
 	}
 	if len(req.Modifications) > 0 {
@@ -146,7 +151,7 @@ func (s *Service) needsReview(proposal *agent.AgentProposal, modifications map[s
 	return s.executor.ReviewRequired(proposal, modifications)
 }
 
-func staleRefusal(proposal *agent.AgentProposal, preview *agent.ProposalPreview) error {
+func staleRefusal(proposal *agent.AgentProposal, preview *agentpreview.ProposalPreview) error {
 	if !preview.IsStale() {
 		return nil
 	}
@@ -155,21 +160,21 @@ func staleRefusal(proposal *agent.AgentProposal, preview *agent.ProposalPreview)
 	if preview.Staleness.Missing {
 		return fmt.Errorf(
 			"%w: %s no longer exists, so nothing was changed",
-			agent.ErrTargetChanged, record,
+			agentplan.ErrTargetChanged, record,
 		)
 	}
 
 	return fmt.Errorf(
 		"%w: %s was at version %d when this was proposed and is at version %d now, "+
 			"so nothing was changed",
-		agent.ErrTargetChanged,
+		agentplan.ErrTargetChanged,
 		record,
 		preview.Staleness.ProposedVersion,
 		preview.Staleness.CurrentVersion,
 	)
 }
 
-func targetName(proposal *agent.AgentProposal, preview *agent.ProposalPreview) string {
+func targetName(proposal *agent.AgentProposal, preview *agentpreview.ProposalPreview) string {
 	noun := "the record"
 	if resource := strings.TrimSpace(proposal.TargetResource); resource != "" {
 		noun = "the " + strings.ReplaceAll(resource, "_", " ")

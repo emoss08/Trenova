@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerinjuryservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -37,7 +38,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RecordWorkerInjury(ctx, fc.Args["input"].(gqlmodel.RecordWorkerInjuryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjury),
+				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
 			{
 				Name:       "updateWorkerInjury",
@@ -50,7 +51,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerInjury(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerInjuryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjury),
+				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
 			{
 				Name:       "deleteWorkerInjury",
@@ -75,7 +76,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").SaveOshaSummary(ctx, fc.Args["input"].(gqlmodel.SaveOSHASummaryInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary),
+				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
 			{
 				Name:       "certifyOshaSummary",
@@ -88,7 +89,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CertifyOshaSummary(ctx, fc.Args["year"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary),
+				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
 			{
 				Name:       "uncertifyOshaSummary",
@@ -101,7 +102,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UncertifyOshaSummary(ctx, fc.Args["year"].(int))
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary),
+				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
 		}},
 		{Object: "OSHAAnnualSummary", Fields: []*gqlexec.Field{
@@ -110,7 +111,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -120,7 +121,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.Year, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -130,16 +131,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHASummaryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHASummaryStatus),
+				Marshal: gqlexec.Marshal(marshalNOSHASummaryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHASummaryStatus),
 			},
 			{
 				Name:     "naicsCode",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.NAICSCode, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -149,7 +150,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.AverageEmployees, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -161,7 +162,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").TotalHoursWorked(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -170,7 +171,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "executiveName",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.ExecutiveName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -179,7 +180,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "executiveTitle",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.ExecutiveTitle, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -188,7 +189,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "executivePhone",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.ExecutivePhone, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -199,7 +200,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").CertifiedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -210,7 +211,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").CertifiedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -221,7 +222,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").PostedFrom(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -232,7 +233,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").PostedThrough(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -243,7 +244,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return gqlexec.Resolver[resolverOSHAAnnualSummary](ec, "OSHAAnnualSummary").SubmittedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -252,7 +253,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "submissionReference",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.SubmissionReference, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -261,7 +262,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -271,7 +272,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHAAnnualSummary)
+					obj := o.(*workerinjury.OSHAAnnualSummary)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -297,7 +298,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerinjuryservice.OSHALog)
 					return obj.Cases, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjuryᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjuryᚄ),
 			},
 			{
 				Name:      "totals",
@@ -308,7 +309,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerinjuryservice.OSHALog)
 					return obj.Totals, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHASummaryTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHASummaryTotals),
+				Marshal: gqlexec.Marshal(marshalNOSHASummaryTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHASummaryTotals),
 			},
 			{
 				Name:      "summary",
@@ -318,7 +319,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workerinjuryservice.OSHALog)
 					return obj.Summary, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary),
+				Marshal: gqlexec.Marshal(marshalOOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary),
 			},
 			{
 				Name:     "postFrom",
@@ -365,7 +366,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.Deaths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -375,7 +376,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.DaysAwayCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -385,7 +386,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.JobTransferCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -395,7 +396,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.OtherRecordableCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -405,7 +406,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.TotalRecordableCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -415,7 +416,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.TotalDaysAway, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -425,7 +426,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.TotalDaysRestricted, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -435,7 +436,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.InjuryCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -445,7 +446,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.SkinDisorderCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -455,7 +456,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.RespiratoryCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -465,7 +466,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.PoisoningCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -475,7 +476,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.HearingLossCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -485,7 +486,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.OtherIllnessCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -495,7 +496,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.OSHASummaryTotals)
+					obj := o.(*workerinjury.OSHASummaryTotals)
 					return obj.OpenCases, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -514,7 +515,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjuries(ctx, fc.Args["workerId"].(*string), fc.Args["caseYear"].(*int), fc.Args["recordableOnly"].(*bool), fc.Args["openOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjuryᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjuryᚄ),
 			},
 			{
 				Name:       "workerInjury",
@@ -528,7 +529,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerInjury(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjury),
+				Marshal: gqlexec.Marshal(marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury),
 			},
 			{
 				Name:       "oshaLog",
@@ -554,7 +555,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").OshaSummaries(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummaryᚄ),
+				Marshal: gqlexec.Marshal(marshalNOSHAAnnualSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummaryᚄ),
 			},
 		}},
 		{Object: "WorkerInjury", Fields: []*gqlexec.Field{
@@ -563,7 +564,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -573,7 +574,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -583,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -593,7 +594,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -603,7 +604,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.CaseNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -613,7 +614,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.CaseYear, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int16),
@@ -623,40 +624,40 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Classification, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHACaseClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHACaseClassification),
+				Marshal: gqlexec.Marshal(marshalNOSHACaseClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHACaseClassification),
 			},
 			{
 				Name:     "illnessType",
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.IllnessType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNOSHAIllnessType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAIllnessType),
+				Marshal: gqlexec.Marshal(marshalNOSHAIllnessType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAIllnessType),
 			},
 			{
 				Name:     "treatment",
 				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Treatment, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInjuryTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryTreatment),
+				Marshal: gqlexec.Marshal(marshalNInjuryTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryTreatment),
 			},
 			{
 				Name:     "status",
 				NonNull:  true,
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInjuryCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryCaseStatus),
+				Marshal: gqlexec.Marshal(marshalNInjuryCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryCaseStatus),
 			},
 			{
 				Name:       "recordable",
@@ -665,7 +666,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").Recordable(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -675,7 +676,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.OccurredAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -686,7 +687,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ReportedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -697,7 +698,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ReturnedToWorkAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -706,7 +707,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "location",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Location, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -716,7 +717,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -725,7 +726,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "bodyPart",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.BodyPart, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -734,7 +735,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "harmfulAgent",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.HarmfulAgent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -744,7 +745,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.DaysAway, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -754,7 +755,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.DaysRestricted, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -764,7 +765,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.PrivacyCase, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -776,7 +777,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").LogName(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -786,16 +787,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.ClaimStatus, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkersCompClaimStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkersCompClaimStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkersCompClaimStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkersCompClaimStatus),
 			},
 			{
 				Name:     "claimNumber",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.ClaimNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -804,7 +805,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "claimCarrier",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.ClaimCarrier, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -815,7 +816,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ClaimFiledAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -826,7 +827,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").ClaimClosedAt(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
@@ -837,7 +838,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").SafetyEventID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -848,7 +849,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return gqlexec.Resolver[resolverWorkerInjury](ec, "WorkerInjury").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -857,7 +858,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -867,7 +868,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -877,7 +878,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -887,7 +888,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -897,7 +898,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -907,7 +908,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialDocument",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerInjury)
+					obj := o.(*workerinjury.WorkerInjury)
 					return obj.Document, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
@@ -928,39 +929,39 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*worker.WorkerInjury, error)
-	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*worker.WorkerInjury, error)
+	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
+	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
 	DeleteWorkerInjury(ctx context.Context, id string) (bool, error)
-	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*worker.OSHAAnnualSummary, error)
-	CertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error)
-	UncertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error)
+	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*workerinjury.OSHAAnnualSummary, error)
+	CertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
+	UncertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
 }
 
 type resolverOSHAAnnualSummary interface {
-	TotalHoursWorked(ctx context.Context, obj *worker.OSHAAnnualSummary) (int, error)
-	CertifiedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	CertifiedByID(ctx context.Context, obj *worker.OSHAAnnualSummary) (*string, error)
-	PostedFrom(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	PostedThrough(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	SubmittedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
+	TotalHoursWorked(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (int, error)
+	CertifiedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	CertifiedByID(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*string, error)
+	PostedFrom(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	PostedThrough(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	SubmittedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 }
 
 type resolverQuery interface {
-	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*worker.WorkerInjury, error)
-	WorkerInjury(ctx context.Context, id string) (*worker.WorkerInjury, error)
+	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workerinjury.WorkerInjury, error)
+	WorkerInjury(ctx context.Context, id string) (*workerinjury.WorkerInjury, error)
 	OshaLog(ctx context.Context, year *int) (*workerinjuryservice.OSHALog, error)
-	OshaSummaries(ctx context.Context) ([]*worker.OSHAAnnualSummary, error)
+	OshaSummaries(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error)
 }
 
 type resolverWorkerInjury interface {
-	Recordable(ctx context.Context, obj *worker.WorkerInjury) (bool, error)
-	ReportedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	ReturnedToWorkAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	LogName(ctx context.Context, obj *worker.WorkerInjury) (string, error)
-	ClaimFiledAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	ClaimClosedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	SafetyEventID(ctx context.Context, obj *worker.WorkerInjury) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerInjury) (*string, error)
+	Recordable(ctx context.Context, obj *workerinjury.WorkerInjury) (bool, error)
+	ReportedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ReturnedToWorkAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	LogName(ctx context.Context, obj *workerinjury.WorkerInjury) (string, error)
+	ClaimFiledAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ClaimClosedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	SafetyEventID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
+	DocumentID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
 }
 
 var (
@@ -1168,21 +1169,21 @@ func unmarshalInputRecordWorkerInjuryInput(ctx context.Context, ec *gqlexec.Exec
 			it.Description = data
 		case "classification":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classification"))
-			data, err := unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHACaseClassification(ctx, ec, v)
+			data, err := unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHACaseClassification(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Classification = data
 		case "illnessType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("illnessType"))
-			data, err := unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAIllnessType(ctx, ec, v)
+			data, err := unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAIllnessType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.IllnessType = data
 		case "treatment":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("treatment"))
-			data, err := unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryTreatment(ctx, ec, v)
+			data, err := unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryTreatment(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1245,7 +1246,7 @@ func unmarshalInputRecordWorkerInjuryInput(ctx context.Context, ec *gqlexec.Exec
 			it.PrivacyCase = data
 		case "claimStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimStatus"))
-			data, err := unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkersCompClaimStatus(ctx, ec, v)
+			data, err := unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkersCompClaimStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1431,28 +1432,28 @@ func unmarshalInputUpdateWorkerInjuryInput(ctx context.Context, ec *gqlexec.Exec
 			it.InjuryID = data
 		case "classification":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classification"))
-			data, err := unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHACaseClassification(ctx, ec, v)
+			data, err := unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHACaseClassification(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Classification = data
 		case "illnessType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("illnessType"))
-			data, err := unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAIllnessType(ctx, ec, v)
+			data, err := unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAIllnessType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.IllnessType = data
 		case "treatment":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("treatment"))
-			data, err := unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryTreatment(ctx, ec, v)
+			data, err := unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryTreatment(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
 			it.Treatment = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := unmarshalOInjuryCaseStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryCaseStatus(ctx, ec, v)
+			data, err := unmarshalOInjuryCaseStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryCaseStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1529,7 +1530,7 @@ func unmarshalInputUpdateWorkerInjuryInput(ctx context.Context, ec *gqlexec.Exec
 			it.PrivacyCase = data
 		case "claimStatus":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("claimStatus"))
-			data, err := unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkersCompClaimStatus(ctx, ec, v)
+			data, err := unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkersCompClaimStatus(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1639,21 +1640,21 @@ func unmarshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*stri
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOInjuryCaseStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryCaseStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.InjuryCaseStatus, error) {
+func unmarshalOInjuryCaseStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryCaseStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*workerinjury.InjuryCaseStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.InjuryCaseStatus(tmp)
+	res := workerinjury.InjuryCaseStatus(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryTreatment(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.InjuryTreatment, error) {
+func unmarshalOInjuryTreatment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryTreatment(ctx context.Context, ec *gqlexec.Exec, v any) (*workerinjury.InjuryTreatment, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.InjuryTreatment(tmp)
+	res := workerinjury.InjuryTreatment(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1665,21 +1666,21 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHACaseClassification(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.OSHACaseClassification, error) {
+func unmarshalOOSHACaseClassification2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHACaseClassification(ctx context.Context, ec *gqlexec.Exec, v any) (*workerinjury.OSHACaseClassification, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.OSHACaseClassification(tmp)
+	res := workerinjury.OSHACaseClassification(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAIllnessType(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.OSHAIllnessType, error) {
+func unmarshalOOSHAIllnessType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAIllnessType(ctx context.Context, ec *gqlexec.Exec, v any) (*workerinjury.OSHAIllnessType, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.OSHAIllnessType(tmp)
+	res := workerinjury.OSHAIllnessType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1699,12 +1700,12 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkersCompClaimStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.WorkersCompClaimStatus, error) {
+func unmarshalOWorkersCompClaimStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkersCompClaimStatus(ctx context.Context, ec *gqlexec.Exec, v any) (*workerinjury.WorkersCompClaimStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.WorkersCompClaimStatus(tmp)
+	res := workerinjury.WorkersCompClaimStatus(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1724,7 +1725,7 @@ func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx conte
 	return res
 }
 
-func marshalNInjuryCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.InjuryCaseStatus) graphql.Marshaler {
+func marshalNInjuryCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryCaseStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.InjuryCaseStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1732,7 +1733,7 @@ func marshalNInjuryCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodu
 	return res
 }
 
-func marshalNInjuryTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐInjuryTreatment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.InjuryTreatment) graphql.Marshaler {
+func marshalNInjuryTreatment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐInjuryTreatment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.InjuryTreatment) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1772,15 +1773,15 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNOSHAAnnualSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.OSHAAnnualSummary) graphql.Marshaler {
-	return gqlexec.List[*worker.OSHAAnnualSummary]{
-		Elem:        marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary,
+func marshalNOSHAAnnualSummary2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummaryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerinjury.OSHAAnnualSummary) graphql.Marshaler {
+	return gqlexec.List[*workerinjury.OSHAAnnualSummary]{
+		Elem:        marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.OSHAAnnualSummary) graphql.Marshaler {
+func marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerinjury.OSHAAnnualSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1788,7 +1789,7 @@ func marshalNOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return ec.MarshalType(ctx, sel, "OSHAAnnualSummary", v)
 }
 
-func marshalNOSHACaseClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHACaseClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.OSHACaseClassification) graphql.Marshaler {
+func marshalNOSHACaseClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHACaseClassification(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.OSHACaseClassification) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1796,7 +1797,7 @@ func marshalNOSHACaseClassification2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNOSHAIllnessType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAIllnessType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.OSHAIllnessType) graphql.Marshaler {
+func marshalNOSHAIllnessType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAIllnessType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.OSHAIllnessType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1812,7 +1813,7 @@ func marshalNOSHALog2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋ
 	return ec.MarshalType(ctx, sel, "OSHALog", v)
 }
 
-func marshalNOSHASummaryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHASummaryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.OSHASummaryStatus) graphql.Marshaler {
+func marshalNOSHASummaryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHASummaryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.OSHASummaryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1820,7 +1821,7 @@ func marshalNOSHASummaryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 	return res
 }
 
-func marshalNOSHASummaryTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHASummaryTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.OSHASummaryTotals) graphql.Marshaler {
+func marshalNOSHASummaryTotals2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHASummaryTotals(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.OSHASummaryTotals) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "OSHASummaryTotals", &v)
 }
 
@@ -1840,15 +1841,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjuryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerInjury) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerInjury]{
-		Elem:        marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjury,
+func marshalNWorkerInjury2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjuryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerinjury.WorkerInjury) graphql.Marshaler {
+	return gqlexec.List[*workerinjury.WorkerInjury]{
+		Elem:        marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerInjury(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerInjury) graphql.Marshaler {
+func marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkerInjury(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerinjury.WorkerInjury) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1856,7 +1857,7 @@ func marshalNWorkerInjury2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "WorkerInjury", v)
 }
 
-func marshalNWorkersCompClaimStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkersCompClaimStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.WorkersCompClaimStatus) graphql.Marshaler {
+func marshalNWorkersCompClaimStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐWorkersCompClaimStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerinjury.WorkersCompClaimStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1880,7 +1881,7 @@ func marshalOID2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalOOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐOSHAAnnualSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.OSHAAnnualSummary) graphql.Marshaler {
+func marshalOOSHAAnnualSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerinjuryᚐOSHAAnnualSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerinjury.OSHAAnnualSummary) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

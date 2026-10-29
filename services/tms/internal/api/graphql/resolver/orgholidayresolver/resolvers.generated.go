@@ -3,12 +3,12 @@
 package orgholidayresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	orgholidayservice "github.com/emoss08/trenova/internal/modules/workforce/app/orgholidayservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	OrgHolidayService *orgholidayservice.Service
 }
 

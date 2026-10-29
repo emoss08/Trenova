@@ -9,9 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -36,7 +36,7 @@ type Params struct {
 	AccountingRepo   tenantports.AccountingControlRepository
 	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
 	AuditService     auditports.AuditService
-	Realtime         agentports.RealtimeService `optional:"true"`
+	Realtime         realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -46,7 +46,7 @@ type Service struct {
 	controls tenantports.AccountingControlRepository
 	periods  fiscalperiodports.FiscalPeriodRepository
 	audit    auditports.AuditService
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	now      func() int64
 }
 
@@ -425,7 +425,7 @@ func (s *Service) Summary(
 		AwaitingApproval:     counts.AwaitingApproval,
 		ReadyToPost:          counts.ReadyToPost,
 		OldestAccountingDate: counts.OldestAccountingDate,
-		PostingMode:          tenant.JournalPostingModeAutomatic,
+		PostingMode:          accountingcontrol.JournalPostingModeAutomatic,
 	}
 
 	control, err := s.controls.GetByOrgID(ctx, tenantInfo.OrgID)

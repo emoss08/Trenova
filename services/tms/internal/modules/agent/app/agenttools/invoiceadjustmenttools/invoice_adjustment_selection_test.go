@@ -1,0 +1,127 @@
+package invoiceadjustmenttools
+
+import (
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func savedDraftAdjuster() (*fakeAdjuster, *invoiceadjustment.InvoiceAdjustment) {
+	inv := adjustedInvoice()
+	detail := &invoiceadjustment.InvoiceAdjustment{
+		ID:                pulid.MustNew("iadj_"),
+		OriginalInvoiceID: inv.ID,
+		Kind:              invoiceadjustment.KindCreditOnly,
+		Status:            invoiceadjustment.StatusDraft,
+		Reason:            "Customer disputes the lumper fee",
+	}
+
+	return &fakeAdjuster{
+		guard:  &agenttoolstest.WriteGuard{},
+		detail: detail,
+		draft: &invoiceadjustmentports.InvoiceAdjustmentDraftPreview{
+			Before:  detail,
+			After:   detail,
+			Invoice: inv,
+			Figures: adjustmentFigures(false),
+		},
+	}, detail
+}
+
+/*
+A model that read a draft off its invoice sent the draft's id and the
+invoice's id together, and the rewrite was refused for naming both. They
+name the same thing, so the rewrite is taken.
+*/
+func TestSaveInvoiceAdjustmentDraft_TakesTheDraftsOwnInvoiceBesideIt(t *testing.T) {
+	t.Parallel()
+
+	adjuster, detail := savedDraftAdjuster()
+	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
+	params := agenttoolstest.AgentParamsFor(map[string]any{
+		ParamAdjustmentID:         detail.ID.String(),
+		toolparams.ParamInvoiceID: detail.OriginalInvoiceID.String(),
+		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		toolparams.ParamReason:    "Customer disputes the lumper fee",
+	})
+
+	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.NoError(t, err)
+	require.NotNil(t, adjuster.saved)
+	assert.Equal(t, detail.ID, adjuster.saved.AdjustmentID)
+}
+
+func TestSaveInvoiceAdjustmentDraft_ARefusalForADraftOnAnotherInvoiceShowsBothCalls(t *testing.T) {
+	t.Parallel()
+
+	adjuster, detail := savedDraftAdjuster()
+	tool := NewSaveInvoiceAdjustmentDraftTool(adjuster, adjuster)
+	other := pulid.MustNew("inv_")
+	params := agenttoolstest.AgentParamsFor(map[string]any{
+		ParamAdjustmentID:         detail.ID.String(),
+		toolparams.ParamInvoiceID: other.String(),
+		paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+		toolparams.ParamReason:    "Customer disputes the lumper fee",
+	})
+
+	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "send adjustmentId without invoiceId")
+	assert.Contains(t, err.Error(), "send invoiceId without adjustmentId")
+	assert.Contains(t, err.Error(), other.String())
+
+	_, err = tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	require.Error(t, err)
+	assert.Nil(t, adjuster.saved, "a draft is never rewritten under another invoice's name")
+
+	require.ErrorIs(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.AgentParamsFor(map[string]any{
+				paramAdjustmentKind: string(invoiceadjustment.KindCreditOnly),
+			}),
+		),
+		errNoDraftTarget,
+	)
+}
+
+func TestSubmitInvoiceAdjustment_ARefusalForBothSelectionsShowsBothCalls(t *testing.T) {
+	t.Parallel()
+
+	adjuster := &fakeAdjuster{figures: adjustmentFigures(false)}
+	tool := NewSubmitInvoiceAdjustmentTool(adjuster, adjuster)
+
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			ParamDraftAdjustmentID: pulid.MustNew("iadj_").String(),
+			toolparams.ParamAdjustments: []any{map[string]any{
+				toolparams.ParamInvoiceID: pulid.MustNew("inv_").String(),
+				paramAdjustmentKind:       string(invoiceadjustment.KindCreditOnly),
+				toolparams.ParamReason:    "x",
+			}},
+		}),
+	)
+	require.ErrorIs(t, err, errDraftAndAdjustments)
+	assert.Contains(t, err.Error(), "send draftAdjustmentId without adjustments")
+	assert.Contains(t, err.Error(), "send adjustments without draftAdjustmentId")
+
+	require.ErrorIs(
+		t,
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{}),
+		),
+		errDraftOrAdjustments,
+	)
+}

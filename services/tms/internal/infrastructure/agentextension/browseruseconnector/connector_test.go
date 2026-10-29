@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/shopspring/decimal"
@@ -35,8 +36,8 @@ func taskRequest(settings map[string]string) *agentextensionports.PortalTaskRequ
 		StartURL:       "https://portal.acme.com/login",
 		AllowedDomains: []string{"portal.acme.com"},
 		Secrets: map[string]string{
-			agentextension.PortalSecretUsername: "dispatch@trenova.test",
-			agentextension.PortalSecretPassword: "s3cret-pass",
+			extensionportal.PortalSecretUsername: "dispatch@trenova.test",
+			extensionportal.PortalSecretPassword: "s3cret-pass",
 		},
 		ProfileID: "profile-1",
 		Metadata:  map[string]string{"trenovaPortalRun": "aprn_1"},
@@ -311,7 +312,9 @@ func TestLiveViewIsTheOpenBrowsersAddress(t *testing.T) {
 
 	connector := serve(t, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/sessions/session-1", r.URL.Path)
-		_, _ = w.Write([]byte(`{"id": "session-1", "liveUrl": " https://live.browser-use.com/s/1 "}`))
+		_, _ = w.Write(
+			[]byte(`{"id": "session-1", "liveUrl": " https://live.browser-use.com/s/1 "}`),
+		)
 	})
 
 	live, err := connector.LiveView(t.Context(),

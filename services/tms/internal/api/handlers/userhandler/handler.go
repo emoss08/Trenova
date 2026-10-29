@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
@@ -30,7 +29,6 @@ type Params struct {
 	Service              *userservice.Service
 	RoleService          *roleservice.Service
 	PasswordReset        *passwordresetservice.Service
-	Config               *config.Config
 	PermissionEngine     permissionports.PermissionEngine
 	MFA                  sessionports.MFAService
 	ErrorHandler         *helpers.ErrorHandler
@@ -41,7 +39,6 @@ type Handler struct {
 	service       *userservice.Service
 	roleService   *roleservice.Service
 	passwordReset *passwordresetservice.Service
-	cfg           *config.Config
 	permEngine    permissionports.PermissionEngine
 	mfa           sessionports.MFAService
 	eh            *helpers.ErrorHandler
@@ -53,7 +50,6 @@ func New(p Params) *Handler {
 		service:       p.Service,
 		roleService:   p.RoleService,
 		passwordReset: p.PasswordReset,
-		cfg:           p.Config,
 		permEngine:    p.PermissionEngine,
 		mfa:           p.MFA,
 		eh:            p.ErrorHandler,
@@ -330,7 +326,7 @@ func (h *Handler) selectOptions(c *gin.Context) {
 // @Tags Users
 // @Produce json
 // @Param userID path string true "User ID"
-// @Success 200 {array} permission.UserRoleAssignment
+// @Success 200 {array} rbac.UserRoleAssignment
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail

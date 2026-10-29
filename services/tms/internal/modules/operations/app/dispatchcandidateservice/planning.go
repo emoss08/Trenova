@@ -1,13 +1,13 @@
 package dispatchcandidateservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ScoreCandidateRequest struct {
-	Driver   *shipmentports.BoardDriver
-	Move     *shipmentports.BoardMove
+	Driver   *dispatchboardports.BoardDriver
+	Move     *dispatchboardports.BoardMove
 	Snapshot *FleetSnapshot
 }
 
@@ -30,7 +30,7 @@ func (s *Service) ScoreCandidate(req *ScoreCandidateRequest) *CandidateScore {
 
 type CommitPlannedMoveRequest struct {
 	Snapshot *FleetSnapshot
-	Move     *shipmentports.BoardMove
+	Move     *dispatchboardports.BoardMove
 	Score    *CandidateScore
 }
 
@@ -44,7 +44,7 @@ func CommitPlannedMove(req *CommitPlannedMoveRequest) {
 
 	if req.Snapshot.CommitmentsByWorker == nil {
 		req.Snapshot.CommitmentsByWorker = make(
-			map[pulid.ID][]*shipmentports.WorkerCommitment,
+			map[pulid.ID][]*dispatchboardports.WorkerCommitment,
 			1,
 		)
 	}
@@ -54,7 +54,7 @@ func CommitPlannedMove(req *CommitPlannedMoveRequest) {
 
 	req.Snapshot.CommitmentsByWorker[workerID] = append(
 		req.Snapshot.CommitmentsByWorker[workerID],
-		&shipmentports.WorkerCommitment{
+		&dispatchboardports.WorkerCommitment{
 			WorkerID:       workerID,
 			MoveID:         move.MoveID,
 			ShipmentID:     move.ShipmentID,
@@ -72,7 +72,7 @@ func CommitPlannedMove(req *CommitPlannedMoveRequest) {
 	)
 }
 
-func PlannedCompletion(move *shipmentports.BoardMove, score *CandidateScore) int64 {
+func PlannedCompletion(move *dispatchboardports.BoardMove, score *CandidateScore) int64 {
 	if move == nil || score == nil {
 		return 0
 	}

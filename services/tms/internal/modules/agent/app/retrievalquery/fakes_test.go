@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/pgvector/pgvector-go"
@@ -27,7 +27,7 @@ func activeSettings(tenant pagination.TenantInfo) *airetrieval.Settings {
 }
 
 type fakeRepository struct {
-	agentports.AIRetrievalRepository
+	retrievalports.AIRetrievalRepository
 
 	mu            sync.Mutex
 	availability  airetrieval.Availability
@@ -35,9 +35,9 @@ type fakeRepository struct {
 	settings      *airetrieval.Settings
 	settingsErr   error
 	stored        map[string]*airetrieval.CatalogEmbedding
-	getRequests   []agentports.GetCatalogEmbeddingsRequest
-	putRequests   []agentports.PutCatalogEmbeddingsRequest
-	pruneRequests []agentports.PruneCatalogEmbeddingsRequest
+	getRequests   []retrievalports.GetCatalogEmbeddingsRequest
+	putRequests   []retrievalports.PutCatalogEmbeddingsRequest
+	pruneRequests []retrievalports.PruneCatalogEmbeddingsRequest
 }
 
 func newFakeRepository(settings *airetrieval.Settings) *fakeRepository {
@@ -65,7 +65,7 @@ func (r *fakeRepository) GetSettings(
 
 func (r *fakeRepository) GetCatalogEmbeddings(
 	_ context.Context,
-	req agentports.GetCatalogEmbeddingsRequest,
+	req retrievalports.GetCatalogEmbeddingsRequest,
 ) ([]*airetrieval.CatalogEmbedding, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -84,7 +84,7 @@ func (r *fakeRepository) GetCatalogEmbeddings(
 
 func (r *fakeRepository) PutCatalogEmbeddings(
 	_ context.Context,
-	req agentports.PutCatalogEmbeddingsRequest,
+	req retrievalports.PutCatalogEmbeddingsRequest,
 ) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -107,7 +107,7 @@ func (r *fakeRepository) PutCatalogEmbeddings(
 
 func (r *fakeRepository) PruneCatalogEmbeddings(
 	_ context.Context,
-	req agentports.PruneCatalogEmbeddingsRequest,
+	req retrievalports.PruneCatalogEmbeddingsRequest,
 ) (int, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -7,9 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -260,14 +263,14 @@ func (r *stubRepo) ListReadItemIDs(
 }
 
 type stubRunRepo struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	runs map[pulid.ID]*agent.AgentRun
 }
 
 func (r *stubRunRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	run, ok := r.runs[req.ID]
 	if !ok {
@@ -302,22 +305,22 @@ func (d *stubDefinitions) List(
 }
 
 type stubEvents struct {
-	published []agentports.AgentEvent
+	published []agenteventports.AgentEvent
 }
 
-func (e *stubEvents) Publish(_ context.Context, event agentports.AgentEvent) {
-	e.published = append(e.published, event)
+func (e *stubEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	e.published = append(e.published, *event)
 }
 
 type stubRuns struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 
-	last *agentports.StartAgentRunForDefinitionRequest
+	last *agentruntimeports.StartAgentRunForDefinitionRequest
 }
 
 func (r *stubRuns) StartForDefinition(
 	_ context.Context,
-	req *agentports.StartAgentRunForDefinitionRequest,
+	req *agentruntimeports.StartAgentRunForDefinitionRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	r.last = req
@@ -546,7 +549,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100)
 	in.SubjectType = agent.SubjectShipment
 	in.SubjectID = subject
-	in.EventKind = agent.EventServiceFailureDetected
+	in.EventKind = agenttrigger.EventServiceFailureDetected
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
 	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 
@@ -572,7 +575,7 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	assert.Empty(t, events.published)
 	require.Len(t, result.Candidates, 1, "a chat agent is not a candidate to run on a record")
 	assert.Equal(t, "Load monitor", result.Candidates[0].Name)
-	assert.Equal(t, agent.EventServiceFailureDetected, definitions.lastTrigger.EventKind)
+	assert.Equal(t, agenttrigger.EventServiceFailureDetected, definitions.lastTrigger.EventKind)
 
 	// A subscriber: the event is published to it.
 	definitions.subscribers = []*agentdefinition.Definition{{Name: "Service desk"}}
@@ -604,22 +607,22 @@ func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		event    agent.EventKind
+		event    agenttrigger.EventKind
 		source   watchtower.SourceKind
-		template agentdefinition.Template
+		template agenttemplate.Template
 	}{
-		{agent.EventShipmentCreated, watchtower.SourceServiceFailure,
-			agentdefinition.TemplateLoadEntryCheck},
-		{agent.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
-			agentdefinition.TemplateDispatchAssignment},
-		{agent.EventServiceFailureDetected, watchtower.SourceServiceFailure,
-			agentdefinition.TemplateServiceFailureDesk},
-		{agent.EventInsightDetected, watchtower.SourceInsight,
-			agentdefinition.TemplateInsightAnalyst},
-		{agent.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
-			agentdefinition.TemplateEDIDesk},
-		{agent.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
-			agentdefinition.TemplateBillingException},
+		{agenttrigger.EventShipmentCreated, watchtower.SourceServiceFailure,
+			agenttemplate.TemplateLoadEntryCheck},
+		{agenttrigger.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
+			agenttemplate.TemplateDispatchAssignment},
+		{agenttrigger.EventServiceFailureDetected, watchtower.SourceServiceFailure,
+			agenttemplate.TemplateServiceFailureDesk},
+		{agenttrigger.EventInsightDetected, watchtower.SourceInsight,
+			agenttemplate.TemplateInsightAnalyst},
+		{agenttrigger.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
+			agenttemplate.TemplateEDIDesk},
+		{agenttrigger.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
+			agenttemplate.TemplateBillingException},
 	}
 
 	for _, tc := range cases {

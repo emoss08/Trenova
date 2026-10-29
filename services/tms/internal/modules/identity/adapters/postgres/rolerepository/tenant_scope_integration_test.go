@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,9 +22,9 @@ import (
 )
 
 type roleTenantFixture struct {
-	role       *permission.Role
-	permission *permission.ResourcePermission
-	assignment *permission.UserRoleAssignment
+	role       *rbac.Role
+	permission *rbac.ResourcePermission
+	assignment *rbac.UserRoleAssignment
 }
 
 func seedRoleTenantFixture(
@@ -35,27 +36,27 @@ func seedRoleTenantFixture(
 	t.Helper()
 
 	ctx = tenant.Ctx(ctx)
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Dispatcher " + tenant.Organization.ID.String(),
 		MaxSensitivity: permission.SensitivityInternal,
 	}
-	require.NoError(t, permissiondb.Roles.Create(ctx, db, role))
+	require.NoError(t, rbacdb.Roles.Create(ctx, db, role))
 
-	rp := &permission.ResourcePermission{
+	rp := &rbac.ResourcePermission{
 		RoleID:     role.ID,
 		Resource:   permission.ResourceShipment.String(),
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  permission.DataScopeOrganization,
 	}
-	require.NoError(t, permissiondb.ResourcePermissions.Create(ctx, db, rp))
+	require.NoError(t, rbacdb.ResourcePermissions.Create(ctx, db, rp))
 
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		UserID:         tenant.User.ID,
 		OrganizationID: tenant.Organization.ID,
 		RoleID:         role.ID,
 		AssignedAt:     timeutils.NowUnix(),
 	}
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(ctx, db, assignment))
+	require.NoError(t, rbacdb.UserRoleAssignments.Create(ctx, db, assignment))
 
 	return roleTenantFixture{role: role, permission: rp, assignment: assignment}
 }
@@ -71,8 +72,8 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	ctx = tenantA.Ctx(ctx)
-	ura := permissiondb.UserRoleAssignments
-	rps := permissiondb.ResourcePermissions
+	ura := rbacdb.UserRoleAssignments
+	rps := rbacdb.ResourcePermissions
 
 	t.Run("an assignment cannot be deleted from another organization", func(t *testing.T) {
 		_, err := repo.DeleteAssignment(ctx, permissionports.DeleteRoleAssignmentRequest{
@@ -82,7 +83,9 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, errortypes.IsNotFoundError(err))
 
-		count, err := ura.AllTenants().Where(ura.ID.Eq(fixtureB.assignment.ID)).Count(systemCtx(ctx), db)
+		count, err := ura.AllTenants().
+			Where(ura.ID.Eq(fixtureB.assignment.ID)).
+			Count(systemCtx(ctx), db)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), count)
 	})
@@ -101,7 +104,7 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 	})
 
 	t.Run("a permission cannot be rewritten through another tenant's role", func(t *testing.T) {
-		err := repo.UpdateResourcePermission(ctx, &permission.ResourcePermission{
+		err := repo.UpdateResourcePermission(ctx, &rbac.ResourcePermission{
 			ID:         fixtureB.permission.ID,
 			RoleID:     fixtureA.role.ID,
 			Resource:   permission.ResourceShipment.String(),
@@ -116,6 +119,17 @@ func TestRoleRepository_DeletesAndUpdatesStayInsideTheTenant(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, fixtureB.role.ID, stored.RoleID)
 		assert.Equal(t, []permission.Operation{permission.OpRead}, stored.Operations)
+	})
+
+	t.Run("a batch read returns only the organization's roles", func(t *testing.T) {
+		roles, err := repo.GetByIDs(ctx, permissionports.GetRolesByIDsRequest{
+			TenantInfo: tenantA.Info(),
+			RoleIDs:    []pulid.ID{fixtureB.role.ID, fixtureA.role.ID, pulid.MustNew("rol_")},
+		})
+		require.NoError(t, err)
+		require.Len(t, roles, 1)
+		assert.Equal(t, fixtureA.role.ID, roles[0].ID)
+		assert.Equal(t, fixtureA.role.Name, roles[0].Name)
 	})
 
 	t.Run("the owning organization can still delete its own rows", func(t *testing.T) {

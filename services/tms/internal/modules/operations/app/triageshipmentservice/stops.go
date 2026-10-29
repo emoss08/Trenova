@@ -6,8 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +22,14 @@ const (
 	arrivalSourceUnknown = "Not recorded"
 )
 
-var arrivalSources = map[detention.EvidenceSource]string{
-	detention.EvidenceSourceTelematics: "ELD",
-	detention.EvidenceSourceGeofence:   "Geofence",
-	detention.EvidenceSourceDriverApp:  "Driver app",
-	detention.EvidenceSourceEDI:        "EDI",
-	detention.EvidenceSourceDocument:   "Document",
-	detention.EvidenceSourceManual:     "A person",
-	detention.EvidenceSourceSystem:     "Trenova",
+var arrivalSources = map[detentionevidence.EvidenceSource]string{
+	detentionevidence.EvidenceSourceTelematics: "ELD",
+	detentionevidence.EvidenceSourceGeofence:   "Geofence",
+	detentionevidence.EvidenceSourceDriverApp:  "Driver app",
+	detentionevidence.EvidenceSourceEDI:        "EDI",
+	detentionevidence.EvidenceSourceDocument:   "Document",
+	detentionevidence.EvidenceSourceManual:     "A person",
+	detentionevidence.EvidenceSourceSystem:     "Trenova",
 }
 
 func (s *Service) disputedOccurrence(
@@ -105,7 +108,7 @@ func stopTimesOf(occurrence *detention.DetentionOccurrence) *inboundmessageports
 	}
 
 	for _, evidence := range occurrence.Evidence {
-		if evidence.Kind != detention.EvidenceKindArrival {
+		if evidence.Kind != detentionevidence.EvidenceKindArrival {
 			continue
 		}
 		if label, ok := arrivalSources[evidence.Source]; ok {
@@ -120,31 +123,31 @@ func stopTimesOf(occurrence *detention.DetentionOccurrence) *inboundmessageports
 	return out
 }
 
-func paysWhenLate(snapshot *detention.PolicySnapshot) bool {
+func paysWhenLate(snapshot *detentionpolicy.PolicySnapshot) bool {
 	if snapshot == nil {
 		return true
 	}
 
-	return snapshot.LateArrivalRule != detention.LateArrivalRuleForfeit
+	return snapshot.LateArrivalRule != detentionpolicy.LateArrivalRuleForfeit
 }
 
 func (s *Service) SettleDetention(
 	ctx context.Context,
-	req *inboundmessageports.SettleTriageDetentionRequest,
-) (*inboundmessageports.SettledTriageDetention, error) {
+	req *triageworkports.SettleTriageDetentionRequest,
+) (*triageworkports.SettledTriageDetention, error) {
 	occurrence, err := s.disputedOccurrence(ctx, req.TenantInfo, req.ShipmentID, false)
 	if err != nil {
 		return nil, err
 	}
 	if occurrence == nil {
-		return &inboundmessageports.SettledTriageDetention{}, nil
+		return &triageworkports.SettledTriageDetention{}, nil
 	}
 
 	switch req.Decision {
 	case inboundmessage.StopsDecisionWaive:
 		return s.waive(ctx, req, occurrence)
 	case inboundmessage.StopsDecisionStandBy:
-		settled, disputeErr := s.detention.Dispute(ctx, detentionservice.DisputeParams{
+		settled, disputeErr := s.detention.Dispute(ctx, &detentionreview.DisputeParams{
 			OccurrenceID: occurrence.ID,
 			TenantInfo:   req.TenantInfo,
 			Note:         req.Note,
@@ -156,16 +159,16 @@ func (s *Service) SettleDetention(
 
 		return settledOf(settled.BillableAmount, settled.Currency), nil
 	default:
-		return &inboundmessageports.SettledTriageDetention{}, nil
+		return &triageworkports.SettledTriageDetention{}, nil
 	}
 }
 
 func (s *Service) waive(
 	ctx context.Context,
-	req *inboundmessageports.SettleTriageDetentionRequest,
+	req *triageworkports.SettleTriageDetentionRequest,
 	occurrence *detention.DetentionOccurrence,
-) (*inboundmessageports.SettledTriageDetention, error) {
-	params := detentionservice.WaiveParams{
+) (*triageworkports.SettledTriageDetention, error) {
+	params := detentionreview.WaiveParams{
 		OccurrenceID: occurrence.ID,
 		TenantInfo:   req.TenantInfo,
 		Reason:       detention.WaiverReasonOther,
@@ -176,7 +179,7 @@ func (s *Service) waive(
 		return settledOf(occurrence.WaivedAmount, occurrence.Currency), nil
 	}
 	if s.credits == nil {
-		return waivedOf(s.detention.Waive(ctx, params))
+		return waivedOf(s.detention.Waive(ctx, &params))
 	}
 	if occurrence.AdditionalChargeID == nil {
 		return waivedOf(s.detention.WaiveUninvoiced(ctx, &params))
@@ -213,7 +216,7 @@ func (s *Service) waive(
 func waivedOf(
 	waived *detention.DetentionOccurrence,
 	err error,
-) (*inboundmessageports.SettledTriageDetention, error) {
+) (*triageworkports.SettledTriageDetention, error) {
 	if err != nil {
 		return nil, err
 	}
@@ -224,8 +227,8 @@ func waivedOf(
 func settledOf(
 	amount decimal.Decimal,
 	currency string,
-) *inboundmessageports.SettledTriageDetention {
-	return &inboundmessageports.SettledTriageDetention{
+) *triageworkports.SettledTriageDetention {
+	return &triageworkports.SettledTriageDetention{
 		Amount:   amount.StringFixed(amountPlaces),
 		Currency: currency,
 		Settled:  true,

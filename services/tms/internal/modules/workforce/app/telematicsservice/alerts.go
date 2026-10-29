@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
@@ -201,7 +201,7 @@ func (s *Service) notifyDriverOfHOSAlert(
 		Priority:   alert.Priority,
 		// The rule composed this wording from the driver's own logs, so the
 		// template wraps it rather than replacing it.
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			AlertTitle:   alert.DriverTitle,
 			AlertMessage: alert.DriverMessage,
 		},

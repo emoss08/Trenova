@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -13,21 +13,24 @@ import (
 func TestGetByIDQueryChecksTheOwnerWhenGiven(t *testing.T) {
 	t.Parallel()
 
-	owned, args := keeltest.Render(t, getByIDQuery(&agentports.GetAssistantTurnRequest{
+	owned, args := keeltest.Render(t, getByIDQuery(&assistantturnports.GetAssistantTurnRequest{
 		ID:     pulid.ID("atrn_1"),
 		UserID: pulid.ID("usr_1"),
 	}))
 	assert.Contains(t, owned, `"user_id" = `)
 	assert.Contains(t, args, "usr_1")
 
-	anyone, _ := keeltest.Render(t, getByIDQuery(&agentports.GetAssistantTurnRequest{ID: pulid.ID("atrn_1")}))
+	anyone, _ := keeltest.Render(
+		t,
+		getByIDQuery(&assistantturnports.GetAssistantTurnRequest{ID: pulid.ID("atrn_1")}),
+	)
 	assert.NotContains(t, anyone, `"user_id" = `)
 }
 
 func TestActiveQueryReadsALiveTurn(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, activeQuery(&agentports.ActiveAssistantTurnRequest{
+	sql, args := keeltest.Render(t, activeQuery(&assistantturnports.ActiveAssistantTurnRequest{
 		ThreadID: pulid.ID("ath_1"),
 		UserID:   pulid.ID("usr_1"),
 	}))
@@ -38,7 +41,7 @@ func TestActiveQueryReadsALiveTurn(t *testing.T) {
 func TestLiveTurnQueriesJoinTheThreadOfTheSamePerson(t *testing.T) {
 	t.Parallel()
 
-	req := agentports.ListLiveAssistantTurnsRequest{
+	req := assistantturnports.ListLiveAssistantTurnsRequest{
 		UserID:         pulid.ID("usr_1"),
 		ExcludeOrigins: []conversation.ThreadOrigin{conversation.ThreadOrigin("Schedule")},
 	}
@@ -54,9 +57,12 @@ func TestLiveTurnQueriesJoinTheThreadOfTheSamePerson(t *testing.T) {
 func TestLiveThreadTitlesReadAnUnnamedConversationAsEmpty(t *testing.T) {
 	t.Parallel()
 
-	titles, _ := keeltest.Render(t, liveThreadTitlesQuery(&agentports.ListLiveAssistantTurnsRequest{
-		UserID: pulid.ID("usr_1"),
-	}))
-	assert.Contains(t, titles, `COALESCE(`)
+	titles, _ := keeltest.Render(
+		t,
+		liveThreadTitlesQuery(&assistantturnports.ListLiveAssistantTurnsRequest{
+			UserID: pulid.ID("usr_1"),
+		}),
+	)
+	assert.Contains(t, titles, `coalesce(`)
 	assert.Contains(t, titles, `"title"`)
 }

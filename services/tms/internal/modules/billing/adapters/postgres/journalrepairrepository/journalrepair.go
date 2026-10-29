@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
@@ -112,7 +112,7 @@ func (r *repository) ListUnjournaledAdjustmentMemos(
 
 			journaled, err := existingJournalBatches(ctx, db, &existingJournalRequest{
 				ObjectType: "Invoice",
-				Event:      tenant.JournalSourceEventCreditMemoPosted,
+				Event:      accountingcontrol.JournalSourceEventCreditMemoPosted,
 				ObjectIDs:  memoIDs,
 			})
 			if err != nil {
@@ -181,7 +181,7 @@ func (r *repository) ListUnjournaledDriverPayments(
 			}
 			batches, err := existingJournalBatches(ctx, db, &existingJournalRequest{
 				ObjectType: "DriverSettlement",
-				Event:      tenant.JournalSourceEventDriverSettlementPaid,
+				Event:      accountingcontrol.JournalSourceEventDriverSettlementPaid,
 				ObjectIDs:  settlementIDs,
 			})
 			if err != nil {
@@ -206,7 +206,7 @@ func (r *repository) ListUnjournaledDriverPayments(
 
 type existingJournalRequest struct {
 	ObjectType string
-	Event      tenant.JournalSourceEventType
+	Event      accountingcontrol.JournalSourceEventType
 	ObjectIDs  []pulid.ID
 }
 

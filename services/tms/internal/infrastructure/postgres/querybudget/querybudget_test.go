@@ -19,7 +19,7 @@ func newBudgets(t *testing.T, maxRepeats int) (*Budgets, *observer.ObservedLogs)
 	cfg := &config.Config{}
 	cfg.Database.Budget.MaxRepeats = maxRepeats
 
-	return New(Params{Config: cfg, Logger: zap.New(core)}), logs
+	return New(Params{DatabaseConfig: &cfg.Database, Logger: zap.New(core)}), logs
 }
 
 func TestNewDefaultsToTenRepeats(t *testing.T) {

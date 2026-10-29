@@ -3,9 +3,12 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,18 +21,18 @@ func TestRun_HandsAToolTheRunsTimezoneWhereverItIsAsked(t *testing.T) {
 	tool := &validatingActionTool{
 		stubActionToolAlias: actionTool("report_update", agent.TierAutoExecute, nil),
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
-		textTurn("Done."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_update", map[string]any{"definitionId": "rd_1"}),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{tool}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{tool}}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: autoDefinition("report_update"),
-		Actor:      testActor(),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.AutoDefinition("report_update"),
+		Actor:      runtimetest.Actor(),
 		Input:      "update",
-		Context:    agentdefinition.RuntimeContext{Timezone: "America/Chicago"},
+		Context:    agentturn.RuntimeContext{Timezone: "America/Chicago"},
 	})
 	require.NoError(t, err)
 
@@ -42,26 +45,29 @@ func TestRun_TheFilingBaselineReadsTheRunsTimezone(t *testing.T) {
 
 	shipmentID := pulid.MustNew("shp_")
 	tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("shipment_place_hold", map[string]any{"shipmentId": shipmentID.String()}),
-		textTurn("I have proposed a hold."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn(
+			"shipment_place_hold",
+			map[string]any{"shipmentId": shipmentID.String()},
+		),
+		runtimetest.TextTurn("I have proposed a hold."),
 	}}
-	previews := &recordingPreviews{target: &agentports.ProposalTarget{
+	previews := &recordingPreviews{target: &agentruntimeports.ProposalTarget{
 		Resource: permission.ResourceShipment,
 		ID:       shipmentID,
 		Version:  7,
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.versions = stubVersions{version: 7}
-	rt.previews = previews
+	rewire(rt, func(p *Params) { p.Versions = stubVersions{version: 7} })
+	rewire(rt, func(p *Params) { p.Previews = previews })
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_place_hold"),
-		Actor:      testActor(),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_place_hold"),
+		Actor:      runtimetest.Actor(),
 		Input:      "hold it",
-		Context:    agentdefinition.RuntimeContext{Timezone: "America/Denver"},
+		Context:    agentturn.RuntimeContext{Timezone: "America/Denver"},
 	})
 	require.NoError(t, err)
 

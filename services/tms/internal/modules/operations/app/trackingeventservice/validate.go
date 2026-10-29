@@ -1,8 +1,8 @@
 package trackingeventservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,7 +22,7 @@ func validateObserved(
 	if params.Source.Interactive() || !params.Source.IsValid() {
 		multiErr.Add("source", errortypes.ErrInvalid, "Source must be Carrier, Telematics or EDI")
 	}
-	if params.Kind != shipment.VisitArrival && params.Kind != shipment.VisitDeparture {
+	if params.Kind != shipmentvocab.VisitArrival && params.Kind != shipmentvocab.VisitDeparture {
 		multiErr.Add("kind", errortypes.ErrInvalid, "Kind must be Arrival or Departure")
 	}
 	addEventTime(multiErr, "eventAt", &params.EventAt)
@@ -52,7 +52,7 @@ func validateReported(
 	}
 	if params.DepartedAt != nil {
 		switch {
-		case params.Action != shipmentports.StopActualActionArrive:
+		case params.Action != shipmentmoveports.StopActualActionArrive:
 			multiErr.Add(
 				"departedAt",
 				errortypes.ErrInvalid,
@@ -97,7 +97,7 @@ func addEventTime(multiErr *errortypes.MultiError, field string, at *int64) {
 	switch {
 	case *at <= 0:
 		multiErr.Add(field, errortypes.ErrInvalid, "Occurred at must be a valid timestamp")
-	case *at > timeutils.NowUnix()+shipmentports.StopActualClockSkewSeconds:
+	case *at > timeutils.NowUnix()+shipmentmoveports.StopActualClockSkewSeconds:
 		multiErr.Add(field, errortypes.ErrInvalid, "Occurred at cannot be in the future")
 	}
 }

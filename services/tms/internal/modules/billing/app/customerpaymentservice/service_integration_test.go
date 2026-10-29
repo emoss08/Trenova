@@ -7,30 +7,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
-	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -79,9 +77,9 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.DefaultRevenueAccountID = billingtest.GLAccountID(t, ctx, db, "4000")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -202,12 +200,13 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	assert.Equal(t, int64(1), applicationCount)
 
 	je := journalentrydb.JournalEntries
-	entry, err := je.Pick(je.ReferenceType, je.TotalDebit, je.TotalCredit).
-		Where(je.ReferenceID.Eq(payment.ID.String())).
-		Order(je.ID.Asc()).
-		First(ctx, db)
-	require.NoError(t, err)
-	assert.Equal(t, tenant.JournalSourceEventCustomerPaymentPosted.String(), entry.ReferenceType)
+	entry, err := je.Pick(je.TotalDebit, je.TotalCredit).
+		Where(
+			je.ReferenceType.Eq(accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()),
+			je.ReferenceID.Eq(payment.ID.String()),
+		).
+		One(ctx, db)
+	require.NoError(t, err, "posting the payment journals it once")
 	assert.Equal(t, int64(10000), entry.TotalDebit)
 	assert.Equal(t, int64(10000), entry.TotalCredit)
 
@@ -251,9 +250,9 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -370,7 +369,10 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	je := journalentrydb.JournalEntries
 	jel := journalentrydb.JournalEntryLines
 	lineCount, err := jel.Where(jel.JournalEntryID.InQuery(
-		je.Pick(je.ID).Where(je.ReferenceID.Eq(payment.ID.String())).Limit(1),
+		je.Pick(je.ID).Where(
+			je.ReferenceType.Eq(accountingcontrol.JournalSourceEventCustomerPaymentPosted.String()),
+			je.ReferenceID.Eq(payment.ID.String()),
+		).Limit(1),
 	)).Count(ctx, db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(3), lineCount)
@@ -419,9 +421,9 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -652,9 +654,9 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -798,7 +800,7 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 
 	je := journalentrydb.JournalEntries
 	reversalEntryCount, err := je.Where(
-		je.ReferenceType.Eq(tenant.JournalSourceEventCustomerPaymentReversed.String()),
+		je.ReferenceType.Eq(accountingcontrol.JournalSourceEventCustomerPaymentReversed.String()),
 		je.ReferenceID.Eq(payment.ID.String()),
 	).Count(ctx, db)
 	require.NoError(t, err)
@@ -851,9 +853,9 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.DefaultWriteOffAccountID = billingtest.GLAccountID(t, ctx, db, "6940")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 
@@ -1012,9 +1014,9 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
 	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
 	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
 

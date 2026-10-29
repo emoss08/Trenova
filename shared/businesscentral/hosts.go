@@ -8,7 +8,7 @@ const (
 	tokenPath        = "/organizations/oauth2/v2.0/token"
 	environmentsPath = "/environments/v1.2"
 	apiVersionRoot   = "v2.0"
-	apiSegment       = "api/v2.0"
+	APISegment       = "api/v2.0"
 )
 
 func AllowedHosts() []string {

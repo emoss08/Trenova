@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -21,11 +21,11 @@ var catalogAxes = map[string]int{
 	"edited_tool v2": 4,
 }
 
-func catalogItems() []agentports.EmbeddingCatalogItem {
-	return []agentports.EmbeddingCatalogItem{
-		agentports.NewEmbeddingCatalogItem("worker_list", "list workers"),
-		agentports.NewEmbeddingCatalogItem("worker_list_time_off", "list time off"),
-		agentports.NewEmbeddingCatalogItem("send_reminder", "send reminder"),
+func catalogItems() []retrievalports.EmbeddingCatalogItem {
+	return []retrievalports.EmbeddingCatalogItem{
+		retrievalports.NewEmbeddingCatalogItem("worker_list", "list workers"),
+		retrievalports.NewEmbeddingCatalogItem("worker_list_time_off", "list time off"),
+		retrievalports.NewEmbeddingCatalogItem("send_reminder", "send reminder"),
 	}
 }
 
@@ -38,8 +38,8 @@ func textEmbeddings() *fakeEmbeddings {
 	}}
 }
 
-func catalogQuery() agentports.QueryVector {
-	return agentports.QueryVector{
+func catalogQuery() retrievalports.QueryVector {
+	return retrievalports.QueryVector{
 		Available:  true,
 		Vector:     blend(map[int]float32{1: 0.8, 0: 0.6}),
 		ModelKey:   testModelKey,
@@ -56,9 +56,9 @@ func newCatalogIndex(repo *fakeRepository, embeddings aiusageports.EmbeddingServ
 }
 
 func similarityRequest(
-	items []agentports.EmbeddingCatalogItem,
-) *agentports.CatalogSimilarityRequest {
-	return &agentports.CatalogSimilarityRequest{
+	items []retrievalports.EmbeddingCatalogItem,
+) *retrievalports.CatalogSimilarityRequest {
+	return &retrievalports.CatalogSimilarityRequest{
 		TenantInfo: testTenant(),
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Items:      items,
@@ -134,7 +134,7 @@ func TestSimilarities_EmbedsOnlyAnEditedItem(t *testing.T) {
 	require.NoError(t, err)
 
 	edited := catalogItems()
-	edited[2] = agentports.NewEmbeddingCatalogItem("send_reminder", "edited_tool v2")
+	edited[2] = retrievalports.NewEmbeddingCatalogItem("send_reminder", "edited_tool v2")
 	result, err := index.Similarities(t.Context(), similarityRequest(edited))
 	require.NoError(t, err)
 	require.True(t, result.Available)
@@ -214,20 +214,20 @@ func TestSimilarities_RefusesAMalformedRequest(t *testing.T) {
 	index := newCatalogIndex(newFakeRepository(nil), textEmbeddings())
 
 	unusable := similarityRequest(catalogItems())
-	unusable.Query = agentports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed)
+	unusable.Query = retrievalports.UnavailableQueryVector(airetrieval.UnavailableReasonNotIndexed)
 	_, err := index.Similarities(t.Context(), unusable)
-	require.ErrorIs(t, err, agentports.ErrCatalogQueryNotUsable)
+	require.ErrorIs(t, err, retrievalports.ErrCatalogQueryNotUsable)
 
 	empty := similarityRequest(nil)
 	_, err = index.Similarities(t.Context(), empty)
-	require.ErrorIs(t, err, agentports.ErrCatalogRequestInvalid)
+	require.ErrorIs(t, err, retrievalports.ErrCatalogRequestInvalid)
 
 	repeated := similarityRequest(append(catalogItems(), catalogItems()[0]))
 	_, err = index.Similarities(t.Context(), repeated)
-	require.ErrorIs(t, err, agentports.ErrCatalogItemKeyRepeated)
+	require.ErrorIs(t, err, retrievalports.ErrCatalogItemKeyRepeated)
 
 	zero := similarityRequest(catalogItems())
 	zero.Query.Vector = make([]float32, airetrieval.Dimensions768)
 	_, err = index.Similarities(t.Context(), zero)
-	require.ErrorIs(t, err, agentports.ErrCatalogQueryNotUsable)
+	require.ErrorIs(t, err, retrievalports.ErrCatalogQueryNotUsable)
 }

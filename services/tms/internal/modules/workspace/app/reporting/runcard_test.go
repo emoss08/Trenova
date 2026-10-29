@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportingtest"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -309,7 +310,7 @@ func TestRunCard_ARunStillGoingHasNoResultToCheckOrCompare(t *testing.T) {
 	run.Sample = nil
 	runs := &cardRuns{run: run}
 	svc := cardService(t, runs)
-	engine, ok := svc.engine.(*fakeEngine)
+	engine, ok := svc.engine.(*reportingtest.Engine)
 	require.True(t, ok)
 
 	card, err := svc.GetRunCard(t.Context(), rowsRequest())
@@ -317,7 +318,7 @@ func TestRunCard_ARunStillGoingHasNoResultToCheckOrCompare(t *testing.T) {
 
 	assert.Nil(t, card.Sample)
 	assert.Nil(t, card.Previous)
-	assert.Empty(t, engine.recorded("compile"), "no access check runs without a result")
+	assert.Empty(t, engine.Recorded("compile"), "no access check runs without a result")
 	assert.Nil(t, runs.asked)
 	assert.Len(t, card.Parameters, 2)
 }

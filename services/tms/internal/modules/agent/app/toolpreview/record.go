@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 var ErrNoRecord = errors.New("the record to preview was not loaded")
@@ -39,8 +40,8 @@ func Update[T any](
 	before *T,
 	mutate func(*T) error,
 	opts ...Option,
-) (*agent.RecordChange, error) {
-	return mutated(agent.PreviewOperationUpdate, rec, before, mutate, opts)
+) (*agentpreview.RecordChange, error) {
+	return mutated(agentpreview.PreviewOperationUpdate, rec, before, mutate, opts)
 }
 
 // Archive is Update for a write that retires the record rather than editing
@@ -50,17 +51,17 @@ func Archive[T any](
 	before *T,
 	mutate func(*T) error,
 	opts ...Option,
-) (*agent.RecordChange, error) {
-	return mutated(agent.PreviewOperationArchive, rec, before, mutate, opts)
+) (*agentpreview.RecordChange, error) {
+	return mutated(agentpreview.PreviewOperationArchive, rec, before, mutate, opts)
 }
 
 func mutated[T any](
-	operation agent.PreviewOperation,
+	operation agentpreview.PreviewOperation,
 	rec Record,
 	before *T,
 	mutate func(*T) error,
 	opts []Option,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	if before == nil {
 		return nil, ErrNoRecord
 	}
@@ -86,38 +87,42 @@ func mutated[T any](
 
 // Changed previews the difference between two states of one record the tool
 // computed itself.
-func Changed[T any](rec Record, before, after *T, opts ...Option) (*agent.RecordChange, error) {
+func Changed[T any](
+	rec Record,
+	before, after *T,
+	opts ...Option,
+) (*agentpreview.RecordChange, error) {
 	if before == nil || after == nil {
 		return nil, ErrNoRecord
 	}
 
-	return build(agent.PreviewOperationUpdate, &rec, before, after, newOptions(opts))
+	return build(agentpreview.PreviewOperationUpdate, &rec, before, after, newOptions(opts))
 }
 
 // Create previews a record the write would make. Every value it would hold
 // is shown, or only the paths named with Only.
-func Create[T any](rec Record, created *T, opts ...Option) (*agent.RecordChange, error) {
+func Create[T any](rec Record, created *T, opts ...Option) (*agentpreview.RecordChange, error) {
 	if created == nil {
 		return nil, ErrNoRecord
 	}
 
-	return build(agent.PreviewOperationCreate, &rec, nil, created, newOptions(opts))
+	return build(agentpreview.PreviewOperationCreate, &rec, nil, created, newOptions(opts))
 }
 
 // Delete previews a record the write would remove, with the values it holds
 // now when before is given.
-func Delete[T any](rec Record, before *T, opts ...Option) (*agent.RecordChange, error) {
+func Delete[T any](rec Record, before *T, opts ...Option) (*agentpreview.RecordChange, error) {
 	if before == nil {
-		change := newChange(agent.PreviewOperationDelete, &rec)
+		change := newChange(agentpreview.PreviewOperationDelete, &rec)
 
 		return change, nil
 	}
 
-	return build(agent.PreviewOperationDelete, &rec, before, nil, newOptions(opts))
+	return build(agentpreview.PreviewOperationDelete, &rec, before, nil, newOptions(opts))
 }
 
-func newChange(operation agent.PreviewOperation, rec *Record) *agent.RecordChange {
-	return &agent.RecordChange{
+func newChange(operation agentpreview.PreviewOperation, rec *Record) *agentpreview.RecordChange {
+	return &agentpreview.RecordChange{
 		Resource:  rec.Resource,
 		EntityID:  rec.ID,
 		Label:     strings.TrimSpace(rec.Label),
@@ -127,11 +132,11 @@ func newChange(operation agent.PreviewOperation, rec *Record) *agent.RecordChang
 }
 
 func build(
-	operation agent.PreviewOperation,
+	operation agentpreview.PreviewOperation,
 	rec *Record,
 	before, after any,
 	o *options,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	beforeMap, beforeOrder, err := decode(before)
 	if err != nil {
 		return nil, fmt.Errorf("read the record before the change: %w", err)
@@ -189,8 +194,8 @@ func (o *options) fields(
 	diff map[string]jsonutils.FieldChange,
 	beforeMap, afterMap map[string]any,
 	order []string,
-) []agent.PreviewFieldChange {
-	fields := make([]agent.PreviewFieldChange, 0, len(diff))
+) []agentpreview.PreviewFieldChange {
+	fields := make([]agentpreview.PreviewFieldChange, 0, len(diff))
 	for path, entry := range diff {
 		field, keep := o.field(resource, path, &entry, beforeMap, afterMap)
 		if keep {
@@ -202,7 +207,7 @@ func (o *options) fields(
 	for i, key := range order {
 		position[key] = i
 	}
-	slices.SortFunc(fields, func(a, b agent.PreviewFieldChange) int {
+	slices.SortFunc(fields, func(a, b agentpreview.PreviewFieldChange) int {
 		ap, aok := position[topLevel(a.Path)]
 		bp, bok := position[topLevel(b.Path)]
 		switch {
@@ -226,23 +231,23 @@ func (o *options) field(
 	path string,
 	entry *jsonutils.FieldChange,
 	beforeMap, afterMap map[string]any,
-) (agent.PreviewFieldChange, bool) {
+) (agentpreview.PreviewFieldChange, bool) {
 	if matches(o.ignore, path) || (len(o.only) > 0 && !matches(o.only, path)) {
-		return agent.PreviewFieldChange{}, false
+		return agentpreview.PreviewFieldChange{}, false
 	}
 
 	top := topLevel(path)
 	explicit := o.explicit(path)
 	if !explicit && o.hidden(path, beforeMap[top], afterMap[top]) {
-		return agent.PreviewFieldChange{}, false
+		return agentpreview.PreviewFieldChange{}, false
 	}
 
 	sensitivity := fieldsensitivity.Level(o.registry, resource, top)
 	if sensitivity == permission.SensitivityConfidential {
-		return agent.PreviewFieldChange{}, false
+		return agentpreview.PreviewFieldChange{}, false
 	}
 
-	field := agent.PreviewFieldChange{
+	field := agentpreview.PreviewFieldChange{
 		Path:        path,
 		Sensitivity: sensitivity,
 		Volatile:    matches(o.volatile, path),
@@ -260,7 +265,7 @@ func (o *options) field(
 	displayType, shown := o.classify(path, entry.From, entry.To)
 	if !shown {
 		if !explicit {
-			return agent.PreviewFieldChange{}, false
+			return agentpreview.PreviewFieldChange{}, false
 		}
 		displayType = assistantartifact.DisplayText
 	}
@@ -369,7 +374,7 @@ func camelPath(path string) string {
 			builder.WriteString(segment)
 			continue
 		}
-		builder.WriteString(stringutils.CapitalizeFirst(segment))
+		builder.WriteString(textcase.CapitalizeFirst(segment))
 	}
 
 	return builder.String()
@@ -386,7 +391,7 @@ func projected(displayType assistantartifact.DisplayType, value any) any {
 	return nil
 }
 
-func refValue(resource permission.Resource, value any) (any, *agent.PreviewRef) {
+func refValue(resource permission.Resource, value any) (any, *agentpreview.PreviewRef) {
 	text, ok := value.(string)
 	if !ok {
 		return nil, nil
@@ -401,5 +406,5 @@ func refValue(resource permission.Resource, value any) (any, *agent.PreviewRef) 
 		return nil, nil
 	}
 
-	return text, &agent.PreviewRef{Resource: resource, ID: id}
+	return text, &agentpreview.PreviewRef{Resource: resource, ID: id}
 }

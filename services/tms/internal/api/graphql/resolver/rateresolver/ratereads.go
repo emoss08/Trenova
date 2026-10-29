@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/ratingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,7 +34,7 @@ func (r *RateAgreementResolver) firstLanes(
 		return nil, err
 	}
 
-	return loaders.RateAgreementLanes(ctx, obj.ID, first)
+	return ratingloaders.RateAgreementLanes(ctx, obj.ID, first)
 }
 
 func (r *RateAgreementResolver) laneCount(
@@ -49,11 +49,11 @@ func (r *RateAgreementResolver) laneCount(
 		return rateagreementports.LaneCount{}, err
 	}
 
-	return loaders.RateAgreementLaneCount(ctx, obj.ID)
+	return ratingloaders.RateAgreementLaneCount(ctx, obj.ID)
 }
 
 type cellPageRequest struct {
-	key    ratematrix.VersionKey
+	key    ratematrixversion.VersionKey
 	offset *int
 	limit  *int
 }
@@ -74,7 +74,7 @@ func (d *Deps) matrixCellPage(
 	if req.limit != nil {
 		size = min(max(*req.limit, 1), maxMatrixCellPage)
 	}
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 
 	page, err := d.RateMatrixService.ListCells(ctx, &ratematrixports.ListRateMatrixCellsRequest{
 		TenantInfo:    tenant,

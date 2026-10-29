@@ -9,11 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentroster"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,16 +51,22 @@ func (f *factsRepo) ProviderFailures(
 }
 
 type providerRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	enabled []*aiprovider.Provider
 	off     []*aiprovider.Provider
 }
 
-func (p *providerRepo) ListEnabled(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (p *providerRepo) ListEnabled(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	return p.enabled, nil
 }
 
-func (p *providerRepo) ListOrdered(context.Context, pagination.TenantInfo) ([]*aiprovider.Provider, error) {
+func (p *providerRepo) ListOrdered(
+	context.Context,
+	pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
 	all := make([]*aiprovider.Provider, 0, len(p.enabled)+len(p.off))
 	for _, provider := range append(append([]*aiprovider.Provider{}, p.enabled...), p.off...) {
 		all = append(all, provider.Redacted())
@@ -85,8 +93,11 @@ type controlRepo struct {
 	paused bool
 }
 
-func (c *controlRepo) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
-	return &tenant.AgentControl{ShadowMode: c.paused}, nil
+func (c *controlRepo) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentcontrol.AgentControl, error) {
+	return &agentcontrol.AgentControl{ShadowMode: c.paused}, nil
 }
 
 type memoryCache struct {
@@ -132,7 +143,11 @@ func (c *memoryCache) Set(
 	return nil
 }
 
-func (c *memoryCache) ClaimNarration(context.Context, *aicontrolsummaryports.AIControlSummaryKey, int) (bool, error) {
+func (c *memoryCache) ClaimNarration(
+	context.Context,
+	*aicontrolsummaryports.AIControlSummaryKey,
+	int,
+) (bool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.claims++
@@ -140,17 +155,17 @@ func (c *memoryCache) ClaimNarration(context.Context, *aicontrolsummaryports.AIC
 }
 
 type completion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	reply string
 	calls int
 }
 
 func (c *completion) CompleteStructured(
 	context.Context,
-	*agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	*llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	c.calls++
-	return &agentports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
+	return &llmports.StructuredCompletionResult{Text: c.reply, ModelIdentifier: "test"}, nil
 }
 
 func newService(cache *memoryCache, model *completion, enabled ...*aiprovider.Provider) *Service {
@@ -177,7 +192,7 @@ func chatProvider() *aiprovider.Provider {
 		ID:                  pulid.MustNew("aiprv_"),
 		Name:                "Primary",
 		Enabled:             true,
-		Tasks:               aiprovider.AllTasks(),
+		Tasks:               aitask.AllTasks(),
 		Trusted:             true,
 		Kind:                aiprovider.KindOpenAIChat,
 	}
@@ -271,7 +286,10 @@ func TestSummaryPastTheDaysAllowanceStaysPlain(t *testing.T) {
 func TestSummaryRefusesAnUnknownTab(t *testing.T) {
 	t.Parallel()
 
-	_, err := newService(newMemoryCache(), nil).Summary(t.Context(), &aicontrolsummaryports.AIControlSummaryRequest{Tab: "Nope"})
+	_, err := newService(
+		newMemoryCache(),
+		nil,
+	).Summary(t.Context(), &aicontrolsummaryports.AIControlSummaryRequest{Tab: "Nope"})
 
 	require.Error(t, err)
 }
@@ -297,7 +315,9 @@ func TestFactsNameOnlyEnabledProvidersAsFailing(t *testing.T) {
 func TestAcceptRefusesALinkThePlainSentenceDoesNotHave(t *testing.T) {
 	t.Parallel()
 
-	plain := []aicontrolsummary.Segment{{Text: "4 proposals", Target: aicontrolsummary.TargetWatchtower}}
+	plain := []aicontrolsummary.Segment{
+		{Text: "4 proposals", Target: aicontrolsummary.TargetWatchtower},
+	}
 	facts := &aicontrolsummary.Facts{Agents: aicontrolsummary.AgentCounts{Waiting: 4}}
 
 	_, ok := Accept([]aicontrolsummary.Segment{
@@ -313,16 +333,21 @@ func TestFactsCountEveryProviderTheWeekAndAKeyStillMissing(t *testing.T) {
 
 	on := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Local", Kind: aiprovider.KindOpenAIChat, Enabled: true,
-		Tasks: []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks: []aitask.Task{aitask.TaskGeneral},
 	}
 	keyed := &aiprovider.Provider{
-		ID: pulid.MustNew("aiprv_"), Name: "OpenAI", Kind: aiprovider.KindOpenAIResponses, APIKey: "sealed",
+		ID: pulid.MustNew(
+			"aiprv_",
+		), Name: "OpenAI", Kind: aiprovider.KindOpenAIResponses, APIKey: "sealed",
 	}
 	keyless := &aiprovider.Provider{
 		ID: pulid.MustNew("aiprv_"), Name: "Anthropic", Kind: aiprovider.KindAnthropicMessages,
 	}
 	svc := newService(newMemoryCache(), nil, on)
-	svc.providers = &providerRepo{enabled: []*aiprovider.Provider{on}, off: []*aiprovider.Provider{keyed, keyless}}
+	svc.providers = &providerRepo{
+		enabled: []*aiprovider.Provider{on},
+		off:     []*aiprovider.Provider{keyed, keyless},
+	}
 	usage := &usageRepo{calls: 1284}
 	svc.usage = usage
 

@@ -14,6 +14,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
+	"github.com/emoss08/trenova/shared/xeroref"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,9 +125,9 @@ func TestNewRequiresTenantAndToken(t *testing.T) {
 	t.Parallel()
 
 	_, err := xero.New(" ", testAccessToken)
-	require.ErrorIs(t, err, xero.ErrTenantIDRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrTenantIDRequired)
 	_, err = xero.New(testTenant, "")
-	require.ErrorIs(t, err, xero.ErrAccessTokenRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrAccessTokenRequired)
 
 	client, err := xero.New(" "+testTenant+" ", testAccessToken)
 	require.NoError(t, err)
@@ -186,7 +188,7 @@ func TestAccountsSendIfModifiedSinceAndClassifyControlAccounts(t *testing.T) {
 		_, _ = w.Write(fixture(t, "accounts.json"))
 	})
 
-	accounts, err := client.Accounts(t.Context(), &since)
+	accounts, err := xeroref.Accounts(t.Context(), client, &since)
 	require.NoError(t, err)
 	require.Len(t, accounts, 4)
 
@@ -215,7 +217,7 @@ func TestAccountsWithoutModifiedSinceSendNoHeader(t *testing.T) {
 		_, _ = w.Write(fixture(t, "accounts.json"))
 	})
 
-	accounts, err := client.Accounts(t.Context(), nil)
+	accounts, err := xeroref.Accounts(t.Context(), client, nil)
 	require.NoError(t, err)
 	assert.Len(t, accounts, 4)
 }
@@ -228,7 +230,7 @@ func TestNotModifiedIsAnEmptyResult(t *testing.T) {
 	})
 
 	since := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
-	items, err := client.Items(t.Context(), &since)
+	items, err := xeroref.Items(t.Context(), client, &since)
 	require.NoError(t, err)
 	assert.Empty(t, items)
 }
@@ -241,7 +243,7 @@ func TestItemsReadSalesDetails(t *testing.T) {
 		_, _ = w.Write(fixture(t, "items.json"))
 	})
 
-	items, err := client.Items(t.Context(), nil)
+	items, err := xeroref.Items(t.Context(), client, nil)
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 	assert.Equal(t, "LINEHAUL", items[0].Code)
@@ -263,7 +265,7 @@ func TestCreateItemPutsASoldItem(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_item.json"))
 	})
 
-	item, err := client.CreateItem(t.Context(), testKey, xero.ItemInput{
+	item, err := xeroref.CreateItem(t.Context(), client, testKey, xeroref.ItemInput{
 		Code:             " DETENTION ",
 		Name:             "Detention",
 		Description:      "Detention time",
@@ -286,28 +288,43 @@ func TestCreateItemValidatesBeforeCallingXero(t *testing.T) {
 	calls := 0
 	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) { calls++ })
 
-	_, err := client.CreateItem(t.Context(), testKey, xero.ItemInput{Name: "Detention"})
-	require.ErrorIs(t, err, xero.ErrItemCodeInvalid)
-	_, err = client.CreateItem(t.Context(), testKey, xero.ItemInput{
+	_, err := xeroref.CreateItem(t.Context(), client, testKey, xeroref.ItemInput{Name: "Detention"})
+	require.ErrorIs(t, err, xeroerrors.ErrItemCodeInvalid)
+	_, err = xeroref.CreateItem(t.Context(), client, testKey, xeroref.ItemInput{
 		Code: "ABCDEFGHIJKLMNOPQRSTUVWXYZ012345",
 		Name: "Too long a code",
 	})
-	require.ErrorIs(t, err, xero.ErrItemCodeInvalid)
-	_, err = client.CreateItem(t.Context(), testKey, xero.ItemInput{
+	require.ErrorIs(t, err, xeroerrors.ErrItemCodeInvalid)
+	_, err = xeroref.CreateItem(t.Context(), client, testKey, xeroref.ItemInput{
 		Code: "DET",
 		Name: "A name that runs well past the fifty characters Xero allows",
 	})
-	require.ErrorIs(t, err, xero.ErrItemNameInvalid)
-	_, err = client.CreateItem(t.Context(), "", xero.ItemInput{Code: "DET", Name: "Detention"})
-	require.ErrorIs(t, err, xero.ErrIdempotencyKey)
+	require.ErrorIs(t, err, xeroerrors.ErrItemNameInvalid)
+	_, err = xeroref.CreateItem(
+		t.Context(),
+		client,
+		"",
+		xeroref.ItemInput{Code: "DET", Name: "Detention"},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrIdempotencyKey)
 	long := make([]byte, xero.MaxIdempotencyKeyLength+1)
 	for idx := range long {
 		long[idx] = 'k'
 	}
-	_, err = client.CreateItem(t.Context(), string(long), xero.ItemInput{Code: "DET", Name: "Detention"})
-	require.ErrorIs(t, err, xero.ErrIdempotencyKey)
-	_, err = client.CreateItem(t.Context(), "key\r\nX-Evil: 1", xero.ItemInput{Code: "DET", Name: "Detention"})
-	require.ErrorIs(t, err, xero.ErrIdempotencyKey)
+	_, err = xeroref.CreateItem(
+		t.Context(),
+		client,
+		string(long),
+		xeroref.ItemInput{Code: "DET", Name: "Detention"},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrIdempotencyKey)
+	_, err = xeroref.CreateItem(
+		t.Context(),
+		client,
+		"key\r\nX-Evil: 1",
+		xeroref.ItemInput{Code: "DET", Name: "Detention"},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrIdempotencyKey)
 	assert.Zero(t, calls, "nothing reaches Xero")
 }
 
@@ -325,7 +342,7 @@ func TestContactsPageThroughEverythingIncludingArchived(t *testing.T) {
 		_, _ = w.Write(fixture(t, "contacts.json"))
 	})
 
-	page, err := client.Contacts(t.Context(), 1, &since)
+	page, err := xeroref.Contacts(t.Context(), client, 1, &since)
 	require.NoError(t, err)
 	assert.True(t, page.More, "page 1 of 2")
 	require.Len(t, page.Contacts, 2)
@@ -357,7 +374,7 @@ func TestContactsPaginationKeyIsReadInEitherCase(t *testing.T) {
 			`","Name":"Globex"}],"Pagination":{"page":2,"pageSize":1000,"pageCount":2,"itemCount":1001}}`))
 	})
 
-	page, err := client.Contacts(t.Context(), 2, nil)
+	page, err := xeroref.Contacts(t.Context(), client, 2, nil)
 	require.NoError(t, err)
 	assert.False(t, page.More, "the last page")
 	require.Len(t, page.Contacts, 1)
@@ -370,12 +387,12 @@ func TestContactsWithoutPaginationUseAFullPageAsMore(t *testing.T) {
 		_, _ = w.Write([]byte(`{"Contacts":[{"ContactID":"` + testContact + `","Name":"Globex"}]}`))
 	})
 
-	page, err := client.Contacts(t.Context(), 1, nil)
+	page, err := xeroref.Contacts(t.Context(), client, 1, nil)
 	require.NoError(t, err)
 	assert.False(t, page.More)
 
-	_, err = client.Contacts(t.Context(), 0, nil)
-	require.ErrorIs(t, err, xero.ErrInvalidPage)
+	_, err = xeroref.Contacts(t.Context(), client, 0, nil)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidPage)
 }
 
 func TestCreateContactPutsTheContact(t *testing.T) {
@@ -388,12 +405,12 @@ func TestCreateContactPutsTheContact(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_contact.json"))
 	})
 
-	contact, err := client.CreateContact(t.Context(), testKey, xero.ContactInput{
+	contact, err := xeroref.CreateContact(t.Context(), client, testKey, xeroref.ContactInput{
 		Name:          " Globex Shipping ",
 		ContactNumber: "CUST-1001",
 		EmailAddress:  "ap@globex.example",
 		TaxNumber:     "12-3456789",
-		Addresses: []xero.Address{{
+		Addresses: []xeroref.Address{{
 			AddressType:  "pobox",
 			AddressLine1: "PO Box 42",
 			City:         "Cypress Creek",
@@ -430,19 +447,31 @@ func TestUpdateContactPostsToTheContact(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_contact.json"))
 	})
 
-	contact, err := client.UpdateContact(t.Context(), testKey, testContact, xero.ContactInput{
-		Name: "Globex Shipping",
-	})
+	contact, err := xeroref.UpdateContact(
+		t.Context(),
+		client,
+		testKey,
+		testContact,
+		xeroref.ContactInput{
+			Name: "Globex Shipping",
+		},
+	)
 	require.NoError(t, err)
 	sent := firstOf(t, body, "Contacts")
 	assert.Equal(t, testContact, sent["ContactID"])
 	assert.NotContains(t, sent, "Addresses")
 	assert.Equal(t, "Globex Shipping", contact.Name)
 
-	_, err = client.UpdateContact(t.Context(), testKey, "not-a-guid", xero.ContactInput{Name: "X"})
-	require.ErrorIs(t, err, xero.ErrInvalidID)
-	_, err = client.CreateContact(t.Context(), testKey, xero.ContactInput{Name: " "})
-	require.ErrorIs(t, err, xero.ErrContactNameInvalid)
+	_, err = xeroref.UpdateContact(
+		t.Context(),
+		client,
+		testKey,
+		"not-a-guid",
+		xeroref.ContactInput{Name: "X"},
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrInvalidID)
+	_, err = xeroref.CreateContact(t.Context(), client, testKey, xeroref.ContactInput{Name: " "})
+	require.ErrorIs(t, err, xeroerrors.ErrContactNameInvalid)
 }
 
 func TestDuplicateContactNameIsADuplicate(t *testing.T) {
@@ -453,11 +482,16 @@ func TestDuplicateContactNameIsADuplicate(t *testing.T) {
 		_, _ = w.Write(fixture(t, "error_duplicate_contact.json"))
 	})
 
-	_, err := client.CreateContact(t.Context(), testKey, xero.ContactInput{Name: "Globex Shipping"})
+	_, err := xeroref.CreateContact(
+		t.Context(),
+		client,
+		testKey,
+		xeroref.ContactInput{Name: "Globex Shipping"},
+	)
 	require.Error(t, err)
-	assert.True(t, xero.IsValidation(err))
-	assert.True(t, xero.IsDuplicateNumber(err))
-	assert.False(t, xero.IsLockDate(err))
+	assert.True(t, xeroerrors.IsValidation(err))
+	assert.True(t, xeroerrors.IsDuplicateNumber(err))
+	assert.False(t, xeroerrors.IsLockDate(err))
 }
 
 func TestLimiterBucketIsPerTenant(t *testing.T) {
@@ -493,7 +527,12 @@ func TestCustomHTTPClientStillCarriesIdempotencyKey(t *testing.T) {
 		xero.WithTimeout(5*time.Second),
 	)
 	require.NoError(t, err)
-	_, err = client.CreateItem(t.Context(), testKey, xero.ItemInput{Code: "DET", Name: "Detention"})
+	_, err = xeroref.CreateItem(
+		t.Context(),
+		client,
+		testKey,
+		xeroref.ItemInput{Code: "DET", Name: "Detention"},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testKey, got)
 }
@@ -532,7 +571,7 @@ func TestParseDate(t *testing.T) {
 
 	for _, bad := range []string{"", "yesterday", "/Date(abc)/", "/Date(123+00)/", "/Date()/"} {
 		_, err = xero.ParseDate(bad)
-		require.ErrorIs(t, err, xero.ErrInvalidDate, bad)
+		require.ErrorIs(t, err, xeroerrors.ErrInvalidDate, bad)
 	}
 }
 
@@ -543,6 +582,6 @@ func TestUnreadableDateFailsTheDecode(t *testing.T) {
 		_, _ = w.Write([]byte(`{"Accounts":[{"AccountID":"a","UpdatedDateUTC":"not a date"}]}`))
 	})
 
-	_, err := client.Accounts(t.Context(), nil)
+	_, err := xeroref.Accounts(t.Context(), client, nil)
 	require.Error(t, err)
 }

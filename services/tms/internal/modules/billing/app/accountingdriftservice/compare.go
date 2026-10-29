@@ -1,8 +1,10 @@
 package accountingdriftservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
@@ -14,8 +16,8 @@ const (
 
 type comparison struct {
 	record   *accountingsync.AccountingSyncRecord
-	trenova  *accountingsyncports.AccountingDriftState
-	provider *accountingsyncports.AccountingDocumentState
+	trenova  *accountingdriftports.AccountingDriftState
+	provider *accountingconnectorports.AccountingDocumentState
 }
 
 func comparesAmount(objectType accountingsync.SyncObjectType) bool {
@@ -52,25 +54,25 @@ func (c *comparison) providerState() string {
 	}
 }
 
-func (c *comparison) kind() (accountingsync.DriftKind, bool) {
+func (c *comparison) kind() (accountingdrift.DriftKind, bool) {
 	trenovaVoided := c.trenova.Voided
 	switch {
 	case !c.found():
-		return accountingsync.DriftDeletedInProvider, !trenovaVoided
+		return accountingdrift.DriftDeletedInProvider, !trenovaVoided
 	case c.providerVoided():
-		return accountingsync.DriftVoidedInProvider, !trenovaVoided
+		return accountingdrift.DriftVoidedInProvider, !trenovaVoided
 	case trenovaVoided:
-		return accountingsync.DriftStatusMismatch, true
+		return accountingdrift.DriftStatusMismatch, true
 	case comparesAmount(c.record.ObjectType) && c.trenovaMinor() != c.providerMinor():
-		return accountingsync.DriftAmountMismatch, true
+		return accountingdrift.DriftAmountMismatch, true
 	default:
 		return "", false
 	}
 }
 
 func (c *comparison) observation(
-	base *accountingsync.DriftObservation,
-) *accountingsync.DriftObservation {
+	base *accountingdrift.DriftObservation,
+) *accountingdrift.DriftObservation {
 	kind, differs := c.kind()
 	if !differs {
 		return nil

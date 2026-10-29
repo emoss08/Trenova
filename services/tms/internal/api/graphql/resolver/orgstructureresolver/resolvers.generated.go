@@ -3,11 +3,11 @@
 package orgstructureresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 }
 
 type ApprovalDelegationResolver struct{ *Deps }

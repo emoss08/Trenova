@@ -16,7 +16,7 @@ import (
 	kms "cloud.google.com/go/kms/apiv1"
 	kmspb "cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/shared/pulid"
 	gax "github.com/googleapis/gax-go/v2"
 	"go.uber.org/fx"
@@ -42,7 +42,7 @@ var (
 type Params struct {
 	fx.In
 
-	Config *config.Config
+	SecurityConfig *securityconfig.Config
 }
 
 type Service struct {
@@ -137,7 +137,7 @@ type kmsClient interface {
 }
 
 func New(p Params) (*Service, error) {
-	keyManager, err := keyManagerFromConfig(p.Config, dialKMS)
+	keyManager, err := keyManagerFromConfig(p.SecurityConfig, dialKMS)
 	if err != nil {
 		return nil, err
 	}
@@ -529,19 +529,19 @@ func dialKMS(ctx context.Context, opts ...option.ClientOption) (kmsClient, error
 	return kms.NewKeyManagementClient(ctx, opts...)
 }
 
-func keyManagerFromConfig(cfg *config.Config, dial kmsDialer) (KeyManager, error) {
+func keyManagerFromConfig(cfg *securityconfig.Config, dial kmsDialer) (KeyManager, error) {
 	if cfg == nil {
 		return DisabledKeyManager{}, nil
 	}
 
-	enc := cfg.Security.Encryption
+	enc := cfg.Encryption
 	manager := strings.ToLower(strings.TrimSpace(enc.KeyManager))
 	if manager == "" {
-		manager = config.EncryptionKeyManagerLocal
+		manager = securityconfig.EncryptionKeyManagerLocal
 	}
 
 	switch manager {
-	case config.EncryptionKeyManagerGCPAutokey:
+	case securityconfig.EncryptionKeyManagerGCPAutokey:
 		active, err := newGCPAutokeyManager(&enc.GCPKMS, dial)
 		if err != nil {
 			return nil, err
@@ -554,7 +554,7 @@ func keyManagerFromConfig(cfg *config.Config, dial kmsDialer) (KeyManager, error
 			return active, nil
 		}
 		return NewKeyring(active, reader), nil
-	case config.EncryptionKeyManagerDisabled:
+	case securityconfig.EncryptionKeyManagerDisabled:
 		return DisabledKeyManager{}, nil
 	default:
 		keyring, err := NewLocalKeyring(enc.Key, enc.RetiredKeys)
@@ -565,7 +565,7 @@ func keyManagerFromConfig(cfg *config.Config, dial kmsDialer) (KeyManager, error
 	}
 }
 
-func localReader(enc *config.EncryptionConfig) (KeyManager, bool, error) {
+func localReader(enc *securityconfig.EncryptionConfig) (KeyManager, bool, error) {
 	secrets := make([]string, 0, len(enc.RetiredKeys)+1)
 	if strings.TrimSpace(enc.Key) != "" {
 		secrets = append(secrets, enc.Key)
@@ -707,7 +707,7 @@ func (m *GCPAutokeyManager) Provider() string {
 	return gcpAutokeyProvider
 }
 
-func newGCPAutokeyManager(cfg *config.GCPKMSConfig, dial kmsDialer) (KeyManager, error) {
+func newGCPAutokeyManager(cfg *securityconfig.GCPKMSConfig, dial kmsDialer) (KeyManager, error) {
 	activeKey := cfg.CryptoKey
 	if strings.TrimSpace(activeKey) == "" {
 		activeKey = cfg.KeyResource

@@ -6,18 +6,26 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -90,23 +98,29 @@ type watchtowerReader interface {
 type proposalReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentProposalByIDRequest,
+		req agentproposalports.GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
 }
 
 type planReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
+	GetByID(
+		ctx context.Context,
+		req agentplanports.GetAgentPlanByIDRequest,
+	) (*agentplan.AgentPlan, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type exceptionReader interface {
 	GetByID(
 		ctx context.Context,
-		req agentports.GetAgentExceptionByIDRequest,
-	) (*agent.AgentException, error)
+		req agentexceptionports.GetAgentExceptionByIDRequest,
+	) (*agentexception.AgentException, error)
 }
 
 type definitionReader interface {
@@ -117,15 +131,18 @@ type definitionReader interface {
 }
 
 type memoryStore interface {
-	Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error)
+	Create(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
-		req agentports.ListAgentMemorySuggestionContextRequest,
-	) ([]*agent.Memory, error)
+		req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
+	) ([]*agentmemory.Memory, error)
 }
 
 type retentionReader interface {
-	Get(ctx context.Context, req tenantports.GetDataRetentionRequest) (*tenant.DataRetention, error)
+	Get(
+		ctx context.Context,
+		req tenantports.GetDataRetentionRequest,
+	) (*dataretention.DataRetention, error)
 }
 
 type permissionChecker interface {
@@ -144,17 +161,17 @@ type Params struct {
 	Briefings     briefingports.BriefingRepository
 	Insights      insightports.InsightRepository
 	Watchtower    watchtowerports.WatchtowerRepository
-	Proposals     agentports.AgentProposalRepository
-	Plans         agentports.AgentPlanRepository
-	Runs          agentports.AgentRunRepository
-	Exceptions    agentports.AgentExceptionRepository
+	Proposals     agentproposalports.AgentProposalRepository
+	Plans         agentplanports.AgentPlanRepository
+	Runs          agentruntimeports.AgentRunRepository
+	Exceptions    agentexceptionports.AgentExceptionRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Memories      agentports.AgentMemoryRepository
+	Memories      agentmemoryports.AgentMemoryRepository
 	Retention     tenantports.DataRetentionRepository
 	Organizations tenantports.OrganizationRepository
 	Permissions   permissionports.PermissionEngine
-	Tools         agentports.AgentToolRegistry      `optional:"true"`
-	QueryTools    agentports.AgentQueryToolRegistry `optional:"true"`
+	Tools         agenttoolports.AgentToolRegistry      `optional:"true"`
+	QueryTools    agenttoolports.AgentQueryToolRegistry `optional:"true"`
 }
 
 type Service struct {

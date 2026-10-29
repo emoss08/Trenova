@@ -4,19 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/detentionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,9 +30,10 @@ type holdFixture struct {
 	tenantInfo pagination.TenantInfo
 	item       *billingqueue.BillingQueueItem
 	repo       *billingqueueportsmock.MockBillingQueueRepository
-	invoices   *invoiceportsmock.MockInvoiceService
+	invoices   *invoiceportsmock.MockInvoiceCreationService
+	voids      *invoiceportsmock.MockInvoiceVoidService
 	detention  *detentionportsmock.MockDetentionBillingService
-	svc        *service
+	svc        *Service
 }
 
 func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
@@ -58,26 +58,28 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 			BillType:         billType,
 		},
 		repo:      billingqueueportsmock.NewMockBillingQueueRepository(t),
-		invoices:  invoiceportsmock.NewMockInvoiceService(t),
+		invoices:  invoiceportsmock.NewMockInvoiceCreationService(t),
+		voids:     invoiceportsmock.NewMockInvoiceVoidService(t),
 		detention: detentionportsmock.NewMockDetentionBillingService(t),
 	}
 
 	audit := auditportsmock.NewMockAuditService(t)
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Maybe()
 
-	f.svc = &service{
+	f.svc = wired(&Service{
 		l:                zap.NewNop(),
 		db:               passthroughDB{},
 		repo:             f.repo,
-		invoiceSvc:       f.invoices,
+		invoiceCreation:  f.invoices,
+		invoiceVoids:     f.voids,
 		auditService:     audit,
 		realtime:         realtime,
 		validator:        testValidator(),
 		detentionBilling: f.detention,
 		shipmentRepo:     unheldShipments(t),
-	}
+	})
 
 	return f
 }

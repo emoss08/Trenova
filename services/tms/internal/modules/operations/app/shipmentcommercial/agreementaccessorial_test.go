@@ -5,16 +5,16 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fuelsurchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/rateagreementportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +37,7 @@ func TestAdoptContractRate_AppliesAgreementAccessorials(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -45,7 +45,7 @@ func TestAdoptContractRate_AppliesAgreementAccessorials(t *testing.T) {
 	require.Len(t, entity.AdditionalCharges, 1)
 	charge := entity.AdditionalCharges[0]
 
-	assert.Equal(t, shipment.SystemOwnerAgreement, charge.Owner())
+	assert.Equal(t, shipmentvocab.SystemOwnerAgreement, charge.Owner())
 	assert.Equal(t, agreement.Accessorials[0].ID, *charge.RateAgreementAccessorialID)
 	assert.True(t, decimal.NewFromInt(75).Equal(charge.Amount))
 	assert.True(t, decimal.NewFromInt(175).Equal(entity.TotalChargeAmount.Decimal))
@@ -98,7 +98,7 @@ func TestRecalculate_LeavesContractAccessorialsAlone(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -240,7 +240,7 @@ func TestSyncFuelSurcharge_PassesAgreementFuelBinding(t *testing.T) {
 		calculator.Recalculate(
 			t.Context(),
 			entity,
-			&tenant.ShipmentControl{},
+			&shipmentcontrol.ShipmentControl{},
 			pulid.MustNew("usr_"),
 		),
 	)
@@ -272,7 +272,7 @@ func adoptContract(t *testing.T, calculator *Calculator, entity *shipment.Shipme
 		t.Context(),
 		entity,
 		rated,
-		&tenant.ShipmentControl{},
+		&shipmentcontrol.ShipmentControl{},
 		userID,
 	))
 }

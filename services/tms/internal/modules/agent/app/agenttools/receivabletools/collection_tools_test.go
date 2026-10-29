@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/collection"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/collectionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
@@ -183,13 +184,13 @@ func refusePastFollowUp(req *collectionports.ScheduleFollowUpRequest) error {
 func previewOf(
 	t *testing.T,
 	guard *agenttoolstest.WriteGuard,
-	tool agentports.AgentTool,
-	params agentports.ToolExecuteParams,
-) *agent.ToolPreview {
+	tool agenttoolports.AgentTool,
+	params *agenttoolports.ToolExecuteParams,
+) *agentpreview.ToolPreview {
 	t.Helper()
 
-	return agenttoolstest.PreviewWithoutWrites(t, guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	return agenttoolstest.PreviewWithoutWrites(t, guard, func() (*agentpreview.ToolPreview, error) {
+		return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	})
 }
 
@@ -210,9 +211,9 @@ func TestLogCollectionActivity_APromiseShowsTheEntryAndTheFollowUpItMoves(t *tes
 	preview := previewOf(t, collections.guard, tool, params)
 	require.Len(t, preview.Changes, 2, "the history entry and the account it changes")
 	entry := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, entry.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, entry.Operation)
 	account := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationUpdate, account.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationUpdate, account.Operation)
 	assert.Contains(t, preview.Summary, "promise to pay")
 	assert.Empty(t, collections.logged)
 
@@ -296,7 +297,7 @@ func TestScheduleCollectionFollowUp_ADayAlreadyOverIsRefused(t *testing.T) {
 		"followUpOn": "2020-01-01",
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Empty(t, collections.scheduled)
 
@@ -365,16 +366,16 @@ func TestSendPaymentReminder_PreviewIsTheEmailAndItsRecipients(t *testing.T) {
 
 	preview := previewOf(t, reminders.guard, tool, params)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelEmail, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, change.Message.Channel)
 	assert.Equal(t, []string{"ap@acme.test"}, change.Message.To)
 	assert.Equal(t, []string{"controller@acme.test"}, change.Message.Cc)
 	assert.Contains(t, change.Message.Body, "Please call us")
 	assert.Contains(t, preview.Summary, "2 overdue invoices")
 	assert.Empty(t, reminders.sent)
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.Len(t, reminders.sent, 1)
 	assert.Equal(t, customerID, reminders.sent[0].CustomerID)
@@ -386,7 +387,7 @@ func TestSendPaymentReminder_PreviewIsTheEmailAndItsRecipients(t *testing.T) {
 func TestCustomerEmails_LeaveTheOrganizationAndStopAtAskFirst(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewSendPaymentReminderTool(nil),
 		NewSendCustomerStatementTool(nil),
 	} {
@@ -467,6 +468,6 @@ func TestSendCustomerStatement_RefusesADateItCannotRead(t *testing.T) {
 		"asOfDate":   "10/15/2026",
 	})
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Empty(t, statements.asked)
 }

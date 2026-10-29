@@ -5,8 +5,10 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -15,8 +17,8 @@ func (s *Service) factoringNoa(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	noaID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFactoringNoa,
 		ID:    noaID.String(),
 		Label: "Notice of assignment",
@@ -50,8 +52,8 @@ func (s *Service) factoringSubmission(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	submissionID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFactoringSubmission,
 		ID:    submissionID.String(),
 		Label: "Factoring schedule",
@@ -60,7 +62,7 @@ func (s *Service) factoringSubmission(
 		return subject, nil
 	}
 
-	found, err := s.submissions.GetByID(ctx, factoringports.GetSubmissionRequest{
+	found, err := s.submissions.GetByID(ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID:         submissionID,
 		TenantInfo: tenant,
 	})
@@ -89,8 +91,8 @@ func (s *Service) factoringRemittance(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	remittanceID pulid.ID,
-) (*agentdefinition.RuntimeSubject, error) {
-	subject := &agentdefinition.RuntimeSubject{
+) (*agentturn.RuntimeSubject, error) {
+	subject := &agentturn.RuntimeSubject{
 		Type:  agent.SubjectFactoringRemittance,
 		ID:    remittanceID.String(),
 		Label: "Factor remittance",
@@ -99,7 +101,7 @@ func (s *Service) factoringRemittance(
 		return subject, nil
 	}
 
-	found, err := s.remittances.Get(ctx, factoringports.GetRemittanceRequest{
+	found, err := s.remittances.Get(ctx, factoringremittanceports.GetRemittanceRequest{
 		ID:         remittanceID,
 		TenantInfo: tenant,
 	})

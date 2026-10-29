@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -14,21 +15,21 @@ import (
 )
 
 type capturingPlans struct {
-	created []*agent.AgentPlan
+	created []*agentplan.AgentPlan
 }
 
 func (s *capturingPlans) Create(
 	_ context.Context,
-	plan *agent.AgentPlan,
-) (*agent.AgentPlan, error) {
+	plan *agentplan.AgentPlan,
+) (*agentplan.AgentPlan, error) {
 	plan.ID = pulid.MustNew("apl_")
 	s.created = append(s.created, plan)
 
 	return plan, nil
 }
 
-func pendingAction(tool string) agentports.PendingAction {
-	return agentports.PendingAction{
+func pendingAction(tool string) agentruntimeports.PendingAction {
+	return agentruntimeports.PendingAction{
 		ToolName:  tool,
 		Arguments: map[string]any{},
 		Rationale: "because " + tool,
@@ -39,7 +40,7 @@ func pendingAction(tool string) agentports.PendingAction {
 func recordActions(
 	t *testing.T,
 	plans *capturingPlans,
-	actions ...agentports.PendingAction,
+	actions ...agentruntimeports.PendingAction,
 ) *RecordResult {
 	t.Helper()
 
@@ -50,7 +51,7 @@ func recordNamedActions(
 	t *testing.T,
 	plans *capturingPlans,
 	planTitle string,
-	actions ...agentports.PendingAction,
+	actions ...agentruntimeports.PendingAction,
 ) *RecordResult {
 	t.Helper()
 
@@ -104,7 +105,7 @@ func TestRecord_GroupsSeveralPendingProposalsIntoAPlan(t *testing.T) {
 	assert.Equal(t, "Dispatch coverage: 2 changes", plan.Title)
 	assert.Equal(t, "Cover the two open moves", plan.Summary)
 	assert.Equal(t, 2, plan.StepCount, "a write that already ran is not a step anyone decides")
-	assert.Equal(t, agent.PlanStatusPending, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusPending, plan.Status)
 	assert.Positive(t, plan.ExpiresAt)
 
 	require.Len(t, result.Proposals, 3)

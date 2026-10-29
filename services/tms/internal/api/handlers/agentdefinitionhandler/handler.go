@@ -7,8 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -26,10 +31,10 @@ type Params struct {
 	fx.In
 
 	Service              agentdefinitionports.AgentDefinitionService
-	Trust                agentports.AgentTrustService
-	Budgets              agentports.AgentBudgetService
+	Trust                agenttrustports.AgentTrustService
+	Budgets              agentbudgetports.AgentBudgetService
 	Workflows            kernelports.WorkflowStarter
-	Streams              agentports.TurnStreamReader
+	Streams              assistantstreamports.TurnStreamReader
 	Logger               *zap.Logger
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
@@ -37,10 +42,10 @@ type Params struct {
 
 type Handler struct {
 	service   agentdefinitionports.AgentDefinitionService
-	trust     agentports.AgentTrustService
-	budgets   agentports.AgentBudgetService
+	trust     agenttrustports.AgentTrustService
+	budgets   agentbudgetports.AgentBudgetService
 	workflows kernelports.WorkflowStarter
-	streams   agentports.TurnStreamReader
+	streams   assistantstreamports.TurnStreamReader
 	logger    *zap.Logger
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
@@ -185,7 +190,7 @@ func (h *Handler) trustLedger(c *gin.Context) {
 		return
 	}
 
-	rows, err := h.trust.ListForDefinition(c.Request.Context(), agentports.ListToolTrustRequest{
+	rows, err := h.trust.ListForDefinition(c.Request.Context(), agenttoolports.ListToolTrustRequest{
 		TenantInfo:        tenantFromAuthContext(authCtx),
 		AgentDefinitionID: agentID,
 	})
@@ -218,7 +223,7 @@ func (h *Handler) getBySystemKey(c *gin.Context) {
 type saveAgentRequest struct {
 	Name                   string                            `json:"name"`
 	Description            string                            `json:"description"`
-	Template               agentdefinition.Template          `json:"template"`
+	Template               agenttemplate.Template            `json:"template"`
 	Instructions           string                            `json:"instructions"`
 	Guardrails             []string                          `json:"guardrails"`
 	ToolNames              []string                          `json:"toolNames"`
@@ -233,7 +238,7 @@ type saveAgentRequest struct {
 	TriggerMode            agentdefinition.TriggerMode       `json:"triggerMode"`
 	CronExpression         string                            `json:"cronExpression"`
 	CronTimezone           string                            `json:"cronTimezone"`
-	EventKinds             []agent.EventKind                 `json:"eventKinds"`
+	EventKinds             []agenttrigger.EventKind          `json:"eventKinds"`
 	IntervalSeconds        int                               `json:"intervalSeconds"`
 	EndsAt                 *int64                            `json:"endsAt"`
 	MaxConcurrentRuns      int                               `json:"maxConcurrentRuns"`

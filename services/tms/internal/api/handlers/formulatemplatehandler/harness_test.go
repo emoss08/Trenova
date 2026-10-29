@@ -7,10 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateimportservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -133,8 +137,8 @@ func (f *fakeRecords) ShipmentRecord(
 
 type fixtureOptions struct {
 	granted   map[string]bool
-	studio    agentports.FormulaStudioAssist
-	assistant agentports.PageAssistant
+	studio    formulastudioports.FormulaStudioAssist
+	assistant assistantports.PageAssistant
 }
 
 type fixture struct {
@@ -163,8 +167,8 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	engine := &grantedEngine{granted: opts.granted}
 	resolver := tariff.NewTemplateResolver(tariff.TemplateResolverParams{
@@ -172,22 +176,51 @@ func newFixture(t *testing.T, opts fixtureOptions) *fixture {
 		Versions:        f.versions,
 		LibraryVersions: f.libraryVersions,
 	})
+	checker := tariff.NewChecker(
+		tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}},
+	)
 	service := formulatemplateservice.New(formulatemplateservice.Params{
+		Logger:       logger,
+		DB:           dbtest.NopConnection{},
+		Repo:         f.repo,
+		VersionRepo:  f.versions,
+		Checker:      checker,
+		Resolver:     resolver,
+		AuditService: &mocks.NoopAuditService{},
+	})
+	reviews := formulatemplatereviewservice.New(formulatemplatereviewservice.Params{
+		Logger:      logger,
+		DB:          dbtest.NopConnection{},
+		Templates:   service,
+		Repo:        f.repo,
+		VersionRepo: f.versions,
+		ReviewRepo:  formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
+		Checker:     checker,
+		Resolver:    resolver,
+		Dependents:  noDependents{},
+	})
+	studio := formulatemplatestudioservice.New(formulatemplatestudioservice.Params{
 		Logger:          logger,
-		DB:              dbtest.NopConnection{},
-		Repo:            f.repo,
+		Templates:       service,
 		VersionRepo:     f.versions,
-		ReviewRepo:      formulatemplateportsmock.NewMockFormulaTemplateReviewRepository(t),
 		LibraryVersions: f.libraryVersions,
-		Checker:         tariff.NewChecker(tariff.CheckerParams{Resolver: resolver, Context: emptyContext{}}),
+		Checker:         checker,
 		Resolver:        resolver,
 		Rater:           f.rater,
-		Dependents:      noDependents{},
 		Records:         f.records,
-		AuditService:    &mocks.NoopAuditService{},
+	})
+	imports := formulatemplateimportservice.New(formulatemplateimportservice.Params{
+		Logger:      logger,
+		DB:          dbtest.NopConnection{},
+		Templates:   service,
+		Repo:        f.repo,
+		VersionRepo: f.versions,
 	})
 	f.handler = formulatemplatehandler.New(formulatemplatehandler.Params{
 		Service:       service,
+		Reviews:       reviews,
+		StudioService: studio,
+		Imports:       imports,
 		PageAssistant: opts.assistant,
 		StudioAssist:  opts.studio,
 		ErrorHandler:  errorHandler,

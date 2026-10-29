@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,53 +16,55 @@ import (
 func TestParseNotifications(t *testing.T) {
 	t.Parallel()
 
-	notifications, err := businesscentral.ParseNotifications(fixture(t, "notifications.json"))
+	notifications, err := businesscentralwebhook.ParseNotifications(
+		fixture(t, "notifications.json"),
+	)
 	require.NoError(t, err)
 	require.Len(t, notifications, 2)
 	first := notifications[0]
 	assert.Equal(t, testSubscription, first.SubscriptionID)
 	assert.Equal(t, "s3cr3t-state", first.ClientState)
-	assert.Equal(t, businesscentral.ChangeTypeUpdated, first.ChangeType)
+	assert.Equal(t, businesscentralwebhook.ChangeTypeUpdated, first.ChangeType)
 	assert.Equal(t, "api/v2.0/companies("+testCompany+")/salesInvoices("+testInvoice+")",
 		first.Resource)
 	assert.Equal(t, time.Date(2026, 10, 6, 10, 15, 0, 250000000, time.UTC), first.LastModified)
 	assert.Equal(t, time.Date(2026, 10, 9, 9, 0, 0, 0, time.UTC), first.ExpirationDateTime)
-	assert.Equal(t, businesscentral.ChangeTypeCollection, notifications[1].ChangeType)
+	assert.Equal(t, businesscentralwebhook.ChangeTypeCollection, notifications[1].ChangeType)
 }
 
 func TestParseNotificationsRejectsBadPayloads(t *testing.T) {
 	t.Parallel()
 
 	for _, body := range []string{"", "validationToken=abc", "[]", "{not json", `{"value":"x"}`} {
-		_, err := businesscentral.ParseNotifications([]byte(body))
-		require.ErrorIs(t, err, businesscentral.ErrUnexpectedPayload, body)
+		_, err := businesscentralwebhook.ParseNotifications([]byte(body))
+		require.ErrorIs(t, err, businesscentralerrors.ErrUnexpectedPayload, body)
 	}
 
 	var b strings.Builder
 	b.WriteString(`{"value":[`)
-	for idx := range businesscentral.MaxNotificationsPerBatch + 1 {
+	for idx := range businesscentralwebhook.MaxNotificationsPerBatch + 1 {
 		if idx > 0 {
 			b.WriteString(",")
 		}
 		b.WriteString(`{"subscriptionId":"s` + strconv.Itoa(idx) + `"}`)
 	}
 	b.WriteString(`]}`)
-	_, err := businesscentral.ParseNotifications([]byte(b.String()))
-	require.ErrorIs(t, err, businesscentral.ErrTooManyNotifications)
+	_, err := businesscentralwebhook.ParseNotifications([]byte(b.String()))
+	require.ErrorIs(t, err, businesscentralerrors.ErrTooManyNotifications)
 }
 
 func TestValidationToken(t *testing.T) {
 	t.Parallel()
 
-	token, ok := businesscentral.ValidationToken("a1B2-c3_d4.e5~!")
+	token, ok := businesscentralwebhook.ValidationToken("a1B2-c3_d4.e5~!")
 	assert.True(t, ok)
 	assert.Equal(t, "a1B2-c3_d4.e5~!", token)
 
-	_, ok = businesscentral.ValidationToken(strings.Repeat("x", 1024))
+	_, ok = businesscentralwebhook.ValidationToken(strings.Repeat("x", 1024))
 	assert.True(t, ok)
 	for _, raw := range []string{"", " ", "has space", "tab\t", "<script>\n", "é",
 		strings.Repeat("x", 1025)} {
-		_, ok = businesscentral.ValidationToken(raw)
+		_, ok = businesscentralwebhook.ValidationToken(raw)
 		assert.False(t, ok, raw)
 	}
 }

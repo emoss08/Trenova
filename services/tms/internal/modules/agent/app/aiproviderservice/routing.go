@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 )
 
 func (s *Service) RoutePreview(
 	ctx context.Context,
-	req *agentports.AIProviderRoutePreviewRequest,
-) ([]aiprovider.TaskRoute, error) {
+	req *aiproviderports.AIProviderRoutePreviewRequest,
+) ([]airouting.TaskRoute, error) {
 	draft := &aiprovider.Provider{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
 	if req.Draft.ID.IsNotNil() {
-		stored, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+		stored, err := s.repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 			ID:         req.Draft.ID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -32,10 +33,13 @@ func (s *Service) RoutePreview(
 		return nil, err
 	}
 
-	return aiprovider.PreviewRoutes(enabled, draft), nil
+	return airouting.PreviewRoutes(enabled, draft), nil
 }
 
-func applyRoutingDraft(provider *aiprovider.Provider, draft *agentports.AIProviderRoutingDraft) {
+func applyRoutingDraft(
+	provider *aiprovider.Provider,
+	draft *aiproviderports.AIProviderRoutingDraft,
+) {
 	provider.Name = draft.Name
 	provider.Kind = draft.Kind
 	provider.Tasks = draft.Tasks

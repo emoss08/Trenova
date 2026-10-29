@@ -1,6 +1,8 @@
 package order
 
-import "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+)
 
 type Status string
 
@@ -53,14 +55,14 @@ func (s Status) AllowsMembershipChange() bool {
 // an order is only Canceled when every leg is Canceled. StatusClosed is terminal
 // and never produced here — it is set exclusively by the manual close / AR
 // settlement flow, so the caller must guard against overwriting it.
-func Derive(legs []shipment.Status) Status {
+func Derive(legs []shipmentvocab.Status) Status {
 	if len(legs) == 0 {
 		return StatusDraft
 	}
 
-	active := make([]shipment.Status, 0, len(legs))
+	active := make([]shipmentvocab.Status, 0, len(legs))
 	for _, s := range legs {
-		if s != shipment.StatusCanceled {
+		if s != shipmentvocab.StatusCanceled {
 			active = append(active, s)
 		}
 	}
@@ -72,13 +74,13 @@ func Derive(legs []shipment.Status) Status {
 	allDelivered := true
 	allNew := true
 	for _, s := range active {
-		if s != shipment.StatusInvoiced {
+		if s != shipmentvocab.StatusInvoiced {
 			allInvoiced = false
 		}
 		if !isDelivered(s) {
 			allDelivered = false
 		}
-		if s != shipment.StatusNew {
+		if s != shipmentvocab.StatusNew {
 			allNew = false
 		}
 	}
@@ -95,10 +97,12 @@ func Derive(legs []shipment.Status) Status {
 	}
 }
 
-func isDelivered(s shipment.Status) bool {
+func isDelivered(s shipmentvocab.Status) bool {
 	//nolint:exhaustive // only delivered/billed leg statuses matter here
 	switch s {
-	case shipment.StatusReadyToInvoice, shipment.StatusCompleted, shipment.StatusInvoiced:
+	case shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusInvoiced:
 		return true
 	default:
 		return false

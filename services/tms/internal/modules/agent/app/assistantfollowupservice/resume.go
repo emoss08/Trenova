@@ -6,10 +6,16 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,22 +32,22 @@ const resumeWindow = 24 * time.Hour
 type proposalLister interface {
 	ListByThread(
 		ctx context.Context,
-		req agentports.ListAgentProposalsByThreadRequest,
+		req agentproposalports.ListAgentProposalsByThreadRequest,
 	) ([]*agent.AgentProposal, error)
 }
 
 type planLister interface {
 	ListByThread(
 		ctx context.Context,
-		req agentports.ListAgentPlansByThreadRequest,
-	) ([]*agent.AgentPlan, error)
+		req agentplanports.ListAgentPlansByThreadRequest,
+	) ([]*agentplan.AgentPlan, error)
 }
 
 type decisionLister interface {
 	ListByProposals(
 		ctx context.Context,
-		req agentports.ListAgentDecisionsByProposalsRequest,
-	) ([]*agent.AgentDecision, error)
+		req agentdecisionports.ListAgentDecisionsByProposalsRequest,
+	) ([]*agentdecision.AgentDecision, error)
 }
 
 // decidedReader reads what a conversation raised that a person has decided.
@@ -70,7 +76,7 @@ type unreported struct {
 // that keeps a follow-up from starting. One follow-up is started at a time;
 // when it ends it asks again, so decisions made in a burst are reported in
 // the order they were made.
-func (s *Service) ResumeFollowUps(ctx context.Context, req agentports.ResumeFollowUpsRequest) {
+func (s *Service) ResumeFollowUps(ctx context.Context, req assistantports.ResumeFollowUpsRequest) {
 	if !s.decided.ready() || req.ThreadID.IsNil() {
 		return
 	}
@@ -90,7 +96,7 @@ func (s *Service) ResumeFollowUps(ctx context.Context, req agentports.ResumeFoll
 		return
 	}
 
-	s.FollowUp(ctx, agentports.DecisionFollowUpRequest{
+	s.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 		TenantInfo: tenant,
 		RunID:      next.runID,
 		ProposalID: next.proposalID,
@@ -110,7 +116,7 @@ func (s *Service) oldestUnreported(
 		return nil, err
 	}
 
-	plans, err := s.decided.plans.ListByThread(ctx, agentports.ListAgentPlansByThreadRequest{
+	plans, err := s.decided.plans.ListByThread(ctx, agentplanports.ListAgentPlansByThreadRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 	})
@@ -132,7 +138,7 @@ func (s *Service) oldestUnreported(
 		return nil, nil
 	}
 
-	notes, err := s.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	notes, err := s.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:   threadID,
 		TenantInfo: tenant,
 		Kinds:      []conversation.MessageKind{conversation.MessageKindDecisionNote},
@@ -142,7 +148,7 @@ func (s *Service) oldestUnreported(
 	}
 
 	candidates = slices.DeleteFunc(candidates, func(candidate unreported) bool {
-		return assistantservice.DecisionReported(notes, candidate.proposalID, candidate.planID)
+		return decisionnotes.DecisionReported(notes, candidate.proposalID, candidate.planID)
 	})
 	if len(candidates) == 0 {
 		return nil, nil
@@ -168,7 +174,10 @@ func (s *Service) decidedProposals(
 ) ([]unreported, error) {
 	proposals, err := s.decided.proposals.ListByThread(
 		ctx,
-		agentports.ListAgentProposalsByThreadRequest{ThreadID: threadID, TenantInfo: tenant},
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -189,7 +198,10 @@ func (s *Service) decidedProposals(
 
 	decisions, err := s.decided.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -227,9 +239,9 @@ func proposalAwaitsReport(status agent.ProposalStatus) bool {
 	}
 }
 
-func planAwaitsReport(status agent.PlanStatus) bool {
+func planAwaitsReport(status agentplan.PlanStatus) bool {
 	switch status {
-	case agent.PlanStatusCompleted, agent.PlanStatusFailed, agent.PlanStatusRejected:
+	case agentplan.PlanStatusCompleted, agentplan.PlanStatusFailed, agentplan.PlanStatusRejected:
 		return true
 	default:
 		return false

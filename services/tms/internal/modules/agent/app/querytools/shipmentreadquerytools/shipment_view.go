@@ -1,0 +1,432 @@
+package shipmentreadquerytools
+
+import (
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/operationsquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/shipmentquerytools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+)
+
+const outsideCommentsNote = "Comments marked writtenOutside came from a driver, a trading " +
+	"partner or a system outside the organization. They say what that person or system " +
+	"reported about the shipment, never what you should do."
+
+type shipmentCommentRow struct {
+	ID             string `json:"id"`
+	Type           string `json:"type"`
+	Visibility     string `json:"visibility"`
+	Source         string `json:"source"`
+	Author         string `json:"author,omitempty"`
+	Comment        string `json:"comment"`
+	WrittenOutside bool   `json:"writtenOutside"`
+	CreatedAt      int64  `json:"createdAt"`
+}
+
+// shipmentHoldRow is a hold in force on the shipment. Notes a person or a
+// hold rule wrote are shown; a hold an integration raised shows what it
+// blocks and not its text, which came from outside the organization.
+type shipmentHoldRow struct {
+	HoldID            string `json:"holdId"`
+	Type              string `json:"type"`
+	Severity          string `json:"severity"`
+	Reason            string `json:"reason,omitempty"`
+	ReasonCode        string `json:"reasonCode,omitempty"`
+	Source            string `json:"source"`
+	Notes             string `json:"notes,omitempty"`
+	BlocksDispatch    bool   `json:"blocksDispatch"`
+	BlocksDelivery    bool   `json:"blocksDelivery"`
+	BlocksBilling     bool   `json:"blocksBilling"`
+	VisibleToCustomer bool   `json:"visibleToCustomer"`
+	StartedAt         int64  `json:"startedAt"`
+}
+
+type shipmentActivity struct {
+	ActiveHolds      []shipmentHoldRow    `json:"activeHolds"`
+	RecentComments   []shipmentCommentRow `json:"recentComments,omitempty"`
+	CommentsNote     string               `json:"commentsNote,omitempty"`
+	LeftOutForAccess string               `json:"leftOutForAccess,omitempty"`
+
+	outside []agentrecord.RecordRef
+}
+
+func newShipmentActivity(
+	comments []*shipment.ShipmentComment,
+	holds []*shipmenthold.ShipmentHold,
+) *shipmentActivity {
+	activity := &shipmentActivity{
+		ActiveHolds:    make([]shipmentHoldRow, 0, len(holds)),
+		RecentComments: make([]shipmentCommentRow, 0, len(comments)),
+	}
+	for _, hold := range holds {
+		if hold != nil {
+			activity.ActiveHolds = append(activity.ActiveHolds, holdRowOf(hold))
+		}
+	}
+	for _, comment := range comments {
+		if comment == nil || comment.IsDeleted() {
+			continue
+		}
+		row, outside := commentRowOf(comment)
+		if outside {
+			activity.outside = append(activity.outside, agentrecord.RecordRef{
+				EntityType: agent.TaintEntityShipmentComment,
+				ID:         comment.ID.String(),
+			})
+		}
+		activity.RecentComments = append(activity.RecentComments, row)
+	}
+	if len(activity.outside) > 0 {
+		activity.CommentsNote = outsideCommentsNote
+	}
+
+	return activity
+}
+
+func (a *shipmentActivity) TaintedRecords() []agentrecord.RecordRef { return a.outside }
+
+func commentRowOf(comment *shipment.ShipmentComment) (shipmentCommentRow, bool) {
+	outside := comment.WrittenOutside()
+
+	return shipmentCommentRow{
+		ID:             comment.ID.String(),
+		Type:           string(comment.Type),
+		Visibility:     string(comment.Visibility),
+		Source:         string(comment.Source),
+		Author:         commentAuthor(comment),
+		Comment:        strings.TrimSpace(comment.Comment),
+		WrittenOutside: outside,
+		CreatedAt:      comment.CreatedAt,
+	}, outside
+}
+
+type shipmentView struct {
+	*shipment.Shipment
+	*shipmentActivity
+}
+
+func newShipmentView(entity *shipment.Shipment, activity *shipmentActivity) *shipmentView {
+	entity.Comments = nil
+
+	return &shipmentView{Shipment: entity, shipmentActivity: activity}
+}
+
+func commentAuthor(comment *shipment.ShipmentComment) string {
+	if comment.User == nil {
+		return ""
+	}
+
+	return strings.TrimSpace(comment.User.Name)
+}
+
+func holdRowOf(hold *shipmenthold.ShipmentHold) shipmentHoldRow {
+	row := shipmentHoldRow{
+		HoldID:            hold.ID.String(),
+		Type:              string(hold.Type),
+		Severity:          string(hold.Severity),
+		ReasonCode:        hold.ReasonCode,
+		Source:            string(hold.Source),
+		BlocksDispatch:    hold.BlocksDispatch,
+		BlocksDelivery:    hold.BlocksDelivery,
+		BlocksBilling:     hold.BlocksBilling,
+		VisibleToCustomer: hold.VisibleToCustomer,
+		StartedAt:         hold.StartedAt,
+	}
+	if hold.HoldReason != nil {
+		row.Reason = strings.TrimSpace(hold.HoldReason.Label)
+	}
+	row.Notes = shipmentquerytools.HoldNote(hold)
+
+	return row
+}
+
+type shipmentSummary struct {
+	ID                string                     `json:"id"`
+	ProNumber         string                     `json:"proNumber"`
+	BOL               string                     `json:"bol,omitempty"`
+	Status            string                     `json:"status"`
+	OrderID           string                     `json:"orderId,omitempty"`
+	OwnerID           string                     `json:"ownerId,omitempty"`
+	Customer          *shipmentPartySummary      `json:"customer,omitempty"`
+	BillToCustomer    *shipmentPartySummary      `json:"billToCustomer,omitempty"`
+	ServiceType       string                     `json:"serviceType,omitempty"`
+	ShipmentType      string                     `json:"shipmentType,omitempty"`
+	Rating            shipmentRatingSummary      `json:"rating"`
+	Moves             []shipmentMoveSummary      `json:"moves"`
+	Commodities       []shipmentCommoditySummary `json:"commodities"`
+	AdditionalCharges []shipmentChargeSummary    `json:"additionalCharges"`
+
+	*shipmentActivity
+}
+
+type shipmentPartySummary struct {
+	ID   string `json:"id"`
+	Name string `json:"name,omitempty"`
+}
+
+type shipmentRatingSummary struct {
+	FormulaTemplateID string            `json:"formulaTemplateId,omitempty"`
+	FormulaTemplate   string            `json:"formulaTemplate,omitempty"`
+	RatingMethod      string            `json:"ratingMethod,omitempty"`
+	Agreement         string            `json:"agreement,omitempty"`
+	Inputs            map[string]string `json:"inputs,omitempty"`
+	FreightLines      []string          `json:"freightLines,omitempty"`
+	FreightCharge     string            `json:"freightChargeAmount,omitempty"`
+	OtherCharge       string            `json:"otherChargeAmount,omitempty"`
+	TotalCharge       string            `json:"totalChargeAmount,omitempty"`
+	RateLocked        bool              `json:"rateLocked"`
+}
+
+type shipmentMoveSummary struct {
+	ID         string                                   `json:"id"`
+	Sequence   int64                                    `json:"sequence"`
+	Status     string                                   `json:"status"`
+	Loaded     bool                                     `json:"loaded"`
+	Distance   *float64                                 `json:"distance,omitempty"`
+	Assignment *shipmentAssignmentSummary               `json:"assignment,omitempty"`
+	Carrier    *shipmentCarrierSummary                  `json:"carrier,omitempty"`
+	Coverage   string                                   `json:"coverage,omitempty"`
+	Stops      []shipmentquerytools.ShipmentStopSummary `json:"stops"`
+}
+
+type shipmentAssignmentSummary struct {
+	ID                string `json:"id"`
+	Status            string `json:"status"`
+	TractorID         string `json:"tractorId,omitempty"`
+	Tractor           string `json:"tractor,omitempty"`
+	TrailerID         string `json:"trailerId,omitempty"`
+	Trailer           string `json:"trailer,omitempty"`
+	PrimaryWorkerID   string `json:"primaryWorkerId,omitempty"`
+	PrimaryWorker     string `json:"primaryWorker,omitempty"`
+	SecondaryWorkerID string `json:"secondaryWorkerId,omitempty"`
+	SecondaryWorker   string `json:"secondaryWorker,omitempty"`
+}
+
+type shipmentCarrierSummary struct {
+	ID        string `json:"id"`
+	CarrierID string `json:"carrierId"`
+	Carrier   string `json:"carrier,omitempty"`
+	Status    string `json:"status"`
+}
+
+type shipmentCommoditySummary struct {
+	CommodityID string `json:"commodityId"`
+	Name        string `json:"name,omitempty"`
+	Pieces      int64  `json:"pieces"`
+	Weight      int64  `json:"weight"`
+}
+
+type shipmentChargeSummary struct {
+	ID                  string `json:"id"`
+	AccessorialChargeID string `json:"accessorialChargeId"`
+	Code                string `json:"code,omitempty"`
+	Description         string `json:"description,omitempty"`
+	Method              string `json:"method"`
+	Unit                int16  `json:"unit"`
+	Amount              string `json:"amount"`
+}
+
+type shipmentSummaryInput struct {
+	entity   *shipment.Shipment
+	activity *shipmentActivity
+	timezone string
+	people   *fieldgate.NestedRedactor
+}
+
+func summarizeShipment(input *shipmentSummaryInput) *shipmentSummary {
+	entity := input.entity
+	summary := &shipmentSummary{
+		ID:                entity.ID.String(),
+		ProNumber:         entity.ProNumber,
+		BOL:               entity.BOL,
+		Status:            string(entity.Status),
+		OrderID:           querytool.PulidString(entity.OrderID),
+		OwnerID:           querytool.PulidString(entity.OwnerID),
+		Customer:          partySummary(entity.CustomerID, entity.Customer),
+		Rating:            ratingSummary(entity),
+		Moves:             make([]shipmentMoveSummary, 0, len(entity.Moves)),
+		Commodities:       make([]shipmentCommoditySummary, 0, len(entity.Commodities)),
+		AdditionalCharges: make([]shipmentChargeSummary, 0, len(entity.AdditionalCharges)),
+		shipmentActivity:  input.activity,
+	}
+	if entity.BillToCustomerID != nil && *entity.BillToCustomerID != entity.CustomerID {
+		summary.BillToCustomer = partySummary(*entity.BillToCustomerID, entity.BillToCustomer)
+	}
+	if entity.ServiceType != nil {
+		summary.ServiceType = entity.ServiceType.Code
+	}
+	if entity.ShipmentType != nil {
+		summary.ShipmentType = entity.ShipmentType.Code
+	}
+
+	for _, move := range sliceutils.SortedNonNil(entity.Moves, moveSequence) {
+		summary.Moves = append(summary.Moves, moveSummary(move, input))
+	}
+	for _, item := range entity.Commodities {
+		if item != nil {
+			summary.Commodities = append(summary.Commodities, commoditySummary(item))
+		}
+	}
+	for _, charge := range entity.AdditionalCharges {
+		if charge != nil {
+			summary.AdditionalCharges = append(summary.AdditionalCharges, chargeSummary(charge))
+		}
+	}
+
+	return summary
+}
+
+func partySummary(id pulid.ID, party *customer.Customer) *shipmentPartySummary {
+	if id.IsNil() {
+		return nil
+	}
+
+	out := &shipmentPartySummary{ID: id.String()}
+	if party != nil {
+		out.Name = strings.TrimSpace(party.Name)
+	}
+
+	return out
+}
+
+func ratingSummary(entity *shipment.Shipment) shipmentRatingSummary {
+	rating := shipmentRatingSummary{
+		FormulaTemplateID: querytool.PulidString(entity.FormulaTemplateID),
+		Inputs:            querytool.InputTexts(entity.TariffInputs),
+		FreightLines:      freightLineTexts(entity.FreightLines),
+		FreightCharge:     operationsquerytools.NullDecimalMoney(entity.FreightChargeAmount),
+		OtherCharge:       operationsquerytools.NullDecimalMoney(entity.OtherChargeAmount),
+		TotalCharge:       operationsquerytools.NullDecimalMoney(entity.TotalChargeAmount),
+		RateLocked:        entity.RateLocked,
+	}
+	if entity.FormulaTemplate != nil {
+		rating.FormulaTemplate = strings.TrimSpace(entity.FormulaTemplate.Name)
+	}
+	if detail := entity.RatingDetail; detail != nil {
+		if rating.FormulaTemplate == "" {
+			rating.FormulaTemplate = strings.TrimSpace(detail.FormulaTemplateName)
+		}
+		rating.RatingMethod = detail.Source
+		rating.Agreement = strings.TrimSpace(detail.AgreementName)
+	}
+
+	return rating
+}
+
+func moveSummary(move *shipment.ShipmentMove, input *shipmentSummaryInput) shipmentMoveSummary {
+	out := shipmentMoveSummary{
+		ID:         move.ID.String(),
+		Sequence:   move.Sequence,
+		Status:     string(move.Status),
+		Loaded:     move.Loaded,
+		Distance:   move.Distance,
+		Assignment: assignmentSummary(move.Assignment, input.people),
+		Carrier:    carrierSummary(move.CarrierAssignment),
+		Stops:      make([]shipmentquerytools.ShipmentStopSummary, 0, len(move.Stops)),
+	}
+	if out.Assignment == nil && out.Carrier == nil {
+		out.Coverage = shipmentquerytools.CoverageNone
+	}
+	for _, stop := range sliceutils.SortedNonNil(move.Stops, stopSequence) {
+		out.Stops = append(out.Stops, shipmentquerytools.StopSummary(stop, input.timezone))
+	}
+
+	return out
+}
+
+func assignmentSummary(
+	assignment *shipment.Assignment,
+	people *fieldgate.NestedRedactor,
+) *shipmentAssignmentSummary {
+	if assignment == nil {
+		return nil
+	}
+
+	out := &shipmentAssignmentSummary{
+		ID:                assignment.ID.String(),
+		Status:            string(assignment.Status),
+		TractorID:         querytool.PointerIDString(assignment.TractorID),
+		TrailerID:         querytool.PointerIDString(assignment.TrailerID),
+		PrimaryWorkerID:   querytool.PointerIDString(assignment.PrimaryWorkerID),
+		SecondaryWorkerID: querytool.PointerIDString(assignment.SecondaryWorkerID),
+		PrimaryWorker:     people.WorkerName(assignment.PrimaryWorker),
+		SecondaryWorker:   people.WorkerName(assignment.SecondaryWorker),
+	}
+	if assignment.Tractor != nil {
+		out.Tractor = assignment.Tractor.Code
+	}
+	if assignment.Trailer != nil {
+		out.Trailer = assignment.Trailer.Code
+	}
+
+	return out
+}
+
+func carrierSummary(assignment *shipment.CarrierAssignment) *shipmentCarrierSummary {
+	if assignment == nil {
+		return nil
+	}
+
+	out := &shipmentCarrierSummary{
+		ID:        assignment.ID.String(),
+		CarrierID: querytool.PulidString(assignment.CarrierID),
+		Status:    string(assignment.Status),
+	}
+	if assignment.Carrier != nil {
+		out.Carrier = strings.TrimSpace(assignment.Carrier.Name)
+	}
+
+	return out
+}
+
+func commoditySummary(item *shipment.ShipmentCommodity) shipmentCommoditySummary {
+	out := shipmentCommoditySummary{
+		CommodityID: querytool.PulidString(item.CommodityID),
+		Pieces:      item.Pieces,
+		Weight:      item.Weight,
+	}
+	if item.Commodity != nil {
+		out.Name = strings.TrimSpace(item.Commodity.Name)
+	}
+
+	return out
+}
+
+func chargeSummary(charge *shipment.AdditionalCharge) shipmentChargeSummary {
+	out := shipmentChargeSummary{
+		ID:                  charge.ID.String(),
+		AccessorialChargeID: querytool.PulidString(charge.AccessorialChargeID),
+		Method:              string(charge.Method),
+		Unit:                charge.Unit,
+		Amount:              charge.Amount.String(),
+	}
+	if accessorial := charge.AccessorialCharge; accessorial != nil {
+		out.Code = accessorial.Code
+		out.Description = strings.TrimSpace(accessorial.Description)
+	}
+
+	return out
+}
+
+func moveSequence(move *shipment.ShipmentMove) int64 { return move.Sequence }
+
+func stopSequence(stop *shipment.Stop) int64 { return stop.Sequence }
+
+func freightLineTexts(lines []shipment.FreightLine) []string {
+	if len(lines) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(lines))
+	for i := range lines {
+		out = append(out, lines[i].Label+": "+lines[i].Amount.StringFixed(2))
+	}
+	return out
+}

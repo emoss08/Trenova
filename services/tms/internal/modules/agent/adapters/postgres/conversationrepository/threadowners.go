@@ -7,16 +7,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const maxThreadOwnersPerCall = 1000
 
-var _ agentports.ThreadOwnerRepository = (*repository)(nil)
+var _ conversationports.ThreadOwnerRepository = (*repository)(nil)
 
-func NewThreadOwners(p Params) agentports.ThreadOwnerRepository {
+func NewThreadOwners(p Params) conversationports.ThreadOwnerRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.thread-owner-repository"),
@@ -25,7 +25,7 @@ func NewThreadOwners(p Params) agentports.ThreadOwnerRepository {
 
 func (r *repository) ThreadOwners(
 	ctx context.Context,
-	req agentports.ThreadOwnersRequest,
+	req conversationports.ThreadOwnersRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]pulid.ID, error) {
 		if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {

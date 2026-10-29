@@ -9,14 +9,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,34 +29,35 @@ import (
 
 type stubStream struct {
 	id      string
-	prelude []agentports.RealtimeFrame
-	frames  chan agentports.RealtimeFrame
+	prelude []realtimeports.RealtimeFrame
+	frames  chan realtimeports.RealtimeFrame
 	reason  string
 	once    sync.Once
 	closed  bool
 }
 
-func (s *stubStream) ConnectionID() string                    { return s.id }
-func (s *stubStream) Prelude() []agentports.RealtimeFrame     { return s.prelude }
-func (s *stubStream) Frames() <-chan agentports.RealtimeFrame { return s.frames }
-func (s *stubStream) Reason() string                          { return s.reason }
-func (s *stubStream) Close()                                  { s.once.Do(func() { s.closed = true }) }
+func (s *stubStream) ConnectionID() string                       { return s.id }
+func (s *stubStream) Prelude() []realtimeports.RealtimeFrame     { return s.prelude }
+func (s *stubStream) Frames() <-chan realtimeports.RealtimeFrame { return s.frames }
+func (s *stubStream) Reason() string                             { return s.reason }
+
+func (s *stubStream) Close() { s.once.Do(func() { s.closed = true }) }
 
 type stubGateway struct {
 	mu       sync.Mutex
 	stream   *stubStream
 	openErr  error
-	opened   *agentports.OpenRealtimeStreamRequest
-	joined   *agentports.RealtimeScopeRequest
-	left     *agentports.RealtimeScopeRequest
-	typing   *agentports.RealtimeTypingRequest
-	snapshot *agentports.RealtimePresenceSnapshot
+	opened   *realtimeports.OpenRealtimeStreamRequest
+	joined   *realtimeports.RealtimeScopeRequest
+	left     *realtimeports.RealtimeScopeRequest
+	typing   *realtimeports.RealtimeTypingRequest
+	snapshot *realtimeports.RealtimePresenceSnapshot
 }
 
 func (g *stubGateway) Open(
 	_ context.Context,
-	req *agentports.OpenRealtimeStreamRequest,
-) (agentports.RealtimeStream, error) {
+	req *realtimeports.OpenRealtimeStreamRequest,
+) (realtimeports.RealtimeStream, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.opened = req
@@ -68,18 +69,24 @@ func (g *stubGateway) Open(
 
 func (g *stubGateway) JoinPresence(
 	_ context.Context,
-	req *agentports.RealtimeScopeRequest,
-) (*agentports.RealtimePresenceSnapshot, error) {
+	req *realtimeports.RealtimeScopeRequest,
+) (*realtimeports.RealtimePresenceSnapshot, error) {
 	g.joined = req
 	return g.snapshot, nil
 }
 
-func (g *stubGateway) LeavePresence(_ context.Context, req *agentports.RealtimeScopeRequest) error {
+func (g *stubGateway) LeavePresence(
+	_ context.Context,
+	req *realtimeports.RealtimeScopeRequest,
+) error {
 	g.left = req
 	return nil
 }
 
-func (g *stubGateway) SignalTyping(_ context.Context, req *agentports.RealtimeTypingRequest) error {
+func (g *stubGateway) SignalTyping(
+	_ context.Context,
+	req *realtimeports.RealtimeTypingRequest,
+) error {
 	g.typing = req
 	return nil
 }
@@ -104,8 +111,10 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 	t.Helper()
 
 	gin.SetMode(gin.TestMode)
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	eh := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: zap.NewNop(), Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	eh := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: zap.NewNop(), AppConfig: &cfg.App},
+	)
 
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("Check", mock.Anything, mock.Anything).
@@ -117,8 +126,8 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 		PermissionMiddleware: middleware.NewPermissionMiddleware(
 			middleware.PermissionMiddlewareParams{PermissionEngine: engine, ErrorHandler: eh},
 		),
-		Config: cfg,
-		Logger: zap.NewNop(),
+		RealtimeConfig: &cfg.Realtime,
+		Logger:         zap.NewNop(),
 	})
 
 	r := gin.New()
@@ -147,21 +156,21 @@ func newTestRouter(t *testing.T, gateway *stubGateway, mode authMode) *gin.Engin
 func TestStream_WritesPreludeLiveFramesAndCloseReason(t *testing.T) {
 	t.Parallel()
 
-	frames := make(chan agentports.RealtimeFrame, 2)
-	frames <- agentports.RealtimeFrame{
+	frames := make(chan realtimeports.RealtimeFrame, 2)
+	frames <- realtimeports.RealtimeFrame{
 		ID:    "3.100-0",
-		Event: agentports.RealtimeEventInvalidation,
+		Event: realtimeports.RealtimeEventInvalidation,
 		Data:  []byte(`{"resource":"shipments"}`),
 	}
 	close(frames)
 
 	stream := &stubStream{
 		id: "rtc_1",
-		prelude: []agentports.RealtimeFrame{
-			{Event: agentports.RealtimeEventReady, Data: []byte(`{"connectionId":"rtc_1"}`)},
+		prelude: []realtimeports.RealtimeFrame{
+			{Event: realtimeports.RealtimeEventReady, Data: []byte(`{"connectionId":"rtc_1"}`)},
 		},
 		frames: frames,
-		reason: agentports.RealtimeCloseShutdown,
+		reason: realtimeports.RealtimeCloseShutdown,
 	}
 	gateway := &stubGateway{stream: stream}
 	router := newTestRouter(t, gateway, authUser)
@@ -195,7 +204,7 @@ func TestStream_WritesPreludeLiveFramesAndCloseReason(t *testing.T) {
 func TestStream_PortalUsersAreMarked(t *testing.T) {
 	t.Parallel()
 
-	frames := make(chan agentports.RealtimeFrame)
+	frames := make(chan realtimeports.RealtimeFrame)
 	close(frames)
 	gateway := &stubGateway{stream: &stubStream{id: "rtc_2", frames: frames}}
 	router := newTestRouter(t, gateway, authPortal)
@@ -239,9 +248,9 @@ func TestJoinShipmentComments_ScopesToTheShipment(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
-	gateway := &stubGateway{snapshot: &agentports.RealtimePresenceSnapshot{
+	gateway := &stubGateway{snapshot: &realtimeports.RealtimePresenceSnapshot{
 		Scope: "shipment-comments:" + shipmentID.String(),
-		Members: []agentports.RealtimePresenceMember{
+		Members: []realtimeports.RealtimePresenceMember{
 			{UserID: "usr_other", ConnectionID: "rtc_other", Name: "Other"},
 		},
 	}}
@@ -262,7 +271,7 @@ func TestJoinShipmentComments_ScopesToTheShipment(t *testing.T) {
 	assert.Equal(t, "rtc_01J00000000000000000000000", gateway.joined.ConnectionID)
 	assert.Equal(t, testUserID, gateway.joined.UserID)
 
-	var snapshot agentports.RealtimePresenceSnapshot
+	var snapshot realtimeports.RealtimePresenceSnapshot
 	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &snapshot))
 	require.Len(t, snapshot.Members, 1)
 	assert.Equal(t, "Other", snapshot.Members[0].Name)
@@ -332,7 +341,9 @@ func TestTypingShipmentComments_PassesStop(t *testing.T) {
 func TestJoinView_ScopesToTheTablesResource(t *testing.T) {
 	t.Parallel()
 
-	gateway := &stubGateway{snapshot: &agentports.RealtimePresenceSnapshot{Scope: "view:customer"}}
+	gateway := &stubGateway{
+		snapshot: &realtimeports.RealtimePresenceSnapshot{Scope: "view:customer"},
+	}
 	router := newTestRouter(t, gateway, authUser)
 
 	req := httptest.NewRequest(
@@ -353,7 +364,7 @@ func TestJoinRecord_ScopesToTheResourceAndRecord(t *testing.T) {
 	t.Parallel()
 
 	customerID := pulid.MustNew("cus_")
-	gateway := &stubGateway{snapshot: &agentports.RealtimePresenceSnapshot{}}
+	gateway := &stubGateway{snapshot: &realtimeports.RealtimePresenceSnapshot{}}
 	router := newTestRouter(t, gateway, authUser)
 
 	req := httptest.NewRequest(

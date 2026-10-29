@@ -14,11 +14,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission/factoringsubmissiondb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
@@ -49,13 +50,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist/workerchecklistdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave/workerleavedb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety/workersafetydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule/workerscheduledb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining/workertrainingdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
 
-const MaxIDsPerResource = agentports.MaxRecordLabelsPerResource
+const MaxIDsPerResource = agentruntimeports.MaxRecordLabelsPerResource
 
 type Params struct {
 	fx.In
@@ -67,7 +74,7 @@ type Labeler struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.RecordLabeler {
+func New(p Params) agentruntimeports.RecordLabeler {
 	return &Labeler{db: p.DB}
 }
 
@@ -162,7 +169,7 @@ var sources = map[permission.Resource]source{
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceFactoringSubmission: func(ids []pulid.ID) projection {
-		t := factoringdb.Submissions
+		t := factoringsubmissiondb.Submissions
 		return t.Pick(t.ID, labelText(t.Number)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceInvoice: func(ids []pulid.ID) projection {
@@ -277,19 +284,19 @@ var sources = map[permission.Resource]source{
 		return t.Pick(t.ID, labelText(t.Code)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceShiftTemplate: func(ids []pulid.ID) projection {
-		t := workerdb.ShiftTemplates
+		t := workerscheduledb.ShiftTemplates
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceTrainingCourse: func(ids []pulid.ID) projection {
-		t := workerdb.TrainingCourses
+		t := workertrainingdb.TrainingCourses
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceWorkerChecklistTemplate: func(ids []pulid.ID) projection {
-		t := workerdb.WorkerChecklistTemplates
+		t := workerchecklistdb.WorkerChecklistTemplates
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceWorkerCredentialType: func(ids []pulid.ID) projection {
-		t := workerdb.WorkerCredentialTypes
+		t := workercredentialdb.WorkerCredentialTypes
 		return t.Pick(t.ID, labelText(t.Name)).Where(t.ID.In(ids...))
 	},
 }
@@ -312,7 +319,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	},
 	permission.ResourceWorkerLeave: {
 		query: func(ids []pulid.ID) projection {
-			t := workerdb.WorkerLeaveCases
+			t := workerleavedb.WorkerLeaveCases
 			return t.Pick(t.ID, t.WorkerID, labelText(t.LeaveType)).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceWorker,
@@ -326,7 +333,7 @@ var ownedSources = map[permission.Resource]ownedSource{
 	},
 	permission.ResourceWorkerSafetyEvent: {
 		query: func(ids []pulid.ID) projection {
-			t := workerdb.WorkerSafetyEvents
+			t := workersafetydb.WorkerSafetyEvents
 			return t.Pick(t.ID, t.WorkerID, labelText(t.Kind)).Where(t.ID.In(ids...))
 		},
 		owner: permission.ResourceWorker,
@@ -337,8 +344,8 @@ func (l *Labeler) Labels(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
-) (agentports.RecordLabels, error) {
-	labels := make(agentports.RecordLabels, len(refs))
+) (agentruntimeports.RecordLabels, error) {
+	labels := make(agentruntimeports.RecordLabels, len(refs))
 
 	resources := make([]permission.Resource, 0, len(refs))
 	for resource := range refs {

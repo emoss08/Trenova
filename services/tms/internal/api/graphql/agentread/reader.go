@@ -13,9 +13,9 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -63,21 +63,21 @@ type Params struct {
 	fx.In
 	gqlext.Params
 
-	Config      *config.Config
+	AppConfig   *appconfig.Config
 	Schema      Schema
-	Loaders     *loaders.Factory
+	Loaders     *loadercore.Registry
 	Permissions permissionports.PermissionEngine
 }
 
 type Reader struct {
 	exec        *executor.Executor
 	operations  map[string]Operation
-	loaders     *loaders.Factory
+	loaders     *loadercore.Registry
 	permissions permissionports.PermissionEngine
 	tracer      trace.Tracer
 }
 
-var _ agentports.GraphQLReader = (*Reader)(nil)
+var _ graphqlreadports.GraphQLReader = (*Reader)(nil)
 
 func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 	exec := executor.New(gqlext.NewCostLimitedSchema(p.Schema.ExecutableSchema))
@@ -86,7 +86,7 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 	for _, ext := range gqlext.Extensions(p.Params) {
 		exec.Use(ext)
 	}
-	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.Config))
+	exec.SetErrorPresenter(gqlext.ErrorPresenter(p.AppConfig))
 	exec.SetRecoverFunc(gqlext.Recover)
 
 	operations := make(map[string]Operation, len(Operations()))
@@ -105,11 +105,11 @@ func New(p Params) *Reader { //nolint:gocritic // fx params are passed by value
 
 func (r *Reader) Read(
 	ctx context.Context,
-	req *agentports.GraphQLReadRequest,
-) (*agentports.GraphQLReadResult, error) {
+	req *graphqlreadports.GraphQLReadRequest,
+) (*graphqlreadports.GraphQLReadResult, error) {
 	op, ok := r.operations[req.Operation]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", agentports.ErrUnknownReadOperation, req.Operation)
+		return nil, fmt.Errorf("%w: %s", graphqlreadports.ErrUnknownReadOperation, req.Operation)
 	}
 	if readscope.Current(ctx) == nil {
 		return nil, ErrNoReadScope
@@ -265,8 +265,8 @@ func authContextFor(actor *permissionports.RequestActor) (*authctx.AuthContext, 
 func decode(
 	response *graphql.Response,
 	ceiling *gqlctx.FieldCeiling,
-) (*agentports.GraphQLReadResult, error) {
-	result := &agentports.GraphQLReadResult{Withheld: ceiling.Withheld()}
+) (*graphqlreadports.GraphQLReadResult, error) {
+	result := &graphqlreadports.GraphQLReadResult{Withheld: ceiling.Withheld()}
 	if response == nil {
 		return result, nil
 	}
@@ -283,14 +283,14 @@ func decode(
 	return result, nil
 }
 
-func readErrors(list gqlerror.List) []agentports.GraphQLReadError {
+func readErrors(list gqlerror.List) []graphqlreadports.GraphQLReadError {
 	if len(list) == 0 {
 		return nil
 	}
-	out := make([]agentports.GraphQLReadError, 0, len(list))
+	out := make([]graphqlreadports.GraphQLReadError, 0, len(list))
 	for _, gqlErr := range list {
 		code, _ := gqlErr.Extensions["code"].(string)
-		out = append(out, agentports.GraphQLReadError{
+		out = append(out, graphqlreadports.GraphQLReadError{
 			Message: gqlErr.Message,
 			Path:    gqlErr.Path.String(),
 			Code:    code,
@@ -300,7 +300,7 @@ func readErrors(list gqlerror.List) []agentports.GraphQLReadError {
 	return out
 }
 
-func errorCodes(result *agentports.GraphQLReadResult) []string {
+func errorCodes(result *graphqlreadports.GraphQLReadResult) []string {
 	out := make([]string, 0, len(result.Errors))
 	for _, readErr := range result.Errors {
 		out = append(out, readErr.Code)

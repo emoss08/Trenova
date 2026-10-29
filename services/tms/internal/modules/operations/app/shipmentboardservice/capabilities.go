@@ -3,26 +3,26 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"golang.org/x/sync/errgroup"
 )
 
-var boardAITasks = [...]aiprovider.Task{
-	aiprovider.TaskDailyBriefing,
-	aiprovider.TaskOperationalInsights,
+var boardAITasks = [...]aitask.Task{
+	aitask.TaskDailyBriefing,
+	aitask.TaskOperationalInsights,
 }
 
 func (s *Service) Capabilities(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*shipmentports.ShipmentBoardCapabilities, error) {
-	out := new(shipmentports.ShipmentBoardCapabilities)
+) (*shipmentboardports.ShipmentBoardCapabilities, error) {
+	out := new(shipmentboardports.ShipmentBoardCapabilities)
 	g, gctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -71,21 +71,24 @@ func (s *Service) Capabilities(
 func (s *Service) AIAvailable(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	task aiprovider.Task,
+	task aitask.Task,
 ) (bool, error) {
-	return s.anyAITask(ctx, tenantInfo, []aiprovider.Task{task})
+	return s.anyAITask(ctx, tenantInfo, []aitask.Task{task})
 }
 
 func (s *Service) anyAITask(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	tasks []aiprovider.Task,
+	tasks []aitask.Task,
 ) (bool, error) {
 	for _, task := range tasks {
-		providers, err := s.aiProviders.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
-			Task:       task,
-			TenantInfo: tenantInfo,
-		})
+		providers, err := s.aiProviders.ListForTask(
+			ctx,
+			aiproviderports.ListAIProvidersForTaskRequest{
+				Task:       task,
+				TenantInfo: tenantInfo,
+			},
+		)
 		if err != nil {
 			return false, err
 		}

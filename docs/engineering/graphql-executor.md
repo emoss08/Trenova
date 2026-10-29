@@ -58,12 +58,14 @@ internal/api/graphql/
 └── resolver/
     ├── services.go          # Params (fx), Services: every dependency a resolver may use
     ├── resolver.generated.go  # Resolver root: builds each package's Deps, wires ResolverRoot
-    ├── base/                # Core (logger, permissions, tracing) and shared helpers
+    ├── resolvercore/        # Core (logger, permissions, team scope, tracing), embedded in every Deps
+    ├── gqlid/ gqlscalar/ gqldecimal/  # id, pointer and decimal conversions
+    ├── gqlconnection/       # connections, list and data-table inputs
     ├── <file>resolver/      # one package per schema file
     │   ├── <file>.resolvers.go       # hand-written resolver methods (stubs generated)
     │   └── resolvers.generated.go    # Deps and the resolver types
     ├── mappers/             # mappergen output
-    └── telematicsmapping/   # mapping shared by more than one resolver package
+    └── shipmentmapping/ telematicsmapping/ ...  # mapping shared by more than one resolver package
 ```
 
 A schema file's executor package holds:
@@ -102,15 +104,15 @@ back exactly as they were.
 ## Resolvers
 
 `resolver/services.go` is hand-written. `Params` is the fx parameter struct, `Services`
-embeds `*base.Core` and holds every service a resolver may use, and `newServices` fills it.
+embeds `*resolvercore.Core` and holds every service a resolver may use, and `newServices` fills it.
 To give resolvers a new service, add it to all three.
 
 Each resolver package gets a generated `Deps`:
 
 ```go
 type Deps struct {
-	*base.Core
-	ShipmentService shipmentports.ShipmentService
+	*resolvercore.Core
+	ShipmentService shipmentserviceports.ShipmentService
 	// ...only the Services fields this package's code names
 }
 
@@ -124,9 +126,12 @@ package does not really use; that only widens the package's imports.
 
 Rules that keep the split paying off:
 
-- Code shared by several resolver packages goes in `base` only when it needs nothing but
-  `Core`. Everything in `base` recompiles all resolver packages when it changes. Mapping
-  shared by a few packages gets its own small package, like `telematicsmapping`.
+- Code shared by several resolver packages goes in `resolvercore` only when it is a `Core`
+  method or what one needs. Everything in `resolvercore` recompiles all resolver packages when
+  it changes. Other shared code gets its own small package named for what it provides: ids
+  (`gqlid`), scalar pointers (`gqlscalar`), decimals (`gqldecimal`), connections and list
+  inputs (`gqlconnection`), and mapping shared by a few packages, like `shipmentmapping` or
+  `telematicsmapping`.
 - Resolver packages never import each other.
 - A resolver method may not have the same name as a `Services` field the package uses: the
   method would hide the field. The generator refuses this and names both; rename the field.
@@ -135,7 +140,7 @@ In tests, build the package's `Deps` directly:
 
 ```go
 r := &QueryResolver{&Deps{
-	Core:            &base.Core{L: zap.NewNop(), PermissionEngine: engine},
+	Core:            &resolvercore.Core{L: zap.NewNop(), PermissionEngine: engine},
 	ShipmentService: shipments,
 }}
 ```

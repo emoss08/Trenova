@@ -8,13 +8,7 @@ import (
 	"time"
 	_ "time/tzdata"
 
-	"github.com/emoss08/trenova/internal/testutil/pagetest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -26,6 +20,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tractorportsmock"
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -977,8 +975,8 @@ func TestUpsertTaxRates_ValidatesEachRowAndRejectsDuplicates(t *testing.T) {
 func selfHostedReferenceGuard(t *testing.T) *referencedataguard.Guard {
 	t.Helper()
 
-	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
-		Mode: config.PlatformModeSelfHosted,
+	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
+		Mode: platformconfig.ModeSelfHosted,
 	}, editioninfo.SelfHosted())
 	require.NoError(t, err)
 
@@ -988,8 +986,8 @@ func selfHostedReferenceGuard(t *testing.T) *referencedataguard.Guard {
 func TestTaxRateWrites_AreRefusedForATenantThatIsNotAStewardInCloudMode(t *testing.T) {
 	t.Parallel()
 
-	guard, err := referencedataguard.FromPlatform(&config.PlatformConfig{
-		Mode:                  config.PlatformModeCloud,
+	guard, err := referencedataguard.FromPlatform(&platformconfig.Config{
+		Mode:                  platformconfig.ModeCloud,
 		ReferenceDataStewards: []string{pulid.MustNew("org_").String()},
 	}, editioninfo.NewStatic("cloud", true))
 	require.NoError(t, err)

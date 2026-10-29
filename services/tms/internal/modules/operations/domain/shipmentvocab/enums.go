@@ -1,0 +1,484 @@
+package shipmentvocab
+
+type Status string
+
+const (
+	StatusNew                = Status("New")
+	StatusPartiallyAssigned  = Status("PartiallyAssigned")
+	StatusAssigned           = Status("Assigned")
+	StatusInTransit          = Status("InTransit")
+	StatusDelayed            = Status("Delayed")
+	StatusPartiallyCompleted = Status("PartiallyCompleted")
+	StatusReadyToInvoice     = Status("ReadyToInvoice")
+	StatusCompleted          = Status("Completed")
+	StatusInvoiced           = Status("Invoiced")
+	StatusCanceled           = Status("Canceled")
+)
+
+type TenderStatus string
+
+const (
+	TenderStatusTendered = TenderStatus("Tendered")
+	TenderStatusAccepted = TenderStatus("Accepted")
+	TenderStatusRejected = TenderStatus("Rejected")
+	TenderStatusExpired  = TenderStatus("Expired")
+	TenderStatusCanceled = TenderStatus("Canceled")
+)
+
+type EntryMethod string
+
+const (
+	EntryMethodManual = EntryMethod("Manual")
+	EntryMethodEDI    = EntryMethod("EDI")
+)
+
+const RateCoverageRuleKey = "rate_coverage"
+
+type FreightTerms string
+
+const (
+	FreightTermsPrepaid    = FreightTerms("Prepaid")
+	FreightTermsCollect    = FreightTerms("Collect")
+	FreightTermsThirdParty = FreightTerms("ThirdParty")
+)
+
+func FreightTermsValues() []FreightTerms {
+	return []FreightTerms{FreightTermsPrepaid, FreightTermsCollect, FreightTermsThirdParty}
+}
+
+func (f FreightTerms) IsValid() bool {
+	switch f {
+	case FreightTermsPrepaid, FreightTermsCollect, FreightTermsThirdParty:
+		return true
+	default:
+		return false
+	}
+}
+
+type BillingTransferStatus string
+
+const (
+	BillingTransferNone           = BillingTransferStatus("")
+	BillingTransferReadyForReview = BillingTransferStatus("ReadyForReview")
+	BillingTransferInReview       = BillingTransferStatus("InReview")
+	BillingTransferOnHold         = BillingTransferStatus("OnHold")
+	BillingTransferException      = BillingTransferStatus("Exception")
+	BillingTransferSentBackToOps  = BillingTransferStatus("SentBackToOps")
+	BillingTransferApproved       = BillingTransferStatus("Approved")
+	BillingTransferPosted         = BillingTransferStatus("Posted")
+	BillingTransferCanceled       = BillingTransferStatus("Canceled")
+)
+
+type MoveStatus string
+
+const (
+	MoveStatusNew       = MoveStatus("New")
+	MoveStatusAssigned  = MoveStatus("Assigned")
+	MoveStatusInTransit = MoveStatus("InTransit")
+	MoveStatusCompleted = MoveStatus("Completed")
+	MoveStatusCanceled  = MoveStatus("Canceled")
+)
+
+func MoveStatuses() []MoveStatus {
+	return []MoveStatus{
+		MoveStatusNew,
+		MoveStatusAssigned,
+		MoveStatusInTransit,
+		MoveStatusCompleted,
+		MoveStatusCanceled,
+	}
+}
+
+type AssignmentAck string
+
+const (
+	AssignmentAckPending  = AssignmentAck("Pending")
+	AssignmentAckAccepted = AssignmentAck("Accepted")
+	AssignmentAckDeclined = AssignmentAck("Declined")
+)
+
+func (a AssignmentAck) String() string { return string(a) }
+
+func (a AssignmentAck) IsValid() bool {
+	switch a {
+	case AssignmentAckPending, AssignmentAckAccepted, AssignmentAckDeclined:
+		return true
+	default:
+		return false
+	}
+}
+
+type AssignmentStatus string
+
+const (
+	AssignmentStatusNew        = AssignmentStatus("New")
+	AssignmentStatusInProgress = AssignmentStatus("InProgress")
+	AssignmentStatusCompleted  = AssignmentStatus("Completed")
+	AssignmentStatusCanceled   = AssignmentStatus("Canceled")
+)
+
+type StopStatus string
+
+const (
+	StopStatusNew       = StopStatus("New")
+	StopStatusInTransit = StopStatus("InTransit")
+	StopStatusCompleted = StopStatus("Completed")
+	StopStatusCanceled  = StopStatus("Canceled")
+)
+
+type StopType string
+
+const (
+	StopTypePickup        = StopType("Pickup")
+	StopTypeDelivery      = StopType("Delivery")
+	StopTypeSplitDelivery = StopType("SplitDelivery")
+	StopTypeSplitPickup   = StopType("SplitPickup")
+)
+
+func PickupStopTypes() []StopType {
+	return []StopType{StopTypePickup, StopTypeSplitPickup}
+}
+
+func DeliveryStopTypes() []StopType {
+	return []StopType{StopTypeDelivery, StopTypeSplitDelivery}
+}
+
+func StopTypeValues() []StopType {
+	return []StopType{StopTypePickup, StopTypeDelivery, StopTypeSplitPickup, StopTypeSplitDelivery}
+}
+
+type StopScheduleType string
+
+const (
+	StopScheduleTypeOpen        = StopScheduleType("Open")
+	StopScheduleTypeAppointment = StopScheduleType("Appointment")
+)
+
+func StopScheduleTypeValues() []StopScheduleType {
+	return []StopScheduleType{StopScheduleTypeOpen, StopScheduleTypeAppointment}
+}
+
+type CommentType string
+
+const (
+	CommentTypeInternal            = CommentType("Internal")
+	CommentTypeDispatch            = CommentType("Dispatch")
+	CommentTypeDriverUpdate        = CommentType("DriverUpdate")
+	CommentTypePickupInstruction   = CommentType("PickupInstruction")
+	CommentTypeDeliveryInstruction = CommentType("DeliveryInstruction")
+	CommentTypeStatusUpdate        = CommentType("StatusUpdate")
+	CommentTypeException           = CommentType("Exception")
+	CommentTypeCustomerUpdate      = CommentType("CustomerUpdate")
+	CommentTypeAppointment         = CommentType("Appointment")
+	CommentTypeDocument            = CommentType("Document")
+	CommentTypeBilling             = CommentType("Billing")
+	CommentTypeCompliance          = CommentType("Compliance")
+)
+
+type CommentVisibility string
+
+const (
+	CommentVisibilityInternal   = CommentVisibility("Internal")
+	CommentVisibilityOperations = CommentVisibility("Operations")
+	CommentVisibilityCustomer   = CommentVisibility("Customer")
+	CommentVisibilityDriver     = CommentVisibility("Driver")
+	CommentVisibilityAccounting = CommentVisibility("Accounting")
+)
+
+func CommentVisibilityValues() []CommentVisibility {
+	return []CommentVisibility{
+		CommentVisibilityInternal,
+		CommentVisibilityOperations,
+		CommentVisibilityCustomer,
+		CommentVisibilityDriver,
+		CommentVisibilityAccounting,
+	}
+}
+
+type CommentPriority string
+
+const (
+	CommentPriorityLow    = CommentPriority("Low")
+	CommentPriorityNormal = CommentPriority("Normal")
+	CommentPriorityHigh   = CommentPriority("High")
+	CommentPriorityUrgent = CommentPriority("Urgent")
+)
+
+func CommentPriorityValues() []CommentPriority {
+	return []CommentPriority{
+		CommentPriorityLow,
+		CommentPriorityNormal,
+		CommentPriorityHigh,
+		CommentPriorityUrgent,
+	}
+}
+
+type CommentSource string
+
+const (
+	CommentSourceUser        = CommentSource("User")
+	CommentSourceSystem      = CommentSource("System")
+	CommentSourceIntegration = CommentSource("Integration")
+	CommentSourceAI          = CommentSource("AI")
+)
+
+func (v Status) IsValid() bool {
+	switch v {
+	case StatusNew,
+		StatusPartiallyAssigned,
+		StatusAssigned,
+		StatusInTransit,
+		StatusDelayed,
+		StatusPartiallyCompleted,
+		StatusReadyToInvoice,
+		StatusCompleted,
+		StatusInvoiced,
+		StatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v TenderStatus) IsValid() bool {
+	switch v {
+	case TenderStatusTendered,
+		TenderStatusAccepted,
+		TenderStatusRejected,
+		TenderStatusExpired,
+		TenderStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v EntryMethod) IsValid() bool {
+	switch v {
+	case EntryMethodManual, EntryMethodEDI:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BillingTransferStatus) IsValid() bool {
+	switch v {
+	case BillingTransferNone,
+		BillingTransferReadyForReview,
+		BillingTransferInReview,
+		BillingTransferOnHold,
+		BillingTransferException,
+		BillingTransferSentBackToOps,
+		BillingTransferApproved,
+		BillingTransferPosted,
+		BillingTransferCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v BillingTransferStatus) IsOutsideBillingQueue() bool {
+	return v == BillingTransferNone || v == BillingTransferSentBackToOps
+}
+
+func BillingTransferCandidateStatuses() []Status {
+	return []Status{StatusCompleted, StatusReadyToInvoice}
+}
+
+func (v Status) IsBillingTransferCandidate() bool {
+	return v == StatusCompleted || v == StatusReadyToInvoice
+}
+
+func (v MoveStatus) IsValid() bool {
+	switch v {
+	case MoveStatusNew,
+		MoveStatusAssigned,
+		MoveStatusInTransit,
+		MoveStatusCompleted,
+		MoveStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v AssignmentStatus) IsValid() bool {
+	switch v {
+	case AssignmentStatusNew,
+		AssignmentStatusInProgress,
+		AssignmentStatusCompleted,
+		AssignmentStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopStatus) IsValid() bool {
+	switch v {
+	case StopStatusNew,
+		StopStatusInTransit,
+		StopStatusCompleted,
+		StopStatusCanceled:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopType) IsValid() bool {
+	switch v {
+	case StopTypePickup,
+		StopTypeDelivery,
+		StopTypeSplitDelivery,
+		StopTypeSplitPickup:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v StopScheduleType) IsValid() bool {
+	switch v {
+	case StopScheduleTypeOpen,
+		StopScheduleTypeAppointment:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentType) IsValid() bool {
+	switch v {
+	case CommentTypeInternal,
+		CommentTypeDispatch,
+		CommentTypeDriverUpdate,
+		CommentTypePickupInstruction,
+		CommentTypeDeliveryInstruction,
+		CommentTypeStatusUpdate,
+		CommentTypeException,
+		CommentTypeCustomerUpdate,
+		CommentTypeAppointment,
+		CommentTypeDocument,
+		CommentTypeBilling,
+		CommentTypeCompliance:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentVisibility) IsValid() bool {
+	switch v {
+	case CommentVisibilityInternal,
+		CommentVisibilityOperations,
+		CommentVisibilityCustomer,
+		CommentVisibilityDriver,
+		CommentVisibilityAccounting:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentPriority) IsValid() bool {
+	switch v {
+	case CommentPriorityLow,
+		CommentPriorityNormal,
+		CommentPriorityHigh,
+		CommentPriorityUrgent:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v CommentSource) IsValid() bool {
+	switch v {
+	case CommentSourceUser,
+		CommentSourceSystem,
+		CommentSourceIntegration,
+		CommentSourceAI:
+		return true
+	default:
+		return false
+	}
+}
+
+type MoveCoverageType string
+
+const (
+	MoveCoverageTypeUnassigned = MoveCoverageType("unassigned")
+	MoveCoverageTypeDriver     = MoveCoverageType("driver")
+	MoveCoverageTypeCarrier    = MoveCoverageType("carrier")
+)
+
+func (c MoveCoverageType) String() string {
+	return string(c)
+}
+
+func (c MoveCoverageType) IsValid() bool {
+	switch c {
+	case MoveCoverageTypeUnassigned, MoveCoverageTypeDriver, MoveCoverageTypeCarrier:
+		return true
+	}
+	return false
+}
+
+type CarrierAssignmentStatus string
+
+const (
+	CarrierAssignmentStatusPending   = CarrierAssignmentStatus("Pending")
+	CarrierAssignmentStatusConfirmed = CarrierAssignmentStatus("Confirmed")
+	CarrierAssignmentStatusCanceled  = CarrierAssignmentStatus("Canceled")
+)
+
+func (s CarrierAssignmentStatus) String() string {
+	return string(s)
+}
+
+func (s CarrierAssignmentStatus) IsValid() bool {
+	switch s {
+	case CarrierAssignmentStatusPending,
+		CarrierAssignmentStatusConfirmed,
+		CarrierAssignmentStatusCanceled:
+		return true
+	}
+	return false
+}
+
+type CarrierRateMethod string
+
+const (
+	CarrierRateMethodFlat    = CarrierRateMethod("Flat")
+	CarrierRateMethodPerMile = CarrierRateMethod("PerMile")
+)
+
+func (m CarrierRateMethod) String() string {
+	return string(m)
+}
+
+func (m CarrierRateMethod) Label() string {
+	switch m {
+	case CarrierRateMethodPerMile:
+		return "Per Mile"
+	case CarrierRateMethodFlat:
+		return "Flat"
+	default:
+		return string(m)
+	}
+}
+
+func (m CarrierRateMethod) IsValid() bool {
+	switch m {
+	case CarrierRateMethodFlat, CarrierRateMethodPerMile:
+		return true
+	}
+	return false
+}
+
+func CarrierRateMethodValues() []CarrierRateMethod {
+	return []CarrierRateMethod{CarrierRateMethodFlat, CarrierRateMethodPerMile}
+}

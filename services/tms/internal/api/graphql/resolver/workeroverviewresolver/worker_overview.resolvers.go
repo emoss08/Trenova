@@ -8,7 +8,8 @@ package workeroverviewresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,7 @@ func (r *QueryResolver) WorkerOverview(ctx context.Context, workerID string) (*w
 
 	return r.WorkerOverviewService.Get(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		wid,
 		r.OverviewSections(ctx, authCtx),
 	)
@@ -42,9 +43,9 @@ func (r *QueryResolver) WorkerRosterAttention(ctx context.Context) (*workeroverv
 	if err != nil {
 		return nil, err
 	}
-	return r.WorkerOverviewService.RosterAttention(ctx, base.TenantInfo(authCtx), access)
+	return r.WorkerOverviewService.RosterAttention(ctx, resolvercore.TenantInfo(authCtx), access)
 }
 
 func (r *WorkerRosterAttentionResolver) PTOLiabilityDays(ctx context.Context, obj *workeroverviewservice.RosterAttention) (string, error) {
-	return base.DecimalString(obj.PTOLiabilityDays), nil
+	return gqldecimal.DecimalString(obj.PTOLiabilityDays), nil
 }

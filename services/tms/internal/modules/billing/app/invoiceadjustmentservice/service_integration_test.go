@@ -8,10 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
@@ -20,13 +16,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceadjustmentengine"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -38,11 +35,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -60,6 +57,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -193,6 +192,13 @@ func (fakeAccessorialRepo) GetByID(
 	return nil, nil
 }
 
+func (fakeAccessorialRepo) GetByIDs(
+	context.Context,
+	accessorialchargeports.GetAccessorialChargesByIDsRequest,
+) ([]*accessorialcharge.AccessorialCharge, error) {
+	return nil, nil
+}
+
 func (fakeAccessorialRepo) ListCatalog(
 	context.Context,
 	pagination.TenantInfo,
@@ -258,7 +264,7 @@ type noopRealtimeService struct{}
 
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
-	*agentports.PublishResourceInvalidationRequest,
+	*realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -323,13 +329,13 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	)
 	h.ensureOpenFiscalPeriod(t)
 	h.ensureAccountingDefaults(t)
-	h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+	h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 		control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 	})
 
 	t.Run("full invoice credit only executes credit memo", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -373,9 +379,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("credit and rebill creates draft replacement invoice and lineage", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
-			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange
+			control.ReplacementInvoiceReviewPolicy = invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -478,9 +484,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("full reversal ignores partial line input and does not rebill", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
-			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyNoAdditionalReview
+			control.ReplacementInvoiceReviewPolicy = invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicyNoAdditionalReview
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -566,8 +572,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("write-off uses write-off approval policy and creates journal entry", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.WriteOffApprovalPolicy = tenant.WriteOffApprovalPolicyRequireApprovalAboveThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.WriteOffApprovalPolicy = invoiceadjustmentcontrol.WriteOffApprovalPolicyRequireApprovalAboveThreshold
 			control.WriteOffApprovalThreshold = decimal.NewFromInt(50)
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
@@ -651,8 +657,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("approve revalidates against current state", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAlways
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -673,8 +679,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, submitErr)
 		require.Equal(t, invoiceadjustment.StatusPendingApproval, pending.Status)
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 		_, executeErr := h.service.Submit(h.ctx, &invoiceadjustmentports.InvoiceAdjustmentRequest{
@@ -700,8 +706,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("reject marks pending approval adjustments rejected", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAlways
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAlways
 		})
 
 		entity := h.createPostedInvoice(t, []invoice.InvoiceLine{
@@ -738,7 +744,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("idempotency and partial credits exhaust eligibility", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -788,8 +794,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Settled freight", 1, 100),
 		}, invoice.SettlementStatusPaid, decimal.NewFromInt(100))
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityDisallow
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.PaidInvoiceAdjustmentPolicy = invoiceadjustmentcontrol.AdjustmentEligibilityDisallow
 		})
 		blocked, blockedErr := h.service.Preview(
 			h.ctx,
@@ -805,8 +811,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.NoError(t, blockedErr)
 		assert.Contains(t, blocked.Errors, "invoiceId")
 
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.PaidInvoiceAdjustmentPolicy = tenant.AdjustmentEligibilityAllowWithApproval
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.PaidInvoiceAdjustmentPolicy = invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval
 		})
 		allowed, allowedErr := h.service.Preview(
 			h.ctx,
@@ -825,9 +831,9 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("reason policy is enforced and supporting documents are optional", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.AdjustmentReasonRequirement = tenant.RequirementPolicyRequired
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.AdjustmentReasonRequirement = invoiceadjustmentcontrol.RequirementPolicyRequired
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -857,8 +863,8 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	})
 
 	t.Run("no adjustment kind requires supporting documents", func(t *testing.T) {
-		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
-			control.StandardAdjustmentApprovalPolicy = tenant.ApprovalPolicyAmountThreshold
+		h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalPolicy = invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold
 			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 		})
 
@@ -940,7 +946,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 	t.Run(
 		"bulk inline tracks partial success and large batches route to Temporal",
 		func(t *testing.T) {
-			h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+			h.setControls(t, func(control *invoiceadjustmentcontrol.InvoiceAdjustmentControl) {
 				control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
 			})
 
@@ -1044,9 +1050,6 @@ func newIntegrationHarness(
 	accountingRepo := accountingcontrolrepository.New(
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
-	billingCtrlRepo := billingcontrolrepository.New(
-		billingcontrolrepository.Params{DB: conn, Logger: logger},
-	)
 	customerRepo := customerrepository.New(customerrepository.Params{
 		DB:     conn,
 		Logger: logger,
@@ -1139,37 +1142,46 @@ func newIntegrationHarness(
 	}
 
 	h.service = New(Params{
-		Logger:             logger,
 		DB:                 conn,
 		Repo:               adjustmentRepo,
 		InvoiceRepo:        invoiceRepo,
-		CustomerRepo:       customerRepo,
-		BillingQueueRepo:   billingQueueRepo,
-		ShipmentRepo:       shipmentRepo,
-		ShipmentCtrlRepo:   shipmentCtrlRepo,
-		BillingCtrlRepo:    billingCtrlRepo,
 		AdjustmentCtrlRepo: adjustmentCtrlRepo,
-		AccountingRepo:     accountingRepo,
-		JournalRepo: journalpostingrepository.New(
-			journalpostingrepository.Params{DB: conn, Logger: logger},
+		Validator: invoiceadjustmentengine.NewValidator(
+			invoiceadjustmentengine.ValidatorParams{},
 		),
-		FiscalPeriodRepo: fiscalPeriodRepo,
-		DocumentRepo:     documentRepo,
-		CustomerLedgerRepo: customerledgerrepository.New(
-			customerledgerrepository.Params{DB: conn, Logger: logger},
-		),
-		Validator:       NewValidator(ValidatorParams{}),
-		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
-		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
-			AccessorialRepo: fakeAccessorialRepo{},
+		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Logger:             logger,
+			Repo:               adjustmentRepo,
+			InvoiceRepo:        invoiceRepo,
+			CustomerRepo:       customerRepo,
+			BillingQueueRepo:   billingQueueRepo,
+			ShipmentRepo:       shipmentRepo,
+			ShipmentCtrlRepo:   shipmentCtrlRepo,
+			AdjustmentCtrlRepo: adjustmentCtrlRepo,
+			AccountingRepo:     accountingRepo,
+			JournalRepo: journalpostingrepository.New(
+				journalpostingrepository.Params{DB: conn, Logger: logger},
+			),
+			FiscalPeriodRepo: fiscalPeriodRepo,
+			DocumentRepo:     documentRepo,
+			CustomerLedgerRepo: customerledgerrepository.New(
+				customerledgerrepository.Params{DB: conn, Logger: logger},
+			),
+			Validator: invoiceadjustmentengine.NewValidator(
+				invoiceadjustmentengine.ValidatorParams{},
+			),
+			AuditService: noopAuditService{},
+			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Logger:          zap.NewNop(),
+				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
+				AccessorialRepo: fakeAccessorialRepo{},
+			}),
+			Generator: &fakeGenerator{},
+			SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+				TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+			},
 		}),
-		Generator: &fakeGenerator{},
-		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
-			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
-		},
 	})
 
 	return h
@@ -1183,50 +1195,57 @@ func (h *integrationHarness) buildService(
 	t.Helper()
 
 	return New(Params{
-		Logger:      zap.NewNop(),
-		DB:          h.conn,
-		Repo:        h.adjustmentRepo,
-		InvoiceRepo: h.invoiceRepo,
-		CustomerRepo: customerrepository.New(customerrepository.Params{
-			DB:     h.conn,
-			Logger: zap.NewNop(),
-		}),
-		BillingQueueRepo: h.billingQueueRepo,
-		ShipmentRepo: shipmentrepository.New(
-			shipmentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		ShipmentCtrlRepo: shipmentcontrolrepository.New(
-			shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		BillingCtrlRepo: billingcontrolrepository.New(
-			billingcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
+		DB:                 h.conn,
+		Repo:               h.adjustmentRepo,
+		InvoiceRepo:        h.invoiceRepo,
 		AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
-		AccountingRepo:     h.accountingRepo,
-		JournalRepo: journalpostingrepository.New(
-			journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+		Validator: invoiceadjustmentengine.NewValidator(
+			invoiceadjustmentengine.ValidatorParams{},
 		),
-		FiscalPeriodRepo: fiscalperiodrepository.New(
-			fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		CustomerLedgerRepo: customerledgerrepository.New(
-			customerledgerrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		DocumentRepo: documentrepository.New(
-			documentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
-		),
-		Validator:       NewValidator(ValidatorParams{}),
-		AuditService:    noopAuditService{},
 		WorkflowStarter: starter,
-		Commercial: shipmentcommercial.New(shipmentcommercial.Params{
-			Logger:          zap.NewNop(),
-			RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
-			AccessorialRepo: fakeAccessorialRepo{},
+		Engine: invoiceadjustmentengine.New(invoiceadjustmentengine.Params{
+			Logger:      zap.NewNop(),
+			Repo:        h.adjustmentRepo,
+			InvoiceRepo: h.invoiceRepo,
+			CustomerRepo: customerrepository.New(customerrepository.Params{
+				DB:     h.conn,
+				Logger: zap.NewNop(),
+			}),
+			BillingQueueRepo: h.billingQueueRepo,
+			ShipmentRepo: shipmentrepository.New(
+				shipmentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			ShipmentCtrlRepo: shipmentcontrolrepository.New(
+				shipmentcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
+			AccountingRepo:     h.accountingRepo,
+			JournalRepo: journalpostingrepository.New(
+				journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			FiscalPeriodRepo: fiscalperiodrepository.New(
+				fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			CustomerLedgerRepo: customerledgerrepository.New(
+				customerledgerrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			DocumentRepo: documentrepository.New(
+				documentrepository.Params{DB: h.conn, Logger: zap.NewNop()},
+			),
+			Validator: invoiceadjustmentengine.NewValidator(
+				invoiceadjustmentengine.ValidatorParams{},
+			),
+			AuditService: noopAuditService{},
+			Commercial: shipmentcommercial.New(shipmentcommercial.Params{
+				Logger:          zap.NewNop(),
+				RateEngine:      ratingtest.NewFlatEngine(t, formulaAmount),
+				AccessorialRepo: fakeAccessorialRepo{},
+			}),
+			Generator: &fakeGenerator{},
+			SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
+				TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+			},
 		}),
-		Generator: &fakeGenerator{},
-		SequenceGenerator: testutil.UniqueJournalSequenceGenerator{
-			TestSequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
-		},
 	})
 }
 
@@ -1313,10 +1332,10 @@ func (h *integrationHarness) ensureAccountingDefaults(t *testing.T) {
 	control.DefaultARAccountID = h.lookupGLAccount(t, "1110")
 	control.DefaultWriteOffAccountID = h.lookupGLAccount(t, "6940")
 	control.DefaultRevenueAccountID = h.lookupGLAccount(t, "4000")
-	control.AccountingBasis = tenant.AccountingBasisAccrual
-	control.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
-	control.JournalPostingMode = tenant.JournalPostingModeAutomatic
-	control.ManualJournalEntryPolicy = tenant.ManualJournalEntryPolicyAdjustmentOnly
+	control.AccountingBasis = accountingcontrol.AccountingBasisAccrual
+	control.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
+	control.JournalPostingMode = accountingcontrol.JournalPostingModeAutomatic
+	control.ManualJournalEntryPolicy = accountingcontrol.ManualJournalEntryPolicyAdjustmentOnly
 	control.RequireManualJEApproval = true
 	_, err = h.accountingRepo.Update(h.ctx, control)
 	require.NoError(t, err)
@@ -1406,7 +1425,7 @@ func (h *integrationHarness) lookupGLAccount(t *testing.T, code string) pulid.ID
 
 func (h *integrationHarness) setControls(
 	t *testing.T,
-	mutate func(*tenant.InvoiceAdjustmentControl),
+	mutate func(*invoiceadjustmentcontrol.InvoiceAdjustmentControl),
 ) {
 	t.Helper()
 

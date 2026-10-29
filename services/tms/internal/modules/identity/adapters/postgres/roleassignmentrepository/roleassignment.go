@@ -6,8 +6,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -38,31 +38,31 @@ func New(p Params) permissionports.RoleAssignmentRepository {
 }
 
 func withRole(
-	q *keel.Query[*permission.UserRoleAssignment],
+	q *keel.Query[*rbac.UserRoleAssignment],
 	expand bool,
-) *keel.Query[*permission.UserRoleAssignment] {
+) *keel.Query[*rbac.UserRoleAssignment] {
 	if !expand {
 		return q
 	}
 
-	return q.Load(permissiondb.UserRoleAssignments.Role())
+	return q.Load(rbacdb.UserRoleAssignments.Role())
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *permissionports.ListRoleAssignmentsRequest,
-) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
+) (*pagination.ListResult[*rbac.UserRoleAssignment], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*permission.UserRoleAssignment], error) {
-			ura := permissiondb.UserRoleAssignments
+		func(ctx context.Context) (*pagination.ListResult[*rbac.UserRoleAssignment], error) {
+			ura := rbacdb.UserRoleAssignments
 			page := req.Filter.Pagination
 			rows := withRole(ura.Query(), req.ExpandRoles).
 				Limit(page.SafeLimit()).
 				Offset(page.SafeOffset())
 
-			var items []*permission.UserRoleAssignment
+			var items []*rbac.UserRoleAssignment
 			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
@@ -82,9 +82,9 @@ func (r *repository) List(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req permissionports.GetRoleAssignmentByIDRequest,
-) (*permission.UserRoleAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.UserRoleAssignment, error) {
-		ura := permissiondb.UserRoleAssignments
+) (*rbac.UserRoleAssignment, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*rbac.UserRoleAssignment, error) {
+		ura := rbacdb.UserRoleAssignments
 		entity, err := withRole(ura.Where(ura.ID.Eq(req.RoleAssignmentID)), req.ExpandRoles).
 			One(ctx, r.db.Keel(ctx))
 		if err != nil {

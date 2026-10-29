@@ -11,6 +11,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/keelassign"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection/accountingconnectiondb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
@@ -376,19 +380,19 @@ func finishAssignments(record *accountingsync.AccountingSyncRecord) []keel.Assig
 		sr.AttemptCount.To(int64(record.AttemptCount)),
 		listquery.OptionalInt64(sr.NextAttemptAt, record.NextAttemptAt),
 		listquery.OptionalInt64(sr.LeaseExpiresAt, record.LeaseExpiresAt),
-		stringOrNull(sr.ExternalID, record.ExternalID),
-		stringOrNull(sr.ExternalDocNumber, record.ExternalDocNumber),
-		stringOrNull(sr.ExternalURL, record.ExternalURL),
+		keelassign.StringOrNull(sr.ExternalID, record.ExternalID),
+		keelassign.StringOrNull(sr.ExternalDocNumber, record.ExternalDocNumber),
+		keelassign.StringOrNull(sr.ExternalURL, record.ExternalURL),
 		sr.ExternalRefs.To(record.ExternalRefs),
-		stringOrNull(sr.PayloadHash, record.PayloadHash),
+		keelassign.StringOrNull(sr.PayloadHash, record.PayloadHash),
 		payload,
 		sr.MappingIDs.To(record.MappingIDs),
-		stringOrNull(sr.ErrorCategory.StringCol, string(record.ErrorCategory)),
-		stringOrNull(sr.ErrorCode, record.ErrorCode),
-		stringOrNull(sr.ErrorMessage, record.ErrorMessage),
-		stringOrNull(sr.Resolution, record.Resolution),
+		keelassign.StringOrNull(sr.ErrorCategory.StringCol, string(record.ErrorCategory)),
+		keelassign.StringOrNull(sr.ErrorCode, record.ErrorCode),
+		keelassign.StringOrNull(sr.ErrorMessage, record.ErrorMessage),
+		keelassign.StringOrNull(sr.Resolution, record.Resolution),
 		listquery.OptionalInt64(sr.SyncedAt, record.SyncedAt),
-		stringOrNull(sr.DependsOnRecordID.StringCol, record.DependsOnRecordID.String()),
+		keelassign.StringOrNull(sr.DependsOnRecordID.StringCol, record.DependsOnRecordID.String()),
 		sr.Version.To(record.Version),
 		sr.UpdatedAt.To(record.UpdatedAt),
 	}
@@ -729,7 +733,7 @@ func (r *syncRecordRepository) ListDueConnections(
 			}
 
 			sr := accountingsyncdb.AccountingSyncRecords
-			ac := accountingsyncdb.AccountingConnections
+			ac := accountingconnectiondb.AccountingConnections
 			due, err := keel.Into[accountingsyncports.AccountingSyncDueConnection](
 				ctx,
 				r.db.Keel(ctx),
@@ -743,8 +747,8 @@ func (r *syncRecordRepository) ListDueConnections(
 					DistinctOn(sr.ConnectionID).
 					Pick(sr.OrganizationID, sr.BusinessUnitID, sr.ConnectionID).
 					Where(
-						ac.Status.In(activeStatuses()...),
-						ac.SetupStep.Eq(accountingsync.SetupStepComplete),
+						ac.Status.In(accountingconnectionrepository.ActiveStatuses()...),
+						ac.SetupStep.Eq(accountingconnection.SetupStepComplete),
 						ac.SyncStartDate.IsNotNull(),
 						ac.SyncEnabledAt.IsNotNull(),
 						ac.PausedAt.IsNull(),

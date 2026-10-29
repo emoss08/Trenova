@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument/edidocumentdb"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edipartnerports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
@@ -28,7 +28,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDITransactionSetRepository {
+func New(p Params) edipartnerports.EDITransactionSetRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transaction-set-repository"),
@@ -37,12 +37,12 @@ func New(p Params) ediports.EDITransactionSetRepository {
 
 func (r *repository) SelectTransactionSetOptions(
 	ctx context.Context,
-	req *ediports.EDITransactionSetSelectOptionsRequest,
-) (*pagination.ListResult[*edi.EDITransactionSet], error) {
+	req *edipartnerports.EDITransactionSetSelectOptionsRequest,
+) (*pagination.ListResult[*edidocument.EDITransactionSet], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.EDITransactionSet], error) {
+		func(ctx context.Context) (*pagination.ListResult[*edidocument.EDITransactionSet], error) {
 			search := *req.SelectQueryRequest
 			search.Query = strings.TrimSpace(search.Query)
 
@@ -58,9 +58,9 @@ func (r *repository) SelectTransactionSetOptions(
 }
 
 func transactionSetOptionsQuery(
-	req *ediports.EDITransactionSetSelectOptionsRequest,
-) *keel.Query[*edi.EDITransactionSet] {
-	ts := edidb.EDITransactionSets
+	req *edipartnerports.EDITransactionSetSelectOptionsRequest,
+) *keel.Query[*edidocument.EDITransactionSet] {
+	ts := edidocumentdb.EDITransactionSets
 	return ts.Pick(
 		ts.ID,
 		ts.Standard,
@@ -78,7 +78,7 @@ func transactionSetOptionsQuery(
 }
 
 func transactionSetSearch(s string) keel.Pred {
-	ts := edidb.EDITransactionSets
+	ts := edidocumentdb.EDITransactionSets
 	return keel.Or(
 		ts.Code.ContainsFold(s),
 		ts.Name.ContainsFold(s),

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -83,7 +83,7 @@ func (r *analyticsRepository) ListStopFacts(
 			Where(
 				st.ActualArrival.IsNotNull(),
 				st.ActualDeparture.IsNotNull(),
-				st.Status.Ne(shipment.StopStatusCanceled),
+				st.Status.Ne(shipmentvocab.StopStatusCanceled),
 				keel.When(req.From > 0, st.ActualArrival.Gte(req.From)),
 				keel.When(req.To > 0, st.ActualArrival.Lte(req.To)),
 				optionalIDEq(sp.CustomerID, req.CustomerID),

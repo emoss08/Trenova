@@ -19,6 +19,7 @@ on:
       - "go.work.sum"
       - ".golangci.yml"
       - "services/tms/.go-arch-lint.yml"
+      - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -43,6 +44,7 @@ on:
       - "go.work.sum"
       - ".golangci.yml"
       - "services/tms/.go-arch-lint.yml"
+      - "services/tms/.go-pkgsize.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
       - "deploy/Dockerfile.postgres"
@@ -235,9 +237,12 @@ jobs:
           path: services/tms/coverage-integration.out
           if-no-files-found: error
 
+      # The tail only: the server log runs to thousands of lines, and a full dump
+      # pushes the failing step's output (the plan guard's findings) out of the
+      # job log's tail.
       - name: Postgres logs
         if: failure()
-        run: docker logs trenova-test-postgres || true
+        run: docker logs --tail 300 trenova-test-postgres || true
 
   # The keyword-only fallback: every migration applies on plain PostGIS with no
   # pgvector, and the retrieval storage reports itself unavailable instead of
@@ -357,6 +362,10 @@ jobs:
         working-directory: ./services/tms
         run: go run ./scripts/archlint
 
+      - name: Run pkgsizelint
+        working-directory: ./services/tms
+        run: go run ./scripts/pkgsizelint
+
   codegen-checks:
     name: Codegen Checks
     if: github.event_name != 'schedule'
@@ -386,7 +395,7 @@ jobs:
           go run ./internal/api/graphql/agentread/gen
           # Each schema file gets its own executor package, so a new schema file
           # produces new *untracked* generated files that git diff cannot see.
-          PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/agentquerytoolservice/graphqlreads_gen.go"
+          PATHS="internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e internal/api/graphql/agentread internal/modules/agent/app/querytools/graphqlread/graphqlreads_gen.go"
           if [ -n "$(git status --porcelain -- $PATHS)" ]; then
             echo "::error::GraphQL server code is stale - run 'task gqlgen' and commit"
             git status --porcelain -- $PATHS

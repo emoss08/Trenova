@@ -7,11 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,16 +21,18 @@ import (
 )
 
 type savingHolds struct {
-	shipmentports.ShipmentHoldService
+	shipmentholdports.ShipmentHoldService
 
 	reason  *holdreason.HoldReason
-	current *shipment.ShipmentHold
-	saved   *shipment.ShipmentHold
+	current *shipmenthold.ShipmentHold
+	saved   *shipmenthold.ShipmentHold
 	guard   agenttoolstest.WriteGuard
 }
 
-func (f *savingHolds) plan(req *shipmentports.CreateShipmentHoldRequest) *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+func (f *savingHolds) plan(
+	req *shipmentholdports.CreateShipmentHoldRequest,
+) *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ShipmentID:     req.ShipmentID,
 		HoldReasonID:   &f.reason.ID,
 		Type:           f.reason.Type,
@@ -45,9 +47,9 @@ func (f *savingHolds) plan(req *shipmentports.CreateShipmentHoldRequest) *shipme
 
 func (f *savingHolds) PreviewCreate(
 	_ context.Context,
-	req *shipmentports.CreateShipmentHoldRequest,
+	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if !f.reason.Active {
 		return nil, errortypes.NewValidationError(
 			"holdReasonId", errortypes.ErrInvalid, "Hold reason must be active",
@@ -59,9 +61,9 @@ func (f *savingHolds) PreviewCreate(
 
 func (f *savingHolds) Create(
 	_ context.Context,
-	req *shipmentports.CreateShipmentHoldRequest,
+	req *shipmentholdports.CreateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -73,14 +75,16 @@ func (f *savingHolds) Create(
 
 func (f *savingHolds) GetByID(
 	context.Context,
-	*shipmentports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+	*shipmentholdports.GetShipmentHoldByIDRequest,
+) (*shipmenthold.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
 }
 
-func (f *savingHolds) release(actor *permissionports.RequestActor) (*shipment.ShipmentHold, error) {
+func (f *savingHolds) release(
+	actor *permissionports.RequestActor,
+) (*shipmenthold.ShipmentHold, error) {
 	if !f.current.IsActive() {
 		return nil, errortypes.NewBusinessError("Shipment hold is already released")
 	}
@@ -94,17 +98,17 @@ func (f *savingHolds) release(actor *permissionports.RequestActor) (*shipment.Sh
 
 func (f *savingHolds) PreviewRelease(
 	_ context.Context,
-	_ *shipmentports.ReleaseShipmentHoldRequest,
+	_ *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	return f.release(actor)
 }
 
 func (f *savingHolds) Release(
 	_ context.Context,
-	_ *shipmentports.ReleaseShipmentHoldRequest,
+	_ *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -141,12 +145,16 @@ func TestPlaceShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"notes":        "Waiting on the signed BOL.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&holds.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, change.Operation)
 	assert.Equal(t, permission.ResourceShipmentHold, change.Resource)
 	assert.Equal(t, true, agenttoolstest.FieldByPath(t, change, "blocksDispatch").After)
 	shipmentField := agenttoolstest.FieldByPath(t, change, "shipmentId")
@@ -164,22 +172,26 @@ func TestPlaceShipmentHold_PreviewWarnsOnAnInactiveReason(t *testing.T) {
 	holds := &savingHolds{reason: documentsHoldReason(false)}
 	tool := shipmenttools.NewPlaceShipmentHoldTool(holds).(*shipmenttools.PlaceShipmentHoldTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"shipmentId":   pulid.MustNew("shp_").String(),
-			"holdReasonId": holds.reason.ID.String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&holds.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"shipmentId":   pulid.MustNew("shp_").String(),
+				"holdReasonId": holds.reason.ID.String(),
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
 	reason := documentsHoldReason(true)
-	current := &shipment.ShipmentHold{
+	current := &shipmenthold.ShipmentHold{
 		ID:             pulid.MustNew("shld_"),
 		ShipmentID:     pulid.MustNew("shp_"),
 		Type:           reason.Type,
@@ -194,12 +206,16 @@ func TestReleaseShipmentHold_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"holdId":     current.ID.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&holds.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, current.ID, change.EntityID)
 	assert.True(t, agenttoolstest.FieldByPath(t, change, "releasedAt").Volatile)
 	assert.Contains(t, preview.Summary, "blocks delivery")
@@ -216,22 +232,26 @@ func TestReleaseShipmentHold_PreviewWarnsOnAHoldAlreadyReleased(t *testing.T) {
 	t.Parallel()
 
 	released := int64(100)
-	current := &shipment.ShipmentHold{ID: pulid.MustNew("shld_"), ReleasedAt: &released}
+	current := &shipmenthold.ShipmentHold{ID: pulid.MustNew("shld_"), ReleasedAt: &released}
 	holds := &savingHolds{reason: documentsHoldReason(true), current: current}
 	tool := shipmenttools.NewReleaseShipmentHoldTool(holds).(*shipmenttools.ReleaseShipmentHoldTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-			"shipmentId": pulid.MustNew("shp_").String(),
-			"holdId":     current.ID.String(),
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&holds.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+				"shipmentId": pulid.MustNew("shp_").String(),
+				"holdId":     current.ID.String(),
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
-func fieldPaths(fields []agent.PreviewFieldChange) []string {
+func fieldPaths(fields []agentpreview.PreviewFieldChange) []string {
 	paths := make([]string, 0, len(fields))
 	for i := range fields {
 		paths = append(paths, fields[i].Path)

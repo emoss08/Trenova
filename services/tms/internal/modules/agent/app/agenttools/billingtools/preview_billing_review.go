@@ -4,15 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var inReviewFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	"assignedBillerId",
 	"reviewStartedAt",
 	"reviewCompletedAt",
@@ -22,20 +23,20 @@ var inReviewVolatileFields = []string{"reviewStartedAt"}
 
 func (t *TransitionToInReviewTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	move, err := t.move(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	move, err := t.move(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	plan, err := common.PlanUpdate(
-		common.QueueRecord(move.item),
+	plan, err := changepreview.PlanUpdate(
+		billingqueuepreview.QueueRecord(move.item),
 		move.item,
 		move.plan(params.Actor, timeutils.NowUnix()),
 		toolpreview.Only(inReviewFields...),
 		toolpreview.Volatile(inReviewVolatileFields...),
-		toolpreview.WithRefs(decisionRefs),
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs),
 	)
 	if err != nil {
 		return nil, err

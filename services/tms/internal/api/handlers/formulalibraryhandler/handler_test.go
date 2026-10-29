@@ -8,10 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -90,16 +90,16 @@ func (emptyContext) LoadCells(
 }
 
 type pageAssistant struct {
-	opened []*agentports.OpenPageThreadRequest
+	opened []*assistantports.OpenPageThreadRequest
 }
 
 func (p *pageAssistant) OpenPageThread(
 	_ context.Context,
-	req *agentports.OpenPageThreadRequest,
+	req *assistantports.OpenPageThreadRequest,
 	_ *permissionports.RequestActor,
-) (*agentports.PageThread, error) {
+) (*assistantports.PageThread, error) {
 	p.opened = append(p.opened, req)
-	return &agentports.PageThread{
+	return &assistantports.PageThread{
 		Thread: &conversation.Thread{ID: pulid.MustNew("athr_"), Origin: req.Origin},
 	}, nil
 }
@@ -123,8 +123,8 @@ func newFixture(t *testing.T, granted map[string]bool) *fixture {
 	}
 	logger := zap.NewNop()
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
+		Logger:    logger,
+		AppConfig: &appconfig.Config{Debug: true},
 	})
 	engine := &grantedEngine{granted: granted}
 	resolver := tariff.NewTemplateResolver(tariff.TemplateResolverParams{
@@ -192,7 +192,10 @@ func authorGrants() map[string]bool {
 	}
 }
 
-func returnsLibrary(_ context.Context, entity *formulalibrary.FormulaLibrary) *formulalibrary.FormulaLibrary {
+func returnsLibrary(
+	_ context.Context,
+	entity *formulalibrary.FormulaLibrary,
+) *formulalibrary.FormulaLibrary {
 	return entity
 }
 

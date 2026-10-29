@@ -3,8 +3,9 @@ package shipmentboardservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/integrationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -24,33 +25,33 @@ type MapsReadiness interface {
 type Params struct {
 	fx.In
 
-	Repo            shipmentports.ShipmentBoardRepository
+	Repo            shipmentboardports.ShipmentBoardRepository
 	QuickFilters    shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders     agentports.AIProviderRepository
+	AIProviders     aiproviderports.AIProviderRepository
 	Organizations   tenantports.OrganizationRepository
 	Integrations    integrationports.IntegrationRepository
 	IntegrationsSvc *integrationservice.Service
 }
 
 type Service struct {
-	repo          shipmentports.ShipmentBoardRepository
+	repo          shipmentboardports.ShipmentBoardRepository
 	quickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	aiProviders   agentports.AIProviderRepository
+	aiProviders   aiproviderports.AIProviderRepository
 	organizations tenantports.OrganizationRepository
 	integrations  integrationports.IntegrationRepository
 	maps          MapsReadiness
 }
 
 var (
-	_ shipmentports.ShipmentBoardCapabilitiesReader = (*Service)(nil)
-	_ shipmentports.ShipmentStageSummaryReader      = (*Service)(nil)
-	_ shipmentports.ShipmentQuickFilterCounter      = (*Service)(nil)
+	_ shipmentboardports.ShipmentBoardCapabilitiesReader = (*Service)(nil)
+	_ shipmentboardports.ShipmentStageSummaryReader      = (*Service)(nil)
+	_ shipmentboardports.ShipmentQuickFilterCounter      = (*Service)(nil)
 )
 
 type Dependencies struct {
-	Repo          shipmentports.ShipmentBoardRepository
+	Repo          shipmentboardports.ShipmentBoardRepository
 	QuickFilters  shipmentports.ShipmentQuickFilterBasisResolver
-	AIProviders   agentports.AIProviderRepository
+	AIProviders   aiproviderports.AIProviderRepository
 	Organizations tenantports.OrganizationRepository
 	Integrations  integrationports.IntegrationRepository
 	Maps          MapsReadiness

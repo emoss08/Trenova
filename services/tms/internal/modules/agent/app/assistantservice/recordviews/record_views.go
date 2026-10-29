@@ -1,0 +1,469 @@
+package recordviews
+
+import (
+	"strconv"
+	"strings"
+
+	"github.com/emoss08/trenova/shared/typeutils"
+)
+
+/*
+A record card's view: the few things a person reads a record of this kind
+for, laid out for it, rather than every field the tool returned. A shipment
+is its route and who is moving it; an invoice is what it bills and whether
+it is paid; a billing queue item is what it would bill and what stands in
+the way; a customer is how they are billed and how much credit they have
+left; a driver is whether they can take a load and when their papers are due.
+
+The view is built from the tool's JSON, as the model reads it, so it depends
+on the tool's contract and not its Go types. A field the result does not
+carry is left out, never guessed. Facts are keyed, not labelled: the reader
+names them in their own language.
+*/
+
+const (
+	PayloadView = "view"
+
+	viewShipment         = "shipment"
+	ViewInvoice          = "invoice"
+	ViewBillingQueueItem = "billing_queue_item"
+	viewCustomer         = "customer"
+	viewWorker           = "worker"
+
+	keyType     = "type"
+	keyStatus   = "status"
+	keySubtitle = "subtitle"
+	keyBOL      = "bol"
+	keyFacts    = "facts"
+
+	stopPickup   = "Pickup"
+	stopDelivery = "Delivery"
+)
+
+// RecordView is the card's view for a record of a kind that has one, nil
+// for any other.
+func RecordView(entity string, result map[string]any) map[string]any {
+	switch entity {
+	case viewShipment:
+		return shipmentView(result)
+	case ViewInvoice:
+		return invoiceView(result)
+	case ViewBillingQueueItem:
+		return billingQueueView(result)
+	case viewCustomer:
+		return customerView(result)
+	case viewWorker:
+		return workerView(result)
+	default:
+		return nil
+	}
+}
+
+type fact struct {
+	key   string
+	value any
+}
+
+// facts keeps the facts that hold a value, in the order given.
+func facts(entries ...fact) []any {
+	out := make([]any, 0, len(entries))
+	for _, entry := range entries {
+		switch value := entry.value.(type) {
+		case nil:
+			continue
+		case string:
+			if strings.TrimSpace(value) == "" {
+				continue
+			}
+		case float64:
+			if value == 0 {
+				continue
+			}
+		case int64:
+			if value == 0 {
+				continue
+			}
+		}
+		out = append(out, map[string]any{"key": entry.key, "value": entry.value})
+	}
+
+	return out
+}
+
+func ObjectOf(value any) map[string]any {
+	object, _ := value.(map[string]any)
+	return object
+}
+
+func ListOf(value any) []map[string]any {
+	items, _ := value.([]any)
+	out := make([]map[string]any, 0, len(items))
+	for _, item := range items {
+		if object := ObjectOf(item); object != nil {
+			out = append(out, object)
+		}
+	}
+
+	return out
+}
+
+func TextOf(object map[string]any, key string) string {
+	return typeutils.StringOfTrimmed(object[key])
+}
+
+// nameOf is a field that may be written out or nested: the summary of a
+// shipment says "primaryWorker": "Emily Chen", the full record nests the
+// worker. A nested record reads as its whole name, its name, its first and
+// last name, or its code, whichever it has.
+func nameOf(object map[string]any, key string) string {
+	if text := TextOf(object, key); text != "" {
+		return text
+	}
+	nested := ObjectOf(object[key])
+	if nested == nil {
+		return ""
+	}
+	for _, field := range []string{"wholeName", "name"} {
+		if text := TextOf(nested, field); text != "" {
+			return text
+		}
+	}
+	if full := strings.TrimSpace(
+		TextOf(nested, "firstName") + " " + TextOf(nested, "lastName"),
+	); full != "" {
+		return full
+	}
+
+	return TextOf(nested, "code")
+}
+
+// firstText is the first of the keys that holds a value.
+func firstText(object map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if text := TextOf(object, key); text != "" {
+			return text
+		}
+	}
+
+	return ""
+}
+
+func NumberOf(object map[string]any, key string) float64 {
+	switch value := object[key].(type) {
+	case float64:
+		return value
+	case int64:
+		return float64(value)
+	case int:
+		return float64(value)
+	case string:
+		parsed, err := strconv.ParseFloat(value, 64)
+		if err == nil {
+			return parsed
+		}
+	}
+
+	return 0
+}
+
+// shipmentView is the shipment as the design draws it: where it started and
+// where it is going, how far along, and who and what is moving it.
+func shipmentView(result map[string]any) map[string]any {
+	var stops []map[string]any
+	var assignment, carrier map[string]any
+	var miles float64
+	for _, move := range ListOf(result["moves"]) {
+		stops = append(stops, ListOf(move["stops"])...)
+		if assignment == nil {
+			assignment = ObjectOf(move["assignment"])
+		}
+		if carrier == nil {
+			carrier = ObjectOf(move["carrier"])
+		}
+		if carrier == nil {
+			carrier = ObjectOf(move["carrierAssignment"])
+		}
+		if loaded, _ := move["loaded"].(bool); loaded {
+			miles += NumberOf(move, "distance")
+		}
+	}
+
+	view := map[string]any{
+		keyType:     viewShipment,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(ObjectOf(result["customer"]), "name"),
+	}
+
+	if len(stops) > 0 {
+		first, last := 0, len(stops)-1
+		for idx, stop := range stops {
+			if TextOf(stop, keyType) == stopPickup {
+				first = idx
+				break
+			}
+		}
+		for idx := len(stops) - 1; idx > first; idx-- {
+			if TextOf(stops[idx], keyType) == stopDelivery {
+				last = idx
+				break
+			}
+		}
+		route := stops[first : last+1]
+		view["from"] = stopView(route[0], true)
+		view["to"] = stopView(route[len(route)-1], false)
+
+		// A load that drops part of itself in Denver on the way to Chicago is
+		// not a Dallas–Chicago lane; the stops between are drawn on the line.
+		if len(route) > 2 {
+			via := make([]map[string]any, 0, len(route)-2)
+			for _, stop := range route[1 : len(route)-1] {
+				shown := stopView(stop, false)
+				shown[keyType] = TextOf(stop, keyType)
+				shown["done"] = stopDone(stop)
+				via = append(via, shown)
+			}
+			view["via"] = via
+		}
+
+		view["progress"] = routeProgress(route)
+		if TextOf(result, keyStatus) == "Completed" {
+			view["progress"] = 1.0
+		}
+	}
+
+	var weight int64
+	for _, commodity := range ListOf(result["commodities"]) {
+		weight += int64(NumberOf(commodity, "weight"))
+	}
+	rating := ObjectOf(result["rating"])
+
+	rate := TextOf(rating, "totalChargeAmount")
+	if rate == "" {
+		rate = TextOf(result, "totalChargeAmount")
+	}
+	view[keyFacts] = facts(
+		fact{"driver", nameOf(assignment, "primaryWorker")},
+		fact{"tractor", nameOf(assignment, "tractor")},
+		fact{"trailer", nameOf(assignment, "trailer")},
+		fact{"carrier", nameOf(carrier, "carrier")},
+		fact{"weight", weight},
+		fact{"miles", miles},
+		fact{"rate", rate},
+		fact{keyBOL, TextOf(result, keyBOL)},
+		fact{"serviceType", nameOf(result, "serviceType")},
+		fact{"shipmentType", nameOf(result, "shipmentType")},
+	)
+
+	return view
+}
+
+func stopDone(stop map[string]any) bool {
+	return TextOf(stop, "actualDeparture") != "" || TextOf(stop, keyStatus) == "Completed"
+}
+
+// routeProgress is how far along the line the truck is, with the stops evenly
+// spaced on it as the card draws them: at the last stop it finished, or
+// halfway to the next once it has left that one and not yet reached the next.
+func routeProgress(route []map[string]any) float64 {
+	if len(route) < 2 {
+		return 0
+	}
+	at := -1
+	for idx, stop := range route {
+		if stopDone(stop) {
+			at = idx
+		}
+	}
+	if at < 0 {
+		return 0
+	}
+	if at == len(route)-1 {
+		return 1
+	}
+	position := float64(at)
+	if TextOf(route[at], "actualDeparture") != "" {
+		position += 0.5
+	}
+
+	return position / float64(len(route)-1)
+}
+
+// stopView is one end of the route: the place, the city and the time that
+// matters there, which is when it happened if it has, and the window if not.
+func stopView(stop map[string]any, origin bool) map[string]any {
+	// The summary writes a stop's place out; the full record nests its location.
+	location := ObjectOf(stop["location"])
+	city := firstText(stop, "city")
+	if city == "" {
+		city = TextOf(location, "city")
+	}
+	state := TextOf(stop, "state")
+	if state == "" {
+		state = TextOf(ObjectOf(location["state"]), "abbreviation")
+	}
+	if state != "" {
+		if city != "" {
+			city += ", " + state
+		} else {
+			city = state
+		}
+	}
+
+	place := TextOf(stop, "location")
+	if place == "" {
+		place = TextOf(location, "name")
+	}
+	view := map[string]any{"city": city, "place": place}
+	switch {
+	case origin && TextOf(stop, "actualDeparture") != "":
+		view["when"], view["at"] = "departed", TextOf(stop, "actualDeparture")
+	case TextOf(stop, "actualArrival") != "":
+		view["when"], view["at"] = "arrived", TextOf(stop, "actualArrival")
+	case TextOf(stop, "scheduledWindowStart") != "":
+		view["when"], view["at"] = "scheduled", TextOf(stop, "scheduledWindowStart")
+	}
+
+	return view
+}
+
+// invoiceView is what an invoice bills, to whom, and whether it is paid.
+func invoiceView(result map[string]any) map[string]any {
+	return map[string]any{
+		keyType:     ViewInvoice,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(result, "billToName"),
+		"amount": map[string]any{
+			"total":    TextOf(result, "totalAmount"),
+			"balance":  TextOf(result, "balanceDue"),
+			"currency": TextOf(result, "currency"),
+		},
+		keyFacts: facts(
+			fact{"settlement", TextOf(result, "settlementStatus")},
+			fact{"dueDate", result["dueDate"]},
+			fact{"invoiceDate", result["invoiceDate"]},
+			fact{"paymentTerm", TextOf(result, "paymentTerm")},
+			fact{"proNumber", TextOf(result, "proNumber")},
+			fact{keyBOL, TextOf(result, keyBOL)},
+			fact{"sent", TextOf(result, "sendStatus")},
+			fact{"lines", NumberOf(result, "lineCount")},
+		),
+	}
+}
+
+// billingQueueView is what an item would bill, who is on it, and what stands
+// between it and an invoice.
+func billingQueueView(result map[string]any) map[string]any {
+	view := map[string]any{
+		keyType:     ViewBillingQueueItem,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: TextOf(result, "billTo"),
+		"amount":    map[string]any{"total": TextOf(result, "amount")},
+		keyFacts: facts(
+			fact{"proNumber", TextOf(result, "proNumber")},
+			fact{keyBOL, TextOf(result, keyBOL)},
+			fact{"biller", TextOf(result, "assignedBiller")},
+			fact{"billType", TextOf(result, "billType")},
+			fact{"ageDays", NumberOf(result, "ageDays")},
+			fact{"exception", TextOf(result, "exceptionReason")},
+		),
+	}
+	if _, ok := result["canApprove"]; ok {
+		readiness := ObjectOf(result["readiness"])
+		blockers := len(ListOf(result["detentionHolds"]))
+		for _, key := range []string{"missingDocuments", "validationFailures"} {
+			if items, listed := readiness[key].([]any); listed {
+				blockers += len(items)
+			}
+		}
+		view["ready"] = map[string]any{
+			"canApprove": result["canApprove"],
+			"blockedBy":  TextOf(result, "approvalBlockedBy"),
+			"blockers":   blockers,
+		}
+	}
+
+	return view
+}
+
+// place is "City, ST" from a record's city and its state, whichever it has.
+func place(result map[string]any) string {
+	city := TextOf(result, "city")
+	state := TextOf(ObjectOf(result["state"]), "abbreviation")
+	if state == "" {
+		state = TextOf(result, "state")
+	}
+	switch {
+	case city != "" && state != "":
+		return city + ", " + state
+	case city != "":
+		return city
+	default:
+		return state
+	}
+}
+
+// joined is the parts that hold a value, separated by a middle dot.
+func joined(parts ...string) string {
+	kept := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if strings.TrimSpace(part) != "" {
+			kept = append(kept, part)
+		}
+	}
+
+	return strings.Join(kept, " · ")
+}
+
+// customerView is a customer as billing reads them: who and where they are,
+// how they are billed, and how much of their credit is in use.
+func customerView(result map[string]any) map[string]any {
+	billing := ObjectOf(result["billingProfile"])
+	view := map[string]any{
+		keyType:     viewCustomer,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: joined(TextOf(result, "code"), place(result)),
+		keyFacts: facts(
+			fact{"paymentTerm", TextOf(billing, "paymentTerm")},
+			fact{"billingCycle", TextOf(billing, "billingCycle")},
+			fact{"invoiceDelivery", TextOf(billing, "invoiceDelivery")},
+			fact{"creditStatus", TextOf(billing, "creditStatus")},
+			fact{"creditLimit", TextOf(billing, "creditLimit")},
+			fact{"creditBalance", TextOf(billing, "creditBalance")},
+			fact{"creditHold", TextOf(billing, "creditHoldReason")},
+			fact{"dotNumber", TextOf(result, "dotNumber")},
+			fact{"mcNumber", TextOf(result, "mcNumber")},
+		),
+	}
+
+	return view
+}
+
+// workerView is a driver as dispatch reads them: whether they can take a
+// load, what they are qualified for, and when their papers come due.
+func workerView(result map[string]any) map[string]any {
+	view := map[string]any{
+		keyType:     viewWorker,
+		keyStatus:   TextOf(result, keyStatus),
+		keySubtitle: joined(TextOf(result, "driverType"), TextOf(result, keyType), place(result)),
+		keyFacts: facts(
+			fact{"fleet", TextOf(result, "fleetCode")},
+			fact{"cdlClass", TextOf(result, "cdlClass")},
+			fact{"endorsement", TextOf(result, "endorsement")},
+			fact{"compliance", TextOf(result, "complianceStatus")},
+			fact{"physicalDueDate", result["physicalDueDate"]},
+			fact{"mvrDueDate", result["mvrDueDate"]},
+			fact{"twicExpiry", result["twicExpiry"]},
+			fact{"nextTrainingDue", result["nextTrainingDue"]},
+			fact{"hireDate", result["hireDate"]},
+			fact{"leave", TextOf(result, "leaveType")},
+		),
+	}
+	if assignable, ok := result["canBeAssigned"].(bool); ok {
+		view["ready"] = map[string]any{
+			"canApprove": assignable,
+			"blockedBy":  TextOf(result, "assignmentBlocked"),
+		}
+	}
+
+	return view
+}

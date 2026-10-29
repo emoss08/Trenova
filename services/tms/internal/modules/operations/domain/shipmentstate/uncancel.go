@@ -1,6 +1,9 @@
 package shipmentstate
 
-import "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+)
 
 func (c *Coordinator) PrepareForUncancel(entity *shipment.Shipment, delayThresholdMinutes int16) {
 	if entity == nil {
@@ -20,8 +23,9 @@ func (c *Coordinator) PrepareForUncancel(entity *shipment.Shipment, delayThresho
 			}
 		}
 
-		if move.Assignment != nil && move.Assignment.Status == shipment.AssignmentStatusCanceled {
-			move.Assignment.Status = shipment.AssignmentStatusNew
+		if move.Assignment != nil &&
+			move.Assignment.Status == shipmentvocab.AssignmentStatusCanceled {
+			move.Assignment.Status = shipmentvocab.AssignmentStatusNew
 		}
 
 		if move.IsCanceled() {
@@ -32,17 +36,23 @@ func (c *Coordinator) PrepareForUncancel(entity *shipment.Shipment, delayThresho
 	entity.Status = deriveShipmentStatus(entity, c.now(), delayThresholdMinutes)
 }
 
-func CancelPreservedStopStatuses() []shipment.StopStatus {
-	return []shipment.StopStatus{shipment.StopStatusCompleted, shipment.StopStatusCanceled}
+func CancelPreservedStopStatuses() []shipmentvocab.StopStatus {
+	return []shipmentvocab.StopStatus{
+		shipmentvocab.StopStatusCompleted,
+		shipmentvocab.StopStatusCanceled,
+	}
 }
 
-func CancelPreservedMoveStatuses() []shipment.MoveStatus {
-	return []shipment.MoveStatus{shipment.MoveStatusCompleted, shipment.MoveStatusCanceled}
+func CancelPreservedMoveStatuses() []shipmentvocab.MoveStatus {
+	return []shipmentvocab.MoveStatus{
+		shipmentvocab.MoveStatusCompleted,
+		shipmentvocab.MoveStatusCanceled,
+	}
 }
 
-func CancelPreservedAssignmentStatuses() []shipment.AssignmentStatus {
-	return []shipment.AssignmentStatus{
-		shipment.AssignmentStatusCompleted,
-		shipment.AssignmentStatusCanceled,
+func CancelPreservedAssignmentStatuses() []shipmentvocab.AssignmentStatus {
+	return []shipmentvocab.AssignmentStatus{
+		shipmentvocab.AssignmentStatusCompleted,
+		shipmentvocab.AssignmentStatusCanceled,
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/fmcsa"
@@ -55,7 +56,7 @@ func (c *Client) Lookup(
 	}
 
 	outcome := &intelkit.CallOutcome{
-		Endpoint:  carrierintel.EndpointComposite,
+		Endpoint:  carrierintelusage.EndpointComposite,
 		DOTNumber: dot,
 		Started:   time.Now(),
 		Units:     1,
@@ -82,7 +83,7 @@ func (c *Client) Lookup(
 	return &carrierintelports.CarrierIntelLookupResult{
 		Profile:     profile,
 		Raw:         composite.Raw,
-		Endpoint:    carrierintel.EndpointComposite,
+		Endpoint:    carrierintelusage.EndpointComposite,
 		ProviderRef: ref,
 		Depth:       carrierintel.LookupDepthFMCSA,
 		SourceAsOf:  intelkit.Unix(composite.Carrier.SnapshotDate),
@@ -132,7 +133,7 @@ func (c *Client) Search(
 	offset := max(req.Offset, 0)
 	carriers, err := c.searchByName(
 		ctx,
-		carrierintel.EndpointSearch,
+		carrierintelusage.EndpointSearch,
 		name,
 		offset,
 		max(req.Limit, 0),
@@ -170,7 +171,13 @@ func (c *Client) Autocomplete(
 		return nil, errorMapper.InvalidRequest(messageAutocompleteTerm)
 	}
 
-	carriers, err := c.searchByName(ctx, carrierintel.EndpointAutocomplete, term, 0, max(limit, 0))
+	carriers, err := c.searchByName(
+		ctx,
+		carrierintelusage.EndpointAutocomplete,
+		term,
+		0,
+		max(limit, 0),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +198,7 @@ func (c *Client) Autocomplete(
 
 func (c *Client) searchByName(
 	ctx context.Context,
-	endpoint carrierintel.Endpoint,
+	endpoint carrierintelusage.Endpoint,
 	name string,
 	offset, limit int,
 ) ([]fmcsa.Carrier, error) {

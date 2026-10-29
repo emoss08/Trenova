@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage/edimessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject/ladingprojectdb"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -32,7 +34,7 @@ type flows struct {
 	l  *zap.Logger
 }
 
-func NewFlows(p Params) ediports.FlowRepository {
+func NewFlows(p Params) ladingports.FlowRepository {
 	return &flows{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-flow-repository"),
@@ -41,10 +43,10 @@ func NewFlows(p Params) ediports.FlowRepository {
 
 func (r *flows) GetInstance(
 	ctx context.Context,
-	req ediports.GetFlowInstanceRequest,
-) (*edi.FlowInstance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
-		i := edidb.FlowInstances
+	req ladingports.GetFlowInstanceRequest,
+) (*ladingproject.FlowInstance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ladingproject.FlowInstance, error) {
+		i := ladingprojectdb.FlowInstances
 		instance, err := i.Where(i.ID.Eq(req.ID)).Load(i.Partner()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, instanceErrors.Map(err, req.ID.String())
@@ -55,10 +57,10 @@ func (r *flows) GetInstance(
 
 func (r *flows) GetInstanceByKey(
 	ctx context.Context,
-	req ediports.GetFlowInstanceByKeyRequest,
-) (*edi.FlowInstance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
-		i := edidb.FlowInstances
+	req ladingports.GetFlowInstanceByKeyRequest,
+) (*ladingproject.FlowInstance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ladingproject.FlowInstance, error) {
+		i := ladingprojectdb.FlowInstances
 		instance, err := i.Where(
 			i.EDIPartnerID.Eq(req.PartnerID),
 			i.Flow.Eq(req.Flow),
@@ -75,18 +77,18 @@ func (r *flows) GetInstanceByKey(
 // exist: two messages for the same key that arrive together open one instance.
 func (r *flows) OpenInstance(
 	ctx context.Context,
-	instance *edi.FlowInstance,
-) (*edi.FlowInstance, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
+	instance *ladingproject.FlowInstance,
+) (*ladingproject.FlowInstance, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ladingproject.FlowInstance, error) {
 		db := r.db.Keel(ctx)
-		i := edidb.FlowInstances
+		i := ladingprojectdb.FlowInstances
 		if len(instance.State) == 0 {
 			instance.State = []byte("{}")
 		}
 		if _, err := i.CreateOrSkip(
 			ctx,
 			db,
-			[]*edi.FlowInstance{instance},
+			[]*ladingproject.FlowInstance{instance},
 			i.OrganizationID,
 			i.BusinessUnitID,
 			i.EDIPartnerID,
@@ -109,10 +111,10 @@ func (r *flows) OpenInstance(
 
 func (r *flows) SaveInstance(
 	ctx context.Context,
-	instance *edi.FlowInstance,
-) (*edi.FlowInstance, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.FlowInstance, error) {
-		i := edidb.FlowInstances
+	instance *ladingproject.FlowInstance,
+) (*ladingproject.FlowInstance, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ladingproject.FlowInstance, error) {
+		i := ladingprojectdb.FlowInstances
 		err := i.Save(
 			ctx,
 			r.db.Keel(ctx),
@@ -137,7 +139,7 @@ func (r *flows) SaveInstance(
 	})
 }
 
-func (r *flows) AppendEvent(ctx context.Context, event *edi.FlowEvent) error {
+func (r *flows) AppendEvent(ctx context.Context, event *ladingproject.FlowEvent) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(event.Detail) == 0 {
 			event.Detail = []byte("{}")
@@ -145,12 +147,12 @@ func (r *flows) AppendEvent(ctx context.Context, event *edi.FlowEvent) error {
 		if event.Actions == nil {
 			event.Actions = []lading.FlowAction{}
 		}
-		return edidb.FlowEvents.Create(ctx, r.db.Keel(ctx), event)
+		return ladingprojectdb.FlowEvents.Create(ctx, r.db.Keel(ctx), event)
 	})
 }
 
-func instanceFilters(req *ediports.ListFlowInstancesRequest) []keel.Pred {
-	i := edidb.FlowInstances
+func instanceFilters(req *ladingports.ListFlowInstancesRequest) []keel.Pred {
+	i := ladingprojectdb.FlowInstances
 	search := ""
 	if req.Filter != nil {
 		search = req.Filter.Query
@@ -169,13 +171,13 @@ func instanceFilters(req *ediports.ListFlowInstancesRequest) []keel.Pred {
 
 func (r *flows) ListInstances(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
-) (*pagination.ListResult[*edi.FlowInstance], error) {
+	req *ladingports.ListFlowInstancesRequest,
+) (*pagination.ListResult[*ladingproject.FlowInstance], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.FlowInstance], error) {
-			i := edidb.FlowInstances
+		func(ctx context.Context) (*pagination.ListResult[*ladingproject.FlowInstance], error) {
+			i := ladingprojectdb.FlowInstances
 			q := i.Omit(i.State).
 				Where(instanceFilters(req)...).
 				Load(i.Partner()).
@@ -189,17 +191,17 @@ func (r *flows) ListInstances(
 // at most a page of them.
 func (r *flows) ListOpenInstances(
 	ctx context.Context,
-	req *ediports.ListShipmentFlowInstancesRequest,
-) ([]*edi.FlowInstance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.FlowInstance, error) {
+	req *ladingports.ListShipmentFlowInstancesRequest,
+) ([]*ladingproject.FlowInstance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ladingproject.FlowInstance, error) {
 		if req.ShipmentID.IsNil() && req.TransferID.IsNil() {
-			return []*edi.FlowInstance{}, nil
+			return []*ladingproject.FlowInstance{}, nil
 		}
-		i := edidb.FlowInstances
+		i := ladingprojectdb.FlowInstances
 		return i.Where(
 			keel.When(req.ShipmentID.IsNotNil(), i.ShipmentID.Eq(req.ShipmentID)),
 			keel.When(req.TransferID.IsNotNil(), i.TransferID.Eq(req.TransferID)),
-			i.Status.Ne(edi.FlowInstanceStatusClosed),
+			i.Status.Ne(ladingproject.FlowInstanceStatusClosed),
 		).
 			Order(i.CreatedAt.Asc()).
 			Limit(maxOpenInstancesListed).
@@ -209,21 +211,21 @@ func (r *flows) ListOpenInstances(
 
 func (r *flows) ListInstancesCursor(
 	ctx context.Context,
-	req *ediports.ListFlowInstancesRequest,
-) (*pagination.CursorListResult[*edi.FlowInstance], error) {
+	req *ladingports.ListFlowInstancesRequest,
+) (*pagination.CursorListResult[*ladingproject.FlowInstance], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*edi.FlowInstance], error) {
-			i := edidb.FlowInstances
+		func(ctx context.Context) (*pagination.CursorListResult[*ladingproject.FlowInstance], error) {
+			i := ladingprojectdb.FlowInstances
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				i.Omit(i.State).Where(instanceFilters(req)...),
-				&listquery.Request[edi.FlowInstance]{
+				&listquery.Request[ladingproject.FlowInstance]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
-					Shape: func(q *keel.Query[*edi.FlowInstance]) *keel.Query[*edi.FlowInstance] {
+					Shape: func(q *keel.Query[*ladingproject.FlowInstance]) *keel.Query[*ladingproject.FlowInstance] {
 						return q.Load(i.Partner())
 					},
 				},
@@ -234,10 +236,10 @@ func (r *flows) ListInstancesCursor(
 
 func (r *flows) ListEvents(
 	ctx context.Context,
-	req ediports.ListFlowEventsRequest,
-) ([]*edi.FlowEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.FlowEvent, error) {
-		e := edidb.FlowEvents
+	req ladingports.ListFlowEventsRequest,
+) ([]*ladingproject.FlowEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ladingproject.FlowEvent, error) {
+		e := ladingprojectdb.FlowEvents
 		limit := req.Limit
 		if limit <= 0 || limit > maxFlowEventsListed {
 			limit = maxFlowEventsListed
@@ -251,10 +253,10 @@ func (r *flows) ListEvents(
 
 func (r *flows) GetSendMessage(
 	ctx context.Context,
-	req ediports.GetFlowSendMessageRequest,
-) (*edi.EDIMessage, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMessage, error) {
-		m := edidb.EDIMessages
+	req ladingports.GetFlowSendMessageRequest,
+) (*edimessage.EDIMessage, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edimessage.EDIMessage, error) {
+		m := edimessagedb.EDIMessages
 		message, err := m.Omit(m.Lineage).Where(
 			m.FlowInstanceID.Eq(req.InstanceID),
 			m.FlowSendID.Eq(req.SendID),

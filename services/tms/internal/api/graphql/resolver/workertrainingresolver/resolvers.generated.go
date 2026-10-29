@@ -3,15 +3,15 @@
 package workertrainingresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 )
 
 type Deps struct {
-	*base.Core
-	WorkerTrainingService *workertrainingservice.Service
-	DriverPortalService   *driverportalservice.Service
+	*resolvercore.Core
+	WorkerTrainingService      *workertrainingservice.Service
+	DriverPortalRecordsService *driverportalrecordsservice.Service
 }
 
 type MutationResolver struct{ *Deps }

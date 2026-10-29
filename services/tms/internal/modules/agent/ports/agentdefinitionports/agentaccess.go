@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -63,20 +65,20 @@ type SaveAgentWithAccessRequest struct {
 // AgentAccess is an agent and the roles granted it.
 type AgentAccess struct {
 	Agent *agentdefinition.Definition
-	Roles []*permission.Role
+	Roles []*rbac.Role
 }
 
 // RoleAgents is a role and the agents granted it.
 type RoleAgents struct {
-	Role   *permission.Role
+	Role   *rbac.Role
 	Agents []*agentdefinition.Definition
 }
 
 // AgentAudienceRole is how much of an agent one role could use, and whether
 // it is granted the agent now.
 type AgentAudienceRole struct {
-	Role             *permission.Role
-	Coverage         agentdefinition.AudienceCoverage
+	Role             *rbac.Role
+	Coverage         agentreach.AudienceCoverage
 	MissingResources []permission.Resource
 	Granted          bool
 }

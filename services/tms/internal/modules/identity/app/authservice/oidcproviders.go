@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,7 +50,7 @@ func (p *oidcProviders) clientContext(ctx context.Context) context.Context {
 
 func (p *oidcProviders) get(
 	ctx context.Context,
-	cfg *tenant.SSOConfig,
+	cfg *sso.SSOConfig,
 ) (*oidc.Provider, error) {
 	if _, err := httpsafe.ValidateHTTPSURL(cfg.OIDCIssuerURL, p.policy); err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (p *oidcProviders) get(
 	return provider, nil
 }
 
-func oidcConfigFingerprint(cfg *tenant.SSOConfig) string {
+func oidcConfigFingerprint(cfg *sso.SSOConfig) string {
 	return cfg.OIDCIssuerURL + "\x00" +
 		strconv.FormatInt(cfg.Version, 10) + "\x00" +
 		strconv.FormatInt(cfg.UpdatedAt, 10)

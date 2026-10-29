@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
@@ -112,7 +113,7 @@ func For(kind documenttemplate.Kind) (*Starter, error) {
 // catalog at render. A per-locale file is for the cases where the layout itself
 // has to change, not merely the words.
 func ForLocale(kind documenttemplate.Kind, locale i18n.Locale) (*Starter, error) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	def, ok := registry.Get(kind)
 	if !ok {
 		return nil, fmt.Errorf("unknown template kind %q", kind)

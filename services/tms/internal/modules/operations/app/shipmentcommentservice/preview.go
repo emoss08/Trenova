@@ -5,7 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -14,7 +15,7 @@ import (
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentCommentByIDRequest,
+	req *shipmentcommentports.GetShipmentCommentByIDRequest,
 ) (*shipment.ShipmentComment, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
@@ -42,10 +43,10 @@ func (s *service) GetByID(
 
 func (s *service) PreviewPin(
 	ctx context.Context,
-	req *shipmentports.ToggleShipmentCommentRequest,
+	req *shipmentcommentports.ToggleShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 	pinned bool,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	comment, userID, err := s.planPin(ctx, req, actor, pinned)
 	if err != nil {
 		return nil, err
@@ -63,12 +64,12 @@ func (s *service) PreviewPin(
 		}
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: comment, After: &after}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: comment, After: &after}, nil
 }
 
 func (s *service) planPin(
 	ctx context.Context,
-	req *shipmentports.ToggleShipmentCommentRequest,
+	req *shipmentcommentports.ToggleShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 	pinned bool,
 ) (*shipment.ShipmentComment, pulid.ID, error) {
@@ -88,7 +89,7 @@ func (s *service) planPin(
 	if pinned && !comment.IsPinned() {
 		pinnedCount, countErr := s.repo.CountPinnedByShipmentID(
 			ctx,
-			&shipmentports.GetShipmentCommentCountRequest{
+			&shipmentcommentports.GetShipmentCommentCountRequest{
 				TenantInfo: req.TenantInfo,
 				ShipmentID: req.ShipmentID,
 			},
@@ -96,7 +97,7 @@ func (s *service) planPin(
 		if countErr != nil {
 			return nil, pulid.Nil, countErr
 		}
-		if pinnedCount >= shipment.MaxPinnedComments {
+		if pinnedCount >= shipmentvocab.MaxPinnedComments {
 			return nil, pulid.Nil, errortypes.NewConflictError(
 				"This shipment already has the maximum number of pinned comments",
 			)
@@ -108,10 +109,10 @@ func (s *service) planPin(
 
 func (s *service) PreviewResolve(
 	ctx context.Context,
-	req *shipmentports.ToggleShipmentCommentRequest,
+	req *shipmentcommentports.ToggleShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 	resolved bool,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	comment, userID, err := s.getToggleTarget(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -129,25 +130,25 @@ func (s *service) PreviewResolve(
 		}
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: comment, After: &after}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: comment, After: &after}, nil
 }
 
 func (s *service) PreviewUpdate(
 	ctx context.Context,
-	req *shipmentports.UpdateShipmentCommentRequest,
+	req *shipmentcommentports.UpdateShipmentCommentRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentCommentChange, error) {
+) (*shipmentcommentports.ShipmentCommentChange, error) {
 	original, entity, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentCommentChange{Before: original, After: entity}, nil
+	return &shipmentcommentports.ShipmentCommentChange{Before: original, After: entity}, nil
 }
 
 func (s *service) planUpdate(
 	ctx context.Context,
-	req *shipmentports.UpdateShipmentCommentRequest,
+	req *shipmentcommentports.UpdateShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 ) (original, entity *shipment.ShipmentComment, err error) {
 	if req == nil || req.Entity == nil {
@@ -177,7 +178,7 @@ func (s *service) planUpdate(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	original, err = s.getEditableComment(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+	original, err = s.getEditableComment(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  entity.ID,
 		ShipmentID: entity.ShipmentID,
 		TenantInfo: tenantInfo,
@@ -203,20 +204,23 @@ func (s *service) planUpdate(
 
 func (s *service) PreviewDelete(
 	ctx context.Context,
-	req *shipmentports.DeleteShipmentCommentRequest,
+	req *shipmentcommentports.DeleteShipmentCommentRequest,
 	actor *permissionports.RequestActor,
-) (*shipmentports.ShipmentCommentDeletion, error) {
+) (*shipmentcommentports.ShipmentCommentDeletion, error) {
 	original, replies, err := s.planDelete(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentCommentDeletion{Comment: original, Tombstoned: replies > 0}, nil
+	return &shipmentcommentports.ShipmentCommentDeletion{
+		Comment:    original,
+		Tombstoned: replies > 0,
+	}, nil
 }
 
 func (s *service) planDelete(
 	ctx context.Context,
-	req *shipmentports.DeleteShipmentCommentRequest,
+	req *shipmentcommentports.DeleteShipmentCommentRequest,
 	actor *permissionports.RequestActor,
 ) (original *shipment.ShipmentComment, replies int, err error) {
 	if req == nil {
@@ -227,7 +231,7 @@ func (s *service) planDelete(
 		)
 	}
 
-	repoReq := &shipmentports.DeleteShipmentCommentQuery{
+	repoReq := &shipmentcommentports.DeleteShipmentCommentQuery{
 		TenantInfo: req.TenantInfo,
 		ShipmentID: req.ShipmentID,
 		CommentID:  req.CommentID,
@@ -241,7 +245,7 @@ func (s *service) planDelete(
 		return nil, 0, err
 	}
 
-	original, err = s.getEditableComment(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+	original, err = s.getEditableComment(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -262,7 +266,7 @@ func (s *service) planDelete(
 		return nil, 0, err
 	}
 
-	replies, err = s.repo.CountReplies(ctx, &shipmentports.GetShipmentCommentByIDRequest{
+	replies, err = s.repo.CountReplies(ctx, &shipmentcommentports.GetShipmentCommentByIDRequest{
 		CommentID:  req.CommentID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,

@@ -6,15 +6,17 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *Service) ScriptsOffered(ctx context.Context, tenant pagination.TenantInfo) (bool, error) {
-	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, tenant)
+	usable, err := s.UsableFor(ctx, aitask.TaskAssistantChat, tenant)
 	if err != nil {
-		if errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if errors.Is(err, llmports.ErrNoProviderConfigured) {
 			return false, nil
 		}
 		return false, err
@@ -35,14 +37,14 @@ func (s *Service) ScriptSettings(
 	if providerID.IsNil() {
 		return aiprovider.ScriptSettings{}, nil
 	}
-	provider, err := s.repo.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.Repo.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
 	if err != nil {
 		return aiprovider.ScriptSettings{}, err
 	}
-	if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
+	if ok, _ := provider.CanServeTask(aitask.TaskAssistantChat); !ok {
 		return aiprovider.ScriptSettings{}, nil
 	}
 

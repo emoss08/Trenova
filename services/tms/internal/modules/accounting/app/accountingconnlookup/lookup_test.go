@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,16 +16,16 @@ import (
 )
 
 type fakeConnections struct {
-	accountingsyncports.AccountingConnectionRepository
-	conn *accountingsync.AccountingConnection
+	accountingconnectionports.AccountingConnectionRepository
+	conn *accountingconnection.AccountingConnection
 	err  error
-	asks []accountingsyncports.GetAccountingConnectionRequest
+	asks []accountingconnectionports.GetAccountingConnectionRequest
 }
 
 func (f *fakeConnections) GetByType(
 	_ context.Context,
-	req accountingsyncports.GetAccountingConnectionRequest,
-) (*accountingsync.AccountingConnection, error) {
+	req accountingconnectionports.GetAccountingConnectionRequest,
+) (*accountingconnection.AccountingConnection, error) {
 	f.asks = append(f.asks, req)
 	return f.conn, f.err
 }
@@ -33,7 +33,7 @@ func (f *fakeConnections) GetByType(
 func TestByTypeReadsTheTenantsConnection(t *testing.T) {
 	t.Parallel()
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	conn := &accountingsync.AccountingConnection{ID: pulid.MustNew("acctc_")}
+	conn := &accountingconnection.AccountingConnection{ID: pulid.MustNew("acctc_")}
 	repo := &fakeConnections{conn: conn}
 
 	found, err := ByType(t.Context(), repo, tenant, integration.TypeQuickBooksOnline)

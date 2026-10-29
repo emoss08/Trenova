@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -72,7 +73,7 @@ func (s *service) planDetection(
 	if params.source == nil {
 		return plan, nil
 	}
-	if params.source.Status == shipment.StatusCanceled {
+	if params.source.Status == shipmentvocab.StatusCanceled {
 		plan.SkippedStops = append(plan.SkippedStops, skippedStopDetail(addSkippedEvaluationParams{
 			shipmentID: params.source.ID,
 			reason:     "shipment canceled",
@@ -205,5 +206,5 @@ func (s *service) persistDetected(
 func canMarkDelayed(entity *shipment.Shipment) bool {
 	return entity != nil &&
 		shipmentstate.IsDelayedEligibleShipmentStatus(entity.Status) &&
-		shipmentstate.CanTransitionShipmentStatus(entity.Status, shipment.StatusDelayed)
+		shipmentstate.CanTransitionShipmentStatus(entity.Status, shipmentvocab.StatusDelayed)
 }

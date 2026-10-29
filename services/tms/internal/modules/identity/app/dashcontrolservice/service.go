@@ -3,9 +3,9 @@ package dashcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -25,14 +25,14 @@ type Params struct {
 	Logger       *zap.Logger
 	Repo         tenantports.DashControlRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
 	repo         tenantports.DashControlRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -47,15 +47,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DashControl, error) {
+) (*dashcontrol.DashControl, error) {
 	return s.repo.GetOrCreate(ctx, tenantInfo)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *tenant.DashControl,
+	entity *dashcontrol.DashControl,
 	userID pulid.ID,
-) (*tenant.DashControl, error) {
+) (*dashcontrol.DashControl, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -101,7 +101,7 @@ func (s *Service) Update(
 
 func (s *Service) publishInvalidation(
 	ctx context.Context,
-	control *tenant.DashControl,
+	control *dashcontrol.DashControl,
 	userID pulid.ID,
 ) {
 	if s.realtime == nil {

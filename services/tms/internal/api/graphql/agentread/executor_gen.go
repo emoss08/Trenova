@@ -79,7 +79,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
 	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	briefingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
 	captureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
 	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
@@ -126,6 +125,7 @@ import (
 	rateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
 	recurringshipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
 	reportresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	schedulingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
 	servicefailurereasoncoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
 	servicefailureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
@@ -148,25 +148,40 @@ import (
 	workerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerresolver"
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
-	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	monitoringconfig "github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	fiscalperiodservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
 	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	accountingconnectionports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	accountingdriftports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	accountinginboundports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	accountingmappingports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	factoringledgerports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	factoringremittanceports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	factoringsubmissionports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	capturedevices "github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	capturefiling "github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	captureprofiles "github.com/emoss08/trenova/internal/modules/documents/app/captureprofiles"
 	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	capturerequests "github.com/emoss08/trenova/internal/modules/documents/app/capturerequests"
+	capturesupport "github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
+	inboundintake "github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
+	inboundmailbox "github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	inboundqueue "github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	inboundreads "github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	inboundreplyservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	inboundviews "github.com/emoss08/trenova/internal/modules/documents/app/inboundviews"
 	triagebriefingservice "github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
 	triageconflictservice "github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
 	triagecorrectionservice "github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
@@ -174,7 +189,11 @@ import (
 	triageruleservice "github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
 	triageworkservice "github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	edimessageview "github.com/emoss08/trenova/internal/modules/edi/app/edimessageview"
+	edioutbound "github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	edioverview "github.com/emoss08/trenova/internal/modules/edi/app/edioverview"
+	edisetup "github.com/emoss08/trenova/internal/modules/edi/app/edisetup"
+	editransferservice "github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
@@ -186,18 +205,31 @@ import (
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	detentionnoticeservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
 	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
-	detentionservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	detentionreview "github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	detentionsimulation "github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
-	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	assignmentports "github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	ratingreviewports "github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	shipmentcommentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	shipmentdistanceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
 	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
-	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	shipmentimportassistantports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
+	shipmentserviceports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
+	tenderports "github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
+	carrierintelenrollmentservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	carrierintelmonitorservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
+	carrierintelreviewservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	carrierintelsourcingservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	carrierintelverifyservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	carrierintelvetservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
 	factoringcompanyservice "github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
@@ -219,15 +251,22 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	carriersettlementcostservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	carriersettlementworkspaceservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
 	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	driversettlementreviewservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	driversettlementtransferservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementtransferservice"
+	driversettlementworkspaceservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	fueldeskcardservice "github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
 	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
 	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
+	driverportalinvitationservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
@@ -241,11 +280,14 @@ import (
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	workerptoports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	reportdashboardservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	reportscheduleservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
+	reportviewservice "github.com/emoss08/trenova/internal/modules/workspace/app/reportviewservice"
 	tablechangealertservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"go.uber.org/fx"
@@ -258,137 +300,186 @@ import (
 type ResolverParams struct {
 	fx.In
 
-	AccessorialChargeService     *accessorialchargeservice.Service
-	AccountingConnectionService  accountingsyncports.AccountingConnectionService
-	AccountingDriftService       accountingsyncports.AccountingDriftService
-	AccountingInboundService     accountingsyncports.AccountingInboundService
-	AccountingMappingService     accountingsyncports.AccountingMappingService
-	AccountingSyncService        accountingsyncports.AccountingSyncService
-	AnalyticsService             kernelports.AnalyticsService
-	AssignmentService            shipmentports.AssignmentService
-	BriefingService              briefingports.BriefingService
-	CaptureReleaseService        *capturereleaseservice.Service
-	CaptureService               *captureservice.Service
-	CarrierAssignmentService     *carrierassignmentservice.Service
-	CarrierCapacityService       *carriercapacityservice.Service
-	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
-	CarrierIntelService          *carrierintelservice.Service
-	CarrierService               *carrierservice.Service
-	CarrierSettlementBatchRepo   carriersettlementports.CarrierSettlementBatchRepository
-	CarrierSettlementRepo        carriersettlementports.CarrierSettlementRepository
-	CarrierSettlementService     *carriersettlementservice.Service
-	CommodityService             *commodityservice.Service
-	Config                       *config.Config `optional:"true"`
-	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
-	CustomerPaymentService       customerpaymentports.CustomerPaymentService
-	CustomerService              *customerservice.Service
-	DashControlService           *dashcontrolservice.Service
-	DetentionPolicyService       *detentionpolicyservice.Service
-	DetentionService             *detentionservice.Service
-	DispatchAutoAssignService    agentports.DispatchAutoAssignService
-	DispatchConsoleService       agentports.DispatchConsoleService
-	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
-	DocumentTypeService          *documenttypeservice.Service
-	DriverPayService             *driverpayservice.Service
-	DriverPortalService          *driverportalservice.Service
-	DriverSettlementRepo         driversettlementports.DriverSettlementRepository
-	DriverSettlementService      *driversettlementservice.Service
-	EDIInboundService            *ediinboundservice.Service
-	EDIService                   *ediservice.Service
-	EmailService                 *emailservice.Service
-	EquipmentManufacturerService *equipmentmanufacturerservice.Service
-	EquipmentTypeService         *equipmenttypeservice.Service
-	EscrowAccountRepo            driverpayports.EscrowAccountRepository
-	FactoringAgreementService    factoringports.AgreementService
-	FactoringCompanyService      *factoringcompanyservice.Service
-	FactoringLedgerService       factoringports.LedgerService
-	FactoringNoaService          factoringports.NoaService
-	FactoringReadinessService    factoringports.ReadinessService
-	FactoringRemittanceService   factoringports.RemittanceService
-	FactoringSubmissionService   factoringports.SubmissionService
-	FactoringTransportService    factoringports.TransportService
-	FiscalPeriodService          *fiscalperiodservice.Service
-	FleetCodeService             *fleetcodeservice.Service
-	FormulaLibraryService        *formulalibraryservice.Service
-	FormulaTemplateService       *formulatemplateservice.Service
-	FuelDeskCards                *fueldeskcardservice.Service
-	FuelIndexPriceRepo           fuelsurchargeports.FuelIndexPriceRepository
-	FuelIndexRepo                fuelsurchargeports.FuelIndexRepository
-	FuelPurchaseService          *fuelpurchaseservice.Service
-	FuelSurchargeProgramRepo     fuelsurchargeports.FuelSurchargeProgramRepository
-	FuelSurchargeService         *fuelsurchargeservice.Service
-	GLAccountRepo                glaccountports.GLAccountRepository
-	HazardousMaterialService     *hazardousmaterialservice.Service
-	HoldReasonService            *holdreasonservice.Service
-	HomeLayoutService            *homelayoutservice.Service
-	IFTAService                  *iftaservice.Service
-	InboundMessageService        *inboundmessageservice.Service
-	InboundReplyService          *inboundreplyservice.Service
-	InvoiceAdjustmentService     invoiceadjustmentports.InvoiceAdjustmentService
-	InvoiceDisputeRepo           invoiceports.InvoiceDisputeRepository
-	InvoiceDisputeService        invoiceports.InvoiceDisputeService
-	InvoiceService               invoiceports.InvoiceService
-	JournalCards                 *journalcardservice.Service
-	JournalEntryService          *journalentryservice.Service
-	JournalReversalService       *journalreversalservice.Service
-	JournalReview                journalentryports.JournalReviewService
-	LocationCategoryService      *locationcategoryservice.Service
-	LocationService              *locationservice.Service
-	Logger                       *zap.Logger
-	ManualJournalService         *manualjournalservice.Service
-	NotificationService          *notificationservice.Service
-	OrderService                 *orderservice.Service
-	OrgStructureService          *orgstructureservice.Service
-	OrganizationService          tenantports.OrganizationService
-	PayAdvanceRepo               driverpayports.PayAdvanceRepository
-	PayEventRepo                 driversettlementports.PayEventRepository
-	PayProfileRepo               driverpayports.PayProfileRepository
-	PerformanceReviewService     *performancereviewservice.Service
-	PermissionEngine             permissionports.PermissionEngine
-	RateAgreementService         *rateagreementservice.Service
-	RateMatrixService            *ratematrixservice.Service
-	RateQuoteService             *ratequoteservice.Service
-	RateZoneService              *ratezoneservice.Service
-	RecurringDeductionRepo       driverpayports.RecurringDeductionRepository
-	RecurringEarningRepo         driverpayports.RecurringEarningRepository
-	RecurringShipmentService     *recurringshipmentservice.Service
-	ReportingService             *reportingservice.Service
-	RoutingGuideService          *routingguideservice.Service
-	SchedulingService            *schedulingservice.Service
-	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
-	ServiceFailureSvc            servicefailureports.ServiceFailureService
-	ServiceTypeService           *servicetypeservice.Service
-	SettlementBatchRepo          driversettlementports.SettlementBatchRepository
-	SettlementControlService     *settlementcontrolservice.Service
-	ShipmentCommentService       shipmentports.ShipmentCommentService
-	ShipmentEventService         shipmenteventports.ShipmentEventService
-	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
-	ShipmentRatingReviewService  shipmentports.RatingReviewService
-	ShipmentService              shipmentports.ShipmentService
-	ShipmentTypeService          *shipmenttypeservice.Service
-	TableChangeAlertService      *tablechangealertservice.Service
-	TableExportService           *tableexportservice.Service
-	TelematicsService            *telematicsservice.Service
-	TenderService                *tenderservice.Service
-	TrackingEventService         trackingeventports.TrackingEventService
-	TractorService               *tractorservice.Service
-	TrailerService               *trailerservice.Service
-	TriageBriefingService        *triagebriefingservice.Service
-	TriageConflictService        *triageconflictservice.Service
-	TriageCorrectionService      *triagecorrectionservice.Service
-	TriagePeekService            *triagepeekservice.Service
-	TriageRuleService            *triageruleservice.Service
-	TriageWorkService            *triageworkservice.Service
-	WorkerChecklistService       *workerchecklistservice.Service
-	WorkerCredentialService      *workercredentialservice.Service
-	WorkerDQFService             *workerdqfservice.Service
-	WorkerDrugAlcoholService     *workerdrugalcoholservice.Service
-	WorkerInjuryService          *workerinjuryservice.Service
-	WorkerLeaveService           *workerleaveservice.Service
-	WorkerPTOService             workerports.WorkerPTOService
-	WorkerSafetyService          *workersafetyservice.Service
-	WorkerService                *workerservice.Service
-	WorkerTrainingService        *workertrainingservice.Service
+	AccessorialChargeService          *accessorialchargeservice.Service
+	AccountingApps                    accountingconnectionports.AccountingAppService
+	AccountingAuthorization           accountingconnectionports.AccountingAuthorizationService
+	AccountingBackfillService         accountingsyncports.AccountingBackfillService
+	AccountingCertificates            accountingconnectionports.AccountingCertificateService
+	AccountingConnectionStatus        accountingconnectionports.AccountingConnectionStatusReader
+	AccountingDriftService            accountingdriftports.AccountingDriftService
+	AccountingHealth                  accountingconnectionports.AccountingHealthChecker
+	AccountingInboundService          accountinginboundports.AccountingInboundService
+	AccountingMappingDecisions        accountingmappingports.AccountingMappingDecisionService
+	AccountingMappingReader           accountingmappingports.AccountingMappingReader
+	AccountingReferenceCreator        accountingmappingports.AccountingReferenceCreator
+	AccountingSyncActions             accountingsyncports.AccountingSyncActionService
+	AccountingSyncReader              accountingsyncports.AccountingSyncReader
+	AccountingSyncSetup               accountingsyncports.AccountingSyncSetupService
+	AnalyticsService                  kernelports.AnalyticsService
+	AssignmentService                 assignmentports.AssignmentService
+	BriefingService                   briefingports.BriefingService
+	CaptureDeviceService              *capturedevices.Service
+	CaptureFilingService              *capturefiling.Service
+	CaptureProfileService             *captureprofiles.Service
+	CaptureReleaseService             *capturereleaseservice.Service
+	CaptureRequestService             *capturerequests.Service
+	CaptureSupportService             *capturesupport.Service
+	CarrierAssignmentService          *carrierassignmentservice.Service
+	CarrierCapacityService            *carriercapacityservice.Service
+	CarrierCostEventRepo              carriersettlementports.CarrierCostEventRepository
+	CarrierIntelEnrollmentService     *carrierintelenrollmentservice.Service
+	CarrierIntelMonitorService        *carrierintelmonitorservice.Service
+	CarrierIntelReviewService         *carrierintelreviewservice.Service
+	CarrierIntelService               *carrierintelservice.Service
+	CarrierIntelSourcingService       *carrierintelsourcingservice.Service
+	CarrierIntelVerifyService         *carrierintelverifyservice.Service
+	CarrierIntelVetService            *carrierintelvetservice.Service
+	CarrierService                    *carrierservice.Service
+	CarrierSettlementBatchRepo        carriersettlementports.CarrierSettlementBatchRepository
+	CarrierSettlementCostService      *carriersettlementcostservice.Service
+	CarrierSettlementRepo             carriersettlementports.CarrierSettlementRepository
+	CarrierSettlementService          *carriersettlementservice.Service
+	CarrierSettlementWorkspaceService *carriersettlementworkspaceservice.Service
+	CommodityService                  *commodityservice.Service
+	CustomerPaymentRepo               customerpaymentports.CustomerPaymentRepository
+	CustomerPaymentService            customerpaymentports.CustomerPaymentService
+	CustomerService                   *customerservice.Service
+	DashControlService                *dashcontrolservice.Service
+	DetentionNotices                  *detentionnoticeservice.Service
+	DetentionPolicyService            *detentionpolicyservice.Service
+	DetentionReview                   *detentionreview.Service
+	DetentionSimulation               *detentionsimulation.Service
+	DispatchAutoAssignService         dispatchconsoleports.DispatchAutoAssignService
+	DispatchConsoleService            dispatchconsoleports.DispatchConsoleService
+	DistanceCalculationService        shipmentdistanceports.DistanceCalculationService `optional:"true"`
+	DocumentTypeService               *documenttypeservice.Service
+	DriverPayService                  *driverpayservice.Service
+	DriverPortalInvitationService     *driverportalinvitationservice.Service
+	DriverPortalRecordsService        *driverportalrecordsservice.Service
+	DriverPortalService               *driverportalservice.Service
+	DriverSettlementRepo              driversettlementports.DriverSettlementRepository
+	DriverSettlementReviewService     *driversettlementreviewservice.Service
+	DriverSettlementService           *driversettlementservice.Service
+	DriverSettlementTransferService   *driversettlementtransferservice.Service
+	DriverSettlementWorkspaceService  *driversettlementworkspaceservice.Service
+	EDIInboundService                 *ediinboundservice.Service
+	EDIMessageService                 *edimessageview.Service
+	EDIOutboundService                *edioutbound.Service
+	EDIOverviewService                *edioverview.Service
+	EDISetupService                   *edisetup.Service
+	EDITransferService                *editransferservice.Service
+	EmailService                      *emailservice.Service
+	EquipmentManufacturerService      *equipmentmanufacturerservice.Service
+	EquipmentTypeService              *equipmenttypeservice.Service
+	EscrowAccountRepo                 driverpayports.EscrowAccountRepository
+	FactoringAgreementService         factoringports.AgreementService
+	FactoringCompanyService           *factoringcompanyservice.Service
+	FactoringLedgerService            factoringledgerports.LedgerService
+	FactoringNoaService               factoringports.NoaService
+	FactoringReadinessService         factoringports.ReadinessService
+	FactoringRemittanceService        factoringremittanceports.RemittanceService
+	FactoringSubmissionService        factoringsubmissionports.SubmissionService
+	FactoringTransportService         factoringsubmissionports.TransportService
+	FiscalPeriodService               *fiscalperiodservice.Service
+	FleetCodeService                  *fleetcodeservice.Service
+	FormulaLibraryService             *formulalibraryservice.Service
+	FormulaTemplateService            *formulatemplateservice.Service
+	FuelDeskCards                     *fueldeskcardservice.Service
+	FuelIndexPriceRepo                fuelsurchargeports.FuelIndexPriceRepository
+	FuelIndexRepo                     fuelsurchargeports.FuelIndexRepository
+	FuelPurchaseService               *fuelpurchaseservice.Service
+	FuelSurchargeProgramRepo          fuelsurchargeports.FuelSurchargeProgramRepository
+	FuelSurchargeService              *fuelsurchargeservice.Service
+	GLAccountRepo                     glaccountports.GLAccountRepository
+	HazardousMaterialService          *hazardousmaterialservice.Service
+	HoldReasonService                 *holdreasonservice.Service
+	HomeLayoutService                 *homelayoutservice.Service
+	IFTAService                       *iftaservice.Service
+	InboundIntakeService              *inboundintake.Service
+	InboundMailboxService             *inboundmailbox.Service
+	InboundQueueService               *inboundqueue.Service
+	InboundReadService                *inboundreads.Service
+	InboundReplyService               *inboundreplyservice.Service
+	InboundViewService                *inboundviews.Service
+	InvoiceAdjustmentService          invoiceadjustmentports.InvoiceAdjustmentService
+	InvoiceCreationService            invoiceports.InvoiceCreationService
+	InvoiceDisputeRepo                invoiceports.InvoiceDisputeRepository
+	InvoiceDisputeService             invoiceports.InvoiceDisputeService
+	InvoiceEDIService                 invoiceports.InvoiceEDIService
+	InvoiceMemoService                invoiceports.InvoiceMemoService
+	InvoiceQueryService               invoiceports.InvoiceQueryService
+	InvoiceVoidService                invoiceports.InvoiceVoidService
+	JournalCards                      *journalcardservice.Service
+	JournalEntryService               *journalentryservice.Service
+	JournalReversalService            *journalreversalservice.Service
+	JournalReview                     journalentryports.JournalReviewService
+	LocationCategoryService           *locationcategoryservice.Service
+	LocationService                   *locationservice.Service
+	Logger                            *zap.Logger
+	ManualJournalService              *manualjournalservice.Service
+	MonitoringConfig                  *monitoringconfig.Config `optional:"true"`
+	NotificationService               *notificationservice.Service
+	OrderService                      *orderservice.Service
+	OrgStructureService               *orgstructureservice.Service
+	OrganizationService               tenantports.OrganizationService
+	PayAdvanceRepo                    driverpayports.PayAdvanceRepository
+	PayEventRepo                      driversettlementports.PayEventRepository
+	PayProfileRepo                    driverpayports.PayProfileRepository
+	PerformanceReviewService          *performancereviewservice.Service
+	PermissionEngine                  permissionports.PermissionEngine
+	RateAgreementService              *rateagreementservice.Service
+	RateMatrixService                 *ratematrixservice.Service
+	RateQuoteService                  *ratequoteservice.Service
+	RateZoneService                   *ratezoneservice.Service
+	RecurringDeductionRepo            driverpayports.RecurringDeductionRepository
+	RecurringEarningRepo              driverpayports.RecurringEarningRepository
+	RecurringShipmentService          *recurringshipmentservice.Service
+	ReportDashboardService            *reportdashboardservice.Service
+	ReportScheduleService             *reportscheduleservice.Service
+	ReportViewService                 *reportviewservice.Service
+	ReportingService                  *reportingservice.Service
+	RoutingGuideService               *routingguideservice.Service
+	SchedulingService                 *schedulingservice.Service
+	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
+	ServiceFailureSvc                 servicefailureports.ServiceFailureService
+	ServiceTypeService                *servicetypeservice.Service
+	SettlementBatchRepo               driversettlementports.SettlementBatchRepository
+	SettlementControlService          *settlementcontrolservice.Service
+	ShipmentAutoRater                 shipmentserviceports.ShipmentAutoRater
+	ShipmentBillingTransfer           shipmentserviceports.ShipmentBillingTransferService
+	ShipmentCommentService            shipmentcommentports.ShipmentCommentService
+	ShipmentEventService              shipmenteventports.ShipmentEventService
+	ShipmentImportAssistant           shipmentimportassistantports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentLifecycle                 shipmentserviceports.ShipmentLifecycleService
+	ShipmentLoadingPlanner            shipmentserviceports.ShipmentLoadingPlanner
+	ShipmentRatingReviewService       ratingreviewports.RatingReviewService
+	ShipmentReader                    shipmentserviceports.ShipmentReader
+	ShipmentReadiness                 shipmentserviceports.ShipmentBillingReadinessReader
+	ShipmentTypeService               *shipmenttypeservice.Service
+	ShipmentWriter                    shipmentserviceports.ShipmentWriter
+	TableChangeAlertService           *tablechangealertservice.Service
+	TableExportService                *tableexportservice.Service
+	TelematicsService                 *telematicsservice.Service
+	TenderRepo                        tenderports.TenderRepository
+	TrackingEventService              trackingeventports.TrackingEventService
+	TractorService                    *tractorservice.Service
+	TrailerService                    *trailerservice.Service
+	TriageBriefingService             *triagebriefingservice.Service
+	TriageConflictService             *triageconflictservice.Service
+	TriageCorrectionService           *triagecorrectionservice.Service
+	TriagePeekService                 *triagepeekservice.Service
+	TriageRuleService                 *triageruleservice.Service
+	TriageWorkService                 *triageworkservice.Service
+	WorkerChecklistService            *workerchecklistservice.Service
+	WorkerCredentialService           *workercredentialservice.Service
+	WorkerDQFService                  *workerdqfservice.Service
+	WorkerDrugAlcoholService          *workerdrugalcoholservice.Service
+	WorkerInjuryService               *workerinjuryservice.Service
+	WorkerLeaveService                *workerleaveservice.Service
+	WorkerPTOService                  workerptoports.WorkerPTOService
+	WorkerSafetyService               *workersafetyservice.Service
+	WorkerService                     *workerservice.Service
+	WorkerTrainingService             *workertrainingservice.Service
 }
 
 var shards = []*gqlexec.Shard{
@@ -512,8 +603,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingMappings",
-		Hash:     "sha256:b72e96ea5e92d88b4f768c6229930166ad6a70cd09f42de64a35db73cc70079c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } } }",
+		Hash:     "sha256:7d714c4c2325f49f5d4ebbe75ef5b2b399ad0b8ca3204d20619700877a5051ce",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $includeTotalCount: Boolean = false, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingMappingSummary",
@@ -522,8 +613,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskAccountingSyncRecords",
-		Hash:     "sha256:ca6610fbf54240604efc633ffa333f19749fdfad28ed0681b85c064f3406a509",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } } }",
+		Hash:     "sha256:dff49624682ddb77c806c6d106c2b8ea6622d2ae0d74734bfd46602929c4f95f",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $includeTotalCount: Boolean = false, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { cursor node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskAccountingSyncObjectStates",
@@ -807,8 +898,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskCaptureBatches",
-		Hash:     "sha256:b9ff4bc173f2783c89e71405b5123d0a8408205e04a8f5c6df5a839dbeffcf21",
-		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatches($input: CaptureBatchesInput!) { captureBatches(input: $input) { edges { cursor node { ...DeskCaptureBatchFields } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:fb6308277a09f7a144d1f764cf353a5046f6ac6ca1e5390a1e790eabb0e7e0eb",
+		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatches($includeTotalCount: Boolean = false, $input: CaptureBatchesInput!) { captureBatches(input: $input) { edges { cursor node { ...DeskCaptureBatchFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCaptureBatch",
@@ -817,13 +908,13 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskEmailProfiles",
-		Hash:     "sha256:f89bec20e5e4da495654c0a54ba992eda757a0c3e4c84d0b8cae52eceb2190cf",
-		Document: "query DeskEmailProfiles($input: DataTableConnectionInput!) { emailProfiles(input: $input) { edges { cursor node { description id name replyToEmail senderEmail senderName status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:ab69cc8a07cf8e63efca3132446b900c25438d77a23e849bae5c99a00848ee21",
+		Document: "query DeskEmailProfiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { emailProfiles(input: $input) { edges { cursor node { description id name replyToEmail senderEmail senderName status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskInboundMessages",
-		Hash:     "sha256:1f66f654ce5c505635005a4af1cb3b1fa73e8944774bc23e63262cb4d76738ba",
-		Document: "query DeskInboundMessages($input: InboundMessagesInput!) { inboundMessages(input: $input) { edges { cursor node { attachmentCount classification confidence dueAt fromAddress fromName id mailbox { address name } mailboxId matchReason matchedCustomerId matchedShipmentId needsReview ownerId preview receivedAt status subject threadCount threadKey } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:2307e4d7f28a357bac7034f1930da4aae664029e4f3b6f74e15ce21e38567f1d",
+		Document: "query DeskInboundMessages($includeTotalCount: Boolean = false, $input: InboundMessagesInput!) { inboundMessages(input: $input) { edges { cursor node { attachmentCount classification confidence dueAt fromAddress fromName id mailbox { address name } mailboxId matchReason matchedCustomerId matchedShipmentId needsReview ownerId preview receivedAt status subject threadCount threadKey } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "TriageAssignees",
@@ -872,23 +963,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskFiscalPeriods",
-		Hash:     "sha256:e83468ca3e2354865d77c7d65e7096c7689f51658fb69eb7ac5cebe3d274324b",
-		Document: "query DeskFiscalPeriods($input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { cursor node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:ef179492e839211a7ea7b696b6a80de3ae1afa34f4acfd9480fccb77e2d6a168",
+		Document: "query DeskFiscalPeriods($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { cursor node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskJournalEntries",
-		Hash:     "sha256:ae82c6e423b4b47fb00a12a90c9bd4e1971d082a55b6efe89e96dca328e1a8d4",
-		Document: "query DeskJournalEntries($input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { cursor node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:830849d32b585f471085c32e45a1758249606b3bcb444655c28b11f6aa0ae57a",
+		Document: "query DeskJournalEntries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { cursor node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskJournalReversals",
-		Hash:     "sha256:e4de0fbdcb6a424cbae7b2bc7ba1b7a2202f63502f63695dbb91f517fb225878",
-		Document: "query DeskJournalReversals($input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { cursor node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:751df07c5c6191c8269b7dea0a8a536f38e60b07ab201641949976007e6411a7",
+		Document: "query DeskJournalReversals($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { cursor node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskManualJournals",
-		Hash:     "sha256:0ab4ddc613c4f6f1b24fe9e7c9b6f4d740a799f5d167800caa5deaca85517392",
-		Document: "query DeskManualJournals($input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { cursor node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:29037eac713a284a1f150615fcc102438f61d41a7cb9b5bf29292e4e598dad09",
+		Document: "query DeskManualJournals($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { cursor node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -1007,8 +1098,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskDriverSettlementStatement",
-		Hash:     "sha256:67cfc6d79e2a55fbdb58548ba569c10698d07f1a4bc0397c5ba8ef0494f23805",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:2e541d9cae70bf88d9478a3db98754fffea95296bdcf62969132c59e486f710a",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "WorkerEarningsSummary",
@@ -1082,8 +1173,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerCredential",
-		Hash:     "sha256:43246c83f8dc68f9605ada0a2116bdbb5f190c8b62169c95b58acaa631bdf067",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:d27e395a2c03027a8b2c624044c30b21656aee61d56dbb0a2598a8cfdc45ac22",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DotRandomDraw",
@@ -1112,8 +1203,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkers",
-		Hash:     "sha256:3be55cb574e3642d02678112104ec454681d662be5141f34d004f8d5fb5f19f3",
-		Document: "query DeskWorkers($input: DataTableConnectionInput!, $withoutCredential: String) { workers(input: $input, withoutCredential: $withoutCredential) { edges { cursor node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } } }",
+		Hash:     "sha256:9fdca621dc272cb47ab91abb96f3d27c90b9f8cf5b468641a1dfe54aeeaa3b4e",
+		Document: "query DeskWorkers($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $withoutCredential: String) { workers(input: $input, withoutCredential: $withoutCredential) { edges { cursor node { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType externalId firstName fleetCode { code id } fleetCodeId id lastName profile { cdlClass cdlRestrictions complianceStatus eldExempt endorsement hazmatExpiry isQualified lastComplianceCheck lastMvrCheck licenseExpiry medicalCardExpiry mvrDueDate physicalDueDate shortHaulExempt twicExpiry } status type wholeName } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerChecklists",
@@ -1127,8 +1218,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerCredentialList",
-		Hash:     "sha256:463beec95f7dddb48ed5f2e03b0c8a95d8bbe32cf89045881e0aa3c8c2d49730",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredentialList($credentialTypeCode: String, $expiringWithinDays: Int, $includeArchived: Boolean, $includeExpired: Boolean, $limit: Int, $offset: Int, $requiredOnly: Boolean, $workerIds: [ID!]) { workerCredentials( workerIds: $workerIds includeArchived: $includeArchived expiringWithinDays: $expiringWithinDays includeExpired: $includeExpired credentialTypeCode: $credentialTypeCode requiredOnly: $requiredOnly limit: $limit offset: $offset ) { credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority status verifiedAt worker { assignmentBlocked canBeAssigned profile { complianceStatus } ...WorkerReference } workerId } }",
+		Hash:     "sha256:4695b97cd9414641ab43a27040d12dcd029327243e721b794f1be58fedbcb866",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredentialList($credentialTypeCode: String, $expiringWithinDays: Int, $includeArchived: Boolean, $includeExpired: Boolean, $limit: Int, $offset: Int, $requiredOnly: Boolean, $workerIds: [ID!]) @requiresRead(kind: \"worker\") { workerCredentials( workerIds: $workerIds includeArchived: $includeArchived expiringWithinDays: $expiringWithinDays includeExpired: $includeExpired credentialTypeCode: $credentialTypeCode requiredOnly: $requiredOnly limit: $limit offset: $offset ) { credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority status verifiedAt worker { assignmentBlocked canBeAssigned profile { complianceStatus } ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerCredentialTypes",
@@ -1147,23 +1238,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerDotTests",
-		Hash:     "sha256:9d2617986d4a9342144979c8afce617dc585375fb7e49ac1f044dec3a9c9efd2",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerDotTests($limit: Int, $openOnly: Boolean, $workerId: ID) { workerDotTests(workerId: $workerId, openOnly: $openOnly, limit: $limit) { collectedAt collectionSite drawEntryId id isDot reason result safetyEventId scheduledAt status substance testType worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:ab111736039b229fe30504ddc167a5c5053459d7e4df28c160a8e8fa494cf479",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerDotTests($limit: Int, $openOnly: Boolean, $workerId: ID) { workerDotTests(workerId: $workerId, openOnly: $openOnly, limit: $limit) { collectedAt collectionSite drawEntryId id isDot reason result safetyEventId scheduledAt status substance testType worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerEmploymentVerifications",
-		Hash:     "sha256:c6c548407a5983c47be2cfa6f6583224db530861428a1472c9745c34ba7af66b",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerEmploymentVerifications($limit: Int, $outstandingOnly: Boolean, $workerId: ID) { workerEmploymentVerifications( workerId: $workerId outstandingOnly: $outstandingOnly limit: $limit ) { accidentCount employedFrom employedTo employerDotNumber employerName findings followUpCount hadAccidents hadDrugAlcoholViolations id method requestedAt responseReceivedAt status wasDotRegulated worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:e59afa6a0b13ef7ab55ec17eee0e83ec536f0763f3aba9f9973ef606c925d6aa",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerEmploymentVerifications($limit: Int, $outstandingOnly: Boolean, $workerId: ID) { workerEmploymentVerifications( workerId: $workerId outstandingOnly: $outstandingOnly limit: $limit ) { accidentCount employedFrom employedTo employerDotNumber employerName findings followUpCount hadAccidents hadDrugAlcoholViolations id method requestedAt responseReceivedAt status wasDotRegulated worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerInjuries",
-		Hash:     "sha256:fd73a50247f0204b7aa254c9bb9580f203de6ae21e7856e5d1953e65c2e6c9f8",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerInjuries($caseYear: Int, $limit: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly limit: $limit ) { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:672958ce24165d06b824167089505bbc6f0a85879c6a7171ce8310a56ef98d1a",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerInjuries($caseYear: Int, $limit: Int, $openOnly: Boolean, $recordableOnly: Boolean, $workerId: ID) { workerInjuries( workerId: $workerId caseYear: $caseYear recordableOnly: $recordableOnly openOnly: $openOnly limit: $limit ) { bodyPart caseNumber caseYear claimStatus classification daysAway daysRestricted description id illnessType logName occurredAt privacyCase recordable returnedToWorkAt status treatment worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerLeaveCases",
-		Hash:     "sha256:22bbe9f1225ff459850c17b5003a2476d0e5afed93b6564295a272887cb83735",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerLeaveCases($certificationOutstandingOnly: Boolean, $limit: Int, $openOnly: Boolean, $workerId: ID) { workerLeaveCases( workerId: $workerId openOnly: $openOnly certificationOutstandingOnly: $certificationOutstandingOnly limit: $limit ) { certificationDueAt certificationLate certificationStatus endsAt entries { countsAgainstEntitlement hours id ptoId usedOn } fmlaDesignated frequency id leaveType reason requestedAt startsAt status worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:55738e33c137a724bf6346966bece6ccc68ea22d7cb51143af356d7d6640e732",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerLeaveCases($certificationOutstandingOnly: Boolean, $limit: Int, $openOnly: Boolean, $workerId: ID) { workerLeaveCases( workerId: $workerId openOnly: $openOnly certificationOutstandingOnly: $certificationOutstandingOnly limit: $limit ) { certificationDueAt certificationLate certificationStatus endsAt entries { countsAgainstEntitlement hours id ptoId usedOn } fmlaDesignated frequency id leaveType reason requestedAt startsAt status worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerPerformanceReviews",
@@ -1177,8 +1268,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskWorkerSafetyEvents",
-		Hash:     "sha256:a411bbc24d9179e6efba078f07ace1b9fb6f2758ea52e112db944f81fec7bc15",
-		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerSafetyEvents($limit: Int, $openOnly: Boolean, $workerId: ID) { workerSafetyEvents(workerId: $workerId, openOnly: $openOnly, limit: $limit) { activePoints closedAt description id inspectionLevel inspectionResult kind location occurredAt outOfService points pointsExpireAt preventable referenceNumber resolution severity shipmentId status violations { basic code description id outOfService severityWeight } worker { ...WorkerReference } workerId } }",
+		Hash:     "sha256:831beae5cc82f9d913fe2b9b438b9fd885a182ff0c3bb4e68be98cf0a811430f",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { assignmentBlocked canBeAssigned firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerSafetyEvents($limit: Int, $openOnly: Boolean, $workerId: ID) { workerSafetyEvents(workerId: $workerId, openOnly: $openOnly, limit: $limit) { activePoints closedAt description id inspectionLevel inspectionResult kind location occurredAt outOfService points pointsExpireAt preventable referenceNumber resolution severity shipmentId status violations { basic code description id outOfService severityWeight } worker { ...WorkerReference } workerId } }",
 	},
 	{
 		Name:     "DeskWorkerRecognitions",
@@ -1208,24 +1299,33 @@ var operations = []Operation{
 }
 
 func NewSchema(p ResolverParams) Schema {
-	core := &base.Core{
+	core := &resolvercore.Core{
 		L:                   p.Logger.Named("api.graphql.resolver"),
 		WorkerPTOService:    p.WorkerPTOService,
 		OrgStructureService: p.OrgStructureService,
 		PermissionEngine:    p.PermissionEngine,
-		TraceURL:            base.TraceURLBuilder(p.Config),
+		TraceURL:            resolvercore.TraceURLBuilder(p.MonitoringConfig),
 	}
 	accessorialchargeDeps := &accessorialchargeresolver.Deps{
 		Core:                     core,
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
 	accountingsyncDeps := &accountingsyncresolver.Deps{
-		Core:                     core,
-		AccountingConnections:    p.AccountingConnectionService,
-		AccountingMappingService: p.AccountingMappingService,
-		AccountingSync:           p.AccountingSyncService,
-		AccountingInbound:        p.AccountingInboundService,
-		AccountingDrift:          p.AccountingDriftService,
+		Core:                       core,
+		AccountingConnectionStatus: p.AccountingConnectionStatus,
+		AccountingAuthorization:    p.AccountingAuthorization,
+		AccountingCertificates:     p.AccountingCertificates,
+		AccountingHealth:           p.AccountingHealth,
+		AccountingApps:             p.AccountingApps,
+		AccountingMappingReader:    p.AccountingMappingReader,
+		AccountingMappingDecisions: p.AccountingMappingDecisions,
+		AccountingReferenceCreator: p.AccountingReferenceCreator,
+		AccountingSyncReader:       p.AccountingSyncReader,
+		AccountingSyncSetup:        p.AccountingSyncSetup,
+		AccountingSyncActions:      p.AccountingSyncActions,
+		AccountingBackfillService:  p.AccountingBackfillService,
+		AccountingInbound:          p.AccountingInboundService,
+		AccountingDrift:            p.AccountingDriftService,
 	}
 	briefingDeps := &briefingresolver.Deps{
 		Core:            core,
@@ -1233,7 +1333,11 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	captureDeps := &captureresolver.Deps{
 		Core:                  core,
-		CaptureService:        p.CaptureService,
+		CaptureSupportService: p.CaptureSupportService,
+		CaptureProfileService: p.CaptureProfileService,
+		CaptureDeviceService:  p.CaptureDeviceService,
+		CaptureRequestService: p.CaptureRequestService,
+		CaptureFilingService:  p.CaptureFilingService,
 		CaptureReleaseService: p.CaptureReleaseService,
 	}
 	carrierDeps := &carrierresolver.Deps{
@@ -1245,15 +1349,23 @@ func NewSchema(p ResolverParams) Schema {
 		CarrierCapacityService: p.CarrierCapacityService,
 	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
-		Core:                core,
-		CarrierIntelService: p.CarrierIntelService,
+		Core:                          core,
+		CarrierIntelService:           p.CarrierIntelService,
+		CarrierIntelEnrollmentService: p.CarrierIntelEnrollmentService,
+		CarrierIntelMonitorService:    p.CarrierIntelMonitorService,
+		CarrierIntelReviewService:     p.CarrierIntelReviewService,
+		CarrierIntelVetService:        p.CarrierIntelVetService,
+		CarrierIntelSourcingService:   p.CarrierIntelSourcingService,
+		CarrierIntelVerifyService:     p.CarrierIntelVerifyService,
 	}
 	carriersettlementDeps := &carriersettlementresolver.Deps{
-		Core:                       core,
-		CarrierSettlementService:   p.CarrierSettlementService,
-		CarrierSettlementRepo:      p.CarrierSettlementRepo,
-		CarrierSettlementBatchRepo: p.CarrierSettlementBatchRepo,
-		CarrierCostEventRepo:       p.CarrierCostEventRepo,
+		Core:                              core,
+		CarrierSettlementService:          p.CarrierSettlementService,
+		CarrierSettlementCostService:      p.CarrierSettlementCostService,
+		CarrierSettlementWorkspaceService: p.CarrierSettlementWorkspaceService,
+		CarrierSettlementRepo:             p.CarrierSettlementRepo,
+		CarrierSettlementBatchRepo:        p.CarrierSettlementBatchRepo,
+		CarrierCostEventRepo:              p.CarrierCostEventRepo,
 	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             core,
@@ -1268,11 +1380,13 @@ func NewSchema(p ResolverParams) Schema {
 		CustomerPaymentService: p.CustomerPaymentService,
 		CustomerPaymentRepo:    p.CustomerPaymentRepo,
 		CustomerService:        p.CustomerService,
-		InvoiceService:         p.InvoiceService,
+		InvoiceQueryService:    p.InvoiceQueryService,
 	}
 	detentionDeps := &detentionresolver.Deps{
 		Core:                   core,
-		DetentionService:       p.DetentionService,
+		DetentionReview:        p.DetentionReview,
+		DetentionSimulation:    p.DetentionSimulation,
+		DetentionNotices:       p.DetentionNotices,
 		DetentionPolicyService: p.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
@@ -1287,31 +1401,39 @@ func NewSchema(p ResolverParams) Schema {
 		DocumentTypeService: p.DocumentTypeService,
 	}
 	driverportalDeps := &driverportalresolver.Deps{
-		Core:                    core,
-		TelematicsService:       p.TelematicsService,
-		NotificationService:     p.NotificationService,
-		DriverSettlementService: p.DriverSettlementService,
-		DriverPortalService:     p.DriverPortalService,
-		DashControlService:      p.DashControlService,
+		Core:                          core,
+		TelematicsService:             p.TelematicsService,
+		NotificationService:           p.NotificationService,
+		DriverSettlementReviewService: p.DriverSettlementReviewService,
+		DriverPortalService:           p.DriverPortalService,
+		DriverPortalInvitationService: p.DriverPortalInvitationService,
+		DriverPortalRecordsService:    p.DriverPortalRecordsService,
+		DashControlService:            p.DashControlService,
 	}
 	driversettlementDeps := &driversettlementresolver.Deps{
-		Core:                     core,
-		DriverPayService:         p.DriverPayService,
-		DriverSettlementService:  p.DriverSettlementService,
-		SettlementControlService: p.SettlementControlService,
-		PayProfileRepo:           p.PayProfileRepo,
-		RecurringDeductionRepo:   p.RecurringDeductionRepo,
-		RecurringEarningRepo:     p.RecurringEarningRepo,
-		PayAdvanceRepo:           p.PayAdvanceRepo,
-		EscrowAccountRepo:        p.EscrowAccountRepo,
-		DriverSettlementRepo:     p.DriverSettlementRepo,
-		SettlementBatchRepo:      p.SettlementBatchRepo,
-		PayEventRepo:             p.PayEventRepo,
+		Core:                             core,
+		DriverPayService:                 p.DriverPayService,
+		DriverSettlementService:          p.DriverSettlementService,
+		DriverSettlementTransferService:  p.DriverSettlementTransferService,
+		DriverSettlementWorkspaceService: p.DriverSettlementWorkspaceService,
+		SettlementControlService:         p.SettlementControlService,
+		PayProfileRepo:                   p.PayProfileRepo,
+		RecurringDeductionRepo:           p.RecurringDeductionRepo,
+		RecurringEarningRepo:             p.RecurringEarningRepo,
+		PayAdvanceRepo:                   p.PayAdvanceRepo,
+		EscrowAccountRepo:                p.EscrowAccountRepo,
+		DriverSettlementRepo:             p.DriverSettlementRepo,
+		SettlementBatchRepo:              p.SettlementBatchRepo,
+		PayEventRepo:                     p.PayEventRepo,
 	}
 	ediDeps := &ediresolver.Deps{
-		Core:              core,
-		EdiService:        p.EDIService,
-		EdiInboundService: p.EDIInboundService,
+		Core:               core,
+		EdiSetupService:    p.EDISetupService,
+		EdiTransferService: p.EDITransferService,
+		EdiOutboundService: p.EDIOutboundService,
+		EdiMessageService:  p.EDIMessageService,
+		EdiOverviewService: p.EDIOverviewService,
+		EdiInboundService:  p.EDIInboundService,
 	}
 	emailprofileDeps := &emailprofileresolver.Deps{
 		Core:         core,
@@ -1390,7 +1512,11 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	inboundmessageDeps := &inboundmessageresolver.Deps{
 		Core:                  core,
-		InboundMessageService: p.InboundMessageService,
+		InboundQueueService:   p.InboundQueueService,
+		InboundReadService:    p.InboundReadService,
+		InboundViewService:    p.InboundViewService,
+		InboundMailboxService: p.InboundMailboxService,
+		InboundIntakeService:  p.InboundIntakeService,
 	}
 	inboundreplyDeps := &inboundreplyresolver.Deps{
 		Core:                core,
@@ -1399,9 +1525,13 @@ func NewSchema(p ResolverParams) Schema {
 		TriagePeekService:   p.TriagePeekService,
 	}
 	invoiceDeps := &invoiceresolver.Deps{
-		Core:            core,
-		CustomerService: p.CustomerService,
-		InvoiceService:  p.InvoiceService,
+		Core:                   core,
+		CustomerService:        p.CustomerService,
+		InvoiceQueryService:    p.InvoiceQueryService,
+		InvoiceCreationService: p.InvoiceCreationService,
+		InvoiceMemoService:     p.InvoiceMemoService,
+		InvoiceVoidService:     p.InvoiceVoidService,
+		InvoiceEDIService:      p.InvoiceEDIService,
 	}
 	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
 		Core:                     core,
@@ -1441,9 +1571,9 @@ func NewSchema(p ResolverParams) Schema {
 		OrderService: p.OrderService,
 	}
 	performancereviewDeps := &performancereviewresolver.Deps{
-		Core:                     core,
-		PerformanceReviewService: p.PerformanceReviewService,
-		DriverPortalService:      p.DriverPortalService,
+		Core:                       core,
+		PerformanceReviewService:   p.PerformanceReviewService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	rateDeps := &rateresolver.Deps{
 		Core:                 core,
@@ -1457,9 +1587,12 @@ func NewSchema(p ResolverParams) Schema {
 		RecurringShipmentService: p.RecurringShipmentService,
 	}
 	reportDeps := &reportresolver.Deps{
-		Core:               core,
-		TableExportService: p.TableExportService,
-		ReportingService:   p.ReportingService,
+		Core:                   core,
+		TableExportService:     p.TableExportService,
+		ReportingService:       p.ReportingService,
+		ReportViewService:      p.ReportViewService,
+		ReportScheduleService:  p.ReportScheduleService,
+		ReportDashboardService: p.ReportDashboardService,
 	}
 	schedulingDeps := &schedulingresolver.Deps{
 		Core:              core,
@@ -1480,13 +1613,19 @@ func NewSchema(p ResolverParams) Schema {
 	shipmentDeps := &shipmentresolver.Deps{
 		Core:                        core,
 		AnalyticsService:            p.AnalyticsService,
-		ShipmentService:             p.ShipmentService,
+		ShipmentReader:              p.ShipmentReader,
+		ShipmentWriter:              p.ShipmentWriter,
+		ShipmentLifecycle:           p.ShipmentLifecycle,
+		ShipmentReadiness:           p.ShipmentReadiness,
+		ShipmentBillingTransfer:     p.ShipmentBillingTransfer,
+		ShipmentAutoRater:           p.ShipmentAutoRater,
+		ShipmentLoadingPlanner:      p.ShipmentLoadingPlanner,
 		ShipmentCommentService:      p.ShipmentCommentService,
 		ShipmentRatingReviewService: p.ShipmentRatingReviewService,
 		ShipmentEventService:        p.ShipmentEventService,
 		TrackingEventService:        p.TrackingEventService,
 		ShipmentImportAssistant:     p.ShipmentImportAssistant,
-		InvoiceService:              p.InvoiceService,
+		InvoiceQueryService:         p.InvoiceQueryService,
 		DriverSettlementRepo:        p.DriverSettlementRepo,
 		CarrierSettlementRepo:       p.CarrierSettlementRepo,
 	}
@@ -1500,7 +1639,7 @@ func NewSchema(p ResolverParams) Schema {
 	}
 	telematicsDeps := &telematicsresolver.Deps{
 		Core:              core,
-		ShipmentService:   p.ShipmentService,
+		ShipmentReader:    p.ShipmentReader,
 		TelematicsService: p.TelematicsService,
 	}
 	tenantDeps := &tenantresolver.Deps{
@@ -1510,7 +1649,7 @@ func NewSchema(p ResolverParams) Schema {
 	tenderDeps := &tenderresolver.Deps{
 		Core:                core,
 		RoutingGuideService: p.RoutingGuideService,
-		TenderService:       p.TenderService,
+		TenderRepo:          p.TenderRepo,
 	}
 	tractorDeps := &tractorresolver.Deps{
 		Core:           core,
@@ -1556,14 +1695,14 @@ func NewSchema(p ResolverParams) Schema {
 		WorkerLeaveService: p.WorkerLeaveService,
 	}
 	workersafetyDeps := &workersafetyresolver.Deps{
-		Core:                core,
-		WorkerSafetyService: p.WorkerSafetyService,
-		DriverPortalService: p.DriverPortalService,
+		Core:                       core,
+		WorkerSafetyService:        p.WorkerSafetyService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	workertrainingDeps := &workertrainingresolver.Deps{
-		Core:                  core,
-		WorkerTrainingService: p.WorkerTrainingService,
-		DriverPortalService:   p.DriverPortalService,
+		Core:                       core,
+		WorkerTrainingService:      p.WorkerTrainingService,
+		DriverPortalRecordsService: p.DriverPortalRecordsService,
 	}
 	customerBillingProfile := &customerBillingProfileResolver{
 		customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},

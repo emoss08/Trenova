@@ -6,12 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcapacityports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -39,7 +41,7 @@ func (r *MutationResolver) TenderShipments(
 		return nil, err
 	}
 
-	items := make([]shipmentports.TenderShipmentItem, 0, len(input.Items))
+	items := make([]shipmentcapacityports.TenderShipmentItem, 0, len(input.Items))
 	for idx, item := range input.Items {
 		shipmentID, parseErr := pulid.Parse(item.ShipmentID)
 		if parseErr != nil {
@@ -49,7 +51,7 @@ func (r *MutationResolver) TenderShipments(
 				"Shipment is invalid",
 			)
 		}
-		carrierID, parseErr := base.OptionalID(item.CarrierID)
+		carrierID, parseErr := gqlid.OptionalID(item.CarrierID)
 		if parseErr != nil {
 			return nil, errortypes.NewValidationError(
 				fmt.Sprintf("items[%d].carrierId", idx),
@@ -59,14 +61,17 @@ func (r *MutationResolver) TenderShipments(
 		}
 		items = append(
 			items,
-			shipmentports.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
+			shipmentcapacityports.TenderShipmentItem{ShipmentID: shipmentID, CarrierID: carrierID},
 		)
 	}
 
-	result, err := r.BoardTenderer.TenderShipments(ctx, &shipmentports.TenderShipmentsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Items:      items,
-	})
+	result, err := r.BoardTenderer.TenderShipments(
+		ctx,
+		&shipmentcapacityports.TenderShipmentsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Items:      items,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +88,7 @@ func (r *MutationResolver) DecideShipmentSuggestion(
 		return false, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	if err = r.BoardSuggestionDecider.Decide(ctx, &shipmentsuggestionports.DecideSuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
@@ -112,7 +117,7 @@ func (r *MutationResolver) UndoShipmentSuggestionDecision(
 		return false, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	if err = r.BoardSuggestionDecider.Undo(ctx, &shipmentsuggestionports.UndoSuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
@@ -151,7 +156,7 @@ func (r *MutationResolver) NotifyShipmentDelay(
 	idempotencyKey, _ := idempotency.KeyFrom(ctx)
 
 	if err = r.CustomerUpdateService.NotifyDelay(ctx, &customerupdateservice.NotifyDelayRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ShipmentID:     shipmentID,
 		Message:        input.Message,
 		IdempotencyKey: idempotencyKey,
@@ -170,7 +175,7 @@ func (r *QueryResolver) ShipmentBoardCapabilities(
 		return nil, err
 	}
 
-	caps, err := r.BoardCapabilities.Capabilities(ctx, base.TenantInfo(authCtx))
+	caps, err := r.BoardCapabilities.Capabilities(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +195,11 @@ func (r *QueryResolver) ShipmentStageSummary(
 
 	rows, err := r.BoardStageSummaries.StageSummary(
 		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx), r.showsMargins(ctx, authCtx)),
+		scopeRequestFromGraphQL(
+			&input,
+			resolvercore.TenantInfo(authCtx),
+			r.showsMargins(ctx, authCtx),
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -211,7 +220,11 @@ func (r *QueryResolver) ShipmentQuickFilterCounts(
 
 	rows, err := r.BoardQuickFilterCounts.QuickFilterCounts(
 		ctx,
-		scopeRequestFromGraphQL(&input, base.TenantInfo(authCtx), r.showsMargins(ctx, authCtx)),
+		scopeRequestFromGraphQL(
+			&input,
+			resolvercore.TenantInfo(authCtx),
+			r.showsMargins(ctx, authCtx),
+		),
 	)
 	if err != nil {
 		return nil, err
@@ -229,7 +242,7 @@ func (r *QueryResolver) ShipmentBriefing(
 		return nil, err
 	}
 
-	briefing, err := r.BoardBriefing.Briefing(ctx, base.TenantInfo(authCtx), timezone)
+	briefing, err := r.BoardBriefing.Briefing(ctx, resolvercore.TenantInfo(authCtx), timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +261,8 @@ func (r *QueryResolver) ShipmentCapacity(
 
 	capacity, err := r.BoardCapacity.Capacity(
 		ctx,
-		base.TenantInfo(authCtx),
-		shipmentports.CapacityUnitKind(kind),
+		resolvercore.TenantInfo(authCtx),
+		shipmentcapacityports.CapacityUnitKind(kind),
 	)
 	if err != nil {
 		return nil, err
@@ -277,9 +290,9 @@ func (r *QueryResolver) CapacityUnitMatches(
 		)
 	}
 
-	request := &shipmentports.CapacityMatchesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Kind:       shipmentports.CapacityUnitKind(kind),
+	request := &shipmentcapacityports.CapacityMatchesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Kind:       shipmentcapacityports.CapacityUnitKind(kind),
 		UnitID:     id,
 	}
 	if limit != nil {
@@ -318,7 +331,11 @@ func (r *QueryResolver) ShipmentCoverageSuggestions(
 		)
 	}
 
-	suggestions, err := r.BoardCoverage.CoverageSuggestions(ctx, base.TenantInfo(authCtx), id)
+	suggestions, err := r.BoardCoverage.CoverageSuggestions(
+		ctx,
+		resolvercore.TenantInfo(authCtx),
+		id,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +352,7 @@ func (r *QueryResolver) ShipmentSuggestions(
 		return nil, err
 	}
 
-	tenantInfo := base.TenantInfo(authCtx)
+	tenantInfo := resolvercore.TenantInfo(authCtx)
 	queue, err := r.BoardSuggestions.Suggestions(ctx, &shipmentsuggestionports.SuggestionRequest{
 		TenantInfo: tenantInfo,
 		UserID:     tenantInfo.UserID,
@@ -357,7 +374,7 @@ func (r *QueryResolver) ShipmentWatchlist(
 		return nil, err
 	}
 
-	watchlist, err := r.BoardWatchlist.Watchlist(ctx, base.TenantInfo(authCtx), timezone)
+	watchlist, err := r.BoardWatchlist.Watchlist(ctx, resolvercore.TenantInfo(authCtx), timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +386,7 @@ func (r *QueryResolver) ShipmentWatchlist(
 func (r *QueryResolver) ShipmentBoardGroups(
 	ctx context.Context,
 	input gqlmodel.ShipmentBoardScopeInput,
-	groupBy shipment.BoardGrouping,
+	groupBy boardgrouping.BoardGrouping,
 ) ([]*gqlmodel.ShipmentBoardGroup, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
@@ -378,10 +395,10 @@ func (r *QueryResolver) ShipmentBoardGroups(
 
 	groups, err := r.BoardGroups.GroupSummary(
 		ctx,
-		&shipmentports.SummarizeShipmentBoardGroupsRequest{
+		&shipmentboardports.SummarizeShipmentBoardGroupsRequest{
 			Scope: scopeRequestFromGraphQL(
 				&input,
-				base.TenantInfo(authCtx),
+				resolvercore.TenantInfo(authCtx),
 				r.showsMargins(ctx, authCtx),
 			),
 			GroupBy: groupBy,

@@ -7,7 +7,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -17,27 +23,31 @@ import (
 // fakePreviews answers as the preview service would: stale when the pinned
 // record has moved, and with the digest of what it shows.
 type fakePreviews struct {
-	agentports.ProposalPreviewService
+	agentruntimeports.ProposalPreviewService
 
 	stale  bool
 	digest string
-	asked  []*agentports.ProposalPreviewRequest
+	asked  []*agentruntimeports.ProposalPreviewRequest
 }
 
 func (f *fakePreviews) ForProposal(
 	_ context.Context,
-	req *agentports.ProposalPreviewRequest,
-) (*agent.ProposalPreview, error) {
+	req *agentruntimeports.ProposalPreviewRequest,
+) (*agentpreview.ProposalPreview, error) {
 	f.asked = append(f.asked, req)
 	version := int64(3)
-	preview := &agent.ProposalPreview{
-		Schema:        agent.PreviewSchemaVersion,
+	preview := &agentpreview.ProposalPreview{
+		Schema:        agentpreview.PreviewSchemaVersion,
 		ProposalID:    req.Proposal.ID,
 		Tool:          req.Proposal.ToolName,
-		Coverage:      agent.PreviewCoverageFull,
+		Coverage:      agentpreview.PreviewCoverageFull,
 		TargetVersion: &version,
 		Digest:        f.digest,
-		Staleness:     &agent.PreviewStaleness{Pinned: true, ProposedVersion: 3, CurrentVersion: 3},
+		Staleness: &agentpreview.PreviewStaleness{
+			Pinned:          true,
+			ProposedVersion: 3,
+			CurrentVersion:  3,
+		},
 	}
 	if f.stale {
 		preview.Staleness.CurrentVersion = 5
@@ -54,7 +64,7 @@ type statusRecorder struct {
 
 func (p *statusRecorder) UpdateStatus(
 	ctx context.Context,
-	req agentports.UpdateAgentProposalStatusRequest,
+	req *agentproposalports.UpdateAgentProposalStatusRequest,
 ) (*agent.AgentProposal, error) {
 	p.updated++
 
@@ -75,12 +85,12 @@ func previewHarness(t *testing.T, previews *fakePreviews) (*decideHarness, *stat
 func decideWith(
 	t *testing.T,
 	h *decideHarness,
-	decision agent.DecisionType,
+	decision agentdecision.DecisionType,
 	digest string,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	t.Helper()
 
-	return h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
+	return h.service.DecideWithOutcome(t.Context(), &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    h.proposals.proposal.ID,
 		Decision:      decision,
 		ReasonCode:    "looks_right",
@@ -100,17 +110,17 @@ func TestDecide_AStaleApprovalIsRecordedAsRefusedAndReported(t *testing.T) {
 	followUps := &recordedFollowUps{}
 	h.service.followUps = followUps
 
-	outcome, err := decideWith(t, h, agent.DecisionAccepted, "")
+	outcome, err := decideWith(t, h, agentdecision.DecisionAccepted, "")
 	require.NoError(t, err, "the refusal is the decision's outcome, not an error to the caller")
 
-	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+	require.ErrorIs(t, outcome.ExecutionError, agentplan.ErrTargetChanged)
 	assert.Contains(t, outcome.ExecutionError.Error(),
 		"was at version 3 when this was proposed and is at version 5 now, so nothing was changed")
 	assert.Nil(t, outcome.ExecutedTargetVersion)
 
 	created := h.decisions.created
 	require.NotNil(t, created, "the approval is recorded")
-	assert.Equal(t, agent.DecisionAccepted, created.Decision)
+	assert.Equal(t, agentdecision.DecisionAccepted, created.Decision)
 	require.NotNil(t, created.Preview)
 	assert.True(t, created.Preview.IsStale(), "with the preview it was refused on")
 	assert.Equal(t, digest, created.PreviewDigest)
@@ -122,7 +132,7 @@ func TestDecide_AStaleApprovalIsRecordedAsRefusedAndReported(t *testing.T) {
 	refused := h.proposals.executed[0]
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, refused.Status,
 		"the proposal is closed as not carried out")
-	assert.True(t, agent.TargetChanged(refused.ExecutionError))
+	assert.True(t, agentplan.TargetChanged(refused.ExecutionError))
 	assert.True(t, refused.ExecutedByUserID.IsNil(), "no write ran as anyone")
 
 	require.Len(t, followUps.requests, 1, "the conversation is told why nothing happened")
@@ -134,9 +144,9 @@ func TestDecide_AStaleApprovalIsRefusedWhateverDigestItWasReviewedOn(t *testing.
 
 	h, _ := previewHarness(t, &fakePreviews{stale: true, digest: strings.Repeat("a", 64)})
 
-	outcome, err := decideWith(t, h, agent.DecisionAccepted, strings.Repeat("b", 64))
+	outcome, err := decideWith(t, h, agentdecision.DecisionAccepted, strings.Repeat("b", 64))
 	require.NoError(t, err, "a record that moved on is a refusal, not a preview conflict")
-	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+	require.ErrorIs(t, outcome.ExecutionError, agentplan.ErrTargetChanged)
 }
 
 func TestDecide_AStaleRefusalLeavesTheTrustLedgerAlone(t *testing.T) {
@@ -146,14 +156,14 @@ func TestDecide_AStaleRefusalLeavesTheTrustLedgerAlone(t *testing.T) {
 	trust := &recordedTrust{}
 	h.service.trust = trust
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, "")
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, "")
 	require.NoError(t, err)
 	assert.Zero(t, trust.decisions)
 	assert.Zero(t, trust.failures, "a record someone else moved is not the tool's failure")
 }
 
 type recordedTrust struct {
-	agentports.AgentTrustService
+	agenttrustports.AgentTrustService
 
 	decisions int
 	failures  int
@@ -162,7 +172,7 @@ type recordedTrust struct {
 func (r *recordedTrust) RecordDecision(
 	context.Context,
 	*agent.AgentProposal,
-	*agent.AgentDecision,
+	*agentdecision.AgentDecision,
 ) error {
 	r.decisions++
 
@@ -181,25 +191,33 @@ func TestDecide_AStalePlanStepIsRefusedEvenWhereItWouldNeedReview(t *testing.T) 
 	h, _ := previewHarness(t, &fakePreviews{})
 	h.proposals.proposal.EgressClass = agent.EgressMoney
 	version := int64(5)
-	step := &agent.ProposalPreview{
+	step := &agentpreview.ProposalPreview{
 		ProposalID:    h.proposals.proposal.ID,
 		TargetVersion: &version,
-		Staleness:     &agent.PreviewStaleness{Pinned: true, ProposedVersion: 3, CurrentVersion: 5},
+		Staleness: &agentpreview.PreviewStaleness{
+			Pinned:          true,
+			ProposedVersion: 3,
+			CurrentVersion:  5,
+		},
 	}
 
-	outcome, err := h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
-		ProposalID:  h.proposals.proposal.ID,
-		Decision:    agent.DecisionAccepted,
-		ReasonCode:  "decided_as_plan",
-		WithinPlan:  true,
-		StepPreview: step,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: h.actor.OrganizationID,
-			BuID:  h.actor.BusinessUnitID,
+	outcome, err := h.service.DecideWithOutcome(
+		t.Context(),
+		&agentdecisionports.DecideAgentProposalRequest{
+			ProposalID:  h.proposals.proposal.ID,
+			Decision:    agentdecision.DecisionAccepted,
+			ReasonCode:  "decided_as_plan",
+			WithinPlan:  true,
+			StepPreview: step,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: h.actor.OrganizationID,
+				BuID:  h.actor.BusinessUnitID,
+			},
 		},
-	}, h.actor)
+		h.actor,
+	)
 	require.NoError(t, err)
-	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+	require.ErrorIs(t, outcome.ExecutionError, agentplan.ErrTargetChanged)
 	require.Len(t, h.proposals.executed, 1)
 	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.executed[0].Status)
 }
@@ -209,7 +227,7 @@ func TestDecide_ADigestThatNoLongerMatchesIsAConflictAndWritesNothing(t *testing
 
 	h, recorder := previewHarness(t, &fakePreviews{digest: strings.Repeat("a", 64)})
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, strings.Repeat("b", 64))
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, strings.Repeat("b", 64))
 
 	require.Error(t, err)
 	var conflict *errortypes.ConflictError
@@ -226,7 +244,7 @@ func TestDecide_RecordsWhatTheApproverSawAndWhetherTheyReviewedIt(t *testing.T) 
 	previews := &fakePreviews{digest: digest}
 	h, _ := previewHarness(t, previews)
 
-	outcome, err := decideWith(t, h, agent.DecisionAccepted, digest)
+	outcome, err := decideWith(t, h, agentdecision.DecisionAccepted, digest)
 	require.NoError(t, err)
 	require.NoError(t, outcome.ExecutionError)
 
@@ -250,7 +268,7 @@ func TestDecide_AnApprovalWithoutADigestIsRecordedUnreviewed(t *testing.T) {
 	digest := strings.Repeat("d", 64)
 	h, _ := previewHarness(t, &fakePreviews{digest: digest})
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, "")
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, "")
 	require.NoError(t, err)
 
 	created := h.decisions.created
@@ -266,7 +284,7 @@ func TestDecide_ARejectionIsNeverRefusedOverItsDigest(t *testing.T) {
 
 	h, _ := previewHarness(t, &fakePreviews{digest: strings.Repeat("a", 64)})
 
-	_, err := decideWith(t, h, agent.DecisionRejected, "not-a-digest-the-client-could-send")
+	_, err := decideWith(t, h, agentdecision.DecisionRejected, "not-a-digest-the-client-could-send")
 	require.NoError(t, err)
 
 	require.NotNil(t, h.decisions.created)
@@ -281,7 +299,7 @@ func TestDecide_ARejectionRecordsOnlyTheDigestItWasSent(t *testing.T) {
 	h, _ := previewHarness(t, previews)
 
 	sent := strings.Repeat("f", 64)
-	_, err := decideWith(t, h, agent.DecisionRejected, sent)
+	_, err := decideWith(t, h, agentdecision.DecisionRejected, sent)
 	require.NoError(t, err, "a stale proposal can always be rejected")
 
 	created := h.decisions.created

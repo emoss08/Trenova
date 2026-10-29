@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"reflect"
 	"text/template/parse"
+
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatefuncs"
 )
 
 // rangeGuardName is the function every {{range}} pipeline is routed through.
@@ -54,17 +57,17 @@ func (g *rangeGuard) check(value any) (any, error) {
 		iterations = int64(v.Len())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		iterations = v.Int()
-		if iterations > maxSeqLength {
+		if iterations > templatefuncs.MaxSeqLength {
 			return nil, fmt.Errorf("%w: range over %d is more than %d", ErrRenderBudget,
-				iterations, maxSeqLength)
+				iterations, templatefuncs.MaxSeqLength)
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Uintptr:
-		if v.Uint() > maxSeqLength {
+		if v.Uint() > templatefuncs.MaxSeqLength {
 			return nil, fmt.Errorf("%w: range over %d is more than %d", ErrRenderBudget,
-				v.Uint(), maxSeqLength)
+				v.Uint(), templatefuncs.MaxSeqLength)
 		}
-		iterations = int64(v.Uint()) //nolint:gosec // bounded by maxSeqLength just above
+		iterations = int64(v.Uint()) //nolint:gosec // bounded by MaxSeqLength just above
 	case reflect.Invalid, reflect.Bool, reflect.Float32, reflect.Float64, reflect.Complex64,
 		reflect.Complex128, reflect.String, reflect.Struct, reflect.Interface, reflect.Pointer,
 		reflect.UnsafePointer:
@@ -135,16 +138,21 @@ func guardedPipe(tree *parse.Tree, pipe *parse.PipeNode) *parse.PipeNode {
 // rangeChecks reports the loops a template may not have: a range over a
 // number written into the template, which seq exists for, and ranges nested
 // deeper than maxRangeDepth.
-func rangeChecks(field string, tree *parse.Tree) Diagnostics {
+func rangeChecks(field string, tree *parse.Tree) templatediag.Diagnostics {
 	if tree == nil || tree.Root == nil {
 		return nil
 	}
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 	rangeCheckList(field, tree.Root, 0, &diags)
 	return diags
 }
 
-func rangeCheckList(field string, list *parse.ListNode, depth int, diags *Diagnostics) {
+func rangeCheckList(
+	field string,
+	list *parse.ListNode,
+	depth int,
+	diags *templatediag.Diagnostics,
+) {
 	if list == nil {
 		return
 	}
@@ -152,16 +160,22 @@ func rangeCheckList(field string, list *parse.ListNode, depth int, diags *Diagno
 		switch n := node.(type) {
 		case *parse.RangeNode:
 			if depth+1 > maxRangeDepth {
-				*diags = append(*diags, errorDiag(CodeRangeTooDeep, field, fmt.Sprintf(
-					"ranges are nested more than %d deep", maxRangeDepth,
-				)))
+				*diags = append(*diags, templatediag.Error(
+					templatediag.CodeRangeTooDeep,
+					field,
+					fmt.Sprintf("ranges are nested more than %d deep", maxRangeDepth),
+				))
 				return
 			}
 			if rangesOverNumber(n.Pipe) {
-				*diags = append(*diags, errorDiag(CodeRangeOverNumber, field, fmt.Sprintf(
-					"{{range}} over a number is not allowed; use seq, which stops at %d",
-					maxSeqLength,
-				)))
+				*diags = append(*diags, templatediag.Error(
+					templatediag.CodeRangeOverNumber,
+					field,
+					fmt.Sprintf(
+						"{{range}} over a number is not allowed; use seq, which stops at %d",
+						templatefuncs.MaxSeqLength,
+					),
+				))
 			}
 			rangeCheckList(field, n.List, depth+1, diags)
 			rangeCheckList(field, n.ElseList, depth, diags)

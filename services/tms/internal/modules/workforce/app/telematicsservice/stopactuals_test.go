@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentmoveportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -96,7 +97,7 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 	move := &shipment.ShipmentMove{
 		ID:         pulid.MustNew("sm_"),
 		ShipmentID: pulid.MustNew("shp_"),
-		Status:     shipment.MoveStatusInTransit,
+		Status:     shipmentvocab.MoveStatusInTransit,
 		Stops:      stops,
 	}
 
@@ -104,11 +105,11 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 	dispatch.EXPECT().GetOrCreate(mock.Anything, tenant.OrgID, tenant.BuID).
 		Return(&dispatchcontrol.DispatchControl{EnableAutoStopActuals: true}, nil).Maybe()
 
-	assignments := shipmentportsmock.NewMockAssignmentRepository(t)
+	assignments := assignmentportsmock.NewMockAssignmentRepository(t)
 	assignments.EXPECT().FindActiveByTractorID(mock.Anything, tenant, tractor).
 		Return(&shipment.Assignment{ShipmentMoveID: move.ID}, nil).Maybe()
 
-	moveRepo := shipmentportsmock.NewMockShipmentMoveRepository(t)
+	moveRepo := shipmentmoveportsmock.NewMockShipmentMoveRepository(t)
 	moveRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(move, nil).Maybe()
 
 	visits := &visitRecorder{}
@@ -136,7 +137,7 @@ func newStopHarness(t *testing.T, stops ...*shipment.Stop) *stopHarness {
 
 func (h *stopHarness) event(
 	locationID pulid.ID,
-	visit shipment.VisitKind,
+	visit shipmentvocab.VisitKind,
 	providerStop bool,
 ) *stopEvent {
 	return &stopEvent{
@@ -162,7 +163,7 @@ func openStop(sequence int64, locationID pulid.ID) *shipment.Stop {
 		ID:         pulid.MustNew("stp_"),
 		Sequence:   sequence,
 		LocationID: locationID,
-		Status:     shipment.StopStatusNew,
+		Status:     shipmentvocab.StopStatusNew,
 	}
 }
 
@@ -173,7 +174,7 @@ func TestApplyStopEvent_RecordsTheMatchedStopAtTheEventTime(t *testing.T) {
 	first := openStop(1, pulid.MustNew("loc_"))
 	second := openStop(2, location)
 	h := newStopHarness(t, first, second)
-	event := h.event(location, shipment.VisitArrival, false)
+	event := h.event(location, shipmentvocab.VisitArrival, false)
 
 	h.service.applyStopEvent(t.Context(), event)
 
@@ -204,9 +205,12 @@ func TestApplyStopEvent_NeverFallsBackToTheNextOpenStop(t *testing.T) {
 
 		h.service.applyStopEvent(
 			t.Context(),
-			h.event(pulid.MustNew("loc_"), shipment.VisitArrival, false),
+			h.event(pulid.MustNew("loc_"), shipmentvocab.VisitArrival, false),
 		)
-		h.service.applyStopEvent(t.Context(), h.event(pulid.Nil, shipment.VisitDeparture, false))
+		h.service.applyStopEvent(
+			t.Context(),
+			h.event(pulid.Nil, shipmentvocab.VisitDeparture, false),
+		)
 
 		assert.Empty(t, h.repo.recorded)
 		assert.Empty(t, h.tower.upserts)
@@ -216,7 +220,7 @@ func TestApplyStopEvent_NeverFallsBackToTheNextOpenStop(t *testing.T) {
 		t.Parallel()
 		h := newStopHarness(t, openStop(1, pulid.MustNew("loc_")))
 
-		h.service.applyStopEvent(t.Context(), h.event(pulid.Nil, shipment.VisitArrival, true))
+		h.service.applyStopEvent(t.Context(), h.event(pulid.Nil, shipmentvocab.VisitArrival, true))
 
 		require.Len(t, h.repo.recorded, 1)
 		recorded := h.repo.recorded[0]
@@ -244,7 +248,7 @@ func TestApplyStopEvent_RefusedStopIsLeftForReview(t *testing.T) {
 
 	h.visits.err = errortypes.NewBusinessError("Complete the earlier stops on this load first")
 
-	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitArrival, false))
+	h.service.applyStopEvent(t.Context(), h.event(location, shipmentvocab.VisitArrival, false))
 
 	require.Len(t, h.repo.recorded, 1)
 	recorded := h.repo.recorded[0]
@@ -272,7 +276,7 @@ func TestApplyStopEvent_RefusedVerdictIsLeftForReview(t *testing.T) {
 		Reason:  "This load has been canceled",
 	}
 
-	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitDeparture, false))
+	h.service.applyStopEvent(t.Context(), h.event(location, shipmentvocab.VisitDeparture, false))
 
 	require.Len(t, h.repo.recorded, 1)
 	recorded := h.repo.recorded[0]
@@ -293,7 +297,7 @@ func TestApplyStopEvent_RepeatSignalsReachTheStopTheTruckIsAt(t *testing.T) {
 	h := newStopHarness(t, onSite, openStop(2, location))
 	h.visits.verdict = &telematicsports.StopVisitVerdict{Outcome: telematics.StopOutcomeDuplicate}
 
-	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitArrival, true))
+	h.service.applyStopEvent(t.Context(), h.event(location, shipmentvocab.VisitArrival, true))
 
 	require.Len(t, h.visits.reports, 1)
 	assert.Equal(t, onSite.ID, h.visits.reports[0].StopID)
@@ -315,7 +319,7 @@ func TestApplyStopEvent_PendingVisitWaitsWithoutReview(t *testing.T) {
 		Reason:  "Waiting for an earlier stop",
 	}
 
-	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitArrival, false))
+	h.service.applyStopEvent(t.Context(), h.event(location, shipmentvocab.VisitArrival, false))
 
 	require.Len(t, h.repo.recorded, 1)
 	assert.Equal(t, telematics.StopOutcomePending, h.repo.recorded[0].StopOutcome)
@@ -333,7 +337,7 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 		Return(&dispatchcontrol.DispatchControl{}, nil).Once()
 	h.service.dispatchControlRepo = dispatch
 
-	h.service.applyStopEvent(t.Context(), h.event(pulid.Nil, shipment.VisitArrival, true))
+	h.service.applyStopEvent(t.Context(), h.event(pulid.Nil, shipmentvocab.VisitArrival, true))
 
 	assert.Empty(t, h.repo.recorded)
 	assert.Empty(t, h.tower.upserts)
@@ -341,10 +345,10 @@ func TestApplyStopEvent_DoesNothingWhenAutoStopActualsAreOff(t *testing.T) {
 
 type recordedWaitNotices struct {
 	agentwaitports.AgentWaitNotifier
-	events []*agentports.AgentEvent
+	events []*agenteventports.AgentEvent
 }
 
-func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *agentports.AgentEvent) {
+func (r *recordedWaitNotices) NotifyEvent(_ context.Context, event *agenteventports.AgentEvent) {
 	r.events = append(r.events, event)
 }
 
@@ -361,7 +365,7 @@ func TestApplyStopEvent_ReachesTheWaitsWhenAutoStopActualsAreOff(t *testing.T) {
 	waits := &recordedWaitNotices{}
 	h.service.waits = waits
 
-	h.service.applyStopEvent(t.Context(), h.event(location, shipment.VisitArrival, false))
+	h.service.applyStopEvent(t.Context(), h.event(location, shipmentvocab.VisitArrival, false))
 
 	require.Len(t, waits.events, 1)
 	assert.Equal(t, h.move.ID, waits.events[0].SubjectID)
@@ -383,7 +387,7 @@ func TestApplyStopEvent_AVisitAtNoStopOfTheMoveReachesNoWait(t *testing.T) {
 
 	h.service.applyStopEvent(
 		t.Context(),
-		h.event(pulid.MustNew("loc_"), shipment.VisitArrival, false),
+		h.event(pulid.MustNew("loc_"), shipmentvocab.VisitArrival, false),
 	)
 
 	assert.Empty(t, waits.events)

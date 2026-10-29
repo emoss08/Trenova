@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (s *Service) clearScheduledVersions(
+func (s *Service) ClearScheduledVersions(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 ) (int64, error) {
@@ -51,13 +51,13 @@ func (s *Service) CreateVersion(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get template", zap.Error(err))
 		return nil, err
 	}
 
-	if err = s.prepareContent(ctx, template); err != nil {
+	if err = s.PrepareContent(ctx, template); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func (s *Service) CreateVersion(
 				prevVersion,
 				template,
 				&jsonutils.DiffOptions{
-					IgnoreFields: versionDiffIgnoreFields,
+					IgnoreFields: VersionDiffIgnoreFields,
 				},
 			)
 			if diffErr != nil {
@@ -118,7 +118,7 @@ func (s *Service) CreateVersion(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		template,
@@ -168,7 +168,7 @@ func (s *Service) Rollback(
 		return nil, err
 	}
 
-	currentTemplate, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	currentTemplate, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get current template", zap.Error(err))
 		return nil, err
@@ -177,7 +177,7 @@ func (s *Service) Rollback(
 	resolved := currentTemplate.ApplyVersionFull(targetVersion)
 	resolved.CurrentVersionNumber = currentTemplate.CurrentVersionNumber + 1
 
-	if err = s.prepareContent(ctx, resolved); err != nil {
+	if err = s.PrepareContent(ctx, resolved); err != nil {
 		return nil, err
 	}
 
@@ -203,7 +203,7 @@ func (s *Service) Rollback(
 			return txErr
 		}
 
-		if txErr = s.createVersionSnapshot(
+		if txErr = s.CreateVersionSnapshot(
 			txCtx,
 			updated,
 			updated.CurrentVersionNumber,
@@ -217,7 +217,7 @@ func (s *Service) Rollback(
 
 		if resolved.Status == formulatemplate.StatusDraft &&
 			currentTemplate.Status != formulatemplate.StatusDraft {
-			cleared, clearErr := s.clearScheduledVersions(txCtx, updated)
+			cleared, clearErr := s.ClearScheduledVersions(txCtx, updated)
 			if clearErr != nil {
 				return clearErr
 			}
@@ -231,7 +231,7 @@ func (s *Service) Rollback(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		updatedTemplate,
@@ -254,7 +254,7 @@ func (s *Service) Fork(
 		zap.String("sourceTemplateID", req.SourceTemplateID.String()),
 	)
 
-	sourceTemplate, err := s.getTemplateByIDWithTenant(ctx, req.SourceTemplateID, req.TenantInfo)
+	sourceTemplate, err := s.GetTemplateByIDWithTenant(ctx, req.SourceTemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get source template", zap.Error(err))
 		return nil, err
@@ -275,7 +275,7 @@ func (s *Service) Fork(
 	seed := snapshot
 	seed.OrganizationID = req.TenantInfo.OrgID
 	seed.BusinessUnitID = req.TenantInfo.BuID
-	seed.Source, err = s.renamed(ctx, seed.Source, req.NewName)
+	seed.Source, err = s.Renamed(ctx, seed.Source, req.NewName)
 	if err != nil {
 		log.Error("failed to name the forked source", zap.Error(err))
 		return nil, err
@@ -284,7 +284,7 @@ func (s *Service) Fork(
 	seed.SourceVersionNumber = &sourceVersionNum
 	forkedTemplate := seed.Build()
 
-	if err = s.prepareContent(ctx, forkedTemplate); err != nil {
+	if err = s.PrepareContent(ctx, forkedTemplate); err != nil {
 		return nil, err
 	}
 
@@ -301,7 +301,7 @@ func (s *Service) Fork(
 			return txErr
 		}
 
-		if txErr = s.createVersionSnapshot(
+		if txErr = s.CreateVersionSnapshot(
 			txCtx, created, 1, req.TenantInfo.UserID, changeMessage, nil,
 		); txErr != nil {
 			log.Error("failed to create version snapshot", zap.Error(txErr))
@@ -315,7 +315,7 @@ func (s *Service) Fork(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		createdTemplate,
@@ -371,7 +371,7 @@ func (s *Service) CompareVersions(
 	}
 
 	changes, err := jsonutils.JSONDiff(fromVer, toVer, &jsonutils.DiffOptions{
-		IgnoreFields: versionDiffIgnoreFields,
+		IgnoreFields: VersionDiffIgnoreFields,
 	})
 	if err != nil {
 		log.Error("failed to compute diff", zap.Error(err))
@@ -395,7 +395,7 @@ func (s *Service) GetLineage(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get template", zap.Error(err))
 		return nil, err
@@ -437,7 +437,7 @@ func (s *Service) UpdateVersionTags(
 		}
 	}
 
-	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	template, err := s.GetTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
 		log.Error("failed to get template", zap.Error(err))
 		return nil, err
@@ -449,7 +449,7 @@ func (s *Service) UpdateVersionTags(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		template,
@@ -466,7 +466,7 @@ func (s *Service) UpdateVersionTags(
 	return version, nil
 }
 
-func (s *Service) createVersionSnapshot(
+func (s *Service) CreateVersionSnapshot(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	versionNumber int64,
@@ -486,7 +486,7 @@ func (s *Service) createVersionSnapshot(
 	return err
 }
 
-func (s *Service) createApprovedSnapshot(
+func (s *Service) CreateApprovedSnapshot(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
 	userID pulid.ID,

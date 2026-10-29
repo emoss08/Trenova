@@ -3,11 +3,12 @@ package servicefailureservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -29,7 +30,7 @@ type delayedShipmentMarkerParams struct {
 	logger          *zap.Logger
 	shipmentRepo    shipmentports.ShipmentRepository
 	auditService    auditports.AuditService
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	orderDerivation orderports.OrderDerivationService
 }
 
@@ -43,7 +44,7 @@ type shipmentStatusMarker struct {
 	l               *zap.Logger
 	shipmentRepo    shipmentports.ShipmentRepository
 	auditService    auditports.AuditService
-	realtime        agentports.RealtimeService
+	realtime        realtimeports.RealtimeService
 	orderDerivation orderports.OrderDerivationService
 }
 
@@ -97,7 +98,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 
 	previous := *params.shipment
 	candidate := *params.shipment
-	candidate.Status = shipment.StatusDelayed
+	candidate.Status = shipmentvocab.StatusDelayed
 	updated, err := m.shipmentRepo.UpdateDerivedState(ctx, &candidate)
 	if err != nil {
 		return nil, err

@@ -9,7 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -71,7 +72,11 @@ func (f *fakeRenderer) RenderMessage(
 ) (*documenttemplateports.RenderedMessage, error) {
 	f.requests = append(f.requests, req)
 
-	return &documenttemplateports.RenderedMessage{Subject: "reminder", HTML: "<p>x</p>", Text: "x"}, nil
+	return &documenttemplateports.RenderedMessage{
+		Subject: "reminder",
+		HTML:    "<p>x</p>",
+		Text:    "x",
+	}, nil
 }
 
 type fakeShadow struct{ shadow bool }
@@ -83,12 +88,12 @@ func (f fakeShadow) Organization(context.Context, pagination.TenantInfo) (bool, 
 type fakeProposals struct {
 	pending  []*agent.AgentProposal
 	reminded []pulid.ID
-	lastList agentports.ListPendingProposalsForReminderRequest
+	lastList agentproposalports.ListPendingProposalsForReminderRequest
 }
 
 func (f *fakeProposals) ListPendingForReminder(
 	_ context.Context,
-	req agentports.ListPendingProposalsForReminderRequest,
+	req agentproposalports.ListPendingProposalsForReminderRequest,
 ) ([]*agent.AgentProposal, error) {
 	f.lastList = req
 
@@ -97,7 +102,7 @@ func (f *fakeProposals) ListPendingForReminder(
 
 func (f *fakeProposals) MarkReminded(
 	_ context.Context,
-	req agentports.MarkProposalsRemindedRequest,
+	req agentproposalports.MarkProposalsRemindedRequest,
 ) (int, error) {
 	f.reminded = append(f.reminded, req.IDs...)
 
@@ -108,7 +113,7 @@ type fakeRuns struct{ runs map[pulid.ID]*agent.AgentRun }
 
 func (f fakeRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.runs[req.ID], nil
 }
@@ -205,7 +210,7 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(false)
-	require.NoError(t, h.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
+	require.NoError(t, h.svc.NotifyPending(t.Context(), agentproposalports.PendingProposalsNotice{
 		Definition: h.definition,
 		Run:        h.run,
 		Proposals: []*agent.AgentProposal{
@@ -250,7 +255,7 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	h := newHarness(false)
 	chat := *h.run
 	chat.Trigger = agent.RunTriggerChat
-	require.NoError(t, h.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
+	require.NoError(t, h.svc.NotifyPending(t.Context(), agentproposalports.PendingProposalsNotice{
 		Definition: h.definition,
 		Run:        &chat,
 		Proposals: []*agent.AgentProposal{
@@ -260,13 +265,16 @@ func TestNotifyPending_SkipsChatRunsAndShadow(t *testing.T) {
 	assert.Empty(t, h.notifications.created, "the person who asked is looking at the answer")
 
 	shadowed := newHarness(true)
-	require.NoError(t, shadowed.svc.NotifyPending(t.Context(), agentports.PendingProposalsNotice{
-		Definition: shadowed.definition,
-		Run:        shadowed.run,
-		Proposals: []*agent.AgentProposal{
-			shadowed.proposal("dispatch_assign_move", agent.ProposalStatusPending, 1),
-		},
-	}))
+	require.NoError(
+		t,
+		shadowed.svc.NotifyPending(t.Context(), agentproposalports.PendingProposalsNotice{
+			Definition: shadowed.definition,
+			Run:        shadowed.run,
+			Proposals: []*agent.AgentProposal{
+				shadowed.proposal("dispatch_assign_move", agent.ProposalStatusPending, 1),
+			},
+		}),
+	)
 	assert.Empty(t, shadowed.notifications.created, "hidden proposals are nothing to decide")
 }
 
@@ -280,11 +288,14 @@ func TestRemindPending_NotifiesAtHighPriorityAndEmailsThoseWithAnAddress(t *test
 		h.proposal("dispatch_assign_move", agent.ProposalStatusPending, now-5*3600),
 	}
 
-	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
-		Now:       now,
-		OlderThan: 4 * time.Hour,
-		Limit:     100,
-	})
+	reminded, err := h.svc.RemindPending(
+		t.Context(),
+		agentproposalports.RemindPendingProposalsRequest{
+			Now:       now,
+			OlderThan: 4 * time.Hour,
+			Limit:     100,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 2, reminded)
 	assert.Equal(t, now-4*3600, h.proposals.lastList.Before)
@@ -321,9 +332,12 @@ func TestRemindPending_MarksShadowedProposalsWithoutTellingAnyone(t *testing.T) 
 		h.proposal("dispatch_assign_move", agent.ProposalStatusPending, now-9*3600),
 	}
 
-	reminded, err := h.svc.RemindPending(t.Context(), agentports.RemindPendingProposalsRequest{
-		Now: now, OlderThan: 4 * time.Hour, Limit: 100,
-	})
+	reminded, err := h.svc.RemindPending(
+		t.Context(),
+		agentproposalports.RemindPendingProposalsRequest{
+			Now: now, OlderThan: 4 * time.Hour, Limit: 100,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, reminded)
 	assert.Len(t, h.proposals.reminded, 1, "a hidden proposal is not scanned again every sweep")

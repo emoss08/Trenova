@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -62,8 +62,8 @@ func (s *service) afterServiceFailureCreate(
 		action:  "created",
 		payload: entity,
 	})
-	agentports.PublishAgentEvent(ctx, s.publisher, agentports.AgentEvent{
-		Kind:       agent.EventServiceFailureDetected,
+	agenteventports.PublishAgentEvent(ctx, s.publisher, agenteventports.AgentEvent{
+		Kind:       agenttrigger.EventServiceFailureDetected,
 		SubjectID:  entity.ShipmentID,
 		TenantInfo: serviceFailureTenantInfo(entity),
 	})
@@ -218,16 +218,16 @@ func (s *service) comment(ctx context.Context, params commentParams) {
 	params.metadata["serviceFailureStatus"] = string(params.entity.Status)
 	if _, err := s.commentService.CreateSystem(
 		ctx,
-		&shipmentports.CreateSystemShipmentCommentRequest{
+		&shipmentcommentports.CreateSystemShipmentCommentRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: params.entity.OrganizationID,
 				BuID:  params.entity.BusinessUnitID,
 			},
 			ShipmentID: params.entity.ShipmentID,
 			Comment:    params.comment,
-			Type:       shipment.CommentTypeException,
-			Visibility: shipment.CommentVisibilityOperations,
-			Priority:   shipment.CommentPriorityHigh,
+			Type:       shipmentvocab.CommentTypeException,
+			Visibility: shipmentvocab.CommentVisibilityOperations,
+			Priority:   shipmentvocab.CommentPriorityHigh,
 			Metadata:   params.metadata,
 		},
 	); err != nil {

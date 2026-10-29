@@ -13,11 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -30,11 +34,11 @@ var testVerifier = strings.Repeat("v", 43)
 func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	_, ok := provider.InstanceApp()
 	assert.False(t, ok)
 	_, err := provider.Bind(nil)
-	require.ErrorIs(t, err, ErrNotConfigured)
+	require.ErrorIs(t, err, nsbinding.ErrNotConfigured)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, provider.ClassifyError(err))
 	assert.Equal(t, integration.TypeNetSuite, provider.IntegrationType())
 	assert.Empty(t, provider.WebhookSignatureHeader())
@@ -46,14 +50,14 @@ func TestUnconfiguredInstanceHasNoApp(t *testing.T) {
 func TestConfiguredInstanceAppAndAuthorizeURL(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{
 		ClientID:     " " + testClientID + " ",
 		ClientSecret: "secret",
 	})
 	app, ok := provider.InstanceApp()
 	require.True(t, ok)
-	assert.Equal(t, accountingsync.AppSourceInstance, app.Source)
-	assert.Equal(t, accountingsync.AppEnvironmentProduction, app.Environment)
+	assert.Equal(t, accountingconnection.AppSourceInstance, app.Source)
+	assert.Equal(t, accountingprovider.AppEnvironmentProduction, app.Environment)
 	assert.Equal(t, testClientID, app.ClientID)
 	assert.Equal(t,
 		"https://app.example.com/admin/integrations/netsuite/callback",
@@ -67,7 +71,7 @@ func TestConfiguredInstanceAppAndAuthorizeURL(t *testing.T) {
 	conn, err := provider.Bind(again)
 	require.NoError(t, err)
 	assert.Equal(t, integration.TypeNetSuite, conn.IntegrationType())
-	raw, err := conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{
+	raw, err := conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{
 		State:         "state-0123456789abcdefghij",
 		CodeChallenge: testChallenge,
 	})
@@ -87,7 +91,7 @@ func TestConfiguredInstanceAppAndAuthorizeURL(t *testing.T) {
 func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 	t.Parallel()
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	first, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
 	second, err := provider.Bind(tenantApp())
@@ -104,32 +108,36 @@ func TestBindingReusesTheConnectorForTheSameKeys(t *testing.T) {
 func TestWithoutARedirectAddressOAuthIsAConfigurationFailure(t *testing.T) {
 	t.Parallel()
 
-	provider, err := New(Params{Config: &config.Config{}, Logger: zap.NewNop()})
+	provider, err := New(Params{AccountingConfig: &accountingconfig.Config{},
+		AppConfig: &appconfig.Config{}, Logger: zap.NewNop()})
 	require.NoError(t, err)
 	conn, err := provider.Bind(tenantApp())
 	require.NoError(t, err)
-	_, err = conn.AuthorizeURL(accountingsyncports.AccountingAuthorizeRequest{State: "state"})
-	require.ErrorIs(t, err, errNoRedirect)
+	_, err = conn.AuthorizeURL(accountingconnectorports.AccountingAuthorizeRequest{State: "state"})
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 	assert.Equal(t, accountingsync.ErrorCategoryConfiguration, conn.ClassifyError(err))
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{Code: "c"})
-	require.ErrorIs(t, err, errNoRedirect)
-	_, err = conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{
+	_, err = conn.ExchangeCode(
+		t.Context(),
+		&accountingconnectorports.AccountingCodeExchange{Code: "c"},
+	)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
+	_, err = conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "refresh",
 	})
-	require.ErrorIs(t, err, errNoRedirect)
-	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingsyncports.AccountingRevokeRequest{
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
+	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingconnectorports.AccountingRevokeRequest{
 		Token: "refresh",
-	}), errNoRedirect)
-	require.ErrorIs(t, conn.VerifyApp(t.Context()), errNoRedirect)
+	}), nsbinding.ErrNoRedirect)
+	require.ErrorIs(t, conn.VerifyApp(t.Context()), nsbinding.ErrNoRedirect)
 	nsConn, ok := conn.(*Connector)
 	require.True(t, ok)
 	_, err = nsConn.TokenFromCertificate(
 		t.Context(),
-		&accountingsyncports.AccountingCertificateGrant{
+		&accountingconnectorports.AccountingCertificateGrant{
 			RealmID: testAccount,
 		},
 	)
-	require.ErrorIs(t, err, errNoRedirect)
+	require.ErrorIs(t, err, nsbinding.ErrNoRedirect)
 }
 
 func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
@@ -143,7 +151,7 @@ func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{
+	grant, err := conn.ExchangeCode(t.Context(), &accountingconnectorports.AccountingCodeExchange{
 		Code:            "code-1",
 		CallbackRealmID: "1234567_sb1",
 		CodeVerifier:    testVerifier,
@@ -163,17 +171,17 @@ func TestExchangeCodeSendsTheVerifierToTheCallbackAccount(t *testing.T) {
 		call.Auth,
 	)
 
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{
+	_, err = conn.ExchangeCode(t.Context(), &accountingconnectorports.AccountingCodeExchange{
 		Code:            "code-1",
 		CallbackRealmID: "not an account",
 		CodeVerifier:    testVerifier,
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
-	_, err = conn.ExchangeCode(t.Context(), &accountingsyncports.AccountingCodeExchange{
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
+	_, err = conn.ExchangeCode(t.Context(), &accountingconnectorports.AccountingCodeExchange{
 		Code:         "code-1",
 		CodeVerifier: testVerifier,
 	})
-	require.ErrorIs(t, err, errNoAccount)
+	require.ErrorIs(t, err, nsbinding.ErrNoAccount)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 
@@ -189,7 +197,7 @@ func TestRefreshParsesCompositeRealmsAndKeepsAMissingRefreshTokenEmpty(t *testin
 	}}
 	conn := testConnector(t, fake)
 
-	grant, err := conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{
+	grant, err := conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "stored-refresh",
 		RealmID:      testRef().String(),
 	})
@@ -203,11 +211,11 @@ func TestRefreshParsesCompositeRealmsAndKeepsAMissingRefreshTokenEmpty(t *testin
 	assert.Equal(t, "refresh_token", call.Form.Get("grant_type"))
 	assert.Equal(t, "stored-refresh", call.Form.Get("refresh_token"))
 
-	_, err = conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{
+	_, err = conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "stored-refresh",
 		RealmID:      testAccount + "-s0",
 	})
-	require.ErrorIs(t, err, netsuite.ErrInvalidCompanyRef)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidCompanyRef)
 	assert.Equal(t, 1, fake.count(http.MethodPost, tokenPath))
 }
 
@@ -220,7 +228,7 @@ func TestRefreshReportsARotatedRefreshTokenWithTheProfileLifetime(t *testing.T) 
 		}
 		return reply{}
 	}})
-	grant, err := conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{
+	grant, err := conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "stored-refresh",
 		RealmID:      testAccount,
 	})
@@ -235,7 +243,7 @@ func TestRefreshWithAnExpiredTokenIsRevoked(t *testing.T) {
 	conn := testConnector(t, &fakeNS{respond: func(call nsCall) reply {
 		return fixtureReply(t, http.StatusBadRequest, "invalid_grant.json")
 	}})
-	_, err := conn.Refresh(t.Context(), &accountingsyncports.AccountingRefreshRequest{
+	_, err := conn.Refresh(t.Context(), &accountingconnectorports.AccountingRefreshRequest{
 		RefreshToken: "expired",
 		RealmID:      testAccount,
 	})
@@ -253,7 +261,7 @@ func TestRevokeCallsTheAccountRevokeEndpoint(t *testing.T) {
 		return reply{}
 	}}
 	conn := testConnector(t, fake)
-	require.NoError(t, conn.Revoke(t.Context(), &accountingsyncports.AccountingRevokeRequest{
+	require.NoError(t, conn.Revoke(t.Context(), &accountingconnectorports.AccountingRevokeRequest{
 		Token:   "refresh-token",
 		RealmID: testRef().String(),
 	}))
@@ -262,13 +270,13 @@ func TestRevokeCallsTheAccountRevokeEndpoint(t *testing.T) {
 	assert.Equal(t, "refresh-token", call.Form.Get("token"))
 	assert.True(t, strings.HasPrefix(call.Auth, "Basic "))
 
-	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingsyncports.AccountingRevokeRequest{
+	require.ErrorIs(t, conn.Revoke(t.Context(), &accountingconnectorports.AccountingRevokeRequest{
 		Token:   "refresh-token",
 		RealmID: "bad realm",
-	}), netsuite.ErrInvalidCompanyRef)
+	}), netsuiteerrors.ErrInvalidCompanyRef)
 	require.NoError(
 		t,
-		conn.ReleaseCompanies(t.Context(), nil, []accountingsyncports.AccountingCompany{
+		conn.ReleaseCompanies(t.Context(), nil, []accountingconnectorports.AccountingCompany{
 			{ID: "x"},
 		}),
 	)
@@ -283,7 +291,7 @@ func TestVerifyAppChecksTheClientIDFormOnly(t *testing.T) {
 	require.NoError(t, conn.VerifyApp(t.Context()))
 	assert.Empty(t, fake.all())
 
-	provider := newProvider(t, config.NetSuiteConfig{})
+	provider := newProvider(t, accountingconfig.NetSuiteConfig{})
 	for _, id := range []string{"short", strings.Repeat("a", 300), "has spaces in the client id!!"} {
 		app := tenantApp()
 		app.ClientID = id
@@ -292,7 +300,7 @@ func TestVerifyAppChecksTheClientIDFormOnly(t *testing.T) {
 		require.ErrorIs(
 			t,
 			bound.VerifyApp(t.Context()),
-			accountingsyncports.ErrAccountingAppRejected,
+			accountingconnectorports.ErrAccountingAppRejected,
 		)
 	}
 }
@@ -310,9 +318,9 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 
 	conn := testConnector(t, &fakeNS{})
 	apiErr := func(status int, code, detail string) error {
-		return &netsuite.APIError{
+		return &netsuiteerrors.APIError{
 			Status:  status,
-			Details: []netsuite.ErrorDetail{{Code: code, Detail: detail}},
+			Details: []netsuiteerrors.ErrorDetail{{Code: code, Detail: detail}},
 		}
 	}
 	cases := []struct {
@@ -321,17 +329,17 @@ func TestClassifyErrorMapsConnectionFailures(t *testing.T) {
 		want accountingsync.ErrorCategory
 	}{
 		{"nil", nil, ""},
-		{"not configured", ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
-		{"unreachable", errUnreachable, accountingsync.ErrorCategoryConfiguration},
+		{"not configured", nsbinding.ErrNotConfigured, accountingsync.ErrorCategoryConfiguration},
+		{"unreachable", nsbinding.ErrUnreachable, accountingsync.ErrorCategoryConfiguration},
 		{
 			"revoked",
-			&netsuite.OAuthError{Code: "invalid_grant"},
+			&netsuiteerrors.OAuthError{Code: "invalid_grant"},
 			accountingsync.ErrorCategoryRevoked,
 		},
-		{"certificate", errCertificateRevoked, accountingsync.ErrorCategoryRevoked},
+		{"certificate", nsbinding.ErrCertificateRevoked, accountingsync.ErrorCategoryRevoked},
 		{
 			"client",
-			&netsuite.OAuthError{Code: "invalid_client"},
+			&netsuiteerrors.OAuthError{Code: "invalid_client"},
 			accountingsync.ErrorCategoryUnauthorized,
 		},
 		{

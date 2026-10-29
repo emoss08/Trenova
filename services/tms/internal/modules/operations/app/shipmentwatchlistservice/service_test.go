@@ -5,13 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/pickupwindow"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +35,7 @@ func TestBuildDeliveryWatch(t *testing.T) {
 	day := time.Date(2026, 10, 6, 0, 0, 0, 0, loc).Unix()
 	now := day + 14*3600
 
-	rows := []*shipmentports.ShipmentDeliveryRow{
+	rows := []*shipmentboardports.ShipmentDeliveryRow{
 		{
 			ShipmentID:    pulid.MustNew("shp_"),
 			DeliveryAt:    day + 8*3600,
@@ -55,7 +60,7 @@ func TestBuildDeliveryWatch(t *testing.T) {
 			ShipmentID: pulid.MustNew("shp_"),
 			DeliveryAt: day + 17*3600,
 			Cutoff:     day + 17*3600,
-			StageRank:  shipment.StageLate.Rank(),
+			StageRank:  shipmentvocab.StageLate.Rank(),
 		},
 		{
 			ShipmentID:    pulid.MustNew("shp_"),
@@ -93,7 +98,7 @@ func TestAccruedAmountAndSummary(t *testing.T) {
 	assert.True(t, AccruedAmount(rate, 1000, 900).IsZero())
 	assert.True(t, AccruedAmount(decimal.Zero, 0, 3600).IsZero())
 
-	accruals := []shipmentports.DetentionAccrual{
+	accruals := []shipmentboardports.DetentionAccrual{
 		{FacilityName: "a", Amount: decimal.NewFromInt(10), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "b", Amount: decimal.NewFromInt(40), RatePerHour: decimal.NewFromInt(50)},
 		{FacilityName: "c", Amount: decimal.NewFromInt(30), RatePerHour: decimal.NewFromInt(75)},
@@ -127,18 +132,18 @@ func (stubBasis) Prepare(
 }
 
 type stubBoard struct {
-	shipmentports.ShipmentBoardRepository
-	filters []shipment.QuickFilterSpec
+	shipmentboardports.ShipmentBoardRepository
+	filters []quickfilter.QuickFilterSpec
 }
 
 func (s *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
 	s.filters = req.Filters
-	totals := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+	totals := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i := range totals {
-		totals[i] = shipmentports.ShipmentQuickFilterTotal{
+		totals[i] = shipmentboardports.ShipmentQuickFilterTotal{
 			Count:   i + 1,
 			Revenue: decimal.NewFromInt(int64(100 * (i + 1))),
 		}
@@ -147,48 +152,48 @@ func (s *stubBoard) QuickFilterTotals(
 }
 
 type stubWatchlist struct {
-	dwelling []*shipmentports.ShipmentDwellRow
+	dwelling []*shipmentboardports.ShipmentDwellRow
 }
 
 func (s *stubWatchlist) ListDeliveriesToday(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDeliveryRow, error) {
+	*shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
 	return nil, nil
 }
 
 func (s *stubWatchlist) NextUncoveredPickup(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) (*shipmentports.ShipmentPickupRow, error) {
-	return &shipmentports.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
+	*shipmentboardports.ShipmentWatchlistRequest,
+) (*shipmentboardports.ShipmentPickupRow, error) {
+	return &shipmentboardports.ShipmentPickupRow{PickupAt: 77, OriginCity: "Joliet"}, nil
 }
 
 func (s *stubWatchlist) ListDwellingStops(
 	context.Context,
-	*shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDwellRow, error) {
+	*shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDwellRow, error) {
 	return s.dwelling, nil
 }
 
 func (s *stubWatchlist) ListReadyToBillCustomers(
 	context.Context,
-	*shipmentports.ListReadyToBillCustomersRequest,
-) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
-	return []*shipmentports.ShipmentBillingCustomerRow{
+	*shipmentboardports.ListReadyToBillCustomersRequest,
+) ([]*shipmentboardports.ShipmentBillingCustomerRow, error) {
+	return []*shipmentboardports.ShipmentBillingCustomerRow{
 		{Name: "Acme", Count: 2, Total: decimal.NewFromInt(500), TotalCustomers: 6},
 	}, nil
 }
 
 type stubControls struct {
 	tenantports.ShipmentControlRepository
-	control *tenant.ShipmentControl
+	control *shipmentcontrol.ShipmentControl
 }
 
 func (s stubControls) Get(
 	context.Context,
 	tenantports.GetShipmentControlRequest,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	return s.control, nil
 }
 
@@ -210,21 +215,21 @@ type stubMoves struct{}
 
 func (stubMoves) ListBoardMoves(
 	_ context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
-	out := make([]*shipmentports.BoardMove, 0, len(filter.MoveIDs))
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
+	out := make([]*dispatchboardports.BoardMove, 0, len(filter.MoveIDs))
 	for _, id := range filter.MoveIDs {
-		out = append(out, &shipmentports.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
+		out = append(out, &dispatchboardports.BoardMove{MoveID: id, AssignedCarrierName: "Swift"})
 	}
 	return out, nil
 }
 
-type stubDesk struct{ entries []*detentionservice.DeskEntry }
+type stubDesk struct{ entries []*detentionreview.DeskEntry }
 
 func (s stubDesk) ListDesk(
 	context.Context,
 	pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
+) ([]*detentionreview.DeskEntry, error) {
 	return s.entries, nil
 }
 
@@ -236,13 +241,13 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 	board := &stubBoard{}
 	svc := NewWithDependencies(&Dependencies{
 		Board: board,
-		Watchlist: &stubWatchlist{dwelling: []*shipmentports.ShipmentDwellRow{{
+		Watchlist: &stubWatchlist{dwelling: []*shipmentboardports.ShipmentDwellRow{{
 			MoveID:        pulid.MustNew("smv_"),
 			FacilityName:  "DC 4",
 			ActualArrival: now.Unix() - 2*3600,
 		}}},
 		QuickFilters: stubBasis{now: now},
-		Controls: stubControls{control: &tenant.ShipmentControl{
+		Controls: stubControls{control: &shipmentcontrol.ShipmentControl{
 			DetentionThreshold: ptr(int16(30)),
 			DetentionChargeID:  &chargeID,
 		}},
@@ -257,14 +262,14 @@ func TestWatchlistComputesEverySection(t *testing.T) {
 
 	assert.Equal(t, 1, watch.Uncovered.Count)
 	require.Len(t, watch.Uncovered.Windows, 4)
-	assert.Equal(t, shipment.PickupWindowUnderTwoHours, watch.Uncovered.Windows[0].Window)
+	assert.Equal(t, pickupwindow.PickupWindowUnderTwoHours, watch.Uncovered.Windows[0].Window)
 	assert.Equal(t, 3, watch.Uncovered.Windows[0].Count)
 	assert.Equal(t, "Joliet", watch.Uncovered.Next.OriginCity)
 	assert.Equal(t, 2, watch.Billing.Count)
 	assert.Equal(t, 5, watch.Billing.MoreCustomers)
-	assert.Equal(t, shipment.QuickFilterUncovered, board.filters[0].Filter)
-	assert.Equal(t, shipment.QuickFilterReadyToBill, board.filters[1].Filter)
-	assert.Equal(t, shipment.QuickFilterPickupWindow, board.filters[2].Filter)
+	assert.Equal(t, quickfilter.QuickFilterUncovered, board.filters[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterReadyToBill, board.filters[1].Filter)
+	assert.Equal(t, quickfilter.QuickFilterPickupWindow, board.filters[2].Filter)
 
 	require.Equal(t, 1, watch.Detention.StopCount)
 	assert.True(t, watch.Detention.Amount.Equal(decimal.NewFromInt(90)))
@@ -282,18 +287,18 @@ func TestWatchlistUsesTheDetentionEngine(t *testing.T) {
 		Board:        &stubBoard{},
 		Watchlist:    &stubWatchlist{},
 		QuickFilters: stubBasis{now: now},
-		Controls: stubControls{control: &tenant.ShipmentControl{
+		Controls: stubControls{control: &shipmentcontrol.ShipmentControl{
 			UseDetentionPolicyEngine: true,
 		}},
 		Accessorials: stubAccessorials{},
 		Moves:        stubMoves{},
-		Detention: stubDesk{entries: []*detentionservice.DeskEntry{
+		Detention: stubDesk{entries: []*detentionreview.DeskEntry{
 			{Occurrence: &detention.DetentionOccurrence{
 				ID:                occurrenceID,
 				FreeTimeExpiresAt: now.Unix() - 3600,
-				PolicySnapshot: &detention.PolicySnapshot{
+				PolicySnapshot: &detentionpolicy.PolicySnapshot{
 					FlatRate:     decimal.NewFromInt(80),
-					FlatRateUnit: detention.TierRateUnitHour,
+					FlatRateUnit: detentionpolicy.TierRateUnitHour,
 				},
 			}},
 			{Occurrence: &detention.DetentionOccurrence{FreeTimeExpiresAt: now.Unix() + 600}},

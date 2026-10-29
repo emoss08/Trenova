@@ -5,13 +5,14 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentsearch"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
-	DefaultSimilarityFloor = agentports.DefaultCatalogSimilarityFloor
+	DefaultSimilarityFloor = retrievalports.DefaultCatalogSimilarityFloor
 	RRFK                   = rankfusion.DefaultK
 
 	vectorCandidateFactor = 4
@@ -31,7 +32,7 @@ func NewSemantic(similarity map[string]float64) *Semantic {
 	return &Semantic{Similarity: similarity, Floor: DefaultSimilarityFloor}
 }
 
-func SemanticFrom(found agentports.CatalogSimilarities) *Semantic {
+func SemanticFrom(found retrievalports.CatalogSimilarities) *Semantic {
 	semantic := NewSemantic(found.ByKey)
 	if semantic != nil {
 		semantic.Floor = found.FloorOrDefault()
@@ -64,17 +65,17 @@ type Query struct {
 	StrongOnly   bool
 }
 
-func (c *Catalog) Items() []agentports.EmbeddingCatalogItem {
-	out := make([]agentports.EmbeddingCatalogItem, len(c.items))
+func (c *Catalog) Items() []retrievalports.EmbeddingCatalogItem {
+	out := make([]retrievalports.EmbeddingCatalogItem, len(c.items))
 	copy(out, c.items)
 
 	return out
 }
 
-func DescriptorText(descriptor *agentports.AgentToolDescriptor) string {
+func DescriptorText(descriptor *agenttoolports.AgentToolDescriptor) string {
 	var b strings.Builder
 	b.Grow(len(descriptor.Name) + len(descriptor.Description) + 64)
-	b.WriteString(strings.ReplaceAll(agentports.ReadingOrder(descriptor.Name), "_", " "))
+	b.WriteString(strings.ReplaceAll(agenttoolports.ReadingOrder(descriptor.Name), "_", " "))
 	b.WriteString(": ")
 	b.WriteString(strings.TrimSpace(descriptor.Description))
 	if len(descriptor.SearchTerms) > 0 {
@@ -85,7 +86,7 @@ func DescriptorText(descriptor *agentports.AgentToolDescriptor) string {
 	return b.String()
 }
 
-func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
+func (c *Catalog) RankHybrid(q Query) []agenttoolports.AgentToolDescriptor {
 	if !q.Semantic.usable() {
 		return c.Rank(q.Allowed, q.Text, q.Limit)
 	}
@@ -97,7 +98,7 @@ func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
 	terms := agentsearch.Terms(q.Text)
 	fused, _ := c.fuse(wanted, c.keywordRanked(wanted, terms, keywordRanking{minScore: 1}), q)
 
-	out := make([]agentports.AgentToolDescriptor, 0, q.Limit)
+	out := make([]agenttoolports.AgentToolDescriptor, 0, q.Limit)
 	taken := make(map[string]struct{}, q.Limit)
 	for _, entry := range fused {
 		if len(out) == q.Limit {
@@ -120,7 +121,7 @@ func (c *Catalog) RankHybrid(q Query) []agentports.AgentToolDescriptor {
 	return out
 }
 
-func (c *Catalog) FindHybrid(q Query) []agentports.AgentToolDescriptor {
+func (c *Catalog) FindHybrid(q Query) []agenttoolports.AgentToolDescriptor {
 	return c.withFamilies(c.allowedSet(q.Allowed), c.matched(q))
 }
 
@@ -139,9 +140,9 @@ func (c *Catalog) Match(q Query) []Match {
 	return out
 }
 
-func (c *Catalog) matched(q Query) []agentports.AgentToolDescriptor {
+func (c *Catalog) matched(q Query) []agenttoolports.AgentToolDescriptor {
 	matched := c.matchedScored(q)
-	found := make([]agentports.AgentToolDescriptor, 0, len(matched)+maxFamilySize)
+	found := make([]agenttoolports.AgentToolDescriptor, 0, len(matched)+maxFamilySize)
 	for idx := range matched {
 		found = append(found, matched[idx].descriptor)
 	}
@@ -150,7 +151,7 @@ func (c *Catalog) matched(q Query) []agentports.AgentToolDescriptor {
 }
 
 type scoredDescriptor struct {
-	descriptor agentports.AgentToolDescriptor
+	descriptor agenttoolports.AgentToolDescriptor
 	score      float64
 }
 

@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +18,7 @@ import (
 func customerPaymentConnectionToModel(
 	result *pagination.CursorListResult[*customerpayment.Payment],
 ) (*gqlmodel.CustomerPaymentConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *customerpayment.Payment, cursor string) *gqlmodel.CustomerPaymentEdge {
 			return &gqlmodel.CustomerPaymentEdge{
@@ -85,7 +86,7 @@ func postCustomerPaymentRequestFromInput(
 		return nil, err
 	}
 
-	currencyCode := strings.TrimSpace(base.StringValue(input.CurrencyCode))
+	currencyCode := strings.TrimSpace(gqlscalar.StringValue(input.CurrencyCode))
 	if currencyCode == "" {
 		currencyCode = money.DefaultCurrencyCode
 	}
@@ -96,8 +97,8 @@ func postCustomerPaymentRequestFromInput(
 		AccountingDate:  int64(input.AccountingDate),
 		AmountMinor:     int64(input.AmountMinor),
 		PaymentMethod:   input.PaymentMethod,
-		ReferenceNumber: base.StringValue(input.ReferenceNumber),
-		Memo:            base.StringValue(input.Memo),
+		ReferenceNumber: gqlscalar.StringValue(input.ReferenceNumber),
+		Memo:            gqlscalar.StringValue(input.Memo),
 		CurrencyCode:    currencyCode,
 		Applications:    applications,
 		TenantInfo:      tenantInfo,
@@ -146,7 +147,7 @@ func reverseCustomerPaymentRequestFromInput(
 	return &customerpaymentports.ReverseCustomerPaymentRequest{
 		PaymentID:      paymentID,
 		AccountingDate: int64(input.AccountingDate),
-		Reason:         base.StringValue(input.Reason),
+		Reason:         gqlscalar.StringValue(input.Reason),
 		TenantInfo:     tenantInfo,
 	}, nil
 }

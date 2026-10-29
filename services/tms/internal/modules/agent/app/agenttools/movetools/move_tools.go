@@ -4,14 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -19,7 +23,7 @@ import (
 type moveStopReader interface {
 	GetByID(
 		ctx context.Context,
-		req *shipmentports.GetMoveByIDRequest,
+		req *shipmentmoveports.GetMoveByIDRequest,
 	) (*shipment.ShipmentMove, error)
 }
 
@@ -31,31 +35,31 @@ type stopReporter interface {
 }
 
 type RecordStopActualTool struct {
-	moves     shipmentports.ShipmentMoveService
+	moves     shipmentmoveports.ShipmentMoveService
 	reports   stopReporter
 	moveStops moveStopReader
 }
 
 func newRecordStopActualTool(
-	moves shipmentports.ShipmentMoveService,
+	moves shipmentmoveports.ShipmentMoveService,
 	reports stopReporter,
 	moveStops moveStopReader,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &RecordStopActualTool{moves: moves, reports: reports, moveStops: moveStops}
 }
 
 func ProvideRecordStopActualTool(
-	moves shipmentports.ShipmentMoveService,
+	moves shipmentmoveports.ShipmentMoveService,
 	reports trackingeventports.TrackingEventService,
-	moveStops shipmentports.ShipmentMoveRepository,
-) agentports.AgentTool {
+	moveStops shipmentmoveports.ShipmentMoveRepository,
+) agenttoolports.AgentTool {
 	return newRecordStopActualTool(moves, reports, moveStops)
 }
 
 func (t *RecordStopActualTool) Name() string { return "dispatch_record_stop_actual" }
 
 func (t *RecordStopActualTool) Recipe() []string {
-	return []string{toolShipmentList, "shipment_get", "dispatch_record_stop_actual"}
+	return []string{toolShipmentList, toolShipmentGet, "dispatch_record_stop_actual"}
 }
 
 func (t *RecordStopActualTool) Description() string {
@@ -104,18 +108,18 @@ func (t *RecordStopActualTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *RecordStopActualTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *RecordStopActualTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Records arrival and departure times on a stop; no model-written text " +
 			"leaves the organization.",
 	}
@@ -123,13 +127,13 @@ func (t *RecordStopActualTool) Policy() agentports.ToolPolicy {
 
 func (t *RecordStopActualTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
-	request, err := t.request(ctx, &params)
+	request, err := t.request(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -153,28 +157,28 @@ func (t *RecordStopActualTool) Execute(
 // state does not admit is refused to the model before it is proposed.
 func (t *RecordStopActualTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return common.PreviewValidates(ctx, t, &params)
+	return toolspec.PreviewValidates(ctx, t, params)
 }
 
 func (t *RecordStopActualTool) request(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*shipmentports.RecordStopActualRequest, error) {
-	moveID, err := common.RequirePulid(params.Params, "moveId")
+	params *agenttoolports.ToolExecuteParams,
+) (*shipmentmoveports.RecordStopActualRequest, error) {
+	moveID, err := toolparams.RequirePulid(params.Params, "moveId")
 	if err != nil {
 		return nil, err
 	}
 
-	stopID, err := common.RequirePulid(params.Params, "stopId")
+	stopID, err := toolparams.RequirePulid(params.Params, "stopId")
 	if err != nil {
 		return nil, err
 	}
 
 	// "Arrived" is not "Arrive", and coercing it would record an event that
 	// did not happen.
-	action, err := common.RequireEnum(
+	action, err := toolparams.RequireEnum(
 		params.Params,
 		"action",
 		agenttoolschema.StopActualActions.Values,
@@ -183,8 +187,8 @@ func (t *RecordStopActualTool) request(
 		return nil, err
 	}
 
-	request := &shipmentports.RecordStopActualRequest{
-		TenantInfo: common.TenantFrom(*params),
+	request := &shipmentmoveports.RecordStopActualRequest{
+		TenantInfo: toolparams.TenantFrom(params),
 		MoveID:     moveID,
 		StopID:     stopID,
 		Action:     action,
@@ -203,14 +207,14 @@ func (t *RecordStopActualTool) request(
 	if err != nil {
 		return nil, err
 	}
-	if request.OccurredAt, err = common.OptionalLocalTime(
+	if request.OccurredAt, err = toolparams.OptionalLocalTime(
 		params.Params,
 		"occurredAt",
 		zone,
 	); err != nil {
 		return nil, err
 	}
-	if request.DepartedAt, err = common.OptionalLocalTime(
+	if request.DepartedAt, err = toolparams.OptionalLocalTime(
 		params.Params,
 		"departedAt",
 		zone,
@@ -223,7 +227,7 @@ func (t *RecordStopActualTool) request(
 
 func (t *RecordStopActualTool) stopZone(
 	ctx context.Context,
-	request *shipmentports.RecordStopActualRequest,
+	request *shipmentmoveports.RecordStopActualRequest,
 	fallback string,
 ) (*time.Location, error) {
 	if t.moveStops == nil {
@@ -232,7 +236,7 @@ func (t *RecordStopActualTool) stopZone(
 		return zone, nil
 	}
 
-	move, err := t.moveStops.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := t.moveStops.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            request.MoveID,
 		TenantInfo:        request.TenantInfo,
 		ExpandMoveDetails: true,
@@ -242,7 +246,7 @@ func (t *RecordStopActualTool) stopZone(
 	}
 
 	stopZone := ""
-	if stop := common.FindStop(move, request.StopID); stop != nil && stop.Location != nil {
+	if stop := shipmentpreview.FindStop(move, request.StopID); stop != nil && stop.Location != nil {
 		stopZone = stop.Location.Timezone
 	}
 	zone, _ := timeutils.ResolveZone(stopZone, fallback)
@@ -252,6 +256,6 @@ func (t *RecordStopActualTool) stopZone(
 
 // Target names the record this call would change, so a proposal to change it
 // can be checked against the record's version before it runs.
-func (t *RecordStopActualTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "moveId", permission.ResourceShipmentMove)
+func (t *RecordStopActualTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, "moveId", permission.ResourceShipmentMove)
 }

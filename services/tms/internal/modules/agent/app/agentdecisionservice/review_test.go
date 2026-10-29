@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,10 +35,15 @@ func TestDecide_AGatedApprovalWithoutADigestIsRefused(t *testing.T) {
 			h, recorder := previewHarness(t, &fakePreviews{digest: strings.Repeat("d", 64)})
 			h.proposals.proposal.EgressClass = class
 
-			_, err := decideWith(t, h, agent.DecisionAccepted, "")
+			_, err := decideWith(t, h, agentdecision.DecisionAccepted, "")
 
 			require.Error(t, err)
-			assert.True(t, agent.IsReviewRequired(err), "the refusal says to review it first: %v", err)
+			assert.True(
+				t,
+				agent.IsReviewRequired(err),
+				"the refusal says to review it first: %v",
+				err,
+			)
 			assert.Contains(t, err.Error(), "must be reviewed")
 			assert.Nil(t, h.decisions.created, "nothing is recorded")
 			assert.Zero(t, recorder.updated, "the proposal stays pending")
@@ -50,7 +57,7 @@ func TestDecide_ATaintedInternalApprovalWithoutADigestIsRefused(t *testing.T) {
 	h, _ := previewHarness(t, &fakePreviews{digest: strings.Repeat("d", 64)})
 	h.proposals.proposal.Tainted = true
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, "")
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, "")
 
 	require.Error(t, err)
 	assert.True(t, agent.IsReviewRequired(err))
@@ -64,7 +71,7 @@ func TestDecide_AGatedApprovalWithTheDigestShownIsRecordedReviewed(t *testing.T)
 	h, _ := previewHarness(t, &fakePreviews{digest: digest})
 	h.proposals.proposal.EgressClass = agent.EgressMoney
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, digest)
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, digest)
 	require.NoError(t, err)
 
 	require.NotNil(t, h.decisions.created)
@@ -79,7 +86,7 @@ func TestDecide_AGatedRejectionNeedsNoDigest(t *testing.T) {
 	h.proposals.proposal.EgressClass = agent.EgressExternalRecipient
 	h.proposals.proposal.Tainted = true
 
-	_, err := decideWith(t, h, agent.DecisionRejected, "")
+	_, err := decideWith(t, h, agentdecision.DecisionRejected, "")
 	require.NoError(t, err, "a person can always say no")
 	require.NotNil(t, h.decisions.created)
 }
@@ -91,16 +98,20 @@ func TestDecide_AGatedApprovalWithNothingToPreviewItIsRefused(t *testing.T) {
 	h.service.previews = nil
 	h.proposals.proposal.EgressClass = agent.EgressDriverVisible
 
-	_, err := decideWith(t, h, agent.DecisionAccepted, strings.Repeat("d", 64))
+	_, err := decideWith(t, h, agentdecision.DecisionAccepted, strings.Repeat("d", 64))
 
 	require.Error(t, err)
 	assert.True(t, agent.IsReviewRequired(err))
 }
 
-func planStep(h *decideHarness, step *agent.ProposalPreview, reviewed bool) *agentports.DecideAgentProposalRequest {
-	return &agentports.DecideAgentProposalRequest{
+func planStep(
+	h *decideHarness,
+	step *agentpreview.ProposalPreview,
+	reviewed bool,
+) *agentdecisionports.DecideAgentProposalRequest {
+	return &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:          h.proposals.proposal.ID,
-		Decision:            agent.DecisionAccepted,
+		Decision:            agentdecision.DecisionAccepted,
 		ReasonCode:          "looks_right",
 		WithinPlan:          true,
 		StepPreview:         step,
@@ -115,11 +126,11 @@ func planStep(h *decideHarness, step *agent.ProposalPreview, reviewed bool) *age
 func TestDecide_APlanStepIsReviewedByClass(t *testing.T) {
 	t.Parallel()
 
-	shown := &agent.ProposalPreview{Digest: strings.Repeat("b", 64)}
+	shown := &agentpreview.ProposalPreview{Digest: strings.Repeat("b", 64)}
 	cases := []struct {
 		name     string
 		class    agent.EgressClass
-		step     *agent.ProposalPreview
+		step     *agentpreview.ProposalPreview
 		reviewed bool
 		refused  bool
 	}{
@@ -146,7 +157,11 @@ func TestDecide_APlanStepIsReviewedByClass(t *testing.T) {
 			h, _ := previewHarness(t, &fakePreviews{digest: strings.Repeat("d", 64)})
 			h.proposals.proposal.EgressClass = tc.class
 
-			_, err := h.service.DecideWithOutcome(t.Context(), planStep(h, tc.step, tc.reviewed), h.actor)
+			_, err := h.service.DecideWithOutcome(
+				t.Context(),
+				planStep(h, tc.step, tc.reviewed),
+				h.actor,
+			)
 			if tc.refused {
 				require.Error(t, err)
 				assert.True(t, agent.IsReviewRequired(err))
@@ -200,7 +215,10 @@ type capturingAudit struct {
 	logged []*auditports.LogActionParams
 }
 
-func (a *capturingAudit) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (a *capturingAudit) LogAction(
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
+) error {
 	a.logged = append(a.logged, params)
 
 	return nil
@@ -213,7 +231,7 @@ func TestDecide_TheAuditRowRecordsThePermissionTheDeciderUsed(t *testing.T) {
 	audit := &capturingAudit{}
 	h.service.audit = audit
 
-	outcome := h.decide(t, t.Context(), agent.DecisionAccepted)
+	outcome := h.decide(t, t.Context(), agentdecision.DecisionAccepted)
 	require.NoError(t, outcome.ExecutionError)
 
 	var decided *auditports.LogActionParams

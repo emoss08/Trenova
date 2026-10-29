@@ -6,8 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,7 +41,13 @@ func TestReadInvoicesInChunksOfTheReadLimit(t *testing.T) {
 			if id == invoiceID(3) {
 				status = "VOIDED"
 			}
-			fmt.Fprintf(&b, `{"InvoiceID":"%s","InvoiceNumber":"INV-%s","Status":"%s","Total":100,"AmountDue":40,"CurrencyCode":"USD","UpdatedDateUTC":"2026-09-29T11:00:00"}`, id, id[len(id)-3:], status)
+			fmt.Fprintf(
+				&b,
+				`{"InvoiceID":"%s","InvoiceNumber":"INV-%s","Status":"%s","Total":100,"AmountDue":40,"CurrencyCode":"USD","UpdatedDateUTC":"2026-09-29T11:00:00"}`,
+				id,
+				id[len(id)-3:],
+				status,
+			)
 			written++
 		}
 		b.WriteString("]}")
@@ -48,13 +56,19 @@ func TestReadInvoicesInChunksOfTheReadLimit(t *testing.T) {
 	conn := testConnector(t, fake)
 	assert.Equal(t, xero.MaxIDsPerRead, conn.DocumentReadLimits().MaxPerRead)
 
-	targets := make([]accountingsyncports.AccountingDocumentTarget, 0, 150)
+	targets := make([]accountingconnectorports.AccountingDocumentTarget, 0, 150)
 	for idx := range 150 {
-		targets = append(targets, accountingsyncports.AccountingDocumentTarget{ExternalID: invoiceID(idx)})
+		targets = append(
+			targets,
+			accountingconnectorports.AccountingDocumentTarget{ExternalID: invoiceID(idx)},
+		)
 	}
-	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectInvoice, Targets: targets,
-	})
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectInvoice, Targets: targets,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 150)
 	assert.True(t, states[0].Found)
@@ -90,13 +104,24 @@ func TestReadBillsFollowsTheCreditFlag(t *testing.T) {
 		}
 	}}
 	conn := testConnector(t, fake)
-	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill,
-		Targets: []accountingsyncports.AccountingDocumentTarget{
-			{ExternalID: testBill, Refs: map[string]string{accountingsync.ExternalRefCreditDocument: "false"}},
-			{ExternalID: testCreditNote, Refs: map[string]string{accountingsync.ExternalRefCreditDocument: "true"}},
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{
+					ExternalID: testBill,
+					Refs: map[string]string{
+						accountingsync.ExternalRefCreditDocument: "false",
+					},
+				},
+				{
+					ExternalID: testCreditNote,
+					Refs:       map[string]string{accountingsync.ExternalRefCreditDocument: "true"},
+				},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 	assert.Equal(t, testBill, states[0].ExternalID)
@@ -124,17 +149,25 @@ func TestReadPaymentsAndAllocations(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	states, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectCustomerPayment,
-		Targets: []accountingsyncports.AccountingDocumentTarget{
-			{ExternalID: testBatch, Refs: map[string]string{
-				refPaymentPrefix + testInvoice:  testPayment,
-				refPaymentPrefix + testInvoice2: testPayment2,
-			}},
-			{ExternalID: testOldPayment, Refs: map[string]string{refPaymentPrefix + testBill: testOldPayment}},
-			{ExternalID: "legacy", Refs: map[string]string{}},
+	states, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectCustomerPayment,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{ExternalID: testBatch, Refs: map[string]string{
+					xerodocsync.RefPaymentPrefix + testInvoice:  testPayment,
+					xerodocsync.RefPaymentPrefix + testInvoice2: testPayment2,
+				}},
+				{
+					ExternalID: testOldPayment,
+					Refs: map[string]string{
+						xerodocsync.RefPaymentPrefix + testBill: testOldPayment,
+					},
+				},
+				{ExternalID: "legacy", Refs: map[string]string{}},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, states, 2)
 	assert.True(t, states[0].Found)
@@ -143,22 +176,34 @@ func TestReadPaymentsAndAllocations(t *testing.T) {
 	assert.True(t, states[1].Found)
 	assert.True(t, states[1].Voided)
 
-	allocations, err := conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectCreditApplication,
-		Targets: []accountingsyncports.AccountingDocumentTarget{
-			{ExternalID: testAllocation, Refs: map[string]string{refCreditNote: testCreditNote}},
-			{ExternalID: "b6c3a2d1-9f8e-4d7c-8b6a-5e4f3d2c1b0e", Refs: map[string]string{refCreditNote: testCreditNote}},
+	allocations, err := conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectCreditApplication,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{
+				{
+					ExternalID: testAllocation,
+					Refs:       map[string]string{xerodocsync.RefCreditNote: testCreditNote},
+				},
+				{
+					ExternalID: "b6c3a2d1-9f8e-4d7c-8b6a-5e4f3d2c1b0e",
+					Refs:       map[string]string{xerodocsync.RefCreditNote: testCreditNote},
+				},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	require.Len(t, allocations, 2)
 	assert.True(t, allocations[0].Found)
 	assert.True(t, allocations[0].Total.Equal(dec("40")))
 	assert.False(t, allocations[1].Found)
 
-	_, err = conn.ReadDocuments(t.Context(), &accountingsyncports.ReadAccountingDocumentsRequest{
-		Auth: testAuth(), Kind: accountingsync.SyncObjectJournalEntry,
-		Targets: []accountingsyncports.AccountingDocumentTarget{{ExternalID: "x"}},
-	})
-	require.ErrorIs(t, err, errDocumentKind)
+	_, err = conn.ReadDocuments(
+		t.Context(),
+		&accountingconnectorports.ReadAccountingDocumentsRequest{
+			Auth: testAuth(), Kind: accountingsync.SyncObjectJournalEntry,
+			Targets: []accountingconnectorports.AccountingDocumentTarget{{ExternalID: "x"}},
+		},
+	)
+	require.ErrorIs(t, err, xerosession.ErrDocumentKind)
 }

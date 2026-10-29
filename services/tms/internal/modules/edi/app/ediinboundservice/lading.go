@@ -7,11 +7,17 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundapply"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edipayload"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/x12"
@@ -32,10 +38,10 @@ type readTransaction struct {
 type reading struct {
 	programs *edilading.Programs
 	read     map[string]*readTransaction
-	skipped  map[edi.TransactionSet]string
+	skipped  map[edidocument.TransactionSet]string
 }
 
-func readKey(set edi.TransactionSet, control string) string {
+func readKey(set edidocument.TransactionSet, control string) string {
 	return string(set) + "/" + control
 }
 
@@ -63,7 +69,7 @@ func (s *Service) readFile(
 	r := &reading{
 		programs: programs,
 		read:     map[string]*readTransaction{},
-		skipped:  map[edi.TransactionSet]string{},
+		skipped:  map[edidocument.TransactionSet]string{},
 	}
 	for _, set := range receivedSets(interchange) {
 		flow, clause := programs.Active.Manifest.Receiving(string(set))
@@ -111,8 +117,8 @@ func (s *Service) readFile(
 	return r, nil
 }
 
-func receivedSets(interchange *parsedInterchange) []edi.TransactionSet {
-	sets := make([]edi.TransactionSet, 0, 2)
+func receivedSets(interchange *parsedInterchange) []edidocument.TransactionSet {
+	sets := make([]edidocument.TransactionSet, 0, 2)
 	for index := range interchange.transactions {
 		set := interchange.transactions[index].set
 		if set.IsAcknowledgment() || slices.Contains(sets, set) {
@@ -144,43 +150,45 @@ func (r *readTransaction) apply(interchange *parsedInterchange, transaction *par
 	}
 }
 
-func (r *readTransaction) payload(set edi.TransactionSet) (edi.DocumentPayload, error) {
-	payload := edi.DocumentPayload{TransactionSet: set}
+func (r *readTransaction) payload(
+	set edidocument.TransactionSet,
+) (edipayload.DocumentPayload, error) {
+	payload := edipayload.DocumentPayload{TransactionSet: set}
 	document := r.result.Document
 	if len(document) == 0 {
 		return payload, nil
 	}
 	switch set {
-	case edi.TransactionSet204:
+	case edidocument.TransactionSet204:
 		tender, _, err := ladingdoc.ToLoadTender(document, r.unmapped)
 		if err != nil {
 			return payload, err
 		}
 		payload.LoadTender = tender
 		payload.PurposeCode = tender.PurposeCode
-	case edi.TransactionSet990:
+	case edidocument.TransactionSet990:
 		answer, err := ladingdoc.ToTenderAnswer(document)
 		if err != nil {
 			return payload, err
 		}
-		payload.TenderResponse = &edi.TenderResponsePayload{
+		payload.TenderResponse = &edipayload.TenderResponsePayload{
 			BOL:             answer.Key,
 			ResponseCode:    answer.ReservationCode,
 			RejectionReason: answer.Reason,
 		}
-	case edi.TransactionSet214:
+	case edidocument.TransactionSet214:
 		status, err := ladingdoc.ToShipmentStatus(document)
 		if err != nil {
 			return payload, err
 		}
 		payload.ShipmentStatus = status
-	case edi.TransactionSet210:
+	case edidocument.TransactionSet210:
 		invoice, err := ladingdoc.ToFreightInvoice(document)
 		if err != nil {
 			return payload, err
 		}
 		payload.FreightInvoice = invoice
-	case edi.TransactionSet997, edi.TransactionSet999:
+	case edidocument.TransactionSet997, edidocument.TransactionSet999:
 	}
 	return payload, nil
 }
@@ -215,9 +223,9 @@ func rejectionMessage(findings []x12.Finding) string {
 }
 
 type received struct {
-	file        *edi.EDIInboundFile
+	file        *ediinboundfile.EDIInboundFile
 	partner     *edi.EDIPartner
-	message     *edi.EDIMessage
+	message     *edimessage.EDIMessage
 	transaction *parsedTransaction
 	read        *readTransaction
 	programs    *edilading.Programs
@@ -229,7 +237,8 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 	tenantInfo := inboundFileTenant(in.file)
 
 	key := ""
-	if in.transaction.set == edi.TransactionSet204 && in.message.PayloadSnapshot.LoadTender != nil {
+	if in.transaction.set == edidocument.TransactionSet204 &&
+		in.message.PayloadSnapshot.LoadTender != nil {
 		key, _ = in.message.PayloadSnapshot.LoadTender.RatingDetail["externalShipmentId"].(string)
 	}
 	dispatched, err := s.flows.Dispatch(ctx, &edilading.DispatchRequest{
@@ -253,7 +262,7 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 		outcome.err = fmt.Errorf("the partner's flow %s: %w", in.read.flow, err)
 		return outcome
 	}
-	if _, err = s.messageRepo.LinkMessageFlow(ctx, &ediports.LinkEDIMessageFlowRequest{
+	if _, err = s.messageRepo.LinkMessageFlow(ctx, &edimessageports.LinkEDIMessageFlowRequest{
 		ID:             in.message.ID,
 		TenantInfo:     tenantInfo,
 		FlowInstanceID: dispatched.Instance.ID,
@@ -287,11 +296,11 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 			return outcome
 		}
 	}
-	if _, err = s.ediService.ExecuteFlowActions(
+	if _, err = s.outbound.ExecuteFlowActions(
 		ctx,
 		tenantInfo,
 		dispatched,
-		&ediservice.FlowActionContext{TransferID: transfer},
+		&edioutbound.FlowActionContext{TransferID: transfer},
 	); err != nil {
 		outcome.warnings = append(outcome.warnings, fmt.Sprintf(
 			"the partner's flow %s could not finish what it asked: %s",
@@ -307,7 +316,7 @@ func (s *Service) act(
 	in *received,
 	dispatched *edilading.Dispatched,
 	action *lading.FlowAction,
-) (*edi.EDITransfer, []string, error) {
+) (*editransfer.EDITransfer, []string, error) {
 	switch action.Kind {
 	case lading.ActionCreate, lading.ActionUpdate:
 		return s.routeLoadTender(ctx, in.file, in.partner, in.message, in.transaction)
@@ -316,9 +325,9 @@ func (s *Service) act(
 		if tender := in.message.PayloadSnapshot.LoadTender; tender != nil {
 			key, _ = tender.RatingDetail["externalShipmentId"].(string)
 		}
-		warnings, err := s.ediService.CancelInboundTender(
+		warnings, err := s.inboundApply.CancelInboundTender(
 			ctx,
-			&ediservice.CancelInboundTenderRequest{
+			&ediinboundapply.CancelInboundTenderRequest{
 				TenantInfo: inboundFileTenant(in.file),
 				Partner:    in.partner,
 				Key:        key,
@@ -344,7 +353,7 @@ func (s *Service) act(
 func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, error) {
 	payload := in.message.PayloadSnapshot
 	switch in.transaction.set {
-	case edi.TransactionSet990:
+	case edidocument.TransactionSet990:
 		if payload.TenderResponse == nil {
 			return nil, nil
 		}
@@ -365,7 +374,7 @@ func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, er
 				references:      answer.References,
 			},
 		)
-	case edi.TransactionSet214:
+	case edidocument.TransactionSet214:
 		if payload.ShipmentStatus == nil {
 			return nil, nil
 		}
@@ -376,9 +385,11 @@ func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, er
 			in.transaction,
 			statusDetails(in.transaction, payload.ShipmentStatus),
 		)
-	case edi.TransactionSet210:
+	case edidocument.TransactionSet210:
 		return s.routeFreightInvoice(ctx, in.file, in.partner, in.message, in.transaction)
-	case edi.TransactionSet204, edi.TransactionSet997, edi.TransactionSet999:
+	case edidocument.TransactionSet204,
+		edidocument.TransactionSet997,
+		edidocument.TransactionSet999:
 	}
 	return []string{fmt.Sprintf(
 		"transaction %s/%s recorded without processing: Trenova applies no %s",
@@ -390,7 +401,7 @@ func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, er
 
 func statusDetails(
 	transaction *parsedTransaction,
-	status *edi.ShipmentStatusPayload,
+	status *edipayload.ShipmentStatusPayload,
 ) *shipmentStatusDetails {
 	details := &shipmentStatusDetails{
 		controlNumber: transaction.controlNumber,
@@ -414,9 +425,9 @@ func statusDetails(
 // records the result against the set's first message.
 func (s *Service) shadow(
 	ctx context.Context,
-	file *edi.EDIInboundFile,
+	file *ediinboundfile.EDIInboundFile,
 	r *reading,
-	first map[edi.TransactionSet]*edi.EDIMessage,
+	first map[edidocument.TransactionSet]*edimessage.EDIMessage,
 ) {
 	if s.replayer == nil || r.programs.Shadow == nil {
 		return

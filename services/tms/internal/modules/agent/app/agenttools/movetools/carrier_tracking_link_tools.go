@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
@@ -80,8 +85,8 @@ func liveLinkOf(link *checkcall.TrackingLink) *liveLinkView {
 	}
 }
 
-func moveTarget(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
+func moveTarget(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, ParamMoveID, permission.ResourceShipmentMove)
 }
 
 func moveProperty(what string) map[string]any {
@@ -94,7 +99,7 @@ func revokedLinkChange(
 	moveID pulid.ID,
 	label string,
 	live *checkcall.TrackingLink,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	after := *live
 	revokedAt := int64(0)
 	after.RevokedAt = &revokedAt
@@ -112,13 +117,13 @@ func revokedLinkChange(
 
 func ProvideIssueCarrierTrackingLinkTool(
 	checkCalls checkcallports.CheckCallService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newIssueCarrierTrackingLinkTool(checkCalls)
 }
 
-func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.AgentTool {
-	return common.NewReportingReceivableTool(
-		&common.ReceivableSpec{
+func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
+	return toolspec.NewReportingReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolIssueCarrierTrackingLink,
 			Recipe: []string{
 				toolShipmentList,
@@ -143,10 +148,10 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 				"load, and ends any link the carrier holds now; dispatch_revoke_tracking_link " +
 				"ends it.",
 			Target:   moveTarget,
-			Artifact: common.ShipmentRecordEntity,
+			Artifact: changepreview.ShipmentRecordEntity,
 			Properties: map[string]any{
 				ParamMoveID: moveProperty("The move to track"),
-				paramRecipientEmail: common.StringProperty(
+				paramRecipientEmail: toolparams.StringProperty(
 					"Where to email the link: the carrier's dispatch address they gave or "+
 						"carrier_get shows.",
 					checkcall.MaxRecipientLength,
@@ -159,37 +164,15 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 				"carrier check calls",
 			},
 		},
-		common.ReceivablePlan[
+		toolspec.ReceivablePlan[
 			*checkcallports.IssueTrackingLinkRequest,
 			*checkcallports.TrackingLinkPreview,
 		]{
-			Request: func(
-				params *agentports.ToolExecuteParams,
-			) (*checkcallports.IssueTrackingLinkRequest, error) {
-				moveID, err := common.RequirePulid(params.Params, ParamMoveID)
-				if err != nil {
-					return nil, err
-				}
-				recipient, err := common.RequireBoundedText(
-					params.Params,
-					paramRecipientEmail,
-					checkcall.MaxRecipientLength,
-				)
-				if err != nil {
-					return nil, err
-				}
-				tenant := common.TenantFrom(*params)
-				return &checkcallports.IssueTrackingLinkRequest{
-					TenantInfo:     tenant,
-					MoveID:         moveID,
-					RecipientEmail: recipient,
-					IssuedByID:     tenant.UserID,
-				}, nil
-			},
+			Request: issueTrackingLinkRequest,
 			Plan: func(
 				ctx context.Context,
 				req *checkcallports.IssueTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*checkcallports.TrackingLinkPreview, error) {
 				return links.PreviewIssueLink(ctx, req)
 			},
@@ -200,13 +183,13 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 			Run: func(
 				ctx context.Context,
 				req *checkcallports.IssueTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+				_ *agenttoolports.ToolExecuteParams,
+			) (*agentrecord.ToolExecutionResult, error) {
 				issued, err := links.IssueLink(ctx, req)
 				if err != nil {
 					return nil, err
 				}
-				result := &agent.ToolExecutionResult{
+				result := &agentrecord.ToolExecutionResult{
 					Action: "issued",
 					Kind:   "carrier tracking link",
 					Name:   "Tracking link for " + req.RecipientEmail,
@@ -214,8 +197,8 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 						ParamMoveID:      req.MoveID.String(),
 						"trackingLinkId": issued.Link.ID.String(),
 					},
-					Record: &agent.RecordRef{
-						EntityType: common.ShipmentRecordEntity,
+					Record: &agentrecord.RecordRef{
+						EntityType: changepreview.ShipmentRecordEntity,
 						ID:         issued.Link.ShipmentID.String(),
 					},
 					State: "Emailed to " + req.RecipientEmail,
@@ -231,10 +214,34 @@ func newIssueCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Age
 	)
 }
 
+func issueTrackingLinkRequest(
+	params *agenttoolports.ToolExecuteParams,
+) (*checkcallports.IssueTrackingLinkRequest, error) {
+	moveID, err := toolparams.RequirePulid(params.Params, ParamMoveID)
+	if err != nil {
+		return nil, err
+	}
+	recipient, err := toolparams.RequireBoundedText(
+		params.Params,
+		paramRecipientEmail,
+		checkcall.MaxRecipientLength,
+	)
+	if err != nil {
+		return nil, err
+	}
+	tenant := toolparams.TenantFrom(params)
+	return &checkcallports.IssueTrackingLinkRequest{
+		TenantInfo:     tenant,
+		MoveID:         moveID,
+		RecipientEmail: recipient,
+		IssuedByID:     tenant.UserID,
+	}, nil
+}
+
 func renderIssuedLink(
 	req *checkcallports.IssueTrackingLinkRequest,
 	plan *checkcallports.TrackingLinkPreview,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	label := "Carrier tracking link"
 	if plan.ShipmentProNumber != "" {
 		label += " for " + plan.ShipmentProNumber
@@ -259,9 +266,9 @@ func renderIssuedLink(
 		return nil, err
 	}
 	if plan.Email != nil {
-		created.Message = common.PlannedEmailPreview(plan.Email)
+		created.Message = outboundpreview.PlannedEmailPreview(plan.Email)
 	}
-	changes := []*agent.RecordChange{created}
+	changes := []*agentpreview.RecordChange{created}
 
 	carrier := plan.CarrierName
 	if carrier == "" {
@@ -295,13 +302,13 @@ func carrierLoad(carrier, proNumber string) string {
 
 func ProvideRevokeCarrierTrackingLinkTool(
 	checkCalls checkcallports.CheckCallService,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newRevokeCarrierTrackingLinkTool(checkCalls)
 }
 
-func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.AgentTool {
-	return common.NewReceivableTool(
-		&common.ReceivableSpec{
+func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(
+		&toolspec.ReceivableSpec{
 			Name: toolRevokeCarrierTrackingLink,
 			Recipe: []string{
 				toolShipmentList,
@@ -327,23 +334,23 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Required:    []string{ParamMoveID},
 			SearchTerms: []string{"revoke tracking link", "stop carrier link"},
 		},
-		common.ReceivablePlan[*checkcallports.RevokeTrackingLinkRequest, *checkcall.TrackingLink]{
+		toolspec.ReceivablePlan[*checkcallports.RevokeTrackingLinkRequest, *checkcall.TrackingLink]{
 			Request: func(
-				params *agentports.ToolExecuteParams,
+				params *agenttoolports.ToolExecuteParams,
 			) (*checkcallports.RevokeTrackingLinkRequest, error) {
-				moveID, err := common.RequirePulid(params.Params, ParamMoveID)
+				moveID, err := toolparams.RequirePulid(params.Params, ParamMoveID)
 				if err != nil {
 					return nil, err
 				}
 				return &checkcallports.RevokeTrackingLinkRequest{
-					TenantInfo: common.TenantFrom(*params),
+					TenantInfo: toolparams.TenantFrom(params),
 					MoveID:     moveID,
 				}, nil
 			},
 			Plan: func(
 				ctx context.Context,
 				req *checkcallports.RevokeTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
+				_ *agenttoolports.ToolExecuteParams,
 			) (*checkcall.TrackingLink, error) {
 				live, err := links.PreviewRevokeLink(ctx, req)
 				if errortypes.IsNotFoundError(err) {
@@ -359,7 +366,7 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Render: func(
 				req *checkcallports.RevokeTrackingLinkRequest,
 				live *checkcall.TrackingLink,
-			) (*agent.ToolPreview, error) {
+			) (*agentpreview.ToolPreview, error) {
 				changed, err := revokedLinkChange(req.MoveID, "Carrier tracking link", live)
 				if err != nil {
 					return nil, err
@@ -374,12 +381,12 @@ func newRevokeCarrierTrackingLinkTool(links carrierTrackingLinker) agentports.Ag
 			Run: func(
 				ctx context.Context,
 				req *checkcallports.RevokeTrackingLinkRequest,
-				_ *agentports.ToolExecuteParams,
-			) (*agent.ToolExecutionResult, error) {
+				_ *agenttoolports.ToolExecuteParams,
+			) (*agentrecord.ToolExecutionResult, error) {
 				if err := links.RevokeLink(ctx, req); err != nil {
 					return nil, err
 				}
-				return &agent.ToolExecutionResult{
+				return &agentrecord.ToolExecutionResult{
 					Action: "revoked",
 					Kind:   "carrier tracking link",
 					IDs:    map[string]string{ParamMoveID: req.MoveID.String()},

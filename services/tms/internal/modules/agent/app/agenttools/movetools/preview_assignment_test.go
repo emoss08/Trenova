@@ -1,0 +1,285 @@
+package movetools
+
+import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+type savingAssignments struct {
+	assignmentports.AssignmentService
+
+	shipment *shipment.Shipment
+	existing *shipment.Assignment
+	saved    *shipment.Assignment
+	inUse    []assignmentports.EquipmentInUse
+	guard    agenttoolstest.WriteGuard
+}
+
+func (f *savingAssignments) plan(
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
+	assignment, err := assignmentservice.NewMoveAssignment(req, f.existing)
+	if err != nil {
+		return nil, err
+	}
+	after := shipmentcoverage.CloneForUpdate(f.shipment)
+	move := after.FindMove(req.ShipmentMoveID)
+	move.Assignment = assignment
+	move.CoverageType = shipmentvocab.MoveCoverageTypeDriver
+	move.Status = shipmentvocab.MoveStatusAssigned
+	after.Status = shipmentvocab.StatusAssigned
+
+	return &assignmentports.AssignmentPlan{
+		Assignment:     assignment,
+		ShipmentBefore: f.shipment,
+		ShipmentAfter:  after,
+		EquipmentInUse: f.inUse,
+	}, nil
+}
+
+func (f *savingAssignments) PreviewAssignToMove(
+	_ context.Context,
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*assignmentports.AssignmentPlan, error) {
+	return f.plan(req)
+}
+
+func (f *savingAssignments) AssignToMove(
+	_ context.Context,
+	req *assignmentports.AssignShipmentMoveRequest,
+) (*shipment.Assignment, error) {
+	if err := f.guard.Write(); err != nil {
+		return nil, err
+	}
+	plan, err := f.plan(req)
+	if err != nil {
+		return nil, err
+	}
+	f.saved = plan.Assignment
+	f.saved.ID = pulid.MustNew("asg_")
+
+	return f.saved, nil
+}
+
+type checkingConsole struct {
+	dispatchconsoleports.DispatchConsoleService
+
+	preview *dispatchconsoleservice.AssignmentPreview
+}
+
+func (f *checkingConsole) PreviewAssignment(
+	context.Context,
+	*dispatchconsoleservice.PreviewAssignmentRequest,
+) (*dispatchconsoleservice.AssignmentPreview, error) {
+	return f.preview, nil
+}
+
+func uncoveredShipment() *shipment.Shipment {
+	moveID := pulid.MustNew("smv_")
+
+	return &shipment.Shipment{
+		ID:        pulid.MustNew("shp_"),
+		ProNumber: "S-88213",
+		Status:    shipmentvocab.StatusNew,
+		Moves: []*shipment.ShipmentMove{{
+			ID:           moveID,
+			Status:       shipmentvocab.MoveStatusNew,
+			CoverageType: shipmentvocab.MoveCoverageTypeUnassigned,
+			Version:      2,
+		}},
+	}
+}
+
+func assignParams(
+	entity *shipment.Shipment,
+) (*agenttoolports.ToolExecuteParams, pulid.ID, pulid.ID) {
+	workerID := pulid.MustNew("wrk_")
+	tractorID := pulid.MustNew("trc_")
+
+	return agenttoolstest.ExecuteParams(map[string]any{
+		"shipmentMoveId":  entity.Moves[0].ID.String(),
+		"primaryWorkerId": workerID.String(),
+		"tractorId":       tractorID.String(),
+	}), workerID, tractorID
+}
+
+func TestAssignMove_PreviewMatchesWhatIsSaved(t *testing.T) {
+	t.Parallel()
+
+	entity := uncoveredShipment()
+	assignments := &savingAssignments{shipment: entity}
+	console := &checkingConsole{preview: &dispatchconsoleservice.AssignmentPreview{
+		Score: &dispatchcandidateservice.CandidateScore{
+			WorkerName: "Ana Reyes",
+			Findings: []dispatcheligibility.Finding{{
+				Severity: dispatcheligibility.SeverityWarn,
+				Message:  "Medical card expires in 12 days",
+			}},
+		},
+	}}
+	tool := NewAssignMoveTool(assignments, console).(*AssignMoveTool)
+	params, workerID, tractorID := assignParams(entity)
+
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+
+	assert.Empty(t, preview.Warnings)
+	assert.Contains(t, preview.Summary, "Ana Reyes")
+	assert.Contains(t, preview.Summary, "Medical card expires in 12 days")
+	require.Len(t, preview.Changes, 3)
+
+	created := agenttoolstest.PreviewChange(t, preview, 0)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
+	driver := agenttoolstest.FieldByPath(t, created, "primaryWorkerId")
+	assert.Equal(t, "Driver", driver.Label)
+	require.NotNil(t, driver.AfterRef)
+	assert.Equal(t, workerID, driver.AfterRef.ID)
+	assert.Equal(t, "Ana Reyes", driver.AfterRef.Label)
+	tractor := agenttoolstest.FieldByPath(t, created, "tractorId")
+	require.NotNil(t, tractor.AfterRef)
+	assert.Equal(t, permission.ResourceTractor, tractor.AfterRef.Resource)
+	assert.Equal(t, tractorID, tractor.AfterRef.ID)
+
+	move := agenttoolstest.PreviewChange(t, preview, 1)
+	assert.Equal(t, entity.Moves[0].ID, move.EntityID)
+	assert.Equal(t, "Assigned", agenttoolstest.FieldByPath(t, move, "status").After)
+	shipmentChange := agenttoolstest.PreviewChange(t, preview, 2)
+	assert.Equal(t, permission.ResourceShipment, shipmentChange.Resource)
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+	agenttoolstest.RequireCreateParity(t, created, assignments.saved, AssignmentOptions()...)
+}
+
+func TestAssignMove_PreviewWarnsWhenDispatchRulesBlockTheDriver(t *testing.T) {
+	t.Parallel()
+
+	entity := uncoveredShipment()
+	assignments := &savingAssignments{shipment: entity}
+	console := &checkingConsole{preview: &dispatchconsoleservice.AssignmentPreview{
+		Blocked:          true,
+		RequiresOverride: true,
+		Score: &dispatchcandidateservice.CandidateScore{
+			Findings: []dispatcheligibility.Finding{{
+				Severity: dispatcheligibility.SeverityBlock,
+				Message:  "Driver is out of drive time",
+			}},
+		},
+	}}
+	tool := NewAssignMoveTool(assignments, console).(*AssignMoveTool)
+	params, _, _ := assignParams(entity)
+
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
+	assert.Contains(t, preview.Warnings[0].Message, "Driver is out of drive time")
+}
+
+/*
+equipment_list_trailers listed TRL-001 as Available while it ran SEED-DET-001,
+and the preview said so only at the end of a long summary, cut off where the
+consequence was. The assignment was approved and the next stop actual was
+refused. Equipment on a load in progress is a warning of its own, naming the
+load, and the assignment still files: a planner books a unit's next load
+while it runs the current one.
+*/
+func TestAssignMove_PreviewWarnsForEquipmentOnALoadInProgress(t *testing.T) {
+	t.Parallel()
+
+	entity := uncoveredShipment()
+	assignments := &savingAssignments{
+		shipment: entity,
+		inUse: []assignmentports.EquipmentInUse{{
+			Kind:           "trailer",
+			EquipmentID:    pulid.MustNew("tr_"),
+			ShipmentMoveID: pulid.MustNew("smv_"),
+			ProNumber:      "SEED-DET-001",
+		}},
+	}
+	tool := NewAssignMoveTool(assignments, nil).(*AssignMoveTool)
+	params, _, _ := assignParams(entity)
+
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningEquipmentInUse)
+	assert.Nil(t, preview.Refusal(), "booking a unit's next load while it runs this one is allowed")
+	require.Len(t, preview.Warnings, 1)
+	warning := preview.Warnings[0]
+	assert.Equal(t, []string{"SEED-DET-001"}, warning.Args)
+	assert.Contains(t, warning.Message, "the trailer is on SEED-DET-001, a load still in progress")
+	assert.Contains(t, warning.Message, "until the other load is done")
+	assert.NotContains(t, preview.Summary, "SEED-DET-001")
+	assert.NotEmpty(t, preview.Changes)
+}
+
+func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {
+	t.Parallel()
+
+	entity := uncoveredShipment()
+	assignments := &savingAssignments{
+		shipment: entity,
+		existing: &shipment.Assignment{ID: pulid.MustNew("asg_")},
+	}
+	tool := NewAssignMoveTool(assignments, nil).(*AssignMoveTool)
+	params, _, _ := assignParams(entity)
+
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&assignments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+
+	assert.Empty(t, preview.Changes)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
+}
+
+/*
+"put david park on it with trc-001 and a dry van" loaded dispatch_assign_move with only
+shipment_get and dispatch_rank_candidates. gpt-6-luna spent its four tool searches
+finding the driver and the tractor, was refused a fifth for the trailer list,
+and asked which dry van instead of choosing one. The lookups its ids name load
+with it.
+*/
+func TestAssignMove_LoadsTheLookupsItsIDsComeFrom(t *testing.T) {
+	t.Parallel()
+
+	tool := &AssignMoveTool{}
+	for _, read := range []string{"worker_list", "equipment_list_tractors", "equipment_list_trailers"} {
+		assert.Contains(t, tool.Prerequisites(), read)
+	}
+}

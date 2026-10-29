@@ -7,9 +7,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview/agentpreviewdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"go.uber.org/fx"
@@ -30,17 +31,17 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) agentports.AgentProposalBaselineRepository {
+func New(p Params) agentproposalports.AgentProposalBaselineRepository {
 	return &repository{db: p.DB}
 }
 
-func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaseline) error {
+func (r *repository) Create(ctx context.Context, baseline *agentpreview.ProposalBaseline) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		b := agentdb.ProposalBaselines
+		b := agentpreviewdb.ProposalBaselines
 		if _, err := b.CreateOrSkip(
 			ctx,
 			r.db.Keel(ctx),
-			[]*agent.ProposalBaseline{baseline},
+			[]*agentpreview.ProposalBaseline{baseline},
 			b.ProposalID,
 			b.OrganizationID,
 			b.BusinessUnitID,
@@ -54,10 +55,10 @@ func (r *repository) Create(ctx context.Context, baseline *agent.ProposalBaselin
 
 func (r *repository) GetByProposal(
 	ctx context.Context,
-	req agentports.GetProposalBaselineRequest,
-) (*agent.ProposalBaseline, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ProposalBaseline, error) {
-		baseline, err := agentdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
+	req agentproposalports.GetProposalBaselineRequest,
+) (*agentpreview.ProposalBaseline, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentpreview.ProposalBaseline, error) {
+		baseline, err := agentpreviewdb.ProposalBaselines.Get(ctx, r.db.Keel(ctx), req.ProposalID)
 		if err != nil {
 			return nil, baselineErrors.Map(err, req.ProposalID.String())
 		}
@@ -68,28 +69,32 @@ func (r *repository) GetByProposal(
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
-	req agentports.ListProposalBaselinesRequest,
-) ([]*agent.ProposalBaseline, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ProposalBaseline, error) {
-		if len(req.ProposalIDs) == 0 {
-			return []*agent.ProposalBaseline{}, nil
-		}
+	req agentproposalports.ListProposalBaselinesRequest,
+) ([]*agentpreview.ProposalBaseline, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*agentpreview.ProposalBaseline, error) {
+			if len(req.ProposalIDs) == 0 {
+				return []*agentpreview.ProposalBaseline{}, nil
+			}
 
-		b := agentdb.ProposalBaselines
-		rows, err := b.Where(b.ProposalID.In(req.ProposalIDs...)).
-			Limit(len(req.ProposalIDs)).
-			List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("list proposal baselines: %w", err)
-		}
+			b := agentpreviewdb.ProposalBaselines
+			rows, err := b.Where(b.ProposalID.In(req.ProposalIDs...)).
+				Limit(len(req.ProposalIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("list proposal baselines: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) PurgeOrphans(
 	ctx context.Context,
-	req agentports.PurgeOrphanProposalBaselinesRequest,
+	req agentproposalports.PurgeOrphanProposalBaselinesRequest,
 ) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "purge orphaned proposal baselines across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
@@ -98,7 +103,7 @@ func (r *repository) PurgeOrphans(
 			limit = DefaultPurgeLimit
 		}
 
-		b := agentdb.ProposalBaselines
+		b := agentpreviewdb.ProposalBaselines
 		purged, err := b.AllTenants().
 			Where(b.ProposalID.InQuery(orphans(req.Before, limit))).
 			Delete(ctx, r.db.Keel(ctx))
@@ -114,8 +119,8 @@ func (r *repository) PurgeOrphans(
 // names. A proposal is filed after its baseline is kept, so only an old
 // baseline can be known to be an orphan: its filing was retried under
 // another id, or never happened.
-func orphans(before int64, limit int) *keel.Query[*agent.ProposalBaseline] {
-	orphan := agentdb.ProposalBaselines.As("orphan")
+func orphans(before int64, limit int) *keel.Query[*agentpreview.ProposalBaseline] {
+	orphan := agentpreviewdb.ProposalBaselines.As("orphan")
 	p := agentdb.AgentProposals
 
 	return orphan.AllTenants().

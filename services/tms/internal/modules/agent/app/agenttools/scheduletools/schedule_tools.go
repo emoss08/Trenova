@@ -10,13 +10,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationschedule"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationscheduleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +71,7 @@ type CreateScheduleTool struct {
 
 func NewCreateScheduleTool(
 	planner conversationscheduleports.ConversationSchedulePlanner,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &CreateScheduleTool{planner: planner}
 }
 
@@ -80,10 +85,10 @@ func (t *CreateScheduleTool) SearchTerms() []string {
 }
 
 func (t *CreateScheduleTool) Description() string {
-	return "Repeat a request in this conversation on a schedule, when the person asks for " +
-		"something every day, every weekday or one day a week (\"schedule this to run " +
-		"everyday at 9:30 AM EST\", \"give me this board every Monday at 8\"). Each run asks " +
-		"request again here, as the person, and the answer posts into this conversation. " +
+	return "Repeat a request in this conversation every day, every weekday or one day a " +
+		"week, when the person asks for it on a schedule. For example, \"schedule this to " +
+		"run everyday at 9:30 AM EST\" or \"give me this board every Monday at 8\". Each run " +
+		"asks request again here, as the person, and the answer posts into this conversation. " +
 		"Write request in full so it stands alone: when they say \"this\", write out what " +
 		"they asked for. time is 24-hour HH:MM. timezone is the clock they named " +
 		"(America/New_York for EST or Eastern); leave it out for their own clock, which is " +
@@ -125,20 +130,20 @@ func (t *CreateScheduleTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *CreateScheduleTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *CreateScheduleTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAssistant,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeSelf,
+		Scope:         agenttooltrust.ToolScopeSelf,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressPersonal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		// The schedule is read beside the conversation its answers post into.
 		Artifact: threadEntity,
 		Rationale: "Repeats a request in the person's own conversation, asked as them with " +
@@ -148,7 +153,7 @@ func (t *CreateScheduleTool) Policy() agentports.ToolPolicy {
 }
 
 func (t *CreateScheduleTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (conversationscheduleports.PlanConversationScheduleRequest, error) {
 	person := params.Actor.PersonUserID()
 	if person.IsNil() {
@@ -158,15 +163,15 @@ func (t *CreateScheduleTool) request(
 		return conversationscheduleports.PlanConversationScheduleRequest{}, errNeedsConversation
 	}
 
-	request, err := common.RequireString(params.Params, paramRequest)
+	request, err := toolparams.RequireString(params.Params, paramRequest)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
-	repeat, err := common.RequireString(params.Params, paramRepeat)
+	repeat, err := toolparams.RequireString(params.Params, paramRepeat)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
-	at, err := common.RequireString(params.Params, paramTime)
+	at, err := toolparams.RequireString(params.Params, paramTime)
 	if err != nil {
 		return conversationscheduleports.PlanConversationScheduleRequest{}, err
 	}
@@ -181,7 +186,7 @@ func (t *CreateScheduleTool) request(
 			Repeat: repeat,
 			Time:   at,
 		},
-		Timezone:   common.OptionalString(params.Params, paramTimezone),
+		Timezone:   toolparams.OptionalString(params.Params, paramTimezone),
 		ProposalID: params.ProposalID,
 		Actor:      actor,
 	}, nil
@@ -192,7 +197,7 @@ func (t *CreateScheduleTool) request(
 // request in it.
 func (t *CreateScheduleTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*conversationscheduleports.PlannedConversationSchedule, error) {
 	if t.planner == nil {
 		return nil, errNoSchedules
@@ -212,12 +217,12 @@ func (t *CreateScheduleTool) plan(
 
 func (t *CreateScheduleTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -232,24 +237,24 @@ func (t *CreateScheduleTool) Validate(
 
 func (t *CreateScheduleTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	fallback := toolpreview.Build("Would repeat a request in this conversation on a schedule.")
 
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) || errors.Is(err, errNeedsPerson) ||
+		if changepreview.IsRefusal(err) || errors.Is(err, errNeedsPerson) ||
 			errors.Is(err, errNeedsConversation) {
-			return common.WarnWouldFail(fallback, err), nil
+			return changepreview.WarnWouldFail(fallback, err), nil
 		}
 
 		return nil, err
 	}
 	if planned.Existing != nil {
-		return common.WarnWouldFail(fallback, alreadyKept(planned.Existing)), nil
+		return changepreview.WarnWouldFail(fallback, alreadyKept(planned.Existing)), nil
 	}
 
 	schedule := planned.Schedule
@@ -271,7 +276,7 @@ func (t *CreateScheduleTool) Preview(
 
 func (t *CreateScheduleTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -280,15 +285,15 @@ func (t *CreateScheduleTool) Execute(
 
 func (t *CreateScheduleTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if t.planner == nil {
 		return nil, errNoSchedules
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -306,12 +311,12 @@ func (t *CreateScheduleTool) ExecuteWithResult(
 		action, schedule = "found", kept.Existing
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: action,
 		Kind:   "schedule",
 		Name:   schedule.Cadence + " · " + stringutils.Ellipsize(schedule.Prompt, labelRunes),
 		IDs:    map[string]string{paramScheduleID: schedule.ID.String()},
-		Record: &agent.RecordRef{EntityType: threadEntity, ID: schedule.ThreadID.String()},
+		Record: &agentrecord.RecordRef{EntityType: threadEntity, ID: schedule.ThreadID.String()},
 	}, nil
 }
 

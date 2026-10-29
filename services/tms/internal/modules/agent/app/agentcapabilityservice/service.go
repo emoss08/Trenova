@@ -21,8 +21,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentbudgetports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -39,27 +43,28 @@ type Params struct {
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Agents      agentdefinitionports.AgentDefinitionService
-	Tools       agentports.AgentToolRegistry
-	QueryTools  agentports.AgentQueryToolRegistry
+	Tools       agenttoolports.AgentToolRegistry
+	QueryTools  agenttoolports.AgentQueryToolRegistry
 	Permissions permissionports.PermissionEngine
-	Budgets     agentports.AgentBudgetService   `optional:"true"`
-	Providers   agentports.AIProviderRepository `optional:"true"`
-	Users       tenantports.UserRepository      `optional:"true"`
+	Budgets     agentbudgetports.AgentBudgetService  `optional:"true"`
+	Providers   aiproviderports.AIProviderRepository `optional:"true"`
+	Users       tenantports.UserRepository           `optional:"true"`
 }
 
 type Service struct {
 	l           *zap.Logger
 	definitions agentdefinitionports.AgentDefinitionRepository
 	agents      agentdefinitionports.AgentDefinitionService
-	tools       agentports.AgentToolRegistry
-	queryTools  agentports.AgentQueryToolRegistry
+	tools       agenttoolports.AgentToolRegistry
+	queryTools  agenttoolports.AgentQueryToolRegistry
 	permissions permissionports.PermissionEngine
-	budgets     agentports.AgentBudgetService
-	providers   agentports.AIProviderRepository
+	budgets     agentbudgetports.AgentBudgetService
+	providers   aiproviderports.AIProviderRepository
 	users       tenantports.UserRepository
 }
 
-func New(p Params) agentports.AgentCapabilityService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentcapabilityports.AgentCapabilityService {
 	return &Service{
 		l:           p.Logger.Named("service.agent-capability"),
 		definitions: p.Definitions,
@@ -75,9 +80,9 @@ func New(p Params) agentports.AgentCapabilityService {
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *agentports.GetAgentCapabilitiesRequest,
+	req *agentcapabilityports.GetAgentCapabilitiesRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.AgentCapabilities, error) {
+) (*agentcapabilityports.AgentCapabilities, error) {
 	definition, err := s.readable(ctx, req.TenantInfo, req.AgentID, actor)
 	if err != nil {
 		return nil, err
@@ -88,9 +93,9 @@ func (s *Service) Get(
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *agentports.UpdateAgentCapabilitiesRequest,
+	req *agentcapabilityports.UpdateAgentCapabilitiesRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.AgentCapabilities, error) {
+) (*agentcapabilityports.AgentCapabilities, error) {
 	definition, err := s.readable(ctx, req.TenantInfo, req.AgentID, actor)
 	if err != nil {
 		return nil, err
@@ -199,7 +204,7 @@ func (s *Service) describe(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
-) (*agentports.AgentCapabilities, error) {
+) (*agentcapabilityports.AgentCapabilities, error) {
 	tenant := pagination.TenantInfo{
 		OrgID: definition.OrganizationID,
 		BuID:  definition.BusinessUnitID,
@@ -209,7 +214,7 @@ func (s *Service) describe(
 		return nil, err
 	}
 
-	out := &agentports.AgentCapabilities{
+	out := &agentcapabilityports.AgentCapabilities{
 		AgentID:     definition.ID,
 		Name:        definition.Name,
 		Description: definition.Description,
@@ -220,8 +225,8 @@ func (s *Service) describe(
 		Enabled:     definition.Enabled,
 		CanEdit:     editable,
 		Version:     definition.Version,
-		ReadTools:   []agentports.AgentCapabilityTool{},
-		WriteTools:  []agentports.AgentCapabilityTool{},
+		ReadTools:   []agentcapabilityports.AgentCapabilityTool{},
+		WriteTools:  []agentcapabilityports.AgentCapabilityTool{},
 		Model:       s.modelName(ctx, definition, tenant),
 		SetUpBy:     s.personName(ctx, definition.CreatedByID, tenant),
 	}
@@ -246,9 +251,11 @@ func (s *Service) describe(
 // rows are the tools the page lists: the ones the agent holds, in the order
 // they were chosen, then the ones switched off on the page. The tools every
 // agent holds are not listed, since none of them can be switched off.
-func (s *Service) rows(definition *agentdefinition.Definition) []agentports.AgentCapabilityTool {
+func (s *Service) rows(
+	definition *agentdefinition.Definition,
+) []agentcapabilityports.AgentCapabilityTool {
 	prerequisites := s.prerequisiteReads(definition)
-	rows := make([]agentports.AgentCapabilityTool, 0,
+	rows := make([]agentcapabilityports.AgentCapabilityTool, 0,
 		len(definition.ToolNames)+len(definition.DisabledToolNames))
 	seen := make(map[string]struct{})
 	add := func(name string, held bool) {
@@ -282,7 +289,7 @@ func (s *Service) companionWrites(definition *agentdefinition.Definition) []stri
 		if !ok {
 			continue
 		}
-		bringer, brings := tool.(agentports.CompanionTool)
+		bringer, brings := tool.(agenttoolports.CompanionTool)
 		if !brings {
 			continue
 		}
@@ -301,19 +308,21 @@ func (s *Service) row(
 	name string,
 	held bool,
 	prerequisites map[string]string,
-) (agentports.AgentCapabilityTool, bool) {
-	row := agentports.AgentCapabilityTool{Key: name, Label: Label(name)}
+) (agentcapabilityports.AgentCapabilityTool, bool) {
+	row := agentcapabilityports.AgentCapabilityTool{Key: name, Label: Label(name)}
 
 	if _, ok := s.queryTools.Get(name); ok {
-		row.Mode = agentports.AgentCapabilityAllowed
+		row.Mode = agentcapabilityports.AgentCapabilityAllowed
 		if !held {
-			row.Mode = agentports.AgentCapabilityOff
+			row.Mode = agentcapabilityports.AgentCapabilityOff
 		}
-		row.AllowedModes = []agentports.AgentCapabilityMode{
-			agentports.AgentCapabilityAllowed, agentports.AgentCapabilityOff,
+		row.AllowedModes = []agentcapabilityports.AgentCapabilityMode{
+			agentcapabilityports.AgentCapabilityAllowed, agentcapabilityports.AgentCapabilityOff,
 		}
 		if needer, needed := prerequisites[name]; needed && held {
-			row.AllowedModes = []agentports.AgentCapabilityMode{agentports.AgentCapabilityAllowed}
+			row.AllowedModes = []agentcapabilityports.AgentCapabilityMode{
+				agentcapabilityports.AgentCapabilityAllowed,
+			}
 			row.LockReason = "Always on · " + needer + " needs it"
 		}
 
@@ -328,11 +337,11 @@ func (s *Service) row(
 	}
 	policy := tool.Policy()
 	row.Write = true
-	row.Mode = ModeForTier(agenttoolpolicy.StaticTier(definition, policy))
+	row.Mode = ModeForTier(agenttoolpolicy.StaticTier(definition, &policy))
 	if !held {
-		row.Mode = agentports.AgentCapabilityOff
+		row.Mode = agentcapabilityports.AgentCapabilityOff
 	}
-	row.AllowedModes, row.LockReason = WriteModes(definition, policy)
+	row.AllowedModes, row.LockReason = WriteModes(definition, &policy)
 
 	return row, true
 }
@@ -341,16 +350,16 @@ func (s *Service) row(
 // Allowed is not among them when it is not.
 func WriteModes(
 	definition *agentdefinition.Definition,
-	policy agentports.ToolPolicy,
-) ([]agentports.AgentCapabilityMode, string) {
-	all := []agentports.AgentCapabilityMode{
-		agentports.AgentCapabilityAllowed,
-		agentports.AgentCapabilityAskFirst,
-		agentports.AgentCapabilityOff,
+	policy *agenttoolports.ToolPolicy,
+) ([]agentcapabilityports.AgentCapabilityMode, string) {
+	all := []agentcapabilityports.AgentCapabilityMode{
+		agentcapabilityports.AgentCapabilityAllowed,
+		agentcapabilityports.AgentCapabilityAskFirst,
+		agentcapabilityports.AgentCapabilityOff,
 	}
-	asks := []agentports.AgentCapabilityMode{
-		agentports.AgentCapabilityAskFirst,
-		agentports.AgentCapabilityOff,
+	asks := []agentcapabilityports.AgentCapabilityMode{
+		agentcapabilityports.AgentCapabilityAskFirst,
+		agentcapabilityports.AgentCapabilityOff,
 	}
 
 	switch {
@@ -368,12 +377,12 @@ func WriteModes(
 }
 
 // ModeForTier is the page's word for a tier.
-func ModeForTier(tier agent.AutonomyTier) agentports.AgentCapabilityMode {
+func ModeForTier(tier agent.AutonomyTier) agentcapabilityports.AgentCapabilityMode {
 	if tier == agent.TierAutoExecute {
-		return agentports.AgentCapabilityAllowed
+		return agentcapabilityports.AgentCapabilityAllowed
 	}
 
-	return agentports.AgentCapabilityAskFirst
+	return agentcapabilityports.AgentCapabilityAskFirst
 }
 
 // prerequisiteReads are the reads a held write takes its arguments from,
@@ -386,7 +395,7 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 		if !ok {
 			continue
 		}
-		dependent, depends := tool.(agentports.PrerequisiteTool)
+		dependent, depends := tool.(agenttoolports.PrerequisiteTool)
 		if !depends {
 			continue
 		}
@@ -401,15 +410,15 @@ func (s *Service) prerequisiteReads(definition *agentdefinition.Definition) map[
 }
 
 func checkChange(
-	rows []agentports.AgentCapabilityTool,
-	change agentports.AgentCapabilityToolChange,
+	rows []agentcapabilityports.AgentCapabilityTool,
+	change agentcapabilityports.AgentCapabilityToolChange,
 ) error {
 	if !change.Mode.IsValid() {
 		return errortypes.NewValidationError(
 			"tools", errortypes.ErrInvalid, "Mode must be Allowed, AskFirst or Off",
 		)
 	}
-	idx := slices.IndexFunc(rows, func(row agentports.AgentCapabilityTool) bool {
+	idx := slices.IndexFunc(rows, func(row agentcapabilityports.AgentCapabilityTool) bool {
 		return row.Key == change.Key
 	})
 	if idx < 0 {
@@ -434,7 +443,7 @@ func checkChange(
 // applyUpdate makes the page's changes on a copy of the stored agent.
 func applyUpdate(
 	d *agentdefinition.Definition,
-	req *agentports.UpdateAgentCapabilitiesRequest,
+	req *agentcapabilityports.UpdateAgentCapabilitiesRequest,
 ) error {
 	if req.Enabled != nil {
 		d.Enabled = *req.Enabled
@@ -491,12 +500,15 @@ func applyUpdate(
 	return nil
 }
 
-func applyMode(d *agentdefinition.Definition, change agentports.AgentCapabilityToolChange) {
+func applyMode(
+	d *agentdefinition.Definition,
+	change agentcapabilityports.AgentCapabilityToolChange,
+) {
 	switch change.Mode {
-	case agentports.AgentCapabilityOff:
+	case agentcapabilityports.AgentCapabilityOff:
 		d.TurnToolOff(change.Key)
 		return
-	case agentports.AgentCapabilityAllowed, agentports.AgentCapabilityAskFirst:
+	case agentcapabilityports.AgentCapabilityAllowed, agentcapabilityports.AgentCapabilityAskFirst:
 		d.TurnToolOn(change.Key)
 	}
 
@@ -505,9 +517,9 @@ func applyMode(d *agentdefinition.Definition, change agentports.AgentCapabilityT
 		tiers[name] = tier
 	}
 	switch change.Mode {
-	case agentports.AgentCapabilityAllowed:
+	case agentcapabilityports.AgentCapabilityAllowed:
 		tiers[change.Key] = agent.TierAutoExecute
-	case agentports.AgentCapabilityAskFirst:
+	case agentcapabilityports.AgentCapabilityAskFirst:
 		tiers[change.Key] = agent.TierActWithApproval
 	}
 	d.ToolTiers = tiers
@@ -524,8 +536,8 @@ func (s *Service) modelName(
 	if s.providers == nil {
 		return ""
 	}
-	providers, err := s.providers.ListForTask(ctx, agentports.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskAssistantChat,
+	providers, err := s.providers.ListForTask(ctx, aiproviderports.ListAIProvidersForTaskRequest{
+		Task:       aitask.TaskAssistantChat,
 		TenantInfo: tenant,
 	})
 	if err != nil {
@@ -535,7 +547,7 @@ func (s *Service) modelName(
 
 	var first *aiprovider.Provider
 	for _, provider := range providers {
-		if ok, _ := provider.CanServeTask(aiprovider.TaskAssistantChat); !ok {
+		if ok, _ := provider.CanServeTask(aitask.TaskAssistantChat); !ok {
 			continue
 		}
 		if provider.ID == definition.PreferredProviderID {
@@ -586,8 +598,8 @@ func (s *Service) handoffs(
 	definition *agentdefinition.Definition,
 	tenant pagination.TenantInfo,
 	actor *permissionports.RequestActor,
-) ([]agentports.AgentCapabilityHandoff, error) {
-	out := []agentports.AgentCapabilityHandoff{}
+) ([]agentcapabilityports.AgentCapabilityHandoff, error) {
+	out := []agentcapabilityports.AgentCapabilityHandoff{}
 	if len(definition.DelegateIDs) == 0 {
 		return out, nil
 	}
@@ -620,7 +632,7 @@ func (s *Service) handoffs(
 		if topic == "" {
 			topic = delegate.Description
 		}
-		out = append(out, agentports.AgentCapabilityHandoff{
+		out = append(out, agentcapabilityports.AgentCapabilityHandoff{
 			AgentID:     delegate.ID,
 			Name:        delegate.Name,
 			Description: delegate.Description,
@@ -637,8 +649,8 @@ func (s *Service) handoffs(
 func (s *Service) limits(
 	ctx context.Context,
 	definition *agentdefinition.Definition,
-) (agentports.AgentCapabilityLimits, error) {
-	limits := agentports.AgentCapabilityLimits{
+) (agentcapabilityports.AgentCapabilityLimits, error) {
+	limits := agentcapabilityports.AgentCapabilityLimits{
 		DailyRequestLimit:  definition.DailyRunLimit,
 		MaxChangeItems:     definition.ChangeLimit(),
 		BusinessHoursOnly:  definition.BusinessHoursOnly,
@@ -679,7 +691,7 @@ func (s *Service) limits(
 // Label is a tool's name as a person reads it, in reading order:
 // invoice_post is "Post invoice".
 func Label(name string) string {
-	words := strings.FieldsFunc(agentports.ReadingOrder(name), func(r rune) bool {
+	words := strings.FieldsFunc(agenttoolports.ReadingOrder(name), func(r rune) bool {
 		return r == '_' || r == '-' || r == '.'
 	})
 	if len(words) == 0 {

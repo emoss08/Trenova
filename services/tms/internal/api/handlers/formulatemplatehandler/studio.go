@@ -7,11 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -65,9 +66,9 @@ func (h *Handler) studioAvailable(c *gin.Context) bool {
 	return false
 }
 
-func (r *formulaDraftRequest) toDraft() (agentports.FormulaStudioDraft, error) {
+func (r *formulaDraftRequest) toDraft() (formulastudioports.FormulaStudioDraft, error) {
 	multiErr := errortypes.NewMultiError()
-	draft := agentports.FormulaStudioDraft{
+	draft := formulastudioports.FormulaStudioDraft{
 		Name:        strings.TrimSpace(r.Name),
 		Description: strings.TrimSpace(r.Description),
 		Source:      r.Source,
@@ -109,7 +110,7 @@ func (r *formulaDraftRequest) toDraft() (agentports.FormulaStudioDraft, error) {
 // @Accept json
 // @Produce json
 // @Param request body explainFormulaRequest true "The editor's draft and the preview load"
-// @Success 200 {object} agentports.ExplainFormulaResponse
+// @Success 200 {object} formulastudioports.ExplainFormulaResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -134,7 +135,7 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if len(req.Inputs) > formulatemplateservice.MaxPreviewInputs {
+	if len(req.Inputs) > formulatemplatestudioservice.MaxPreviewInputs {
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"inputs",
 			errortypes.ErrInvalid,
@@ -152,12 +153,16 @@ func (h *Handler) explainFormula(c *gin.Context) {
 		shipmentID = *shipment
 	}
 
-	resp, err := h.studio.ExplainFormula(c.Request.Context(), &agentports.ExplainFormulaRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		Draft:      draft,
-		Inputs:     req.Inputs,
-		ShipmentID: shipmentID,
-	}, h.studioActor(authCtx))
+	resp, err := h.studio.ExplainFormula(
+		c.Request.Context(),
+		&formulastudioports.ExplainFormulaRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			Draft:      draft,
+			Inputs:     req.Inputs,
+			ShipmentID: shipmentID,
+		},
+		h.studioActor(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -173,7 +178,7 @@ func (h *Handler) explainFormula(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body formulaDraftRequest true "The editor's draft"
-// @Success 200 {object} agentports.DescribeFormulaInputsResponse
+// @Success 200 {object} formulastudioports.DescribeFormulaInputsResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -201,7 +206,7 @@ func (h *Handler) describeInputs(c *gin.Context) {
 
 	resp, err := h.studio.DescribeInputs(
 		c.Request.Context(),
-		&agentports.DescribeFormulaInputsRequest{
+		&formulastudioports.DescribeFormulaInputsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 		},
@@ -222,7 +227,7 @@ func (h *Handler) describeInputs(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body formulaDraftRequest true "The editor's draft"
-// @Success 200 {object} agentports.SuggestFormulaTestsResponse
+// @Success 200 {object} formulastudioports.SuggestFormulaTestsResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -250,7 +255,7 @@ func (h *Handler) suggestTests(c *gin.Context) {
 
 	resp, err := h.studio.SuggestTests(
 		c.Request.Context(),
-		&agentports.SuggestFormulaTestsRequest{
+		&formulastudioports.SuggestFormulaTestsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 		},
@@ -271,7 +276,7 @@ func (h *Handler) suggestTests(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param request body explainTestRequest true "The editor's draft and the test's name"
-// @Success 200 {object} agentports.ExplainFormulaTestResponse
+// @Success 200 {object} formulastudioports.ExplainFormulaTestResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -297,7 +302,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 		return
 	}
 	name := strings.TrimSpace(req.TestName)
-	if name == "" || utf8.RuneCountInString(name) > formulatemplateservice.MaxTestNameLength {
+	if name == "" || utf8.RuneCountInString(name) > formulatemplatestudioservice.MaxTestNameLength {
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"testName",
 			errortypes.ErrInvalid,
@@ -308,7 +313,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 
 	resp, err := h.studio.ExplainTest(
 		c.Request.Context(),
-		&agentports.ExplainFormulaTestRequest{
+		&formulastudioports.ExplainFormulaTestRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			Draft:      draft,
 			TestName:   name,
@@ -329,7 +334,7 @@ func (h *Handler) explainTest(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {object} agentports.DraftFormulaReviewNoteResponse
+// @Success 200 {object} formulastudioports.DraftFormulaReviewNoteResponse
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -352,7 +357,7 @@ func (h *Handler) reviewNote(c *gin.Context) {
 
 	resp, err := h.studio.DraftReviewNote(
 		c.Request.Context(),
-		&agentports.DraftFormulaReviewNoteRequest{
+		&formulastudioports.DraftFormulaReviewNoteRequest{
 			TenantInfo:      pagination.FromAuthAsUser(authCtx),
 			TemplateID:      templateID,
 			IncludeBacktest: h.mayReadShipments(c, authCtx),
@@ -373,7 +378,7 @@ func (h *Handler) reviewNote(c *gin.Context) {
 // @Tags Formula Templates
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Success 200 {array} formulatemplateservice.Reviewer
+// @Success 200 {array} formulatemplatereviewservice.Reviewer
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 404 {object} helpers.ProblemDetail
@@ -389,9 +394,9 @@ func (h *Handler) listReviewers(c *gin.Context) {
 		return
 	}
 
-	reviewers, err := h.service.ListReviewers(
+	reviewers, err := h.reviews.ListReviewers(
 		c.Request.Context(),
-		&formulatemplateservice.ListReviewersRequest{
+		&formulatemplatereviewservice.ListReviewersRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},

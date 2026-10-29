@@ -2,11 +2,6 @@ package customerpaymentservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -18,11 +13,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -68,7 +68,8 @@ func newPaymentWorld(
 		RunAndReturn(func(context.Context, customerpaymentports.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
 			stored := *w.payment
 			return &stored, nil
-		}).Maybe()
+		}).
+		Maybe()
 	paymentRepo.EXPECT().
 		Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *customerpayment.Payment) (*customerpayment.Payment, error) {
@@ -77,14 +78,16 @@ func newPaymentWorld(
 			stored := *entity
 			w.payment = &stored
 			return &stored, nil
-		}).Maybe()
+		}).
+		Maybe()
 	invoiceRepo := invoiceportsmock.NewMockInvoiceRepository(t)
 	invoiceRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *w.invoices[req.ID]
 			return &stored, nil
-		}).Maybe()
+		}).
+		Maybe()
 	invoiceRepo.EXPECT().
 		Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, entity *invoice.Invoice) (*invoice.Invoice, error) {
@@ -96,10 +99,10 @@ func newPaymentWorld(
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, w.orgID).
-		Return(&tenant.AccountingControl{
-			AccountingBasis:               tenant.AccountingBasisAccrual,
-			RevenueRecognitionPolicy:      tenant.RevenueRecognitionOnInvoicePost,
-			JournalPostingMode:            tenant.JournalPostingModeAutomatic,
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:               accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy:      accountingcontrol.RevenueRecognitionOnInvoicePost,
+			JournalPostingMode:            accountingcontrol.JournalPostingModeAutomatic,
 			DefaultCashAccountID:          pulid.MustNew("gla_"),
 			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
 			DefaultARAccountID:            pulid.MustNew("gla_"),
@@ -117,7 +120,8 @@ func newPaymentWorld(
 			w.writes++
 			w.postings = append(w.postings, params)
 			return nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	w.svc = &Service{
 		db:             fakePaymentDB{},
@@ -135,7 +139,10 @@ func newPaymentWorld(
 	return w
 }
 
-func openInvoiceFor(payment *customerpayment.Payment, totalMinor, appliedMinor int64) *invoice.Invoice {
+func openInvoiceFor(
+	payment *customerpayment.Payment,
+	totalMinor, appliedMinor int64,
+) *invoice.Invoice {
 	return &invoice.Invoice{
 		ID:                 pulid.MustNew("inv_"),
 		OrganizationID:     payment.OrganizationID,
@@ -153,7 +160,10 @@ func openInvoiceFor(payment *customerpayment.Payment, totalMinor, appliedMinor i
 	}
 }
 
-func postedPayment(appliedMinor, amountMinor int64, apps ...*customerpayment.Application) *customerpayment.Payment {
+func postedPayment(
+	appliedMinor, amountMinor int64,
+	apps ...*customerpayment.Application,
+) *customerpayment.Payment {
 	return &customerpayment.Payment{
 		ID:                   pulid.MustNew("cpay_"),
 		OrganizationID:       pulid.MustNew("org_"),
@@ -170,7 +180,9 @@ func postedPayment(appliedMinor, amountMinor int64, apps ...*customerpayment.App
 	}
 }
 
-func journalLinesOf(posting journalentryports.CreateJournalPostingParams) []kernelports.JournalLinePreview {
+func journalLinesOf(
+	posting journalentryports.CreateJournalPostingParams,
+) []kernelports.JournalLinePreview {
 	lines := make([]kernelports.JournalLinePreview, 0, len(posting.Lines))
 	for _, line := range posting.Lines {
 		lines = append(lines, kernelports.JournalLinePreview{
@@ -230,14 +242,18 @@ func TestPreviewApplyUnapplied_RefusesWhatApplyRefuses(t *testing.T) {
 	target := openInvoiceFor(payment, 6000, 0)
 	w := newPaymentWorld(t, payment, target)
 
-	_, err := w.svc.PreviewApplyUnapplied(t.Context(), &customerpaymentports.ApplyCustomerPaymentRequest{
-		PaymentID:      payment.ID,
-		AccountingDate: 200,
-		Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
-			{InvoiceID: target.ID, AppliedAmountMinor: 100},
+	_, err := w.svc.PreviewApplyUnapplied(
+		t.Context(),
+		&customerpaymentports.ApplyCustomerPaymentRequest{
+			PaymentID:      payment.ID,
+			AccountingDate: 200,
+			Applications: []*customerpaymentports.CustomerPaymentApplicationInput{
+				{InvoiceID: target.ID, AppliedAmountMinor: 100},
+			},
+			TenantInfo: w.tenantInfo,
 		},
-		TenantInfo: w.tenantInfo,
-	}, w.actor)
+		w.actor,
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no unapplied amount")
 	assert.Zero(t, w.writes)
@@ -303,19 +319,25 @@ func TestPreviewApplyCreditMemo_IsWhatApplyCreditMemoWrites(t *testing.T) {
 		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *f.memo
 			return &stored, nil
-		}).Once()
+		}).
+		Once()
 	f.invoiceRepo.EXPECT().
 		GetByID(mock.Anything, invoiceports.GetInvoiceByIDRequest{ID: f.target.ID, TenantInfo: f.tenantInfo}).
 		RunAndReturn(func(context.Context, invoiceports.GetInvoiceByIDRequest) (*invoice.Invoice, error) {
 			stored := *f.target
 			return &stored, nil
-		}).Once()
+		}).
+		Once()
 
 	preview, err := f.svc.PreviewApplyCreditMemo(t.Context(), f.applyRequest(3000), f.actor)
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(0), preview.CreditMemoBefore.AppliedAmountMinor)
-	assert.Equal(t, f.memo.CreditRemainingMinor()-3000, preview.CreditMemoAfter.CreditRemainingMinor())
+	assert.Equal(
+		t,
+		f.memo.CreditRemainingMinor()-3000,
+		preview.CreditMemoAfter.CreditRemainingMinor(),
+	)
 	require.Len(t, preview.InvoicesAfter, 1)
 	assert.Equal(t, int64(3000), preview.InvoicesAfter[0].AppliedAmountMinor)
 	assert.Equal(t, int64(0), preview.InvoicesBefore[0].AppliedAmountMinor)
@@ -359,8 +381,16 @@ func TestPreviewUnapplyCreditMemoApplication_RestoresBothBalances(t *testing.T) 
 	)
 	require.NoError(t, err)
 
-	assert.Equal(t, customerpayment.CreditApplicationStatusApplied, preview.ApplicationBefore.Status)
-	assert.Equal(t, customerpayment.CreditApplicationStatusUnapplied, preview.Applications[0].Status)
+	assert.Equal(
+		t,
+		customerpayment.CreditApplicationStatusApplied,
+		preview.ApplicationBefore.Status,
+	)
+	assert.Equal(
+		t,
+		customerpayment.CreditApplicationStatusUnapplied,
+		preview.Applications[0].Status,
+	)
 	assert.Equal(t, "Applied to the wrong invoice", preview.Applications[0].UnappliedReason)
 	assert.Equal(t, int64(0), preview.InvoicesAfter[0].AppliedAmountMinor)
 	assert.Equal(t, int64(3000), preview.InvoicesBefore[0].AppliedAmountMinor)
@@ -372,7 +402,9 @@ func TestReverse_PutsAShortPayBackOnTheInvoiceAndTheLedger(t *testing.T) {
 
 	invoiceID := pulid.MustNew("inv_")
 	payment := postedPayment(9000, 9000, &customerpayment.Application{
-		ID: pulid.MustNew("cpapp_"), InvoiceID: invoiceID, AppliedAmountMinor: 9000, ShortPayAmountMinor: 1000,
+		ID: pulid.MustNew(
+			"cpapp_",
+		), InvoiceID: invoiceID, AppliedAmountMinor: 9000, ShortPayAmountMinor: 1000,
 	})
 	settled := openInvoiceFor(payment, 10000, 10000)
 	settled.ID = invoiceID
@@ -387,7 +419,11 @@ func TestReverse_PutsAShortPayBackOnTheInvoiceAndTheLedger(t *testing.T) {
 	}, w.actor)
 
 	require.NoError(t, err)
-	assert.Zero(t, w.invoices[invoiceID].AppliedAmountMinor, "the short pay no longer settles anything")
+	assert.Zero(
+		t,
+		w.invoices[invoiceID].AppliedAmountMinor,
+		"the short pay no longer settles anything",
+	)
 	assert.Equal(t, invoice.SettlementStatusUnpaid, w.invoices[invoiceID].SettlementStatus)
 
 	require.Len(t, w.postings, 1)

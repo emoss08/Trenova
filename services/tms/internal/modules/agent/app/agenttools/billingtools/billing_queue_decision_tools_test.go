@@ -5,14 +5,18 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -35,7 +39,11 @@ type fakeQueue struct {
 	unknown map[pulid.ID]bool
 }
 
-func (f *fakeQueue) CheckBiller(_ context.Context, _ pagination.TenantInfo, billerID pulid.ID) error {
+func (f *fakeQueue) CheckBiller(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	billerID pulid.ID,
+) error {
 	if f.unknown[billerID] {
 		return errortypes.NewValidationError("billerId", errortypes.ErrInvalid,
 			"Biller user not found in the current tenant")
@@ -96,16 +104,23 @@ func (f *fakeQueue) AssignBiller(
 func TestHoldBillingQueueItem_AnAgentHoldsAnItemWithItsNote(t *testing.T) {
 	t.Parallel()
 
-	queue := &fakeQueue{item: agenttoolstest.ReviewedItem(billingqueue.StatusInReview), guard: &agenttoolstest.WriteGuard{}}
+	queue := &fakeQueue{
+		item:  agenttoolstest.ReviewedItem(billingqueue.StatusInReview),
+		guard: &agenttoolstest.WriteGuard{},
+	}
 	tool := NewHoldBillingQueueItemTool(queue).(*BillingQueueDecisionTool)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamNote:               "Waiting on the lumper receipt from the consignee",
+		billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String(),
+		toolparams.ParamNote:                        "Waiting on the lumper receipt from the consignee",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceBillingQueue, change.Resource)
 	assert.Equal(t, "OnHold", agenttoolstest.FieldByPath(t, change, "status").After)
@@ -120,30 +135,43 @@ func TestHoldBillingQueueItem_AnAgentHoldsAnItemWithItsNote(t *testing.T) {
 func TestSendBackToOps_PreviewsTheNoteOperationsWillSee(t *testing.T) {
 	t.Parallel()
 
-	queue := &fakeQueue{item: agenttoolstest.ReviewedItem(billingqueue.StatusInReview), guard: &agenttoolstest.WriteGuard{}}
+	queue := &fakeQueue{
+		item:  agenttoolstest.ReviewedItem(billingqueue.StatusInReview),
+		guard: &agenttoolstest.WriteGuard{},
+	}
 	tool := NewSendBackToOpsTool(queue).(*BillingQueueDecisionTool)
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		paramExceptionReasonCode:       "WeightDiscrepancy",
-		common.ParamNote:               "The BOL says 42,000 lb; the shipment says 24,000",
+		billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String(),
+		paramExceptionReasonCode:                    "WeightDiscrepancy",
+		toolparams.ParamNote:                        "The BOL says 42,000 lb; the shipment says 24,000",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	item := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "SentBackToOps", agenttoolstest.FieldByPath(t, item, "status").After)
-	assert.Equal(t, "WeightDiscrepancy", agenttoolstest.FieldByPath(t, item, "exceptionReasonCode").After)
+	assert.Equal(
+		t,
+		"WeightDiscrepancy",
+		agenttoolstest.FieldByPath(t, item, "exceptionReasonCode").After,
+	)
 
 	note := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceShipment, note.Resource)
 	assert.Equal(t, queue.item.ShipmentID, note.EntityID)
 	require.NotNil(t, note.Message)
-	assert.Equal(t, agent.MessageChannelComment, note.Message.Channel)
-	assert.Equal(t,
+	assert.Equal(t, agentpreview.MessageChannelComment, note.Message.Channel)
+	assert.Equal(
+		t,
 		"Sent back from billing: WeightDiscrepancy\n\nThe BOL says 42,000 lb; the shipment says 24,000",
-		note.Message.Body)
+		note.Message.Body,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, billingqueue.StatusSentBackToOps, queue.item.Status)
@@ -155,7 +183,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		build  func(common.BillingQueueDecider) agentports.AgentTool
+		build  func(billingqueuepreview.BillingQueueDecider) agenttoolports.AgentTool
 		status billingqueue.Status
 		params map[string]any
 	}{
@@ -174,7 +202,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 			status: billingqueue.StatusReadyForReview,
 			params: map[string]any{
 				paramExceptionReasonCode: "IncorrectRates",
-				common.ParamNote:         "Linehaul is 200 under the agreement",
+				toolparams.ParamNote:     "Linehaul is 200 under the agreement",
 			},
 		},
 		"a hold without saying what it waits on": {
@@ -185,7 +213,7 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 		"a cancel reason longer than the queue keeps": {
 			build:  NewCancelBillingQueueItemTool,
 			status: billingqueue.StatusInReview,
-			params: map[string]any{common.ParamReason: string(make([]byte, 101))},
+			params: map[string]any{toolparams.ParamReason: string(make([]byte, 101))},
 		},
 	}
 
@@ -193,10 +221,13 @@ func TestBillingDecisions_RefuseWhatTheQueueWouldRefuse(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			queue := &fakeQueue{item: agenttoolstest.ReviewedItem(tc.status), guard: &agenttoolstest.WriteGuard{}}
+			queue := &fakeQueue{
+				item:  agenttoolstest.ReviewedItem(tc.status),
+				guard: &agenttoolstest.WriteGuard{},
+			}
 			params := tc.params
-			params[common.ParamBillingQueueItemID] = queue.item.ID.String()
-			tool := tc.build(queue).(agentports.ToolValidator)
+			params[billingqueuepreview.ParamBillingQueueItemID] = queue.item.ID.String()
+			tool := tc.build(queue).(agenttoolports.ToolValidator)
 
 			require.Error(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(params)))
 		})
@@ -209,7 +240,10 @@ func approveFixture(
 ) (*fakeQueue, *ApproveBillingQueueItemTool) {
 	t.Helper()
 
-	queue := &fakeQueue{item: agenttoolstest.ReviewedItem(billingqueue.StatusInReview), guard: &agenttoolstest.WriteGuard{}}
+	queue := &fakeQueue{
+		item:  agenttoolstest.ReviewedItem(billingqueue.StatusInReview),
+		guard: &agenttoolstest.WriteGuard{},
+	}
 	tool := NewApproveBillingQueueItemTool(queue, invoices).(*ApproveBillingQueueItemTool)
 
 	return queue, tool
@@ -240,13 +274,17 @@ func TestApproveBillingQueueItem_PreviewShowsTheDraftInvoiceAndAutoPost(t *testi
 		},
 	})
 	params := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamReviewNotes:        "Charges match the agreement; POD and BOL on file",
+		billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String(),
+		billingqueuepreview.ParamReviewNotes:        "Charges match the agreement; POD and BOL on file",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "creating draft invoice INV-5001")
@@ -256,7 +294,7 @@ func TestApproveBillingQueueItem_PreviewShowsTheDraftInvoiceAndAutoPost(t *testi
 	assert.Equal(t, "Approved", agenttoolstest.FieldByPath(t, item, "status").After)
 	draft := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceInvoice, draft.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, draft.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, draft.Operation)
 	require.NotNil(t, draft.Money)
 	assert.True(t, draft.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("1650.00")))
 }
@@ -269,16 +307,22 @@ func TestApproveBillingQueueItem_RefusesAnItemADetentionChargeHolds(t *testing.T
 
 	queue, tool := approveFixture(t, &agenttoolstest.FakeApprovalInvoices{})
 	queue.item.DetentionHolds = []*billingqueue.DetentionHold{{OccurrenceID: pulid.MustNew("dto_")}}
-	params := agenttoolstest.AgentParamsFor(map[string]any{common.ParamBillingQueueItemID: queue.item.ID.String()})
+	params := agenttoolstest.AgentParamsFor(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String()},
+	)
 
 	err := tool.Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "detention charge")
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 // A flagged check nobody settled holds the item too. Proposing the approval
@@ -292,17 +336,23 @@ func TestApproveBillingQueueItem_RefusesAnItemWithAnOpenFlaggedCheck(t *testing.
 		{Summary: "Fuel surcharge is not in the agreement"},
 		{Summary: "Weight differs from the BOL", ResolutionKey: &settled},
 	}}
-	params := agenttoolstest.AgentParamsFor(map[string]any{common.ParamBillingQueueItemID: queue.item.ID.String()})
+	params := agenttoolstest.AgentParamsFor(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String()},
+	)
 
 	err := tool.Validate(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Fuel surcharge is not in the agreement")
 	assert.NotContains(t, err.Error(), "Weight differs")
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 // Approval is a person's decision: the agent's own call is refused, and the
@@ -316,13 +366,19 @@ func TestApproveBillingQueueItem_RunsOnlyFromAPersonsApproval(t *testing.T) {
 		Result: &invoiceports.CreateInvoiceFromBillingQueueResult{Invoice: made},
 	})
 
-	unattended := agenttoolstest.AgentParamsFor(map[string]any{common.ParamBillingQueueItemID: queue.item.ID.String()})
-	require.ErrorIs(t, tool.Execute(t.Context(), unattended), common.ErrDecisionNeedsAPerson)
+	unattended := agenttoolstest.AgentParamsFor(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String()},
+	)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), unattended),
+		billingqueuepreview.ErrDecisionNeedsAPerson,
+	)
 	assert.Nil(t, queue.updated)
 
 	approved := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamReviewNotes:        "Checked",
+		billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String(),
+		billingqueuepreview.ParamReviewNotes:        "Checked",
 	})
 	approved.ProposalID = pulid.MustNew("ap_")
 	result, err := tool.ExecuteWithResult(t.Context(), approved)
@@ -332,31 +388,46 @@ func TestApproveBillingQueueItem_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	assert.Equal(t, approved.Actor, queue.actor)
 	assert.Equal(t, made.ID.String(), result.IDs["invoiceId"])
 	require.NotNil(t, result.Record)
-	assert.Equal(t, common.InvoiceRecordEntity, result.Record.EntityType)
+	assert.Equal(t, changepreview.InvoiceRecordEntity, result.Record.EntityType)
 }
 
 func TestCancelBillingQueueItem_IsProposedAndRunsAsTheApprover(t *testing.T) {
 	t.Parallel()
 
-	queue := &fakeQueue{item: agenttoolstest.ReviewedItem(billingqueue.StatusInReview), guard: &agenttoolstest.WriteGuard{}}
+	queue := &fakeQueue{
+		item:  agenttoolstest.ReviewedItem(billingqueue.StatusInReview),
+		guard: &agenttoolstest.WriteGuard{},
+	}
 	tool := NewCancelBillingQueueItemTool(queue).(*BillingQueueDecisionTool)
 	proposed := agenttoolstest.AgentParamsFor(map[string]any{
-		common.ParamBillingQueueItemID: queue.item.ID.String(),
-		common.ParamReason:             "Duplicate of INV-4990",
+		billingqueuepreview.ParamBillingQueueItemID: queue.item.ID.String(),
+		toolparams.ParamReason:                      "Duplicate of INV-4990",
 	})
 
 	require.NoError(t, tool.Validate(t.Context(), proposed),
 		"who cancels is the approver, not something the proposal can name")
-	require.ErrorIs(t, tool.Execute(t.Context(), proposed), common.ErrDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), proposed),
+		billingqueuepreview.ErrDecisionNeedsAPerson,
+	)
 
 	approved := agenttoolstest.ExecuteParams(proposed.Params)
 	approved.ProposalID = pulid.MustNew("ap_")
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), approved)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), approved)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "Canceled", agenttoolstest.FieldByPath(t, change, "status").After)
-	assert.Equal(t, "Duplicate of INV-4990", agenttoolstest.FieldByPath(t, change, "cancelReason").After)
+	assert.Equal(
+		t,
+		"Duplicate of INV-4990",
+		agenttoolstest.FieldByPath(t, change, "cancelReason").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), approved))
 	assert.Equal(t, billingqueue.StatusCanceled, queue.item.Status)
@@ -373,13 +444,17 @@ func TestAssignBillingQueueBiller_MovesAWaitingItemIntoReview(t *testing.T) {
 	tool := NewAssignBillerTool(queue).(*AssignBillerTool)
 	biller := pulid.MustNew("usr_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemID: item.ID.String(),
-		paramBillerID:                  biller.String(),
+		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
+		paramBillerID: biller.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "InReview", agenttoolstest.FieldByPath(t, change, "status").After)
 	require.NotNil(t, agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef)
@@ -396,7 +471,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 	t.Parallel()
 
 	queue := &fakeQueue{item: agenttoolstest.ReviewedItem(billingqueue.StatusInReview)}
-	personal := []agentports.AgentTool{
+	personal := []agenttoolports.AgentTool{
 		NewApproveBillingQueueItemTool(queue, &agenttoolstest.FakeApprovalInvoices{}),
 		NewCancelBillingQueueItemTool(queue),
 	}
@@ -407,7 +482,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 		assert.False(t, policy.Reversible, tool.Name())
 	}
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewHoldBillingQueueItemTool(queue),
 		NewMoveToExceptionTool(queue),
 		NewSendBackToOpsTool(queue),
@@ -417,7 +492,7 @@ func TestBillingDecisions_DeclareWhoMayMakeThem(t *testing.T) {
 		assert.Equal(t, agent.TierAutoExecute, policy.MaxTier, tool.Name())
 		assert.Equal(t, permission.OpUpdate, policy.Operation, tool.Name())
 		require.NotNil(t, policy.TaintHold, tool.Name())
-		assert.True(t, permission.IsAgentAllowed(policy.Resource, policy.Operation), tool.Name())
+		assert.True(t, agentceiling.Allows(policy.Resource, policy.Operation), tool.Name())
 	}
 
 	assert.Equal(t, permission.OpAssign, NewAssignBillerTool(queue).Policy().Operation)
@@ -434,11 +509,15 @@ func TestAssignBillingQueueBiller_RefusesABillerWhoIsNotAUser(t *testing.T) {
 	item := agenttoolstest.ReviewedItem(billingqueue.StatusReadyForReview)
 	item.AssignedBillerID = nil
 	invented := pulid.MustNew("usr_")
-	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}, unknown: map[pulid.ID]bool{invented: true}}
+	queue := &fakeQueue{
+		item:    item,
+		guard:   &agenttoolstest.WriteGuard{},
+		unknown: map[pulid.ID]bool{invented: true},
+	}
 	tool := NewAssignBillerTool(queue).(*AssignBillerTool)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemID: item.ID.String(),
-		paramBillerID:                  invented.String(),
+		billingqueuepreview.ParamBillingQueueItemID: item.ID.String(),
+		paramBillerID: invented.String(),
 	})
 
 	err := tool.Validate(t.Context(), params)

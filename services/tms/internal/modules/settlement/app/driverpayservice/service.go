@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -66,13 +68,6 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 	}
 }
 
-func requireActor(actor *permissionports.RequestActor, operation string) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
-	}
-	return nil
-}
-
 func (s *Service) ListProfiles(
 	ctx context.Context,
 	req *driverpayports.ListPayProfilesRequest,
@@ -94,6 +89,13 @@ func (s *Service) GetProfile(
 	return s.profileRepo.GetByID(ctx, req)
 }
 
+func (s *Service) GetProfilesByIDs(
+	ctx context.Context,
+	req driverpayports.GetPayProfilesByIDsRequest,
+) ([]*driverpay.PayProfile, error) {
+	return s.profileRepo.GetByIDs(ctx, req)
+}
+
 func (s *Service) ProfileSelectOptions(
 	ctx context.Context,
 	req *driverpayports.PayProfileSelectOptionsRequest,
@@ -106,7 +108,7 @@ func (s *Service) CreateProfile(
 	entity *driverpay.PayProfile,
 	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
-	if err := requireActor(actor, "Pay profile creation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay profile creation"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
@@ -128,7 +130,7 @@ func (s *Service) UpdateProfile(
 	entity *driverpay.PayProfile,
 	actor *permissionports.RequestActor,
 ) (*driverpay.PayProfile, error) {
-	if err := requireActor(actor, "Pay profile update"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Pay profile update"); err != nil {
 		return nil, err
 	}
 	multiErr := errortypes.NewMultiError()
@@ -160,7 +162,7 @@ func (s *Service) UpdateProfile(
 func (s *Service) ListWorkerAssignments(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,
-) ([]*driverpay.WorkerPayAssignment, error) {
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return s.assignmentRepo.ListForWorker(ctx, req)
 }
 
@@ -168,14 +170,14 @@ func (s *Service) ListProfileAssignments(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	profileID pulid.ID,
-) ([]*driverpay.WorkerPayAssignment, error) {
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return s.assignmentRepo.ListForProfile(ctx, tenantInfo, profileID)
 }
 
 func (s *Service) GetEffectiveAssignment(
 	ctx context.Context,
 	req driverpayports.GetWorkerPayAssignmentRequest,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	if req.AsOf == 0 {
 		req.AsOf = timeutils.NowUnix()
 	}
@@ -184,10 +186,10 @@ func (s *Service) GetEffectiveAssignment(
 
 func (s *Service) AssignProfileToWorker(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 	actor *permissionports.RequestActor,
-) (*driverpay.WorkerPayAssignment, error) {
-	if err := requireActor(actor, "Pay profile assignment"); err != nil {
+) (*payassignment.WorkerPayAssignment, error) {
+	if err := settlementshared.RequireActor(actor, "Pay profile assignment"); err != nil {
 		return nil, err
 	}
 	plan, err := s.PlanAssignment(ctx, entity)
@@ -195,7 +197,7 @@ func (s *Service) AssignProfileToWorker(
 		return nil, err
 	}
 
-	var created *driverpay.WorkerPayAssignment
+	var created *payassignment.WorkerPayAssignment
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.endOverlappingAssignments(txCtx, entity); txErr != nil {
 			return txErr
@@ -215,7 +217,7 @@ func (s *Service) AssignProfileToWorker(
 }
 
 func validateRateOverrides(
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 	profile *driverpay.PayProfile,
 ) error {
 	if len(entity.RateOverrides) == 0 {
@@ -245,7 +247,7 @@ func validateRateOverrides(
 
 func (s *Service) endOverlappingAssignments(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 ) error {
 	overlapping, err := s.assignmentRepo.ListOverlapping(ctx, entity)
 	if err != nil {
@@ -269,8 +271,8 @@ func (s *Service) EndAssignment(
 	assignmentID pulid.ID,
 	endDate int64,
 	actor *permissionports.RequestActor,
-) (*driverpay.WorkerPayAssignment, error) {
-	if err := requireActor(actor, "Pay assignment termination"); err != nil {
+) (*payassignment.WorkerPayAssignment, error) {
+	if err := settlementshared.RequireActor(actor, "Pay assignment termination"); err != nil {
 		return nil, err
 	}
 	entity, err := s.assignmentRepo.GetByID(ctx, tenantInfo, assignmentID)
@@ -314,7 +316,7 @@ func (s *Service) logProfileAudit(
 }
 
 func (s *Service) logAssignmentAudit(
-	current *driverpay.WorkerPayAssignment,
+	current *payassignment.WorkerPayAssignment,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,

@@ -130,7 +130,7 @@ Input tokens on the span are the whole prompt, as the semantic conventions ask:
 Anthropic reports cached tokens beside `input_tokens`, so they are added
 (`aiprovider.Kind.CachesOutsideInput`); OpenAI counts them inside it. The usage
 row keeps the provider's own `input_tokens`, with the cache counts in their own
-columns. Cost is priced from all three by `aiprovider.Provider.CostFor`, the one
+columns. Cost is priced from all three by `aipricing.CostFor`, the one
 pricing function every cost path uses: fresh input at the input price, cache
 reads at `cache_read_cost_per_million` and writes at
 `cache_write_cost_per_million`. A cache price left empty takes the protocol's
@@ -226,6 +226,7 @@ was sampled, so the audit trail can always name it.
 | `agent_run_steps.trace_id`, `.span_id` | `runstepledger.Claim`, from the `execute_tool` span | when the call is claimed |
 | `agent_run_steps.agent_definition_id`, `.agent_definition_version`, `.delegate_call_id` | the same, from the turn's definition (a delegate's own) and delegation | same |
 | `agent_run_steps.outcome.reason`, `.verdict` | `runstepledger.Settle` | when the call settles |
+| a `Completion` step's `.trace_id`, `.span_id`, `.agent_definition_id`, `.agent_definition_version`, `.delegate_call_id` | `replystep.Ledger.Keep` through `runstepledger.Record`, from the model activity's context and the request's `AIUsageAttribution` | when the reply arrives |
 | `agent_proposals.id` | minted in the dispatch activity (`PendingAction.ProposalID`); the insert mints one for an action from an older history | when the proposal is filed |
 | `agent_proposals.trace_id`, `.span_id`, `.step_key` | `proposalrecorder`, from the action | same |
 | `agent_proposals.executed_at` | the recorder, from `PendingAction.ExecutedAt` (when an automatic write ran); the executor for an approved one | at filing; at execution |
@@ -234,7 +235,7 @@ was sampled, so the audit trail can always name it.
 | `agent_decisions.trace_id` | `agentdecisionservice`, the `decide` span's trace | when the decision is recorded |
 | `agent_decisions.preview`, `.preview_digest`, `.preview_reviewed`, `.preview_target_version` | `agentdecisionservice`, from the preview settled for the decider (a plan's step: the plan's) | same |
 | `agent_proposal_baselines` | `proposalpreviewservice.Baseline`, from the dispatch activity, keyed by `PendingAction.ProposalID` | when a held write is decided, before the proposal is filed |
-| `ai_usage_records.trace_id`, `.span_id` | `completionrouter.record`, the attempt's `chat` span | per attempt, off the request path |
+| `ai_usage_records.trace_id`, `.span_id` | `completionengine.Engine.Record`, the attempt's `chat` span | per attempt, off the request path |
 | `ai_usage_records.owner_kind`, `.owner_id`, `.delegate_call_id`, `.agent_definition_version` | the same, from `AIUsageAttribution`, set in `Turn.completionRequest()` | same |
 | `ai_usage_records.attempt`, `.failover`, `.cache_read_tokens`, `.cache_write_tokens` | the same | same |
 | `agent_run_events.occurred_at` | `agentruneventservice`, from `StreamItem.At` (the workflow's clock) or now | when the account is written |

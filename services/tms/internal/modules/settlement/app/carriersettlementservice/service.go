@@ -7,22 +7,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementjournal"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementrealtime"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,17 +37,13 @@ type Params struct {
 	LedgerRepo        carriersettlementports.CarrierLedgerRepository
 	InvoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	SettlementControl tenantports.CarrierSettlementControlRepository
-	CarrierRepo       carrierports.CarrierRepository
-	AssignmentRepo    shipmentports.CarrierAssignmentRepository
-	ShipmentRepo      shipmentports.ShipmentRepository
-	EDIInvoiceRepo    ediports.EDICarrierInvoiceRepository
 	AccountingRepo    tenantports.AccountingControlRepository
 	Stamper           *exchangeratestamp.Stamper
 	JournalRepo       journalentryports.JournalPostingRepository
 	FiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	Generator         seqgen.Generator
 	AuditService      auditports.AuditService
-	Realtime          agentports.RealtimeService
+	Realtime          realtimeports.RealtimeService
 	Sync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
 }
 
@@ -64,23 +56,18 @@ type Service struct {
 	ledgerRepo        carriersettlementports.CarrierLedgerRepository
 	invoiceMatchRepo  carriersettlementports.CarrierInvoiceMatchRepository
 	settlementControl tenantports.CarrierSettlementControlRepository
-	carrierRepo       carrierports.CarrierRepository
-	assignmentRepo    shipmentports.CarrierAssignmentRepository
-	shipmentRepo      shipmentports.ShipmentRepository
-	ediInvoiceRepo    ediports.EDICarrierInvoiceRepository
-	accountingRepo    tenantports.AccountingControlRepository
 	stamper           *exchangeratestamp.Stamper
-	journalRepo       journalentryports.JournalPostingRepository
-	fiscalPeriodRepo  fiscalperiodports.FiscalPeriodRepository
 	generator         seqgen.Generator
 	auditService      auditports.AuditService
-	realtime          agentports.RealtimeService
 	sync              accountingsyncports.AccountingSyncEnqueuer
+	publisher         carriersettlementrealtime.Publisher
+	journals          *carriersettlementjournal.Writer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
+	l := p.Logger.Named("service.carrier-settlement")
 	return &Service{
-		l:                 p.Logger.Named("service.carrier-settlement"),
+		l:                 l,
 		db:                p.DB,
 		settlementRepo:    p.SettlementRepo,
 		batchRepo:         p.BatchRepo,
@@ -88,18 +75,18 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		ledgerRepo:        p.LedgerRepo,
 		invoiceMatchRepo:  p.InvoiceMatchRepo,
 		settlementControl: p.SettlementControl,
-		carrierRepo:       p.CarrierRepo,
-		assignmentRepo:    p.AssignmentRepo,
-		shipmentRepo:      p.ShipmentRepo,
-		ediInvoiceRepo:    p.EDIInvoiceRepo,
-		accountingRepo:    p.AccountingRepo,
 		stamper:           p.Stamper,
-		journalRepo:       p.JournalRepo,
-		fiscalPeriodRepo:  p.FiscalPeriodRepo,
 		generator:         p.Generator,
 		auditService:      p.AuditService,
-		realtime:          p.Realtime,
 		sync:              p.Sync,
+		publisher:         carriersettlementrealtime.NewPublisher(l, p.Realtime),
+		journals: carriersettlementjournal.New(&carriersettlementjournal.Params{
+			AccountingRepo:    p.AccountingRepo,
+			SettlementControl: p.SettlementControl,
+			JournalRepo:       p.JournalRepo,
+			FiscalPeriodRepo:  p.FiscalPeriodRepo,
+			Generator:         p.Generator,
+		}),
 	}
 }
 
@@ -126,13 +113,6 @@ func (s *Service) queueSync(
 			PostedAt:    entity.PostedAt,
 		}),
 	)
-}
-
-func requireActor(actor *permissionports.RequestActor, operation string) error {
-	if actor == nil || actor.UserID.IsNil() {
-		return errortypes.NewAuthorizationError("{0} requires an authenticated user", operation)
-	}
-	return nil
 }
 
 func (s *Service) List(
@@ -198,52 +178,6 @@ func (s *Service) ListLedgerEntries(
 	return s.ledgerRepo.ListByCarrier(ctx, req)
 }
 
-func (s *Service) publishRealtimeInvalidation(
-	ctx context.Context,
-	resource string,
-	action permission.Operation,
-	recordID, orgID, buID, userID pulid.ID,
-) {
-	if s.realtime == nil {
-		return
-	}
-	err := realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		ActorUserID:    userID,
-		ActorType:      permissionports.PrincipalTypeUser,
-		ActorID:        userID,
-		Resource:       resource,
-		Action:         string(action),
-		RecordID:       recordID,
-	})
-	if err != nil {
-		s.l.Warn("failed to publish realtime invalidation",
-			zap.String("resource", resource),
-			zap.Error(err))
-	}
-}
-
-func (s *Service) publishCostEventInvalidation(
-	ctx context.Context,
-	entity *carriersettlement.CostEvent,
-	action permission.Operation,
-	userID pulid.ID,
-) {
-	if entity == nil {
-		return
-	}
-	s.publishRealtimeInvalidation(
-		ctx,
-		"carrier_cost_event",
-		action,
-		entity.ID,
-		entity.OrganizationID,
-		entity.BusinessUnitID,
-		userID,
-	)
-}
-
 func (s *Service) logSettlementAudit(
 	ctx context.Context,
 	current, previous *carriersettlement.CarrierSettlement,
@@ -251,7 +185,7 @@ func (s *Service) logSettlementAudit(
 	operation permission.Operation,
 	comment string,
 ) {
-	s.publishRealtimeInvalidation(
+	s.publisher.Publish(
 		ctx,
 		permission.ResourceCarrierSettlement.String(),
 		operation,

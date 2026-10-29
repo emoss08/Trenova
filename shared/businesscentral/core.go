@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/emoss08/trenova/shared/restx"
 )
 
@@ -19,29 +20,29 @@ const (
 	languageHeader      = "Accept-Language"
 	wildcardETag        = "*"
 	maxETagLength       = 512
-	suffixCreate        = "-create"
-	suffixGet           = "-get"
-	suffixSearch        = "-search"
-	suffixDelete        = "-delete"
-	suffixUpdate        = "-update"
+	SuffixCreate        = "-create"
+	SuffixGet           = "-get"
+	SuffixSearch        = "-search"
+	SuffixDelete        = "-delete"
+	SuffixUpdate        = "-update"
 )
 
-type core struct {
+type Core struct {
 	reads    *restx.Client
 	writes   *restx.Client
 	base     *url.URL
 	pageSize int
 }
 
-type call struct {
-	endpoint string
-	method   string
-	path     string
-	query    url.Values
-	ifMatch  string
-	body     any
-	out      any
-	expected []int
+type Call struct {
+	Endpoint string
+	Method   string
+	Path     string
+	Query    url.Values
+	IfMatch  string
+	Body     any
+	Out      any
+	Expected []int
 }
 
 type collection[T any] struct {
@@ -49,11 +50,11 @@ type collection[T any] struct {
 	NextLink string `json:"@odata.nextLink"`
 }
 
-type listCall struct {
-	endpoint string
-	path     string
-	filter   string
-	unpaged  bool
+type ListCall struct {
+	Endpoint string
+	Path     string
+	Filter   string
+	Unpaged  bool
 }
 
 type pageCursor struct {
@@ -63,7 +64,7 @@ type pageCursor struct {
 	linked bool
 }
 
-func newCore(settings *options, token string, bucket *restx.Bucket) (*core, error) {
+func newCore(settings *options, token string, bucket *restx.Bucket) (*Core, error) {
 	cfg := restx.Config{
 		BaseURL:    settings.baseURL,
 		Timeout:    settings.timeout,
@@ -75,7 +76,7 @@ func newCore(settings *options, token string, bucket *restx.Bucket) (*core, erro
 		},
 		Retry:        settings.retry,
 		Observer:     settings.observer,
-		ErrorDecoder: decodeAPIError,
+		ErrorDecoder: businesscentralerrors.DecodeAPIError,
 	}
 	if settings.limiter != nil && bucket != nil {
 		limited := *bucket
@@ -96,93 +97,93 @@ func newCore(settings *options, token string, bucket *restx.Bucket) (*core, erro
 	if err != nil {
 		return nil, fmt.Errorf("businesscentral: parse base url: %w", err)
 	}
-	return &core{reads: reads, writes: writes, base: base, pageSize: settings.pageSize}, nil
+	return &Core{reads: reads, writes: writes, base: base, pageSize: settings.pageSize}, nil
 }
 
-func (c *core) do(ctx context.Context, req *call) (*restx.Response, error) {
+func (c *Core) do(ctx context.Context, req *Call) (*restx.Response, error) {
 	transport := c.reads
-	if req.method != http.MethodGet {
+	if req.Method != http.MethodGet {
 		transport = c.writes
 	}
-	expected := req.expected
+	expected := req.Expected
 	if len(expected) == 0 {
 		expected = []int{http.StatusOK}
 	}
-	resp, err := transport.Do(withRequestHeaders(ctx, requestHeaders{ifMatch: req.ifMatch}),
+	resp, err := transport.Do(withRequestHeaders(ctx, requestHeaders{ifMatch: req.IfMatch}),
 		&restx.Request{
-			Endpoint:       req.endpoint,
-			Method:         req.method,
-			Path:           req.path,
-			Query:          req.query,
-			Body:           req.body,
-			Out:            req.out,
+			Endpoint:       req.Endpoint,
+			Method:         req.Method,
+			Path:           req.Path,
+			Query:          req.Query,
+			Body:           req.Body,
+			Out:            req.Out,
 			ExpectedStatus: expected,
 		})
 	if err != nil {
-		redactAPIError(err, transport.Redact)
+		businesscentralerrors.RedactAPIError(err, transport.Redact)
 	}
 	return resp, err
 }
 
-func fetchOne[W, T any](ctx context.Context, c *core, req *call, convert func(*W) T) (*T, error) {
+func FetchOne[W, T any](ctx context.Context, c *Core, req *Call, convert func(*W) T) (*T, error) {
 	var wire W
-	req.out = &wire
+	req.Out = &wire
 	resp, err := c.do(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	if resp == nil || len(bytes.TrimSpace(resp.Body)) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 	out := convert(&wire)
 	return &out, nil
 }
 
-func fetchFirst[W, T any](
+func FetchFirst[W, T any](
 	ctx context.Context,
-	c *core,
-	req *listCall,
+	c *Core,
+	req *ListCall,
 	convert func(*W) T,
 ) (*T, error) {
 	var wire collection[W]
-	if _, err := c.do(ctx, &call{
-		endpoint: req.endpoint,
-		method:   http.MethodGet,
-		path:     req.path,
-		out:      &wire,
+	if _, err := c.do(ctx, &Call{
+		Endpoint: req.Endpoint,
+		Method:   http.MethodGet,
+		Path:     req.Path,
+		Out:      &wire,
 	}); err != nil {
 		return nil, err
 	}
 	if len(wire.Value) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, businesscentralerrors.ErrUnexpectedPayload
 	}
 	out := convert(&wire.Value[0])
 	return &out, nil
 }
 
-func collect[W, T any](
+func Collect[W, T any](
 	ctx context.Context,
-	c *core,
-	req *listCall,
+	c *Core,
+	req *ListCall,
 	convert func(*W) T,
 ) ([]T, error) {
 	query := url.Values{}
-	if !req.unpaged {
+	if !req.Unpaged {
 		query.Set(topParam, strconv.Itoa(c.pageSize))
 	}
-	if req.filter != "" {
-		query.Set(filterParam, req.filter)
+	if req.Filter != "" {
+		query.Set(filterParam, req.Filter)
 	}
-	cursor := pageCursor{path: req.path, query: query, linked: req.unpaged}
+	cursor := pageCursor{path: req.Path, query: query, linked: req.Unpaged}
 	out := make([]T, 0)
 	for range maxPages {
 		var wire collection[W]
-		_, err := c.do(ctx, &call{
-			endpoint: req.endpoint,
-			method:   http.MethodGet,
-			path:     cursor.path,
-			query:    cursor.query,
-			out:      &wire,
+		_, err := c.do(ctx, &Call{
+			Endpoint: req.Endpoint,
+			Method:   http.MethodGet,
+			Path:     cursor.path,
+			Query:    cursor.query,
+			Out:      &wire,
 		})
 		if err != nil {
 			return nil, err
@@ -198,10 +199,10 @@ func collect[W, T any](
 			return out, nil
 		}
 	}
-	return nil, ErrTooManyResults
+	return nil, businesscentralerrors.ErrTooManyResults
 }
 
-func (c *core) advance(cursor *pageCursor, nextLink string, received int) (bool, error) {
+func (c *Core) advance(cursor *pageCursor, nextLink string, received int) (bool, error) {
 	if nextLink != "" {
 		path, query, err := c.resolveNextLink(nextLink)
 		if err != nil {
@@ -218,37 +219,37 @@ func (c *core) advance(cursor *pageCursor, nextLink string, received int) (bool,
 	return true, nil
 }
 
-func (c *core) resolveNextLink(raw string) (string, url.Values, error) {
+func (c *Core) resolveNextLink(raw string) (string, url.Values, error) {
 	link, err := url.Parse(strings.TrimSpace(raw))
 	if err != nil || link.User != nil || link.Fragment != "" ||
 		!strings.EqualFold(link.Scheme, c.base.Scheme) ||
 		!strings.EqualFold(link.Host, c.base.Host) {
-		return "", nil, ErrForeignNextLink
+		return "", nil, businesscentralerrors.ErrForeignNextLink
 	}
 	prefix := strings.TrimRight(c.base.EscapedPath(), "/")
 	escaped := link.EscapedPath()
 	if !strings.HasPrefix(escaped, prefix+"/") || strings.Contains(escaped+"/", "/../") ||
 		strings.Contains(escaped+"/", "/./") {
-		return "", nil, ErrForeignNextLink
+		return "", nil, businesscentralerrors.ErrForeignNextLink
 	}
 	query, err := url.ParseQuery(link.RawQuery)
 	if err != nil {
-		return "", nil, ErrForeignNextLink
+		return "", nil, businesscentralerrors.ErrForeignNextLink
 	}
 	return strings.TrimPrefix(escaped, prefix), query, nil
 }
 
-func ifMatch(etag string) (string, error) {
+func IfMatch(etag string) (string, error) {
 	value := strings.TrimSpace(etag)
 	if value == "" {
 		return wildcardETag, nil
 	}
 	if len(value) > maxETagLength {
-		return "", ErrInvalidETag
+		return "", businesscentralerrors.ErrInvalidETag
 	}
 	for idx := range len(value) {
 		if value[idx] < ' ' || value[idx] > '~' {
-			return "", ErrInvalidETag
+			return "", businesscentralerrors.ErrInvalidETag
 		}
 	}
 	return value, nil
@@ -256,5 +257,5 @@ func ifMatch(etag string) (string, error) {
 
 func environmentPath(tenantID, environment string) string {
 	return "/" + apiVersionRoot + "/" + tenantID + "/" + url.PathEscape(environment) +
-		"/" + apiSegment
+		"/" + APISegment
 }

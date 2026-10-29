@@ -5,15 +5,20 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,16 +27,16 @@ import (
 )
 
 type fakeTenderChanges struct {
-	change  *edi.TenderChange
+	change  *editenderchange.TenderChange
 	guard   *agenttoolstest.WriteGuard
-	applied *ediservice.TenderChangeActionRequest
-	refused *ediservice.TenderChangeActionRequest
+	applied *editenderchangeservice.TenderChangeActionRequest
+	refused *editenderchangeservice.TenderChangeActionRequest
 }
 
 func (f *fakeTenderChanges) GetTenderChange(
 	_ context.Context,
-	req ediports.GetEDITenderChangeByIDRequest,
-) (*edi.TenderChange, error) {
+	req editenderports.GetEDITenderChangeByIDRequest,
+) (*editenderchange.TenderChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITenderChange not found")
 	}
@@ -42,9 +47,9 @@ func (f *fakeTenderChanges) GetTenderChange(
 
 func (f *fakeTenderChanges) ApplyTenderChange(
 	_ context.Context,
-	req *ediservice.TenderChangeActionRequest,
+	req *editenderchangeservice.TenderChangeActionRequest,
 	_ *permissionports.RequestActor,
-) (*edi.TenderChange, error) {
+) (*editenderchange.TenderChange, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -55,9 +60,9 @@ func (f *fakeTenderChanges) ApplyTenderChange(
 
 func (f *fakeTenderChanges) RejectTenderChange(
 	_ context.Context,
-	req *ediservice.TenderChangeActionRequest,
+	req *editenderchangeservice.TenderChangeActionRequest,
 	_ *permissionports.RequestActor,
-) (*edi.TenderChange, error) {
+) (*editenderchange.TenderChange, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -67,18 +72,18 @@ func (f *fakeTenderChanges) RejectTenderChange(
 }
 
 type fakeTransferChanges struct {
-	change  *edi.TransferChange
-	effect  *ediservice.TransferChangeEffect
+	change  *edisync.TransferChange
+	effect  *editransferchangeservice.TransferChangeEffect
 	checked error
 	guard   *agenttoolstest.WriteGuard
-	applied *ediservice.TransferChangeActionRequest
-	refused *ediservice.TransferChangeActionRequest
+	applied *editransferchangeservice.TransferChangeActionRequest
+	refused *editransferchangeservice.TransferChangeActionRequest
 }
 
 func (f *fakeTransferChanges) GetTransferChange(
 	_ context.Context,
-	req ediports.GetEDITransferChangeByIDRequest,
-) (*edi.TransferChange, error) {
+	req editenderports.GetEDITransferChangeByIDRequest,
+) (*edisync.TransferChange, error) {
 	if req.ID != f.change.ID {
 		return nil, errortypes.NewNotFoundError("EDITransferChange not found")
 	}
@@ -89,10 +94,10 @@ func (f *fakeTransferChanges) GetTransferChange(
 
 func (f *fakeTransferChanges) CheckTransferChangeReview(
 	_ context.Context,
-	change *edi.TransferChange,
+	change *edisync.TransferChange,
 	_ pagination.TenantInfo,
 ) error {
-	if change.Status != edi.TransferChangeStatusPendingReview {
+	if change.Status != edisync.TransferChangeStatusPendingReview {
 		return errortypes.NewValidationError(
 			"status", errortypes.ErrInvalidOperation,
 			"EDI transfer change has already been reviewed",
@@ -105,10 +110,10 @@ func (f *fakeTransferChanges) CheckTransferChangeReview(
 func (f *fakeTransferChanges) PlanTransferChangeEffect(
 	context.Context,
 	pagination.TenantInfo,
-	*edi.TransferChange,
-) (*ediservice.TransferChangeEffect, error) {
+	*edisync.TransferChange,
+) (*editransferchangeservice.TransferChangeEffect, error) {
 	if f.effect == nil {
-		return &ediservice.TransferChangeEffect{}, nil
+		return &editransferchangeservice.TransferChangeEffect{}, nil
 	}
 
 	return f.effect, nil
@@ -116,9 +121,9 @@ func (f *fakeTransferChanges) PlanTransferChangeEffect(
 
 func (f *fakeTransferChanges) ApplyTransferChange(
 	_ context.Context,
-	req *ediservice.TransferChangeActionRequest,
+	req *editransferchangeservice.TransferChangeActionRequest,
 	_ *permissionports.RequestActor,
-) (*edi.TransferChange, error) {
+) (*edisync.TransferChange, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -129,9 +134,9 @@ func (f *fakeTransferChanges) ApplyTransferChange(
 
 func (f *fakeTransferChanges) RejectTransferChange(
 	_ context.Context,
-	req *ediservice.TransferChangeActionRequest,
+	req *editransferchangeservice.TransferChangeActionRequest,
 	_ *permissionports.RequestActor,
-) (*edi.TransferChange, error) {
+) (*edisync.TransferChange, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -140,28 +145,28 @@ func (f *fakeTransferChanges) RejectTransferChange(
 	return f.change, nil
 }
 
-func pendingTenderChange(orgID, buID pulid.ID) *edi.TenderChange {
+func pendingTenderChange(orgID, buID pulid.ID) *editenderchange.TenderChange {
 	weightBefore, weightAfter := int64(20000), int64(42000)
 
-	return &edi.TenderChange{
+	return &editenderchange.TenderChange{
 		ID:            pulid.MustNew("editcg_"),
-		Status:        edi.TenderChangeStatusPendingReview,
-		RecipientKind: edi.TenderRecipientKindInternal,
+		Status:        editenderchange.TenderChangeStatusPendingReview,
+		RecipientKind: editenderchange.TenderRecipientKindInternal,
 		Version:       2,
-		Recipient: &edi.TenderRecipient{
-			RecipientKind:           edi.TenderRecipientKindInternal,
+		Recipient: &editenderchange.TenderRecipient{
+			RecipientKind:           editenderchange.TenderRecipientKindInternal,
 			RecipientOrganizationID: orgID,
 			BusinessUnitID:          buID,
 		},
-		PreviousBaselinePayload: edi.LoadTenderPayload{BOL: "BOL-9", Weight: &weightBefore},
-		NewTenderPayload:        edi.LoadTenderPayload{BOL: "BOL-9", Weight: &weightAfter},
+		PreviousBaselinePayload: editransfer.LoadTenderPayload{BOL: "BOL-9", Weight: &weightBefore},
+		NewTenderPayload:        editransfer.LoadTenderPayload{BOL: "BOL-9", Weight: &weightAfter},
 	}
 }
 
 func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewReviewEDITenderChangeTool(nil),
 		NewReviewEDITransferChangeTool(nil),
 	} {
@@ -177,11 +182,11 @@ func TestEDIChangeReviews_ArePersonOnlyProposalsTargetingTheChange(t *testing.T)
 		)
 
 		id := pulid.MustNew("editcg_")
-		target, ok := tool.(agentports.TargetedTool).Target(
+		target, ok := tool.(agenttoolports.TargetedTool).Target(
 			map[string]any{paramEDIChangeID: id.String()},
 		)
 		require.True(t, ok, tool.Name())
-		assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
+		assert.Equal(t, agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: id}, target)
 	}
 }
 
@@ -201,12 +206,16 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 		paramEDIReviewDecision: reviewApply,
 	}
 	params.Params = args
-	proposing := params
+	proposing := *params
 	proposing.ProposalID = pulid.Nil
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), proposing)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), &proposing)
+		},
+	)
 	status := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, changes.change.ID, status.EntityID)
 	require.NotNil(t, status.Version)
@@ -217,8 +226,8 @@ func TestReviewEDITenderChange_PreviewsWhatTheTenderNowSaysAndAppliesOnlyWhenApp
 	assert.EqualValues(t, 20000, weight.Before)
 	assert.EqualValues(t, 42000, weight.After)
 
-	require.NoError(t, tool.Validate(t.Context(), proposing))
-	require.ErrorIs(t, tool.Execute(t.Context(), proposing), ErrEDIDecisionNeedsAPerson)
+	require.NoError(t, tool.Validate(t.Context(), &proposing))
+	require.ErrorIs(t, tool.Execute(t.Context(), &proposing), ErrEDIDecisionNeedsAPerson)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, changes.applied)
 	assert.Equal(t, changes.change.ID, changes.applied.ChangeID)
@@ -229,15 +238,15 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 	t.Parallel()
 
 	params := agenttoolstest.AgentParamsFor(nil)
-	cases := map[string]func(*edi.TenderChange){
-		"already reviewed": func(change *edi.TenderChange) {
-			change.Status = edi.TenderChangeStatusApplied
+	cases := map[string]func(*editenderchange.TenderChange){
+		"already reviewed": func(change *editenderchange.TenderChange) {
+			change.Status = editenderchange.TenderChangeStatusApplied
 		},
-		"another organization's change": func(change *edi.TenderChange) {
+		"another organization's change": func(change *editenderchange.TenderChange) {
 			change.Recipient.RecipientOrganizationID = pulid.MustNew("org_")
 		},
-		"an outside partner's change": func(change *edi.TenderChange) {
-			change.Recipient.RecipientKind = edi.TenderRecipientKindExternal
+		"an outside partner's change": func(change *editenderchange.TenderChange) {
+			change.Recipient.RecipientKind = editenderchange.TenderRecipientKindExternal
 		},
 	}
 	for name, mutate := range cases {
@@ -248,17 +257,21 @@ func TestReviewEDITenderChange_RefusesWhatTheServiceRefuses(t *testing.T) {
 			mutate(change)
 			fake := &fakeTenderChanges{change: change, guard: &agenttoolstest.WriteGuard{}}
 			tool := NewReviewEDITenderChangeTool(fake).(*EdiChangeReviewTool)
-			call := params
+			call := *params
 			call.Params = map[string]any{
 				paramEDIChangeID:       change.ID.String(),
 				paramEDIReviewDecision: reviewReject,
 			}
 
-			require.Error(t, tool.Validate(t.Context(), call))
-			preview := agenttoolstest.PreviewWithoutWrites(t, fake.guard, func() (*agent.ToolPreview, error) {
-				return tool.Preview(t.Context(), call)
-			})
-			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+			require.Error(t, tool.Validate(t.Context(), &call))
+			preview := agenttoolstest.PreviewWithoutWrites(
+				t,
+				fake.guard,
+				func() (*agentpreview.ToolPreview, error) {
+					return tool.Preview(t.Context(), &call)
+				},
+			)
+			agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 		})
 	}
 }
@@ -268,20 +281,20 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 
 	shipmentID := pulid.MustNew("shp_")
 	changes := &fakeTransferChanges{
-		change: &edi.TransferChange{
+		change: &edisync.TransferChange{
 			ID:         pulid.MustNew("editc_"),
-			Status:     edi.TransferChangeStatusPendingReview,
-			ChangeType: edi.TransferChangeTypeShipmentStatus214,
+			Status:     edisync.TransferChangeStatusPendingReview,
+			ChangeType: edisync.TransferChangeTypeShipmentStatus214,
 			Version:    6,
 		},
-		effect: &ediservice.TransferChangeEffect{
+		effect: &editransferchangeservice.TransferChangeEffect{
 			Shipment: &shipment.Shipment{
 				ID:        shipmentID,
 				ProNumber: "PRO-31",
-				Status:    shipment.StatusInTransit,
+				Status:    shipmentvocab.StatusInTransit,
 				Version:   9,
 			},
-			NextStatus: shipment.StatusCompleted,
+			NextStatus: shipmentvocab.StatusCompleted,
 		},
 		guard: &agenttoolstest.WriteGuard{},
 	}
@@ -291,28 +304,40 @@ func TestReviewEDITransferChange_PreviewsTheShipmentStatusItWouldSet(t *testing.
 		paramEDIReviewDecision: reviewApply,
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
-	assert.Equal(t, "Applied", agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
+	assert.Equal(
+		t,
+		"Applied",
+		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), "status").After,
+	)
 	moved := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, permission.ResourceShipment, moved.Resource)
 	assert.Equal(t, shipmentID, moved.EntityID)
 	assert.Equal(t, "Completed", agenttoolstest.FieldByPath(t, moved, "status").After)
 
 	rejected := agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIChangeID:       changes.change.ID.String(),
-		paramEDIReviewDecision: reviewReject,
-		common.FieldReason:     "The partner's 214 contradicts the driver's arrival",
+		paramEDIChangeID:          changes.change.ID.String(),
+		paramEDIReviewDecision:    reviewReject,
+		changepreview.FieldReason: "The partner's 214 contradicts the driver's arrival",
 	})
-	rejectPreview := agenttoolstest.PreviewWithoutWrites(t, changes.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), rejected)
-	})
+	rejectPreview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		changes.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), rejected)
+		},
+	)
 	require.Len(t, rejectPreview.Changes, 1, "a rejection leaves the shipment alone")
 
-	approved := rejected
+	approved := *rejected
 	approved.ProposalID = pulid.MustNew("agp_")
-	require.NoError(t, tool.Execute(t.Context(), approved))
+	require.NoError(t, tool.Execute(t.Context(), &approved))
 	require.NotNil(t, changes.refused)
 	assert.Equal(t, "The partner's 214 contradicts the driver's arrival", changes.refused.Reason)
 }
@@ -321,12 +346,15 @@ func TestReviewEDIChanges_RefuseAnUnknownDecision(t *testing.T) {
 	t.Parallel()
 
 	tool := NewReviewEDITransferChangeTool(&fakeTransferChanges{
-		change: &edi.TransferChange{ID: pulid.MustNew("editc_")},
+		change: &edisync.TransferChange{ID: pulid.MustNew("editc_")},
 	})
-	err := tool.(agentports.ToolValidator).Validate(t.Context(), agenttoolstest.AgentParamsFor(map[string]any{
-		paramEDIChangeID:       pulid.MustNew("editc_").String(),
-		paramEDIReviewDecision: "Approve",
-	}))
+	err := tool.(agenttoolports.ToolValidator).Validate(
+		t.Context(),
+		agenttoolstest.AgentParamsFor(map[string]any{
+			paramEDIChangeID:       pulid.MustNew("editc_").String(),
+			paramEDIReviewDecision: "Approve",
+		}),
+	)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Apply or Reject")
 }

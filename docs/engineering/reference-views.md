@@ -71,7 +71,7 @@ Internal.
   guard walks the value by reflection with a plan cached per Go type: a domain struct named for a
   resource is that kind (`customer.Customer`, `worker.Worker`), `namedKinds` holds the few whose
   name does not spell theirs (`shipment.Stop`, `billingqueue.BillingQueueItem`,
-  `worker.WorkerLeaveCase`, `worker.TimeClockEntry`, `worker.WorkerDOTViolation`), and any other
+  `workerleave.WorkerLeaveCase`, `timesheet.TimeClockEntry`, `workerdot.WorkerDOTViolation`), and any other
   struct is part of the record that carries it. The value a route returns (each item of a list or
   page) is the root record; a record of a kind reached through it is linked, unless it is part of
   the root's family (a shipment's moves and stops), and so on down. A linked record of a kind the
@@ -233,7 +233,7 @@ only, from:
   permission the screen needs is asked of the engine in one `CheckBatch`.
 - `pageAccessPreview(input:)` for a role, saved (`roleId`) or as the role editor holds it
   (`draft`), with the roles it inherits. It needs role read, like the role editor. The grants are
-  united by `permission.GrantsOf` with their implied operations and the widest ceiling, wrapped in
+  united by `permissioncatalog.GrantsOf` with their implied operations and the widest ceiling, wrapped in
   `refview.RoleAccess`, and every field goes through `refview` (`Decide`, `DecidePart`) with the
   role's ceiling (`fieldsensitivity.RoleCeiling`), so the preview cannot disagree with the guard.
   It is worked out before organization access policies (ABAC), and an inherited role from another
@@ -267,6 +267,13 @@ word is a catalog entry, and lists are joined in the request's language by `i18n
 A view field is shown to everyone who can read any record that links to the kind, so adding one
 widens access across the product. Add it only when linking screens need it to identify or use the
 record, never money, credit, contact details, personal or HR data, notes or configuration secrets.
+A view names whole fields: a plain object in a view (a state, an address) shows every field under
+it at the object's own sensitivity, and the generated fragment selects all its scalars. So never
+put an object that also carries what a view may not show in one, such as a worker's `profile`
+(licence number, drug and alcohol standing, disqualification reason). A screen that needs one of
+its fields, as `DeskWorkerCredentialList` needs `profile.complianceStatus`, declares
+`@requiresRead` and draws the field's withheld state. A worker's `canBeAssigned` and
+`assignmentBlocked` are in its view because every screen that assigns a driver needs them.
 The change needs a security review on the pull request, which names every screen it is for. Then:
 
 1. add the field to the kind's `ReferenceView`;
@@ -303,7 +310,7 @@ Each failure says what to add.
 | `TestEveryProtectedTypeSaysWhatStandsBehindIt` (gqlext) | a type with protected fields names neither the entity REST withholds it through nor why only GraphQL serves it |
 | `TestEveryMarginFieldARESTResponseCarriesIsWithheld` (responseguard) | a JSON field a REST response carries, named for a margin or profit, has no `WithholdFields` in `restMargins` that clears it, and is not listed in `unprotectedRESTMarginNames` with why |
 | `TestEveryRESTMarginIsClearedWithoutTheMarginsGroupAndKeptWithIt` (responseguard) | a type in `restMargins` leaves a margin to a caller without the group, or clears one for a caller with it |
-| `TestEveryProtectedFieldIsWithheldFromTheAuditTrail` (responseguard) | a field a stored record's `WithholdFields` clears (worker, credential and every domain type in `restMargins`) stays in an audit entry of that record for a reader without the group, because no `permission.ProtectedPaths` entry covers it, or is withheld from a reader with every group |
+| `TestEveryProtectedFieldIsWithheldFromTheAuditTrail` (responseguard) | a field a stored record's `WithholdFields` clears (worker, credential and every domain type in `restMargins`) stays in an audit entry of that record for a reader without the group, because no `protectedfield.Paths` entry covers it, or is withheld from a reader with every group |
 | `TestEveryRelationAResponseReachesIsClassified` (responseguard) | a REST response reaches a struct through a keel relation that is neither a kind nor listed in `carried` |
 | `TestEveryKindAgreesWithTheGraphQLGuard` (responseguard) | a Go type is gated as a different kind on REST than the GraphQL type bound to it |
 | `TestHandlersWriteEveryResponseThroughTheGuard` (responseguard) | a handler writes a response with gin directly instead of `helpers.JSON` |

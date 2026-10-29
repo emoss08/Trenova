@@ -3,7 +3,9 @@ package agentqualityservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -11,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/floatutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -56,15 +59,15 @@ func (s *Service) Overview(
 		return nil, err
 	}
 
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	now := s.now()
 	since := now - int64(window)*secondsPerDay
-	timezone := s.timezoneOf(ctx, control, req.TenantInfo)
-	_, monthStart, err := windows(now, timezone)
+	timezone := s.settings.Timezone(ctx, control, req.TenantInfo)
+	_, monthStart, err := agentqualitysettings.Windows(now, timezone)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +117,7 @@ func (s *Service) Overview(
 
 	latest, err := s.suiteRuns.Latest(ctx, agentqualityports.LatestAgentSuiteRunsRequest{
 		TenantInfo: req.TenantInfo,
-		Statuses:   scoredStatuses(),
+		Statuses:   agentqualityengine.ScoredStatuses(),
 	})
 	if err != nil {
 		return nil, err
@@ -130,7 +133,7 @@ func (s *Service) Overview(
 	}
 	overview.WorstRegression = worstRegression(latest)
 	overview.AgentsScored = len(scores)
-	overview.QualityScore = meanPointer(scores)
+	overview.QualityScore = floatutils.MeanPtr(scores)
 
 	withCases, err := s.cases.ListAgentsWithActiveCases(
 		ctx,
@@ -154,8 +157,8 @@ func (s *Service) Overview(
 	return overview, nil
 }
 
-func worstRegression(latest []*agentquality.SuiteRun) *agentquality.SuiteRun {
-	var worst *agentquality.SuiteRun
+func worstRegression(latest []*agentqualitysuite.SuiteRun) *agentqualitysuite.SuiteRun {
+	var worst *agentqualitysuite.SuiteRun
 	for _, run := range latest {
 		if run == nil || !run.Regression {
 			continue
@@ -168,7 +171,7 @@ func worstRegression(latest []*agentquality.SuiteRun) *agentquality.SuiteRun {
 	return worst
 }
 
-func regressionDrop(run *agentquality.SuiteRun) float64 {
+func regressionDrop(run *agentqualitysuite.SuiteRun) float64 {
 	if run == nil || run.QualityScore == nil || run.BaselineScore == nil {
 		return 0
 	}
@@ -176,7 +179,7 @@ func regressionDrop(run *agentquality.SuiteRun) float64 {
 	return *run.BaselineScore - *run.QualityScore
 }
 
-func qualityPoints(runs []*agentquality.SuiteRun) []*agentqualityports.AgentQualityPoint {
+func qualityPoints(runs []*agentqualitysuite.SuiteRun) []*agentqualityports.AgentQualityPoint {
 	points := make([]*agentqualityports.AgentQualityPoint, 0, len(runs))
 	for _, run := range runs {
 		if run.QualityScore == nil {
@@ -275,7 +278,7 @@ func (s *Service) fillRatings(
 	req *agentqualityports.AgentQualityRequest,
 	since int64,
 ) error {
-	control, err := s.control(ctx, req.TenantInfo)
+	control, err := s.settings.Control(ctx, req.TenantInfo)
 	if err != nil {
 		return err
 	}
@@ -284,7 +287,7 @@ func (s *Service) fillRatings(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Since:             since,
-		Timezone:          s.timezoneOf(ctx, control, req.TenantInfo),
+		Timezone:          s.settings.Timezone(ctx, control, req.TenantInfo),
 		Limit:             detailWorstRatedLimit,
 	}
 	days, err := s.feedback.DailySatisfaction(ctx, windowReq)
@@ -405,16 +408,16 @@ type ratingTotals struct {
 }
 
 type agentPageData struct {
-	history  map[pulid.ID][]*agentquality.SuiteRun
-	latest   map[pulid.ID]*agentquality.SuiteRun
+	history  map[pulid.ID][]*agentqualitysuite.SuiteRun
+	latest   map[pulid.ID]*agentqualitysuite.SuiteRun
 	current  map[pulid.ID]ratingTotals
 	previous map[pulid.ID]ratingTotals
 }
 
 func (s *Service) agentPageData(ctx context.Context, req agentPageRequest) (*agentPageData, error) {
 	data := &agentPageData{
-		history:  make(map[pulid.ID][]*agentquality.SuiteRun, len(req.ids)),
-		latest:   make(map[pulid.ID]*agentquality.SuiteRun, len(req.ids)),
+		history:  make(map[pulid.ID][]*agentqualitysuite.SuiteRun, len(req.ids)),
+		latest:   make(map[pulid.ID]*agentqualitysuite.SuiteRun, len(req.ids)),
 		current:  make(map[pulid.ID]ratingTotals, len(req.ids)),
 		previous: make(map[pulid.ID]ratingTotals, len(req.ids)),
 	}
@@ -490,7 +493,7 @@ func (s *Service) GetSuiteRun(
 	ctx context.Context,
 	id pulid.ID,
 	tenant pagination.TenantInfo,
-) (*agentquality.SuiteRun, error) {
+) (*agentqualitysuite.SuiteRun, error) {
 	return s.suiteRuns.GetByID(ctx, agentqualityports.GetAgentSuiteRunRequest{
 		ID:         id,
 		TenantInfo: tenant,

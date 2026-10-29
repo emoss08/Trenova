@@ -6,6 +6,7 @@
   "Activate this agreement?": "要啟用此協議嗎？",
   "Add at least one fee tier": "至少新增一個費用級距",
   "Add the address the factor takes schedules at": "新增承購公司接收清單的地址",
+  "Advance and fee rate together cannot be more than 100% of the invoice": "預付比率與手續費率合計不得超過發票金額的 100%",
   "Advance and reserve": "預付與保留款",
   "Advance and reserve together cannot be more than 100%": "預付與保留款合計不得超過 100%",
   "Advance rate": "預付比率",

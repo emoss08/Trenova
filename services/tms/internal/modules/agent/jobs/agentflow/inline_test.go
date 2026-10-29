@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,9 +23,9 @@ type countingObserver struct {
 func (o *countingObserver) ObserveTool(
 	context.Context,
 	RunContext,
-	agentports.ToolObservation,
+	*agentruntimeports.ToolObservation,
 	kernelports.AssistantStreamEmitter,
-) (*agentports.ShownArtifact, []*assistantartifact.Artifact, error) {
+) (*agentruntimeports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	o.calls++
 
 	return nil, nil, nil
@@ -34,7 +34,7 @@ func (o *countingObserver) ObserveTool(
 func TestRunContext_CarriesAnInlineReplyAsData(t *testing.T) {
 	t.Parallel()
 
-	run := NewRunContext(&agentports.RunRequest{
+	run := NewRunContext(&agentruntimeports.RunRequest{
 		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
 		ThreadID:   pulid.MustNew("athr_"),
 		Inline:     true,

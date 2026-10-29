@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +37,7 @@ func (r *recordedWaits) Cancel(
 	return &agentwait.Wait{ID: req.ID}, nil
 }
 
-func waitParams(args map[string]any) agentports.ToolExecuteParams {
+func waitParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),
@@ -46,7 +46,7 @@ func waitParams(args map[string]any) agentports.ToolExecuteParams {
 		BusinessUnitID: pulid.MustNew("bu_"),
 	}
 
-	return agentports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		Actor:          actor,
@@ -79,7 +79,12 @@ func TestWaitUntil_ReadsAWaitOnATimeInTheOrganizationsZone(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, time.Date(2026, 10, 9, 15, 30, 0, 0, chicago).Unix(), req.Condition.At)
 	assert.Equal(t, int64(maxWaitHours)*3600, req.LifetimeSeconds, "the give-up is held to a week")
-	assert.Equal(t, params.ThreadID, req.ThreadID, "the conversation is the runtime's, not the model's")
+	assert.Equal(
+		t,
+		params.ThreadID,
+		req.ThreadID,
+		"the conversation is the runtime's, not the model's",
+	)
 	assert.Equal(t, params.DefinitionID, req.DefinitionID)
 	assert.Equal(t, "Ask whether the PO came through", req.Then)
 	assert.Equal(t, "wait", result.Kind)

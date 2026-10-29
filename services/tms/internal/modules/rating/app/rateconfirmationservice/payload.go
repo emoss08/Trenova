@@ -3,8 +3,9 @@ package rateconfirmationservice
 import (
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -21,8 +22,8 @@ type payloadParams struct {
 // buildContext assembles the render context for a rate confirmation. It is pure
 // so a generated document can be reproduced from its inputs in a test, and the
 // same context is frozen as the payload snapshot the send path re-renders from.
-func buildContext(p payloadParams) *documenttemplate.RateConfirmationContext {
-	out := &documenttemplate.RateConfirmationContext{
+func buildContext(p payloadParams) *rateconfirmationtemplate.RateConfirmationContext {
+	out := &rateconfirmationtemplate.RateConfirmationContext{
 		CompanyName:           p.CompanyName,
 		CarrierName:           p.Carrier.Name,
 		CarrierSCAC:           p.Carrier.SCAC,
@@ -52,17 +53,20 @@ func buildContext(p payloadParams) *documenttemplate.RateConfirmationContext {
 		if acc == nil {
 			continue
 		}
-		out.Accessorials = append(out.Accessorials, documenttemplate.RateConfirmationChargeRow{
-			Description: acc.Description,
-			Amount:      acc.Amount.StringFixed(2),
-		})
+		out.Accessorials = append(
+			out.Accessorials,
+			rateconfirmationtemplate.RateConfirmationChargeRow{
+				Description: acc.Description,
+				Amount:      acc.Amount.StringFixed(2),
+			},
+		)
 	}
 
 	return out
 }
 
-func stopRows(stops []*shipment.Stop) []documenttemplate.RateConfirmationStopRow {
-	rows := make([]documenttemplate.RateConfirmationStopRow, 0, len(stops))
+func stopRows(stops []*shipment.Stop) []rateconfirmationtemplate.RateConfirmationStopRow {
+	rows := make([]rateconfirmationtemplate.RateConfirmationStopRow, 0, len(stops))
 	for _, stop := range stops {
 		if stop == nil {
 			continue
@@ -74,7 +78,7 @@ func stopRows(stops []*shipment.Stop) []documenttemplate.RateConfirmationStopRow
 		if stop.Sequence <= 0 {
 			sequence = len(rows) + 1
 		}
-		row := documenttemplate.RateConfirmationStopRow{
+		row := rateconfirmationtemplate.RateConfirmationStopRow{
 			Sequence: sequence,
 			Type:     stopTypeLabel(stop.Type),
 			Window:   timeutils.WindowLabelUTC(stop.ScheduledWindowStart, stop.ScheduledWindowEnd),
@@ -92,22 +96,22 @@ func stopRows(stops []*shipment.Stop) []documenttemplate.RateConfirmationStopRow
 	return rows
 }
 
-func stopTypeLabel(stopType shipment.StopType) string {
+func stopTypeLabel(stopType shipmentvocab.StopType) string {
 	switch stopType {
-	case shipment.StopTypePickup, shipment.StopTypeSplitPickup:
+	case shipmentvocab.StopTypePickup, shipmentvocab.StopTypeSplitPickup:
 		return "Pickup"
-	case shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery:
+	case shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery:
 		return "Delivery"
 	default:
 		return string(stopType)
 	}
 }
 
-func rateMethodLabel(method shipment.CarrierRateMethod) string {
+func rateMethodLabel(method shipmentvocab.CarrierRateMethod) string {
 	switch method {
-	case shipment.CarrierRateMethodPerMile:
+	case shipmentvocab.CarrierRateMethodPerMile:
 		return "Per mile"
-	case shipment.CarrierRateMethodFlat:
+	case shipmentvocab.CarrierRateMethodFlat:
 		return "Flat"
 	default:
 		return string(method)
@@ -116,9 +120,9 @@ func rateMethodLabel(method shipment.CarrierRateMethod) string {
 
 func baseRateLabel(assignment *shipment.CarrierAssignment) string {
 	switch assignment.RateMethod {
-	case shipment.CarrierRateMethodPerMile:
+	case shipmentvocab.CarrierRateMethodPerMile:
 		return assignment.BaseRate.StringFixed(2) + "/mi"
-	case shipment.CarrierRateMethodFlat:
+	case shipmentvocab.CarrierRateMethodFlat:
 		return assignment.BaseRate.StringFixed(2) + " flat"
 	default:
 		return assignment.BaseRate.StringFixed(2)

@@ -9,7 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"gopkg.in/yaml.v3"
 )
 
@@ -115,7 +116,7 @@ func (k *Kit) HybridFinder(fixture *EmbeddingFixture) Finder {
 
 func GuideKeywordFinder(guide *productguideservice.Service) Finder {
 	return func(request string) ([]string, error) {
-		return guide.RankPaths(request, agentports.CatalogSimilarities{}, SelectionDepth), nil
+		return guide.RankPaths(request, retrievalports.CatalogSimilarities{}, SelectionDepth), nil
 	}
 }
 
@@ -215,7 +216,7 @@ func (r SelectionReport) SpuriousMatches() string {
 	return builder.String()
 }
 
-func descriptorNames(found []agentports.AgentToolDescriptor) []string {
+func descriptorNames(found []agenttoolports.AgentToolDescriptor) []string {
 	names := make([]string, 0, len(found))
 	for _, descriptor := range found {
 		names = append(names, descriptor.Name)

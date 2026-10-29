@@ -7,16 +7,23 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -51,7 +58,10 @@ func TestEvaluateServiceFailures_RunsTheEvaluatorForTheShipmentAsTheActor(t *tes
 		"force":      true,
 	})
 
-	require.NoError(t, operationstools.NewEvaluateServiceFailuresTool(failures).Execute(t.Context(), params))
+	require.NoError(
+		t,
+		servicefailuretools.NewEvaluateServiceFailuresTool(failures).Execute(t.Context(), params),
+	)
 
 	require.NotNil(t, failures.Evaluated)
 	assert.Equal(t, params.Params["shipmentId"], failures.Evaluated.ShipmentID.String())
@@ -67,13 +77,17 @@ func TestResolveServiceFailure_CarriesTheVersionAndTheReason(t *testing.T) {
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 	reasonID := pulid.MustNew("sfrc_")
 
-	require.NoError(t, operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{
-			"serviceFailureId": existing.ID.String(),
-			"reasonCodeId":     reasonID.String(),
-			"note":             "  Shipper closed early; driver waited until opening. ",
-		},
-	)))
+	require.NoError(
+		t,
+		servicefailuretools.NewResolveServiceFailureTool(failures).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(
+				map[string]any{
+					"serviceFailureId": existing.ID.String(),
+					"reasonCodeId":     reasonID.String(),
+					"note":             "  Shipper closed early; driver waited until opening. ",
+				},
+			)),
+	)
 
 	require.NotNil(t, failures.Resolved)
 	assert.Equal(t, existing.ID, failures.Resolved.ID)
@@ -92,19 +106,25 @@ func TestResolveServiceFailure_InsistsOnAReasonWhenNoneIsOnFile(t *testing.T) {
 	existing := openFailure()
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 
-	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"serviceFailureId": existing.ID.String(),
-		"note":             "Done.",
-	}))
+	err := servicefailuretools.NewResolveServiceFailureTool(failures).
+		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+			"serviceFailureId": existing.ID.String(),
+			"note":             "Done.",
+		}))
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "exception_list_service_failure_reason_codes")
 	assert.Nil(t, failures.Resolved)
 
 	existing.ReasonCodeID = pulid.PtrOrNil(pulid.MustNew("sfrc_"))
-	require.NoError(t, operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(
-		map[string]any{"serviceFailureId": existing.ID.String(), "note": "Done."},
-	)), "a failure that already carries a reason keeps it")
+	require.NoError(
+		t,
+		servicefailuretools.NewResolveServiceFailureTool(failures).
+			Execute(t.Context(), agenttoolstest.ExecuteParams(
+				map[string]any{"serviceFailureId": existing.ID.String(), "note": "Done."},
+			)),
+		"a failure that already carries a reason keeps it",
+	)
 	assert.True(t, failures.Resolved.ReasonCodeID.IsNil())
 }
 
@@ -115,10 +135,11 @@ func TestResolveServiceFailure_RefusesATerminalOne(t *testing.T) {
 	existing.Status = servicefailure.StatusResolved
 	failures := &agenttoolstest.FakeFailureDecider{Existing: existing}
 
-	err := operationstools.NewResolveServiceFailureTool(failures).Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"serviceFailureId": existing.ID.String(),
-		"note":             "Again.",
-	}))
+	err := servicefailuretools.NewResolveServiceFailureTool(failures).
+		Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
+			"serviceFailureId": existing.ID.String(),
+			"note":             "Again.",
+		}))
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "already Resolved")
@@ -165,7 +186,7 @@ func TestNotifyDriver_SendsThroughTheDispatchMessageTemplate(t *testing.T) {
 	assert.Equal(t, params.OrganizationID, drivers.sent.TenantInfo.OrgID)
 	assert.Equal(t, "/loads/"+shipmentID.String(), drivers.sent.Link)
 
-	context, ok := drivers.sent.Context.(documenttemplate.DriverNotificationContext)
+	context, ok := drivers.sent.Context.(notificationtemplate.DriverNotificationContext)
 	require.True(t, ok)
 	assert.Equal(t, "Delivery moved to 3 PM", context.AlertTitle)
 	assert.Equal(
@@ -235,13 +256,13 @@ func TestEmailCustomer_WritesToTheCustomersContactsAndRecordsIt(t *testing.T) {
 
 	require.NotNil(t, renderer.Req)
 	assert.Equal(t, documenttemplate.KindAgentCustomerUpdateEmail, renderer.Req.Kind)
-	context, ok := renderer.Req.Data.(documenttemplate.AgentEmailContext)
+	context, ok := renderer.Req.Data.(portaltemplate.AgentEmailContext)
 	require.True(t, ok)
 	assert.Equal(t, "Acme Freight", context.CustomerName)
 	assert.Equal(t, "S12345", context.ShipmentProNumber)
 
 	require.NotNil(t, comments.Created)
-	assert.Equal(t, shipment.CommentTypeCustomerUpdate, comments.Created.Type)
+	assert.Equal(t, shipmentvocab.CommentTypeCustomerUpdate, comments.Created.Type)
 	assert.Contains(t, comments.Created.Comment, "ops@acme.example")
 	assert.Contains(t, comments.Created.Comment, "we now expect 3:30 PM")
 }
@@ -282,7 +303,7 @@ func TestEmailCustomer_IsAProposalThatNeedsAnIdempotencyKey(t *testing.T) {
 		"body":       "Body.",
 	}))
 
-	require.ErrorIs(t, err, common.ErrMissingIdempotencyKey)
+	require.ErrorIs(t, err, toolguard.ErrMissingIdempotencyKey)
 	assert.Nil(t, mailer.Sent)
 }
 
@@ -307,21 +328,21 @@ func TestEmailCustomer_ReportsARecordFailureAfterTheSend(t *testing.T) {
 }
 
 type failingCommentWriter struct {
-	shipmentports.ShipmentCommentService
+	shipmentcommentports.ShipmentCommentService
 }
 
 // Nothing has gone to this customer yet; the failure under test is the
 // record after the send, not the guard before it.
 func (f *failingCommentWriter) ListByShipmentID(
 	context.Context,
-	*shipmentports.ListShipmentCommentsRequest,
+	*shipmentcommentports.ListShipmentCommentsRequest,
 ) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	return &pagination.CursorListResult[*shipment.ShipmentComment]{}, nil
 }
 
 func (failingCommentWriter) CreateSystem(
 	context.Context,
-	*shipmentports.CreateSystemShipmentCommentRequest,
+	*shipmentcommentports.CreateSystemShipmentCommentRequest,
 ) (*shipment.ShipmentComment, error) {
 	return nil, errors.New("thread locked")
 }
@@ -379,7 +400,7 @@ func TestWaiveDetention_GivesUpRevenueOnlyOnceAPersonApproves(t *testing.T) {
 		"reason":       "CarrierFault",
 		"note":         "Our truck arrived two hours late.",
 	}))
-	require.ErrorIs(t, err, common.ErrApprovalNeedsAPerson)
+	require.ErrorIs(t, err, detentionpreview.ErrApprovalNeedsAPerson)
 	assert.Nil(t, det.Waived)
 
 	policy := tool.Policy()
@@ -391,9 +412,9 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	t.Parallel()
 
 	tool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
-	for _, candidate := range []agentports.AgentTool{
-		operationstools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}),
-		operationstools.NewResolveServiceFailureTool(&agenttoolstest.FakeFailureDecider{}),
+	for _, candidate := range []agenttoolports.AgentTool{
+		servicefailuretools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}),
+		servicefailuretools.NewResolveServiceFailureTool(&agenttoolstest.FakeFailureDecider{}),
 		operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
 		tool,
 		operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}),
@@ -404,7 +425,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 		require.ErrorIs(
 			t,
 			candidate.Execute(t.Context(), params),
-			common.ErrTenantMismatch,
+			toolguard.ErrTenantMismatch,
 			candidate.Name(),
 		)
 	}
@@ -420,19 +441,25 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 
 	customerTool, _, _, _, _ := agenttoolstest.CustomerEmailFixture()
 	tools := []struct {
-		tool     agentports.AgentTool
+		tool     agenttoolports.AgentTool
 		resource permission.Resource
 	}{
-		{operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}), permission.ResourceDriverMessage},
+		{
+			operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
+			permission.ResourceDriverMessage,
+		},
 		{customerTool, permission.ResourceCustomerCommunication},
-		{operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}), permission.ResourceCustomerCommunication},
+		{
+			operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}),
+			permission.ResourceCustomerCommunication,
+		},
 	}
 	for _, entry := range tools {
 		assert.Equal(t, entry.resource, entry.tool.Policy().Resource, entry.tool.Name())
 		assert.Equal(t, permission.OpCreate, entry.tool.Policy().Operation, entry.tool.Name())
 		assert.True(
 			t,
-			permission.IsAgentAllowed(
+			agentceiling.Allows(
 				entry.tool.Policy().Resource,
 				entry.tool.Policy().Operation,
 			),
@@ -455,7 +482,7 @@ func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T
 	tool, mailer, _, comments, _ := agenttoolstest.CustomerEmailFixture()
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 600,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "agent", "tool": "customer_send_email"},
 	}}
 
@@ -468,7 +495,7 @@ func TestEmailCustomer_WillNotTellTheSameCustomerTwiceWithinTheHour(t *testing.T
 	params.IdempotencyKey = "idem-2"
 
 	err := tool.Execute(t.Context(), params)
-	require.ErrorIs(t, err, common.ErrCustomerAlreadyTold)
+	require.ErrorIs(t, err, outboundpreview.ErrCustomerAlreadyTold)
 	assert.Nil(t, mailer.Sent, "nothing may go out once the customer has been told")
 	assert.Nil(t, comments.Created)
 }
@@ -481,7 +508,7 @@ func TestEmailCustomer_ATypedCommentDoesNotSilenceTheDesk(t *testing.T) {
 	tool, mailer, _, comments, _ := agenttoolstest.CustomerEmailFixture()
 	comments.Existing = []*shipment.ShipmentComment{{
 		CreatedAt: timeutils.NowUnix() - 60,
-		Type:      shipment.CommentTypeCustomerUpdate,
+		Type:      shipmentvocab.CommentTypeCustomerUpdate,
 		Metadata:  map[string]any{"source": "user"},
 	}}
 

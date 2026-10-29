@@ -1,7 +1,7 @@
 package extractionevaljobs
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionevalports"
@@ -28,7 +28,7 @@ type RegistryParams struct {
 	fx.In
 
 	Activities *Activities
-	Config     *config.Config
+	AIConfig   *aiconfig.Config
 	Logger     *zap.Logger
 }
 
@@ -37,7 +37,7 @@ func NewDrainingRegistry(p RegistryParams) registry.WorkerRegistry {
 		"extraction-eval-worker",
 		p.Activities,
 		workflows(),
-		p.Config,
+		p.AIConfig,
 		p.Logger,
 	)
 }
@@ -47,7 +47,7 @@ func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 		&registry.DomainConfig{
 			Name:         "extraction-eval-worker",
 			TaskQueue:    temporaltype.DocumentExtractionTaskQueue,
-			WorkerConfig: documentextractionjobs.QueueWorkerConfig(p.Config),
+			WorkerConfig: documentextractionjobs.QueueWorkerConfig(p.AIConfig),
 		},
 		p.Activities,
 		workflows(),

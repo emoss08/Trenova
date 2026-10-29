@@ -17,6 +17,15 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/deskbench"
+	"github.com/emoss08/trenova/internal/deskbench/benchagent"
+	"github.com/emoss08/trenova/internal/deskbench/benchfindings"
+	"github.com/emoss08/trenova/internal/deskbench/benchnamespace"
+	"github.com/emoss08/trenova/internal/deskbench/benchreport"
+	"github.com/emoss08/trenova/internal/deskbench/benchresult"
+	"github.com/emoss08/trenova/internal/deskbench/benchrun"
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
+	"github.com/emoss08/trenova/internal/deskbench/benchsql"
+	"github.com/emoss08/trenova/internal/deskbench/benchstats"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -165,7 +174,7 @@ var providersCmd = &cobra.Command{
 
 func init() {
 	persistent := DeskCmd.PersistentFlags()
-	persistent.StringVar(&flags.namespace, "namespace", deskbench.DefaultNamespace,
+	persistent.StringVar(&flags.namespace, "namespace", benchnamespace.Default,
 		"Temporal namespace the bench's own worker uses")
 	persistent.StringVar(
 		&flags.user,
@@ -210,7 +219,7 @@ func init() {
 		StringSliceVar(&flags.names, "name", nil, "only scenarios whose name contains one of these")
 	runCmd.Flags().StringVar(&flags.compare, "compare", comparePrevious,
 		"report to compare with: 'previous', a run directory, a report.json, or '' for none")
-	runCmd.Flags().IntVar(&flags.passK, "pass-k", deskbench.DefaultPassK,
+	runCmd.Flags().IntVar(&flags.passK, "pass-k", benchstats.DefaultPassK,
 		"k for pass^k, the chance every one of k trials of a scenario passes")
 	runCmd.Flags().StringSliceVar(&flags.splits, "split", nil,
 		"only scenarios of these splits: development, held-out, adversarial")
@@ -219,7 +228,7 @@ func init() {
 
 	findingsCmd.Flags().StringVar(&flags.findings, "file", defaultFindings, "findings file")
 	findingsCmd.Flags().
-		StringSliceVar(&flags.statuses, "status", []string{string(deskbench.FindingOpen)},
+		StringSliceVar(&flags.statuses, "status", []string{string(benchfindings.FindingOpen)},
 			"open, fixed, wontfix, or all")
 	findingsCmd.Flags().
 		StringSliceVar(&flags.severity, "severity", nil, "critical, high, medium, low")
@@ -252,15 +261,19 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	report, outDir, err := execute(cmd.Context(), executeOptions{kind: kindAsk}, deskbench.RunOptions{
-		Scenarios: []*deskbench.Scenario{scenario},
-		User:      flags.user,
-		Agent:     flags.agent,
-		Providers: flags.providers,
-		Keep:      flags.keep,
-		Delete:    flags.delete,
-		ThreadID:  threadID,
-	})
+	report, outDir, err := execute(
+		cmd.Context(),
+		executeOptions{kind: kindAsk},
+		benchrun.RunOptions{
+			Scenarios: []*benchscenario.Scenario{scenario},
+			User:      flags.user,
+			Agent:     flags.agent,
+			Providers: flags.providers,
+			Keep:      flags.keep,
+			Delete:    flags.delete,
+			ThreadID:  threadID,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -271,13 +284,13 @@ func runAsk(cmd *cobra.Command, args []string) error {
 			fmt.Println(string(transcript))
 		}
 	}
-	fmt.Print(deskbench.RenderSummary(report))
+	fmt.Print(benchreport.RenderSummary(report))
 	printFiles(outDir)
 
 	return nil
 }
 
-func askScenario(messages []string) (*deskbench.Scenario, error) {
+func askScenario(messages []string) (*benchscenario.Scenario, error) {
 	var page map[string]any
 	if flags.page != "" {
 		if err := sonic.UnmarshalString(flags.page, &page); err != nil {
@@ -290,9 +303,9 @@ func askScenario(messages []string) (*deskbench.Scenario, error) {
 		return nil, err
 	}
 
-	steps := make([]deskbench.Step, 0, len(messages)+1)
+	steps := make([]benchscenario.Step, 0, len(messages)+1)
 	for idx, message := range messages {
-		step := deskbench.Step{Say: message, Attach: attached[idx]}
+		step := benchscenario.Step{Say: message, Attach: attached[idx]}
 		if idx == 0 {
 			step.Page = page
 		}
@@ -300,12 +313,15 @@ func askScenario(messages []string) (*deskbench.Scenario, error) {
 	}
 	switch {
 	case flags.approve:
-		steps = append(steps, deskbench.Step{Decide: deskbench.DecisionApprove})
+		steps = append(steps, benchscenario.Step{Decide: benchscenario.DecisionApprove})
 	case flags.reject != "":
-		steps = append(steps, deskbench.Step{Decide: deskbench.DecisionReject, Note: flags.reject})
+		steps = append(
+			steps,
+			benchscenario.Step{Decide: benchscenario.DecisionReject, Note: flags.reject},
+		)
 	}
 
-	scenario := &deskbench.Scenario{
+	scenario := &benchscenario.Scenario{
 		Name: "ask " + stringutils.Ellipsize(
 			stringutils.CollapseWhitespace(messages[0]),
 			askNameLength,
@@ -346,7 +362,7 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 		paths = []string{defaultScenario}
 	}
 
-	scenarios, err := deskbench.LoadScenarios(paths)
+	scenarios, err := benchscenario.LoadScenarios(paths)
 	if err != nil {
 		return err
 	}
@@ -360,7 +376,7 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 		compare:   flags.compare,
 		passK:     flags.passK,
 		threshold: thresholdFlag(),
-	}, deskbench.RunOptions{
+	}, benchrun.RunOptions{
 		Scenarios: scenarios,
 		User:      flags.user,
 		Agent:     flags.agent,
@@ -376,7 +392,7 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println()
-	fmt.Print(deskbench.RenderSummary(report))
+	fmt.Print(benchreport.RenderSummary(report))
 	printFiles(outDir)
 
 	if failed := report.Summary.Cases - report.Summary.Passed; failed > 0 {
@@ -386,8 +402,8 @@ func runScenarios(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func filterScenarios(scenarios []*deskbench.Scenario) []*deskbench.Scenario {
-	kept := make([]*deskbench.Scenario, 0, len(scenarios))
+func filterScenarios(scenarios []*benchscenario.Scenario) []*benchscenario.Scenario {
+	kept := make([]*benchscenario.Scenario, 0, len(scenarios))
 	for _, scenario := range scenarios {
 		if !scenario.HasTag(flags.tags) {
 			continue
@@ -437,8 +453,8 @@ func thresholdFlag() *int {
 func execute(
 	parent context.Context,
 	run executeOptions,
-	opts deskbench.RunOptions,
-) (*deskbench.Report, string, error) {
+	opts benchrun.RunOptions,
+) (*benchreport.Report, string, error) {
 	ctx, stop := signal.NotifyContext(parent, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -451,7 +467,7 @@ func execute(
 		}
 	}
 
-	var baseline *deskbench.Report
+	var baseline *benchreport.Report
 	if run.compare != "" {
 		baseline, err = loadBaseline(run.compare)
 		if err != nil {
@@ -480,7 +496,7 @@ func execute(
 		return nil, "", err
 	}
 
-	meta := deskbench.ReportMeta{
+	meta := benchreport.ReportMeta{
 		StartedAt: time.Now(),
 		Namespace: flags.namespace,
 		Version:   cfg.App.Version,
@@ -501,17 +517,17 @@ func execute(
 	)
 	fmt.Fprintf(os.Stderr, "watch it live: tail -f %s\n", livePath)
 
-	cases, runErr := bench.Run(ctx, opts)
+	cases, runErr := benchrun.New(bench).Run(ctx, &opts)
 	meta.FinishedAt = time.Now()
 	if closeErr := bench.Close(); closeErr != nil {
 		fmt.Fprintf(os.Stderr, "stopping the bench: %v\n", closeErr)
 	}
 
-	report := deskbench.BuildReport(meta, cases)
+	report := benchreport.BuildReport(&meta, cases)
 	if baseline != nil {
-		report.Comparison = deskbench.Compare(baseline, report)
-		report.ComparisonNote = deskbench.ComparedDataNote(baseline.Meta.Data, report.Meta.Data)
-		report.CellChanges = deskbench.CompareCells(baseline, report)
+		report.Comparison = benchreport.Compare(baseline, report)
+		report.ComparisonNote = benchresult.ComparedDataNote(baseline.Meta.Data, report.Meta.Data)
+		report.CellChanges = benchreport.CompareCells(baseline, report)
 	}
 	if !run.noWrite {
 		if err = report.Write(outDir); err != nil {
@@ -534,16 +550,16 @@ func profileData(
 	ctx context.Context,
 	bench *deskbench.Bench,
 	kind string,
-) (deskbench.DataProfile, error) {
+) (benchresult.DataProfile, error) {
 	if kind == kindAsk {
-		return deskbench.DataProfile{}, nil
+		return benchresult.DataProfile{}, nil
 	}
 	session, err := bench.SessionFor(ctx, flags.user)
 	if err != nil {
-		return deskbench.DataProfile{}, err
+		return benchresult.DataProfile{}, err
 	}
-	data, err := bench.ProfileData(ctx, session)
-	if errors.Is(err, deskbench.ErrNoFixtureData) {
+	data, err := benchsql.New(bench.DB).ProfileData(ctx, session)
+	if errors.Is(err, benchresult.ErrNoFixtureData) {
 		return data, fmt.Errorf("%w. Reset the database with `task db-reset`, and add "+
 			"`task db-seed-volume` for a tenant-sized organization", err)
 	}
@@ -556,7 +572,7 @@ func profileData(
 }
 
 func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
-	specs, err := deskbench.LoadAgentSpecs(defaultAgents)
+	specs, err := benchagent.LoadAgentSpecs(defaultAgents)
 	if err != nil {
 		return err
 	}
@@ -583,7 +599,7 @@ func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
 	return nil
 }
 
-func reportSync(synced *deskbench.AgentSync) {
+func reportSync(synced *benchagent.AgentSync) {
 	for _, name := range synced.Created {
 		fmt.Fprintf(os.Stderr, "created agent %s\n", name)
 	}
@@ -600,10 +616,10 @@ func openBenchWith(ctx context.Context, opts deskbench.OpenOptions) (*deskbench.
 	if cfg == nil {
 		return nil, errors.New("configuration was not loaded")
 	}
-	if err := deskbench.AssertSafe(cfg, flags.namespace); err != nil {
+	if err := benchnamespace.AssertSafe(&cfg.App, &cfg.Temporal, flags.namespace); err != nil {
 		return nil, err
 	}
-	if err := deskbench.EnsureNamespace(ctx, &cfg.Temporal, flags.namespace); err != nil {
+	if err := benchnamespace.Ensure(ctx, &cfg.Temporal, flags.namespace); err != nil {
 		return nil, err
 	}
 
@@ -625,7 +641,7 @@ func runDirectory(kind string) (string, error) {
 	return dir, nil
 }
 
-func loadBaseline(compare string) (*deskbench.Report, error) {
+func loadBaseline(compare string) (*benchreport.Report, error) {
 	path := compare
 	if compare == comparePrevious {
 		raw, err := os.ReadFile(filepath.Join(benchRoot, latestFile))
@@ -635,7 +651,7 @@ func loadBaseline(compare string) (*deskbench.Report, error) {
 		path = strings.TrimSpace(string(raw))
 	}
 
-	return deskbench.LoadReport(path)
+	return benchreport.LoadReport(path)
 }
 
 func markLatest(outDir string) error {
@@ -657,7 +673,7 @@ func commit() string {
 	return revision
 }
 
-func printProgress(result *deskbench.CaseResult) {
+func printProgress(result *benchresult.CaseResult) {
 	if result.Skipped != "" {
 		fmt.Fprintf(os.Stderr, "%s %s #%d: %s\n", result.Verdict(), result.Key(), result.Repeat,
 			result.Skipped)
@@ -692,30 +708,30 @@ func printFiles(outDir string) {
 }
 
 func listFindings(_ *cobra.Command, _ []string) error {
-	findings, err := deskbench.LoadFindings(flags.findings)
+	findings, err := benchfindings.LoadFindings(flags.findings)
 	if err != nil {
 		return err
 	}
 
-	filter := deskbench.FindingFilter{Area: flags.area}
+	filter := benchfindings.FindingFilter{Area: flags.area}
 	if !slices.Contains(flags.statuses, statusAll) {
 		for _, status := range flags.statuses {
-			filter.Statuses = append(filter.Statuses, deskbench.FindingStatus(status))
+			filter.Statuses = append(filter.Statuses, benchfindings.FindingStatus(status))
 		}
 	}
 	for _, severity := range flags.severity {
-		filter.Severities = append(filter.Severities, deskbench.FindingSeverity(severity))
+		filter.Severities = append(filter.Severities, benchfindings.FindingSeverity(severity))
 	}
-	kept := deskbench.FilterFindings(findings, filter)
+	kept := benchfindings.FilterFindings(findings, filter)
 
 	var rendered string
 	switch flags.format {
 	case formatMarkdown:
-		rendered = deskbench.RenderFindingsMarkdown(kept)
+		rendered = benchfindings.RenderFindingsMarkdown(kept)
 	case formatCSV:
-		rendered, err = deskbench.RenderFindingsCSV(kept)
+		rendered, err = benchfindings.RenderFindingsCSV(kept)
 	case formatJSON:
-		rendered, err = deskbench.RenderFindingsJSON(kept)
+		rendered, err = benchfindings.RenderFindingsJSON(kept)
 	default:
 		return fmt.Errorf("--format must be md, csv or json, not %q", flags.format)
 	}

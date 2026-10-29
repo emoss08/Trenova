@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,13 +26,16 @@ const (
 // no session: each is checked against its watch's secret before anything is
 // done, and a valid one only asks the watch to be checked now.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
-	rg.POST(agentextension.WebWatchWebhookPrefix+"/:orgID/:buID/:watchID/", h.receiveWatchDelivery)
+	rg.POST(
+		extensionwebwatch.WebWatchWebhookPrefix+"/:orgID/:buID/:watchID/",
+		h.receiveWatchDelivery,
+	)
 }
 
 func (h *Handler) listWebWatches(c *gin.Context) {
 	req := &agentextensionports.ListWebWatchesRequest{TenantInfo: tenantOf(c)}
 	if raw := strings.TrimSpace(c.Query("status")); raw != "" {
-		status := agentextension.WebWatchStatus(raw)
+		status := extensionwebwatch.WebWatchStatus(raw)
 		if !status.IsValid() {
 			h.eh.HandleError(c, errortypes.NewValidationError("status", errortypes.ErrInvalid,
 				"status must be Active, Ended, Stopped or Failed"))
@@ -59,7 +62,7 @@ func (h *Handler) listWebWatches(c *gin.Context) {
 		req.Limit = limit
 	}
 
-	watches, err := h.service.ListWebWatches(c.Request.Context(), req)
+	watches, err := h.webWatches.ListWebWatches(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -85,7 +88,7 @@ func (h *Handler) webWatchFindings(c *gin.Context) {
 		return
 	}
 
-	findings, err := h.service.WebWatchFindings(c.Request.Context(), tenantOf(c), id)
+	findings, err := h.webWatches.WebWatchFindings(c.Request.Context(), tenantOf(c), id)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -113,7 +116,7 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 	}
 
 	tenant := tenantOf(c)
-	watch, err := h.service.StopWebWatch(
+	watch, err := h.webWatches.StopWebWatch(
 		c.Request.Context(),
 		&agentextensionports.StopWebWatchRequest{
 			TenantInfo:  tenant,
@@ -127,7 +130,7 @@ func (h *Handler) stopWebWatch(c *gin.Context) {
 		return
 	}
 	if h.waits != nil {
-		h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &agentextension.WebWatch{
+		h.waits.EndWebWatchWaits(c.Request.Context(), tenant, &extensionwebwatch.WebWatch{
 			ID:     watch.ID,
 			Status: watch.Status,
 		})
@@ -155,7 +158,7 @@ func (h *Handler) receiveWatchDelivery(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebWatchDelivery(
+	err = h.webWatches.ReceiveWebWatchDelivery(
 		c.Request.Context(),
 		&agentextensionports.ReceiveWebWatchDeliveryRequest{
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},

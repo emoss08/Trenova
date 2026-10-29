@@ -2,12 +2,13 @@ package dispatchconsoleresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -36,7 +37,7 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 }
 
 func mapDispatchSummary(
-	summary *shipmentports.BoardSummary,
+	summary *dispatchboardports.BoardSummary,
 ) *gqlmodel.DispatchBoardSummary {
 	if summary == nil {
 		return &gqlmodel.DispatchBoardSummary{}
@@ -72,12 +73,12 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		Loaded:                move.Loaded,
 		Distance:              move.Distance,
 		Revenue:               move.Revenue,
-		CustomerID:            base.IDPtr(move.CustomerID),
+		CustomerID:            gqlid.IDPtr(move.CustomerID),
 		CustomerName:          move.CustomerName,
-		ServiceTypeID:         base.IDPtr(move.ServiceTypeID),
+		ServiceTypeID:         gqlid.IDPtr(move.ServiceTypeID),
 		ServiceTypeCode:       move.ServiceTypeCode,
-		RequiredTractorTypeID: base.IDPtr(move.RequiredTractorTypeID),
-		RequiredTrailerTypeID: base.IDPtr(move.RequiredTrailerTypeID),
+		RequiredTractorTypeID: gqlid.IDPtr(move.RequiredTractorTypeID),
+		RequiredTrailerTypeID: gqlid.IDPtr(move.RequiredTrailerTypeID),
 		TemperatureMin:        int16Ptr(move.TemperatureMin),
 		TemperatureMax:        int16Ptr(move.TemperatureMax),
 		HasHazmat:             move.HasHazmat,
@@ -87,36 +88,36 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		MinutesToPickup: int(move.MinutesToPickup),
 		IsCovered:       move.IsCovered,
 
-		OriginStopID:        base.IDPtr(move.OriginStopID),
-		OriginLocationID:    base.IDPtr(move.OriginLocationID),
+		OriginStopID:        gqlid.IDPtr(move.OriginStopID),
+		OriginLocationID:    gqlid.IDPtr(move.OriginLocationID),
 		OriginName:          move.OriginName,
 		OriginCity:          move.OriginCity,
 		OriginState:         move.OriginState,
 		OriginLatitude:      move.OriginLatitude,
 		OriginLongitude:     move.OriginLongitude,
 		OriginWindowStart:   int(move.OriginWindowStart),
-		OriginWindowEnd:     base.IntPtr(move.OriginWindowEnd),
-		OriginActualArrival: base.IntPtr(move.OriginActualArrive),
+		OriginWindowEnd:     gqlscalar.IntPtr(move.OriginWindowEnd),
+		OriginActualArrival: gqlscalar.IntPtr(move.OriginActualArrive),
 
-		DestinationStopID:      base.IDPtr(move.DestinationStopID),
-		DestinationLocationID:  base.IDPtr(move.DestinationLocationID),
+		DestinationStopID:      gqlid.IDPtr(move.DestinationStopID),
+		DestinationLocationID:  gqlid.IDPtr(move.DestinationLocationID),
 		DestinationName:        move.DestinationName,
 		DestinationCity:        move.DestinationCity,
 		DestinationState:       move.DestinationState,
 		DestinationLatitude:    move.DestinationLatitude,
 		DestinationLongitude:   move.DestinationLongitude,
 		DestinationWindowStart: int(move.DestinationWindowStart),
-		DestinationWindowEnd:   base.IntPtr(move.DestinationWindowEnd),
+		DestinationWindowEnd:   gqlscalar.IntPtr(move.DestinationWindowEnd),
 
-		AssignmentID:          base.IDPtr(move.AssignmentID),
-		AssignedWorkerID:      base.IDPtr(move.AssignedWorkerID),
+		AssignmentID:          gqlid.IDPtr(move.AssignmentID),
+		AssignedWorkerID:      gqlid.IDPtr(move.AssignedWorkerID),
 		AssignedWorkerName:    move.AssignedWorkerName,
-		AssignedTractorID:     base.IDPtr(move.AssignedTractorID),
+		AssignedTractorID:     gqlid.IDPtr(move.AssignedTractorID),
 		AssignedTractorCode:   move.AssignedTractorCode,
-		AssignedTrailerID:     base.IDPtr(move.AssignedTrailerID),
+		AssignedTrailerID:     gqlid.IDPtr(move.AssignedTrailerID),
 		AssignedTrailerCode:   move.AssignedTrailerCode,
 		AssignmentAckStatus:   string(move.AssignmentAckStatus),
-		PreviousMoveTrailerID: base.IDPtr(move.PreviousMoveTrailerID),
+		PreviousMoveTrailerID: gqlid.IDPtr(move.PreviousMoveTrailerID),
 
 		LiveTender: mapDispatchBoardTenderSummary(move.LiveTender),
 	}
@@ -136,7 +137,7 @@ func mapDispatchBoardTenderSummary(
 		CurrentRank:           int(summary.CurrentRank),
 		OfferCount:            summary.OfferCount,
 		CurrentCarrierName:    summary.CurrentCarrierName,
-		CurrentOfferExpiresAt: base.IntPtr(summary.CurrentOfferExpiresAt),
+		CurrentOfferExpiresAt: gqlscalar.IntPtr(summary.CurrentOfferExpiresAt),
 	}
 }
 
@@ -160,7 +161,7 @@ func mapDispatchBoardDriver(
 			DestinationState:     commitment.DestinationSt,
 			DestinationLatitude:  commitment.DestLatitude,
 			DestinationLongitude: commitment.DestLongitude,
-			TrailerID:            base.IDPtr(commitment.TrailerID),
+			TrailerID:            gqlid.IDPtr(commitment.TrailerID),
 		})
 	}
 
@@ -179,7 +180,7 @@ func mapDispatchBoardDriver(
 		LastName:             driver.LastName,
 		WorkerType:           string(driver.WorkerType),
 		DriverType:           string(driver.DriverType),
-		FleetCodeID:          base.IDPtr(driver.FleetCodeID),
+		FleetCodeID:          gqlid.IDPtr(driver.FleetCodeID),
 		FleetCodeName:        driver.FleetCodeName,
 		City:                 driver.City,
 		StateAbbreviation:    driver.StateAbbr,
@@ -188,9 +189,9 @@ func mapDispatchBoardDriver(
 		AssignmentBlocked:    driver.AssignmentNote,
 		AvailableForDispatch: driver.AvailableForDispatch,
 
-		TractorID:        base.IDPtr(driver.TractorID),
+		TractorID:        gqlid.IDPtr(driver.TractorID),
 		TractorCode:      driver.TractorCode,
-		TractorTypeID:    base.IDPtr(driver.TractorTypeID),
+		TractorTypeID:    gqlid.IDPtr(driver.TractorTypeID),
 		TractorAvailable: driver.TractorStatusOK,
 		OpenAssignments:  driver.OpenAssignments,
 
@@ -239,8 +240,8 @@ func mapDispatchCandidate(
 	return &gqlmodel.DispatchCandidate{
 		WorkerID:               score.WorkerID.String(),
 		WorkerName:             score.WorkerName,
-		TractorID:              base.IDPtr(score.TractorID),
-		TrailerID:              base.IDPtr(score.TrailerID),
+		TractorID:              gqlid.IDPtr(score.TractorID),
+		TrailerID:              gqlid.IDPtr(score.TrailerID),
 		MoveID:                 score.MoveID.String(),
 		Score:                  score.Score,
 		Verdict:                score.Verdict,
@@ -274,13 +275,13 @@ func mapDispatchFindings(
 			Severity:   string(finding.Severity),
 			Field:      finding.Field,
 			Message:    finding.Message,
-			Regulation: base.NonEmptyPtr(finding.Regulation),
+			Regulation: gqlscalar.NonEmptyPtr(finding.Regulation),
 		})
 	}
 	return mapped
 }
 
-func mapDispatchPlan(plan *agentports.DispatchPlan) *gqlmodel.DispatchPlan {
+func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.DispatchPlan {
 	if plan == nil {
 		return nil
 	}
@@ -293,15 +294,15 @@ func mapDispatchPlan(plan *agentports.DispatchPlan) *gqlmodel.DispatchPlan {
 			ProNumber:      planned.ProNumber,
 			WorkerID:       planned.WorkerID.String(),
 			WorkerName:     planned.WorkerName,
-			TractorID:      base.IDPtr(planned.TractorID),
-			TrailerID:      base.IDPtr(planned.TrailerID),
+			TractorID:      gqlid.IDPtr(planned.TractorID),
+			TrailerID:      gqlid.IDPtr(planned.TrailerID),
 			Confidence:     confidence,
 			Rationale:      planned.Rationale,
 			AutoExecutable: planned.AutoExecutable,
-			ProposalID:     base.IDPtr(planned.ProposalID),
+			ProposalID:     gqlid.IDPtr(planned.ProposalID),
 			Score:          mapDispatchCandidate(planned.Score),
 
-			TourID:                    base.IDPtr(planned.TourID),
+			TourID:                    gqlid.IDPtr(planned.TourID),
 			SequenceIndex:             planned.SequenceIndex,
 			ProjectedStartAt:          int(planned.ProjectedStartAt),
 			ProjectedCompleteAt:       int(planned.ProjectedCompleteAt),
@@ -339,7 +340,7 @@ func mapDispatchPlan(plan *agentports.DispatchPlan) *gqlmodel.DispatchPlan {
 	}
 
 	return &gqlmodel.DispatchPlan{
-		RunID:        base.IDPtr(plan.RunID),
+		RunID:        gqlid.IDPtr(plan.RunID),
 		Assignments:  assignments,
 		Uncovered:    uncovered,
 		Tours:        tours,

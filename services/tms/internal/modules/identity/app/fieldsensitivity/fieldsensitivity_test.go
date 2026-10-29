@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,7 +88,7 @@ func TestVisible_ConfidentialIsNeverShown(t *testing.T) {
 func TestLevel_UnknownResourceIsInternal(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 
 	assert.Equal(t, permission.SensitivityInternal,
 		Level(registry, permission.Resource("no_such_resource"), "anything"))

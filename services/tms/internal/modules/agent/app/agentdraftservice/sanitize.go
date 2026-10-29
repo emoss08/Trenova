@@ -9,8 +9,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -66,11 +68,11 @@ type sanitizeInput struct {
 
 type sanitizer struct {
 	in    *sanitizeInput
-	notes []agentports.AgentDraftNote
+	notes []agentdraftports.AgentDraftNote
 }
 
 func (s *sanitizer) drop(field, value, reason string) {
-	s.notes = append(s.notes, agentports.AgentDraftNote{
+	s.notes = append(s.notes, agentdraftports.AgentDraftNote{
 		Field:  field,
 		Value:  stringutils.OneLine(value, agentdefinition.MaxGuardrailRunes),
 		Reason: reason,
@@ -79,8 +81,8 @@ func (s *sanitizer) drop(field, value, reason string) {
 
 func sanitizeDraft(
 	in *sanitizeInput,
-) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentports.AgentDraftNote, error) {
-	s := &sanitizer{in: in, notes: make([]agentports.AgentDraftNote, 0, 4)}
+) (*agentdefinitionports.SaveAgentDefinitionRequest, []agentdraftports.AgentDraftNote, error) {
+	s := &sanitizer{in: in, notes: make([]agentdraftports.AgentDraftNote, 0, 4)}
 	reply := in.reply
 
 	instructions := stringutils.TruncateRunes(
@@ -116,8 +118,8 @@ func sanitizeDraft(
 		CronTimezone:      trigger.timezone,
 		EventKinds:        trigger.events,
 		IntervalSeconds:   trigger.interval,
-		Icon:              s.identity("icon", reply.Icon, agentdefinition.IsKnownIcon),
-		Accent:            s.identity("accent", reply.Accent, agentdefinition.IsKnownAccent),
+		Icon:              s.identity("icon", reply.Icon, agentmark.IsKnownIcon),
+		Accent:            s.identity("accent", reply.Accent, agentmark.IsKnownAccent),
 		OutputMode:        outputMode(reply.OutputMode, trigger.mode),
 		TenantInfo:        in.tenantInfo,
 	}
@@ -275,7 +277,7 @@ type sanitizedTrigger struct {
 	mode     agentdefinition.TriggerMode
 	cron     string
 	timezone string
-	events   []agent.EventKind
+	events   []agenttrigger.EventKind
 	interval int
 }
 
@@ -342,9 +344,9 @@ func (s *sanitizer) schedule(trigger *sanitizedTrigger) {
 }
 
 func (s *sanitizer) events(trigger *sanitizedTrigger) {
-	seen := make(map[agent.EventKind]struct{}, len(s.in.reply.EventKinds))
+	seen := make(map[agenttrigger.EventKind]struct{}, len(s.in.reply.EventKinds))
 	for _, raw := range s.in.reply.EventKinds {
-		kind := agent.EventKind(strings.TrimSpace(raw))
+		kind := agenttrigger.EventKind(strings.TrimSpace(raw))
 		if kind == "" {
 			continue
 		}

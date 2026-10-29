@@ -7,14 +7,21 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -43,7 +50,7 @@ func NewActOnPortalTool(
 	portals agentextensionports.PortalAutomator,
 	waits agentextensionports.PortalRunWaits,
 	logger *zap.Logger,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -71,35 +78,35 @@ func (t *ActOnPortalTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramSiteID: agenttoolschema.KindID(
 			"The portal site to act on, from web_list_portal_sites. It must allow actions.",
-			permission.KindPortalSite,
+			recordkind.PortalSite,
 		),
 		paramInstruction: map[string]any{
 			toolschema.KeyType: "string",
 			toolschema.KeyDescription: "Exactly what to do, in one plain sentence, such as " +
 				"\"Book the 8:00 AM dock appointment on October 20 for this PO\".",
-			toolschema.KeyMaxLength: agentextension.MaxPortalInstructionRunes,
+			toolschema.KeyMaxLength: extensionportal.MaxPortalInstructionRunes,
 		},
 		paramDetails: agenttoolschema.StringMap(
 			"The values the portal needs, by what the portal calls them, such as "+
 				"{\"PO number\": \"4512\", \"Carrier\": \"Ridgeline Freight\"}.",
-			agentextension.MaxPortalDetailValueRunes,
+			extensionportal.MaxPortalDetailValueRunes,
 		),
 	}, paramSiteID, paramInstruction)
 }
 
-func (t *ActOnPortalTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ActOnPortalTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourcePortalAutomation,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		Artifact:      string(permission.KindPortalRun),
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		Artifact:      string(recordkind.PortalRun),
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Acts on a third-party portal in the organization's name, which another " +
 			"company then relies on; what it books or submits is undone, if at all, on that " +
 			"portal. A person always decides.",
@@ -114,27 +121,27 @@ func (t *ActOnPortalTool) SearchTerms() []string {
 }
 
 func (t *ActOnPortalTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentextensionports.PortalActionRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	siteID, err := common.RequirePulid(params.Params, paramSiteID)
+	siteID, err := toolparams.RequirePulid(params.Params, paramSiteID)
 	if err != nil {
 		return nil, err
 	}
-	instruction, err := common.RequireString(params.Params, paramInstruction)
+	instruction, err := toolparams.RequireString(params.Params, paramInstruction)
 	if err != nil {
 		return nil, err
 	}
-	details, err := agentextension.PortalDetailsFrom(params.Params[paramDetails])
+	details, err := extensionportal.PortalDetailsFrom(params.Params[paramDetails])
 	if err != nil {
 		return nil, errortypes.NewValidationError(paramDetails, errortypes.ErrInvalid, err.Error())
 	}
 
 	return &agentextensionports.PortalActionRequest{
-		TenantInfo:     common.TenantFrom(*params),
+		TenantInfo:     toolparams.TenantFrom(params),
 		SiteID:         siteID,
 		Instruction:    instruction,
 		Details:        details,
@@ -151,9 +158,9 @@ func (t *ActOnPortalTool) request(
 
 func (t *ActOnPortalTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -167,19 +174,19 @@ func (t *ActOnPortalTool) Validate(
 // the details it will type. It never reaches the vendor.
 func (t *ActOnPortalTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	summary := "Would ask a browser to act on a portal."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
 
 	plan, err := t.portals.PlanPortalAction(ctx, req)
 	if err != nil {
-		if agentextensionservice.IsToolError(err) || common.IsRefusal(err) ||
+		if agentextensionservice.IsToolError(err) || changepreview.IsRefusal(err) ||
 			errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -189,8 +196,8 @@ func (t *ActOnPortalTool) Preview(
 		Resource: permission.ResourcePortalAutomation,
 		ID:       plan.Site.ID,
 		Label:    plan.Site.Name,
-	}, &agent.MessagePreview{
-		Channel: agent.MessageChannelPortal,
+	}, &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelPortal,
 		To:      plan.Site.Domains,
 		Subject: plan.Instruction,
 		Body:    plan.SentTask,
@@ -210,7 +217,7 @@ func (t *ActOnPortalTool) Preview(
 
 func (t *ActOnPortalTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -222,16 +229,16 @@ func (t *ActOnPortalTool) Execute(
 // approval is the idempotency key, so a retry finds the task it started.
 func (t *ActOnPortalTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if !params.ApprovedFromProposal() {
 		return nil, ErrPortalActionNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -240,13 +247,13 @@ func (t *ActOnPortalTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	result := &agent.ToolExecutionResult{
+	result := &agentrecord.ToolExecutionResult{
 		Action: "started",
 		Kind:   resultKind,
 		Name:   started.Site.Name,
 		IDs:    map[string]string{resultRunID: started.RunID.String()},
-		Record: &agent.RecordRef{
-			EntityType: string(permission.KindPortalRun),
+		Record: &agentrecord.RecordRef{
+			EntityType: string(recordkind.PortalRun),
 			ID:         started.RunID.String(),
 		},
 	}
@@ -299,11 +306,11 @@ func (t *ActOnPortalTool) registerWait(
 	return true
 }
 
-func finishedState(status agentextension.PortalRunStatus) string {
+func finishedState(status extensionportal.PortalRunStatus) string {
 	switch status {
-	case agentextension.PortalRunStatusSucceeded:
+	case extensionportal.PortalRunStatusSucceeded:
 		return "Finished. Read what the portal said under AI Control, Extensions."
-	case agentextension.PortalRunStatusStrayed:
+	case extensionportal.PortalRunStatusStrayed:
 		return "Stopped: the browser left the site's addresses, so what it found was withheld."
 	default:
 		return "Ended without succeeding (" + strings.ToLower(status.String()) + ")."

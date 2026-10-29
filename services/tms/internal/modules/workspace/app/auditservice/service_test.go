@@ -6,8 +6,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/auditmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/operationbits"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -128,7 +132,7 @@ type noopRealtimeService struct{}
 
 func (s *noopRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
-	_ *agentports.PublishResourceInvalidationRequest,
+	_ *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	return nil
 }
@@ -136,16 +140,16 @@ func (s *noopRealtimeService) PublishResourceInvalidation(
 func newTestService(
 	repo *mockAuditRepository,
 	bufferRepo *mockBufferRepository,
-	realtime agentports.RealtimeService,
+	realtime realtimeports.RealtimeService,
 ) *service {
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{Env: "test"},
-		Security: config.SecurityConfig{
-			Encryption: config.EncryptionConfig{Key: "test-key-for-unit-tests-only"},
+		App: appconfig.Config{Env: "test"},
+		Security: securityconfig.Config{
+			Encryption: securityconfig.EncryptionConfig{Key: "test-key-for-unit-tests-only"},
 		},
 	}
-	auditMetrics := metrics.NewAudit(nil, logger, false)
+	auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 	metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 	srv := &service{
@@ -153,8 +157,7 @@ func newTestService(
 		bufferRepo: bufferRepo,
 		realtime:   realtime,
 		logger:     logger.Named("service.audit"),
-		config:     cfg,
-		sdm:        NewSensitiveDataManager(cfg.Security.Encryption),
+		sdm:        NewSensitiveDataManager(&cfg.Security.Encryption),
 		metrics:    metricsRegistry,
 	}
 	srv.configureSensitiveDataManager("test")
@@ -670,7 +673,7 @@ func TestList_NormalizesNumericOperationFilter(t *testing.T) {
 				{
 					Field:    "operation",
 					Operator: dbtype.OpEqual,
-					Value:    int64(permission.ClientOpRead),
+					Value:    int64(operationbits.Read),
 				},
 			},
 		},
@@ -713,8 +716,8 @@ func TestList_NormalizesNumericOperationFilterGroupValues(t *testing.T) {
 							Field:    "operation",
 							Operator: dbtype.OpIn,
 							Value: []int64{
-								int64(permission.ClientOpRead),
-								int64(permission.ClientOpUpdate),
+								int64(operationbits.Read),
+								int64(operationbits.Update),
 							},
 						},
 					},
@@ -1029,12 +1032,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "my-test-encryption-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "my-test-encryption-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1042,7 +1045,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1052,7 +1056,6 @@ func TestNew(t *testing.T) {
 		assert.Same(t, repo, concrete.repo)
 		assert.Same(t, bufferRepo, concrete.bufferRepo)
 		assert.NotNil(t, concrete.logger)
-		assert.Same(t, cfg, concrete.config)
 		assert.NotNil(t, concrete.sdm)
 		assert.Same(t, metricsRegistry, concrete.metrics)
 	})
@@ -1064,12 +1067,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "test-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1077,7 +1080,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1093,12 +1097,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "production"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "prod-key"},
+			App: appconfig.Config{Env: "production"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "prod-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1106,7 +1110,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1122,12 +1127,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "my-encryption-key-for-testing"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "my-encryption-key-for-testing"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1135,7 +1140,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1151,12 +1157,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: ""},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: ""},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1164,7 +1170,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1179,12 +1186,12 @@ func TestNew(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1192,7 +1199,8 @@ func TestNew(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1210,12 +1218,12 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "test-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1223,7 +1231,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1256,12 +1265,12 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "test-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1269,7 +1278,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1294,12 +1304,12 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "test-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1307,7 +1317,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 
@@ -1337,12 +1348,12 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 		bufferRepo := new(mockBufferRepository)
 		logger := zap.NewNop()
 		cfg := &config.Config{
-			App: config.AppConfig{Env: "test"},
-			Security: config.SecurityConfig{
-				Encryption: config.EncryptionConfig{Key: "test-key"},
+			App: appconfig.Config{Env: "test"},
+			Security: securityconfig.Config{
+				Encryption: securityconfig.EncryptionConfig{Key: "test-key"},
 			},
 		}
-		auditMetrics := metrics.NewAudit(nil, logger, false)
+		auditMetrics := auditmetrics.NewAudit(nil, logger, false)
 		metricsRegistry := &metrics.Registry{Audit: auditMetrics}
 
 		svc := New(Params{
@@ -1350,7 +1361,8 @@ func TestRegisterDefaultSensitiveFields(t *testing.T) {
 			AuditBufferRepository: bufferRepo,
 			Realtime:              &noopRealtimeService{},
 			Logger:                logger,
-			Config:                cfg,
+			AppConfig:             &cfg.App,
+			SecurityConfig:        &cfg.Security,
 			Metrics:               metricsRegistry,
 		})
 

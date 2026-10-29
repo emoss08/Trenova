@@ -3,8 +3,8 @@ package extractionshadowservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -93,7 +93,7 @@ func (s *Service) checkCandidate(
 	providerID pulid.ID,
 	enabled bool,
 ) error {
-	provider, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	provider, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         providerID,
 		TenantInfo: tenant,
 	})
@@ -108,7 +108,7 @@ func (s *Service) checkCandidate(
 	if !enabled {
 		return nil
 	}
-	if ok, reason := provider.CanServeTask(aiprovider.TaskDocumentExtraction); !ok {
+	if ok, reason := provider.CanServeTask(aitask.TaskDocumentExtraction); !ok {
 		return errortypes.NewValidationError(
 			"providerId",
 			errortypes.ErrInvalid,

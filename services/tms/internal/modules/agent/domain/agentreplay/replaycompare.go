@@ -1,0 +1,374 @@
+package agentreplay
+
+import (
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/shared/maputils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+)
+
+// ReplayVerdict is what one original proposal, set against the replay and
+// against how a person decided on it, says about the agent as it is now.
+type ReplayVerdict string
+
+const (
+	// VerdictAgreed: a person approved it and the replay proposes it again.
+	VerdictAgreed = ReplayVerdict("Agreed")
+	// VerdictImproved: a person rejected it and the replay no longer proposes it.
+	VerdictImproved = ReplayVerdict("Improved")
+	// VerdictRegressed: a person approved it and the replay no longer proposes it.
+	VerdictRegressed = ReplayVerdict("Regressed")
+	// VerdictRepeated: a person rejected it and the replay proposes it again.
+	VerdictRepeated = ReplayVerdict("Repeated")
+	// VerdictChanged: the replay proposes the same tool with different parameters.
+	VerdictChanged = ReplayVerdict("Changed")
+	// VerdictUndecided: nobody decided on the original, so the replay's
+	// keeping or dropping it says nothing yet.
+	VerdictUndecided = ReplayVerdict("Undecided")
+	// VerdictAdded: the replay proposes something the original did not.
+	VerdictAdded = ReplayVerdict("Added")
+)
+
+// OriginalProposal is what the recorded run proposed and what became of it.
+// CorrectedParams is what a person approved when they edited the proposal
+// first: the proposed parameters with the latest Modified decision's changes
+// laid over them. Nil when nobody changed anything or the proposal ended
+// rejected.
+type OriginalProposal struct {
+	ID              pulid.ID
+	ToolName        string
+	Params          map[string]any
+	CorrectedParams map[string]any `json:",omitempty"`
+	Status          agent.ProposalStatus
+	Decision        agentdecision.DecisionType
+}
+
+func NewOriginalProposal(
+	proposal *agent.AgentProposal,
+	decisions []*agentdecision.AgentDecision,
+) OriginalProposal {
+	original := OriginalProposal{
+		ID:       proposal.ID,
+		ToolName: proposal.ToolName,
+		Params:   proposal.ToolParams,
+		Status:   proposal.Status,
+	}
+	if len(decisions) == 0 {
+		return original
+	}
+
+	original.Decision = decisions[0].Decision
+	if original.Decision == agentdecision.DecisionRejected {
+		return original
+	}
+	for _, decision := range decisions {
+		if decision.Decision == agentdecision.DecisionModified && len(decision.Modifications) > 0 {
+			original.CorrectedParams = maputils.Overlay(proposal.ToolParams, decision.Modifications)
+			break
+		}
+	}
+
+	return original
+}
+
+func DecisionsByProposal(
+	decisions []*agentdecision.AgentDecision,
+) map[pulid.ID][]*agentdecision.AgentDecision {
+	grouped := make(map[pulid.ID][]*agentdecision.AgentDecision, len(decisions))
+	for _, decision := range decisions {
+		if decision == nil || decision.ProposalID == nil {
+			continue
+		}
+		grouped[*decision.ProposalID] = append(grouped[*decision.ProposalID], decision)
+	}
+
+	return grouped
+}
+
+func (o OriginalProposal) Expected() map[string]any {
+	if o.CorrectedParams != nil {
+		return o.CorrectedParams
+	}
+
+	return o.Params
+}
+
+// ReplayMatch pairs an original proposal with the replay's answer to it, or
+// a replay action with nothing in the original.
+type ReplayMatch struct {
+	ToolName           string              `json:"toolName"`
+	OriginalProposalID pulid.ID            `json:"originalProposalId,omitempty"`
+	OriginalParams     map[string]any      `json:"originalParams,omitempty"`
+	CorrectedParams    map[string]any      `json:"correctedParams,omitempty"`
+	ReplayParams       map[string]any      `json:"replayParams,omitempty"`
+	OriginalOutcome    string              `json:"originalOutcome,omitempty"`
+	Verdict            ReplayVerdict       `json:"verdict"`
+	Changes            []agent.FieldChange `json:"changes,omitempty"`
+}
+
+// ReplayComparison is the whole replay set against the original, with the
+// counts the list page reads and a score over the proposals people decided.
+type ReplayComparison struct {
+	Matches   []ReplayMatch `json:"matches"`
+	Agreed    int           `json:"agreed"`
+	Improved  int           `json:"improved"`
+	Regressed int           `json:"regressed"`
+	Repeated  int           `json:"repeated"`
+	Changed   int           `json:"changed"`
+	Added     int           `json:"added"`
+	Undecided int           `json:"undecided"`
+	Decided   int           `json:"decided"`
+	// Score is the share of decided originals the replay got right: agreed
+	// plus improved over those kept or dropped. A changed proposal is
+	// decided but neither, so it is left out of both sides. Nil when
+	// nothing counts.
+	Score *float64 `json:"score"`
+}
+
+const (
+	outcomeAccepted  = "accepted"
+	outcomeRejected  = "rejected"
+	outcomeUndecided = "undecided"
+)
+
+// outcomeOf reads a proposal's fate as a person's verdict on it. A write
+// the agent made on its own, or one simulated, counts as accepted: the
+// system stood behind it and nobody took it back.
+func outcomeOf(original OriginalProposal) string {
+	switch original.Decision {
+	case agentdecision.DecisionAccepted, agentdecision.DecisionModified:
+		return outcomeAccepted
+	case agentdecision.DecisionRejected:
+		return outcomeRejected
+	}
+
+	switch original.Status {
+	case agent.ProposalStatusAccepted,
+		agent.ProposalStatusModified,
+		agent.ProposalStatusExecuted,
+		agent.ProposalStatusSimulated:
+		return outcomeAccepted
+	case agent.ProposalStatusRejected:
+		return outcomeRejected
+	default:
+		return outcomeUndecided
+	}
+}
+
+// CompareReplay matches each original proposal to the replay action that
+// answers it and judges the pair by the original's outcome.
+//
+// Matching is by tool, and within a tool by identical parameters first, so a
+// replay that proposes the same two assignments in a different order still
+// agrees with both. What is left in the replay is added; what is left in the
+// original is dropped, and dropped is an improvement or a regression by how
+// a person decided on it.
+func CompareReplay(originals []OriginalProposal, replay []ReplayAction) *ReplayComparison {
+	out := &ReplayComparison{Matches: make([]ReplayMatch, 0, len(originals)+len(replay))}
+	used := make([]bool, len(replay))
+
+	pick := func(original OriginalProposal) (int, bool) {
+		expected := NormalizeParams(original.Expected())
+		exact := -1
+		sameTool := -1
+		for i, action := range replay {
+			if used[i] || action.ToolName != original.ToolName {
+				continue
+			}
+			if reflect.DeepEqual(NormalizeParams(action.Arguments), expected) {
+				exact = i
+				break
+			}
+			if sameTool < 0 {
+				sameTool = i
+			}
+		}
+		if exact >= 0 {
+			return exact, true
+		}
+		if sameTool >= 0 {
+			return sameTool, false
+		}
+
+		return -1, false
+	}
+
+	for _, original := range originals {
+		match := ReplayMatch{
+			ToolName:           original.ToolName,
+			OriginalProposalID: original.ID,
+			OriginalParams:     original.Params,
+			CorrectedParams:    original.CorrectedParams,
+			OriginalOutcome:    outcomeOf(original),
+		}
+		index, exact := pick(original)
+		switch {
+		case index < 0:
+			match.Verdict = droppedVerdict(match.OriginalOutcome)
+		case exact:
+			used[index] = true
+			match.ReplayParams = replay[index].Arguments
+			match.Verdict = keptVerdict(match.OriginalOutcome)
+		default:
+			used[index] = true
+			match.ReplayParams = replay[index].Arguments
+			match.Verdict = VerdictChanged
+			match.Changes = diffParams(original.Expected(), replay[index].Arguments)
+		}
+		out.count(match)
+		out.Matches = append(out.Matches, match)
+	}
+
+	for i, action := range replay {
+		if used[i] {
+			continue
+		}
+		match := ReplayMatch{
+			ToolName:     action.ToolName,
+			ReplayParams: action.Arguments,
+			Verdict:      VerdictAdded,
+		}
+		out.count(match)
+		out.Matches = append(out.Matches, match)
+	}
+
+	if out.Decided > 0 {
+		score := float64(out.Agreed+out.Improved) / float64(out.Decided)
+		out.Score = &score
+	}
+
+	return out
+}
+
+func keptVerdict(outcome string) ReplayVerdict {
+	switch outcome {
+	case outcomeAccepted:
+		return VerdictAgreed
+	case outcomeRejected:
+		return VerdictRepeated
+	default:
+		return VerdictUndecided
+	}
+}
+
+func droppedVerdict(outcome string) ReplayVerdict {
+	switch outcome {
+	case outcomeAccepted:
+		return VerdictRegressed
+	case outcomeRejected:
+		return VerdictImproved
+	default:
+		return VerdictUndecided
+	}
+}
+
+func (c *ReplayComparison) count(match ReplayMatch) {
+	switch match.Verdict {
+	case VerdictAgreed:
+		c.Agreed++
+	case VerdictImproved:
+		c.Improved++
+	case VerdictRegressed:
+		c.Regressed++
+	case VerdictRepeated:
+		c.Repeated++
+	case VerdictChanged:
+		c.Changed++
+	case VerdictAdded:
+		c.Added++
+	case VerdictUndecided:
+		c.Undecided++
+	}
+	switch match.Verdict {
+	case VerdictAgreed, VerdictImproved, VerdictRegressed, VerdictRepeated:
+		c.Decided++
+	}
+}
+
+// NormalizeParams makes two parameter maps comparable whatever JSON round trip
+// they took: numbers come back as float64 from storage and as int from a
+// model, and an absent key is the same as an empty one.
+func NormalizeParams(params map[string]any) map[string]any {
+	out := make(map[string]any, len(params))
+	for key, value := range params {
+		if value == nil {
+			continue
+		}
+		if text, ok := value.(string); ok && strings.TrimSpace(text) == "" {
+			continue
+		}
+		out[key] = fmt.Sprint(NormalizeValue(value))
+	}
+
+	return out
+}
+
+func NormalizeValue(value any) any {
+	switch v := value.(type) {
+	case int:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case float32:
+		return float64(v)
+	case float64:
+		return v
+	case string:
+		return strings.TrimSpace(v)
+	default:
+		encoded, err := sonic.MarshalString(v)
+		if err != nil {
+			return fmt.Sprint(v)
+		}
+
+		return encoded
+	}
+}
+
+func diffParams(original, replay map[string]any) []agent.FieldChange {
+	keys := make(map[string]struct{}, len(original)+len(replay))
+	for key := range original {
+		keys[key] = struct{}{}
+	}
+	for key := range replay {
+		keys[key] = struct{}{}
+	}
+	sorted := make([]string, 0, len(keys))
+	for key := range keys {
+		sorted = append(sorted, key)
+	}
+	sort.Strings(sorted)
+
+	before := NormalizeParams(original)
+	after := NormalizeParams(replay)
+	changes := make([]agent.FieldChange, 0, len(sorted))
+	for _, key := range sorted {
+		if before[key] == after[key] {
+			continue
+		}
+		changes = append(changes, agent.FieldChange{
+			Field: key,
+			From:  displayValue(before[key]),
+			To:    displayValue(after[key]),
+		})
+	}
+
+	return changes
+}
+
+func displayValue(value any) string {
+	if value == nil {
+		return "nothing"
+	}
+
+	return stringutils.Ellipsize(fmt.Sprint(value), 80)
+}

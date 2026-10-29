@@ -3,7 +3,7 @@
 A trading partner sends an implementation guide (a PDF, a DOCX, or a text file of sample X12).
 An agent on the Desk reads it, drafts the whole connection, and proposes it. A person reviews the
 draft and approves it. Nothing is written before that approval. Read this before changing
-`modules/edi/app/ediconnectiondraft`, its ports (`ediports/ediconnectiondraft.go`) or repository
+`modules/edi/app/ediconnectiondraft` (with `ediconnectionfield` and `ediconnectionguide`), its ports (`ediports/ediconnectiondraft.go`) or repository
 (`ediconnectiondraftrepository`), the `edi_draft_connection` or `edi_apply_connection_draft` tools,
 the `edi_connection_draft` Desk artifact, or the communication profile validator's credential rules.
 
@@ -36,7 +36,7 @@ Execute ─▶ ApplyConnectionDraft: re-plan, check the digest and readiness, wr
 
 | Tool | Kind | Holds it | What it does |
 |---|---|---|---|
-| `edi_draft_connection` | query, EDI read | EDI desk | Builds the plan and returns the review (`connectionDraftView`: the draft, a title and a note for the model). Writes nothing. On a ready draft the note names, for the model to repeat in its reply, each template rule left unmet (`MS1-01 (page 5)`), each gap the guide leaves open and the credentials to enter before the connection is turned on; a reply that leaves them out hides what the person must still do. On a ready draft of a partner that exists, the note also lists each write the draft makes, value by value (`Contact name from Dana Whitfield to Priya Raman (page 1)`, `interchange control numbers on the 990 outbound, 214 outbound start at 5000 instead of 1000 (page 3)`): a long draft is shortened to fit the model's context and a note never is, so the change set is never lost with the lists that were cut. On a draft that is not ready the agent first corrects what it misread itself (a candidate the planner found invalid for its field, or a quote that states the value for a different field, such as the partner's ISA qualifier given as its own) and drafts again without asking; it asks the person only about what the guide itself leaves open, and only that: a question ends the turn, so anything else asked for in that reply would never reach the person, and the draft that follows the answer names them. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, listed in `agentruntime.outsideTextTools`). |
+| `edi_draft_connection` | query, EDI read | EDI desk | Builds the plan and returns the review (`connectionDraftView`: the draft, a title and a note for the model). Writes nothing. On a ready draft the note names, for the model to repeat in its reply, each template rule left unmet (`MS1-01 (page 5)`), each gap the guide leaves open and the credentials to enter before the connection is turned on; a reply that leaves them out hides what the person must still do. On a ready draft of a partner that exists, the note also lists each write the draft makes, value by value (`Contact name from Dana Whitfield to Priya Raman (page 1)`, `interchange control numbers on the 990 outbound, 214 outbound start at 5000 instead of 1000 (page 3)`): a long draft is shortened to fit the model's context and a note never is, so the change set is never lost with the lists that were cut. On a draft that is not ready the agent first corrects what it misread itself (a candidate the planner found invalid for its field, or a quote that states the value for a different field, such as the partner's ISA qualifier given as its own) and drafts again without asking; it asks the person only about what the guide itself leaves open, and only that: a question ends the turn, so anything else asked for in that reply would never reach the person, and the draft that follows the answer names them. Reads outside content, so it caps every later write in the turn at `Propose` (`CapsLaterWrites`, listed in `toolaccess.outsideTextTools`). |
 | `edi_apply_connection_draft` | action, EDI update, egress internal | EDI desk | The same input plus `documentDigest`. Its `Preview` recomputes the plan from the document and the configuration as they are at decision time; `Validate` refuses a digest that does not match or a draft that is not ready; `Execute` runs only from an approved proposal, and reports what it saved (`ToolResultReporter`): the partner as an `edi_partner` record, and a state that counts the records by kind, says they were saved inactive (or, for a partner that exists, that what existed keeps its status) and names the credentials still to enter, so the reply after approval can say so. Its default tier and ceiling are both `Propose`. It is an update because creating EDI records is not something an agent may hold; the records it creates are created under a person's approval. |
 
 Both tools take the same input (`agenttools/edispec`: `ParamSchema`, `Parse`). Reading the
@@ -56,7 +56,7 @@ against the stored pages either way:
   a partner, the planner matches one.
 - `values[]`: `{field, value, confidence, citation: {page, quote, section}}`. `field` names a slot
   the planner knows (`partner.name`, `isa.ourId`, `sets.214.outbound.ack`, `as2.partnerAs2Id`, ...;
-  the catalog is `ediconnectiondraft/catalog.go`, exposed as the `edi.connectionDraftField` enum
+  the catalog is `ediconnectionfield/catalog.go`, exposed as the `edi.connectionDraftField` enum
   source). Secret slots do not exist.
 - `requirements[]`: `{transactionSet, direction, segment, elementPosition, usage, codes, citation}`,
   the segment and element usage the spec states.
@@ -108,7 +108,7 @@ again instead.
   value taken from it cites the sample's page and its ISA segment. A sample printed in a PDF reads
   back with its fixed-width padding squeezed and its long lines wrapped; the finder joins the
   wrap and the parser reads the squeezed ISA.
-- **Quotes are redacted** before they are stored or shown (`edi.RedactSecrets`). Anything after a
+- **Quotes are redacted** before they are stored or shown (`x12field.RedactSecrets`). Anything after a
   password, passphrase, secret, key or token label, and any PEM block, is masked, and a sample's
   ISA02 and ISA04 are masked with `X`. The planner redacts every quote and gap summary as it reads
   the request, and checks a quote against the page in its original and its redacted form, so a
@@ -246,13 +246,15 @@ document digest.
 
 | Piece | Where |
 |---|---|
-| Planner, verification, diff, apply | `modules/edi/app/ediconnectiondraft/` |
-| Plan types and ports | `modules/edi/ports/ediports/ediconnectiondraft.go` |
+| Planner, diff, apply | `modules/edi/app/ediconnectiondraft/` |
+| Field catalog, citation checks, spec samples, evidence and resolution | `modules/edi/app/ediconnectionfield/` |
+| Guide files and project check reading | `modules/edi/app/ediconnectionguide/` |
+| Plan types and ports | `modules/edi/ports/ediconnectiondraftports/ediconnectiondraft.go` |
 | Repository | `modules/edi/adapters/postgres/ediconnectiondraftrepository/` |
 | Sample parse | `ediinboundservice.ParseSample` |
 | Tool input | `agent/app/agenttools/edispec/` |
-| Tools | `agent/app/agentquerytoolservice/edi_connection_draft_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` (and `preview_connection_draft.go`) |
-| Artifact | `assistantservice/edi_connection_draft.go`; client `routes/desk/_components/artifacts/kinds/edi-connection-draft/` (with `connection-draft-skeleton.tsx`) |
+| Tools | `agent/app/querytools/ediquerytools/edi_connection_draft_tool.go`, `agent/app/agenttools/editools/apply_connection_draft.go` (and `preview_connection_draft.go`) |
+| Artifact | `assistantservice/toolartifacts/edi_connection_draft.go`; client `routes/desk/_components/artifacts/kinds/edi-connection-draft/` (with `connection-draft-skeleton.tsx`) |
 | Approval card | `components/assistant/proposal-presenters.ts` (`edi_apply_connection_draft`) |
 | Bench | `deskbench/scenarios/edi.yaml` (`edi-guide-new-partner`, `edi-guide-revised`), fixtures `deskbench/fixtures/attachments/edi-guide.html` + `edi-guides.json`, rendered by `render.mjs` |
 | Simulator spec | `dev/edi-partner-sim/specs/simpartner-implementation-guide.txt`, held to the simulator by `internal/sim/spec_test.go` and drafted by `ediconnectiondraft/simulator_spec_test.go` |

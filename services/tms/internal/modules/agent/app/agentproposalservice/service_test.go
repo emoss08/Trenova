@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentproposalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -14,14 +14,14 @@ import (
 )
 
 type fakeProposalRepo struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	items []*agent.AgentProposal
 }
 
 func (f *fakeProposalRepo) List(
 	context.Context,
-	*agentports.ListAgentProposalRequest,
+	*agentproposalports.ListAgentProposalRequest,
 ) (*pagination.ListResult[*agent.AgentProposal], error) {
 	return &pagination.ListResult[*agent.AgentProposal]{
 		Items:      f.items,
@@ -32,19 +32,19 @@ func (f *fakeProposalRepo) List(
 
 func (f *fakeProposalRepo) ListConnection(
 	context.Context,
-	*agentports.ListAgentProposalConnectionRequest,
+	*agentproposalports.ListAgentProposalConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentProposal], error) {
 	return &pagination.CursorListResult[*agent.AgentProposal]{Items: f.items}, nil
 }
 
 func (f *fakeProposalRepo) GetByID(
 	context.Context,
-	agentports.GetAgentProposalByIDRequest,
+	agentproposalports.GetAgentProposalByIDRequest,
 ) (*agent.AgentProposal, error) {
 	return f.items[0], nil
 }
 
-func heldService() (agentports.AgentProposalService, *agent.AgentProposal) {
+func heldService() (agentproposalports.AgentProposalService, *agent.AgentProposal) {
 	pending := &agent.AgentProposal{
 		ID:     pulid.MustNew("ap_"),
 		RunID:  pulid.MustNew("ar_"),
@@ -62,7 +62,7 @@ func TestList_SurfacesAProposalWhateverHoldsIt(t *testing.T) {
 
 	svc, pending := heldService()
 
-	result, err := svc.List(t.Context(), &agentports.ListAgentProposalRequest{
+	result, err := svc.List(t.Context(), &agentproposalports.ListAgentProposalRequest{
 		Filter: &pagination.QueryOptions{},
 	})
 
@@ -75,9 +75,12 @@ func TestListConnection_SurfacesAProposalWhateverHoldsIt(t *testing.T) {
 
 	svc, pending := heldService()
 
-	result, err := svc.ListConnection(t.Context(), &agentports.ListAgentProposalConnectionRequest{
-		Filter: &pagination.QueryOptions{},
-	})
+	result, err := svc.ListConnection(
+		t.Context(),
+		&agentproposalports.ListAgentProposalConnectionRequest{
+			Filter: &pagination.QueryOptions{},
+		},
+	)
 
 	require.NoError(t, err)
 	require.Equal(t, []*agent.AgentProposal{pending}, result.Items)
@@ -88,7 +91,7 @@ func TestGetByID_FindsAProposalWhateverHoldsIt(t *testing.T) {
 
 	svc, pending := heldService()
 
-	found, err := svc.GetByID(t.Context(), agentports.GetAgentProposalByIDRequest{
+	found, err := svc.GetByID(t.Context(), agentproposalports.GetAgentProposalByIDRequest{
 		ID:         pending.ID,
 		TenantInfo: &pagination.TenantInfo{},
 	})

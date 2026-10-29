@@ -5,10 +5,11 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"go.uber.org/zap"
 )
@@ -29,15 +30,15 @@ const (
 
 func (r *Repository) ListDeliveriesToday(
 	ctx context.Context,
-	req *shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDeliveryRow, error) {
+	req *shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentDeliveryRow, error) {
-			today, err := shipmentrepository.QuickFilterCondition(
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentDeliveryRow, error) {
+			today, err := shipmentpredicate.QuickFilterCondition(
 				req.Basis,
-				shipment.Quick(shipment.QuickFilterDeliveringToday),
+				quickfilter.Quick(quickfilter.QuickFilterDeliveringToday),
 			)
 			if err != nil {
 				return nil, err
@@ -46,13 +47,13 @@ func (r *Repository) ListDeliveriesToday(
 			sp := shipmentdb.Shipments
 			ld := shipmentdb.Stops.As(deliveryAlias)
 			loc := locationdb.Locations.As(deliveryLocationAlias)
-			delivery := shipmentrepository.LastDeliveryStop(
+			delivery := shipmentpredicate.LastDeliveryStop(
 				ld,
 				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
 			).Pick(ld.ID, ld.LocationID, ld.ActualArrival, ld.ScheduledWindowStart, ld.ScheduledWindowEnd)
-			deliveryAt := shipmentrepository.DeliveryAt(ld)
+			deliveryAt := shipmentpredicate.DeliveryAt(ld)
 
-			rows, err := keel.Into[shipmentports.ShipmentDeliveryRow](ctx, r.db.Keel(ctx), sp.
+			rows, err := keel.Into[shipmentboardports.ShipmentDeliveryRow](ctx, r.db.Keel(ctx), sp.
 				JoinLateral(delivery).
 				LeftJoin(loc, loc.ID.EqCol(ld.LocationID)).
 				Pick(
@@ -79,28 +80,28 @@ func (r *Repository) ListDeliveriesToday(
 
 func (r *Repository) NextUncoveredPickup(
 	ctx context.Context,
-	req *shipmentports.ShipmentWatchlistRequest,
-) (*shipmentports.ShipmentPickupRow, error) {
+	req *shipmentboardports.ShipmentWatchlistRequest,
+) (*shipmentboardports.ShipmentPickupRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
+		func(ctx context.Context) (*shipmentboardports.ShipmentPickupRow, error) {
 			sp := shipmentdb.Shipments
 			fp := shipmentdb.Stops.As(pickupAlias)
 			fpLoc := locationdb.Locations.As(pickupLocationAlias)
 			ld := shipmentdb.Stops.As(deliveryAlias)
 			ldLoc := locationdb.Locations.As(deliveryLocationAlias)
 
-			pickup := shipmentrepository.FirstPickupStop(
+			pickup := shipmentpredicate.FirstPickupStop(
 				fp,
 				shipmentdb.ShipmentMoves.As(pickupMoveAlias),
 			).Pick(fp.ID, fp.LocationID, fp.ScheduledWindowStart)
-			delivery := shipmentrepository.LastDeliveryStop(
+			delivery := shipmentpredicate.LastDeliveryStop(
 				ld,
 				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
 			).Pick(ld.ID, ld.LocationID)
 
-			rows, err := keel.Into[shipmentports.ShipmentPickupRow](ctx, r.db.Keel(ctx), sp.
+			rows, err := keel.Into[shipmentboardports.ShipmentPickupRow](ctx, r.db.Keel(ctx), sp.
 				JoinLateral(pickup).
 				LeftJoin(fpLoc, fpLoc.ID.EqCol(fp.LocationID)).
 				LeftJoinLateral(delivery).
@@ -112,7 +113,7 @@ func (r *Repository) NextUncoveredPickup(
 					ldLoc.City.Coalesce(""),
 				).
 				Where(
-					shipmentrepository.StageCondition(shipment.StageNeedsCoverage),
+					shipmentpredicate.StageCondition(shipmentvocab.StageNeedsCoverage),
 					fp.ScheduledWindowStart.Gte(req.Basis.Now.Unix()),
 				).
 				Order(fp.ScheduledWindowStart.Asc(), sp.ID.Asc()).
@@ -132,27 +133,27 @@ func (r *Repository) NextUncoveredPickup(
 
 func (r *Repository) ListDwellingStops(
 	ctx context.Context,
-	req *shipmentports.ShipmentWatchlistRequest,
-) ([]*shipmentports.ShipmentDwellRow, error) {
+	req *shipmentboardports.ShipmentWatchlistRequest,
+) ([]*shipmentboardports.ShipmentDwellRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentDwellRow, error) {
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentDwellRow, error) {
 			if req.Basis == nil || req.Basis.Detention == nil {
-				return nil, shipmentrepository.ErrQuickFilterDetentionMissing
+				return nil, shipmentpredicate.ErrQuickFilterDetentionMissing
 			}
 
 			sp := shipmentdb.Shipments
 			dw := shipmentdb.Stops.As(dwellAlias)
 			loc := locationdb.Locations.As(dwellLocationAlias)
-			dwelling := shipmentrepository.DwellingStops(
+			dwelling := shipmentpredicate.DwellingStops(
 				dw,
 				shipmentdb.ShipmentMoves.As(dwellMoveAlias),
 				req.Basis.Now.Unix(),
 				req.Basis.Detention.ThresholdMinutes,
 			).Pick(dw.ID, dw.ShipmentMoveID, dw.LocationID, dw.ActualArrival)
 
-			rows, err := keel.Into[shipmentports.ShipmentDwellRow](ctx, r.db.Keel(ctx), sp.
+			rows, err := keel.Into[shipmentboardports.ShipmentDwellRow](ctx, r.db.Keel(ctx), sp.
 				JoinLateral(dwelling).
 				LeftJoin(loc, loc.ID.EqCol(dw.LocationID)).
 				Pick(
@@ -176,12 +177,12 @@ func (r *Repository) ListDwellingStops(
 
 func (r *Repository) ListReadyToBillCustomers(
 	ctx context.Context,
-	req *shipmentports.ListReadyToBillCustomersRequest,
-) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
+	req *shipmentboardports.ListReadyToBillCustomersRequest,
+) ([]*shipmentboardports.ShipmentBillingCustomerRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
+		func(ctx context.Context) ([]*shipmentboardports.ShipmentBillingCustomerRow, error) {
 			limit := req.Limit
 			if limit <= 0 || limit > maxBillingCustomer {
 				limit = maxBillingCustomer
@@ -191,12 +192,12 @@ func (r *Repository) ListReadyToBillCustomers(
 			cus := sp.Customer()
 			total := revenueSum()
 
-			rows, err := keel.Into[shipmentports.ShipmentBillingCustomerRow](
+			rows, err := keel.Into[shipmentboardports.ShipmentBillingCustomerRow](
 				ctx,
 				r.db.Keel(ctx),
 				sp.Group(sp.CustomerID, cus.Name).
 					Pick(sp.CustomerID, cus.Name, keel.Count(), total, keel.Count().OverWindow(keel.Window{})).
-					Where(shipmentrepository.BillingTransferCandidateCondition()).
+					Where(shipmentpredicate.BillingTransferCandidateCondition()).
 					Order(keel.Desc(total), sp.CustomerID.Asc()).
 					Limit(limit),
 			)

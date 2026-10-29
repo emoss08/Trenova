@@ -3,12 +3,11 @@ package completionrouter
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/testutil/mocks/platformplanportsmock"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,15 +39,21 @@ func TestEveryModelEntryRefusesOnceTheMonthsSpendIsGone(t *testing.T) {
 
 	tenant := plantest.Tenant()
 	svc := newTestService(t)
-	svc.quota = spentGuard(t, tenant)
+	svc.Quota = spentGuard(t, tenant)
 
-	_, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{TenantInfo: tenant})
+	_, err := svc.CompleteStructured(
+		t.Context(),
+		&llmports.StructuredCompletionRequest{TenantInfo: tenant},
+	)
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
-	_, err = svc.CompleteChat(t.Context(), &agentports.ChatCompletionRequest{TenantInfo: tenant})
+	_, err = svc.CompleteChat(t.Context(), &llmports.ChatCompletionRequest{TenantInfo: tenant})
 	require.True(t, errortypes.IsQuotaExceededError(err))
 
-	_, err = svc.SubmitBackground(t.Context(), &agentports.StructuredCompletionRequest{TenantInfo: tenant})
+	_, err = svc.SubmitBackground(
+		t.Context(),
+		&llmports.StructuredCompletionRequest{TenantInfo: tenant},
+	)
 	require.True(t, errortypes.IsQuotaExceededError(err))
 }
 
@@ -56,7 +61,7 @@ func TestAssertWithinSpendSkipsCallsWithoutATenant(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.quota = platformplanportsmock.NewMockQuotaGuard(t)
+	svc.Quota = platformplanportsmock.NewMockQuotaGuard(t)
 
-	require.NoError(t, svc.assertWithinSpend(t.Context(), pagination.TenantInfo{}))
+	require.NoError(t, svc.AssertWithinSpend(t.Context(), pagination.TenantInfo{}))
 }

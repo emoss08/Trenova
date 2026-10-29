@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -104,7 +106,8 @@ func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipm
 			continue
 		}
 		deleteIDs = append(deleteIDs, id)
-		deletedDetention = deletedDetention || existing.Owner() == shipment.SystemOwnerDetention
+		deletedDetention = deletedDetention ||
+			existing.Owner() == shipmentvocab.SystemOwnerDetention
 	}
 
 	if len(deleteIDs) > 0 {
@@ -133,7 +136,7 @@ func (r *repository) linkDetentionOccurrences(
 
 	links := make(map[pulid.ID][]pulid.ID, 1)
 	for _, charge := range entity.AdditionalCharges {
-		if charge == nil || charge.Owner() != shipment.SystemOwnerDetention ||
+		if charge == nil || charge.Owner() != shipmentvocab.SystemOwnerDetention ||
 			len(charge.DetentionOccurrenceIDs) == 0 {
 			continue
 		}
@@ -160,7 +163,7 @@ func (r *repository) linkDetentionOccurrences(
 
 func (r *repository) reconcileHeaderTotals(ctx context.Context, entity *shipment.Shipment) error {
 	freight := entity.FreightChargeAmount.Decimal
-	totals, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
+	totals, err := chargeallocation.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
 	if err != nil {
 		return err
 	}

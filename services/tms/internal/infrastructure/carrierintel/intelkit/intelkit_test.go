@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -158,19 +159,19 @@ func TestRecorder_RecordsStatusAndUnits(t *testing.T) {
 
 	mapper := testMapper()
 	recorder.Record(t.Context(), &CallOutcome{
-		Endpoint: carrierintel.EndpointProfileFull,
+		Endpoint: carrierintelusage.EndpointProfileFull,
 		Started:  time.Now(),
 		Found:    true,
 	})
 	notFound := mapper.Map(errSentinelNotFound)
 	recorder.Record(t.Context(), &CallOutcome{
-		Endpoint: carrierintel.EndpointProfileFull,
+		Endpoint: carrierintelusage.EndpointProfileFull,
 		Started:  time.Now(),
 		RawErr:   errSentinelNotFound,
 		Mapped:   notFound,
 	})
 	recorder.Record(t.Context(), &CallOutcome{
-		Endpoint: carrierintel.EndpointMonitorAdd,
+		Endpoint: carrierintelusage.EndpointMonitorAdd,
 		Started:  time.Now(),
 		Status:   http.StatusMultiStatus,
 		Units:    3,

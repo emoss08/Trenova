@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +20,7 @@ import (
 )
 
 type fakeAccountingChecker struct {
-	status  *accountingsyncports.AccountingSyncStatus
+	status  *accountingconnectionports.AccountingSyncStatus
 	checked []pulid.ID
 	tenant  pagination.TenantInfo
 	guard   agenttoolstest.WriteGuard
@@ -29,7 +30,7 @@ func (f *fakeAccountingChecker) Status(
 	_ context.Context,
 	tenant pagination.TenantInfo,
 	_ integration.Type,
-) (*accountingsyncports.AccountingSyncStatus, error) {
+) (*accountingconnectionports.AccountingSyncStatus, error) {
 	f.tenant = tenant
 	return f.status, nil
 }
@@ -38,7 +39,7 @@ func (f *fakeAccountingChecker) CheckHealth(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*accountingsync.AccountingConnection, error) {
+) (*accountingconnection.AccountingConnection, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -47,12 +48,21 @@ func (f *fakeAccountingChecker) CheckHealth(
 	return f.status.Connection, nil
 }
 
-func connectedStatus(status accountingsync.ConnectionStatus) *accountingsyncports.AccountingSyncStatus {
-	return &accountingsyncports.AccountingSyncStatus{
+func (f *fakeAccountingChecker) CheckDue(
+	context.Context,
+	int,
+) (*accountingconnectionports.AccountingHealthSweep, error) {
+	return &accountingconnectionports.AccountingHealthSweep{}, nil
+}
+
+func connectedStatus(
+	status accountingconnection.ConnectionStatus,
+) *accountingconnectionports.AccountingSyncStatus {
+	return &accountingconnectionports.AccountingSyncStatus{
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ProviderName:    "QuickBooks Online",
 		Available:       true,
-		Connection: &accountingsync.AccountingConnection{
+		Connection: &accountingconnection.AccountingConnection{
 			ID:                  pulid.MustNew("acctc_"),
 			IntegrationType:     integration.TypeQuickBooksOnline,
 			Status:              status,
@@ -64,8 +74,10 @@ func connectedStatus(status accountingsync.ConnectionStatus) *accountingsyncport
 func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 	t.Parallel()
 
-	checker := &fakeAccountingChecker{status: connectedStatus(accountingsync.ConnectionStatusDegraded)}
-	tool := newCheckAccountingConnectionTool(checker)
+	checker := &fakeAccountingChecker{
+		status: connectedStatus(accountingconnection.ConnectionStatusDegraded),
+	}
+	tool := newCheckAccountingConnectionTool(checker, checker)
 	params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -76,16 +88,16 @@ func TestCheckAccountingConnection_ChecksTheTenantsConnection(t *testing.T) {
 func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing.T) {
 	t.Parallel()
 
-	for _, status := range []*accountingsyncports.AccountingSyncStatus{
-		connectedStatus(accountingsync.ConnectionStatusRevoked),
-		connectedStatus(accountingsync.ConnectionStatusDisconnected),
+	for _, status := range []*accountingconnectionports.AccountingSyncStatus{
+		connectedStatus(accountingconnection.ConnectionStatusRevoked),
+		connectedStatus(accountingconnection.ConnectionStatusDisconnected),
 		{IntegrationType: integration.TypeQuickBooksOnline, ProviderName: "QuickBooks Online"},
 	} {
 		checker := &fakeAccountingChecker{status: status}
-		tool := newCheckAccountingConnectionTool(checker)
+		tool := newCheckAccountingConnectionTool(checker, checker)
 		params := agenttoolstest.ExecuteParams(map[string]any{"system": "QuickBooksOnline"})
 
-		err := tool.(agentports.ToolValidator).Validate(t.Context(), params)
+		err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 		require.Error(t, err)
 		assert.True(t, errortypes.IsBusinessError(err))
 		require.Error(t, tool.Execute(t.Context(), params))
@@ -96,19 +108,29 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 func TestCheckAccountingConnection_PolicyStaysInside(t *testing.T) {
 	t.Parallel()
 
-	policy := newCheckAccountingConnectionTool(&fakeAccountingChecker{}).Policy()
+	policy := newCheckAccountingConnectionTool(
+		&fakeAccountingChecker{},
+		&fakeAccountingChecker{},
+	).Policy()
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
 	assert.Equal(t, agent.TierAutoExecute, policy.DefaultTier)
 	assert.False(t, policy.Reversible)
-	assert.Equal(t, agent.ExternalReadNever, policy.ReadsExternal)
+	assert.Equal(t, agenttooltrust.ExternalReadNever, policy.ReadsExternal)
 }
 
 func TestCheckAccountingConnection_RejectsUnknownSystems(t *testing.T) {
 	t.Parallel()
 
-	tool := newCheckAccountingConnectionTool(&fakeAccountingChecker{
-		status: connectedStatus(accountingsync.ConnectionStatusConnected),
-	})
-	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{"system": "SageIntacct"})))
+	checker := &fakeAccountingChecker{
+		status: connectedStatus(accountingconnection.ConnectionStatusConnected),
+	}
+	tool := newCheckAccountingConnectionTool(checker, checker)
+	require.Error(
+		t,
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.ExecuteParams(map[string]any{"system": "SageIntacct"}),
+		),
+	)
 	require.Error(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{})))
 }

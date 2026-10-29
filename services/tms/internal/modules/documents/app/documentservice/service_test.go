@@ -7,13 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	minioadapter "github.com/emoss08/trenova/internal/infrastructure/minio"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentpacketrulerepository"
@@ -33,6 +29,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,7 +76,7 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	logger := zap.NewNop()
 
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:  mc.Endpoint(),
 			AccessKey: mc.AccessKey(),
 			SecretKey: mc.SecretKey(),
@@ -94,16 +94,20 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	}
 
 	storageClient, err := minioadapter.New(minioadapter.Params{
-		Config: cfg,
-		Logger: logger,
+		StorageConfig: &cfg.Storage,
+		Logger:        logger,
 	})
 	require.NoError(t, err)
 
 	cacheRepo := customerportsmock.NewMockDocumentCacheRepository(t)
 
 	sessionRepo := documentuploadportsmock.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
+	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).
+		Maybe()
 	contentService := documentportsmock.NewMockDocumentContentService(t)
 	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
 	// Every scenario in this suite uploads at least one document, and each
@@ -138,12 +142,12 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		SessionRepo:      sessionRepo,
 		Storage:          storageClient,
 		Validator: documentservice.NewValidator(
-			documentservice.ValidatorParams{Config: cfg},
+			documentservice.ValidatorParams{StorageConfig: &cfg.Storage},
 		),
 		AuditService:         &mocks.NoopAuditService{},
 		DocumentIntelligence: contentService,
 		SearchProjection:     searchProjection,
-		Config:               cfg,
+		StorageConfig:        &cfg.Storage,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(nil),
 		Encryption:           encryption,
 	})
@@ -353,11 +357,14 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	assert.EqualValues(t, 1, refreshedFirstVersion.VersionNumber)
 	assert.EqualValues(t, 2, refreshedSecondVersion.VersionNumber)
 
-	resourceDocs, err := h.service.GetByResource(h.ctx, &documentports.GetDocumentsByResourceRequest{
-		TenantInfo:   h.tenantInfo,
-		ResourceID:   resourceID,
-		ResourceType: "shipment",
-	})
+	resourceDocs, err := h.service.GetByResource(
+		h.ctx,
+		&documentports.GetDocumentsByResourceRequest{
+			TenantInfo:   h.tenantInfo,
+			ResourceID:   resourceID,
+			ResourceType: "shipment",
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, resourceDocs, 1)
 	assert.Equal(t, secondVersion.ID, resourceDocs[0].ID)
@@ -372,11 +379,14 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	assert.Equal(t, firstVersion.ID, restored.ID)
 	assert.True(t, restored.IsCurrentVersion)
 
-	restoredDocs, err := h.service.GetByResource(h.ctx, &documentports.GetDocumentsByResourceRequest{
-		TenantInfo:   h.tenantInfo,
-		ResourceID:   resourceID,
-		ResourceType: "shipment",
-	})
+	restoredDocs, err := h.service.GetByResource(
+		h.ctx,
+		&documentports.GetDocumentsByResourceRequest{
+			TenantInfo:   h.tenantInfo,
+			ResourceID:   resourceID,
+			ResourceType: "shipment",
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, restoredDocs, 1)
 	assert.Equal(t, firstVersion.ID, restoredDocs[0].ID)

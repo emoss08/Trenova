@@ -10,9 +10,12 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/emoss08/trenova/shared/xero"
 	"github.com/stretchr/testify/assert"
@@ -129,23 +132,21 @@ func (f *fakeXero) find(method, path string) (xeroCall, bool) {
 	return xeroCall{}, false
 }
 
-func newProvider(t *testing.T, cfg config.XeroConfig) *Provider {
+func newProvider(t *testing.T, cfg accountingconfig.XeroConfig) *Provider {
 	t.Helper()
 	provider, err := New(Params{
-		Config: &config.Config{
-			App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-			Accounting: config.AccountingConfig{Xero: cfg},
-		},
-		Logger: zap.NewNop(),
+		AccountingConfig: &accountingconfig.Config{Xero: cfg},
+		AppConfig:        &appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Logger:           zap.NewNop(),
 	})
 	require.NoError(t, err)
 	return provider
 }
 
-func tenantApp() *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
-		Source:               accountingsync.AppSourceTenant,
-		Environment:          accountingsync.AppEnvironmentProduction,
+func tenantApp() *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
+		Source:               accountingconnection.AppSourceTenant,
+		Environment:          accountingprovider.AppEnvironmentProduction,
 		ClientID:             "tenant-id",
 		ClientSecret:         "tenant-secret",
 		WebhookVerifierToken: "tenant-webhook-key",
@@ -157,23 +158,26 @@ func testConnector(t *testing.T, fake *fakeXero) *Connector {
 	server := httptest.NewServer(fake.handler(t))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.XeroConfig{})
+	provider := newProvider(t, accountingconfig.XeroConfig{})
 	provider.oauthOpts = []xero.Option{
 		xero.WithIdentityURL(server.URL),
 		xero.WithHTTPClient(server.Client()),
 	}
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
-	conn.apiOpts = []xero.Option{
-		xero.WithBaseURL(server.URL),
-		xero.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Session = *xerosession.NewSession(
+		[]xero.Option{
+			xero.WithBaseURL(server.URL),
+			xero.WithRetry(restx.RetryConfig{}),
+		},
+		&http.Client{Transport: provider.gate.transport(server.Client().Transport)},
+		conn.Codes,
+	)
 	return conn
 }
 
-func testAuth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{
+func testAuth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     testTenant,
 		AccessToken: "access-token",
 		CompanyCode: "!Ab12C",

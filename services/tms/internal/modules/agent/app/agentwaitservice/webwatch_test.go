@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,46 +19,46 @@ import (
 type fakeWebWatches struct {
 	agentextensionports.WebWatchRepository
 
-	watch *agentextension.WebWatch
+	watch *extensionwebwatch.WebWatch
 }
 
 func (f *fakeWebWatches) Get(
 	context.Context,
 	pagination.TenantInfo,
 	pulid.ID,
-) (*agentextension.WebWatch, error) {
+) (*extensionwebwatch.WebWatch, error) {
 	return f.watch, nil
 }
 
-func activeWatch() *agentextension.WebWatch {
-	return &agentextension.WebWatch{
-		ID:      pulid.MustNew(agentextension.WebWatchIDPrefix),
+func activeWatch() *extensionwebwatch.WebWatch {
+	return &extensionwebwatch.WebWatch{
+		ID:      pulid.MustNew(extensionwebwatch.WebWatchIDPrefix),
 		Purpose: "FMCSA finalizing the broker transparency rule",
-		Cadence: agentextension.WebWatchCadenceDaily,
-		Status:  agentextension.WebWatchStatusActive,
+		Cadence: extensionwebwatch.WebWatchCadenceDaily,
+		Status:  extensionwebwatch.WebWatchStatusActive,
 		EndsAt:  now + 20*24*60*60,
 	}
 }
 
-func finding(summary string, createdAt int64, urls ...string) *agentextension.WebWatchFinding {
-	results := make([]agentextension.WebWatchResult, 0, len(urls))
+func finding(summary string, createdAt int64, urls ...string) *extensionwebwatch.WebWatchFinding {
+	results := make([]extensionwebwatch.WebWatchResult, 0, len(urls))
 	for idx, target := range urls {
-		results = append(results, agentextension.WebWatchResult{
+		results = append(results, extensionwebwatch.WebWatchResult{
 			Title:         "Page " + strconv.Itoa(idx+1),
 			URL:           target,
 			PublishedDate: "2026-10-01",
 		})
 	}
 
-	return &agentextension.WebWatchFinding{
-		ID:        pulid.MustNew(agentextension.WebWatchFindingIDPrefix),
+	return &extensionwebwatch.WebWatchFinding{
+		ID:        pulid.MustNew(extensionwebwatch.WebWatchFindingIDPrefix),
 		Summary:   summary,
 		Results:   results,
 		CreatedAt: createdAt,
 	}
 }
 
-func watchWait(watch *agentextension.WebWatch, createdAt int64) *agentwait.Wait {
+func watchWait(watch *extensionwebwatch.WebWatch, createdAt int64) *agentwait.Wait {
 	wait := openWait(agentwait.KindWebWatch, agentwait.Condition{WebWatchID: watch.ID})
 	wait.CreatedAt = createdAt
 
@@ -69,7 +69,7 @@ func TestWebWatchOutcomeQuotesWhatItFoundAsOutsideText(t *testing.T) {
 	t.Parallel()
 
 	watch := activeWatch()
-	outcome := webWatchOutcome(watch, []*agentextension.WebWatchFinding{
+	outcome := webWatchOutcome(watch, []*extensionwebwatch.WebWatchFinding{
 		finding("FMCSA published the final rule.", now-60,
 			"https://www.federalregister.gov/d/2026-1"),
 	})
@@ -84,7 +84,7 @@ func TestWebWatchOutcomeQuotesWhatItFoundAsOutsideText(t *testing.T) {
 func TestWebWatchOutcomeShowsTheNewestFindingsWithinTheNote(t *testing.T) {
 	t.Parallel()
 
-	findings := make([]*agentextension.WebWatchFinding, 0, 5)
+	findings := make([]*extensionwebwatch.WebWatchFinding, 0, 5)
 	for idx := range 5 {
 		urls := make([]string, 0, 8)
 		for page := range 8 {
@@ -112,7 +112,7 @@ func TestAWatchsFindingsPickUpTheWorkOnceAndSetTheNextWait(t *testing.T) {
 	waiting := watchWait(watch, now-3600)
 	h := newHarness(waiting)
 	h.svc.facts.webWatches = &fakeWebWatches{watch: watch}
-	found := []*agentextension.WebWatchFinding{
+	found := []*extensionwebwatch.WebWatchFinding{
 		finding("FMCSA published the final rule.", now, "https://www.federalregister.gov/d/2026-1"),
 	}
 
@@ -141,7 +141,7 @@ func TestAWaitAsNewAsTheFindingsIsLeftForTheNextOnes(t *testing.T) {
 	watch := activeWatch()
 	rearmed := watchWait(watch, now)
 	h := newHarness(rearmed)
-	found := []*agentextension.WebWatchFinding{
+	found := []*extensionwebwatch.WebWatchFinding{
 		finding("FMCSA published the final rule.", now, "https://www.federalregister.gov/d/2026-1"),
 	}
 
@@ -161,8 +161,14 @@ func TestAWatchThatIsEndingSetsNoNextWait(t *testing.T) {
 	h := newHarness(waiting)
 	h.svc.facts.webWatches = &fakeWebWatches{watch: watch}
 
-	require.NoError(t, h.svc.NotifyWebWatch(t.Context(), pagination.TenantInfo{}, watch,
-		[]*agentextension.WebWatchFinding{finding("Something new.", now, "https://example.com")}))
+	require.NoError(t, h.svc.NotifyWebWatch(
+		t.Context(),
+		pagination.TenantInfo{},
+		watch,
+		[]*extensionwebwatch.WebWatchFinding{
+			finding("Something new.", now, "https://example.com"),
+		},
+	))
 
 	assert.Len(t, h.workflows.signals, 1)
 	assert.Len(t, h.waits.items, 1, "a watch past its last check is not waited on again")
@@ -189,7 +195,7 @@ func TestAStoppedWatchClosesItsWaitQuietlyAndAFailedOneSaysWhy(t *testing.T) {
 	t.Parallel()
 
 	stopped := activeWatch()
-	stopped.Status = agentextension.WebWatchStatusStopped
+	stopped.Status = extensionwebwatch.WebWatchStatusStopped
 	quiet := watchWait(stopped, now-3600)
 	h := newHarness(quiet)
 
@@ -200,7 +206,7 @@ func TestAStoppedWatchClosesItsWaitQuietlyAndAFailedOneSaysWhy(t *testing.T) {
 	assert.Empty(t, h.turns.started)
 
 	failed := activeWatch()
-	failed.Status = agentextension.WebWatchStatusFailed
+	failed.Status = extensionwebwatch.WebWatchStatusFailed
 	failed.Failure = "Exa turned the watch off after its requests kept failing."
 	told := watchWait(failed, now-3600)
 	h = newHarness(told)

@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -15,7 +17,7 @@ import (
 func (e *engine) grantedAgentIDs(
 	ctx context.Context,
 	orgID pulid.ID,
-	roles []*permission.Role,
+	roles []*rbac.Role,
 ) ([]string, error) {
 	if e.agentGrants == nil || len(roles) == 0 {
 		return []string{}, nil
@@ -127,7 +129,7 @@ func (e *engine) RoleCoverage(
 		return nil, fmt.Errorf("read the roles and the roles they inherit: %w", err)
 	}
 
-	byID := make(map[pulid.ID]*permission.Role, len(closure))
+	byID := make(map[pulid.ID]*rbac.Role, len(closure))
 	for _, role := range closure {
 		if role != nil && role.OrganizationID == req.OrganizationID {
 			byID[role.ID] = role
@@ -147,14 +149,14 @@ func (e *engine) RoleCoverage(
 }
 
 func (e *engine) coverageOf(
-	role *permission.Role,
-	byID map[pulid.ID]*permission.Role,
+	role *rbac.Role,
+	byID map[pulid.ID]*rbac.Role,
 	required []permissionports.RequiredGrant,
 ) permissionports.RoleCoverage {
 	perms := e.inheritedPermissions(role, byID)
 	result := permissionports.RoleCoverage{
 		RoleID:           role.ID,
-		Coverage:         agentdefinition.CoverageNone,
+		Coverage:         agentreach.CoverageNone,
 		MissingResources: []permission.Resource{},
 	}
 	if _, ok := e.resolveResourcePermission(
@@ -178,21 +180,21 @@ func (e *engine) coverageOf(
 		}
 	}
 
-	result.Coverage = agentdefinition.CoverageFull
+	result.Coverage = agentreach.CoverageFull
 	if len(result.MissingResources) > 0 {
-		result.Coverage = agentdefinition.CoveragePartial
+		result.Coverage = agentreach.CoveragePartial
 	}
 
 	return result
 }
 
 func (e *engine) inheritedPermissions(
-	role *permission.Role,
-	byID map[pulid.ID]*permission.Role,
+	role *rbac.Role,
+	byID map[pulid.ID]*rbac.Role,
 ) *permissionports.CachedPermissions {
 	resources := make(map[string]*permissionports.CachedResourcePermission)
 	visited := make(map[pulid.ID]struct{}, len(byID))
-	pending := []*permission.Role{role}
+	pending := []*rbac.Role{role}
 
 	for len(pending) > 0 {
 		current := pending[len(pending)-1]

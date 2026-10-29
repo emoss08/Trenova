@@ -3,7 +3,7 @@ package homelayoutports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,7 +34,7 @@ type DeleteHomeLayoutPresetRequest struct {
 type HomeRoleUserAssignment struct {
 	RoleID             pulid.ID
 	UserID             pulid.ID
-	CoreResponsibility permission.CoreResponsibility
+	CoreResponsibility rbac.CoreResponsibility
 }
 
 type HomeLayoutRepository interface {

@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -38,7 +39,11 @@ func testTenant() pagination.TenantInfo {
 }
 
 func testActor() *permissionports.RequestActor {
-	return &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser, PrincipalID: testUser, UserID: testUser}
+	return &permissionports.RequestActor{
+		PrincipalType: permissionports.PrincipalTypeUser,
+		PrincipalID:   testUser,
+		UserID:        testUser,
+	}
 }
 
 type settingsStore struct {
@@ -191,7 +196,10 @@ func (f *resultStore) TotalsByStatus(
 		}
 		total, ok := byStatus[item.Status]
 		if !ok {
-			total = &extractionshadowports.ExtractionShadowStatusTotal{Status: item.Status, CostUSD: decimal.Zero}
+			total = &extractionshadowports.ExtractionShadowStatusTotal{
+				Status:  item.Status,
+				CostUSD: decimal.Zero,
+			}
 			byStatus[item.Status] = total
 			order = append(order, item.Status)
 		}
@@ -274,14 +282,14 @@ func (f *contentStore) GetByDocumentID(
 }
 
 type providerStore struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -295,13 +303,13 @@ func (f *providerStore) GetByID(
 
 type retentionStore struct {
 	tenantports.DataRetentionRepository
-	settings *tenant.DataRetention
+	settings *dataretention.DataRetention
 }
 
 func (f *retentionStore) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	if f.settings == nil {
 		return nil, errortypes.NewNotFoundError("data retention not found")
 	}
@@ -309,13 +317,13 @@ func (f *retentionStore) Get(
 }
 
 type fakeBudget struct {
-	decision *agentquality.BudgetDecision
+	decision *agentqualitysuite.BudgetDecision
 }
 
 func (f *fakeBudget) CheckEvaluationBudget(
 	context.Context,
 	pagination.TenantInfo,
-) (*agentquality.BudgetDecision, error) {
+) (*agentqualitysuite.BudgetDecision, error) {
 	return f.decision, nil
 }
 
@@ -375,14 +383,14 @@ func newWorld() *world {
 		Name:    "Fine-tuned Qwen",
 		Model:   "trenova-extract",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	production := &aiprovider.Provider{
 		ID:      pulid.MustNew("aip_"),
 		Name:    "Frontier",
 		Model:   "frontier-large",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	w := &world{
 		settings:    &settingsStore{},
@@ -394,7 +402,7 @@ func newWorld() *world {
 			production.ID: production,
 		}},
 		retention:  &retentionStore{},
-		budget:     &fakeBudget{decision: &agentquality.BudgetDecision{}},
+		budget:     &fakeBudget{decision: &agentqualitysuite.BudgetDecision{}},
 		predictor:  &fakePredictor{},
 		starter:    &fakeStarter{},
 		candidate:  candidate,

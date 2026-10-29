@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -88,7 +89,7 @@ type AgentEvalCaseRepository interface {
 	ListSamplingCases(
 		ctx context.Context,
 		req ListEvalCaseSamplingRequest,
-	) ([]agentquality.SamplingCase, error)
+	) ([]agentqualitysuite.SamplingCase, error)
 	Create(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
 	Update(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
 	GetByID(

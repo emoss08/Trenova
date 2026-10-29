@@ -7,7 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -15,23 +17,23 @@ import (
 )
 
 type ScriptedCompletion struct {
-	Turns []*agentports.ChatCompletionResult
+	Turns []*llmports.ChatCompletionResult
 	// Errors fails the completion at that call index instead of answering, so
 	// a test can make the model die after a tool has already run.
 	Errors    map[int]error
 	CallCount int
-	LastReq   *agentports.ChatCompletionRequest
+	LastReq   *llmports.ChatCompletionRequest
 	// Requests is every request, oldest first, so a test can see what a
 	// turn sent before the one that answered it.
-	Requests       []*agentports.ChatCompletionRequest
+	Requests       []*llmports.ChatCompletionRequest
 	Classification string
 	StructuredText string
 }
 
 func (s *ScriptedCompletion) CompleteChat(
 	_ context.Context,
-	req *agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	s.LastReq = req
 	s.Requests = append(s.Requests, req)
 	idx := s.CallCount
@@ -51,9 +53,9 @@ func (s *ScriptedCompletion) CompleteChat(
 
 func (s *ScriptedCompletion) StreamChat(
 	ctx context.Context,
-	req *agentports.ChatCompletionRequest,
-	sink agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	req *llmports.ChatCompletionRequest,
+	sink llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	result, err := s.CompleteChat(ctx, req)
 	if err != nil {
 		return nil, err
@@ -72,17 +74,17 @@ func (s *ScriptedCompletion) StreamChat(
 
 func (s *ScriptedCompletion) CompleteStructured(
 	_ context.Context,
-	_ *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	_ *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	if s.StructuredText != "" {
-		return &agentports.StructuredCompletionResult{Text: s.StructuredText}, nil
+		return &llmports.StructuredCompletionResult{Text: s.StructuredText}, nil
 	}
 	category := s.Classification
 	if category == "" {
 		category = "TransportationOperations"
 	}
 
-	return &agentports.StructuredCompletionResult{
+	return &llmports.StructuredCompletionResult{
 		Text: `{"category":"` + category + `"}`,
 	}, nil
 }
@@ -93,20 +95,20 @@ func (s *ScriptedCompletion) CompleteStructured(
 // really produce rather than a handle that never resolves.
 func (s *ScriptedCompletion) SubmitBackground(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	result, err := s.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentports.BackgroundSubmission{Result: result}, nil
+	return &llmports.BackgroundSubmission{Result: result}, nil
 }
 
 func (s *ScriptedCompletion) PollBackground(
 	_ context.Context,
-	_ *agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	_ *llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	return nil, errors.New("scripted completion runs inline and issues no handle to poll")
 }
 
@@ -118,11 +120,11 @@ type StubQueryTool struct {
 	Result     any
 	Err        error
 	Calls      int
-	LastParams agentports.QueryToolParams
+	LastParams agenttoolports.QueryToolParams
 	LastTenant dbscope.Tenant
 	Resource   permission.Resource
 	// Reads and Source declare the tool as one that reads outside content.
-	Reads   agent.ExternalRead
+	Reads   agenttooltrust.ExternalRead
 	Source  agent.TaintSource
 	Sources []agent.TaintSource
 	// Schema stands in for the tool's declared parameters when set.
@@ -145,7 +147,7 @@ func (t *StubQueryTool) ParamSchema() map[string]any {
 
 	return map[string]any{"type": "object"}
 }
-func (t *StubQueryTool) Policy() agentports.ToolPolicy {
+func (t *StubQueryTool) Policy() agenttoolports.ToolPolicy {
 	resource := t.Resource
 	if resource == "" {
 		resource = permission.ResourceShipment
@@ -153,19 +155,19 @@ func (t *StubQueryTool) Policy() agentports.ToolPolicy {
 
 	reads := t.Reads
 	if reads == "" {
-		reads = agent.ExternalReadNever
+		reads = agenttooltrust.ExternalReadNever
 	}
 
-	return agentports.ToolPolicy{
+	return agenttoolports.ToolPolicy{
 		Name:          t.ToolName,
-		Kind:          agent.ToolKindQuery,
+		Kind:          agenttooltrust.ToolKindQuery,
 		Resource:      resource,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressNone},
-		Effect:        agent.ToolEffectLookup,
+		Effect:        agenttooltrust.ToolEffectLookup,
 		Reversible:    true,
 		Idempotent:    true,
 		ReadsExternal: reads,
@@ -177,7 +179,7 @@ func (t *StubQueryTool) Policy() agentports.ToolPolicy {
 
 func (t *StubQueryTool) Query(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	params *agenttoolports.QueryToolParams,
 ) (any, error) {
 	t.Calls++
 	t.LastParams = *params
@@ -186,9 +188,11 @@ func (t *StubQueryTool) Query(
 	return t.Result, t.Err
 }
 
-type StubQueryRegistry struct{ Tools []agentports.AgentQueryTool }
+type StubQueryRegistry struct {
+	Tools []agenttoolports.AgentQueryTool
+}
 
-func (r *StubQueryRegistry) Get(name string) (agentports.AgentQueryTool, bool) {
+func (r *StubQueryRegistry) Get(name string) (agenttoolports.AgentQueryTool, bool) {
 	for _, tool := range r.Tools {
 		if tool.Name() == name {
 			return tool, true
@@ -198,12 +202,12 @@ func (r *StubQueryRegistry) Get(name string) (agentports.AgentQueryTool, bool) {
 	return nil, false
 }
 
-func (r *StubQueryRegistry) All() []agentports.AgentQueryTool { return r.Tools }
+func (r *StubQueryRegistry) All() []agenttoolports.AgentQueryTool { return r.Tools }
 
-func (r *StubQueryRegistry) Descriptors() []agentports.AgentToolDescriptor {
-	out := make([]agentports.AgentToolDescriptor, 0, len(r.Tools))
+func (r *StubQueryRegistry) Descriptors() []agenttoolports.AgentToolDescriptor {
+	out := make([]agenttoolports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, agentports.DescribeTool(tool, "", true))
+		out = append(out, agenttoolports.DescribeTool(tool, "", true))
 	}
 
 	return out
@@ -216,7 +220,7 @@ type StubActionTool struct {
 	Tier       agent.AutonomyTier
 	Err        error
 	Calls      int
-	LastParams agentports.ToolExecuteParams
+	LastParams agenttoolports.ToolExecuteParams
 	Resource   permission.Resource
 	// Operation is the permission the tool is gated on; update when unset.
 	Operation permission.Operation
@@ -243,7 +247,7 @@ func (t *StubActionTool) ParamSchema() map[string]any {
 
 	return map[string]any{"type": "object"}
 }
-func (t *StubActionTool) Policy() agentports.ToolPolicy {
+func (t *StubActionTool) Policy() agenttoolports.ToolPolicy {
 	resource := t.Resource
 	if resource == "" {
 		resource = permission.ResourceShipmentMove
@@ -261,21 +265,21 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 		operation = permission.OpUpdate
 	}
 
-	policy := agentports.ToolPolicy{
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.ToolName,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      resource,
 		Operation:     operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       agent.TierAutoExecute,
 		CarriesTaint:  t.CarriesTaint,
 		Escalates:     t.Escalates,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A stub write.",
 	}
 	if egress == agent.EgressMoney && t.MoneyMinor != nil {
@@ -285,10 +289,10 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 			currency = StubFunctionalCurrency
 		}
 		vouches, rereads := t.MoneyVouches, t.MoneyRereads
-		policy.Condition = &agentports.TierCondition{
+		policy.Condition = &agenttoolports.TierCondition{
 			Description: "A stub money write within its bounds.",
-			Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-				bound := agentports.WithinMoneyBound(amount, currency)
+			Bounds: func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+				bound := agenttoolports.WithinMoneyBound(amount, currency)
 				for _, reread := range rereads {
 					bound = bound.Rereading(reread.Source, reread.Ref)
 				}
@@ -304,17 +308,17 @@ func (t *StubActionTool) Policy() agentports.ToolPolicy {
 
 func (t *StubActionTool) Execute(
 	_ context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	t.Calls++
-	t.LastParams = params
+	t.LastParams = *params
 
 	return t.Err
 }
 
-type StubActionRegistry struct{ Tools []agentports.AgentTool }
+type StubActionRegistry struct{ Tools []agenttoolports.AgentTool }
 
-func (r *StubActionRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (r *StubActionRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	for _, tool := range r.Tools {
 		if tool.Name() == name {
 			return tool, true
@@ -324,12 +328,12 @@ func (r *StubActionRegistry) Get(name string) (agentports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r *StubActionRegistry) All() []agentports.AgentTool { return r.Tools }
+func (r *StubActionRegistry) All() []agenttoolports.AgentTool { return r.Tools }
 
-func (r *StubActionRegistry) Descriptors() []agentports.AgentToolDescriptor {
-	out := make([]agentports.AgentToolDescriptor, 0, len(r.Tools))
+func (r *StubActionRegistry) Descriptors() []agenttoolports.AgentToolDescriptor {
+	out := make([]agenttoolports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, agentports.DescribeTool(tool, tool.Policy().DefaultTier, false))
+		out = append(out, agenttoolports.DescribeTool(tool, tool.Policy().DefaultTier, false))
 	}
 
 	return out

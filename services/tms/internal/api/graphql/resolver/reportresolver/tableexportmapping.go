@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -36,10 +37,10 @@ func tableExportView(
 	}
 
 	if input.Filter != nil {
-		connection, err := base.DataTableConnectionFromGraphQL(
+		connection, err := gqlconnection.DataTableConnectionFromGraphQL(
 			ctx,
 			input.Filter,
-			base.TenantInfo(authCtx),
+			resolvercore.TenantInfo(authCtx),
 		)
 		if err != nil {
 			return tableexportservice.View{}, err

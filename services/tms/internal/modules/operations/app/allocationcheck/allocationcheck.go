@@ -7,8 +7,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +26,7 @@ const defaultField = "chargeAllocations"
 // named payer reads as not found.
 type Deps struct {
 	CustomerRepo         customerports.CustomerRepository
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	Logger               *zap.Logger
 }
 
@@ -60,7 +62,7 @@ func Validate(
 		return multiErr
 	}
 
-	multiErr = shipment.ValidateAllocations(&shipment.ValidateAllocationsParams{
+	multiErr = chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
 		TenantOrgID: entity.OrganizationID,
 		TenantBuID:  entity.BusinessUnitID,
 		Allocations: entity.ChargeAllocations,
@@ -73,7 +75,11 @@ func Validate(
 	}
 
 	preview := PreviewForResolution(entity)
-	if _, err := shipment.ResolveShares(ctx, preview, preview.ChargeAllocations); err != nil {
+	if _, err := chargeallocation.ResolveShares(
+		ctx,
+		preview,
+		preview.ChargeAllocations,
+	); err != nil {
 		var typed *errortypes.Error
 		if errors.As(err, &typed) {
 			multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
@@ -191,7 +197,7 @@ func PreviewForResolution(entity *shipment.Shipment) *shipment.Shipment {
 			continue
 		}
 		copied := *allocation
-		if copied.ChargeKind == shipment.ChargeAllocationKindAccessorial &&
+		if copied.ChargeKind == shipmentvocab.ChargeAllocationKindAccessorial &&
 			copied.AdditionalChargeIndex != nil {
 			idx := *copied.AdditionalChargeIndex
 			if idx >= 0 && idx < len(preview.AdditionalCharges) &&

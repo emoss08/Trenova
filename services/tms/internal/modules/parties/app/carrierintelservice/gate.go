@@ -7,6 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,11 +52,17 @@ func (s *Service) GateFor(
 		return nil, err
 	}
 
-	overridesByCarrier := make(map[pulid.ID][]*carrierintel.CarrierIntelOverride, len(overrides))
+	overridesByCarrier := make(
+		map[pulid.ID][]*carrierinteloverride.CarrierIntelOverride,
+		len(overrides),
+	)
 	for _, o := range overrides {
 		overridesByCarrier[o.CarrierID] = append(overridesByCarrier[o.CarrierID], o)
 	}
-	snapshotByCarrier := make(map[pulid.ID]*carrierintel.CarrierIntelSnapshot, len(snapshots))
+	snapshotByCarrier := make(
+		map[pulid.ID]*carrierintelsnapshot.CarrierIntelSnapshot,
+		len(snapshots),
+	)
 	for _, snap := range snapshots {
 		snapshotByCarrier[snap.CarrierID] = snap
 	}
@@ -114,20 +123,23 @@ func (s *Service) GateFor(
 
 		findings := snap.Findings
 		if subject, ok := subjectByCarrier[carrierID]; ok {
-			findings = carrierintel.CarryUnconfirmed(snap.Findings, carrierintel.EvaluateFindings(
-				&carrierintel.EvaluateInput{
-					Profile:  snap.Profile,
-					Now:      now,
-					Subject:  carrierintel.SubjectTypeCarrier,
-					NotFound: snap.NotFound,
-					Settings: control.Rules,
-					Overrides: carrierintel.OverrideRefs(
-						overridesByCarrier[carrierID], now,
-					),
-					BrokerAuthority: subject.Broker,
-					AuthorityExempt: subject.Exempt,
-				},
-			))
+			findings = carrierintelrule.CarryUnconfirmed(
+				snap.Findings,
+				carrierintelrule.EvaluateFindings(
+					&carrierintelrule.EvaluateInput{
+						Profile:  snap.Profile,
+						Now:      now,
+						Subject:  carrierintel.SubjectTypeCarrier,
+						NotFound: snap.NotFound,
+						Settings: control.Rules,
+						Overrides: carrierinteloverride.OverrideRefs(
+							overridesByCarrier[carrierID], now,
+						),
+						BrokerAuthority: subject.Broker,
+						AuthorityExempt: subject.Exempt,
+					},
+				),
+			)
 		}
 		gate.Findings = toGateFindings(findings)
 		gates[carrierID] = gate
@@ -136,7 +148,7 @@ func (s *Service) GateFor(
 	return gates, nil
 }
 
-func hasOverriddenFinding(snap *carrierintel.CarrierIntelSnapshot) bool {
+func hasOverriddenFinding(snap *carrierintelsnapshot.CarrierIntelSnapshot) bool {
 	for idx := range snap.Findings {
 		if snap.Findings[idx].Overridden {
 			return true
@@ -145,7 +157,7 @@ func hasOverriddenFinding(snap *carrierintel.CarrierIntelSnapshot) bool {
 	return false
 }
 
-func toGateFindings(findings []carrierintel.Finding) []carrier.IntelFinding {
+func toGateFindings(findings []carrierintelrule.Finding) []carrier.IntelFinding {
 	out := make([]carrier.IntelFinding, 0, len(findings))
 	for idx := range findings {
 		finding := findings[idx]

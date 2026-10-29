@@ -3,27 +3,33 @@ package ediconnectiondraft
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediconnectionfield"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediconnectiondraftports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
 func (s *Service) PreviewConnectionDraft(
 	ctx context.Context,
-	req *ediports.ConnectionDraftRequest,
-) (*ediports.ConnectionDraftPlan, error) {
+	req *ediconnectiondraftports.ConnectionDraftRequest,
+) (*ediconnectiondraftports.ConnectionDraftPlan, error) {
 	p, err := s.plan(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	plan := &ediports.ConnectionDraftPlan{
+	plan := &ediconnectiondraftports.ConnectionDraftPlan{
 		Draft: p.draft,
-		Partner: ediports.PlannedPartner{
+		Partner: ediconnectiondraftports.PlannedPartner{
 			After:  p.writes.partner,
 			Change: p.draft.Partner.Change,
 		},
-		Mappings:       make([]ediports.PlannedMapping, 0, len(p.writes.mappings)),
-		ControlNumbers: make([]ediports.PlannedControlNumber, 0, len(p.writes.controls)),
+		Mappings: make([]ediconnectiondraftports.PlannedMapping, 0, len(p.writes.mappings)),
+		ControlNumbers: make(
+			[]ediconnectiondraftports.PlannedControlNumber,
+			0,
+			len(p.writes.controls),
+		),
 	}
 	if p.match.setup != nil {
 		plan.Partner.Before = p.match.setup.Partner
@@ -32,7 +38,7 @@ func (s *Service) PreviewConnectionDraft(
 		plan.Transport = transport
 	}
 	if project := p.writes.project; project != nil {
-		plan.Project = &ediports.PlannedProject{
+		plan.Project = &ediconnectiondraftports.PlannedProject{
 			Files:   project.files,
 			Samples: project.samples,
 			Change:  project.change,
@@ -40,49 +46,52 @@ func (s *Service) PreviewConnectionDraft(
 		if p.match.setup != nil {
 			plan.Project.Project = p.match.setup.Project
 		}
-		plan.Project.Before = p.current.version
+		plan.Project.Before = p.current.Version
 	}
 	for _, item := range p.writes.mappings {
-		before := p.current.mapping(item.EntityType, item.SourceID)
-		change := ediports.ChangeKindAdd
+		before := p.current.Mapping(item.EntityType, item.SourceID)
+		change := ediconnectiondraftports.ChangeKindAdd
 		if before != nil {
-			change = ediports.ChangeKindChange
+			change = ediconnectiondraftports.ChangeKindChange
 		}
-		plan.Mappings = append(plan.Mappings, ediports.PlannedMapping{
+		plan.Mappings = append(plan.Mappings, ediconnectiondraftports.PlannedMapping{
 			Before: before,
 			After:  item,
 			Change: change,
 		})
 	}
 	for _, control := range p.writes.controls {
-		documentTypeID := p.docTypes[setKey(control.set, control.direction)]
-		before := p.current.sequence(documentTypeID, control.kind)
-		change := ediports.ChangeKindAdd
+		documentTypeID := p.docTypes[ediconnectionfield.SetKey(control.set, control.direction)]
+		before := p.current.Sequence(documentTypeID, control.kind)
+		change := ediconnectiondraftports.ChangeKindAdd
 		if before != nil {
-			change = ediports.ChangeKindChange
+			change = ediconnectiondraftports.ChangeKindChange
 		}
-		plan.ControlNumbers = append(plan.ControlNumbers, ediports.PlannedControlNumber{
-			Before: before,
-			After: &edi.EDIControlNumberSequence{
-				BusinessUnitID: req.TenantInfo.BuID,
-				OrganizationID: req.TenantInfo.OrgID,
-				EDIPartnerID:   p.match.partnerID(),
-				DocumentTypeID: documentTypeID,
-				Kind:           control.kind,
-				NextValue:      control.next,
+		plan.ControlNumbers = append(
+			plan.ControlNumbers,
+			ediconnectiondraftports.PlannedControlNumber{
+				Before: before,
+				After: &edidocument.EDIControlNumberSequence{
+					BusinessUnitID: req.TenantInfo.BuID,
+					OrganizationID: req.TenantInfo.OrgID,
+					EDIPartnerID:   p.match.partnerID(),
+					DocumentTypeID: documentTypeID,
+					Kind:           control.kind,
+					NextValue:      control.next,
+				},
+				Change: change,
 			},
-			Change: change,
-		})
+		)
 	}
 	return plan, nil
 }
 
-func (p *planner) plannedTransport() *ediports.PlannedTransport {
+func (p *planner) plannedTransport() *ediconnectiondraftports.PlannedTransport {
 	request := p.writes.transport
 	if request == nil {
 		return nil
 	}
-	planned := &ediports.PlannedTransport{
+	planned := &ediconnectiondraftports.PlannedTransport{
 		After: &edi.EDICommunicationProfile{
 			ID:             request.ProfileID,
 			BusinessUnitID: p.req.TenantInfo.BuID,
@@ -98,7 +107,7 @@ func (p *planner) plannedTransport() *ediports.PlannedTransport {
 		Change: p.writes.transportChange,
 	}
 	if request.ProfileID.IsNotNil() {
-		planned.Before = p.current.transport
+		planned.Before = p.current.Transport
 	}
 	return planned
 }

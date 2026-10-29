@@ -4,17 +4,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type InjuryChange = kernelports.RecordChange[worker.WorkerInjury]
+type InjuryChange = kernelports.RecordChange[workerinjury.WorkerInjury]
 
 func (s *Service) prepareRecord(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
+	entity *workerinjury.WorkerInjury,
 	userID pulid.ID,
 ) error {
 	tenantInfo := injuryTenant(entity)
@@ -30,7 +31,7 @@ func (s *Service) prepareRecord(
 		entity.CaseYear = yearOf(entity.OccurredAt)
 	}
 	if entity.CaseNumber <= 0 {
-		next, err := s.repo.NextCaseNumber(ctx, &workerports.NextCaseNumberRequest{
+		next, err := s.repo.NextCaseNumber(ctx, &workersafetyports.NextCaseNumberRequest{
 			TenantInfo: tenantInfo,
 			CaseYear:   entity.CaseYear,
 		})
@@ -44,9 +45,9 @@ func (s *Service) prepareRecord(
 
 func (s *Service) PlanRecordInjury(
 	ctx context.Context,
-	entity *worker.WorkerInjury,
+	entity *workerinjury.WorkerInjury,
 	userID pulid.ID,
-) (*worker.WorkerInjury, error) {
+) (*workerinjury.WorkerInjury, error) {
 	planned := *entity
 	if err := s.prepareRecord(ctx, &planned, userID); err != nil {
 		return nil, err
@@ -58,7 +59,7 @@ func (s *Service) PlanUpdateInjury(
 	ctx context.Context,
 	req *UpdateInjuryRequest,
 ) (*InjuryChange, error) {
-	original, err := s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
+	original, err := s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:         req.InjuryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -77,8 +78,8 @@ func (s *Service) PlanDeleteInjury(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerInjury, error) {
-	return s.repo.GetInjuryByID(ctx, &workerports.GetWorkerInjuryByIDRequest{
+) (*workerinjury.WorkerInjury, error) {
+	return s.repo.GetInjuryByID(ctx, &workersafetyports.GetWorkerInjuryByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})

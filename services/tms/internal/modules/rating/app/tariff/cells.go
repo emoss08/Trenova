@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/tarifftables"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -98,7 +99,7 @@ func (c *Checker) TableCells(ctx context.Context, req *TableCellsRequest) (*Tabl
 
 	out := &TableCells{Stamp: stamp, Tables: make([]TableCellsTable, 0, len(codes))}
 	for _, code := range codes {
-		at := tableAt(tariffCtx, code)
+		at := tarifftables.TableAt(tariffCtx, code)
 		if at < 0 {
 			continue
 		}

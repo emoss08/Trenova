@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundintake"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentuploadjobs/documentuploadcontract"
@@ -228,7 +228,7 @@ func fetchContent(
 		&FailInboundMessagePayload{
 			BasePayload: payload.BasePayload,
 			MessageID:   payload.MessageID,
-			Code:        inboundmessageservice.ContentUnavailableCode,
+			Code:        inboundintake.ContentUnavailableCode,
 			Reason:      fetchFailedReason,
 		}).Get(failCtx, nil); failErr != nil {
 		workflow.GetLogger(ctx).Error("could not record the failure either",

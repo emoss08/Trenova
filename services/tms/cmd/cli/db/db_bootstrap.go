@@ -12,9 +12,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	redisrepositories "github.com/emoss08/trenova/internal/infrastructure/redis/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/writebuffer"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
@@ -191,7 +192,7 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 
 	inputs := resolveBootstrapInputs(cmd)
 
-	logger, _, err := config.ProvideLogger(cfg)
+	logger, _, err := config.ProvideLogger(&cfg.Logging)
 	if err != nil {
 		return err
 	}
@@ -288,7 +289,7 @@ func bootstrapInstance(
 		return nil
 	}
 
-	printBootstrapCreated(deps.out, deps.cfg, &plan.Inputs, result)
+	printBootstrapCreated(deps.out, &deps.cfg.App, &plan.Inputs, result)
 	return nil
 }
 
@@ -306,9 +307,9 @@ func newInstanceBootstrapService(
 			DB:     deps.conn,
 			Logger: deps.logger,
 		}),
-		Auditor: auditor,
-		Config:  deps.cfg,
-		Logger:  deps.logger,
+		Auditor:      auditor,
+		SystemConfig: &deps.cfg.System,
+		Logger:       deps.logger,
 	})
 }
 
@@ -322,6 +323,7 @@ func redisSecurityAuditor(
 	app := fx.New(
 		fx.NopLogger,
 		fx.Supply(cfg),
+		config.SectionProviders,
 		fx.Supply(logger),
 		infrastructure.RedisModule,
 		fx.Populate(&client),
@@ -341,7 +343,7 @@ func redisSecurityAuditor(
 		}
 	}
 
-	registry, err := metrics.NewRegistry(cfg, logger)
+	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 	if err != nil {
 		stop()
 		return nil, nil, fmt.Errorf("create metrics registry: %w", err)
@@ -349,12 +351,13 @@ func redisSecurityAuditor(
 
 	audit := auditservice.New(auditservice.Params{
 		AuditRepository: auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
-		AuditBufferRepository: redisrepositories.NewAuditBufferRepository(
-			redisrepositories.AuditBufferRepositoryParams{Client: client, Logger: logger},
+		AuditBufferRepository: writebuffer.NewAuditBufferRepository(
+			writebuffer.AuditBufferRepositoryParams{Client: client, Logger: logger},
 		),
-		Logger:  logger,
-		Config:  cfg,
-		Metrics: registry,
+		Logger:         logger,
+		AppConfig:      &cfg.App,
+		SecurityConfig: &cfg.Security,
+		Metrics:        registry,
 	})
 
 	auditor := auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{
@@ -474,7 +477,7 @@ func printBootstrapCompleted(out io.Writer, inputs *instancebootstrap.Inputs, co
 
 func printBootstrapCreated(
 	out io.Writer,
-	appCfg *config.Config,
+	appCfg *appconfig.Config,
 	inputs *instancebootstrap.Inputs,
 	result *instancebootstrapports.InstanceBootstrapResult,
 ) {
@@ -482,11 +485,11 @@ func printBootstrapCreated(
 	fmt.Fprintf(out, "  Administrator: %s <%s>\n", inputs.AdminName, result.AdminEmail)
 	fmt.Fprintf(out, "  Username:      %s\n", result.AdminUsername)
 	fmt.Fprintf(out, "  Sign-in slug:  %s\n", result.LoginSlug)
-	if appCfg != nil && appCfg.App.GetWebBaseURL() != "" {
+	if appCfg != nil && appCfg.GetWebBaseURL() != "" {
 		fmt.Fprintf(
 			out,
 			"Sign in at %s with that email address and password.\n",
-			appCfg.App.GetWebBaseURL(),
+			appCfg.GetWebBaseURL(),
 		)
 	}
 	if result.SystemUserCreated {

@@ -26,13 +26,13 @@ EDI 214 (every AT7)  ─────────────────┴ Reco
 |---|---|
 | Entity, enums, the projection | `internal/modules/operations/domain/trackingevent` |
 | Applying a projection to a move | `shipment.ShipmentMove.ApplyStopActualChanges` (`domain/shipment/stopactualchange.go`) |
-| Which stop a visit is about | `domain/shipment/stopvisit.go` (`StopForObservedVisit`, `StopForReportedVisit`, `MatchObservedVisit`) |
+| Which stop a visit is about | `domain/stopvisit` (`StopForObserved`, `StopForReported`, `MatchObserved`) |
 | Service | `internal/modules/operations/app/trackingeventservice` |
 | Reconcile under the move lock | `app/shipmentmoveservice/stopactual_reconcile.go` |
 | Repository and table | `adapters/postgres/trackingeventrepository`, migration `20261231008990_tracking_events` |
 | Telematics port | `workforce/ports/telematicsports.StopVisitRecorder` |
 | Driver portal port | `workforce/ports/driverportalports.StopReporter` |
-| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediservice/stopactuals214.go`, `edi/domain/edi/x12time.go` |
+| EDI 214 parser and stop targeting | `edi/app/ediinboundservice/parse.go`, `edi/app/ediinboundapply/stopactuals214.go`, `edi/domain/x12field/x12time.go` |
 | Carrier tracking link and check calls | `checkcallservice`; see [check-calls.md](check-calls.md) |
 | GraphQL read | `shipmentTrackingEvents(shipmentId)` in `shipment.graphqls`; the web app does not show it |
 
@@ -112,7 +112,7 @@ that event `Refused` with the reason instead of failing the caller; any other er
 returned and the event stays `Pending` for the next reconcile.
 
 Telematics declares `StopVisitRecorder` in workforce and operations implements it, so
-workforce takes no new upward dependency. The stop is chosen by `StopForObservedVisit`: the
+workforce takes no new upward dependency. The stop is chosen by `stopvisit.StopForObserved`: the
 stop at the geofence's location the truck is at, else the next one it has not reached, else
 the last one it visited, so a repeat or late ping is still recorded against its stop rather
 than dropped. The telematics row keeps its own outcome (`Recorded`, `Duplicate`, `Pending`,
@@ -134,7 +134,7 @@ The parser reads every `AT7` in every `LX` loop. Each status keeps:
 A time code names a zone. `ET`, `CT`, `MT`, `PT`, `AT` (Alaska), `HT`, `TT` (Atlantic) and `NT`
 follow daylight saving; the `S` and `D` variants are fixed offsets; `UT` and `GM` are UTC.
 `LT`, an unknown code or no code is local time at the stop, read in the stop location's time
-zone once the stop is known (UTC when the location has none). `edi.X12DateTime` does the
+zone once the stop is known (UTC when the location has none). `x12field.X12DateTime` does the
 conversion.
 
 `X3`, `AF`, `X1`, `D1` and `CD` move stop actuals. The stop is the one whose sequence the

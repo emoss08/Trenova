@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/gin-gonic/gin"
@@ -25,8 +25,8 @@ type Logger interface {
 type ErrorHandlerParams struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
+	Logger    *zap.Logger
+	AppConfig *appconfig.Config
 }
 
 type ErrorHandler struct {
@@ -47,9 +47,9 @@ type TimeoutResponseContext struct {
 func NewErrorHandler(params ErrorHandlerParams) *ErrorHandler {
 	return &ErrorHandler{
 		logger:     params.Logger.Named("error-handler"),
-		baseURI:    params.Config.App.GetProblemTypeBaseURI(),
+		baseURI:    params.AppConfig.GetProblemTypeBaseURI(),
 		classifier: NewDefaultClassifier(),
-		sanitizer:  NewSanitizer(params.Config.App.Debug),
+		sanitizer:  NewSanitizer(params.AppConfig.Debug),
 	}
 }
 

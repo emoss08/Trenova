@@ -10,8 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -25,7 +29,7 @@ import (
 )
 
 func (r *CustomerPaymentResolver) ExchangeRate(ctx context.Context, obj *customerpayment.Payment) (*string, error) {
-	return base.NullDecimalStringPtr(obj.ExchangeRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.ExchangeRate), nil
 }
 
 func (r *CustomerPaymentResolver) Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error) {
@@ -34,13 +38,13 @@ func (r *CustomerPaymentResolver) Customer(ctx context.Context, obj *customerpay
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.CustomerByID(ctx, obj.CustomerID.String())
+	if loadercore.Available(ctx) {
+		return partiesloaders.CustomerByID(ctx, obj.CustomerID.String())
 	}
 
 	return r.CustomerService.Get(ctx, customerports.GetCustomerByIDRequest{
 		ID:         obj.CustomerID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -50,13 +54,13 @@ func (r *CustomerPaymentApplicationResolver) Invoice(ctx context.Context, obj *c
 		return nil, err
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.InvoiceByID(ctx, obj.InvoiceID.String())
+	if loadercore.Available(ctx) {
+		return billingloaders.InvoiceByID(ctx, obj.InvoiceID.String())
 	}
 
-	return r.InvoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	return r.InvoiceQueryService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         obj.InvoiceID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -70,7 +74,7 @@ func (r *MutationResolver) PostAndApplyCustomerPayment(ctx context.Context, inpu
 		return nil, err
 	}
 
-	req, err := postCustomerPaymentRequestFromInput(&input, base.TenantInfo(authCtx))
+	req, err := postCustomerPaymentRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +92,7 @@ func (r *MutationResolver) ApplyUnappliedCustomerPayment(ctx context.Context, in
 		return nil, err
 	}
 
-	req, err := applyCustomerPaymentRequestFromInput(&input, base.TenantInfo(authCtx))
+	req, err := applyCustomerPaymentRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +110,7 @@ func (r *MutationResolver) ReverseCustomerPayment(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req, err := reverseCustomerPaymentRequestFromInput(&input, base.TenantInfo(authCtx))
+	req, err := reverseCustomerPaymentRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +131,7 @@ func (r *MutationResolver) ApplyCreditMemo(ctx context.Context, input gqlmodel.A
 		return nil, err
 	}
 
-	req, err := applyCreditMemoRequestFromInput(&input, base.TenantInfo(authCtx))
+	req, err := applyCreditMemoRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +166,7 @@ func (r *MutationResolver) UnapplyCreditMemoApplication(ctx context.Context, inp
 		&customerpaymentports.UnapplyCreditMemoApplicationRequest{
 			ApplicationID: applicationID,
 			Reason:        stringutils.FromPtr(input.Reason),
-			TenantInfo:    base.TenantInfo(authCtx),
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	)
@@ -174,7 +178,7 @@ func (r *QueryResolver) CustomerPayments(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +214,6 @@ func (r *QueryResolver) CustomerPayment(ctx context.Context, id string) (*custom
 
 	return r.CustomerPaymentService.Get(ctx, &customerpaymentports.GetCustomerPaymentRequest{
 		PaymentID:  paymentID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }

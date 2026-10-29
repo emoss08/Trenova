@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
@@ -32,15 +32,15 @@ type FlowsParams struct {
 
 	Logger  *zap.Logger
 	Runtime *Runtime
-	Flows   ediports.FlowRepository
-	Timers  ediports.FlowTimerScheduler `optional:"true"`
+	Flows   ladingports.FlowRepository
+	Timers  ladingports.FlowTimerScheduler `optional:"true"`
 }
 
 type Flows struct {
 	l       *zap.Logger
 	runtime *Runtime
-	flows   ediports.FlowRepository
-	timers  ediports.FlowTimerScheduler
+	flows   ladingports.FlowRepository
+	timers  ladingports.FlowTimerScheduler
 }
 
 func NewFlows(p FlowsParams) *Flows {
@@ -69,7 +69,7 @@ type DispatchRequest struct {
 
 type Dispatched struct {
 	Program  *Program
-	Instance *edi.FlowInstance
+	Instance *ladingproject.FlowInstance
 	Actions  []lading.FlowAction
 }
 
@@ -94,7 +94,7 @@ func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched
 	if err != nil {
 		return nil, err
 	}
-	instance, err := f.flows.OpenInstance(ctx, &edi.FlowInstance{
+	instance, err := f.flows.OpenInstance(ctx, &ladingproject.FlowInstance{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		EDIPartnerID:   req.PartnerID,
@@ -102,7 +102,7 @@ func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched
 		VersionID:      req.Program.Version.ID,
 		Flow:           req.Flow,
 		Key:            key,
-		Status:         edi.FlowInstanceStatusOpen,
+		Status:         ladingproject.FlowInstanceStatusOpen,
 		ShipmentID:     req.ShipmentID,
 		TransferID:     req.TransferID,
 		LastEventAt:    req.Now.Unix(),
@@ -116,7 +116,7 @@ func (f *Flows) Dispatch(ctx context.Context, req *DispatchRequest) (*Dispatched
 // DispatchTo feeds an event to an instance already open.
 func (f *Flows) DispatchTo(
 	ctx context.Context,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	req *DispatchRequest,
 ) (*Dispatched, error) {
 	if req.Program == nil {
@@ -143,9 +143,9 @@ func (f *Flows) DispatchTo(
 // planner's decision find it.
 func (f *Flows) Attach(
 	ctx context.Context,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	transferID, shipmentID pulid.ID,
-) (*edi.FlowInstance, error) {
+) (*ladingproject.FlowInstance, error) {
 	if transferID.IsNotNil() {
 		instance.TransferID = transferID
 	}
@@ -188,7 +188,7 @@ func (f *Flows) key(
 func (f *Flows) step(
 	ctx context.Context,
 	req *DispatchRequest,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	settings map[string]jsonutils.RawJSON,
 ) (*Dispatched, error) {
 	for attempt := 1; ; attempt++ {
@@ -218,7 +218,7 @@ func (f *Flows) step(
 			attempt == maxStepAttempts {
 			return nil, saveErr
 		}
-		instance, err = f.flows.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+		instance, err = f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 			TenantInfo: req.TenantInfo,
 			ID:         instance.ID,
 		})
@@ -228,7 +228,7 @@ func (f *Flows) step(
 	}
 }
 
-func apply(instance *edi.FlowInstance, req *DispatchRequest, step *lading.FlowStep) {
+func apply(instance *ladingproject.FlowInstance, req *DispatchRequest, step *lading.FlowStep) {
 	now := req.Now.Unix()
 	instance.State = step.State
 	instance.VersionID = req.Program.Version.ID
@@ -245,13 +245,13 @@ func apply(instance *edi.FlowInstance, req *DispatchRequest, step *lading.FlowSt
 		action := &step.Actions[index]
 		switch action.Kind {
 		case lading.ActionHold:
-			instance.Status = edi.FlowInstanceStatusHeld
+			instance.Status = ladingproject.FlowInstanceStatusHeld
 			instance.Reason = action.Message
 			instance.HeldAt = &now
 			instance.ResolvedAt = nil
 			instance.ResolvedByID = ""
 		case lading.ActionEscalate:
-			instance.Status = edi.FlowInstanceStatusEscalated
+			instance.Status = ladingproject.FlowInstanceStatusEscalated
 			instance.Reason = action.Message
 			instance.HeldAt = &now
 			instance.ResolvedAt = nil
@@ -260,8 +260,8 @@ func apply(instance *edi.FlowInstance, req *DispatchRequest, step *lading.FlowSt
 	}
 	var summary lading.FlowSummary
 	if err := sonic.Unmarshal(step.State, &summary); err == nil &&
-		instance.Status == edi.FlowInstanceStatusOpen && finished(&summary) && step.Wake == nil {
-		instance.Status = edi.FlowInstanceStatusClosed
+		instance.Status == ladingproject.FlowInstanceStatusOpen && finished(&summary) && step.Wake == nil {
+		instance.Status = ladingproject.FlowInstanceStatusClosed
 	}
 }
 
@@ -276,7 +276,7 @@ func finished(summary *lading.FlowSummary) bool {
 
 func (f *Flows) journal(
 	ctx context.Context,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	req *DispatchRequest,
 	actions []lading.FlowAction,
 	failure *wasmmodule.Message,
@@ -293,7 +293,7 @@ func (f *Flows) journal(
 		stripped[index] = actions[index]
 		stripped[index].Document = nil
 	}
-	if err = f.flows.AppendEvent(ctx, &edi.FlowEvent{
+	if err = f.flows.AppendEvent(ctx, &ladingproject.FlowEvent{
 		OrganizationID: instance.OrganizationID,
 		BusinessUnitID: instance.BusinessUnitID,
 		InstanceID:     instance.ID,
@@ -344,7 +344,7 @@ func eventDetail(event *lading.FlowEvent) flowEventDetail {
 func (f *Flows) schedule(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	instance *edi.FlowInstance,
+	instance *ladingproject.FlowInstance,
 	previous *int64,
 ) {
 	if f.timers == nil || instance.WakeAt == nil {
@@ -353,7 +353,7 @@ func (f *Flows) schedule(
 	if previous != nil && *previous == *instance.WakeAt {
 		return
 	}
-	if err := f.timers.Schedule(ctx, &ediports.ScheduleFlowTimerRequest{
+	if err := f.timers.Schedule(ctx, &ladingports.ScheduleFlowTimerRequest{
 		TenantInfo: tenantInfo,
 		InstanceID: instance.ID,
 		WakeAt:     *instance.WakeAt,
@@ -371,31 +371,33 @@ func (f *Flows) Release(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	instanceID, actorID pulid.ID,
-) (*edi.FlowInstance, error) {
-	instance, err := f.flows.GetInstance(ctx, ediports.GetFlowInstanceRequest{
+) (*ladingproject.FlowInstance, error) {
+	instance, err := f.flows.GetInstance(ctx, ladingports.GetFlowInstanceRequest{
 		TenantInfo: tenantInfo,
 		ID:         instanceID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if instance.Status != edi.FlowInstanceStatusHeld &&
-		instance.Status != edi.FlowInstanceStatusEscalated {
+	if instance.Status != ladingproject.FlowInstanceStatusHeld &&
+		instance.Status != ladingproject.FlowInstanceStatusEscalated {
 		return nil, errortypes.NewBusinessError(
 			"This flow instance is {0}, not held or escalated",
 			string(instance.Status),
 		)
 	}
 	now := time.Now().Unix()
-	instance.Status = edi.FlowInstanceStatusOpen
+	instance.Status = ladingproject.FlowInstanceStatusOpen
 	instance.ResolvedAt = &now
 	instance.ResolvedByID = actorID
 	saved, err := f.flows.SaveInstance(ctx, instance)
 	if err != nil {
 		return nil, err
 	}
-	detail, _ := sonic.Marshal(map[string]string{"status": string(edi.FlowInstanceStatusOpen)})
-	if err = f.flows.AppendEvent(ctx, &edi.FlowEvent{
+	detail, _ := sonic.Marshal(
+		map[string]string{"status": string(ladingproject.FlowInstanceStatusOpen)},
+	)
+	if err = f.flows.AppendEvent(ctx, &ladingproject.FlowEvent{
 		OrganizationID: saved.OrganizationID,
 		BusinessUnitID: saved.BusinessUnitID,
 		InstanceID:     saved.ID,

@@ -6,14 +6,16 @@ package performancereviewservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -37,21 +39,21 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.PerformanceReviewRepository
+	Repo         workerreviewports.PerformanceReviewRepository
 	WorkerRepo   workerports.WorkerRepository
 	UserRepo     tenantports.UserRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService         `optional:"true"`
+	Realtime     realtimeports.RealtimeService      `optional:"true"`
 	DriverNotify *drivernotificationservice.Service `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.PerformanceReviewRepository
+	repo         workerreviewports.PerformanceReviewRepository
 	workerRepo   workerports.WorkerRepository
 	userRepo     tenantports.UserRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	driverNotify *drivernotificationservice.Service
 }
 
@@ -136,7 +138,7 @@ func (s *Service) publish(
 func (s *Service) notifyDriver(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	review *worker.PerformanceReview,
+	review *workerreview.PerformanceReview,
 	reviewerName string,
 ) {
 	if s.driverNotify == nil {
@@ -147,7 +149,7 @@ func (s *Service) notifyDriver(
 		WorkerID:   review.WorkerID,
 		EventType:  eventReviewSubmitted,
 		Priority:   notification.PriorityMedium,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			ReviewTitle:  review.Title,
 			ReviewerName: reviewerName,
 		},
@@ -167,10 +169,6 @@ func (s *Service) loadWorker(
 	})
 }
 
-func templateTenant(entity *worker.PerformanceReviewTemplate) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-}
-
-func reviewTenant(entity *worker.PerformanceReview) pagination.TenantInfo {
+func templateTenant(entity *workerreview.PerformanceReviewTemplate) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

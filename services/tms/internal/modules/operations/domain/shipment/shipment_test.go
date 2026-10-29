@@ -3,79 +3,32 @@ package shipment
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 )
-
-func TestShipment_ApplyEntryMethodDefault(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		shipment *Shipment
-		original *Shipment
-		want     EntryMethod
-	}{
-		{
-			name:     "defaults create to manual",
-			shipment: &Shipment{},
-			want:     EntryMethodManual,
-		},
-		{
-			name:     "preserves original update value",
-			shipment: &Shipment{},
-			original: &Shipment{EntryMethod: EntryMethodEDI},
-			want:     EntryMethodEDI,
-		},
-		{
-			name:     "keeps explicit update value",
-			shipment: &Shipment{EntryMethod: EntryMethodManual},
-			original: &Shipment{EntryMethod: EntryMethodEDI},
-			want:     EntryMethodManual,
-		},
-		{
-			name:     "leaves invalid explicit value for validation",
-			shipment: &Shipment{EntryMethod: EntryMethod("CarrierPortal")},
-			want:     EntryMethod("CarrierPortal"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			tt.shipment.ApplyEntryMethodDefault(tt.original)
-
-			if tt.shipment.EntryMethod != tt.want {
-				t.Fatalf("EntryMethod = %q, want %q", tt.shipment.EntryMethod, tt.want)
-			}
-		})
-	}
-}
 
 func TestShipment_ShipperStop(t *testing.T) {
 	t.Parallel()
 
 	latePickup := &Stop{
 		ID:       pulid.ID("stp_late"),
-		Type:     StopTypePickup,
+		Type:     shipmentvocab.StopTypePickup,
 		Sequence: 5,
 	}
 	firstPickup := &Stop{
 		ID:       pulid.ID("stp_first"),
-		Type:     StopTypeSplitPickup,
+		Type:     shipmentvocab.StopTypeSplitPickup,
 		Sequence: 2,
 	}
 	delivery := &Stop{
 		ID:       pulid.ID("stp_delivery"),
-		Type:     StopTypeDelivery,
+		Type:     shipmentvocab.StopTypeDelivery,
 		Sequence: 0,
 	}
 	earlierMovePickup := &Stop{
 		ID:       pulid.ID("stp_earlier"),
-		Type:     StopTypePickup,
+		Type:     shipmentvocab.StopTypePickup,
 		Sequence: 8,
 	}
 	entity := &Shipment{
@@ -107,7 +60,11 @@ func TestShipment_ShipperStopSkipsNilAndNonOriginStops(t *testing.T) {
 				Sequence: 1,
 				Stops: []*Stop{
 					nil,
-					{ID: pulid.ID("stp_delivery"), Type: StopTypeDelivery, Sequence: 1},
+					{
+						ID:       pulid.ID("stp_delivery"),
+						Type:     shipmentvocab.StopTypeDelivery,
+						Sequence: 1,
+					},
 				},
 			},
 		},
@@ -116,93 +73,6 @@ func TestShipment_ShipperStopSkipsNilAndNonOriginStops(t *testing.T) {
 	if got := entity.ShipperStop(); got != nil {
 		t.Fatalf("ShipperStop() = %v, want nil", got)
 	}
-}
-
-// Clearing an override is a deliberate act, never a side effect of saving
-// something else. A client that round-trips a shipment without the rating
-// fields must not thereby unlock an invoiced load or wipe a negotiated rate.
-func TestRestoreRateOwnedFields_CallersCannotClearAnOverride(t *testing.T) {
-	t.Parallel()
-
-	setBy := pulid.MustNew("usr_")
-	setAt := int64(500)
-	quoteID := pulid.MustNew("rqt_")
-	agreementID := pulid.MustNew("ragr_")
-	ruleID := pulid.MustNew("ragr_")
-
-	original := &Shipment{
-		RateOverrideAmount:  decimal.NewNullDecimal(decimal.NewFromInt(1400)),
-		RateOverrideReason:  "Spot rate agreed with the customer",
-		RateOverrideByID:    &setBy,
-		RateOverrideAt:      &setAt,
-		RateLocked:          true,
-		RateQuoteID:         &quoteID,
-		RateAgreementID:     &agreementID,
-		RateAgreementRuleID: &ruleID,
-	}
-
-	updated := &Shipment{}
-
-	RestoreRateOwnedFields(original, updated)
-
-	require.True(t, updated.HasRateOverride())
-	require.True(t, decimal.NewFromInt(1400).Equal(updated.RateOverrideAmount.Decimal))
-	require.Equal(t, "Spot rate agreed with the customer", updated.RateOverrideReason)
-	require.Equal(t, setBy, *updated.RateOverrideByID)
-	require.Equal(t, setAt, *updated.RateOverrideAt)
-	require.True(t, updated.RateLocked)
-	require.Equal(t, quoteID, *updated.RateQuoteID)
-	require.Equal(t, agreementID, *updated.RateAgreementID)
-	require.Equal(t, ruleID, *updated.RateAgreementRuleID)
-}
-
-// The rating detail explains an invoice. A client echoing back the handful of
-// fields it renders must not thereby erase the contract and the bill that
-// priced a locked shipment, which is never re-rated.
-func TestRestoreRateOwnedFields_RatingDetailComesFromTheRaterNotThePayload(t *testing.T) {
-	t.Parallel()
-
-	original := &Shipment{
-		RateLocked: true,
-		RatingDetail: &RatingDetail{
-			FormulaTemplateID: "ft_01JT",
-			AgreementName:     "Acme Master Contract",
-			RuleLabel:         "DFW → LAX dry van",
-			Source:            "Rated",
-			Explanation:       "Priced from the Acme contract",
-			Bill: &tarifftypes.Bill{
-				Lines: []tarifftypes.Line{
-					{Kind: tarifftypes.LineCharge, Label: "Linehaul", Amount: decimal.NewFromInt(1200)},
-					{Kind: tarifftypes.LineCharge, Code: "FSC", Amount: decimal.NewFromInt(200)},
-				},
-				Total: decimal.NewFromInt(1400),
-			},
-		},
-	}
-
-	updated := &Shipment{
-		RatingDetail: &RatingDetail{FormulaTemplateID: "ft_01JT"},
-	}
-
-	RestoreRateOwnedFields(original, updated)
-
-	require.Equal(t, original.RatingDetail, updated.RatingDetail)
-	require.NotNil(t, updated.RatingDetail.Bill)
-	require.Len(t, updated.RatingDetail.Bill.Lines, 2)
-	require.Equal(t, "Acme Master Contract", updated.RatingDetail.AgreementName)
-}
-
-// A forged override on a create — where there is no original to compare
-// against — is left alone here; the create path never calls this.
-func TestRestoreRateOwnedFields_IgnoresAMissingSide(t *testing.T) {
-	t.Parallel()
-
-	updated := &Shipment{RateLocked: true}
-
-	RestoreRateOwnedFields(nil, updated)
-	RestoreRateOwnedFields(&Shipment{}, nil)
-
-	require.True(t, updated.RateLocked)
 }
 
 func TestShipment_PayerID(t *testing.T) {
@@ -231,130 +101,4 @@ func TestShipment_PayerID(t *testing.T) {
 		t,
 		(&Shipment{CustomerID: customerID, BillToCustomerID: &billTo}).HasExplicitBillTo(),
 	)
-}
-
-func TestShipment_NormalizeBillTo(t *testing.T) {
-	t.Parallel()
-
-	customerID := pulid.MustNew("cus_")
-	other := pulid.MustNew("cus_")
-
-	same := customerID
-	entity := &Shipment{CustomerID: customerID, BillToCustomerID: &same}
-	entity.NormalizeBillTo()
-	require.Nil(t, entity.BillToCustomerID, "a bill-to naming the customer is the same as none")
-
-	empty := pulid.Nil
-	entity = &Shipment{CustomerID: customerID, BillToCustomerID: &empty}
-	entity.NormalizeBillTo()
-	require.Nil(t, entity.BillToCustomerID)
-
-	entity = &Shipment{CustomerID: customerID, BillToCustomerID: &other}
-	entity.NormalizeBillTo()
-	require.NotNil(t, entity.BillToCustomerID)
-	require.Equal(t, other, *entity.BillToCustomerID)
-
-	var none *Shipment
-	none.NormalizeBillTo()
-}
-
-func TestFollowCustomerChange(t *testing.T) {
-	t.Parallel()
-
-	oldCustomer := pulid.MustNew("cus_")
-	newCustomer := pulid.MustNew("cus_")
-	thirdParty := pulid.MustNew("cus_")
-
-	tests := []struct {
-		name     string
-		original *Shipment
-		updated  *Shipment
-		want     *pulid.ID
-	}{
-		{
-			name:     "bill-to that named the old customer follows the new one",
-			original: &Shipment{CustomerID: oldCustomer},
-			updated:  &Shipment{CustomerID: newCustomer, BillToCustomerID: &oldCustomer},
-			want:     nil,
-		},
-		{
-			name:     "a third-party bill-to is left alone",
-			original: &Shipment{CustomerID: oldCustomer},
-			updated:  &Shipment{CustomerID: newCustomer, BillToCustomerID: &thirdParty},
-			want:     &thirdParty,
-		},
-		{
-			name:     "no-op when the customer did not change",
-			original: &Shipment{CustomerID: oldCustomer},
-			updated:  &Shipment{CustomerID: oldCustomer, BillToCustomerID: &oldCustomer},
-			want:     &oldCustomer,
-		},
-		{
-			name:     "no-op without an original",
-			original: nil,
-			updated:  &Shipment{CustomerID: newCustomer, BillToCustomerID: &oldCustomer},
-			want:     &oldCustomer,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			FollowCustomerChange(tc.original, tc.updated)
-			if tc.want == nil {
-				require.Nil(t, tc.updated.BillToCustomerID)
-				return
-			}
-			require.NotNil(t, tc.updated.BillToCustomerID)
-			require.Equal(t, *tc.want, *tc.updated.BillToCustomerID)
-		})
-	}
-}
-
-func TestShipment_ApplyFreightTermsDefault(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		shipment *Shipment
-		original *Shipment
-		want     FreightTerms
-	}{
-		{name: "defaults to prepaid", shipment: &Shipment{}, want: FreightTermsPrepaid},
-		{
-			name:     "preserves the original on update",
-			shipment: &Shipment{},
-			original: &Shipment{FreightTerms: FreightTermsCollect},
-			want:     FreightTermsCollect,
-		},
-		{
-			name:     "keeps an explicit value",
-			shipment: &Shipment{FreightTerms: FreightTermsThirdParty},
-			original: &Shipment{FreightTerms: FreightTermsCollect},
-			want:     FreightTermsThirdParty,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			tc.shipment.ApplyFreightTermsDefault(tc.original)
-			require.Equal(t, tc.want, tc.shipment.FreightTerms)
-		})
-	}
-
-	var none *Shipment
-	none.ApplyFreightTermsDefault(nil)
-}
-
-func TestFreightTerms_IsValid(t *testing.T) {
-	t.Parallel()
-
-	require.True(t, FreightTermsPrepaid.IsValid())
-	require.True(t, FreightTermsCollect.IsValid())
-	require.True(t, FreightTermsThirdParty.IsValid())
-	require.False(t, FreightTerms("").IsValid())
-	require.False(t, FreightTerms("Consignee").IsValid())
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -22,13 +22,13 @@ const tokenParam = "token"
 type Params struct {
 	fx.In
 
-	Service      *tenderservice.Service
+	Service      *tenderresponse.Service
 	ErrorHandler *helpers.ErrorHandler
 	RateLimiter  *middleware.RateLimiter
 }
 
 type Handler struct {
-	service     *tenderservice.Service
+	service     *tenderresponse.Service
 	eh          *helpers.ErrorHandler
 	rateLimiter *middleware.RateLimiter
 }
@@ -67,7 +67,7 @@ type declineRequest struct {
 func (h *Handler) accept(c *gin.Context) {
 	if err := h.service.RespondByToken(
 		c.Request.Context(), c.Param(tokenParam),
-		tenderservice.PublicResponse{Action: tender.ResponseActionAccept},
+		tenderresponse.PublicResponse{Action: tender.ResponseActionAccept},
 	); err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -85,7 +85,7 @@ func (h *Handler) decline(c *gin.Context) {
 	if err := h.service.RespondByToken(
 		c.Request.Context(),
 		c.Param(tokenParam),
-		tenderservice.PublicResponse{
+		tenderresponse.PublicResponse{
 			Action:        tender.ResponseActionDecline,
 			DeclineReason: req.Reason,
 		},
@@ -113,7 +113,7 @@ func (h *Handler) counter(c *gin.Context) {
 
 	if err := h.service.RespondByToken(
 		c.Request.Context(), c.Param(tokenParam),
-		tenderservice.PublicResponse{
+		tenderresponse.PublicResponse{
 			Action:      tender.ResponseActionCounter,
 			CounterRate: req.Rate,
 			CounterNote: req.Note,

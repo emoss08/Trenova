@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload"
@@ -27,7 +28,6 @@ const (
 	attachmentFormMemory = 64 << 20
 	attachmentReadWithin = 2 * time.Minute
 	attachmentReadEvery  = time.Second
-	documentIDPrefix     = "doc_"
 )
 
 var ErrAttachmentUnreadable = errors.New(
@@ -68,7 +68,7 @@ func (c *Conversation) attachmentSource(
 	ctx context.Context,
 	ref string,
 ) (*attachmentSource, error) {
-	if strings.HasPrefix(ref, documentIDPrefix) {
+	if strings.HasPrefix(ref, benchscenario.DocumentIDPrefix) {
 		id, err := pulid.Parse(ref)
 		if err != nil {
 			return nil, err
@@ -136,7 +136,7 @@ func (c *Conversation) awaitReading(ctx context.Context, id pulid.ID) error {
 	for {
 		content, err := c.session.bench.Contents.GetContent(ctx, id, c.session.Tenant)
 		if err == nil && content != nil && content.Status.Settled() {
-			if !c.needsText {
+			if !c.NeedsText {
 				return nil
 			}
 			return unreadableHere(content)

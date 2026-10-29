@@ -85,7 +85,7 @@ Nothing new decides or commits. 5b adds:
 ## What a script may write
 
 The SDK's write surface is the agent's own **action tools**, called with one record at a time.
-One function decides it, `agentports.PreparableFromScript(tool)`, which admits a tool only when
+One function decides it, `agenttoolports.PreparableFromScript(tool)`, which admits a tool only when
 all of these hold:
 
 - it is an action tool whose effect is not a lookup;
@@ -104,7 +104,7 @@ flag and interface, not by name, a new runtime-control tool is excluded by const
 broker builds the turn's write index from the tools the agent holds that pass it and that the
 person is permitted to use (`scriptWriteIndex`).
 
-A `common.RecordBatch` tool may be called with one id or many. `scriptoutbox.Expand` turns a call
+A `recordbatch.RecordBatch` tool may be called with one id or many. `scriptoutbox.Expand` turns a call
 naming N ids into N calls of the single tool, each with the single tool's preview, validation and
 target pin (proposal-previews.md, "Tools that take one record or many");
 `TestEveryRecordSplitterSplitsIntoSingleRecordCalls` holds every splitter to that.
@@ -113,7 +113,7 @@ target pin (proposal-previews.md, "Tools that take one record or many");
 sketches the batch as one proposal of `RecordBatch` items. That proposal shape has three faults
 for a script:
 
-- `RecordBatch` previews at most 20 records (`agent.MaxPreviewRecords`), so records past the
+- `RecordBatch` previews at most 20 records (`agentpreview.MaxPreviewRecords`), so records past the
   20th would be approved unseen;
 - it holds one tool, but a script's batch mixes tools;
 - one digest covers the whole call, so "the step whose preview changed" cannot be named.
@@ -216,7 +216,7 @@ turn's own calls:
 
 **The plan keeps the script that wrote it.** The recorder reads the script's ledger step
 (`ScriptStepReader`, `AgentRunStepRepository.Get`) and copies its title, purpose and code onto
-the plan's `script` column (`agent.ScriptOrigin`, JSONB, migration `…_agent_plan_script`). 5a
+the plan's `script` column (`agentplan.ScriptOrigin`, JSONB, migration `…_agent_plan_script`). 5a
 keeps no separate script-run table, and a ledger step is purged with the run, so the plan carries
 its own copy for as long as it is kept. A step that cannot be read leaves `script` empty and is
 logged; the batch is still filed, because the steps' own previews are what the person approves
@@ -357,7 +357,7 @@ case may deny the person a permission (`denied`):
 
 ## Paired bench scenarios
 
-5a adds `mode: discrete | script` and `pair:` to `deskbench.Scenario`, the loader's refusal of a
+5a adds `mode: discrete | script` and `pair:` to `benchscenario.Scenario`, the loader's refusal of a
 half pair, and the rule that both halves fall into the same split. 5b adds one mode,
 `script_writes`, which forces the gate open with writes (`OverrideWrites`); a pair has one
 discrete half and one script half. `TestBatchWritePairsAreGradedOnTheSameApproval` holds every

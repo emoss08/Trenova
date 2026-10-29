@@ -4,11 +4,16 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/factoringkit"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,65 +24,22 @@ import (
 
 const (
 	paramNoaID          = "noaId"
-	paramVersion        = "version"
 	paramCustomerID     = "customerId"
-	paramFactorID       = "factoringCompanyId"
 	paramNote           = "note"
 	paramRecipient      = "recipient"
 	paramAcknowledgedAt = "acknowledgedAt"
 	paramSignedDocument = "signedDocumentId"
 	paramExpiresAt      = "expiresAt"
-	paramReason         = "reason"
 
 	toolListNoas = "factoring_list_noas"
 )
-
-type policySpec struct {
-	resource    permission.Resource
-	operation   permission.Operation
-	defaultTier agent.AutonomyTier
-	maxTier     agent.AutonomyTier
-	egress      agent.EgressClass
-	idempotent  bool
-	reversible  bool
-	rationale   string
-}
-
-func policy(name string, spec *policySpec) agentports.ToolPolicy {
-	egress := spec.egress
-	if egress == "" {
-		egress = agent.EgressInternal
-	}
-	return agentports.ToolPolicy{
-		Name:          name,
-		Kind:          agent.ToolKindAction,
-		Resource:      spec.resource,
-		Operation:     spec.operation,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   spec.defaultTier,
-		MaxTier:       spec.maxTier,
-		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
-		Reversible:    spec.reversible,
-		Idempotent:    spec.idempotent,
-		ReadsExternal: agent.ExternalReadNever,
-		Rationale:     spec.rationale,
-	}
-}
-
-func refused(summary string, err error) (*agent.ToolPreview, error) {
-	if common.IsRefusal(err) {
-		return common.WarnWouldFail(toolpreview.Build(summary), err), nil
-	}
-	return nil, err
-}
 
 func noaRecord(noa *factoring.Noa) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceFactoringNoa,
 		ID:       noa.ID,
 		Label:    "Notice of assignment " + noa.ID.String(),
-		Version:  common.PreviewVersion(noa.Version),
+		Version:  changepreview.PreviewVersion(noa.Version),
 	}
 }
 
@@ -119,19 +81,24 @@ type noaLoader interface {
 func loadNoa(
 	ctx context.Context,
 	noas noaLoader,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoring.Noa, int64, error) {
-	id, err := common.RequirePulid(params.Params, paramNoaID)
+	id, err := toolparams.RequirePulid(params.Params, paramNoaID)
 	if err != nil {
 		return nil, 0, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(
+		params.Params,
+		factoringkit.ParamVersion,
+		0,
+		factoringkit.MaxVersion,
+	)
 	if err != nil {
 		return nil, 0, err
 	}
 	noa, err := noas.Get(ctx, factoringports.GetNoaRequest{
 		ID:         id,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		return nil, 0, err
@@ -139,13 +106,11 @@ func loadNoa(
 	return noa, int64(version), nil
 }
 
-const maxVersion = 1 << 30
-
 type DraftFactoringNoaTool struct {
 	noas factoringports.NoaService
 }
 
-func NewDraftFactoringNoaTool(noas factoringports.NoaService) agentports.AgentTool {
+func NewDraftFactoringNoaTool(noas factoringports.NoaService) agenttoolports.AgentTool {
 	return &DraftFactoringNoaTool{noas: noas}
 }
 
@@ -170,60 +135,60 @@ func (t *DraftFactoringNoaTool) ParamSchema() map[string]any {
 			permission.ResourceCustomer,
 			"The factored customer, from the invoice or customer_list.",
 		),
-		paramFactorID: agenttoolschema.RecordIDText(
+		factoringkit.ParamFactorID: agenttoolschema.RecordIDText(
 			permission.ResourceFactoringCompany,
 			"The factor the customer's invoices are assigned to, from invoice_get or factoring_list_readiness.",
 		),
 		paramNote: jsonschemautils.Text("A note printed on the letter, when there is one."),
-	}, paramCustomerID, paramFactorID)
+	}, paramCustomerID, factoringkit.ParamFactorID)
 }
 
-func (t *DraftFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringNoa,
-		operation:   permission.OpCreate,
-		defaultTier: agent.TierAutoExecute,
-		maxTier:     agent.TierAutoExecute,
-		reversible:  true,
-		rationale:   "Drafts a letter nobody outside sees until it is sent.",
+func (t *DraftFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringNoa,
+		Operation:   permission.OpCreate,
+		DefaultTier: agent.TierAutoExecute,
+		MaxTier:     agent.TierAutoExecute,
+		Reversible:  true,
+		Rationale:   "Drafts a letter nobody outside sees until it is sent.",
 	})
 }
 
 func (t *DraftFactoringNoaTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.DraftNoaRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	customerID, err := common.RequirePulid(params.Params, paramCustomerID)
+	customerID, err := toolparams.RequirePulid(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	factorID, err := common.RequirePulid(params.Params, paramFactorID)
+	factorID, err := toolparams.RequirePulid(params.Params, factoringkit.ParamFactorID)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringports.DraftNoaRequest{
-		TenantInfo:         common.TenantFrom(*params),
+		TenantInfo:         toolparams.TenantFrom(params),
 		CustomerID:         customerID,
 		FactoringCompanyID: factorID,
-		Notes:              common.OptionalString(params.Params, paramNote),
+		Notes:              toolparams.OptionalString(params.Params, paramNote),
 	}, nil
 }
 
 func (t *DraftFactoringNoaTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	_, err := t.request(&params)
+	_, err := t.request(params)
 	return err
 }
 
 func (t *DraftFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -233,12 +198,12 @@ func (t *DraftFactoringNoaTool) Execute(
 
 func (t *DraftFactoringNoaTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would draft a notice of assignment for the customer. Nothing is sent."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	draft := &factoring.Noa{
 		OrganizationID:     req.TenantInfo.OrgID,
@@ -269,7 +234,7 @@ type SendFactoringNoaTool struct {
 func NewSendFactoringNoaTool(
 	noas factoringports.NoaService,
 	senders emailports.EmailSenderResolver,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SendFactoringNoaTool{noas: noas, senders: senders}
 }
 
@@ -294,58 +259,63 @@ func (t *SendFactoringNoaTool) ParamSchema() map[string]any {
 		paramNoaID: noaIDParam(
 			"The drafted notice, from factoring_list_noas or factoring_create_noa.",
 		),
-		paramVersion: versionParam(),
+		factoringkit.ParamVersion: versionParam(),
 		paramRecipient: jsonschemautils.Text(
 			"Email addresses to send to, comma separated. Leave it out to use the " +
 				"customer's invoice email recipients.",
 		),
-	}, paramNoaID, paramVersion)
+	}, paramNoaID, factoringkit.ParamVersion)
 }
 
-func (t *SendFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringNoa,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierPropose,
-		maxTier:     agent.TierPropose,
-		egress:      agent.EgressExternalRecipient,
-		idempotent:  true,
-		rationale: "Tells a customer, in writing, to pay someone else; a person decides " +
+func (t *SendFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringNoa,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierPropose,
+		MaxTier:     agent.TierPropose,
+		Egress:      agent.EgressExternalRecipient,
+		Idempotent:  true,
+		Rationale: "Tells a customer, in writing, to pay someone else; a person decides " +
 			"every one.",
 	})
 }
 
-func (t *SendFactoringNoaTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
+func (t *SendFactoringNoaTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
 }
 
 func (t *SendFactoringNoaTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*factoringports.SendNoaRequest, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
-	id, err := common.RequirePulid(params.Params, paramNoaID)
+	id, err := toolparams.RequirePulid(params.Params, paramNoaID)
 	if err != nil {
 		return nil, err
 	}
-	version, err := common.RequireIntInRange(params.Params, paramVersion, 0, maxVersion)
+	version, err := toolparams.RequireIntInRange(
+		params.Params,
+		factoringkit.ParamVersion,
+		0,
+		factoringkit.MaxVersion,
+	)
 	if err != nil {
 		return nil, err
 	}
 	return &factoringports.SendNoaRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         id,
 		Version:    int64(version),
-		Recipient:  common.OptionalString(params.Params, paramRecipient),
+		Recipient:  toolparams.OptionalString(params.Params, paramRecipient),
 	}, nil
 }
 
 func (t *SendFactoringNoaTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -355,9 +325,9 @@ func (t *SendFactoringNoaTool) Validate(
 
 func (t *SendFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -367,20 +337,20 @@ func (t *SendFactoringNoaTool) Execute(
 
 func (t *SendFactoringNoaTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would email the customer the notice of assignment."
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 	plan, err := t.noas.PlanSend(ctx, req, params.Actor.UserID)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
 
 	send := messageRequest(&plan.Message)
-	sender, err := common.ResolveEmailSender(ctx, t.senders, send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, send)
 	if err != nil {
 		return nil, err
 	}
@@ -390,14 +360,14 @@ func (t *SendFactoringNoaTool) Preview(
 			ID:       plan.Noa.ID,
 			Label:    "Notice of assignment",
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(send, plan.Message.VersionID),
+			outboundpreview.RenderedEmailPreview(send, plan.Message.VersionID),
 		),
 	)
 
 	recipients := plan.Message.To
-	update, err := common.PlanUpdate(
+	update, err := changepreview.PlanUpdate(
 		noaRecord(plan.Noa),
 		plan.Noa,
 		func(after *factoring.Noa) error {
@@ -412,7 +382,7 @@ func (t *SendFactoringNoaTool) Preview(
 			", telling the customer to pay the factor. It cannot be recalled once sent.",
 		message,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
 	return preview, nil
 }
 
@@ -420,7 +390,9 @@ type RecordFactoringNoaAcknowledgementTool struct {
 	noas factoringports.NoaService
 }
 
-func NewRecordFactoringNoaAcknowledgementTool(noas factoringports.NoaService) agentports.AgentTool {
+func NewRecordFactoringNoaAcknowledgementTool(
+	noas factoringports.NoaService,
+) agenttoolports.AgentTool {
 	return &RecordFactoringNoaAcknowledgementTool{noas: noas}
 }
 
@@ -445,8 +417,8 @@ func (t *RecordFactoringNoaAcknowledgementTool) Prerequisites() []string {
 
 func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramNoaID:   noaIDParam("The sent notice, from factoring_list_noas."),
-		paramVersion: versionParam(),
+		paramNoaID:                noaIDParam("The sent notice, from factoring_list_noas."),
+		factoringkit.ParamVersion: versionParam(),
 		paramAcknowledgedAt: agenttoolschema.DateTime(
 			"When the customer signed the notice. It cannot be in the future.",
 		),
@@ -458,25 +430,25 @@ func (t *RecordFactoringNoaAcknowledgementTool) ParamSchema() map[string]any {
 			"When the notice stops applying, if the factor's agreement says so. Leave it " +
 				"out for a notice that runs until released.",
 		),
-	}, paramNoaID, paramVersion, paramAcknowledgedAt, paramSignedDocument)
+	}, paramNoaID, factoringkit.ParamVersion, paramAcknowledgedAt, paramSignedDocument)
 }
 
-func (t *RecordFactoringNoaAcknowledgementTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringNoa,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		reversible:  true,
-		rationale: "Lets the customer's invoices be sold to the factor; a person confirms " +
+func (t *RecordFactoringNoaAcknowledgementTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringNoa,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Reversible:  true,
+		Rationale: "Lets the customer's invoices be sold to the factor; a person confirms " +
 			"the signed copy is the customer's.",
 	})
 }
 
 func (t *RecordFactoringNoaAcknowledgementTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
+) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
 }
 
 type acknowledgement struct {
@@ -486,29 +458,29 @@ type acknowledgement struct {
 
 func (t *RecordFactoringNoaAcknowledgementTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*acknowledgement, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	noa, version, err := loadNoa(ctx, t.noas, params)
 	if err != nil {
 		return nil, err
 	}
-	acknowledgedAt, err := common.RequireDateTime(params.Params, paramAcknowledgedAt)
+	acknowledgedAt, err := toolparams.RequireDateTime(params.Params, paramAcknowledgedAt)
 	if err != nil {
 		return nil, err
 	}
-	documentID, err := common.RequirePulid(params.Params, paramSignedDocument)
+	documentID, err := toolparams.RequirePulid(params.Params, paramSignedDocument)
 	if err != nil {
 		return nil, err
 	}
-	expiresAt, err := common.OptionalDateTime(params.Params, paramExpiresAt)
+	expiresAt, err := toolparams.OptionalDateTime(params.Params, paramExpiresAt)
 	if err != nil {
 		return nil, err
 	}
 	return &acknowledgement{noa: noa, req: &factoringports.AcknowledgeNoaRequest{
-		TenantInfo:       common.TenantFrom(*params),
+		TenantInfo:       toolparams.TenantFrom(params),
 		ID:               noa.ID,
 		Version:          version,
 		AcknowledgedAt:   acknowledgedAt,
@@ -528,9 +500,9 @@ func (a *acknowledgement) apply(noa *factoring.Noa) error {
 
 func (t *RecordFactoringNoaAcknowledgementTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -539,9 +511,9 @@ func (t *RecordFactoringNoaAcknowledgementTool) Validate(
 
 func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -551,14 +523,14 @@ func (t *RecordFactoringNoaAcknowledgementTool) Execute(
 
 func (t *RecordFactoringNoaAcknowledgementTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would record that the customer signed the notice of assignment."
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
-	update, err := common.PlanUpdate(
+	update, err := changepreview.PlanUpdate(
 		noaRecord(planned.noa),
 		planned.noa,
 		planned.apply,
@@ -575,7 +547,7 @@ type ReleaseFactoringNoaTool struct {
 	noas factoringports.NoaService
 }
 
-func NewReleaseFactoringNoaTool(noas factoringports.NoaService) agentports.AgentTool {
+func NewReleaseFactoringNoaTool(noas factoringports.NoaService) agenttoolports.AgentTool {
 	return &ReleaseFactoringNoaTool{noas: noas}
 }
 
@@ -596,27 +568,27 @@ func (t *ReleaseFactoringNoaTool) Prerequisites() []string { return []string{too
 
 func (t *ReleaseFactoringNoaTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		paramNoaID:   noaIDParam("The open notice, from factoring_list_noas."),
-		paramVersion: versionParam(),
-		paramReason: jsonschemautils.Text(
+		paramNoaID:                noaIDParam("The open notice, from factoring_list_noas."),
+		factoringkit.ParamVersion: versionParam(),
+		factoringkit.ParamReason: jsonschemautils.Text(
 			"Why the notice is released, such as the factor's release letter, in one sentence.",
 		),
-	}, paramNoaID, paramVersion, paramReason)
+	}, paramNoaID, factoringkit.ParamVersion, factoringkit.ParamReason)
 }
 
-func (t *ReleaseFactoringNoaTool) Policy() agentports.ToolPolicy {
-	return policy(t.Name(), &policySpec{
-		resource:    permission.ResourceFactoringNoa,
-		operation:   permission.OpUpdate,
-		defaultTier: agent.TierActWithApproval,
-		maxTier:     agent.TierActWithApproval,
-		rationale: "Ends the customer's assignment to the factor; only the factor can release " +
+func (t *ReleaseFactoringNoaTool) Policy() agenttoolports.ToolPolicy {
+	return factoringkit.Policy(t.Name(), &factoringkit.PolicySpec{
+		Resource:    permission.ResourceFactoringNoa,
+		Operation:   permission.OpUpdate,
+		DefaultTier: agent.TierActWithApproval,
+		MaxTier:     agent.TierActWithApproval,
+		Rationale: "Ends the customer's assignment to the factor; only the factor can release " +
 			"it, so a person confirms the release.",
 	})
 }
 
-func (t *ReleaseFactoringNoaTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
+func (t *ReleaseFactoringNoaTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramNoaID, permission.ResourceFactoringNoa)
 }
 
 type release struct {
@@ -626,21 +598,21 @@ type release struct {
 
 func (t *ReleaseFactoringNoaTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*release, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	noa, version, err := loadNoa(ctx, t.noas, params)
 	if err != nil {
 		return nil, err
 	}
-	reason, err := common.RequireString(params.Params, paramReason)
+	reason, err := toolparams.RequireString(params.Params, factoringkit.ParamReason)
 	if err != nil {
 		return nil, err
 	}
 	return &release{noa: noa, req: &factoringports.ReleaseNoaRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ID:         noa.ID,
 		Version:    version,
 		Reason:     reason,
@@ -653,9 +625,9 @@ func (r *release) apply(noa *factoring.Noa) error {
 
 func (t *ReleaseFactoringNoaTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -664,9 +636,9 @@ func (t *ReleaseFactoringNoaTool) Validate(
 
 func (t *ReleaseFactoringNoaTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -676,14 +648,14 @@ func (t *ReleaseFactoringNoaTool) Execute(
 
 func (t *ReleaseFactoringNoaTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	const summary = "Would release the notice of assignment."
-	planned, err := t.plan(ctx, &params)
+	planned, err := t.plan(ctx, params)
 	if err != nil {
-		return refused(summary, err)
+		return factoringkit.Refused(summary, err)
 	}
-	update, err := common.PlanUpdate(
+	update, err := changepreview.PlanUpdate(
 		noaRecord(planned.noa),
 		planned.noa,
 		planned.apply,

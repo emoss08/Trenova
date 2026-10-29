@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementjournal"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -346,8 +347,8 @@ func (s *Service) planApprove(
 	if err != nil {
 		return err
 	}
-	if hold.refused() {
-		plan.Refusal = hold.refusal
+	if hold.Refused() {
+		plan.Refusal = hold.Refusal
 		return nil
 	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
@@ -358,7 +359,11 @@ func (s *Service) planApprove(
 	return nil
 }
 
-func (s *Service) keepJournal(plan *ActionPlan, draft *journalDraft, err error) error {
+func (s *Service) keepJournal(
+	plan *ActionPlan,
+	draft *carriersettlementjournal.Draft,
+	err error,
+) error {
 	if err != nil {
 		if settlementshared.IsRefusal(err) {
 			plan.Refusal = err
@@ -367,7 +372,7 @@ func (s *Service) keepJournal(plan *ActionPlan, draft *journalDraft, err error) 
 		return err
 	}
 	if draft != nil {
-		plan.Journal = draft.plan
+		plan.Journal = draft.JournalPlan
 	}
 	return nil
 }
@@ -381,7 +386,7 @@ func (s *Service) planPost(
 	if plan.Refusal = PlanPost(plan.After, userID, now); plan.Refused() {
 		return nil
 	}
-	draft, err := s.planSettlementJournal(ctx, plan.After, userID, false)
+	draft, err := s.journals.PlanSettlement(ctx, plan.After, userID, false)
 	return s.keepJournal(plan, draft, err)
 }
 
@@ -399,7 +404,7 @@ func (s *Service) planMarkPaid(
 	}); plan.Refused() {
 		return nil
 	}
-	draft, err := s.planPaymentJournal(ctx, plan.Before, req.TenantInfo.UserID, now)
+	draft, err := s.journals.PlanPayment(ctx, plan.Before, req.TenantInfo.UserID, now)
 	return s.keepJournal(plan, draft, err)
 }
 
@@ -416,7 +421,7 @@ func (s *Service) planVoid(
 	if !wasPosted {
 		return nil
 	}
-	draft, err := s.planSettlementJournal(ctx, plan.Before, req.TenantInfo.UserID, true)
+	draft, err := s.journals.PlanSettlement(ctx, plan.Before, req.TenantInfo.UserID, true)
 	return s.keepJournal(plan, draft, err)
 }
 

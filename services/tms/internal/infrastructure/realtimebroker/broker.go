@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -44,12 +45,12 @@ var (
 type BrokerParams struct {
 	fx.In
 
-	Publisher *Publisher
-	Client    *redis.Client
-	Config    *config.Config
-	Logger    *zap.Logger
-	Metrics   *metrics.Registry `optional:"true"`
-	LC        fx.Lifecycle
+	Publisher      *Publisher
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
+	Logger         *zap.Logger
+	Metrics        *metrics.Registry `optional:"true"`
+	LC             fx.Lifecycle
 }
 
 // Broker fans the bus out to the streams open on this instance and keeps the
@@ -63,9 +64,9 @@ type Broker struct {
 	*Publisher
 
 	client  *redis.Client
-	cfg     config.RealtimeConfig
+	cfg     realtimeconfig.Config
 	l       *zap.Logger
-	metrics *metrics.Realtime
+	metrics *platformmetrics.Realtime
 
 	mu      sync.RWMutex
 	tenants map[string]map[*subscriber]struct{}
@@ -85,7 +86,7 @@ func NewBroker(p BrokerParams) *Broker {
 	b := &Broker{
 		Publisher: p.Publisher,
 		client:    p.Client,
-		cfg:       *p.Config.GetRealtimeConfig(),
+		cfg:       *p.RealtimeConfig,
 		l:         p.Logger.Named("realtime.broker"),
 		tenants:   make(map[string]map[*subscriber]struct{}),
 		perUser:   make(map[string]int),
@@ -154,7 +155,7 @@ func (b *Broker) Drain() {
 	b.mu.Unlock()
 
 	for _, sub := range subs {
-		sub.shutdown(agentports.RealtimeCloseShutdown)
+		sub.shutdown(realtimeports.RealtimeCloseShutdown)
 	}
 }
 
@@ -255,8 +256,8 @@ func (b *Broker) dispatch(e *entry) {
 
 func (b *Broker) Subscribe(
 	ctx context.Context,
-	req *agentports.RealtimeSubscribeRequest,
-) (agentports.RealtimeStream, error) {
+	req *realtimeports.RealtimeSubscribeRequest,
+) (realtimeports.RealtimeStream, error) {
 	conn := req.Connection
 	tenant := tenantKey(conn.OrganizationID, conn.BusinessUnitID)
 	shard := shardFor(tenant, b.cfg.GetShardCount())
@@ -268,7 +269,7 @@ func (b *Broker) Subscribe(
 
 	prelude, floor, err := b.setup(ctx, sub, req)
 	if err != nil {
-		sub.shutdown(agentports.RealtimeCloseShutdown)
+		sub.shutdown(realtimeports.RealtimeCloseShutdown)
 		return nil, err
 	}
 
@@ -345,7 +346,7 @@ func (b *Broker) forget(sub *subscriber) {
 // goroutine that closed the stream, since that is often the fan-out itself
 // shedding a slow reader, and it must not wait on Redis.
 type cleanupJob struct {
-	conn   agentports.RealtimeConnection
+	conn   realtimeports.RealtimeConnection
 	tenant string
 	scopes []string
 }
@@ -381,8 +382,8 @@ func (b *Broker) cleanup() {
 func (b *Broker) setup(
 	ctx context.Context,
 	sub *subscriber,
-	req *agentports.RealtimeSubscribeRequest,
-) ([]agentports.RealtimeFrame, streamID, error) {
+	req *realtimeports.RealtimeSubscribeRequest,
+) ([]realtimeports.RealtimeFrame, streamID, error) {
 	if err := b.registerConnection(ctx, &sub.conn); err != nil {
 		return nil, streamID{}, err
 	}
@@ -395,7 +396,7 @@ func (b *Broker) setup(
 		head = b.headCursor(ctx, sub.shard)
 	}
 
-	ready, err := encodeFrame(agentports.RealtimeEventReady, agentports.RealtimeReadyEvent{
+	ready, err := encodeFrame(realtimeports.RealtimeEventReady, realtimeports.RealtimeReadyEvent{
 		ConnectionID:        sub.conn.ConnectionID,
 		HeartbeatIntervalMs: b.cfg.GetHeartbeatInterval().Milliseconds(),
 		Resumed:             resumed,
@@ -405,24 +406,24 @@ func (b *Broker) setup(
 		return nil, streamID{}, err
 	}
 
-	prelude := make([]agentports.RealtimeFrame, 0, len(replay)+3)
+	prelude := make([]realtimeports.RealtimeFrame, 0, len(replay)+3)
 	prelude = append(prelude, ready)
 	if reset {
-		prelude = append(prelude, agentports.RealtimeFrame{
-			Event: agentports.RealtimeEventReset,
+		prelude = append(prelude, realtimeports.RealtimeFrame{
+			Event: realtimeports.RealtimeEventReset,
 			Data:  []byte("{}"),
 		})
 	}
 
 	if req.JoinUsers {
-		sub.join(agentports.RealtimeScopeUsers)
+		sub.join(realtimeports.RealtimeScopeUsers)
 		snapshot, joinErr := b.JoinPresence(
-			ctx, &sub.conn, agentports.RealtimeScopeUsers, agentports.RealtimePresenceState{},
+			ctx, &sub.conn, realtimeports.RealtimeScopeUsers, realtimeports.RealtimePresenceState{},
 		)
 		if joinErr != nil {
 			return nil, streamID{}, joinErr
 		}
-		frame, encErr := encodeFrame(agentports.RealtimeEventPresenceState, snapshot)
+		frame, encErr := encodeFrame(realtimeports.RealtimeEventPresenceState, snapshot)
 		if encErr != nil {
 			return nil, streamID{}, encErr
 		}
@@ -451,7 +452,7 @@ func (b *Broker) replay(
 	ctx context.Context,
 	sub *subscriber,
 	lastEventID string,
-) ([]agentports.RealtimeFrame, streamID, bool) {
+) ([]realtimeports.RealtimeFrame, streamID, bool) {
 	if lastEventID == "" {
 		return nil, streamID{}, false
 	}
@@ -485,7 +486,7 @@ func (b *Broker) replay(
 	}
 
 	floor := pos.id
-	frames := make([]agentports.RealtimeFrame, 0, len(msgs))
+	frames := make([]realtimeports.RealtimeFrame, 0, len(msgs))
 	for i := range msgs {
 		e, decoded := decodeEntry(sub.shard, &msgs[i])
 		if !decoded {
@@ -501,7 +502,7 @@ func (b *Broker) replay(
 		}
 		frames = append(
 			frames,
-			agentports.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload},
+			realtimeports.RealtimeFrame{ID: e.cursor, Event: e.event, Data: payload},
 		)
 	}
 
@@ -515,8 +516,8 @@ func (b *Broker) maintain() {
 	ticker := time.NewTicker(b.cfg.GetHeartbeatInterval())
 	defer ticker.Stop()
 
-	heartbeat := agentports.RealtimeFrame{
-		Event: agentports.RealtimeEventHeartbeat,
+	heartbeat := realtimeports.RealtimeFrame{
+		Event: realtimeports.RealtimeEventHeartbeat,
 		Data:  []byte("{}"),
 	}
 	for {
@@ -603,10 +604,10 @@ func bytesField(values map[string]any, key string) []byte {
 	return []byte(v)
 }
 
-func encodeFrame(event string, data any) (agentports.RealtimeFrame, error) {
+func encodeFrame(event string, data any) (realtimeports.RealtimeFrame, error) {
 	encoded, err := sonic.Marshal(data)
 	if err != nil {
-		return agentports.RealtimeFrame{}, err
+		return realtimeports.RealtimeFrame{}, err
 	}
-	return agentports.RealtimeFrame{Event: event, Data: encoded}, nil
+	return realtimeports.RealtimeFrame{Event: event, Data: encoded}, nil
 }

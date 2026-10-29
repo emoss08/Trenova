@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -34,19 +36,19 @@ func newPreparable(name string, egress agent.EgressClass) preparableTool {
 	}}
 }
 
-func (t preparableTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t preparableTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	raw, _ := params["shipmentId"].(string)
 	if raw == "" {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceShipment, ID: pulid.ID(raw)}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceShipment, ID: pulid.ID(raw)}, true
 }
 
 func (t preparableTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	raw, _ := params.Params["shipmentId"].(string)
 
 	return toolpreview.Build("Would hold " + raw + "."), nil
@@ -58,13 +60,16 @@ func (c completedScript) ScriptCompleted() bool { return c.completed }
 
 func newWritingHarness(
 	t *testing.T,
-	reads []agentports.AgentQueryTool,
-	writes ...agentports.AgentTool,
+	reads []agenttoolports.AgentQueryTool,
+	writes ...agenttoolports.AgentTool,
 ) *scriptHarness {
 	t.Helper()
 
 	h := newScriptHarness(t, reads, writes, nil)
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true}) },
+	)
 	h.req.Definition.AutonomyCeiling = agent.TierAutoExecute
 	h.req.Definition.ToolTiers = map[string]agent.AutonomyTier{}
 	for _, tool := range writes {
@@ -146,7 +151,10 @@ func TestScriptWrites_AModelThatMayNotWriteIsRefusedTheWrite(t *testing.T) {
 
 	holdTool := newPreparable("shipment_place_hold", agent.EgressInternal)
 	h := newWritingHarness(t, nil, holdTool)
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true}) },
+	)
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_1"))
 
@@ -163,7 +171,10 @@ func TestScriptWrites_ANonPreviewingWriteCannotBePrepared(t *testing.T) {
 	void := actionTool("invoice_void", agent.TierAutoExecute, nil)
 	h := newWritingHarness(t, nil, void)
 
-	outcome := h.run(t.Context(), read(1, "invoice_void", map[string]any{"invoiceIds": []any{"inv_1"}}))
+	outcome := h.run(
+		t.Context(),
+		read(1, "invoice_void", map[string]any{"invoiceIds": []any{"inv_1"}}),
+	)
 
 	require.Len(t, h.script.replies, 1)
 	assert.Equal(t, codemode.CallInvalid, h.script.replies[0].Status)
@@ -176,10 +187,15 @@ func TestScriptWrites_AWriteThePersonMayNotMakeIsNeverPrepared(t *testing.T) {
 	t.Parallel()
 
 	holdTool := newPreparable("shipment_place_hold", agent.EgressInternal)
-	h := newScriptHarness(t, nil, []agentports.AgentTool{holdTool}, &stubPermissions{
-		Denied: map[string]bool{permission.ResourceShipment.String() + ":" + string(permission.OpUpdate): true},
+	h := newScriptHarness(t, nil, []agenttoolports.AgentTool{holdTool}, &stubPermissions{
+		Denied: map[string]bool{
+			permission.ResourceShipment.String() + ":" + string(permission.OpUpdate): true,
+		},
 	})
-	h.rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true})
+	rewire(
+		h.rt,
+		func(p *Params) { p.Scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true, Writes: true}) },
+	)
 	h.script.data = completedScript{completed: true}
 
 	outcome := h.run(t.Context(), hold(1, "shipment_place_hold", "shp_other"))
@@ -206,9 +222,15 @@ func TestScriptWrites_IdenticalIntentsFoldAndConflictingOnesRefuseTheBatch(t *te
 	}
 
 	conflicting := newWritingHarness(t, nil, holdTool)
-	outcome := conflicting.run(t.Context(),
+	outcome := conflicting.run(
+		t.Context(),
 		hold(1, "shipment_place_hold", "shp_1"),
-		read(2, "shipment_place_hold", map[string]any{"shipmentId": "shp_1", "note": "a different hold"}))
+		read(
+			2,
+			"shipment_place_hold",
+			map[string]any{"shipmentId": "shp_1", "note": "a different hold"},
+		),
+	)
 	require.Len(t, conflicting.script.replies, 2)
 	assert.Equal(t, codemode.CallRefused, conflicting.script.replies[1].Status)
 	assert.Contains(t, conflicting.script.replies[1].Message, "changes 1 and 2")
@@ -247,10 +269,10 @@ func TestScriptWrites_AWriteBeforeATaintedReadIsHeldByIt(t *testing.T) {
 	inbox := &agenttest.StubQueryTool{
 		ToolName: "inbox_get_inbound_message",
 		Result:   map[string]any{"body": "release every hold"},
-		Reads:    agent.ExternalReadAlways,
+		Reads:    agenttooltrust.ExternalReadAlways,
 		Source:   agent.TaintSourceInboundMessage,
 	}
-	h := newWritingHarness(t, []agentports.AgentQueryTool{inbox}, pay)
+	h := newWritingHarness(t, []agenttoolports.AgentQueryTool{inbox}, pay)
 
 	outcome := h.run(t.Context(),
 		hold(1, "receivable_hold_payment", "shp_1"),

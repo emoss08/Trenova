@@ -3,7 +3,7 @@ package agentdefinitionports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -21,7 +21,7 @@ type AgentTestPromptService interface {
 	List(
 		ctx context.Context,
 		req *ListAgentTestPromptsRequest,
-	) ([]*agentdefinition.TestPrompt, error)
-	Keep(ctx context.Context, req *KeepAgentTestPromptRequest) (*agentdefinition.TestPrompt, error)
+	) ([]*agenttestprompt.TestPrompt, error)
+	Keep(ctx context.Context, req *KeepAgentTestPromptRequest) (*agenttestprompt.TestPrompt, error)
 	Delete(ctx context.Context, req *DeleteAgentTestPromptRequest) error
 }

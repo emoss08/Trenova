@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -23,21 +25,21 @@ type ActivitiesParams struct {
 	fx.In
 
 	DispatchControlRepo dispatchcontrolports.DispatchControlRepository
-	ProposalRepo        agentports.AgentProposalRepository
-	AutoAssign          agentports.DispatchAutoAssignService
+	ProposalRepo        agentproposalports.AgentProposalRepository
+	AutoAssign          dispatchconsoleports.DispatchAutoAssignService
 	// Watchtower puts a load about to leave with nobody on it on the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// Publisher wakes whichever agent covers dispatch for the same moves.
-	Publisher agentports.AgentEventPublisher `optional:"true"`
+	Publisher agenteventports.AgentEventPublisher `optional:"true"`
 	Logger    *zap.Logger
 }
 
 type Activities struct {
 	dispatchControlRepo dispatchcontrolports.DispatchControlRepository
-	proposalRepo        agentports.AgentProposalRepository
-	autoAssign          agentports.DispatchAutoAssignService
+	proposalRepo        agentproposalports.AgentProposalRepository
+	autoAssign          dispatchconsoleports.DispatchAutoAssignService
 	watchtower          watchtowerports.WatchtowerProjector
-	publisher           agentports.AgentEventPublisher
+	publisher           agenteventports.AgentEventPublisher
 	now                 func() int64
 	logger              *zap.Logger
 }
@@ -96,7 +98,7 @@ func (a *Activities) planTenant(
 		BusinessUnitID: tenant.BuID.String(),
 	}
 
-	plan, err := a.autoAssign.Plan(ctx, &agentports.DispatchPlanRequest{
+	plan, err := a.autoAssign.Plan(ctx, &dispatchconsoleports.DispatchPlanRequest{
 		TenantInfo: tenant,
 		Apply:      false,
 	})
@@ -138,9 +140,9 @@ func (a *Activities) planTenant(
 func (a *Activities) raiseCoverageRisk(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	uncovered []*agentports.DispatchUncoveredMove,
+	uncovered []*dispatchconsoleports.DispatchUncoveredMove,
 ) int {
-	dated := make([]*agentports.DispatchUncoveredMove, 0, len(uncovered))
+	dated := make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(uncovered))
 	for _, move := range uncovered {
 		if move != nil && move.StartsAt > 0 {
 			dated = append(dated, move)
@@ -183,8 +185,8 @@ func (a *Activities) raiseCoverageRisk(
 		if a.watchtower != nil {
 			a.watchtower.Upsert(ctx, watchtowersources.DescribeMoveCoverageRisk(item))
 		}
-		agentports.PublishAgentEvent(ctx, a.publisher, agentports.AgentEvent{
-			Kind:       agent.EventShipmentMoveCoverageAtRisk,
+		agenteventports.PublishAgentEvent(ctx, a.publisher, agenteventports.AgentEvent{
+			Kind:       agenttrigger.EventShipmentMoveCoverageAtRisk,
 			SubjectID:  move.MoveID,
 			TenantInfo: tenant,
 		})
@@ -196,7 +198,7 @@ func (a *Activities) raiseCoverageRisk(
 func (a *Activities) retireProposals(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	plan *agentports.DispatchPlan,
+	plan *dispatchconsoleports.DispatchPlan,
 	outcome *TenantHorizonPlan,
 ) {
 	if plan.RunID.IsNil() {
@@ -205,7 +207,7 @@ func (a *Activities) retireProposals(
 
 	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
-		agentports.ExpireAgentProposalsByRunRequest{
+		agentproposalports.ExpireAgentProposalsByRunRequest{
 			RunID:      plan.RunID,
 			TenantInfo: tenant,
 		},

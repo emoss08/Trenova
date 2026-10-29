@@ -5,16 +5,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func billDoc() *accountingsyncports.AccountingPurchaseDocument {
-	return &accountingsyncports.AccountingPurchaseDocument{
+func billDoc() *accountingconnectorports.AccountingPurchaseDocument {
+	return &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:             testAuth(),
 		RequestID:        testRequestID,
 		Kind:             accountingsync.SyncObjectCarrierBill,
@@ -23,9 +24,17 @@ func billDoc() *accountingsyncports.AccountingPurchaseDocument {
 		TxnDate:          "2026-10-02",
 		DueDate:          "2026-11-01",
 		CurrencyCode:     "USD",
-		Lines: []accountingsyncports.AccountingPurchaseLine{
-			{Description: "Linehaul", AccountExternalID: testExpense, Amount: decimal.NewFromInt(800)},
-			{Description: "Fuel", AccountExternalID: strings.ToUpper(testExpense), Amount: decimal.NewFromInt(200)},
+		Lines: []accountingconnectorports.AccountingPurchaseLine{
+			{
+				Description:       "Linehaul",
+				AccountExternalID: testExpense,
+				Amount:            decimal.NewFromInt(800),
+			},
+			{
+				Description:       "Fuel",
+				AccountExternalID: strings.ToUpper(testExpense),
+				Amount:            decimal.NewFromInt(200),
+			},
 		},
 	}
 }
@@ -35,7 +44,13 @@ func newBillServer(t *testing.T) *salesServer {
 		t:      t,
 		entity: "purchaseInvoices",
 		newID:  testNewBill,
-		posted: docSpec{id: testNewBill, number: "108002", status: "Open", total: 1000, remaining: 1000},
+		posted: docSpec{
+			id:        testNewBill,
+			number:    "108002",
+			status:    "Open",
+			total:     1000,
+			remaining: 1000,
+		},
 	}
 }
 
@@ -50,9 +65,13 @@ func TestCreateBillPostsAccountLinesUnderTheVendorInvoiceNumber(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testNewBill, result.ExternalID)
 	assert.Equal(t, "108002", result.DocNumber)
-	assert.Equal(t, docTypePurchaseInvoice, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypePurchaseInvoice,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	assert.Equal(t, "false", result.Refs[accountingsync.ExternalRefCreditDocument])
-	assert.Equal(t, "1000", result.Refs[refAccountPrefix+testExpense])
+	assert.Equal(t, "1000", result.Refs[bcdocsync.RefAccountPrefix+testExpense])
 	assert.Contains(t, result.Refs[accountingsync.ExternalRefURL], "page=138")
 	assert.Contains(t, result.Refs[accountingsync.ExternalRefURL], "108002")
 
@@ -101,7 +120,7 @@ func TestCreateVendorCreditIsAPurchaseCreditMemo(t *testing.T) {
 	notABill := billDoc()
 	notABill.Kind = accountingsync.SyncObjectInvoice
 	_, err = conn.CreatePurchaseDocument(t.Context(), notABill)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 }
 
 func voidCreditServer(t *testing.T, bill docSpec) *salesServer {
@@ -135,41 +154,51 @@ func TestVoidBillPostsAFullCreditMemoAppliedToIt(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       testAuth(),
-		RequestID:  testRequestID,
-		Kind:       accountingsync.SyncObjectCarrierBill,
-		ExternalID: testBill,
-		Refs: map[string]string{
-			accountingsync.ExternalRefCreditDocument: "false",
-			refAccountPrefix + testExpense:           "700",
-			refAccountPrefix + testBank:              "200",
+	result, err := conn.VoidPurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       testAuth(),
+			RequestID:  testRequestID,
+			Kind:       accountingsync.SyncObjectCarrierBill,
+			ExternalID: testBill,
+			Refs: map[string]string{
+				accountingsync.ExternalRefCreditDocument: "false",
+				bcdocsync.RefAccountPrefix + testExpense: "700",
+				bcdocsync.RefAccountPrefix + testBank:    "200",
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
-	assert.Equal(t, testVendorCredit, result.Refs[voidCreditKey(testBill)])
+	assert.Equal(t, testVendorCredit, result.Refs[bcdocsync.VoidCreditKey(testBill)])
 
 	create, ok := fake.find(http.MethodPost, "/purchaseCreditMemos")
 	require.True(t, ok)
 	assert.Equal(t, testBill, create.Body["invoiceId"])
 	assert.Equal(t, testVendor, create.Body["vendorId"])
 	assert.Equal(t, "CAD", create.Body["currencyCode"])
-	assert.Equal(t, requestReference(testRequestID), create.Body["vendorCreditMemoNumber"])
+	assert.Equal(
+		t,
+		bcdocsync.RequestReference(testRequestID),
+		create.Body["vendorCreditMemoNumber"],
+	)
 	sent := lines(t, create.Body, "purchaseCreditMemoLines")
 	require.Len(t, sent, 2)
 	assert.Equal(t, testBank, sent[0]["accountId"])
 	assert.InDelta(t, 200, sent[0]["directUnitCost"], 0)
 	assert.InDelta(t, 700, sent[1]["directUnitCost"], 0)
-	_, posted := fake.find(http.MethodPost, entity("purchaseCreditMemos", testVendorCredit)+postAction)
+	_, posted := fake.find(
+		http.MethodPost,
+		entity("purchaseCreditMemos", testVendorCredit)+postAction,
+	)
 	assert.True(t, posted)
 }
 
 func TestVoidBillRefusalsAndResume(t *testing.T) {
 	t.Parallel()
 
-	ref := &accountingsyncports.AccountingDocumentRef{
+	ref := &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectDriverBill,
-		ExternalID: testBill, Refs: map[string]string{refAccountPrefix + testExpense: "900"},
+		ExternalID: testBill, Refs: map[string]string{bcdocsync.RefAccountPrefix + testExpense: "900"},
 	}
 
 	paid := voidCreditServer(t, docSpec{
@@ -185,12 +214,12 @@ func TestVoidBillRefusalsAndResume(t *testing.T) {
 	})
 	done.listed = listJSON(t, docSpec{
 		id: testVendorCredit, number: "109002", status: "Open",
-		reference: requestReference(testRequestID),
+		reference: bcdocsync.RequestReference(testRequestID),
 	})
 	fake = &fakeBC{respond: done.respond}
 	result, err := testConnector(t, fake).VoidPurchaseDocument(t.Context(), ref)
 	require.NoError(t, err)
-	assert.Equal(t, testVendorCredit, result.Refs[voidCreditKey(testBill)])
+	assert.Equal(t, testVendorCredit, result.Refs[bcdocsync.VoidCreditKey(testBill)])
 	assert.Empty(t, fake.writes())
 
 	unknown := voidCreditServer(t, docSpec{
@@ -219,21 +248,29 @@ func TestVoidVendorCreditCancelsIt(t *testing.T) {
 	fake := &fakeBC{respond: server.respond}
 	conn := testConnector(t, fake)
 
-	_, err := conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       testAuth(),
-		Kind:       accountingsync.SyncObjectCarrierBill,
-		ExternalID: testVendorCredit,
-		Refs:       map[string]string{accountingsync.ExternalRefDocumentType: docTypePurchaseCreditMemo},
-	})
+	_, err := conn.VoidPurchaseDocument(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       testAuth(),
+			Kind:       accountingsync.SyncObjectCarrierBill,
+			ExternalID: testVendorCredit,
+			Refs: map[string]string{
+				accountingsync.ExternalRefDocumentType: bcdocsync.DocTypePurchaseCreditMemo,
+			},
+		},
+	)
 	require.NoError(t, err)
-	_, cancelled := fake.find(http.MethodPost, entity("purchaseCreditMemos", testVendorCredit)+cancelAction)
+	_, cancelled := fake.find(
+		http.MethodPost,
+		entity("purchaseCreditMemos", testVendorCredit)+cancelAction,
+	)
 	assert.True(t, cancelled)
 
-	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.VoidPurchaseDocument(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), Kind: accountingsync.SyncObjectCarrierBill, ExternalID: testVendorCredit,
 		Refs: map[string]string{accountingsync.ExternalRefDocumentType: "Other"},
 	})
-	require.ErrorIs(t, err, errPurchaseDocumentType)
+	require.ErrorIs(t, err, bcsession.ErrPurchaseDocumentType)
 }
 
 func TestUpdateBillCreditsTheOldBillThenPostsTheNewOne(t *testing.T) {
@@ -259,8 +296,8 @@ func TestUpdateBillCreditsTheOldBillThenPostsTheNewOne(t *testing.T) {
 	result, err := conn.UpdatePurchaseDocument(t.Context(), doc)
 	require.NoError(t, err)
 	assert.Equal(t, testNewBill, result.ExternalID)
-	assert.Equal(t, testBill, result.Refs[refReplaced])
-	assert.Equal(t, testVendorCredit, result.Refs[refCorrective])
+	assert.Equal(t, testBill, result.Refs[bcdocsync.RefReplaced])
+	assert.Equal(t, testVendorCredit, result.Refs[bcdocsync.RefCorrective])
 
 	memo, ok := fake.find(http.MethodPost, "/purchaseCreditMemos")
 	require.True(t, ok)
@@ -270,11 +307,15 @@ func TestUpdateBillCreditsTheOldBillThenPostsTheNewOne(t *testing.T) {
 	assert.InDelta(t, 900, sent[0]["directUnitCost"], 0)
 	created, ok := fake.find(http.MethodPost, "/purchaseInvoices")
 	require.True(t, ok)
-	assert.Equal(t, revisedNumber(doc.DocNumber, doc.RequestID), created.Body["vendorInvoiceNumber"])
-	assert.NotEqual(t, doc.DocNumber, revisedNumber(doc.DocNumber, doc.RequestID))
+	assert.Equal(
+		t,
+		bcdocsync.RevisedNumber(doc.DocNumber, doc.RequestID),
+		created.Body["vendorInvoiceNumber"],
+	)
+	assert.NotEqual(t, doc.DocNumber, bcdocsync.RevisedNumber(doc.DocNumber, doc.RequestID))
 
 	_, err = conn.UpdatePurchaseDocument(t.Context(), billDoc())
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, bcsession.ErrExternalID)
 }
 
 func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
@@ -294,11 +335,17 @@ func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	result, err := conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
-		Auth:       testAuth(),
-		ExternalID: testVendor,
-		Party:      accountingsyncports.AccountingPartyDraft{DisplayName: "Owner Operator LLC", City: "Dallas"},
-	})
+	result, err := conn.UpsertVendor(
+		t.Context(),
+		&accountingconnectorports.AccountingVendorDocument{
+			Auth:       testAuth(),
+			ExternalID: testVendor,
+			Party: accountingconnectorports.AccountingPartyDraft{
+				DisplayName: "Owner Operator LLC",
+				City:        "Dallas",
+			},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testVendor, result.ExternalID)
 	assert.Equal(t, "Owner Operator LLC", result.DocNumber)
@@ -308,18 +355,18 @@ func TestUpsertVendorUpdatesWithTheETagOrRefusesADuplicateName(t *testing.T) {
 	assert.Equal(t, "CAD", patch.Body["currencyCode"])
 	assert.Equal(t, "Dallas", patch.Body["city"])
 
-	_, err = conn.UpsertVendor(t.Context(), &accountingsyncports.AccountingVendorDocument{
+	_, err = conn.UpsertVendor(t.Context(), &accountingconnectorports.AccountingVendorDocument{
 		Auth:  testAuth(),
-		Party: accountingsyncports.AccountingPartyDraft{DisplayName: "Owner Operator Inc"},
+		Party: accountingconnectorports.AccountingPartyDraft{DisplayName: "Owner Operator Inc"},
 	})
-	require.ErrorIs(t, err, errDuplicateName)
+	require.ErrorIs(t, err, bcsession.ErrDuplicateName)
 	assert.Equal(t, accountingsync.SyncErrorDuplicate, conn.ClassifyDocumentError(err).Category)
 }
 
 func TestVoidBillDeletesADraftAndIgnoresAMissingBill(t *testing.T) {
 	t.Parallel()
 
-	ref := &accountingsyncports.AccountingDocumentRef{
+	ref := &accountingconnectorports.AccountingDocumentRef{
 		Auth: testAuth(), RequestID: testRequestID, Kind: accountingsync.SyncObjectCarrierBill,
 		ExternalID: testBill,
 	}
@@ -341,16 +388,4 @@ func TestVoidBillDeletesADraftAndIgnoresAMissingBill(t *testing.T) {
 	_, err = testConnector(t, missing).VoidPurchaseDocument(t.Context(), ref)
 	require.NoError(t, err)
 	assert.Empty(t, missing.writes())
-}
-
-func TestARevisedBillNumberFitsAndDiffersFromTheOriginal(t *testing.T) {
-	t.Parallel()
-
-	long := strings.Repeat("9", businesscentral.MaxExternalDocumentNumberLength)
-	revised := revisedNumber(long, "req-1")
-	assert.Len(t, revised, businesscentral.MaxExternalDocumentNumberLength)
-	assert.True(t, strings.HasSuffix(revised, revisionSeparator+revised[len(revised)-revisionHashLength:]))
-	assert.NotEqual(t, revisedNumber("OO-78", "req-1"), revisedNumber("OO-78", "req-2"))
-	assert.Equal(t, revisedNumber("OO-78", "req-1"), revisedNumber("OO-78", "req-1"))
-	assert.Empty(t, revisedNumber(" ", "req-1"))
 }

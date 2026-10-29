@@ -3,10 +3,13 @@ package settlementtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -69,7 +72,7 @@ type settlementDecision struct {
 
 type SettlementDecisionTool[E any] struct {
 	decision settlementDecision
-	ledger   common.SettlementLedger[E]
+	ledger   settlementpreview.SettlementLedger[E]
 	book     SettlementBook[E]
 }
 
@@ -83,7 +86,7 @@ func (t *SettlementDecisionTool[E]) Prerequisites() []string { return t.decision
 
 func (t *SettlementDecisionTool[E]) ParamSchema() map[string]any {
 	properties := map[string]any{
-		common.ParamSettlementID: agenttoolschema.KindID(
+		settlementpreview.ParamSettlementID: agenttoolschema.KindID(
 			"The "+t.ledger.Noun+", from "+t.ledger.Sources+" or this run's subject. "+
 				"Never guess one."+t.ledger.ByName,
 			t.ledger.Kind,
@@ -97,72 +100,74 @@ func (t *SettlementDecisionTool[E]) ParamSchema() map[string]any {
 		toolschema.KeyType:       toolschema.TypeObject,
 		toolschema.KeyProperties: properties,
 		toolschema.KeyRequired: append(
-			[]string{common.ParamSettlementID},
+			[]string{settlementpreview.ParamSettlementID},
 			t.decision.required...),
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *SettlementDecisionTool[E]) Policy() agentports.ToolPolicy {
-	policy := agentports.ToolPolicy{
+func (t *SettlementDecisionTool[E]) Policy() agenttoolports.ToolPolicy {
+	policy := agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.ledger.Resource,
 		Operation:     t.decision.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   t.decision.defaultTo,
 		MaxTier:       t.decision.maxTier,
 		Egress:        t.decision.egress,
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    t.decision.reversible,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     t.decision.rationale,
 	}
 	if len(t.decision.egress) > 1 {
-		policy.Classify = common.ClassifyAsMoney
+		policy.Classify = settlementpreview.ClassifyAsMoney
 	}
 	switch t.decision.bound {
 	case addedLineBound:
-		policy.Condition = &agentports.TierCondition{
+		policy.Condition = &agenttoolports.TierCondition{
 			Description: addedLineBoundText,
 			Bounds:      t.withinBounds,
 		}
 	case removedLineBound:
-		policy.Condition = &agentports.TierCondition{
+		policy.Condition = &agenttoolports.TierCondition{
 			Description: removedLineBoundText,
 			Bounds:      t.withinBounds,
 		}
 	case unbounded:
 	}
 	if t.decision.holdsWhenTainted {
-		policy.TaintHold = &agentports.TaintHold{
+		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: "Its text is what payroll or the payee reads next, so a run that has " +
 				"read outside text proposes it rather than writing it.",
-			Applies: func(agentports.ToolExecuteParams) bool { return true },
+			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
 		}
 	}
 
 	return policy
 }
 
-func (t *SettlementDecisionTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamSettlementID, t.ledger.Resource)
+func (t *SettlementDecisionTool[E]) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, settlementpreview.ParamSettlementID, t.ledger.Resource)
 }
 
 func (t *SettlementDecisionTool[E]) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*settlementshared.ActionRequest, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	settlementID, err := common.RequirePulid(params.Params, common.ParamSettlementID)
+	settlementID, err := toolparams.RequirePulid(params.Params, settlementpreview.ParamSettlementID)
 	if err != nil {
 		return nil, err
 	}
 
 	req := &settlementshared.ActionRequest{
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		SettlementID: settlementID,
 		Action:       t.decision.action,
 	}
@@ -177,7 +182,7 @@ func (t *SettlementDecisionTool[E]) request(
 
 func (t *SettlementDecisionTool[E]) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*settlementshared.ActionPlan[*E], error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -189,62 +194,62 @@ func (t *SettlementDecisionTool[E]) plan(
 
 func (t *SettlementDecisionTool[E]) withinBounds(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the TierCondition bounds pass params by value
-) agentports.MoneyBound {
+	params *agenttoolports.ToolExecuteParams,
+) agenttoolports.MoneyBound {
 	if t.book == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	plan, err := t.book.PlanAction(ctx, req)
 	if err != nil || plan == nil || plan.Before == nil || t.ledger.Editable == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if !t.ledger.Editable(plan.Before) {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyRecordState)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyRecordState)
 	}
 	if plan.Refused() {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	if t.ledger.Facts == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 	facts := t.ledger.Facts(plan.Before)
 	if facts == nil {
-		return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+		return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 	}
 
 	switch t.decision.bound {
 	case addedLineBound:
 		if req.Adjustment == nil {
-			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
-		return agentports.WithinMoneyBound(req.Adjustment.AmountMinor, facts.Currency)
+		return agenttoolports.WithinMoneyBound(req.Adjustment.AmountMinor, facts.Currency)
 	case removedLineBound:
 		if t.ledger.Line == nil {
-			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
 		line, found := t.ledger.Line(plan.Before, req.LineID)
 		if !found || !line.Manual {
-			return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 		}
 		if !line.AddedByAgent {
-			return agentports.OutsideMoneyBound(agent.HeldByMoneyAgentLine)
+			return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyAgentLine)
 		}
-		return agentports.WithinMoneyBound(line.AmountMinor, facts.Currency)
+		return agenttoolports.WithinMoneyBound(line.AmountMinor, facts.Currency)
 	case unbounded:
 	}
 
-	return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+	return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 }
 
 func (t *SettlementDecisionTool[E]) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -254,16 +259,16 @@ func (t *SettlementDecisionTool[E]) Validate(
 
 func (t *SettlementDecisionTool[E]) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.decision.personOnly && !params.ApprovedFromProposal() {
-		return common.ErrSettlementNeedsAPerson
+		return settlementpreview.ErrSettlementNeedsAPerson
 	}
 
-	req, err := t.request(&params)
+	req, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -274,7 +279,12 @@ func (t *SettlementDecisionTool[E]) Execute(
 }
 
 func fillSettlementReason(params map[string]any, req *settlementshared.ActionRequest) error {
-	reason, err := common.BoundedString(params, paramSettlementReason, maxSettlementReason, true)
+	reason, err := toolparams.BoundedString(
+		params,
+		paramSettlementReason,
+		maxSettlementReason,
+		true,
+	)
 	if err != nil {
 		return err
 	}
@@ -284,5 +294,5 @@ func fillSettlementReason(params map[string]any, req *settlementshared.ActionReq
 }
 
 func settlementReasonProperty(description string) map[string]any {
-	return common.StringProperty(description, maxSettlementReason)
+	return toolparams.StringProperty(description, maxSettlementReason)
 }

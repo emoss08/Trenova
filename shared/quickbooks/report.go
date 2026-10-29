@@ -55,7 +55,7 @@ func (c *Client) TrialBalance(
 	if req == nil || strings.TrimSpace(req.EndDate) == "" {
 		return nil, ErrReportDateRequired
 	}
-	query := c.query()
+	query := c.Query()
 	query.Set("accounting_method", "Accrual")
 	query.Set("end_date", strings.TrimSpace(req.EndDate))
 	if start := strings.TrimSpace(req.StartDate); start != "" {
@@ -63,10 +63,10 @@ func (c *Client) TrialBalance(
 	}
 
 	var out reportEnvelope
-	if _, err := c.transport.Do(ctx, &restx.Request{
+	if _, err := c.Do(ctx, &restx.Request{
 		Endpoint: "report-trialbalance",
 		Method:   http.MethodGet,
-		Path:     c.companyPath("reports", "TrialBalance"),
+		Path:     c.CompanyPath("reports", "TrialBalance"),
 		Query:    query,
 		Out:      &out,
 	}); err != nil {

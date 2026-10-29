@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -29,12 +29,16 @@ func TestDismissInsight_PreviewMatchesWhatIsSaved(t *testing.T) {
 		"reason":    "Known seasonal pattern for this customer.",
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &insights.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&insights.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationArchive, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationArchive, change.Operation)
 	assert.Equal(t, "Acme's margin fell 9 points this month", change.Label)
 	assert.Equal(t, "Active", agenttoolstest.FieldByPath(t, change, "status").Before)
 	assert.Equal(t, "Dismissed", agenttoolstest.FieldByPath(t, change, "status").After)
@@ -53,13 +57,17 @@ func TestDismissInsight_PreviewWarnsForAFindingNoLongerActive(t *testing.T) {
 	insights := &fakeInsightDismisser{finding: finding}
 	tool := NewDismissInsightTool(insights).(*DismissInsightTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &insights.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
-			"insightId": finding.ID.String(),
-			"reason":    "Handled.",
-		}))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&insights.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.MemoryParams(map[string]any{
+				"insightId": finding.ID.String(),
+				"reason":    "Handled.",
+			}))
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }

@@ -21,14 +21,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -77,9 +77,9 @@ type Facts struct {
 // optional: a nil source is a section the briefing does without.
 type Sources struct {
 	Watchtower  watchtowerports.WatchtowerRepository
-	Decisions   agentports.AgentDecisionQueueService
-	Board       shipmentports.DispatchConsoleRepository
-	Credentials workerports.WorkerCredentialRepository
+	Decisions   agentdecisionqueueports.AgentDecisionQueueService
+	Board       dispatchboardports.DispatchConsoleRepository
+	Credentials workercredentialports.WorkerCredentialRepository
 	Billing     billingqueueports.BillingQueueRepository
 	Payments    customerpaymentports.CustomerPaymentRepository
 	Detention   detentionports.DetentionOccurrenceRepository
@@ -283,7 +283,7 @@ func (b *Builder) coverage(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	summary, err := b.sources.Board.GetBoardSummary(ctx, &shipmentports.DispatchBoardFilter{
+	summary, err := b.sources.Board.GetBoardSummary(ctx, &dispatchboardports.DispatchBoardFilter{
 		TenantInfo:     req.TenantInfo,
 		WindowStart:    req.Now,
 		WindowEnd:      req.Now + boardWindowHours*60*60,
@@ -347,7 +347,7 @@ func (b *Builder) compliance(ctx context.Context, req Request, facts *Facts) {
 
 	credentials, err := b.sources.Credentials.ListExpiring(
 		ctx,
-		&workerports.ListExpiringWorkerCredentialsRequest{
+		&workercredentialports.ListExpiringWorkerCredentialsRequest{
 			TenantInfo:  req.TenantInfo,
 			HorizonDays: credentialHorizonDays,
 			AsOf:        req.DayStart,

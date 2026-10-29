@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentformula"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +16,7 @@ func (h *Handler) respondShipment(c *gin.Context, status int, entity *shipment.S
 		h.formulas,
 		status,
 		entity,
-		(*shipment.Shipment).WithoutFormulaContent,
+		shipmentformula.Withhold,
 	)
 }
 
@@ -25,7 +26,7 @@ func (h *Handler) respondShipments(c *gin.Context, entities []*shipment.Shipment
 		h.formulas,
 		http.StatusOK,
 		entities,
-		shipment.WithoutFormulaContent,
+		shipmentformula.WithholdAll,
 	)
 }
 
@@ -38,7 +39,7 @@ func (h *Handler) visibleShipmentPage(
 		c,
 		h.formulas,
 		result.Items,
-		shipment.WithoutFormulaContent,
+		shipmentformula.WithholdAll,
 	)
 
 	return &visible

@@ -2,11 +2,11 @@ package agenttoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*billingtools.TransitionToInReviewTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*billingtools.TransitionToInReviewTool)(nil)
 
-var _ agentports.ToolValidator = (*billingtools.TransitionToInReviewTool)(nil)
+var _ agenttoolports.ToolValidator = (*billingtools.TransitionToInReviewTool)(nil)
 
-var _ agentports.TargetedTool = (*billingtools.TransitionToInReviewTool)(nil)
+var _ agenttoolports.TargetedTool = (*billingtools.TransitionToInReviewTool)(nil)

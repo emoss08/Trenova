@@ -9,13 +9,24 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/keelkinds"
@@ -28,9 +39,9 @@ import (
 // step (a refusal before anything was claimed) and the edges of a delegated
 // task.
 var projectedEventKinds = []string{
-	agentports.AssistantEventToolFinished,
-	agentports.AssistantEventDelegateStarted,
-	agentports.AssistantEventDelegateFinished,
+	assistantstreamports.AssistantEventToolFinished,
+	assistantstreamports.AssistantEventDelegateStarted,
+	assistantstreamports.AssistantEventDelegateFinished,
 }
 
 type sourceRepository struct {
@@ -83,20 +94,29 @@ func (r *sourceRepository) ListRuns(
 func (r *sourceRepository) ListTurns(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*conversation.AssistantTurn, error) {
+) ([]*conversationturn.AssistantTurn, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project assistant turns into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		turn := conversationdb.AssistantTurns
-		rows, err := keyset(turn.Query(), turn.UpdatedAt, turn.ID, page).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
-		}
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			turn := conversationturndb.AssistantTurns
+			rows, err := keyset(
+				turn.Query(),
+				turn.UpdatedAt,
+				turn.ID,
+				page,
+			).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) ListUsage(
@@ -121,15 +141,15 @@ func (r *sourceRepository) ListUsage(
 func (r *sourceRepository) ListSteps(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project agent steps into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
-		step := agentdb.AgentRunSteps
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
+		step := agentrunstepdb.AgentRunSteps
 		rows, err := keyset(
-			step.Where(step.Kind.Eq(string(agentports.RunStepTool))),
+			step.Where(step.Kind.Eq(string(agentruntimeports.RunStepTool))),
 			step.UpdatedAt, step.ID, page,
 		).List(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -143,13 +163,13 @@ func (r *sourceRepository) ListSteps(
 func (r *sourceRepository) ListEvents(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentRunEvent, error) {
+) ([]*agentrunevent.AgentRunEvent, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project agent events into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
-		event := agentdb.AgentRunEvents
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
+		event := agentruneventdb.AgentRunEvents
 		rows, err := keyset(
 			event.Where(event.Kind.In(projectedEventKinds...)),
 			event.CreatedAt, event.ID, page,
@@ -184,13 +204,13 @@ func (r *sourceRepository) ListProposals(
 func (r *sourceRepository) ListDecisions(
 	ctx context.Context,
 	page aiauditports.AIAuditSourcePage,
-) ([]*agent.AgentDecision, error) {
+) ([]*agentdecision.AgentDecision, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project proposal decisions into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
-		d := agentdb.AgentDecisions
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
+		d := agentdecisiondb.AgentDecisions
 		rows, err := keyset(
 			d.Omit(d.Preview).Where(d.ProposalID.IsNotNull()),
 			d.CreatedAt, d.ID, page,
@@ -227,66 +247,78 @@ func (r *sourceRepository) TurnsByIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if len(ids) == 0 {
-			return []*conversation.AssistantTurn{}, nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if len(ids) == 0 {
+				return []*conversationturn.AssistantTurn{}, nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.Where(turn.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns by id: %w", err)
-		}
+			turn := conversationturndb.AssistantTurns
+			rows, err := turn.Where(turn.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns by id: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) TurnsByRunIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	runIDs []pulid.ID,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if len(runIDs) == 0 {
-			return []*conversation.AssistantTurn{}, nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if len(runIDs) == 0 {
+				return []*conversationturn.AssistantTurn{}, nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.Where(turn.RunID.In(runIDs...)).All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns by run: %w", err)
-		}
+			turn := conversationturndb.AssistantTurns
+			rows, err := turn.Where(turn.RunID.In(runIDs...)).All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns by run: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) TurnsInWindow(
 	ctx context.Context,
 	req *aiauditports.AIAuditTurnWindow,
-) ([]*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*conversation.AssistantTurn, error) {
-		if req == nil || len(req.ThreadIDs) == 0 {
-			return make([]*conversation.AssistantTurn, 0), nil
-		}
+) ([]*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*conversationturn.AssistantTurn, error) {
+			if req == nil || len(req.ThreadIDs) == 0 {
+				return make([]*conversationturn.AssistantTurn, 0), nil
+			}
 
-		turn := conversationdb.AssistantTurns
-		rows, err := turn.
-			Where(
-				turn.ThreadID.In(req.ThreadIDs...),
-				turn.StartedAt.Lte(req.To),
-				keel.Or(turn.CompletedAt.IsNull(), turn.CompletedAt.Gte(req.From)),
-			).
-			Order(turn.StartedAt.Asc()).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("read assistant turns in a window: %w", err)
-		}
+			turn := conversationturndb.AssistantTurns
+			rows, err := turn.
+				Where(
+					turn.ThreadID.In(req.ThreadIDs...),
+					turn.StartedAt.Lte(req.To),
+					keel.Or(turn.CompletedAt.IsNull(), turn.CompletedAt.Gte(req.From)),
+				).
+				Order(turn.StartedAt.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read assistant turns in a window: %w", err)
+			}
 
-		return rows, nil
-	})
+			return rows, nil
+		},
+	)
 }
 
 func (r *sourceRepository) ThreadsByIDs(
@@ -317,13 +349,13 @@ func (r *sourceRepository) EvaluationsByIDs(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	ids []pulid.ID,
-) ([]*agent.Evaluation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Evaluation, error) {
+) ([]*agentevaluation.Evaluation, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentevaluation.Evaluation, error) {
 		if len(ids) == 0 {
-			return []*agent.Evaluation{}, nil
+			return []*agentevaluation.Evaluation{}, nil
 		}
 
-		ev := agentdb.Evaluations
+		ev := agentevaluationdb.Evaluations
 		rows, err := ev.
 			Pick(
 				ev.ID,
@@ -367,24 +399,24 @@ func (r *sourceRepository) StartedToolSteps(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	ownerIDs []pulid.ID,
-) ([]*agent.AgentRunStep, error) {
+) ([]*agentrunstep.AgentRunStep, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"project started tool steps into the AI audit chain across every organization",
 	)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunStep, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunstep.AgentRunStep, error) {
 		if len(ownerIDs) == 0 {
-			return []*agent.AgentRunStep{}, nil
+			return []*agentrunstep.AgentRunStep{}, nil
 		}
 
-		step := agentdb.AgentRunSteps
+		step := agentrunstepdb.AgentRunSteps
 		rows, err := step.AllTenants().
 			Where(
 				step.OrganizationID.Eq(tenantInfo.OrgID),
 				step.BusinessUnitID.Eq(tenantInfo.BuID),
 				step.OwnerID.In(ownerIDs...),
-				step.Kind.Eq(string(agentports.RunStepTool)),
-				step.Status.Eq(string(agentports.RunStepStarted)),
+				step.Kind.Eq(string(agentruntimeports.RunStepTool)),
+				step.Status.Eq(string(agentruntimeports.RunStepStarted)),
 			).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -421,12 +453,12 @@ func (r *sourceRepository) ToolStepCalls(
 				callIDs = append(callIDs, call.CallID)
 			}
 
-			step := agentdb.AgentRunSteps
+			step := agentrunstepdb.AgentRunSteps
 			rows, err := keel.Into[ownedCall](ctx, r.db.Keel(ctx), step.
 				Where(
 					step.OwnerID.In(owners...),
 					step.CallID.In(callIDs...),
-					step.Kind.Eq(string(agentports.RunStepTool)),
+					step.Kind.Eq(string(agentruntimeports.RunStepTool)),
 				).
 				Pick(step.OwnerID, step.CallID))
 			if err != nil {

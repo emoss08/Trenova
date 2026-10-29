@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,7 +39,7 @@ var unprotectedMarginNames = map[string]string{
 // reader without the margins group is refused it.
 var marginEnumValues = map[string]string{
 	"ProtectedFieldGroup.Margins": "the group itself, which grants nothing on its own",
-	"ShipmentQuickFilter.LowMargin": "shipment.AuthorizeQuickFilters refuses the filter " +
+	"ShipmentQuickFilter.LowMargin": "quickfilter.AuthorizeQuickFilters refuses the filter " +
 		"and the board does not count it for a reader without the margins group",
 }
 
@@ -68,7 +69,7 @@ func TestEveryMarginFieldIsProtectedByTheMarginsGroup(t *testing.T) {
 				continue
 			}
 			if group, ok := protected.Group(name, field.Name); ok &&
-				group == permission.FieldGroupMargins {
+				group == protectedfield.Margins {
 				continue
 			}
 			if _, ok := covered[name]; ok {
@@ -159,7 +160,7 @@ func typesReachedOnlyThroughMargins(
 			for _, r := range reaches {
 				group, ok := protected.Group(r.object, r.field)
 				_, carrierCovered := covered[r.object]
-				if (!ok || group != permission.FieldGroupMargins) && !carrierCovered {
+				if (!ok || group != protectedfield.Margins) && !carrierCovered {
 					all = false
 					break
 				}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
@@ -48,7 +48,7 @@ type Params struct {
 	Organizations tenantports.OrganizationRepository
 	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -59,7 +59,7 @@ type Service struct {
 	organizations tenantports.OrganizationRepository
 	auditService  auditports.AuditService
 	referenceData *referencedataguard.Guard
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 	now           func() int64
 }
 
@@ -85,7 +85,7 @@ type Deps struct {
 	Organizations tenantports.OrganizationRepository
 	AuditService  auditports.AuditService
 	ReferenceData *referencedataguard.Guard
-	Realtime      agentports.RealtimeService
+	Realtime      realtimeports.RealtimeService
 	Now           func() int64
 }
 

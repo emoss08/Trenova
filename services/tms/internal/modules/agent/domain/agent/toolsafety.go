@@ -3,6 +3,7 @@ package agent
 import (
 	"slices"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -76,63 +77,6 @@ func (c EgressClass) Ceiling() AutonomyTier {
 	}
 }
 
-type ToolKind string
-
-const (
-	ToolKindQuery   = ToolKind("query")
-	ToolKindAction  = ToolKind("action")
-	ToolKindRuntime = ToolKind("runtime")
-)
-
-func (k ToolKind) IsValid() bool {
-	switch k {
-	case ToolKindQuery, ToolKindAction, ToolKindRuntime:
-		return true
-	default:
-		return false
-	}
-}
-
-func (k ToolKind) String() string { return string(k) }
-
-type ToolScope string
-
-const (
-	ToolScopeTenant = ToolScope("tenant")
-	ToolScopeSelf   = ToolScope("self")
-	ToolScopeRun    = ToolScope("run")
-)
-
-func (s ToolScope) IsValid() bool {
-	switch s {
-	case ToolScopeTenant, ToolScopeSelf, ToolScopeRun:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s ToolScope) String() string { return string(s) }
-
-type ExternalRead string
-
-const (
-	ExternalReadNever  = ExternalRead("never")
-	ExternalReadAlways = ExternalRead("always")
-	ExternalReadMarked = ExternalRead("marked")
-)
-
-func (r ExternalRead) IsValid() bool {
-	switch r {
-	case ExternalReadNever, ExternalReadAlways, ExternalReadMarked:
-		return true
-	default:
-		return false
-	}
-}
-
-func (r ExternalRead) String() string { return string(r) }
-
 type TaintSource string
 
 const (
@@ -178,11 +122,11 @@ const (
 )
 
 type TaintMark struct {
-	Source   TaintSource `json:"source"`
-	ToolName string      `json:"toolName"`
-	CallID   string      `json:"callId"`
-	Ref      *RecordRef  `json:"ref,omitempty"`
-	At       int64       `json:"at"`
+	Source   TaintSource            `json:"source"`
+	ToolName string                 `json:"toolName"`
+	CallID   string                 `json:"callId"`
+	Ref      *agentrecord.RecordRef `json:"ref,omitempty"`
+	At       int64                  `json:"at"`
 	// Delegated says the mark crossed a delegation: a delegate read it, or the
 	// turn that handed the delegate its task did.
 	Delegated bool `json:"delegated,omitempty"`
@@ -328,12 +272,12 @@ func (t *RunTaint) Sources() []TaintSource {
 }
 
 type TaintCarrier interface {
-	TaintedRecords() []RecordRef
+	TaintedRecords() []agentrecord.RecordRef
 }
 
 type SourcedRef struct {
 	Source TaintSource
-	Ref    RecordRef
+	Ref    agentrecord.RecordRef
 }
 
 type SourcedTaintCarrier interface {
@@ -380,7 +324,7 @@ func SubjectTaint(subjectType SubjectType, subjectID string, at int64) (TaintMar
 
 	return TaintMark{
 		Source: source,
-		Ref:    &RecordRef{EntityType: entity, ID: subjectID},
+		Ref:    &agentrecord.RecordRef{EntityType: entity, ID: subjectID},
 		At:     at,
 	}, true
 }
@@ -398,7 +342,7 @@ func OutsideAuthoredTaint(
 
 	return TaintMark{
 		Source: source,
-		Ref:    &RecordRef{EntityType: entity, ID: subjectID},
+		Ref:    &agentrecord.RecordRef{EntityType: entity, ID: subjectID},
 		At:     at,
 	}, true
 }
@@ -406,7 +350,7 @@ func OutsideAuthoredTaint(
 func RunRecordTaint(runID pulid.ID, at int64) *RunTaint {
 	mark := TaintMark{Source: TaintSourceRunRecord, At: at}
 	if runID.IsNotNil() {
-		mark.Ref = &RecordRef{EntityType: TaintEntityAgentRun, ID: runID.String()}
+		mark.Ref = &agentrecord.RecordRef{EntityType: TaintEntityAgentRun, ID: runID.String()}
 	}
 
 	taint := &RunTaint{}
@@ -418,7 +362,7 @@ func RunRecordTaint(runID pulid.ID, at int64) *RunTaint {
 func AttachmentTaint(documentID string, at int64) TaintMark {
 	return TaintMark{
 		Source: TaintSourceAttachment,
-		Ref:    &RecordRef{EntityType: TaintEntityDocument, ID: documentID},
+		Ref:    &agentrecord.RecordRef{EntityType: TaintEntityDocument, ID: documentID},
 		At:     at,
 	}
 }

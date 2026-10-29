@@ -6,12 +6,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,25 +36,31 @@ func (f *fixedShadow) ForDefinition(
 	return f.verdict, f.err
 }
 
-func proposedContent(t *testing.T, shadow shadowVerdicts) string {
+func proposedContent(t *testing.T, shadow tooldispatch.ShadowVerdicts) string {
 	t.Helper()
 
 	tool := &agenttest.StubActionTool{
 		ToolName: "home_add_widget",
 		Tier:     agent.TierActWithApproval,
 	}
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("home_add_widget", map[string]any{"key": "fleet-status", "version": 0}),
-		textTurn("I drafted it."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn(
+			"home_add_widget",
+			map[string]any{"key": "fleet-status", "version": 0},
+		),
+		runtimetest.TextTurn("I drafted it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.shadow = shadow
+	retune(
+		rt,
+		func(_ *toolaccess.AccessParams, d *tooldispatch.DispatcherParams) { d.Shadow = shadow },
+	)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("home_add_widget"),
+		Actor:      runtimetest.Actor(),
 		Input:      "add the fleet status widget to my home page",
 	})
 	require.NoError(t, err)
@@ -110,25 +120,4 @@ func TestDispatch_AProposalWhoseHoldCannotBeReadKeepsTheUsualWording(t *testing.
 	content := proposedContent(t, &fixedShadow{err: errors.New("agent control unreadable")})
 
 	assert.Contains(t, content, "It is awaiting a person's review at the")
-}
-
-/*
-A proposal filed while every agent was paused said no one could approve it
-yet. Once someone has, the turn that follows is told the hold was lifted, read
-from that same result, so it does not take back what was true when it said it.
-*/
-func TestLiftedHold_ReadsTheHoldTheFilingResultNamed(t *testing.T) {
-	t.Parallel()
-
-	proposalID := pulid.MustNew("ap_")
-	paused := proposedText("agent_create_schedule", proposalID, agent.TierPropose,
-		organizationPausedHold)
-	shadowed := proposedText("agent_create_schedule", proposalID, agent.TierPropose,
-		agentShadowHold)
-	plain := proposedText("agent_create_schedule", proposalID, agent.TierPropose, "")
-
-	assert.Contains(t, LiftedHold(paused, proposalID), "agents have been resumed since")
-	assert.Contains(t, LiftedHold(shadowed, proposalID), "its shadow switch has been turned off")
-	assert.Empty(t, LiftedHold(plain, proposalID), "a proposal nothing held says nothing")
-	assert.Empty(t, LiftedHold(paused, pulid.MustNew("ap_")), "another proposal's hold is not this one's")
 }

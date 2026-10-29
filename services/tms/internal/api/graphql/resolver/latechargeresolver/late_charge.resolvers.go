@@ -10,8 +10,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/billingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
@@ -26,11 +27,11 @@ func (r *InvoiceResolver) LateChargeAssessments(ctx context.Context, obj *invoic
 		return nil, err
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return []*latecharge.LateChargeAssessment{}, nil
 	}
 
-	return loaders.LateChargeAssessmentsByInvoiceID(ctx, obj.ID.String())
+	return billingloaders.LateChargeAssessmentsByInvoiceID(ctx, obj.ID.String())
 }
 
 func (r *LateChargeAssessmentResolver) RatePercent(ctx context.Context, obj *latecharge.LateChargeAssessment) (string, error) {
@@ -47,7 +48,7 @@ func (r *MutationResolver) AssessLateCharges(ctx context.Context, input *gqlmode
 		return nil, err
 	}
 
-	req, err := lateChargeRequestFromInput(input, base.TenantInfo(authCtx), false)
+	req, err := lateChargeRequestFromInput(input, resolvercore.TenantInfo(authCtx), false)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func (r *QueryResolver) LateChargePreview(ctx context.Context, input *gqlmodel.L
 		return nil, err
 	}
 
-	req, err := lateChargeRequestFromInput(input, base.TenantInfo(authCtx), true)
+	req, err := lateChargeRequestFromInput(input, resolvercore.TenantInfo(authCtx), true)
 	if err != nil {
 		return nil, err
 	}

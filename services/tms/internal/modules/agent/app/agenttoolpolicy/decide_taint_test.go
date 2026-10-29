@@ -6,23 +6,25 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/stretchr/testify/assert"
 )
 
-func policyReaching(class agent.EgressClass) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func policyReaching(class agent.EgressClass) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "write_" + class.String(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipment,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{class},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 	}
 }
 
@@ -41,7 +43,7 @@ func TestDecide_TaintAgainstEveryEgressClass(t *testing.T) {
 		Source:   agent.TaintSourceDocument,
 		ToolName: "document_get_summary",
 		CallID:   "call_1",
-		Ref:      &agent.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
+		Ref:      &agentrecord.RecordRef{EntityType: agent.TaintEntityDocument, ID: "doc_1"},
 	})
 	taints := map[string]*agent.RunTaint{
 		"clean":   {},

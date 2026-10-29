@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,11 +29,11 @@ func (r *TriageActionResolver) visibleShipment(
 	if !r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead) {
 		return nil, nil //nolint:nilnil // the viewer cannot read shipments, so none is shown
 	}
-	if err = base.RequireLoaders(ctx); err != nil {
+	if err = loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.ShipmentSummaryByID(ctx, shipmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.ShipmentSummaryByID(ctx, shipmentID.String()))
 }
 
 func templateInput(input gqlmodel.TriageReplyTemplateInput) inboundreplyservice.TemplateInput {
@@ -62,7 +63,7 @@ func fileRequest(
 	if err != nil {
 		return nil, err
 	}
-	documentTypeID, err := base.OptionalID(input.DocumentTypeID)
+	documentTypeID, err := gqlid.OptionalID(input.DocumentTypeID)
 	if err != nil {
 		return nil, err
 	}

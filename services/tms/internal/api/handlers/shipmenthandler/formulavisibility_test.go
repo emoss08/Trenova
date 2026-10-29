@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
@@ -42,7 +41,7 @@ func ratedShipment(id pulid.ID) *shipment.Shipment {
 		FormulaTemplate: &formulatemplate.FormulaTemplate{Source: "tariff \"Per pound\"\n"},
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Per pound",
-			Trace:               rules.RawJSON(`{"statements":["weight * 2"]}`),
+			Trace:               &shipment.RatingTrace{Statements: rules.RawJSON(`["weight * 2"]`)},
 			Bill: &tarifftypes.Bill{
 				Currency:     "USD",
 				FreightTotal: decimal.NewFromInt(42),
@@ -78,8 +77,8 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 			t.Parallel()
 
 			shipmentID := pulid.MustNew("shp_")
-			service := shipmentportsmock.NewMockShipmentService(t)
-			service.EXPECT().
+			service := newShipmentServiceMocks(t)
+			service.reader.EXPECT().
 				Get(mock.Anything, mock.Anything).
 				Return(ratedShipment(shipmentID), nil).
 				Once()
@@ -120,8 +119,8 @@ func TestShipmentHandler_Get_FormulaContentFollowsPermission(t *testing.T) {
 func TestShipmentHandler_List_HidesFormulaContentWithoutFormulaRead(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		List(mock.Anything, mock.Anything).
 		Return(&pagination.CursorListResult[*shipment.Shipment]{
 			Items: []*shipment.Shipment{
@@ -179,8 +178,8 @@ func TestShipmentHandler_TransferToBilling_HidesFormulaContentWithoutFormulaRead
 			t.Parallel()
 
 			shipmentID := pulid.MustNew("shp_")
-			service := shipmentportsmock.NewMockShipmentService(t)
-			service.EXPECT().
+			service := newShipmentServiceMocks(t)
+			service.transfer.EXPECT().
 				TransferToBilling(mock.Anything, mock.Anything, mock.Anything).
 				Return(&billingqueue.BillingQueueItem{
 					ID:       pulid.MustNew("bqi_"),

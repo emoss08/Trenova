@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -26,7 +26,7 @@ func (s *Service) PurgeExpired(
 		return 0, err
 	}
 	if err != nil {
-		settings = &tenant.DataRetention{}
+		settings = &dataretention.DataRetention{}
 	}
 
 	now := req.Now

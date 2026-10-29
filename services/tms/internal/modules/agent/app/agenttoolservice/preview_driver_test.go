@@ -6,15 +6,16 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -33,7 +34,7 @@ func renderedDriverNotice(
 	req *drivernotificationservice.DriverNotification,
 	reachable bool,
 ) *notificationports.DriverNotificationPreview {
-	data, _ := req.Context.(documenttemplate.DriverNotificationContext)
+	data, _ := req.Context.(notificationtemplate.DriverNotificationContext)
 
 	return &notificationports.DriverNotificationPreview{
 		WorkerID:   req.WorkerID,
@@ -57,22 +58,22 @@ func (f *unreachableDriverNotifier) Preview(
 
 func (f *fakePTODecider) PreviewReject(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusRequested, worker.PTOStatusRejected), nil
 }
 
 func (f *fakePTODecider) PreviewCancel(
 	_ context.Context,
-	req *workerports.UpdatePTOStatusRequest,
-) (*workerports.WorkerPTOTransitionPreview, error) {
+	req *workerptoports.UpdatePTOStatusRequest,
+) (*workerptoports.WorkerPTOTransitionPreview, error) {
 	return decidedPTO(req, worker.PTOStatusApproved, worker.PTOStatusCancelled), nil
 }
 
 func decidedPTO(
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 	from, to worker.PTOStatus,
-) *workerports.WorkerPTOTransitionPreview {
+) *workerptoports.WorkerPTOTransitionPreview {
 	before := &worker.WorkerPTO{
 		ID:        req.ID,
 		WorkerID:  pulid.MustNew("wrk_"),
@@ -93,7 +94,7 @@ func decidedPTO(
 		after.CancellationReason = req.Reason
 	}
 
-	return &workerports.WorkerPTOTransitionPreview{
+	return &workerptoports.WorkerPTOTransitionPreview{
 		Before:        before,
 		After:         &after,
 		ReturnsLedger: from == worker.PTOStatusApproved,
@@ -122,15 +123,15 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 		"priority": "high",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, drivers.sent, "a preview must not message the driver")
 	assert.Empty(t, preview.Warnings)
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, permission.ResourceWorker, send.Resource)
 	require.NotNil(t, send.Message)
-	assert.Equal(t, agent.MessageChannelDash, send.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelDash, send.Message.Channel)
 	assert.Equal(t, []string{"Marcus Dell"}, send.Message.To)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -143,44 +144,58 @@ func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
 	tool := operationstools.NewNotifyDriverTool(&unreachableDriverNotifier{})
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"workerId": pulid.MustNew("wrk_").String(),
-		"title":    "Call dispatch",
-		"message":  "Call when you are parked.",
-	}))
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			"workerId": pulid.MustNew("wrk_").String(),
+			"title":    "Call dispatch",
+			"message":  "Call when you are parked.",
+		}),
+	)
 	require.NoError(t, err)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 }
 
 func TestRejectWorkerPTOPreview_ShowsTheDecisionAndWhatTheDriverIsSent(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := operationstools.NewRejectWorkerPTOTool(pto)
+	tool := ptodecisiontools.NewRejectWorkerPTOTool(pto)
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"ptoId":  pulid.MustNew("wrkpto_").String(),
 		"reason": "Coverage gap on that route",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, pto.rejected, "a preview must not reject")
 	assert.Contains(t, preview.Summary, "Coverage gap on that route")
 
-	status := agenttoolstest.FindChange(t, preview, agent.PreviewOperationUpdate)
+	status := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationUpdate)
 	assert.Equal(t, permission.ResourceWorkerPTO, status.Resource)
 	assert.Equal(t, "Rejected", agenttoolstest.FindField(t, status, "status").After)
-	assert.Equal(t, "Coverage gap on that route", agenttoolstest.FindField(t, status, "rejectionReason").After)
+	assert.Equal(
+		t,
+		"Coverage gap on that route",
+		agenttoolstest.FindField(t, status, "rejectionReason").After,
+	)
 
-	var channels []agent.MessageChannel
+	var channels []agentpreview.MessageChannel
 	for i := range preview.Changes {
 		if preview.Changes[i].Message != nil {
 			channels = append(channels, preview.Changes[i].Message.Channel)
 		}
 	}
-	assert.Equal(t, []agent.MessageChannel{agent.MessageChannelDash, agent.MessageChannelSMS}, channels)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(
+		t,
+		[]agentpreview.MessageChannel{
+			agentpreview.MessageChannelDash,
+			agentpreview.MessageChannelSMS,
+		},
+		channels,
+	)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, "Coverage gap on that route", pto.rejected.Reason)
@@ -190,11 +205,14 @@ func TestCancelWorkerPTOPreview_SaysTheDaysGoBack(t *testing.T) {
 	t.Parallel()
 
 	pto := &fakePTODecider{}
-	tool := operationstools.NewCancelWorkerPTOTool(pto)
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
-		"ptoId":  pulid.MustNew("wrkpto_").String(),
-		"reason": "Route covered",
-	}))
+	tool := ptodecisiontools.NewCancelWorkerPTOTool(pto)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
+		t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{
+			"ptoId":  pulid.MustNew("wrkpto_").String(),
+			"reason": "Route covered",
+		}),
+	)
 	require.NoError(t, err)
 	require.Nil(t, pto.cancelled)
 	assert.Contains(t, preview.Summary, "2.00 booked day(s) go back")
@@ -204,23 +222,23 @@ func TestRequestCredentialRenewalPreview_ShowsTheAskAndWhoCannotReadIt(t *testin
 	t.Parallel()
 
 	stub := &agenttoolstest.StubCredentialActor{}
-	tool := masterdatatools.NewRequestCredentialRenewalTool(stub)
+	tool := findingtools.NewRequestCredentialRenewalTool(stub)
 	params := agenttoolstest.DeskParams(map[string]any{
 		"workerId":      pulid.MustNew("wrk_").String(),
 		"credentialIds": []any{pulid.MustNew("wcred_").String()},
 		"note":          "Your CDL is due this month.",
 	})
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	require.Nil(t, stub.Asked, "a preview must not ask")
 	assert.Contains(t, preview.Summary, "CDL (expires 2026-09-21)")
 
-	send := agenttoolstest.FindChange(t, preview, agent.PreviewOperationSend)
+	send := agenttoolstest.FindChange(t, preview, agentpreview.PreviewOperationSend)
 	assert.Equal(t, "Renew your CDL", send.Message.Subject)
 	assert.Equal(t, "Your CDL is due this month.", send.Message.Body)
 	require.Len(t, preview.Warnings, 1)
-	assert.Equal(t, agent.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
+	assert.Equal(t, agentpreview.PreviewWarningDriverUnreachable, preview.Warnings[0].Code)
 }
 
 /*
@@ -241,7 +259,15 @@ func TestPTOLabel_NamesTheDaysInTheOrganizationsZone(t *testing.T) {
 		EndDate:   start + 86_400,
 	}
 
-	assert.Equal(t, "Vacation time off from 2027-05-02 to 2027-05-03", operationstools.PtoLabel(pto, chicago))
-	assert.Equal(t, "Vacation time off from 2027-05-03 to 2027-05-04", operationstools.PtoLabel(pto, nil),
-		"with no zone known it falls back to UTC")
+	assert.Equal(
+		t,
+		"Vacation time off from 2027-05-02 to 2027-05-03",
+		ptodecisiontools.PtoLabel(pto, chicago),
+	)
+	assert.Equal(
+		t,
+		"Vacation time off from 2027-05-03 to 2027-05-04",
+		ptodecisiontools.PtoLabel(pto, nil),
+		"with no zone known it falls back to UTC",
+	)
 }

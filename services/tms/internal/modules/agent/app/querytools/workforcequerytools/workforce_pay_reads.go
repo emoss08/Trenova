@@ -1,0 +1,247 @@
+package workforcequerytools
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/timesheetports"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/typeutils"
+)
+
+const (
+	maxPayrollRunsShown = 26
+)
+
+type wfPermitReader interface {
+	ListPermits(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*permit.Permit, error)
+	ListRequirements(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*permit.Requirement, error)
+}
+
+type wfPayrollReader interface {
+	ListExports(
+		ctx context.Context,
+		req *timesheetports.ListPayrollExportsRequest,
+	) ([]*timesheet.PayrollExport, error)
+}
+
+var (
+	_ wfPermitReader  = permitports.PermitService(nil)
+	_ wfPayrollReader = (*timesheetservice.Service)(nil)
+)
+
+type permitRow struct {
+	ID           string                 `json:"id"`
+	StateID      string                 `json:"stateId"`
+	State        string                 `json:"state,omitempty"`
+	PermitNumber string                 `json:"permitNumber"`
+	Status       string                 `json:"status"`
+	IssuedAt     querytool.OptionalDate `json:"issuedAt"`
+	ExpiresAt    querytool.OptionalDate `json:"expiresAt"`
+	Cost         string                 `json:"cost,omitempty"`
+	Notes        string                 `json:"notes,omitempty"`
+}
+
+type permitRequirementRow struct {
+	ID                  string `json:"id"`
+	StateID             string `json:"stateId"`
+	State               string `json:"state,omitempty"`
+	Status              string `json:"status"`
+	RouteSequence       int16  `json:"routeSequence"`
+	LeadTimeDays        int16  `json:"leadTimeDays"`
+	EstimatedFee        string `json:"estimatedFee,omitempty"`
+	IsSuperload         bool   `json:"isSuperload"`
+	SatisfiedByPermitID string `json:"satisfiedByPermitId,omitempty"`
+	Restrictions        string `json:"restrictions,omitempty"`
+}
+
+type shipmentPermits struct {
+	ShipmentID   string                 `json:"shipmentId"`
+	Requirements []permitRequirementRow `json:"requirements"`
+	Permits      []permitRow            `json:"permits"`
+	Withheld     []string               `json:"withheldByAccess,omitempty"`
+}
+
+func stateLabel(state *usstate.UsState) string {
+	if state == nil {
+		return ""
+	}
+
+	return state.Abbreviation
+}
+
+func newListShipmentPermitsTool(
+	permits wfPermitReader,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &workforceRead{
+		name: "shipment_list_permits",
+		description: "List an oversize or overweight shipment's state permit requirements " +
+			"and the permits recorded against it. Each requirement has its state, status " +
+			"and lead time; each permit its number, dates and cost. It " +
+			"yields the stateId and permitId the permit tools take.",
+		resource: permission.ResourcePermit,
+		properties: map[string]any{
+			querytool.ParamShipmentID: agenttoolschema.OfResource(map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The shipment, from shipment_get, shipment_list or the " +
+					"page you are on. Never guess one.",
+			}, permission.ResourceShipment),
+		},
+		required: []string{querytool.ParamShipmentID},
+		access:   fieldgate.NewAccess(permissions),
+		run: func(
+			ctx context.Context,
+			params *agenttoolports.QueryToolParams,
+			gate *fieldgate.Gate,
+		) (any, error) {
+			shipmentID, err := querytool.RequirePulid(params.Params, querytool.ParamShipmentID)
+			if err != nil {
+				return nil, err
+			}
+			tenant := querytool.TenantOf(params)
+			requirements, err := permits.ListRequirements(ctx, shipmentID, tenant)
+			if err != nil {
+				return nil, err
+			}
+			recorded, err := permits.ListPermits(ctx, shipmentID, tenant)
+			if err != nil {
+				return nil, err
+			}
+			result := &shipmentPermits{
+				ShipmentID:   shipmentID.String(),
+				Requirements: make([]permitRequirementRow, 0, len(requirements)),
+				Permits:      make([]permitRow, 0, len(recorded)),
+			}
+			for _, requirement := range requirements {
+				result.Requirements = append(result.Requirements, permitRequirementRow{
+					ID:                  requirement.ID.String(),
+					StateID:             requirement.StateID.String(),
+					State:               stateLabel(requirement.State),
+					Status:              string(requirement.Status),
+					RouteSequence:       requirement.RouteSequence,
+					LeadTimeDays:        requirement.LeadTimeDays,
+					EstimatedFee:        decimalText(requirement.EstimatedFee),
+					IsSuperload:         requirement.IsSuperload,
+					SatisfiedByPermitID: querytool.PointerIDString(requirement.SatisfiedByPermitID),
+					Restrictions:        joinStrings(requirement.Restrictions),
+				})
+			}
+			for _, entry := range recorded {
+				result.Permits = append(result.Permits, permitRow{
+					ID:           entry.ID.String(),
+					StateID:      entry.StateID.String(),
+					State:        stateLabel(entry.State),
+					PermitNumber: entry.PermitNumber,
+					Status:       string(entry.Status),
+					IssuedAt:     querytool.PointerDate(entry.IssuedAt),
+					ExpiresAt:    querytool.PointerDate(entry.ExpiresAt),
+					Cost:         decimalText(entry.Cost),
+					Notes:        gatedText(gate, wfFieldNotes, entry.Notes),
+				})
+			}
+			result.Withheld = gate.Withheld()
+			return result, nil
+		},
+	}
+}
+
+type payrollExportRow struct {
+	ID               string                 `json:"id"`
+	Status           string                 `json:"status"`
+	PeriodStart      querytool.OptionalDate `json:"periodStart"`
+	PeriodEnd        querytool.OptionalDate `json:"periodEnd"`
+	TimesheetCount   int32                  `json:"timesheetCount"`
+	RegularMinutes   int32                  `json:"regularMinutes"`
+	OvertimeMinutes  int32                  `json:"overtimeMinutes"`
+	PaidLeaveMinutes int32                  `json:"paidLeaveMinutes"`
+	GeneratedAt      querytool.OptionalDate `json:"generatedAt"`
+	VoidedAt         querytool.OptionalDate `json:"voidedAt"`
+	VoidReason       string                 `json:"voidReason,omitempty"`
+}
+
+func newListPayrollExportsTool(
+	exports wfPayrollReader,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return &workforceRead{
+		name: "settlement_list_payroll_exports",
+		description: "List payroll runs, newest first. Each shows the pay period it " +
+			"covers, how many approved timesheet weeks it locked, the regular, overtime and " +
+			"paid leave minutes, and whether it was voided. It yields the payrollExportId " +
+			"settlement_void_payroll_export takes.",
+		resource:   permission.ResourceTimesheet,
+		properties: map[string]any{},
+		access:     fieldgate.NewAccess(permissions),
+		run: func(
+			ctx context.Context,
+			params *agenttoolports.QueryToolParams,
+			gate *fieldgate.Gate,
+		) (any, error) {
+			runs, err := exports.ListExports(ctx, &timesheetports.ListPayrollExportsRequest{
+				TenantInfo: querytool.TenantOf(params),
+				Limit:      maxPayrollRunsShown,
+			})
+			if err != nil {
+				return nil, err
+			}
+			rows := make([]payrollExportRow, 0, len(runs))
+			for _, run := range runs {
+				rows = append(rows, payrollExportRow{
+					ID:          run.ID.String(),
+					Status:      string(run.Status),
+					PeriodStart: querytool.RecordedDate(run.PeriodStart),
+					PeriodEnd: querytool.RecordedDate(
+						run.PeriodEnd - filtercatalog.SecondsPerDay,
+					),
+					TimesheetCount:   run.TimesheetCount,
+					RegularMinutes:   run.RegularMinutes,
+					OvertimeMinutes:  run.OvertimeMinutes,
+					PaidLeaveMinutes: run.PaidLeaveMinutes,
+					GeneratedAt:      querytool.PointerDate(run.GeneratedAt),
+					VoidedAt: querytool.ExpectedDate(
+						typeutils.ValueOrZero(run.VoidedAt),
+						querytool.AbsentNotVoided,
+					),
+					VoidReason: gatedText(gate, "voidReason", run.VoidReason),
+				})
+			}
+			return fieldgate.NewList(rows, gate), nil
+		},
+	}
+}
+
+func provideListShipmentPermitsTool(
+	permits permitports.PermitService,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return newListShipmentPermitsTool(permits, permissions)
+}
+
+func provideListPayrollExportsTool(
+	s *timesheetservice.Service,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return newListPayrollExportsTool(s, permissions)
+}

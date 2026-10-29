@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment/carrierintelenrollmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/zap"
@@ -29,12 +29,12 @@ func NewFeedStateRepository(p Params) carrierintelports.CarrierIntelFeedStateRep
 func (r *feedStateRepository) Get(
 	ctx context.Context,
 	key carrierintelports.CarrierIntelFeedStateKey,
-) (*carrierintel.CarrierIntelFeedState, error) {
+) (*carrierintelenrollment.CarrierIntelFeedState, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*carrierintel.CarrierIntelFeedState, error) {
-			fs := carrierinteldb.CarrierIntelFeedStates
+		func(ctx context.Context) (*carrierintelenrollment.CarrierIntelFeedState, error) {
+			fs := carrierintelenrollmentdb.CarrierIntelFeedStates
 			entity, err := fs.Where(fs.Provider.Eq(key.Provider), fs.FeedType.Eq(key.FeedType)).
 				One(ctx, r.db.Keel(ctx))
 			if dberror.IsNotFoundError(err) {
@@ -52,14 +52,14 @@ func (r *feedStateRepository) Get(
 
 func (r *feedStateRepository) Upsert(
 	ctx context.Context,
-	entity *carrierintel.CarrierIntelFeedState,
+	entity *carrierintelenrollment.CarrierIntelFeedState,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		fs := carrierinteldb.CarrierIntelFeedStates
+		fs := carrierintelenrollmentdb.CarrierIntelFeedStates
 		_, err := fs.Upsert(
 			ctx,
 			r.db.Keel(ctx),
-			[]*carrierintel.CarrierIntelFeedState{entity},
+			[]*carrierintelenrollment.CarrierIntelFeedState{entity},
 			keel.OnConflict(fs.OrganizationID, fs.BusinessUnitID, fs.Provider, fs.FeedType).Update(
 				fs.Cursor,
 				fs.LastPolledAt,

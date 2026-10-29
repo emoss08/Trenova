@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -58,11 +58,11 @@ func (f *fakeHomeTargets) UnavailableTileTargets(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	tiles []report.DashboardTile,
-) []reporting.UnavailableTile {
-	var missing []reporting.UnavailableTile
+) []reportdashboardservice.UnavailableTile {
+	var missing []reportdashboardservice.UnavailableTile
 	for idx := range tiles {
 		if !f.reports[tiles[idx].DefinitionID] {
-			missing = append(missing, reporting.UnavailableTile{Index: idx})
+			missing = append(missing, reportdashboardservice.UnavailableTile{Index: idx})
 		}
 	}
 	return missing
@@ -70,7 +70,7 @@ func (f *fakeHomeTargets) UnavailableTileTargets(
 
 func (f *fakeHomeTargets) GetDashboard(
 	context.Context,
-	*reporting.GetDashboardRequest,
+	*reportdashboardservice.GetDashboardRequest,
 ) (*report.Dashboard, error) {
 	return nil, errortypes.NewNotFoundError("Dashboard not found")
 }
@@ -113,10 +113,10 @@ func homeFixture(t *testing.T) (*fakeHomeLayouts, homeEditor) {
 
 // homeParams is a call as the runtime hands it over: the person's own, with the
 // owner the runtime recorded.
-func homeParams(args map[string]any) agentports.ToolExecuteParams {
+func homeParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.ExecuteParams(args)
 	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
-	params.Params[agentports.SelfScopeOwnerParam] = params.Actor.UserID.String()
+	params.Params[agenttoolports.SelfScopeOwnerParam] = params.Actor.UserID.String()
 	return params
 }
 
@@ -227,10 +227,10 @@ func TestHomeEdit_RunsOnlyForThePersonItWasProposedFor(t *testing.T) {
 	tool := &RemoveHomeWidgetTool{homeToolBase{editor: editor}}
 
 	params := homeParams(map[string]any{"version": float64(3), "widgetId": "widget_1"})
-	params.Params[agentports.SelfScopeOwnerParam] = pulid.MustNew("usr_").String()
+	params.Params[agenttoolports.SelfScopeOwnerParam] = pulid.MustNew("usr_").String()
 	require.Error(t, tool.Execute(t.Context(), params))
 
-	delete(params.Params, agentports.SelfScopeOwnerParam)
+	delete(params.Params, agenttoolports.SelfScopeOwnerParam)
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, layouts.updated)
 }

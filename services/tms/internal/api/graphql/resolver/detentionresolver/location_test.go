@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -47,23 +47,29 @@ func signedInWithLocations(t *testing.T, repo *locationsByID) context.Context {
 		OrganizationID: stopTenant.OrgID,
 		BusinessUnitID: stopTenant.BuID,
 	})
-	return loaders.NewLocationByIDLoaderFactory(
-		loaders.LocationByIDLoaderFactoryParams{LocationRepo: repo},
+	return placesloaders.NewLocationByIDLoaderFactory(
+		placesloaders.LocationByIDLoaderFactoryParams{LocationRepo: repo},
 	).Attach(ctx, stopTenant)
 }
 
 func locationResolver(granted bool) *DetentionOccurrenceResolver {
-	return &DetentionOccurrenceResolver{&Deps{Core: &base.Core{
+	return &DetentionOccurrenceResolver{&Deps{Core: &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
 			permission.ResourceLocation.String() + "|" + string(permission.OpRead): granted,
 		}},
 	}}}
 }
 
-func TestDetentionOccurrenceLocation_ReadsTheStopsLocationForSomeoneWhoMayReadLocations(t *testing.T) {
+func TestDetentionOccurrenceLocation_ReadsTheStopsLocationForSomeoneWhoMayReadLocations(
+	t *testing.T,
+) {
 	t.Parallel()
 
-	stop := &location.Location{ID: pulid.MustNew("loc_"), Name: "Kroger Atlanta DC", City: "Forest Park"}
+	stop := &location.Location{
+		ID:   pulid.MustNew("loc_"),
+		Name: "Kroger Atlanta DC",
+		City: "Forest Park",
+	}
 	repo := &locationsByID{locations: []*location.Location{stop}}
 
 	got, err := locationResolver(true).Location(

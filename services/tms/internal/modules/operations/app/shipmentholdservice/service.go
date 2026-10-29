@@ -3,13 +3,14 @@ package shipmentholdservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
@@ -28,26 +29,26 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	Repo           shipmentports.ShipmentHoldRepository
+	Repo           shipmentholdports.ShipmentHoldRepository
 	ShipmentRepo   shipmentports.ShipmentRepository
 	HoldReasonRepo holdreasonports.HoldReasonRepository
 	AuditService   auditports.AuditService
 	EventService   shipmenteventports.ShipmentEventService
-	Realtime       agentports.RealtimeService
+	Realtime       realtimeports.RealtimeService
 }
 
 type service struct {
 	l              *zap.Logger
-	repo           shipmentports.ShipmentHoldRepository
+	repo           shipmentholdports.ShipmentHoldRepository
 	shipmentRepo   shipmentports.ShipmentRepository
 	holdReasonRepo holdreasonports.HoldReasonRepository
 	auditService   auditports.AuditService
 	eventService   shipmenteventports.ShipmentEventService
-	realtime       agentports.RealtimeService
+	realtime       realtimeports.RealtimeService
 }
 
 //nolint:gocritic // service constructor
-func New(p Params) shipmentports.ShipmentHoldService {
+func New(p Params) shipmentholdports.ShipmentHoldService {
 	return &service{
 		l:              p.Logger.Named("service.shipment-hold"),
 		repo:           p.Repo,
@@ -71,7 +72,7 @@ func (s *service) recordHoldEvent(
 	}
 }
 
-func tenantRefForHold(hold *shipment.ShipmentHold) shipmenteventservice.TenantRef {
+func tenantRefForHold(hold *shipmenthold.ShipmentHold) shipmenteventservice.TenantRef {
 	return shipmenteventservice.TenantRef{
 		OrganizationID: hold.OrganizationID,
 		BusinessUnitID: hold.BusinessUnitID,
@@ -80,8 +81,8 @@ func tenantRefForHold(hold *shipment.ShipmentHold) shipmenteventservice.TenantRe
 
 func (s *service) ListByShipmentID(
 	ctx context.Context,
-	req *shipmentports.ListShipmentHoldsRequest,
-) (*pagination.ListResult[*shipment.ShipmentHold], error) {
+	req *shipmentholdports.ListShipmentHoldsRequest,
+) (*pagination.ListResult[*shipmenthold.ShipmentHold], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -106,8 +107,8 @@ func (s *service) ListByShipmentID(
 
 func (s *service) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+	req *shipmentholdports.GetShipmentHoldByIDRequest,
+) (*shipmenthold.ShipmentHold, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -124,9 +125,9 @@ func (s *service) GetByID(
 
 func (s *service) Create(
 	ctx context.Context,
-	req *shipmentports.CreateShipmentHoldRequest,
+	req *shipmentholdports.CreateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	entity, err := s.planCreate(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -149,9 +150,9 @@ func (s *service) Create(
 
 func (s *service) Update(
 	ctx context.Context,
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	original, updated, err := s.planUpdate(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -181,9 +182,9 @@ func (s *service) Update(
 
 func (s *service) Release(
 	ctx context.Context,
-	req *shipmentports.ReleaseShipmentHoldRequest,
+	req *shipmentholdports.ReleaseShipmentHoldRequest,
 	actor *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	original, toRelease, err := s.planRelease(ctx, req, actor)
 	if err != nil {
 		return nil, err
@@ -247,7 +248,7 @@ func (s *service) getActiveHoldReason(
 }
 
 func (s *service) logHoldAction(
-	entity *shipment.ShipmentHold,
+	entity *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 	op permission.Operation,
 	previous any,
@@ -290,7 +291,7 @@ func (s *service) logHoldAction(
 
 func (s *service) publishHoldInvalidation(
 	ctx context.Context,
-	entity *shipment.ShipmentHold,
+	entity *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 	action string,
 	payload any,
@@ -313,8 +314,8 @@ func (s *service) publishHoldInvalidation(
 }
 
 func applyCreateOverrides(
-	entity *shipment.ShipmentHold,
-	req *shipmentports.CreateShipmentHoldRequest,
+	entity *shipmenthold.ShipmentHold,
+	req *shipmentholdports.CreateShipmentHoldRequest,
 ) {
 	if req.Severity != nil {
 		entity.Severity = *req.Severity
@@ -333,7 +334,7 @@ func applyCreateOverrides(
 	}
 }
 
-func validateHold(entity *shipment.ShipmentHold) *errortypes.MultiError {
+func validateHold(entity *shipmenthold.ShipmentHold) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {

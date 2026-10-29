@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -272,7 +273,7 @@ func (s *Service) Delete(
 func (s *Service) ListCells(
 	ctx context.Context,
 	req *ratematrixports.ListRateMatrixCellsRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
+) (*pagination.ListResult[*ratematrixcell.RateMatrixCell], error) {
 	return s.repo.ListCells(ctx, req)
 }
 
@@ -325,7 +326,7 @@ func (s *Service) ReplaceCells(
 	return nil
 }
 
-func countCells(cells []*ratematrix.RateMatrixCell) int {
+func countCells(cells []*ratematrixcell.RateMatrixCell) int {
 	count := 0
 	for _, cell := range cells {
 		if cell != nil {

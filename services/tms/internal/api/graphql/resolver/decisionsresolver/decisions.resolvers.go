@@ -10,17 +10,22 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionbatch"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *AgentPlanResolver) Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error) {
+func (r *AgentPlanResolver) Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error) {
 	return loadAgentRun(ctx, obj.RunID)
 }
 
@@ -33,11 +38,11 @@ func (r *AgentRunResolver) Definition(ctx context.Context, obj *agent.AgentRun) 
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		// A run of a retired built-in agent names a definition that is gone;
 		// the run is still worth showing.
@@ -57,11 +62,11 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	thread, err := loaders.ThreadAgentByID(ctx, obj.SubjectID.String())
+	thread, err := agentloaders.ThreadAgentByID(ctx, obj.SubjectID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -73,7 +78,7 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, thread.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, thread.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -91,7 +96,7 @@ func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		return nil, err
 	}
 
-	req, err := base.BatchDecisionRequest(ids, &input, base.TenantInfo(authCtx))
+	req, err := decisionbatch.BatchDecisionRequest(ids, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +106,7 @@ func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		return nil, err
 	}
 
-	return base.BatchDecisionResults(results), nil
+	return decisionbatch.BatchDecisionResults(results), nil
 }
 
 func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.PendingDecisionsInput) (*gqlmodel.PendingDecisionConnection, error) {
@@ -119,9 +124,9 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		return nil, err
 	}
 
-	req := agentports.ListPendingDecisionsRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
-		IncludeTotalCount: base.ConnectionTotalRequested(ctx),
+	req := agentdecisionqueueports.ListPendingDecisionsRequest{
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
+		IncludeTotalCount: gqlconnection.ConnectionTotalRequested(ctx),
 		Usable:            usable,
 	}
 	if input.First != nil {
@@ -141,7 +146,7 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		req.AgentDefinitionID = definitionID
 	}
 
-	page, err := r.AgentDecisionQueueService.ListPending(ctx, req)
+	page, err := r.AgentDecisionQueueService.ListPending(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +195,7 @@ func (r *QueryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 		return nil, err
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	summary, err := r.AgentDecisionQueueService.Summary(ctx, tenant, usable)
 	if err != nil {
 		return nil, err
@@ -218,8 +223,8 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 		return nil, err
 	}
 
-	req := agentports.ListRecentDecisionsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	req := agentdecisionqueueports.ListRecentDecisionsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Since:      int64(since),
 		Usable:     usable,
 	}
@@ -237,7 +242,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 		item := recent[i]
 		out = append(out, &gqlmodel.RecentDecision{
 			ID:              item.DecisionID.String(),
-			Decision:        agent.DecisionType(item.Decision),
+			Decision:        agentdecision.DecisionType(item.Decision),
 			ReasonCode:      item.ReasonCode,
 			Note:            item.Note,
 			DecidedByUserID: item.DecidedByUserID.String(),
@@ -250,7 +255,7 @@ func (r *QueryResolver) RecentDecisions(ctx context.Context, since int, first *i
 	return out, nil
 }
 
-func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
+func (r *AgentPlanResolver) Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error) {
 	return planHold(ctx, obj)
 }
 
@@ -262,7 +267,7 @@ func (r *PendingDecisionEdgeResolver) Hold(ctx context.Context, obj *gqlmodel.Pe
 	switch node := obj.Node.(type) {
 	case *agent.AgentProposal:
 		return proposalHold(ctx, node)
-	case *agent.AgentPlan:
+	case *agentplan.AgentPlan:
 		return planHold(ctx, node)
 	default:
 		return nil, nil //nolint:nilnil // only a proposal or a plan waits on a decision

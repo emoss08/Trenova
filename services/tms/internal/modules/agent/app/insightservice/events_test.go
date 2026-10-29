@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,11 +18,11 @@ import (
 )
 
 type recordingEvents struct {
-	published []agentports.AgentEvent
+	published []agenteventports.AgentEvent
 }
 
-func (r *recordingEvents) Publish(_ context.Context, event agentports.AgentEvent) {
-	r.published = append(r.published, event)
+func (r *recordingEvents) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.published = append(r.published, *event)
 }
 
 // detectingRepo stores what it is given and reports a chosen subset as new,
@@ -79,7 +79,7 @@ func TestRefresh_AnnouncesOnlyTheFindingsThatAreNew(t *testing.T) {
 
 	require.Len(t, events.published, 1)
 	published := events.published[0]
-	assert.Equal(t, agent.EventInsightDetected, published.Kind)
+	assert.Equal(t, agenttrigger.EventInsightDetected, published.Kind)
 	assert.Equal(t, tenantInfo, published.TenantInfo)
 	assert.Equal(t, repo.replaced[0].Insights[1].ID, published.SubjectID)
 	assert.True(t, published.SubjectID.IsNotNil())
@@ -184,5 +184,9 @@ func TestGetDetail_ChecksAnAgentActorAsAnAgent(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, found, detail.Insight)
-	assert.Equal(t, []kernelports.PrincipalType{permissionports.PrincipalTypeAgent}, perms.principals)
+	assert.Equal(
+		t,
+		[]kernelports.PrincipalType{permissionports.PrincipalTypeAgent},
+		perms.principals,
+	)
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -34,54 +34,62 @@ func (r *workerPayAssignmentRepository) GetByID(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerPayAssignment, error) {
-		wpa := driverpaydb.WorkerPayAssignments
-		entity, err := wpa.Where(wpa.ID.Eq(id)).
-			Load(wpa.PayProfile()).
-			One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, assignmentErrors.Map(err, id.String())
-		}
+) (*payassignment.WorkerPayAssignment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
+			entity, err := wpa.Where(wpa.ID.Eq(id)).
+				Load(wpa.PayProfile()).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, assignmentErrors.Map(err, id.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) GetEffectiveForWorker(
 	ctx context.Context,
 	req driverpayports.GetWorkerPayAssignmentRequest,
-) (*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerPayAssignment, error) {
-		wpa := driverpaydb.WorkerPayAssignments
-		entity, err := wpa.Where(
-			wpa.WorkerID.Eq(req.WorkerID),
-			wpa.EffectiveFrom.Lte(req.AsOf),
-			openAfter(wpa.EffectiveTo, req.AsOf),
-		).
-			Load(orderedComponents(wpa.PayProfile())).
-			Order(wpa.EffectiveFrom.Desc()).
-			First(ctx, r.db.Keel(ctx))
-		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, assignmentErrors.Map(err, req.WorkerID.String())
+) (*payassignment.WorkerPayAssignment, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
+			entity, err := wpa.Where(
+				wpa.WorkerID.Eq(req.WorkerID),
+				wpa.EffectiveFrom.Lte(req.AsOf),
+				openAfter(wpa.EffectiveTo, req.AsOf),
+			).
+				Load(orderedComponents(wpa.PayProfile())).
+				Order(wpa.EffectiveFrom.Desc()).
+				First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				if dberror.IsNotFoundError(err) {
+					return nil, assignmentErrors.Map(err, req.WorkerID.String())
+				}
+				return nil, fmt.Errorf("get effective pay assignment: %w", err)
 			}
-			return nil, fmt.Errorf("get effective pay assignment: %w", err)
-		}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) ListForWorker(
 	ctx context.Context,
 	req driverpayports.ListWorkerPayAssignmentsRequest,
-) ([]*driverpay.WorkerPayAssignment, error) {
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
 			items, err := wpa.Where(wpa.WorkerID.Eq(req.WorkerID)).
 				Load(wpa.PayProfile()).
 				Order(wpa.EffectiveFrom.Desc()).
@@ -99,12 +107,12 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	profileID pulid.ID,
-) ([]*driverpay.WorkerPayAssignment, error) {
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
 			items, err := wpa.Where(
 				wpa.PayProfileID.Eq(profileID),
 				openAfterNow(wpa.EffectiveTo),
@@ -123,13 +131,13 @@ func (r *workerPayAssignmentRepository) ListForProfile(
 
 func (r *workerPayAssignmentRepository) ListOverlapping(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) ([]*driverpay.WorkerPayAssignment, error) {
+	entity *payassignment.WorkerPayAssignment,
+) ([]*payassignment.WorkerPayAssignment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*driverpay.WorkerPayAssignment, error) {
-			wpa := driverpaydb.WorkerPayAssignments
+		func(ctx context.Context) ([]*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
 			overlap := openAfter(wpa.EffectiveTo, entity.EffectiveFrom)
 			if entity.EffectiveTo != nil {
 				overlap = keel.And(wpa.EffectiveFrom.Lt(*entity.EffectiveTo), overlap)
@@ -151,39 +159,51 @@ func (r *workerPayAssignmentRepository) ListOverlapping(
 
 func (r *workerPayAssignmentRepository) Create(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) (*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerPayAssignment, error) {
-		if err := driverpaydb.WorkerPayAssignments.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, assignmentErrors.Map(err, entity.ID.String())
-		}
+	entity *payassignment.WorkerPayAssignment,
+) (*payassignment.WorkerPayAssignment, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
+			if err := payassignmentdb.WorkerPayAssignments.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				return nil, assignmentErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) Update(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
-) (*driverpay.WorkerPayAssignment, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.WorkerPayAssignment, error) {
-		wpa := driverpaydb.WorkerPayAssignments
-		if err := wpa.Save(
-			ctx,
-			r.db.Keel(ctx),
-			entity,
-			wpa.PayProfileID,
-			wpa.EffectiveFrom,
-			wpa.EffectiveTo,
-			wpa.SplitPercent,
-			wpa.RateOverrides,
-			wpa.Notes,
-		); err != nil {
-			return nil, assignmentErrors.Map(err, entity.ID.String())
-		}
+	entity *payassignment.WorkerPayAssignment,
+) (*payassignment.WorkerPayAssignment, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*payassignment.WorkerPayAssignment, error) {
+			wpa := payassignmentdb.WorkerPayAssignments
+			if err := wpa.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				wpa.PayProfileID,
+				wpa.EffectiveFrom,
+				wpa.EffectiveTo,
+				wpa.SplitPercent,
+				wpa.RateOverrides,
+				wpa.Notes,
+			); err != nil {
+				return nil, assignmentErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *workerPayAssignmentRepository) Delete(
@@ -192,10 +212,10 @@ func (r *workerPayAssignmentRepository) Delete(
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := driverpaydb.WorkerPayAssignments.DeleteRow(
+		err := payassignmentdb.WorkerPayAssignments.DeleteRow(
 			ctx,
 			r.db.Keel(ctx),
-			&driverpay.WorkerPayAssignment{ID: id},
+			&payassignment.WorkerPayAssignment{ID: id},
 		)
 
 		return assignmentErrors.Map(err, id.String())

@@ -5,16 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/inboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/masterdatatools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentcommenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -25,14 +27,18 @@ func TestTargetOf_NamesTheRecordFromItsArgument(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("shp_")
-	target, ok := common.TargetOf(
+	target, ok := toolparams.TargetOf(
 		map[string]any{"shipmentId": id.String()},
 		"shipmentId",
 		permission.ResourceShipment,
 	)
 
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceShipment, ID: id}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceShipment, ID: id},
+		target,
+	)
 }
 
 // A missing or malformed id yields no target and the call is still made: the
@@ -48,7 +54,7 @@ func TestTargetOf_YieldsNothingForABadArgument(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			_, ok := common.TargetOf(params, "shipmentId", permission.ResourceShipment)
+			_, ok := toolparams.TargetOf(params, "shipmentId", permission.ResourceShipment)
 			assert.False(t, ok)
 		})
 	}
@@ -61,47 +67,71 @@ func TestSingleRecordTools_NameTheirTarget(t *testing.T) {
 
 	id := pulid.MustNew("x_")
 	cases := []struct {
-		tool     agentports.AgentTool
+		tool     agenttoolports.AgentTool
 		key      string
 		resource permission.Resource
 	}{
-		{&shipmenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
+		{&shipmentcommenttools.AddShipmentCommentTool{}, "shipmentId", permission.ResourceShipment},
 		// The document, not the shipment: attaching changes the document's
 		// lineage, so that is the record whose version the proposal pins.
-		{&masterdatatools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},
+		{&documenttools.AttachDocumentTool{}, "documentId", permission.ResourceDocument},
 		{&shipmenttools.PlaceShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&shipmenttools.ReleaseShipmentHoldTool{}, "shipmentId", permission.ResourceShipment},
 		{&shipmenttools.CancelShipmentTool{}, "shipmentId", permission.ResourceShipment},
 		{&movetools.RecordStopActualTool{}, "moveId", permission.ResourceShipmentMove},
-		{&masterdatatools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&operationstools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&operationstools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&operationstools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
-		{&invoicetools.CorrectChargeCodeTool{}, "billingQueueItemId", permission.ResourceBillingQueue},
-		{&masterdatatools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
+		{&movetools.AssignMoveTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{&ptodecisiontools.ApproveWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&ptodecisiontools.RejectWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{&ptodecisiontools.CancelWorkerPTOTool{}, "ptoId", permission.ResourceWorkerPTO},
+		{
+			&invoicetools.CorrectChargeCodeTool{},
+			"billingQueueItemId",
+			permission.ResourceBillingQueue,
+		},
+		{&dashboardtools.AddDashboardTileTool{}, "dashboardId", permission.ResourceDashboard},
 		{&alerttools.ScheduleReportTool{}, "definitionId", permission.ResourceReport},
 		{&inboundtools.LinkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		{&inboundtools.MarkInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
 		// The message, not a new record: a reply to a message somebody has
 		// since settled or relinked must be refused as stale.
 		{&inboundtools.ReplyToInboundMessageTool{}, "messageId", permission.ResourceInboundMessage},
-		{&carriertools.AssignMoveToCarrierTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&carriertools.CancelCarrierAssignmentTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
+		{
+			&carriertools.AssignMoveToCarrierTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
+		{
+			&carriertools.CancelCarrierAssignmentTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
 		// The tender, whose version moves as it advances or ends, so a
 		// withdrawal proposed against a tender that has since moved is stale.
 		{&tendertools.CancelTenderTool{}, "tenderId", permission.ResourceTender},
-		{&ratetools.GenerateRateConfirmationTool{}, "shipmentMoveId", permission.ResourceShipmentMove},
-		{&ratetools.SendRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
-		{&ratetools.VoidRateConfirmationTool{}, "rateConfirmationId", permission.ResourceRateConfirmation},
 		{
-			&ratetools.RecordRateConfirmationConfirmedTool{},
+			&rateconfirmationtools.GenerateRateConfirmationTool{},
+			"shipmentMoveId",
+			permission.ResourceShipmentMove,
+		},
+		{
+			&rateconfirmationtools.SendRateConfirmationTool{},
+			"rateConfirmationId",
+			permission.ResourceRateConfirmation,
+		},
+		{
+			&rateconfirmationtools.VoidRateConfirmationTool{},
+			"rateConfirmationId",
+			permission.ResourceRateConfirmation,
+		},
+		{
+			&rateconfirmationtools.RecordRateConfirmationConfirmedTool{},
 			"rateConfirmationId",
 			permission.ResourceRateConfirmation,
 		},
 	}
 
 	for _, tc := range cases {
-		targeted, ok := tc.tool.(agentports.TargetedTool)
+		targeted, ok := tc.tool.(agenttoolports.TargetedTool)
 		require.True(t, ok, "%T names no target", tc.tool)
 		target, found := targeted.Target(map[string]any{tc.key: id.String()})
 		require.True(t, found, "%T", tc.tool)

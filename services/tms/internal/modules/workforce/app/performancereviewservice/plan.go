@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,16 +14,16 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type ReviewChange = kernelports.RecordChange[worker.PerformanceReview]
+type ReviewChange = kernelports.RecordChange[workerreview.PerformanceReview]
 
 func (s *Service) PlanCreateReview(
 	ctx context.Context,
 	req *CreateReviewRequest,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	if _, err := s.loadWorker(ctx, req.TenantInfo, req.WorkerID); err != nil {
 		return nil, err
 	}
-	template, err := s.repo.GetTemplateByID(ctx, &workerports.GetReviewTemplateByIDRequest{
+	template, err := s.repo.GetTemplateByID(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -38,18 +38,18 @@ func (s *Service) PlanCreateReview(
 		)
 	}
 
-	entity := &worker.PerformanceReview{
+	entity := &workerreview.PerformanceReview{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		WorkerID:       req.WorkerID,
 		TemplateID:     req.TemplateID,
 		ReviewerID:     req.UserID,
-		Status:         worker.ReviewStatusDraft,
+		Status:         workerreview.ReviewStatusDraft,
 		Title:          strings.TrimSpace(req.Title),
 		PeriodStart:    req.PeriodStart,
 		PeriodEnd:      req.PeriodEnd,
-		Ratings:        worker.RatingsFromTemplate(template),
-		Goals:          []worker.ReviewGoal{},
+		Ratings:        workerreview.RatingsFromTemplate(template),
+		Goals:          []workerreview.ReviewGoal{},
 		Template:       template,
 	}
 	if entity.Title == "" {
@@ -71,7 +71,7 @@ func (s *Service) PlanUpdateReview(
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusDraft {
+	if original.Status != workerreview.ReviewStatusDraft {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
@@ -90,7 +90,7 @@ func (s *Service) PlanUpdateReview(
 		updated.PeriodEnd = req.PeriodEnd
 	}
 	updated.Ratings = mergeRatings(original.Ratings, req.Ratings)
-	updated.OverallScore = worker.ComputeOverallScore(updated.Ratings)
+	updated.OverallScore = workerreview.ComputeOverallScore(updated.Ratings)
 	updated.Summary = strings.TrimSpace(req.Summary)
 	updated.Strengths = strings.TrimSpace(req.Strengths)
 	updated.Improvements = strings.TrimSpace(req.Improvements)
@@ -107,12 +107,12 @@ func (s *Service) PlanDeleteReview(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.PerformanceReview, error) {
+) (*workerreview.PerformanceReview, error) {
 	original, err := s.loadReview(ctx, tenantInfo, id, 0)
 	if err != nil {
 		return nil, err
 	}
-	if original.Status != worker.ReviewStatusDraft {
+	if original.Status != workerreview.ReviewStatusDraft {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,

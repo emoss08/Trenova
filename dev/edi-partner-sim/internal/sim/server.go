@@ -17,6 +17,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const (
@@ -149,7 +150,7 @@ func (s *Server) handleConfigurePartner(w http.ResponseWriter, r *http.Request) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if strings.TrimSpace(req.CertificatePEM) != "" {
-		certificate, err := as2.ParseCertificate([]byte(req.CertificatePEM))
+		certificate, err := smime.ParseCertificate([]byte(req.CertificatePEM))
 		if err != nil {
 			s.writeError(w, http.StatusBadRequest, "invalid partner certificate: "+err.Error())
 			return

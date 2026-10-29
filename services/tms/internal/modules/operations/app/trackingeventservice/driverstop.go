@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/driverportalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -32,9 +32,9 @@ func (s *Service) ReportDriverStop(
 		)
 	}
 
-	action := shipmentports.StopActualActionArrive
+	action := shipmentmoveports.StopActualActionArrive
 	if report.Departure {
-		action = shipmentports.StopActualActionDepart
+		action = shipmentmoveports.StopActualActionDepart
 	}
 	sourceKey := ""
 	if clientEventID != "" {

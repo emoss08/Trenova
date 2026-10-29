@@ -3,7 +3,8 @@ package documentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
@@ -35,7 +36,7 @@ func NewTestService(
 	storageClient kernelports.Client,
 	validator *Validator,
 	auditService auditports.AuditService,
-	cfg *config.StorageConfig,
+	cfg *storageconfig.Config,
 	thumbnailGenerator *thumbnailservice.Generator,
 	temporalClient client.Client,
 ) *Service {
@@ -58,11 +59,13 @@ func NewTestService(
 		pageRenders: pagerender.New(pagerender.Params{
 			Storage: storageClient,
 			Encryption: encryptionservice.NewWithKeyManager(
-				encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+				encryptionservice.NewLocalKeyManager(
+					"unit-test-encryption-key-with-at-least-32-bytes",
+				),
 			),
-			Generator: thumbnailGenerator,
-			Config:    &config.Config{},
-			Logger:    logger,
+			Generator:     thumbnailGenerator,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        logger,
 		}),
 		workflowStarter: workflowstarter.New(workflowstarter.Params{
 			TemporalClient: temporalClient,

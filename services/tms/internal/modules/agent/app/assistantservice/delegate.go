@@ -6,11 +6,16 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/usableagents"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,11 +40,11 @@ type OpenDelegateRequest struct {
 	// Actor is the person the turn runs as. The delegate runs as them too.
 	Actor     *permissionports.RequestActor
 	ThreadID  pulid.ID
-	StepOwner agentports.RunStepOwner
-	Call      agentruntime.DelegateCall
+	StepOwner agentruntimeports.RunStepOwner
+	Call      delegation.Call
 	// Records are the records the parent's turn is about. The delegate reads
 	// their memories, since the task is about them too.
-	Records []agent.EntityRef
+	Records []agentpagecontext.EntityRef
 	// Inline says the parent's reply is read with nothing beside it, so the
 	// delegate keeps nothing beside it either.
 	Inline bool
@@ -47,7 +52,7 @@ type OpenDelegateRequest struct {
 
 // DelegateOpening is the delegate's turn, ready to drive.
 type DelegateOpening struct {
-	Request *agentports.RunRequest
+	Request *agentruntimeports.RunRequest
 	Turn    agentruntime.TurnState
 }
 
@@ -103,7 +108,7 @@ func (s *Service) OpenDelegate(
 	if refusal := delegateRefusal(parent, delegate, req.Call.Directed); refusal != "" {
 		return nil, declined(refusal)
 	}
-	usable := agentruntime.UsableAgentsFor(ctx, s.permissions, req.Actor, s.logger)
+	usable := usableagents.For(ctx, s.permissions, req.Actor, s.logger)
 	if !usable.Assistant {
 		return nil, declined("The person is not allowed to use other agents, so " +
 			delegate.Name + " cannot be asked.")
@@ -113,7 +118,7 @@ func (s *Service) OpenDelegate(
 			"be asked. Do the task with your own tools, or tell them an administrator can " +
 			"give one of their roles access to it.")
 	}
-	if err = s.assertWithinBudget(ctx, delegate); err != nil {
+	if err = s.limits().AssertWithinBudget(ctx, delegate); err != nil {
 		if errortypes.IsBusinessError(err) {
 			return nil, declined(err.Error())
 		}
@@ -122,16 +127,16 @@ func (s *Service) OpenDelegate(
 	}
 
 	readOnly := !req.Call.Directed
-	runReq := &agentports.RunRequest{
+	runReq := &agentruntimeports.RunRequest{
 		Definition: delegate,
 		Actor:      req.Actor,
 		Context:    s.delegateContext(ctx, parent, delegate, req),
-		Input:      agentruntime.DelegateInput(req.Call.Task, req.Call.Context),
+		Input:      delegation.Input(req.Call.Task, req.Call.Context),
 		ThreadID:   req.ThreadID,
 		Publishes:  s.artifacts != nil && !req.Inline && !readOnly,
 		Inline:     req.Inline,
 		StepOwner:  req.StepOwner,
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   parent.ID,
 			ParentAgentName: parent.Name,
 			CallID:          req.Call.Call.ID,
@@ -144,7 +149,8 @@ func (s *Service) OpenDelegate(
 		Taint: req.Call.Taint.Clone(),
 	}
 	if !readOnly {
-		runReq.Proposals = s.proposalOutcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant)
+		runReq.Proposals = s.outcomes().
+			Outcomes(ctx, &conversation.Thread{ID: req.ThreadID}, tenant)
 	}
 
 	return &DelegateOpening{
@@ -160,8 +166,8 @@ func (s *Service) delegateContext(
 	ctx context.Context,
 	parent, delegate *agentdefinition.Definition,
 	req *OpenDelegateRequest,
-) agentdefinition.RuntimeContext {
-	bare := agentdefinition.RuntimeContext{
+) agentturn.RuntimeContext {
+	bare := agentturn.RuntimeContext{
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
@@ -170,13 +176,13 @@ func (s *Service) delegateContext(
 		return bare
 	}
 
-	built, err := s.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	built, err := s.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition:       delegate,
 		Actor:            req.Actor,
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
-		Query: (&agentports.ContextQuery{
+		Query: (&retrievalports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(delegate),
 			ThreadID:     req.ThreadID,

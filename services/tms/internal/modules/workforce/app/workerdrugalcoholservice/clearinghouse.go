@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -17,8 +18,8 @@ func (s *Service) ListQueries(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) ([]*worker.WorkerClearinghouseQuery, error) {
-	return s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
+) ([]*dotclearinghouse.WorkerClearinghouseQuery, error) {
+	return s.repo.ListQueries(ctx, &workerdotports.ListClearinghouseQueriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
@@ -29,9 +30,9 @@ func (s *Service) ListQueries(
 // already in hand.
 func (s *Service) RecordQuery(
 	ctx context.Context,
-	entity *worker.WorkerClearinghouseQuery,
+	entity *dotclearinghouse.WorkerClearinghouseQuery,
 	userID pulid.ID,
-) (*worker.WorkerClearinghouseQuery, error) {
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
 	tenantInfo := queryTenant(entity)
 
 	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
@@ -51,7 +52,7 @@ func (s *Service) RecordQuery(
 	// does, so the default has to be applied here too or a caller who leaves
 	// the field alone is told the result is missing.
 	if entity.Result == "" {
-		entity.Result = worker.ClearinghouseResultPending
+		entity.Result = dotclearinghouse.ClearinghouseResultPending
 	}
 
 	multiErr := errortypes.NewMultiError()
@@ -84,7 +85,7 @@ func (s *Service) RecordQuery(
 type CompleteQueryRequest struct {
 	TenantInfo     pagination.TenantInfo
 	QueryID        pulid.ID
-	Result         worker.ClearinghouseResult
+	Result         dotclearinghouse.ClearinghouseResult
 	CompletedAt    int64
 	ViolationCount int32
 	Reference      string
@@ -96,8 +97,8 @@ type CompleteQueryRequest struct {
 func (s *Service) CompleteQuery(
 	ctx context.Context,
 	req *CompleteQueryRequest,
-) (*worker.WorkerClearinghouseQuery, error) {
-	entity, err := s.repo.GetQueryByID(ctx, &workerports.GetClearinghouseQueryByIDRequest{
+) (*dotclearinghouse.WorkerClearinghouseQuery, error) {
+	entity, err := s.repo.GetQueryByID(ctx, &workerdotports.GetClearinghouseQueryByIDRequest{
 		ID:         req.QueryID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -112,7 +113,7 @@ func (s *Service) CompleteQuery(
 			"This query has already been answered; run a new query to re-check",
 		)
 	}
-	if req.Result == worker.ClearinghouseResultPending {
+	if req.Result == dotclearinghouse.ClearinghouseResultPending {
 		return nil, errortypes.NewValidationError(
 			"result",
 			errortypes.ErrRequired,

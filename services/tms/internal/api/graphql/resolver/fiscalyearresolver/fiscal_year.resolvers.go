@@ -9,8 +9,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/accountingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
@@ -19,8 +21,8 @@ import (
 )
 
 func (r *FiscalYearResolver) Periods(ctx context.Context, obj *fiscalyear.FiscalYear) ([]*fiscalperiod.FiscalPeriod, error) {
-	if loaders.Available(ctx) {
-		return loaders.FiscalPeriodsByFiscalYearID(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return accountingloaders.FiscalPeriodsByFiscalYearID(ctx, obj.ID.String())
 	}
 
 	return r.FiscalYearService.ListPeriods(ctx, obj.ID, obj.OrganizationID, obj.BusinessUnitID)
@@ -32,7 +34,7 @@ func (r *QueryResolver) FiscalYears(ctx context.Context, input gqlmodel.DataTabl
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +67,6 @@ func (r *QueryResolver) FiscalYear(ctx context.Context, id string) (*fiscalyear.
 
 	return r.FiscalYearService.Get(ctx, fiscalyearports.GetFiscalYearByIDRequest{
 		ID:         fiscalYearID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }

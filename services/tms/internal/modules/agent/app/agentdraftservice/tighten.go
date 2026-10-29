@@ -7,7 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -31,7 +32,7 @@ func parseTightenReply(text string) (string, error) {
 
 func checkTightened(
 	original, rewritten string,
-) (*agentports.TightenedAgentInstructions, error) {
+) (*agentdraftports.TightenedAgentInstructions, error) {
 	tightened := strings.TrimSpace(rewritten)
 	if tightened == "" {
 		return nil, errortypes.NewBusinessError(
@@ -45,7 +46,7 @@ func checkTightened(
 		)
 	}
 
-	missing, added := agentdefinition.ChangedInstructionVariables(original, tightened)
+	missing, added := agentinstructions.ChangedInstructionVariables(original, tightened)
 	if len(missing) > 0 {
 		return nil, errortypes.NewBusinessError(
 			"The tightened version dropped {0}. Your instructions are unchanged.",
@@ -61,7 +62,7 @@ func checkTightened(
 
 	original = strings.TrimSpace(original)
 
-	return &agentports.TightenedAgentInstructions{
+	return &agentdraftports.TightenedAgentInstructions{
 		Instructions: tightened,
 		Changed:      tightened != original,
 	}, nil

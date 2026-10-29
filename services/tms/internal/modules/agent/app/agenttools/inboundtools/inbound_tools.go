@@ -7,13 +7,18 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/pkg/toolschema"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -22,12 +27,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 )
 
-const paramMessageID = "messageId"
+const ParamMessageID = "messageId"
 
 // maxInboundReviewNote is the note column a person reads beside the
 // message, and the same bound the inbox's own review applies.
@@ -35,7 +40,7 @@ const maxInboundReviewNote = 2000
 
 // maxInboundReplyBody bounds a reply. An answer to a status question is a
 // paragraph; pages of it are a model that lost the thread.
-const maxInboundReplyBody = 10000
+const MaxReplyBody = 10000
 
 // maxReplyReferences keeps the References header to the recent thread.
 const maxReplyReferences = 20
@@ -59,7 +64,7 @@ var inboundReviewStatuses = agenttoolschema.Source(
 	[]inboundmessage.Status{inboundmessage.StatusActioned, inboundmessage.StatusIgnored},
 )
 
-type inboundMessageReader interface {
+type MessageReader interface {
 	GetByID(
 		ctx context.Context,
 		req inboundmessageports.GetInboundMessageByIDRequest,
@@ -67,31 +72,31 @@ type inboundMessageReader interface {
 }
 
 type inboundMessageDesk interface {
-	inboundMessageReader
-	CheckLink(ctx context.Context, req inboundmessageservice.LinkRequest) error
+	MessageReader
+	CheckLink(ctx context.Context, req *inboundqueue.LinkRequest) error
 	Link(
 		ctx context.Context,
-		req inboundmessageservice.LinkRequest,
+		req *inboundqueue.LinkRequest,
 	) (*inboundmessage.InboundMessage, error)
 	Review(
 		ctx context.Context,
-		req inboundmessageservice.ReviewRequest,
+		req *inboundqueue.ReviewRequest,
 	) (*inboundmessage.InboundMessage, error)
 }
 
 func loadInboundMessage(
 	ctx context.Context,
-	desk inboundMessageReader,
-	params agentports.ToolExecuteParams,
+	desk MessageReader,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
 		return nil, err
 	}
 
 	return desk.GetByID(ctx, inboundmessageports.GetInboundMessageByIDRequest{
 		ID:         messageID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 }
 
@@ -102,8 +107,8 @@ func loadInboundMessage(
 // settled, or unreadable — is a proposal a person decides.
 func inboundTierLimit(
 	ctx context.Context,
-	desk inboundMessageReader,
-	params agentports.ToolExecuteParams,
+	desk MessageReader,
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	message, err := loadInboundMessage(ctx, desk, params)
 	if err != nil || message.Mailbox == nil ||
@@ -115,21 +120,21 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
-func inboundCondition(desk inboundMessageReader) *agentports.TierCondition {
-	return &agentports.TierCondition{
+func MessageCondition(desk MessageReader) *agenttoolports.TierCondition {
+	return &agenttoolports.TierCondition{
 		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
 			"a classified message the mailbox handles without review may run on its own, " +
 			"and anything held, quarantined, settled or unreadable waits for a person.",
 		Limit: func(
 			ctx context.Context,
-			params agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) agent.AutonomyTier {
 			return inboundTierLimit(ctx, desk, params)
 		},
 	}
 }
 
-func describeInboundMessage(message *inboundmessage.InboundMessage) string {
+func DescribeMessage(message *inboundmessage.InboundMessage) string {
 	subject := strings.TrimSpace(message.Subject)
 	if subject == "" {
 		subject = "(no subject)"
@@ -142,14 +147,14 @@ type LinkInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func NewLinkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
+func NewLinkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentTool {
 	return &LinkInboundMessageTool{inbox: inbox}
 }
 
 func (t *LinkInboundMessageTool) Name() string { return "inbox_link_inbound_message" }
 
 func (t *LinkInboundMessageTool) Recipe() []string {
-	return []string{toolGetInboundMessage, "inbox_link_inbound_message"}
+	return []string{ToolGetMessage, "inbox_link_inbound_message"}
 }
 
 func (t *LinkInboundMessageTool) Description() string {
@@ -163,9 +168,9 @@ func (t *LinkInboundMessageTool) Description() string {
 
 func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"Optional: the shipment the message is about, from "+
@@ -175,63 +180,63 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 			"carrierId": agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"Optional: the carrier who sent it or who it concerns, from carrier_list."),
 			"reason": map[string]any{
-				"type":        "string",
-				"maxLength":   inboundmessage.MaxMatchReasonLength,
-				"description": "Why these are the right records, in words a person can check.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyMaxLength:   inboundmessage.MaxMatchReasonLength,
+				toolschema.KeyDescription: "Why these are the right records, in words a person can check.",
 			},
 		},
-		"required":             []string{paramMessageID, "reason"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "reason"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *LinkInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *LinkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
+		Condition:     MessageCondition(t.inbox),
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Links an inbound message to a record inside Trenova; the mailbox decides " +
 			"how far it may run.",
 	}
 }
 
-func (t *LinkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+func (t *LinkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *LinkInboundMessageTool) request(
-	params agentports.ToolExecuteParams,
-) (inboundmessageservice.LinkRequest, error) {
-	messageID, err := common.RequirePulid(params.Params, paramMessageID)
+	params *agenttoolports.ToolExecuteParams,
+) (*inboundqueue.LinkRequest, error) {
+	messageID, err := toolparams.RequirePulid(params.Params, ParamMessageID)
 	if err != nil {
-		return inboundmessageservice.LinkRequest{}, err
+		return nil, err
 	}
 
-	req := inboundmessageservice.LinkRequest{
+	req := &inboundqueue.LinkRequest{
 		MessageID:  messageID,
-		TenantInfo: common.TenantFrom(params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
-		Reason:     common.OptionalString(params.Params, "reason"),
+		Reason:     toolparams.OptionalString(params.Params, "reason"),
 	}
 	for key, target := range map[string]*pulid.ID{
 		"shipmentId": &req.ShipmentID,
 		"customerId": &req.CustomerID,
 		"carrierId":  &req.CarrierID,
 	} {
-		if common.OptionalString(params.Params, key) == "" {
+		if toolparams.OptionalString(params.Params, key) == "" {
 			continue
 		}
-		if *target, err = common.RequirePulid(params.Params, key); err != nil {
-			return inboundmessageservice.LinkRequest{}, err
+		if *target, err = toolparams.RequirePulid(params.Params, key); err != nil {
+			return nil, err
 		}
 	}
 
@@ -240,7 +245,7 @@ func (t *LinkInboundMessageTool) request(
 
 func (t *LinkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	req, err := t.request(params)
 	if err != nil {
@@ -255,9 +260,9 @@ func (t *LinkInboundMessageTool) Validate(
 
 func (t *LinkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -275,14 +280,14 @@ type MarkInboundMessageTool struct {
 	inbox inboundMessageDesk
 }
 
-func NewMarkInboundMessageTool(inbox inboundMessageDesk) agentports.AgentTool {
+func NewMarkInboundMessageTool(inbox inboundMessageDesk) agenttoolports.AgentTool {
 	return &MarkInboundMessageTool{inbox: inbox}
 }
 
 func (t *MarkInboundMessageTool) Name() string { return "inbox_mark_inbound_message" }
 
 func (t *MarkInboundMessageTool) Recipe() []string {
-	return []string{toolGetInboundMessage, "inbox_mark_inbound_message"}
+	return []string{ToolGetMessage, "inbox_mark_inbound_message"}
 }
 
 func (t *MarkInboundMessageTool) SearchTerms() []string {
@@ -300,56 +305,56 @@ func (t *MarkInboundMessageTool) Description() string {
 
 func (t *MarkInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
-			common.FieldStatus: agenttoolschema.Enum(
+			changepreview.FieldStatus: agenttoolschema.Enum(
 				"Actioned when it was dealt with, Ignored when there was nothing to do.",
 				inboundReviewStatuses,
 			),
 			"note": map[string]any{
-				"type":        "string",
-				"maxLength":   maxInboundReviewNote,
-				"description": "What was done, or why nothing was, for the person reading the inbox.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyMaxLength:   maxInboundReviewNote,
+				toolschema.KeyDescription: "What was done, or why nothing was, for the person reading the inbox.",
 			},
 		},
-		"required":             []string{paramMessageID, "status", "note"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "status", "note"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *MarkInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *MarkInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceInboundMessage,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Condition:     MessageCondition(t.inbox),
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Settles an inbound message inside Trenova; the mailbox decides how far " +
 			"it may run.",
 	}
 }
 
-func (t *MarkInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+func (t *MarkInboundMessageTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 func (t *MarkInboundMessageTool) arguments(
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (inboundmessage.Status, string, error) {
-	status := inboundmessage.Status(common.OptionalString(params.Params, "status"))
+	status := inboundmessage.Status(toolparams.OptionalString(params.Params, "status"))
 	if status != inboundmessage.StatusActioned && status != inboundmessage.StatusIgnored {
 		return "", "", errors.New(`parameter "status" must be Actioned or Ignored`)
 	}
 
-	note, err := common.RequireString(params.Params, "note")
+	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
 		return "", "", err
 	}
@@ -366,7 +371,7 @@ func (t *MarkInboundMessageTool) arguments(
 
 func (t *MarkInboundMessageTool) settle(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundmessage.InboundMessage, inboundmessage.Status, string, error) {
 	status, note, err := t.arguments(params)
 	if err != nil {
@@ -385,7 +390,7 @@ func (t *MarkInboundMessageTool) settle(
 
 func (t *MarkInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, _, _, err := t.settle(ctx, params)
 
@@ -394,9 +399,9 @@ func (t *MarkInboundMessageTool) Validate(
 
 func (t *MarkInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 
@@ -405,20 +410,20 @@ func (t *MarkInboundMessageTool) Execute(
 		return err
 	}
 
-	_, err = t.inbox.Review(ctx, reviewRequest(&params, message, status, note))
+	_, err = t.inbox.Review(ctx, reviewRequest(params, message, status, note))
 
 	return err
 }
 
 func reviewRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
-) inboundmessageservice.ReviewRequest {
-	return inboundmessageservice.ReviewRequest{
+) *inboundqueue.ReviewRequest {
+	return &inboundqueue.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,
@@ -441,7 +446,7 @@ type inboundReplier struct {
 type replyToInboundMessageParams struct {
 	fx.In
 
-	Inbox     *inboundmessageservice.Service
+	Inbox     *inboundqueue.Service
 	Email     emailports.EmailService
 	Templates documenttemplateports.DocumentTemplateResolver
 	OrgRepo   tenantports.OrganizationRepository
@@ -456,7 +461,9 @@ type ReplyToInboundMessageTool struct {
 	deps  inboundReplier
 }
 
-func NewReplyToInboundMessageTool(p replyToInboundMessageParams) agentports.AgentTool {
+func NewReplyToInboundMessageTool(
+	p replyToInboundMessageParams, //nolint:gocritic // fx params are passed by value
+) agenttoolports.AgentTool {
 	return &ReplyToInboundMessageTool{
 		inbox: p.Inbox,
 		deps: inboundReplier{
@@ -475,7 +482,7 @@ func (t *ReplyToInboundMessageTool) Name() string { return "inbox_send_reply" }
 
 func (t *ReplyToInboundMessageTool) Recipe() []string {
 	return []string{
-		toolGetInboundMessage,
+		ToolGetMessage,
 		"shipment_get_tracking",
 		"inbox_send_reply",
 	}
@@ -497,46 +504,48 @@ func (t *ReplyToInboundMessageTool) Description() string {
 
 func (t *ReplyToInboundMessageTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			ParamMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message being answered, from this run's subject or "+
 					"inbox_list_inbound_messages."),
 			"profileId": agenttoolschema.RecordIDText(permission.ResourceEmailProfile,
 				"The email profile to send from, from inbox_list_email_profiles. Leave it out to "+
 					"send from the profile the organization assigns to operations email."),
 			"body": map[string]any{
-				"type":      "string",
-				"maxLength": maxInboundReplyBody,
-				"description": "The answer in plain prose. The template adds the greeting, the " +
+				toolschema.KeyType:      toolschema.TypeString,
+				toolschema.KeyMaxLength: MaxReplyBody,
+				toolschema.KeyDescription: "The answer in plain prose. The template adds the greeting, the " +
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{paramMessageID, "body"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{ParamMessageID, "body"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *ReplyToInboundMessageTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *ReplyToInboundMessageTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Condition:     inboundCondition(t.inbox),
-		Effect:        agent.ToolEffectChange,
+		Condition:     MessageCondition(t.inbox),
+		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Replies to whoever wrote in with text the model composed.",
 	}
 }
 
-func (t *ReplyToInboundMessageTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramMessageID, permission.ResourceInboundMessage)
+func (t *ReplyToInboundMessageTool) Target(
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, ParamMessageID, permission.ResourceInboundMessage)
 }
 
 type inboundReply struct {
@@ -548,21 +557,21 @@ type inboundReply struct {
 
 func (t *ReplyToInboundMessageTool) prepare(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*inboundReply, error) {
-	profileID, err := common.OptionalID(params.Params, "profileId")
+	profileID, err := toolparams.OptionalID(params.Params, "profileId")
 	if err != nil {
 		return nil, err
 	}
-	body, err := common.RequireString(params.Params, "body")
+	body, err := toolparams.RequireString(params.Params, "body")
 	if err != nil {
 		return nil, err
 	}
 	body = strings.TrimSpace(body)
-	if utf8.RuneCountInString(body) > maxInboundReplyBody {
+	if utf8.RuneCountInString(body) > MaxReplyBody {
 		return nil, fmt.Errorf(
 			`parameter "body" is longer than the %d characters a reply may run to`,
-			maxInboundReplyBody,
+			MaxReplyBody,
 		)
 	}
 
@@ -577,7 +586,7 @@ func (t *ReplyToInboundMessageTool) prepare(
 	return &inboundReply{
 		message:   message,
 		profileID: profileID,
-		subject:   stringutils.ReplySubject(message.Subject),
+		subject:   mailtext.ReplySubject(message.Subject),
 		body:      body,
 	}, nil
 }
@@ -589,11 +598,11 @@ func replyable(message *inboundmessage.InboundMessage) error {
 		return errInboundQuarantined
 	case strings.TrimSpace(message.FromAddress) == "":
 		return errors.New("the message has no sender to answer")
-	case stringutils.IsAutomatedSender(message.FromAddress):
+	case mailtext.IsAutomatedSender(message.FromAddress):
 		return errInboundAutomatedSender
 	case message.Mailbox != nil &&
-		stringutils.NormalizeEmailAddress(message.Mailbox.Address) ==
-			stringutils.NormalizeEmailAddress(message.FromAddress):
+		mailtext.NormalizeEmailAddress(message.Mailbox.Address) ==
+			mailtext.NormalizeEmailAddress(message.FromAddress):
 		return errInboundOwnMailbox
 	default:
 		return nil
@@ -602,7 +611,7 @@ func replyable(message *inboundmessage.InboundMessage) error {
 
 func (t *ReplyToInboundMessageTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.prepare(ctx, params)
 
@@ -611,9 +620,9 @@ func (t *ReplyToInboundMessageTool) Validate(
 
 func (t *ReplyToInboundMessageTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, &params)
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -622,7 +631,7 @@ func (t *ReplyToInboundMessageTool) Execute(
 		return err
 	}
 
-	if _, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
+	if _, err = t.inbox.Review(ctx, &inboundqueue.ReviewRequest{
 		MessageID:  composed.reply.message.ID,
 		TenantInfo: composed.send.TenantInfo,
 		ReviewerID: params.Actor.UserID,
@@ -639,14 +648,14 @@ func (t *ReplyToInboundMessageTool) Execute(
 // id is missing or malformed gets none: a reply outside the thread is better
 // than a header built from something the sender wrote.
 func threadHeaders(message *inboundmessage.InboundMessage) map[string]string {
-	token, ok := stringutils.MessageIDToken(message.MessageID)
+	token, ok := mailtext.MessageIDToken(message.MessageID)
 	if !ok {
 		return nil
 	}
 
 	return map[string]string{
 		"In-Reply-To": token,
-		"References":  stringutils.ReplyReferences(message.References, token, maxReplyReferences),
+		"References":  mailtext.ReplyReferences(message.References, token, maxReplyReferences),
 	}
 }
 
@@ -657,7 +666,7 @@ func (t *ReplyToInboundMessageTool) describeMatch(
 	ctx context.Context,
 	message *inboundmessage.InboundMessage,
 	tenant pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
+	out *portaltemplate.AgentEmailContext,
 ) {
 	if !message.MatchedCustomerID.IsNil() && t.deps.customers != nil {
 		customer, err := t.deps.customers.GetByID(ctx, customerports.GetCustomerByIDRequest{

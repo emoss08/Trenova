@@ -8,7 +8,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/accountingseed"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/referenceseed"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -43,7 +46,7 @@ type BootstrapResult struct {
 	Organization *tenant.Organization
 	Owner        *tenant.User
 	Membership   *tenant.OrganizationMembership
-	AdminRole    *permission.Role
+	AdminRole    *rbac.Role
 }
 
 func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*BootstrapResult, error) {
@@ -61,7 +64,7 @@ func Bootstrap(ctx context.Context, db *keel.DB, params BootstrapParams) (*Boots
 		return nil, err
 	}
 
-	scope := Scope{
+	scope := tenantscope.Scope{
 		OrganizationID: org.ID,
 		BusinessUnitID: bu.ID,
 		Now:            now,
@@ -148,7 +151,7 @@ func createOwner(
 	ctx context.Context,
 	db *keel.DB,
 	params BootstrapParams,
-	scope Scope,
+	scope tenantscope.Scope,
 ) (*tenant.User, *tenant.OrganizationMembership, error) {
 	owner := params.Owner
 	owner.CurrentOrganizationID = scope.OrganizationID
@@ -173,23 +176,23 @@ func createOwner(
 	return owner, membership, nil
 }
 
-func CreateReferenceData(ctx context.Context, db *keel.DB, scope Scope) error {
-	if _, err := EnsureChartOfAccounts(ctx, db, scope); err != nil {
+func CreateReferenceData(ctx context.Context, db *keel.DB, scope tenantscope.Scope) error {
+	if _, err := accountingseed.EnsureChartOfAccounts(ctx, db, scope); err != nil {
 		return err
 	}
-	if _, err := CreateDocumentTypes(ctx, db, scope); err != nil {
+	if _, err := referenceseed.CreateDocumentTypes(ctx, db, scope); err != nil {
 		return fmt.Errorf("create system document types: %w", err)
 	}
-	if _, err := CreateServiceFailureReasonCodes(ctx, db, scope); err != nil {
+	if _, err := referenceseed.CreateServiceFailureReasonCodes(ctx, db, scope); err != nil {
 		return fmt.Errorf("create service failure reason codes: %w", err)
 	}
-	if _, err := CreateDocumentTemplateStarters(ctx, db, scope); err != nil {
+	if _, err := referenceseed.CreateDocumentTemplateStarters(ctx, db, scope); err != nil {
 		return fmt.Errorf("create document template starters: %w", err)
 	}
-	if _, err := CreateSystemAgentDefinitions(ctx, db, scope); err != nil {
+	if _, err := referenceseed.CreateSystemAgentDefinitions(ctx, db, scope); err != nil {
 		return fmt.Errorf("create system agent definitions: %w", err)
 	}
-	if _, err := CreateTCAAllowlist(ctx, db, scope); err != nil {
+	if _, err := referenceseed.CreateTCAAllowlist(ctx, db, scope); err != nil {
 		return fmt.Errorf("create table change alert allowlist: %w", err)
 	}
 
@@ -204,7 +207,7 @@ func AvailableLoginSlug(ctx context.Context, db *keel.DB, base string) (string, 
 
 	return firstAvailable(ctx, base, maxLoginSlugLength, func(candidate string) (bool, error) {
 		o := tenantdb.Organizations
-		return scoped(ctx, o.Where(o.LoginSlug.Eq(candidate))).Exists(ctx, db)
+		return tenantscope.Scoped(ctx, o.Where(o.LoginSlug.Eq(candidate))).Exists(ctx, db)
 	})
 }
 
@@ -216,7 +219,7 @@ func AvailableUsername(ctx context.Context, db *keel.DB, base string) (string, e
 
 	return firstAvailable(ctx, base, maxUsernameLength, func(candidate string) (bool, error) {
 		u := tenantdb.Users
-		return scoped(
+		return tenantscope.Scoped(
 			ctx,
 			u.Where(u.Username.Lower().Eq(strings.ToLower(candidate))),
 		).Exists(ctx, db)

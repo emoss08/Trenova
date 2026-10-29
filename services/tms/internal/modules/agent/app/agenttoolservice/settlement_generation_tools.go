@@ -1,20 +1,22 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementtools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementgenerationtools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*settlementtools.GenerateDriverSettlementTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*settlementgenerationtools.GenerateDriverSettlementTool)(nil)
 
-var _ agentports.ToolValidator = (*settlementtools.GenerateDriverSettlementTool)(nil)
+var _ agenttoolports.ToolValidator = (*settlementgenerationtools.GenerateDriverSettlementTool)(nil)
 
-var _ agentports.ToolResultReporter = (*settlementtools.GenerateDriverSettlementTool)(nil)
+var _ agenttoolports.ToolResultReporter = (*settlementgenerationtools.GenerateDriverSettlementTool)(
+	nil,
+)
 
-var _ agentports.ToolPreviewer = (*settlementtools.GenerateDriverBatchTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*settlementgenerationtools.GenerateDriverBatchTool)(nil)
 
-var _ agentports.ToolValidator = (*settlementtools.GenerateDriverBatchTool)(nil)
+var _ agenttoolports.ToolValidator = (*settlementgenerationtools.GenerateDriverBatchTool)(nil)
 
-var _ agentports.ToolPreviewer = (*settlementtools.GenerateCarrierBatchTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*settlementgenerationtools.GenerateCarrierBatchTool)(nil)
 
-var _ agentports.ToolValidator = (*settlementtools.GenerateCarrierBatchTool)(nil)
+var _ agenttoolports.ToolValidator = (*settlementgenerationtools.GenerateCarrierBatchTool)(nil)

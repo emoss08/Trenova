@@ -7,8 +7,8 @@ import (
 	"mime/multipart"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -41,9 +41,9 @@ type Params struct {
 	SessionRepository sessionports.SessionRepository
 	AuditService      auditports.AuditService
 	Auditor           permissionports.SecurityAuditor
-	Realtime          agentports.RealtimeService
+	Realtime          realtimeports.RealtimeService
 	Storage           kernelports.Client
-	Config            *config.Config
+	StorageConfig     *storageconfig.Config
 	Validator         *Validator
 	DB                kernelports.Transactor
 	Roles             RoleAssigner
@@ -61,9 +61,9 @@ type Service struct {
 	sr           sessionports.SessionRepository
 	auditService auditports.AuditService
 	auditor      permissionports.SecurityAuditor
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	storage      kernelports.Client
-	storageCfg   *config.StorageConfig
+	storageCfg   *storageconfig.Config
 	validator    *Validator
 	db           kernelports.Transactor
 	roles        RoleAssigner
@@ -84,7 +84,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		auditor:      p.Auditor,
 		realtime:     p.Realtime,
 		storage:      p.Storage,
-		storageCfg:   p.Config.GetStorageConfig(),
+		storageCfg:   p.StorageConfig,
 		validator:    p.Validator,
 		db:           p.DB,
 		roles:        p.Roles,
@@ -224,6 +224,13 @@ func (s *Service) GetByID(
 	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req tenantports.GetUsersByIDsRequest,
+) ([]*tenant.User, error) {
+	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) GetOrganizations(

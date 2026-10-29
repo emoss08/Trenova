@@ -10,12 +10,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/tractorports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -76,7 +78,7 @@ func (r *MutationResolver) PatchTractor(ctx context.Context, id string, input gq
 
 	existing, err := r.TractorService.Get(ctx, tractorports.GetTractorByIDRequest{
 		ID:         tractorID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 	if err != nil {
 		return nil, err
@@ -100,7 +102,7 @@ func (r *MutationResolver) BulkUpdateTractorStatus(ctx context.Context, input gq
 		return nil, err
 	}
 
-	tractorIDs, err := base.ParseIDs(input.TractorIds)
+	tractorIDs, err := gqlid.ParseIDs(input.TractorIds)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +110,7 @@ func (r *MutationResolver) BulkUpdateTractorStatus(ctx context.Context, input gq
 	entities, err := r.TractorService.BulkUpdateStatus(
 		ctx,
 		&tractorports.BulkUpdateTractorStatusRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			TractorIDs: tractorIDs,
 			Status:     input.Status,
 		},
@@ -138,7 +140,7 @@ func (r *MutationResolver) LocateTractor(ctx context.Context, input gqlmodel.Loc
 	result, err := r.TractorService.Locate(
 		ctx,
 		&tractorports.LocateTractorRequest{
-			TenantInfo:    base.TenantInfo(authCtx),
+			TenantInfo:    resolvercore.TenantInfo(authCtx),
 			TractorID:     tractorID,
 			NewLocationID: newLocationID,
 		},
@@ -156,7 +158,7 @@ func (r *QueryResolver) Tractors(ctx context.Context, input gqlmodel.DataTableCo
 		return nil, err
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +213,7 @@ func (r *QueryResolver) Tractor(ctx context.Context, id string) (*tractor.Tracto
 
 	return r.TractorService.Get(ctx, tractorports.GetTractorByIDRequest{
 		ID:         tractorID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		TractorRelationIncludes: tractorRelationIncludes(
 			ctx,
 			"",
@@ -223,15 +225,15 @@ func (r *QueryResolver) Tractor(ctx context.Context, id string) (*tractor.Tracto
 }
 
 func (r *TractorResolver) StateID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
-	return base.IDPtr(obj.StateID), nil
+	return gqlid.IDPtr(obj.StateID), nil
 }
 
 func (r *TractorResolver) FleetCodeID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
-	return base.IDPtr(obj.FleetCodeID), nil
+	return gqlid.IDPtr(obj.FleetCodeID), nil
 }
 
 func (r *TractorResolver) SecondaryWorkerID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
-	return base.IDPtr(obj.SecondaryWorkerID), nil
+	return gqlid.IDPtr(obj.SecondaryWorkerID), nil
 }
 
 func (r *TractorResolver) EquipmentStatus(ctx context.Context, obj *tractor.Tractor) (domaintypes.EquipmentStatus, error) {
@@ -239,11 +241,11 @@ func (r *TractorResolver) EquipmentStatus(ctx context.Context, obj *tractor.Trac
 }
 
 func (r *TractorResolver) LastKnownLocationID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
-	return base.IDPtr(obj.LastKnownLocationID), nil
+	return gqlid.IDPtr(obj.LastKnownLocationID), nil
 }
 
 func (r *TractorResolver) InProgressMoveID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
-	return base.IDPtr(obj.InProgressMoveID), nil
+	return gqlid.IDPtr(obj.InProgressMoveID), nil
 }
 
 func (r *TractorResolver) LastKnownLocation(ctx context.Context, obj *tractor.Tractor) (*gqlmodel.LocationReference, error) {

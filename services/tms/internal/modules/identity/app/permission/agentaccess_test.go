@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreach"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -79,11 +80,11 @@ func agentAccessClosure(
 	}
 
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
+		Return([]*rbac.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: child, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{child}).
-		Return([]*permission.Role{
+		Return([]*rbac.Role{
 			{
 				ID:             child,
 				Name:           "Dispatcher",
@@ -94,7 +95,7 @@ func agentAccessClosure(
 				ID:             parent,
 				Name:           "Assistant user",
 				OrganizationID: orgID,
-				Permissions: []*permission.ResourcePermission{{
+				Permissions: []*rbac.ResourcePermission{{
 					Resource:   permission.ResourceAssistant.String(),
 					Operations: parentOps,
 					DataScope:  permission.DataScopeOrganization,
@@ -303,8 +304,8 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 	grant := func(
 		resource permission.Resource,
 		ops ...permission.Operation,
-	) *permission.ResourcePermission {
-		return &permission.ResourcePermission{
+	) *rbac.ResourcePermission {
+		return &rbac.ResourcePermission{
 			Resource:   resource.String(),
 			Operations: ops,
 			DataScope:  permission.DataScopeOrganization,
@@ -312,29 +313,29 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 	}
 
 	requested := []pulid.ID{full, partial, none, elsewhere}
-	roleRepo.On("GetRolesWithInheritance", mock.Anything, requested).Return([]*permission.Role{
+	roleRepo.On("GetRolesWithInheritance", mock.Anything, requested).Return([]*rbac.Role{
 		{
 			ID: base, OrganizationID: orgID,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceAssistant, permission.OpRead, permission.OpCreate),
 			},
 		},
 		{
 			ID: full, OrganizationID: orgID, ParentRoleIDs: []pulid.ID{base},
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment, permission.OpRead, permission.OpUpdate),
 				grant(permission.ResourceWorker, permission.OpRead),
 			},
 		},
 		{
 			ID: partial, OrganizationID: orgID, ParentRoleIDs: []pulid.ID{base},
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment, permission.OpRead),
 			},
 		},
 		{
 			ID: none, OrganizationID: orgID,
-			Permissions: []*permission.ResourcePermission{
+			Permissions: []*rbac.ResourcePermission{
 				grant(permission.ResourceShipment, permission.OpRead, permission.OpUpdate),
 			},
 		},
@@ -366,14 +367,14 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 		byRole[entry.RoleID] = entry
 	}
 
-	assert.Equal(t, agentdefinition.CoverageFull, byRole[full].Coverage,
+	assert.Equal(t, agentreach.CoverageFull, byRole[full].Coverage,
 		"the assistant is inherited from the base role")
 	assert.Empty(t, byRole[full].MissingResources)
-	assert.Equal(t, agentdefinition.CoveragePartial, byRole[partial].Coverage)
+	assert.Equal(t, agentreach.CoveragePartial, byRole[partial].Coverage)
 	assert.Equal(t,
 		[]permission.Resource{permission.ResourceShipment, permission.ResourceWorker},
 		byRole[partial].MissingResources,
 		"each missing resource is named once")
-	assert.Equal(t, agentdefinition.CoverageNone, byRole[none].Coverage,
+	assert.Equal(t, agentreach.CoverageNone, byRole[none].Coverage,
 		"a role that cannot use the assistant covers nothing")
 }

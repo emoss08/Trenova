@@ -32,7 +32,7 @@ responses:
 script:
   - calls:
       - name: shipment_get
-        args: {shipmentId: shp_01JREDTEAMSH1PMENT00000000}
+        args: {shipmentIds: [shp_01JREDTEAMSH1PMENT00000000]}
   - calls:
       - name: receivable_post_customer_payment
         args:

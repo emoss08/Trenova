@@ -5,7 +5,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carriercapacityports"
@@ -21,7 +25,7 @@ func (r *CarrierCapacityPostingResolver) Rate(
 	ctx context.Context,
 	obj *carriercapacity.Posting,
 ) (*string, error) {
-	return base.NullDecimalStringPtr(obj.Rate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.Rate), nil
 }
 
 //nolint:gocritic // gqlgen resolver signature is generated with a value input parameter
@@ -38,7 +42,7 @@ func (r *MutationResolver) CreateCarrierCapacityPosting(
 		return nil, err
 	}
 
-	entity, err := postingFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := postingFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -62,12 +66,12 @@ func (r *MutationResolver) UpdateCarrierCapacityPosting(
 		return nil, err
 	}
 
-	postingID, err := base.RequiredID("id", id)
+	postingID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
-	entity, err := postingFromInput(&input, base.TenantInfo(authCtx))
+	entity, err := postingFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +95,7 @@ func (r *MutationResolver) DeleteCarrierCapacityPosting(
 		return false, err
 	}
 
-	postingID, err := base.RequiredID("id", id)
+	postingID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return false, err
 	}
@@ -101,7 +105,7 @@ func (r *MutationResolver) DeleteCarrierCapacityPosting(
 		&carriercapacityports.DeleteCarrierCapacityPostingRequest{
 			ID:         postingID,
 			Version:    int64(version),
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		},
 		actorutil.FromAuthContext(authCtx),
 	); err != nil {
@@ -127,12 +131,16 @@ func (r *QueryResolver) CarrierCapacityPostings(
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(
+		ctx,
+		&input,
+		resolvercore.TenantInfo(authCtx),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	carrierFilter, err := base.OptionalScopedID("carrierId", carrierID)
+	carrierFilter, err := gqlid.OptionalScopedID("carrierId", carrierID)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +150,7 @@ func (r *QueryResolver) CarrierCapacityPostings(
 		Cursor:    tableInput.Cursor,
 		CarrierID: carrierFilter,
 	}
-	if base.BoolValue(openOnly) {
+	if gqlscalar.BoolValue(openOnly) {
 		req.OpenAt = timeutils.NowUnix()
 	}
 
@@ -167,13 +175,13 @@ func (r *QueryResolver) CarrierCapacityPosting(
 		return nil, err
 	}
 
-	postingID, err := base.RequiredID("id", id)
+	postingID, err := gqlid.RequiredID("id", id)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.CarrierCapacityService.Get(ctx, &carriercapacityports.GetCarrierCapacityPostingRequest{
 		ID:         postingID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }

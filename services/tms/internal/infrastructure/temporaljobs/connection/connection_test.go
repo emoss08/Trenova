@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/connection"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,7 +34,7 @@ func writeProfileFile(t *testing.T, contents string) string {
 func TestBuildOptions_ConfigPlaintext(t *testing.T) {
 	t.Parallel()
 
-	opts, summary, err := connection.BuildOptions(&config.TemporalConfig{
+	opts, summary, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort: "localhost:7233",
 		Identity: "trenova-test",
 	})
@@ -57,7 +57,7 @@ func TestBuildOptions_ConfigPlaintext(t *testing.T) {
 func TestBuildOptions_ConfigAPIKeyEnablesTLS(t *testing.T) {
 	t.Parallel()
 
-	opts, summary, err := connection.BuildOptions(&config.TemporalConfig{
+	opts, summary, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort:  "example-ns.abc12.tmprl.cloud:7233",
 		Namespace: "example-ns.abc12",
 		APIKey:    "  test-api-key  ",
@@ -75,9 +75,9 @@ func TestBuildOptions_ConfigAPIKeyEnablesTLS(t *testing.T) {
 func TestBuildOptions_ConfigTLSServerName(t *testing.T) {
 	t.Parallel()
 
-	opts, summary, err := connection.BuildOptions(&config.TemporalConfig{
+	opts, summary, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort: "temporal.internal:7233",
-		TLS: config.TemporalTLSConfig{
+		TLS: temporalconfig.TLSConfig{
 			ServerName: "temporal.example.com",
 		},
 	})
@@ -94,9 +94,9 @@ func TestBuildOptions_ConfigInvalidClientCertificate(t *testing.T) {
 	t.Parallel()
 
 	missing := filepath.Join(t.TempDir(), "missing.pem")
-	_, _, err := connection.BuildOptions(&config.TemporalConfig{
+	_, _, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort: "temporal.internal:7233",
-		TLS: config.TemporalTLSConfig{
+		TLS: temporalconfig.TLSConfig{
 			ClientCertPath: missing,
 			ClientKeyPath:  missing,
 		},
@@ -107,14 +107,14 @@ func TestBuildOptions_ConfigInvalidClientCertificate(t *testing.T) {
 func TestBuildOptions_ConfigMissingAddress(t *testing.T) {
 	t.Parallel()
 
-	_, _, err := connection.BuildOptions(&config.TemporalConfig{})
+	_, _, err := connection.BuildOptions(&temporalconfig.Config{})
 	require.ErrorIs(t, err, connection.ErrTemporalAddressRequired)
 }
 
 func TestBuildOptions_Profile(t *testing.T) {
 	path := writeProfileFile(t, cloudProfileTOML)
 
-	opts, summary, err := connection.BuildOptions(&config.TemporalConfig{
+	opts, summary, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort:   "localhost:7233",
 		Namespace:  "ignored",
 		Profile:    " cloud ",
@@ -142,7 +142,7 @@ func TestBuildOptions_ProfileEnvironmentOverride(t *testing.T) {
 	path := writeProfileFile(t, cloudProfileTOML)
 	t.Setenv("TEMPORAL_NAMESPACE", "override-ns.abc12")
 
-	opts, _, err := connection.BuildOptions(&config.TemporalConfig{
+	opts, _, err := connection.BuildOptions(&temporalconfig.Config{
 		Profile:    "cloud",
 		ConfigFile: path,
 	})
@@ -155,7 +155,7 @@ func TestBuildOptions_ProfileRejectsAPIKeyWithoutTLS(t *testing.T) {
 	path := writeProfileFile(t, cloudProfileTOML)
 	t.Setenv("TEMPORAL_TLS", "false")
 
-	_, _, err := connection.BuildOptions(&config.TemporalConfig{
+	_, _, err := connection.BuildOptions(&temporalconfig.Config{
 		Profile:    "cloud",
 		ConfigFile: path,
 	})
@@ -165,7 +165,7 @@ func TestBuildOptions_ProfileRejectsAPIKeyWithoutTLS(t *testing.T) {
 func TestBuildOptions_ProfileNotFound(t *testing.T) {
 	path := writeProfileFile(t, cloudProfileTOML)
 
-	_, _, err := connection.BuildOptions(&config.TemporalConfig{
+	_, _, err := connection.BuildOptions(&temporalconfig.Config{
 		Profile:    "staging",
 		ConfigFile: path,
 	})
@@ -176,7 +176,7 @@ func TestBuildOptions_ProfileNotFound(t *testing.T) {
 func TestBuildOptions_ProfileWithoutAddress(t *testing.T) {
 	path := writeProfileFile(t, "[profile.empty]\nnamespace = \"only-namespace\"\n")
 
-	_, _, err := connection.BuildOptions(&config.TemporalConfig{
+	_, _, err := connection.BuildOptions(&temporalconfig.Config{
 		HostPort:   "localhost:7233",
 		Profile:    "empty",
 		ConfigFile: path,

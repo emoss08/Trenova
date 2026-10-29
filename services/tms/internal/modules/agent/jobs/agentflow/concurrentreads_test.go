@@ -9,7 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/activity"
@@ -51,7 +52,7 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 		Result:   map[string]any{"results": []any{"Acme"}},
 	}
 	h := newHarness(t, harnessParams{
-		query: []agentports.AgentQueryTool{workers, customers},
+		query: []agenttoolports.AgentQueryTool{workers, customers},
 		wrapTool: func(
 			run func(context.Context, converter.EncodedValues) (*ToolResult, error),
 		) func(context.Context, converter.EncodedValues) (*ToolResult, error) {
@@ -79,8 +80,8 @@ func TestRun_ReadsInOneReplyRunAtOnceAndSettleInOrder(t *testing.T) {
 		},
 	})
 	h.replies(
-		&agentports.ChatCompletionResult{
-			ToolCalls: []agentports.ToolCall{
+		&llmports.ChatCompletionResult{
+			ToolCalls: []llmports.ToolCall{
 				{ID: "call_1", Name: "worker_list", Arguments: map[string]any{"status": "Active"}},
 				{ID: "call_2", Name: "search_customer", Arguments: map[string]any{"query": "Acme"}},
 			},

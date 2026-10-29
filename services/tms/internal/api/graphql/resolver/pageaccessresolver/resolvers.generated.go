@@ -3,12 +3,12 @@
 package pageaccessresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	pageaccessservice "github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	PageAccessService *pageaccessservice.Service
 }
 

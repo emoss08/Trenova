@@ -12,10 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edipartnerportsmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -94,16 +96,16 @@ func newTestMonitoringServer(
 
 	port := getFreePort(t)
 	cfg := &config.Config{
-		Server: config.ServerConfig{
+		Server: serverconfig.Config{
 			Host: "127.0.0.1",
 		},
-		Monitoring: config.MonitoringConfig{
-			Metrics: config.MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: metricsEnabled,
 				Port:    port,
 				Path:    "/internal/metricsz",
 			},
-			Health: config.HealthConfig{
+			Health: monitoringconfig.HealthConfig{
 				Path:          "/internal/healthz",
 				ReadinessPath: "/internal/readyz",
 				LivenessPath:  "/internal/livez",
@@ -111,11 +113,11 @@ func newTestMonitoringServer(
 		},
 	}
 
-	metricsRegistry, err := obsmetrics.NewRegistry(cfg, zap.NewNop())
+	metricsRegistry, err := obsmetrics.NewRegistry(&cfg.Monitoring, zap.NewNop())
 	require.NoError(t, err)
 
 	server := &MonitoringServer{
-		cfg:      cfg,
+		cfg:      &cfg.Monitoring,
 		logger:   zap.NewNop(),
 		metrics:  metricsRegistry,
 		database: &fakeDBConnection{healthErr: dbErr},
@@ -142,17 +144,17 @@ func newTestMonitoringServer(
 func withEDIMonitoring(t *testing.T, server *MonitoringServer) {
 	t.Helper()
 
-	ediMessageRepo := ediportsmock.NewMockEDIMessageRepository(t)
+	ediMessageRepo := edimessageportsmock.NewMockEDIMessageRepository(t)
 	ediMessageRepo.On("CountDeadLetteredSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediInboundRepo := ediportsmock.NewMockEDIInboundFileRepository(t)
+	ediInboundRepo := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	ediInboundRepo.On("CountQuarantinedSince", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
 
-	ediProfileRepo := ediportsmock.NewMockEDICommunicationProfileRepository(t)
+	ediProfileRepo := edipartnerportsmock.NewMockEDICommunicationProfileRepository(t)
 	ediProfileRepo.On("CountStaleInboundPollingProfiles", mock.Anything, mock.Anything).
 		Return(int64(0), nil).
 		Once()
@@ -174,7 +176,7 @@ func startTestMonitoringServer(t *testing.T, server *MonitoringServer) {
 
 	require.Eventually(t, func() bool {
 		resp, err := http.Get(
-			"http://" + server.server.Addr + server.cfg.Monitoring.Health.LivenessPath,
+			"http://" + server.server.Addr + server.cfg.Health.LivenessPath,
 		)
 		if err != nil {
 			return false

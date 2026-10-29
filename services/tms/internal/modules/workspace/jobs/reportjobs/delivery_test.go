@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func deliveryTestActivities(cfg *config.ReportingConfig) *Activities {
+func deliveryTestActivities(cfg *reportingconfig.Config) *Activities {
 	return &Activities{cfg: cfg}
 }
 
@@ -43,7 +43,7 @@ func deliveryTestSchedule(delivery *report.ScheduleDelivery) *report.ReportSched
 }
 
 func TestAttachmentPlan(t *testing.T) {
-	a := deliveryTestActivities(&config.ReportingConfig{EmailMaxAttachmentBytes: 8192})
+	a := deliveryTestActivities(&reportingconfig.Config{EmailMaxAttachmentBytes: 8192})
 
 	t.Run("disabled", func(t *testing.T) {
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
@@ -95,7 +95,7 @@ func TestDeliveryFileNameSanitizesTitle(t *testing.T) {
 // because a template author cannot compute the ones that are missing.
 func TestDeliveryEmailContext(t *testing.T) {
 	t.Run("attached, with a download link", func(t *testing.T) {
-		a := deliveryTestActivities(&config.ReportingConfig{
+		a := deliveryTestActivities(&reportingconfig.Config{
 			DeliveryLinkBaseURL: "https://app.example.com/",
 		})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
@@ -129,7 +129,7 @@ func TestDeliveryEmailContext(t *testing.T) {
 	})
 
 	t.Run("too large to attach, and nowhere to link to", func(t *testing.T) {
-		a := deliveryTestActivities(&config.ReportingConfig{EmailMaxAttachmentBytes: 8192})
+		a := deliveryTestActivities(&reportingconfig.Config{EmailMaxAttachmentBytes: 8192})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
 			EmailRecipients: []string{"ops@example.com"},
 			EmailAttach:     true,
@@ -151,7 +151,7 @@ func TestDeliveryEmailContext(t *testing.T) {
 	})
 
 	t.Run("neither attached nor too large says where the file is", func(t *testing.T) {
-		a := deliveryTestActivities(&config.ReportingConfig{})
+		a := deliveryTestActivities(&reportingconfig.Config{})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
 			EmailRecipients: []string{"ops@example.com"},
 		})
@@ -167,7 +167,7 @@ func TestDeliveryEmailContext(t *testing.T) {
 	})
 
 	t.Run("a truncated run says so", func(t *testing.T) {
-		a := deliveryTestActivities(&config.ReportingConfig{})
+		a := deliveryTestActivities(&reportingconfig.Config{})
 		schedule := deliveryTestSchedule(&report.ScheduleDelivery{
 			EmailRecipients: []string{"ops@example.com"},
 		})

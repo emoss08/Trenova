@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -184,6 +185,32 @@ func mapProgramError(err error, id string) error {
 	return dberror.MapRetryableTransactionError(programErrors.Map(err, id), programBusyMessage)
 }
 
+func (r *programRepository) GetByIDs(
+	ctx context.Context,
+	req *fuelsurchargeports.GetFuelSurchargeProgramsByIDsRequest,
+) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
+			if len(req.ProgramIDs) == 0 {
+				return []*fuelsurcharge.FuelSurchargeProgram{}, nil
+			}
+
+			p := fuelsurchargedb.FuelSurchargePrograms
+			entities, err := p.Where(p.ID.In(req.ProgramIDs...)).
+				Limit(len(req.ProgramIDs)).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get fuel surcharge programs", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *programRepository) Create(
 	ctx context.Context,
 	entity *fuelsurcharge.FuelSurchargeProgram,
@@ -272,7 +299,7 @@ func fallbackShipmentsQuery(limit int) *keel.Query[*shipment.AdditionalCharge] {
 			ac.IsSystemGenerated.IsTrue(),
 			ac.FuelSurchargeProgramID.IsNotNull(),
 			ac.FuelSurchargeDetail.Text(usedFallbackDetailPath).Eq("true"),
-			sp.Status.NotIn(shipment.StatusInvoiced, shipment.StatusCanceled),
+			sp.Status.NotIn(shipmentvocab.StatusInvoiced, shipmentvocab.StatusCanceled),
 		).
 		Limit(limit)
 }

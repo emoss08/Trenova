@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/pushconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -53,11 +53,11 @@ func (r *fakePushRepository) DeleteByID(_ context.Context, id pulid.ID) error {
 	return nil
 }
 
-func newTestService(repo *fakePushRepository, push config.PushConfig) *Service {
+func newTestService(repo *fakePushRepository, push pushconfig.Config) *Service {
 	return New(Params{
-		Logger: zap.NewNop(),
-		Config: &config.Config{Push: push},
-		Repo:   repo,
+		Logger:     zap.NewNop(),
+		PushConfig: &push,
+		Repo:       repo,
 	})
 }
 
@@ -78,7 +78,7 @@ func TestSubscribeAcceptsKnownPushServices(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakePushRepository{}
-	service := newTestService(repo, config.PushConfig{})
+	service := newTestService(repo, pushconfig.Config{})
 	for _, endpoint := range []string{
 		"https://fcm.googleapis.com/fcm/send/abc:def",
 		"https://updates.push.services.mozilla.com/wpush/v2/gAAAA",
@@ -98,7 +98,7 @@ func TestSubscribeRefusesEndpointsOutsideTheAllowList(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakePushRepository{}
-	service := newTestService(repo, config.PushConfig{})
+	service := newTestService(repo, pushconfig.Config{})
 	for _, endpoint := range []string{
 		"http://fcm.googleapis.com/fcm/send/abc",
 		"https://169.254.169.254/latest/meta-data/",
@@ -124,7 +124,7 @@ func TestSubscribeHonoursAConfiguredAllowList(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakePushRepository{}
-	service := newTestService(repo, config.PushConfig{
+	service := newTestService(repo, pushconfig.Config{
 		AllowedEndpointHosts: []string{"push.internal.example"},
 	})
 
@@ -145,7 +145,7 @@ func TestSubscribeTruncatesALongUserAgent(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakePushRepository{}
-	service := newTestService(repo, config.PushConfig{})
+	service := newTestService(repo, pushconfig.Config{})
 	req := subscribeRequest("https://fcm.googleapis.com/fcm/send/abc")
 	req.UserAgent = string(make([]byte, 400))
 
@@ -171,7 +171,7 @@ func TestSendToUserNeverPostsToADisallowedEndpoint(t *testing.T) {
 		Auth:     "tBHItJI5svbpez7KI4CCXg",
 	}
 	repo := &fakePushRepository{subscriptions: []*notification.PushSubscription{stored}}
-	service := newTestService(repo, config.PushConfig{
+	service := newTestService(repo, pushconfig.Config{
 		VAPIDPublicKey:  "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U",
 		VAPIDPrivateKey: "UUxI4O8-FbRouAevSmBQ6o18hgE4nSG3qwvJTfKc-ls",
 		Subject:         "mailto:admin@example.com",
@@ -186,7 +186,7 @@ func TestSendToUserNeverPostsToADisallowedEndpoint(t *testing.T) {
 func TestSendToUserUsesTheGuardedClient(t *testing.T) {
 	t.Parallel()
 
-	service := newTestService(&fakePushRepository{}, config.PushConfig{})
+	service := newTestService(&fakePushRepository{}, pushconfig.Config{})
 	request, err := http.NewRequestWithContext(
 		t.Context(),
 		http.MethodPost,

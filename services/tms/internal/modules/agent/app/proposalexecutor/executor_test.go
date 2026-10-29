@@ -6,7 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -22,7 +25,7 @@ type recordingTool struct {
 	operation   permission.Operation
 	err         error
 	calls       int
-	lastParams  agentports.ToolExecuteParams
+	lastParams  agenttoolports.ToolExecuteParams
 	requiresKey bool
 }
 
@@ -30,34 +33,34 @@ func (t *recordingTool) Name() string                { return t.name }
 func (t *recordingTool) Description() string         { return "recording tool" }
 func (t *recordingTool) ParamSchema() map[string]any { return map[string]any{} }
 
-func (t *recordingTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *recordingTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      t.resource,
 		Operation:     t.operation,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    t.requiresKey,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A recording stub.",
 	}
 }
 
-func (t *recordingTool) Execute(_ context.Context, params agentports.ToolExecuteParams) error {
+func (t *recordingTool) Execute(_ context.Context, params *agenttoolports.ToolExecuteParams) error {
 	t.calls++
-	t.lastParams = params
+	t.lastParams = *params
 
 	return t.err
 }
 
-type fakeRegistry struct{ tools []agentports.AgentTool }
+type fakeRegistry struct{ tools []agenttoolports.AgentTool }
 
-func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (r fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	for _, tool := range r.tools {
 		if tool.Name() == name {
 			return tool, true
@@ -67,14 +70,14 @@ func (r fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
 	return nil, false
 }
 
-func (r fakeRegistry) All() []agentports.AgentTool                   { return r.tools }
-func (r fakeRegistry) Descriptors() []agentports.AgentToolDescriptor { return nil }
+func (r fakeRegistry) All() []agenttoolports.AgentTool                   { return r.tools }
+func (r fakeRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
 type recordedExecution struct {
 	status     agent.ProposalStatus
 	executedAt *int64
 	errText    string
-	result     *agent.ToolExecutionResult
+	result     *agentrecord.ToolExecutionResult
 	egress     agent.EgressClass
 	by         pulid.ID
 	version    *int64
@@ -82,12 +85,12 @@ type recordedExecution struct {
 
 type fakeProposalRepo struct {
 	recorded  []recordedExecution
-	simulated []agentports.RecordAgentProposalSimulationRequest
+	simulated []agentproposalports.RecordAgentProposalSimulationRequest
 }
 
 func (r *fakeProposalRepo) RecordExecution(
 	_ context.Context,
-	req agentports.RecordAgentProposalExecutionRequest,
+	req *agentproposalports.RecordAgentProposalExecutionRequest,
 ) (*agent.AgentProposal, error) {
 	r.recorded = append(r.recorded, recordedExecution{
 		status:     req.Status,
@@ -128,11 +131,11 @@ func (noopAudit) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOpt
 }
 
 func newExecutor(
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	repo *fakeProposalRepo,
 	perms *fakePermissions,
 ) *Service {
-	tools := []agentports.AgentTool{}
+	tools := []agenttoolports.AgentTool{}
 	if tool != nil {
 		tools = append(tools, tool)
 	}
@@ -359,9 +362,9 @@ func TestExecute_RecordsFailureWhenTheToolNoLongerExists(t *testing.T) {
 
 func (r *fakeProposalRepo) RecordSimulation(
 	_ context.Context,
-	req agentports.RecordAgentProposalSimulationRequest,
+	req *agentproposalports.RecordAgentProposalSimulationRequest,
 ) (*agent.AgentProposal, error) {
-	r.simulated = append(r.simulated, req)
+	r.simulated = append(r.simulated, *req)
 
 	return &agent.AgentProposal{ID: req.ID, Status: agent.ProposalStatusSimulated}, nil
 }

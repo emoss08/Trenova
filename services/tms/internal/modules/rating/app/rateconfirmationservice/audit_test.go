@@ -4,9 +4,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,7 +45,7 @@ func TestConfirmByTokenLogsSystemPrincipalAudit(t *testing.T) {
 	assignment := &shipment.CarrierAssignment{
 		ID:        entity.CarrierAssignmentID,
 		CarrierID: entity.CarrierID,
-		Status:    shipment.CarrierAssignmentStatusPending,
+		Status:    shipmentvocab.CarrierAssignmentStatusPending,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).
 		Return(assignment, nil)

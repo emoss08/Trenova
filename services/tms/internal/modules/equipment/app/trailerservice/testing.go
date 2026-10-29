@@ -2,12 +2,12 @@ package trailerservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 )
 
 func NewTestValidator() *Validator {
 	return &Validator{
-		validator: validationframework.NewTenantedValidatorBuilder[*trailer.Trailer]().
+		validator: tenantedvalidation.NewBuilder[*trailer.Trailer]().
 			WithModelName("Trailer").
 			Build(),
 	}

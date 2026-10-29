@@ -10,7 +10,7 @@ import (
 	"iter"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturecoversheet"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/imagingtest"
 	"github.com/stretchr/testify/require"
@@ -44,7 +44,7 @@ func render(t *testing.T, modules []string) []byte {
 }
 
 func TestTheWorkerReadsAnEncodedSheetBackAsItsPayload(t *testing.T) {
-	payload := capture.CoverSheetPayload("dGhpcy1pcy1hLXJhbmRvbS10b2tlbi1mb3ItdGVzdGluZw")
+	payload := capturecoversheet.CoverSheetPayload("dGhpcy1pcy1hLXJhbmRvbS10b2tlbi1mb3ItdGVzdGluZw")
 	code, err := New().Encode(payload)
 	require.NoError(t, err)
 

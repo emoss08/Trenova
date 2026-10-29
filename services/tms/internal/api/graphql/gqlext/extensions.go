@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"go.uber.org/fx"
 )
 
@@ -51,7 +51,7 @@ func NewCostLimitedSchema(es graphql.ExecutableSchema) graphql.ExecutableSchema 
 	return newCostLimitedSchema(es)
 }
 
-func ErrorPresenter(cfg *config.Config) graphql.ErrorPresenterFunc {
+func ErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 	return newErrorPresenter(cfg)
 }
 

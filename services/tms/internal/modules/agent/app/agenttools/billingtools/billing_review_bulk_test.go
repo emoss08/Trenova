@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -115,16 +117,26 @@ func TestAssignBillingQueueBiller_DefaultsToThePersonAsking(t *testing.T) {
 	item := waitingItem("INV-6001")
 	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewAssignBillerTool(queue).(*AssignBillerTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamBillingQueueItemID: item.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
+	)
 
 	require.NoError(t, tool.Validate(t.Context(), params))
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "InReview", agenttoolstest.FieldByPath(t, change, "status").After)
 	require.NotNil(t, agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef)
-	assert.Equal(t, params.Actor.UserID, agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef.ID)
+	assert.Equal(
+		t,
+		params.Actor.UserID,
+		agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef.ID,
+	)
 	assert.Contains(t, preview.Summary, "the person who asked")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -141,7 +153,9 @@ func TestAssignBillingQueueBiller_AnAgentMustNameTheBiller(t *testing.T) {
 	item := waitingItem("INV-6002")
 	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewAssignBillerTool(queue).(*AssignBillerTool)
-	params := agenttoolstest.AgentParamsFor(map[string]any{common.ParamBillingQueueItemID: item.ID.String()})
+	params := agenttoolstest.AgentParamsFor(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
+	)
 
 	err := tool.Validate(t.Context(), params)
 	require.Error(t, err)
@@ -155,7 +169,13 @@ func TestAssignBillingQueueBiller_AnAgentMustNameTheBiller(t *testing.T) {
 func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testing.T) {
 	t.Parallel()
 
-	first, second, third := waitingItem("INV-7001"), waitingItem("INV-7002"), waitingItem("INV-7003")
+	first, second, third := waitingItem(
+		"INV-7001",
+	), waitingItem(
+		"INV-7002",
+	), waitingItem(
+		"INV-7003",
+	)
 	posted := agenttoolstest.ReviewedItem(billingqueue.StatusPosted)
 	posted.Number = "INV-7004"
 	queue := newFakeQueueSet(first, second, third, posted)
@@ -169,32 +189,50 @@ func TestAssignBillingQueueBillers_AssignsOnePersonToEveryItemInOneCall(t *testi
 	assert.Equal(t, []agent.EgressClass{agent.EgressInternal}, policy.Egress)
 
 	ids := []any{first.ID.String(), second.ID.String(), third.ID.String(), posted.ID.String()}
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamBillingQueueItemIDs: ids})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemIDs: ids},
+	)
 
-	previewer, ok := tool.(agentports.ToolPreviewer)
+	previewer, ok := tool.(agenttoolports.ToolPreviewer)
 	require.True(t, ok)
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return previewer.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return previewer.Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t,
 		"Would assign a biller to 4 billing queue items: 3 would be assigned, 1 would be refused.",
 		preview.Summary,
 	)
 	require.Len(t, preview.Changes, 4)
 	assert.Equal(t, posted.ID, preview.Changes[0].EntityID, "refusals are listed first")
-	refusedOutcome, _ := agenttoolstest.FieldByPath(t, &preview.Changes[0], common.BulkOutcomeField).After.(string)
+	refusedOutcome, _ := agenttoolstest.FieldByPath(t, &preview.Changes[0], recordbatch.BulkOutcomeField).After.(string)
 	assert.True(t, strings.HasPrefix(refusedOutcome, "Refused:"), refusedOutcome)
-	assert.Contains(t, agenttoolstest.FieldByPath(t, &preview.Changes[1], common.BulkOutcomeField).After, "the person who asked")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, &preview.Changes[1], recordbatch.BulkOutcomeField).After,
+		"the person who asked",
+	)
 
-	validator, ok := tool.(agentports.ToolValidator)
+	validator, ok := tool.(agenttoolports.ToolValidator)
 	require.True(t, ok)
-	require.NoError(t, validator.Validate(t.Context(), params), "one refusal among three that go is not a refusal of the call")
+	require.NoError(
+		t,
+		validator.Validate(t.Context(), params),
+		"one refusal among three that go is not a refusal of the call",
+	)
 
-	reporter, ok := tool.(agentports.ToolResultReporter)
+	reporter, ok := tool.(agenttoolports.ToolResultReporter)
 	require.True(t, ok)
 	result, err := reporter.ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err, "the single may run on its own, so the twin may too")
-	assert.Equal(t, "3 of 4 assigned; refused: INV-7004 (Cannot assign a biller to a billing queue item in Posted status)", result.Name)
+	assert.Equal(
+		t,
+		"3 of 4 assigned; refused: INV-7004 (Cannot assign a biller to a billing queue item in Posted status)",
+		result.Name,
+	)
 	for _, item := range []*billingqueue.BillingQueueItem{first, second, third} {
 		require.NotNil(t, item.AssignedBillerID, item.Number)
 		assert.Equal(t, params.Actor.UserID, *item.AssignedBillerID, item.Number)
@@ -211,8 +249,8 @@ func TestAssignBillingQueueBillers_NamesTheBillerItWasGiven(t *testing.T) {
 	tool := NewAssignBillersTool(queue)
 	biller := pulid.MustNew("usr_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemIDs: []any{item.ID.String()},
-		paramBillerID:                   biller.String(),
+		billingqueuepreview.ParamBillingQueueItemIDs: []any{item.ID.String()},
+		paramBillerID: biller.String(),
 	})
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -230,20 +268,30 @@ func TestTransitionToInReview_NamesThePersonAskingWhenTheItemHasNoBiller(t *test
 	item := waitingItem("INV-8001")
 	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewTransitionToInReviewTool(queue).(*TransitionToInReviewTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamBillingQueueItemID: item.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
+	)
 
 	target, ok := tool.Target(params.Params)
 	require.True(t, ok, "a plan of these steps runs each on its own record")
 	assert.Equal(t, item.ID, target.ID)
 
 	require.NoError(t, tool.Validate(t.Context(), params))
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, "InReview", agenttoolstest.FieldByPath(t, change, "status").After)
 	require.NotNil(t, agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef)
-	assert.Equal(t, params.Actor.UserID, agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef.ID)
+	assert.Equal(
+		t,
+		params.Actor.UserID,
+		agenttoolstest.FieldByPath(t, change, "assignedBillerId").AfterRef.ID,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, billingqueue.StatusInReview, queue.item.Status)
@@ -259,7 +307,9 @@ func TestTransitionToInReview_AHeldItemKeepsItsBillerAndMoves(t *testing.T) {
 	biller := *item.AssignedBillerID
 	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewTransitionToInReviewTool(queue).(*TransitionToInReviewTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamBillingQueueItemID: item.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, billingqueue.StatusInReview, queue.item.Status)
@@ -272,7 +322,9 @@ func TestTransitionToInReview_AnAgentCannotMoveANamelessItem(t *testing.T) {
 	item := waitingItem("INV-8002")
 	queue := &fakeQueue{item: item, guard: &agenttoolstest.WriteGuard{}}
 	tool := NewTransitionToInReviewTool(queue).(*TransitionToInReviewTool)
-	params := agenttoolstest.AgentParamsFor(map[string]any{common.ParamBillingQueueItemID: item.ID.String()})
+	params := agenttoolstest.AgentParamsFor(
+		map[string]any{billingqueuepreview.ParamBillingQueueItemID: item.ID.String()},
+	)
 
 	err := tool.Validate(t.Context(), params)
 	require.Error(t, err)
@@ -287,14 +339,18 @@ func TestTransitionItemsToInReview_MovesEveryItemInOneCall(t *testing.T) {
 	tool := NewTransitionItemsToInReviewTool(queue)
 	assert.Equal(t, "billing_start_review", tool.Name())
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamBillingQueueItemIDs: []any{first.ID.String(), second.ID.String()},
+		billingqueuepreview.ParamBillingQueueItemIDs: []any{first.ID.String(), second.ID.String()},
 	})
 
-	previewer, ok := tool.(agentports.ToolPreviewer)
+	previewer, ok := tool.(agenttoolports.ToolPreviewer)
 	require.True(t, ok)
-	preview := agenttoolstest.PreviewWithoutWrites(t, queue.guard, func() (*agent.ToolPreview, error) {
-		return previewer.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		queue.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return previewer.Preview(t.Context(), params)
+		},
+	)
 	assert.Equal(t,
 		"Would move into review 2 billing queue items: 2 would be moved into review.",
 		preview.Summary,

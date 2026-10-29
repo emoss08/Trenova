@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -81,18 +82,18 @@ func (a *Activities) refreshTrainingRollups(ctx context.Context, state *training
 
 type trainingLister func(
 	ctx context.Context,
-	req *workerports.ListTrainingRemindersRequest,
-) ([]*worker.WorkerTrainingRecord, error)
+	req *workertrainingports.ListTrainingRemindersRequest,
+) ([]*workertraining.WorkerTrainingRecord, error)
 
 func (a *Activities) walkTraining(
 	ctx context.Context,
 	state *trainingSweepState,
 	list trainingLister,
-	handle func(context.Context, *trainingSweepState, *worker.WorkerTrainingRecord) error,
+	handle func(context.Context, *trainingSweepState, *workertraining.WorkerTrainingRecord) error,
 ) error {
 	var after pulid.ID
 	for {
-		page, err := list(ctx, &workerports.ListTrainingRemindersRequest{
+		page, err := list(ctx, &workertrainingports.ListTrainingRemindersRequest{
 			HorizonDays: sweepHorizonDays,
 			GraceDays:   sweepGraceDays,
 			AfterID:     after,
@@ -126,14 +127,14 @@ func (a *Activities) walkTraining(
 func (a *Activities) sweepDueTraining(
 	ctx context.Context,
 	state *trainingSweepState,
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 ) error {
 	if record.Worker == nil || record.Course == nil || record.DueAt == nil {
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: record.OrganizationID, BuID: record.BusinessUnitID}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-	daysLeft := worker.DaysUntil(*record.DueAt, state.now)
+	daysLeft := workercredential.DaysUntil(*record.DueAt, state.now)
 	if trainingStep(daysLeft) < 0 {
 		return nil
 	}
@@ -173,14 +174,14 @@ func (a *Activities) sweepDueTraining(
 func (a *Activities) sweepExpiringTraining(
 	ctx context.Context,
 	state *trainingSweepState,
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 ) error {
 	if record.Worker == nil || record.Course == nil || record.ExpiresAt == nil {
 		return nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: record.OrganizationID, BuID: record.BusinessUnitID}
 	tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-	daysLeft := worker.DaysUntil(*record.ExpiresAt, state.now)
+	daysLeft := workercredential.DaysUntil(*record.ExpiresAt, state.now)
 
 	if daysLeft < 0 {
 		if _, err := a.training.MarkExpired(tenantCtx, record); err != nil {
@@ -273,7 +274,7 @@ func trainingDate(value *int64) string {
 func (a *Activities) notifyDriverTraining(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 	daysLeft int64,
 	renewal bool,
 ) (bool, error) {
@@ -292,7 +293,7 @@ func (a *Activities) notifyDriverTraining(
 		WorkerID:   record.WorkerID,
 		EventType:  eventDriverTrainingDue,
 		Priority:   notification.PriorityHigh,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			CourseName: record.Course.Name,
 			DueInDays:  int(daysLeft),
 			DueAt:      trainingDate(dueAt),
@@ -306,7 +307,7 @@ func (a *Activities) notifyDriverTraining(
 func (a *Activities) alertTraining(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	record *worker.WorkerTrainingRecord,
+	record *workertraining.WorkerTrainingRecord,
 	daysLeft int64,
 	eventType string,
 ) (bool, error) {

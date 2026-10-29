@@ -8,6 +8,9 @@ import (
 	csrfutil "github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -147,26 +150,26 @@ func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 	t.Helper()
 
 	cfg := &config.Config{
-		App: config.AppConfig{Debug: true},
-		Security: config.SecurityConfig{
-			Session: config.SessionConfig{
+		App: appconfig.Config{Debug: true},
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				Name:   "session_id",
 				Secret: "test-session-secret",
 			},
-			CSRF: config.CSRFConfig{
+			CSRF: securityconfig.CSRFConfig{
 				HeaderName: "X-CSRF-Token",
 				TokenName:  "csrf_token",
-				BrowserGuard: config.CSRFBrowserGuardConfig{
+				BrowserGuard: securityconfig.CSRFBrowserGuardConfig{
 					Mode: "report",
 				},
 			},
 		},
 	}
 	middleware := NewCSRFMiddleware(
-		cfg,
+		&cfg.Security,
 		helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 	)
 
@@ -202,19 +205,19 @@ func newCSRFBrowserGuardRouter(t *testing.T, mode string) *gin.Engine {
 	t.Helper()
 
 	cfg := &config.Config{
-		Server: config.ServerConfig{
-			CORS: config.CORSConfig{
+		Server: serverconfig.Config{
+			CORS: serverconfig.CORSConfig{
 				AllowedOrigins: []string{"https://app.example.test"},
 			},
 		},
-		Security: config.SecurityConfig{
-			Session: config.SessionConfig{
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				Name: "session_id",
 			},
-			CSRF: config.CSRFConfig{
+			CSRF: securityconfig.CSRFConfig{
 				HeaderName: "X-CSRF-Token",
 				TokenName:  "csrf_token",
-				BrowserGuard: config.CSRFBrowserGuardConfig{
+				BrowserGuard: securityconfig.CSRFBrowserGuardConfig{
 					Mode: mode,
 				},
 			},
@@ -223,10 +226,11 @@ func newCSRFBrowserGuardRouter(t *testing.T, mode string) *gin.Engine {
 
 	router := gin.New()
 	router.Use(NewCSRFBrowserGuard(
-		cfg,
+		&cfg.Security,
+		&cfg.Server,
 		helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		zap.NewNop(),
 	).Guard())

@@ -3,29 +3,49 @@ package migrations
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/accountingbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturepairing"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/onboarding"
@@ -91,19 +111,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_ai_retraining_cycles_status",
-			values: stringsOf(aitraining.AllRetrainingStatuses()),
+			values: stringsOf(airetraining.AllRetrainingStatuses()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_trigger",
-			values: stringsOf(aitraining.AllRetrainingTriggers()),
+			values: stringsOf(airetraining.AllRetrainingTriggers()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_skip_reason",
-			values: stringsOf(aitraining.AllRetrainingSkipReasons()),
+			values: stringsOf(airetraining.AllRetrainingSkipReasons()),
 		},
 		{
 			name:   "ck_ai_providers_reasoning_effort",
-			values: stringsOf(aiprovider.AllReasoningEfforts()),
+			values: stringsOf(aireasoning.AllReasoningEfforts()),
 		},
 		{
 			name:   "ck_ai_retraining_cycles_structured_output_mode",
@@ -131,7 +151,7 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_connections_status",
-			values: stringsOf(accountingsync.AllConnectionStatuses()),
+			values: stringsOf(accountingconnection.AllConnectionStatuses()),
 		},
 		{
 			name:   "ck_accounting_connections_last_error_category",
@@ -139,39 +159,39 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_connections_setup_step",
-			values: stringsOf(accountingsync.AllSetupSteps()),
+			values: stringsOf(accountingconnection.AllSetupSteps()),
 		},
 		{
 			name:   "ck_accounting_reference_objects_kind",
-			values: stringsOf(accountingsync.AllReferenceKinds()),
+			values: stringsOf(accountingprovider.AllReferenceKinds()),
 		},
 		{
 			name:   "ck_accounting_reference_objects_account_class",
-			values: stringsOf(accountingsync.AllAccountClasses()),
+			values: stringsOf(accountingmapping.AllAccountClasses()),
 		},
 		{
 			name:   "ck_accounting_connections_integration_type",
-			values: stringsOf(accountingsync.AccountingSystems()),
+			values: stringsOf(accountingprovider.AccountingSystems()),
 		},
 		{
 			name:   "ck_accounting_app_credentials_integration_type",
-			values: stringsOf(accountingsync.AccountingSystems()),
+			values: stringsOf(accountingprovider.AccountingSystems()),
 		},
 		{
 			name:   "ck_accounting_connections_auth_method",
-			values: stringsOf(accountingsync.AllAuthMethods()),
+			values: stringsOf(accountingconnection.AllAuthMethods()),
 		},
 		{
 			name:   "ck_accounting_pending_certificates_integration_type",
-			values: stringsOf(accountingsync.ClientCredentialsSystems()),
+			values: stringsOf(accountingprovider.ClientCredentialsSystems()),
 		},
 		{
 			name:   "ck_accounting_webhook_subscriptions_status",
-			values: stringsOf(accountingsync.AllWebhookSubscriptionStatuses()),
+			values: stringsOf(accountingconnection.AllWebhookSubscriptionStatuses()),
 		},
 		{
 			name:   "ck_accounting_webhook_subscriptions_integration_type",
-			values: stringsOf(accountingsync.WebhookSubscriptionSystems()),
+			values: stringsOf(accountingprovider.WebhookSubscriptionSystems()),
 		},
 		{
 			name:   "ck_accounting_mappings_target_type",
@@ -179,15 +199,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_mappings_provider_kind",
-			values: stringsOf(accountingsync.AllReferenceKinds()),
+			values: stringsOf(accountingprovider.AllReferenceKinds()),
 		},
 		{
 			name:   "ck_accounting_mappings_state",
-			values: stringsOf(accountingsync.AllMappingStates()),
+			values: stringsOf(accountingmapping.AllMappingStates()),
 		},
 		{
 			name:   "ck_accounting_mappings_source",
-			values: stringsOf(accountingsync.AllMappingSources()),
+			values: stringsOf(accountingmapping.AllMappingSources()),
 		},
 		{
 			name:   "ck_accounting_sync_records_object_type",
@@ -219,11 +239,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_backfills_status",
-			values: stringsOf(accountingsync.AllBackfillStatuses()),
+			values: stringsOf(accountingbackfill.AllBackfillStatuses()),
 		},
 		{
 			name:   "ck_accounting_connections_inbound_payment_policy",
-			values: stringsOf(accountingsync.AllInboundPaymentPolicies()),
+			values: stringsOf(accountingconnection.AllInboundPaymentPolicies()),
 		},
 		{
 			name:   "ck_accounting_connections_changes_error_category",
@@ -231,15 +251,15 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_inbound_changes_kind",
-			values: stringsOf(accountingsync.AllInboundChangeKinds()),
+			values: stringsOf(accountinginbound.AllInboundChangeKinds()),
 		},
 		{
 			name:   "ck_accounting_inbound_changes_status",
-			values: stringsOf(accountingsync.AllInboundChangeStatuses()),
+			values: stringsOf(accountinginbound.AllInboundChangeStatuses()),
 		},
 		{
 			name:   "ck_accounting_inbound_changes_reason",
-			values: stringsOf(accountingsync.AllInboundChangeReasons()),
+			values: stringsOf(accountinginbound.AllInboundChangeReasons()),
 		},
 		{
 			name:   "ck_accounting_connections_drift_error_category",
@@ -251,19 +271,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_accounting_drift_findings_kind",
-			values: stringsOf(accountingsync.AllDriftKinds()),
+			values: stringsOf(accountingdrift.AllDriftKinds()),
 		},
 		{
 			name:   "ck_accounting_drift_findings_status",
-			values: stringsOf(accountingsync.AllDriftStatuses()),
+			values: stringsOf(accountingdrift.AllDriftStatuses()),
 		},
 		{
 			name:   "ck_accounting_drift_findings_resolution",
-			values: stringsOf(accountingsync.AllDriftResolutions()),
+			values: stringsOf(accountingdrift.AllDriftResolutions()),
 		},
 		{
 			name:   "ck_agent_definitions_template",
-			values: stringsOf(agentdefinition.AllTemplates()),
+			values: stringsOf(agenttemplate.AllTemplates()),
 		},
 		{
 			name:   "ck_agent_extensions_type",
@@ -271,19 +291,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_agent_portal_runs_mode",
-			values: stringsOf(agentextension.AllPortalRunModes()),
+			values: stringsOf(extensionportal.AllPortalRunModes()),
 		},
 		{
 			name:   "ck_agent_portal_runs_status",
-			values: stringsOf(agentextension.AllPortalRunStatuses()),
+			values: stringsOf(extensionportal.AllPortalRunStatuses()),
 		},
 		{
 			name:   "ck_agent_web_watches_cadence",
-			values: stringsOf(agentextension.AllWebWatchCadences()),
+			values: stringsOf(extensionwebwatch.AllWebWatchCadences()),
 		},
 		{
 			name:   "ck_agent_web_watches_status",
-			values: stringsOf(agentextension.AllWebWatchStatuses()),
+			values: stringsOf(extensionwebwatch.AllWebWatchStatuses()),
 		},
 		{
 			name:   "ck_agent_analysis_runs_status",
@@ -323,11 +343,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_assistant_turns_origin",
-			values: stringsOf(conversation.AllAssistantTurnOrigins()),
+			values: stringsOf(conversationturn.AllAssistantTurnOrigins()),
 		},
 		{
 			name:   "ck_assistant_thread_chapters_title_source",
-			values: stringsOf(conversation.AllChapterTitleSources()),
+			values: stringsOf(conversationchapter.AllChapterTitleSources()),
 		},
 		{
 			name:   "ck_agent_waits_kind",
@@ -347,39 +367,39 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "chk_agent_evaluations_status",
-			values: stringsOf(agent.AllEvaluationStatuses()),
+			values: stringsOf(agentevaluation.AllEvaluationStatuses()),
 		},
 		{
 			name:   "chk_agent_memories_kind",
-			values: stringsOf(agent.AllMemoryKinds()),
+			values: stringsOf(agentmemory.AllMemoryKinds()),
 		},
 		{
 			name:   "chk_agent_memories_source",
-			values: stringsOf(agent.AllMemorySources()),
+			values: stringsOf(agentmemory.AllMemorySources()),
 		},
 		{
 			name:   "chk_agent_memories_status",
-			values: stringsOf(agent.AllMemoryStatuses()),
+			values: stringsOf(agentmemory.AllMemoryStatuses()),
 		},
 		{
 			name:   "chk_agent_memories_scope",
-			values: stringsOf(agent.AllMemoryScopes()),
+			values: stringsOf(agentmemory.AllMemoryScopes()),
 		},
 		{
 			name:   "chk_agent_memory_preferences_saving_mode",
-			values: stringsOf(agent.AllMemorySavingModes()),
+			values: stringsOf(agentmemory.AllMemorySavingModes()),
 		},
 		{
 			name:   "ck_agent_reflections_subject_type",
-			values: stringsOf(agent.AllReflectionSubjects()),
+			values: stringsOf(agentreflection.AllReflectionSubjects()),
 		},
 		{
 			name:   "ck_agent_reflections_status",
-			values: stringsOf(agent.AllReflectionStatuses()),
+			values: stringsOf(agentreflection.AllReflectionStatuses()),
 		},
 		{
 			name:   "ck_agent_reflections_skip_reason",
-			values: stringsOf(agent.AllReflectionSkips()),
+			values: stringsOf(agentreflection.AllReflectionSkips()),
 		},
 		{
 			name:   "ck_agent_profiles_subject",
@@ -427,11 +447,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_agent_suite_runs_status",
-			values: stringsOf(agentquality.AllSuiteRunStatuses()),
+			values: stringsOf(agentqualitysuite.AllSuiteRunStatuses()),
 		},
 		{
 			name:   "ck_agent_suite_runs_trigger",
-			values: stringsOf(agentquality.AllSuiteRunTriggers()),
+			values: stringsOf(agentqualitysuite.AllSuiteRunTriggers()),
 		},
 		{
 			name:   "ck_ai_providers_embedding_input_style",
@@ -439,11 +459,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_ai_providers_thinking_style",
-			values: stringsOf(aiprovider.AllThinkingStyles()),
+			values: stringsOf(aireasoning.AllThinkingStyles()),
 		},
 		{
 			name:   "ck_ai_providers_platform",
-			values: stringsOf(aiprovider.AllPlatforms()),
+			values: stringsOf(aiplatform.AllPlatforms()),
 		},
 		{
 			name:   "ck_ai_providers_on_cap",
@@ -535,11 +555,11 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_capture_pairings_status",
-			values: stringsOf(capture.AllPairingStatuses()),
+			values: stringsOf(capturepairing.AllPairingStatuses()),
 		},
 		{
 			name:   "ck_capture_profiles_status",
-			values: stringsOf(capture.AllProfileStatuses()),
+			values: stringsOf(captureprofile.AllProfileStatuses()),
 		},
 		{
 			name:   "ck_capture_profiles_pixel_type",
@@ -547,19 +567,19 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		},
 		{
 			name:   "ck_capture_profiles_separator_strategies",
-			values: stringsOf(capture.AllSeparatorStrategies()),
+			values: stringsOf(captureprofile.AllSeparatorStrategies()),
 		},
 		{
 			name:   "ck_capture_requests_mode",
-			values: stringsOf(capture.AllRequestModes()),
+			values: stringsOf(capturerequest.AllRequestModes()),
 		},
 		{
 			name:   "ck_capture_requests_status",
-			values: stringsOf(capture.AllRequestStatuses()),
+			values: stringsOf(capturerequest.AllRequestStatuses()),
 		},
 		{
 			name:   "ck_capture_requests_failure_code",
-			values: stringsOf(capture.AllRequestFailureCodes()),
+			values: stringsOf(capturerequest.AllRequestFailureCodes()),
 		},
 		{
 			name:   "ck_capture_batches_source",

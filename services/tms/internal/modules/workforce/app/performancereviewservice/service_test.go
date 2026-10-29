@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,15 +22,15 @@ import (
 )
 
 type fakeRepo struct {
-	workerports.PerformanceReviewRepository
-	templates []*worker.PerformanceReviewTemplate
-	reviews   []*worker.PerformanceReview
+	workerreviewports.PerformanceReviewRepository
+	templates []*workerreview.PerformanceReviewTemplate
+	reviews   []*workerreview.PerformanceReview
 }
 
 func (f *fakeRepo) GetTemplateByID(
 	_ context.Context,
-	req *workerports.GetReviewTemplateByIDRequest,
-) (*worker.PerformanceReviewTemplate, error) {
+	req *workerreviewports.GetReviewTemplateByIDRequest,
+) (*workerreview.PerformanceReviewTemplate, error) {
 	for _, t := range f.templates {
 		if t.ID == req.ID {
 			return t, nil
@@ -41,7 +41,7 @@ func (f *fakeRepo) GetTemplateByID(
 
 func (f *fakeRepo) TemplateCodeExists(
 	context.Context,
-	*workerports.ReviewTemplateCodeExistsRequest,
+	*workerreviewports.ReviewTemplateCodeExistsRequest,
 ) (bool, error) {
 	return false, nil
 }
@@ -61,8 +61,8 @@ func (f *fakeRepo) ClearDefaultTemplate(
 
 func (f *fakeRepo) CreateTemplate(
 	_ context.Context,
-	t *worker.PerformanceReviewTemplate,
-) (*worker.PerformanceReviewTemplate, error) {
+	t *workerreview.PerformanceReviewTemplate,
+) (*workerreview.PerformanceReviewTemplate, error) {
 	t.ID = pulid.MustNew("prt_")
 	f.templates = append(f.templates, t)
 	return t, nil
@@ -70,9 +70,9 @@ func (f *fakeRepo) CreateTemplate(
 
 func (f *fakeRepo) ListReviews(
 	_ context.Context,
-	req *workerports.ListPerformanceReviewsRequest,
-) ([]*worker.PerformanceReview, error) {
-	out := make([]*worker.PerformanceReview, 0, len(f.reviews))
+	req *workerreviewports.ListPerformanceReviewsRequest,
+) ([]*workerreview.PerformanceReview, error) {
+	out := make([]*workerreview.PerformanceReview, 0, len(f.reviews))
 	for _, r := range f.reviews {
 		if r.WorkerID != req.WorkerID {
 			continue
@@ -95,8 +95,8 @@ func (f *fakeRepo) ListReviews(
 
 func (f *fakeRepo) GetReviewByID(
 	_ context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
-) (*worker.PerformanceReview, error) {
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
+) (*workerreview.PerformanceReview, error) {
 	for _, r := range f.reviews {
 		if r.ID == req.ID {
 			copied := *r
@@ -115,8 +115,8 @@ func (f *fakeRepo) GetReviewByID(
 
 func (f *fakeRepo) CreateReview(
 	_ context.Context,
-	r *worker.PerformanceReview,
-) (*worker.PerformanceReview, error) {
+	r *workerreview.PerformanceReview,
+) (*workerreview.PerformanceReview, error) {
 	for _, existing := range f.reviews {
 		if existing.WorkerID == r.WorkerID && existing.TemplateID == r.TemplateID &&
 			existing.Status.IsOpen() {
@@ -130,8 +130,8 @@ func (f *fakeRepo) CreateReview(
 
 func (f *fakeRepo) UpdateReview(
 	_ context.Context,
-	r *worker.PerformanceReview,
-) (*worker.PerformanceReview, error) {
+	r *workerreview.PerformanceReview,
+) (*workerreview.PerformanceReview, error) {
 	for i, existing := range f.reviews {
 		if existing.ID == r.ID {
 			r.Version = existing.Version + 1
@@ -144,7 +144,7 @@ func (f *fakeRepo) UpdateReview(
 
 func (f *fakeRepo) DeleteReview(
 	_ context.Context,
-	req *workerports.GetPerformanceReviewByIDRequest,
+	req *workerreviewports.GetPerformanceReviewByIDRequest,
 ) error {
 	for i, r := range f.reviews {
 		if r.ID == req.ID {
@@ -160,7 +160,7 @@ type harness struct {
 	repo     *fakeRepo
 	tenant   pagination.TenantInfo
 	wrk      *worker.Worker
-	template *worker.PerformanceReviewTemplate
+	template *workerreview.PerformanceReviewTemplate
 	userID   pulid.ID
 }
 
@@ -179,10 +179,10 @@ func newHarness(t *testing.T) *harness {
 	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	cadence := int32(6)
-	repo := &fakeRepo{templates: []*worker.PerformanceReviewTemplate{{
+	repo := &fakeRepo{templates: []*workerreview.PerformanceReviewTemplate{{
 		ID: pulid.MustNew("prt_"), OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		Code: "DRIVER-ANNUAL", Name: "Driver Review", Status: domaintypes.StatusActive, CadenceMonths: &cadence,
-		Items: []worker.ReviewItem{
+		Items: []workerreview.ReviewItem{
 			{Key: "safety", Label: "Safety", Weight: 3},
 			{Key: "service", Label: "Customer service", Weight: 1},
 		},
@@ -215,7 +215,7 @@ func TestReviewLifecycle(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusDraft, draft.Status)
+	assert.Equal(t, workerreview.ReviewStatusDraft, draft.Status)
 	assert.Equal(t, h.userID, draft.ReviewerID)
 	require.Len(t, draft.Ratings, 2, "items are copied from the template")
 	assert.Contains(t, draft.Title, "Driver Review")
@@ -237,13 +237,13 @@ func TestReviewLifecycle(t *testing.T) {
 		context.Background(),
 		&performancereviewservice.UpdateReviewRequest{
 			TenantInfo: h.tenant, ID: draft.ID,
-			Ratings: []worker.ReviewRating{
+			Ratings: []workerreview.ReviewRating{
 				{Key: "safety", Score: &five, Comment: "Spotless"},
 				{Key: "service", Score: &three},
 				{Key: "bogus", Score: &five},
 			},
 			Summary: "Strong year on the road.",
-			Goals:   []worker.ReviewGoal{{Title: "Complete hazmat refresher"}, {Title: "  "}},
+			Goals:   []workerreview.ReviewGoal{{Title: "Complete hazmat refresher"}, {Title: "  "}},
 			UserID:  h.userID,
 		},
 	)
@@ -254,7 +254,7 @@ func TestReviewLifecycle(t *testing.T) {
 	assert.Equal(t, "4.50", saved.OverallScore.Decimal.StringFixed(2))
 	require.Len(t, saved.Goals, 1, "blank goals are dropped")
 	assert.NotEmpty(t, saved.Goals[0].ID)
-	assert.Equal(t, worker.ReviewGoalStatusOpen, saved.Goals[0].Status)
+	assert.Equal(t, workerreview.ReviewGoalStatusOpen, saved.Goals[0].Status)
 
 	submitted, err := h.svc.SubmitReview(
 		context.Background(),
@@ -263,7 +263,7 @@ func TestReviewLifecycle(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusSubmitted, submitted.Status)
+	assert.Equal(t, workerreview.ReviewStatusSubmitted, submitted.Status)
 	require.NotNil(t, submitted.SubmittedAt)
 
 	_, err = h.svc.UpdateReview(context.Background(), &performancereviewservice.UpdateReviewRequest{
@@ -288,7 +288,7 @@ func TestReviewLifecycle(t *testing.T) {
 		"Thanks — agreed on the goal.",
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusAcknowledged, acked.Status)
+	assert.Equal(t, workerreview.ReviewStatusAcknowledged, acked.Status)
 	assert.True(t, acked.IsAcknowledged())
 
 	closed, err := h.svc.CloseReview(
@@ -298,7 +298,7 @@ func TestReviewLifecycle(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusClosed, closed.Status)
+	assert.Equal(t, workerreview.ReviewStatusClosed, closed.Status)
 	require.NotNil(t, closed.NextReviewAt)
 	assert.Equal(
 		t,
@@ -311,7 +311,10 @@ func TestReviewLifecycle(t *testing.T) {
 		context.Background(),
 		h.tenant,
 		h.wrk.ID,
-		[]worker.ReviewStatus{worker.ReviewStatusSubmitted, worker.ReviewStatusClosed},
+		[]workerreview.ReviewStatus{
+			workerreview.ReviewStatusSubmitted,
+			workerreview.ReviewStatusClosed,
+		},
 	)
 	require.NoError(t, err)
 	assert.Len(t, visible, 1)
@@ -332,7 +335,7 @@ func TestReopenAndDelete(t *testing.T) {
 	four := int32(4)
 	_, err = h.svc.UpdateReview(context.Background(), &performancereviewservice.UpdateReviewRequest{
 		TenantInfo: h.tenant, ID: draft.ID, Summary: "Solid start.",
-		Ratings: []worker.ReviewRating{
+		Ratings: []workerreview.ReviewRating{
 			{Key: "safety", Score: &four},
 			{Key: "service", Score: &four},
 		},
@@ -358,7 +361,7 @@ func TestReopenAndDelete(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.ReviewStatusDraft, reopened.Status)
+	assert.Equal(t, workerreview.ReviewStatusDraft, reopened.Status)
 	assert.Nil(t, reopened.SubmittedAt)
 
 	require.NoError(t, h.svc.DeleteReview(context.Background(), h.tenant, draft.ID, h.userID))
@@ -368,18 +371,22 @@ func TestCreateTemplate_DefaultSwapsAndValidates(t *testing.T) {
 	h := newHarness(t)
 	h.template.IsDefault = true
 
-	_, err := h.svc.CreateTemplate(context.Background(), &worker.PerformanceReviewTemplate{
+	_, err := h.svc.CreateTemplate(context.Background(), &workerreview.PerformanceReviewTemplate{
 		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, Code: "empty", Name: "Empty",
 		Status: domaintypes.StatusActive,
 	}, h.userID)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "a template needs items")
 
-	created, err := h.svc.CreateTemplate(context.Background(), &worker.PerformanceReviewTemplate{
-		OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, Code: "otr-quarterly", Name: "OTR Quarterly",
-		Status: domaintypes.StatusActive, IsDefault: true,
-		Items: []worker.ReviewItem{{Key: "safety", Label: "Safety", Weight: 1}},
-	}, h.userID)
+	created, err := h.svc.CreateTemplate(
+		context.Background(),
+		&workerreview.PerformanceReviewTemplate{
+			OrganizationID: h.tenant.OrgID, BusinessUnitID: h.tenant.BuID, Code: "otr-quarterly", Name: "OTR Quarterly",
+			Status: domaintypes.StatusActive, IsDefault: true,
+			Items: []workerreview.ReviewItem{{Key: "safety", Label: "Safety", Weight: 1}},
+		},
+		h.userID,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "OTR-QUARTERLY", created.Code)
 	assert.True(t, created.IsDefault)

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,10 +45,10 @@ func TestCompleteChat_CarriesTheRequestsReasoningAndToolChoice(t *testing.T) {
 
 	server, captured := capturingChatServer(t)
 	provider := chatProvider("chat", server.URL, 10)
-	provider.ReasoningEffort = aiprovider.ReasoningHigh
+	provider.ReasoningEffort = aireasoning.ReasoningHigh
 
 	req := chatRequest(provider.ID)
-	req.Reasoning = aiprovider.ReasoningLow
+	req.Reasoning = aireasoning.ReasoningLow
 	req.ToolChoiceNone = true
 	req.Tools = []kernelports.ToolSpec{{
 		Name:        "lookup_shipment",

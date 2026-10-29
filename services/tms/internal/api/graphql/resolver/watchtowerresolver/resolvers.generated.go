@@ -3,12 +3,12 @@
 package watchtowerresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	watchtowerports "github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WatchtowerService    watchtowerports.WatchtowerService
 	WatchtowerExceptions watchtowerports.ExceptionService
 }

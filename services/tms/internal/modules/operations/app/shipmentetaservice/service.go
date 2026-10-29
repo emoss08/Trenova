@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -29,8 +30,8 @@ const positionLookbackSeconds = int64(24 * 60 * 60)
 type BoardMoveLister interface {
 	ListBoardMoves(
 		ctx context.Context,
-		filter *shipmentports.DispatchBoardFilter,
-	) ([]*shipmentports.BoardMove, error)
+		filter *dispatchboardports.DispatchBoardFilter,
+	) ([]*dispatchboardports.BoardMove, error)
 }
 
 type WorkerLister interface {
@@ -78,7 +79,7 @@ type ReaderParams struct {
 	fx.In
 
 	Shipments       shipmentports.ShipmentTrackingRepository
-	Console         shipmentports.DispatchConsoleRepository
+	Console         dispatchboardports.DispatchConsoleRepository
 	Telematics      telematicsports.TelematicsRepository
 	ServiceFailures servicefailureports.ServiceFailureRepository
 	StopEtas        stopetaports.Repository
@@ -88,15 +89,15 @@ type RefresherParams struct {
 	fx.In
 
 	Shipments        shipmentports.ShipmentTrackingRepository
-	Console          shipmentports.DispatchConsoleRepository
+	Console          dispatchboardports.DispatchConsoleRepository
 	Telematics       telematicsports.TelematicsRepository
 	ServiceFailures  servicefailureports.ServiceFailureRepository
 	StopEtas         stopetaports.Repository
 	CheckCalls       checkcallports.CheckCallRepository
 	DispatchControls dispatchcontrolports.DispatchControlRepository
 	Routes           routeestimateports.RouteEstimator
-	Realtime         agentports.RealtimeService `optional:"true"`
-	Observers        []stopetaports.Observer    `group:"stop_eta_observers"`
+	Realtime         realtimeports.RealtimeService `optional:"true"`
+	Observers        []stopetaports.Observer       `group:"stop_eta_observers"`
 	Logger           *zap.Logger
 }
 
@@ -110,7 +111,7 @@ type Dependencies struct {
 	CheckCalls      CheckCallReader
 	Controls        ControlReader
 	Routes          routeestimateports.RouteEstimator
-	Realtime        agentports.RealtimeService
+	Realtime        realtimeports.RealtimeService
 	Observers       []stopetaports.Observer
 	Logger          *zap.Logger
 	Now             func() time.Time
@@ -126,7 +127,7 @@ type Service struct {
 	calls     CheckCallReader
 	controls  ControlReader
 	routes    routeestimateports.RouteEstimator
-	realtime  agentports.RealtimeService
+	realtime  realtimeports.RealtimeService
 	observers []stopetaports.Observer
 	l         *zap.Logger
 	now       func() time.Time

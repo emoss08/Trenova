@@ -6,9 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -16,9 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -26,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -154,13 +157,13 @@ func (r *memoryLinks) Touch(context.Context, pagination.TenantInfo, pulid.ID, in
 }
 
 type fakeMoves struct {
-	shipmentports.ShipmentMoveRepository
+	shipmentmoveports.ShipmentMoveRepository
 	move *shipment.ShipmentMove
 }
 
 func (f *fakeMoves) GetByID(
 	_ context.Context,
-	req *shipmentports.GetMoveByIDRequest,
+	req *shipmentmoveports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	if f.move == nil || req.MoveID != f.move.ID {
 		return nil, errortypes.NewNotFoundError("Shipment move")
@@ -180,7 +183,7 @@ func (fakeShipments) GetByID(
 }
 
 type fakeAssignments struct {
-	shipmentports.CarrierAssignmentRepository
+	carrierassignmentports.CarrierAssignmentRepository
 	assignment *shipment.CarrierAssignment
 }
 
@@ -344,8 +347,8 @@ func newHarness(t *testing.T) *harness {
 	}
 	pickup := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypePickup,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypePickup,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 0,
 		Location: &location.Location{
 			Name:  "Shipper DC",
@@ -355,15 +358,15 @@ func newHarness(t *testing.T) *harness {
 	}
 	delivery := &shipment.Stop{
 		ID:       pulid.MustNew("stp_"),
-		Type:     shipment.StopTypeDelivery,
-		Status:   shipment.StopStatusNew,
+		Type:     shipmentvocab.StopTypeDelivery,
+		Status:   shipmentvocab.StopStatusNew,
 		Sequence: 1,
 	}
 	move := &shipment.ShipmentMove{
 		ID:           pulid.MustNew("smv_"),
 		ShipmentID:   pulid.MustNew("shp_"),
-		Status:       shipment.MoveStatusInTransit,
-		CoverageType: shipment.MoveCoverageTypeCarrier,
+		Status:       shipmentvocab.MoveStatusInTransit,
+		CoverageType: shipmentvocab.MoveCoverageTypeCarrier,
 		Stops:        []*shipment.Stop{pickup, delivery},
 	}
 	carrierID := pulid.MustNew("car_")
@@ -374,7 +377,7 @@ func newHarness(t *testing.T) *harness {
 		moves:      &fakeMoves{move: move},
 		assignments: &fakeAssignments{assignment: &shipment.CarrierAssignment{
 			CarrierID: carrierID,
-			Status:    shipment.CarrierAssignmentStatusConfirmed,
+			Status:    shipmentvocab.CarrierAssignmentStatusConfirmed,
 		}},
 		tracking:  &fakeTracking{outcome: trackingevent.OutcomeApplied},
 		templates: &fakeTemplates{},
@@ -391,11 +394,12 @@ func newHarness(t *testing.T) *harness {
 		carrierID: carrierID,
 	}
 	h.svc = New(Params{
-		DB:     dbtest.NopConnection{},
-		Logger: zap.NewNop(),
-		Config: &config.Config{Tendering: config.TenderingConfig{
+		DB:        dbtest.NopConnection{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
+		TenderingConfig: &tenderingconfig.Config{
 			PublicBaseURL: "https://app.example.com/",
-		}},
+		},
 		Repo:                h.checkCalls,
 		Links:               h.links,
 		MoveRepo:            h.moves,
@@ -489,7 +493,7 @@ func TestLog_AnArrivalBecomesADispatcherTrackingEvent(t *testing.T) {
 	require.Len(t, h.tracking.reported, 1)
 	reported := h.tracking.reported[0]
 	assert.Equal(t, trackingevent.SourceAgent, reported.Source)
-	assert.Equal(t, shipmentports.StopActualActionArrive, reported.Action)
+	assert.Equal(t, shipmentmoveports.StopActualActionArrive, reported.Action)
 	assert.Equal(t, "run_1:call_2", reported.SourceKey)
 	assert.Equal(t, testNow-300, *reported.OccurredAt)
 	assert.Equal(t, h.delivery.ID, result.CheckCall.StopID)
@@ -616,10 +620,13 @@ func TestIssueLink_RefusesLoadsItCannotTrack(t *testing.T) {
 	t.Parallel()
 
 	for name, setup := range map[string]func(*harness){
-		"own fleet":     func(h *harness) { h.move.CoverageType = shipment.MoveCoverageTypeDriver },
-		"completed":     func(h *harness) { h.move.Status = shipment.MoveStatusCompleted },
-		"no carrier":    func(h *harness) { h.assignments.assignment = nil },
-		"no public url": func(h *harness) { h.svc.cfg = &config.Config{} },
+		"own fleet":  func(h *harness) { h.move.CoverageType = shipmentvocab.MoveCoverageTypeDriver },
+		"completed":  func(h *harness) { h.move.Status = shipmentvocab.MoveStatusCompleted },
+		"no carrier": func(h *harness) { h.assignments.assignment = nil },
+		"no public url": func(h *harness) {
+			h.svc.appConfig = &appconfig.Config{}
+			h.svc.tenderingConfig = &tenderingconfig.Config{}
+		},
 	} {
 		h := newHarness(t)
 		setup(h)
@@ -711,7 +718,7 @@ func TestPostByToken_RecordsACarrierArrival(t *testing.T) {
 	require.Len(t, h.tracking.observed, 1)
 	observed := h.tracking.observed[0]
 	assert.Equal(t, trackingevent.SourceCarrier, observed.Source)
-	assert.Equal(t, shipment.VisitArrival, observed.Kind)
+	assert.Equal(t, shipmentvocab.VisitArrival, observed.Kind)
 	assert.Equal(t, trackingevent.MatchDirect, observed.MatchMethod)
 	assert.Equal(t, testNow, observed.EventAt, "a time ahead of the server is read as now")
 	assert.Equal(t, "ctl:"+issued.Link.ID.String()+":tap-1", observed.SourceKey)
@@ -754,7 +761,7 @@ func TestPostByToken_EveryDeadLinkGetsTheSameAnswer(t *testing.T) {
 		"carrier replaced": func(h *harness, _ *checkcallports.IssuedTrackingLink) string {
 			h.assignments.assignment = &shipment.CarrierAssignment{
 				CarrierID: pulid.MustNew("car_"),
-				Status:    shipment.CarrierAssignmentStatusConfirmed,
+				Status:    shipmentvocab.CarrierAssignmentStatusConfirmed,
 			}
 			return ""
 		},
@@ -785,7 +792,7 @@ func TestPostByToken_AFinishedLoadIsReadOnly(t *testing.T) {
 
 	h := newHarness(t)
 	token := tokenOf(t, h.issue(t, ""))
-	h.move.Status = shipment.MoveStatusCompleted
+	h.move.Status = shipmentvocab.MoveStatusCompleted
 
 	view, err := h.svc.PreviewByToken(t.Context(), token)
 	require.NoError(t, err)
@@ -896,7 +903,7 @@ func TestLog_RefusesACanceledLoad(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t)
-	h.move.Status = shipment.MoveStatusCanceled
+	h.move.Status = shipmentvocab.MoveStatusCanceled
 
 	_, err := h.svc.Log(t.Context(), &checkcallports.LogCheckCallRequest{
 		TenantInfo: h.tenant,

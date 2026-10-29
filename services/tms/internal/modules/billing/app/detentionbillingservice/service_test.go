@@ -5,14 +5,14 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,13 +67,13 @@ func (f *fakeOccurrences) Update(
 type fakeEvidence struct {
 	detentionports.DetentionEvidenceRepository
 
-	appended []*detention.DetentionEvidence
+	appended []*detentionevidence.DetentionEvidence
 }
 
 func (f *fakeEvidence) Append(
 	_ context.Context,
 	req *detentionports.AppendEvidenceRequest,
-) (*detention.DetentionEvidence, error) {
+) (*detentionevidence.DetentionEvidence, error) {
 	f.appended = append(f.appended, req.Entry)
 	return req.Entry, nil
 }
@@ -109,7 +109,10 @@ func newFixture(t *testing.T) *fixture {
 	t.Helper()
 
 	f := &fixture{
-		tenant:      pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		tenant: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
 		shipmentID:  pulid.MustNew("shp_"),
 		chargeID:    pulid.MustNew("ac_"),
 		invoiceID:   pulid.MustNew("inv_"),
@@ -176,13 +179,16 @@ func (f *fixture) sync(
 	t.Helper()
 
 	ctx, hooks := kernelports.WithAfterCommitHooks(t.Context())
-	require.NoError(t, f.svc.SyncInvoiceBilling(ctx, &detentionports.SyncDetentionInvoiceBillingRequest{
-		TenantInfo:    f.tenant,
-		InvoiceIDs:    []pulid.ID{f.invoiceID, f.invoiceID},
-		InvoiceNumber: "INV-1001",
-		Event:         event,
-		ActorUserID:   f.userID,
-	}))
+	require.NoError(
+		t,
+		f.svc.SyncInvoiceBilling(ctx, &detentionports.SyncDetentionInvoiceBillingRequest{
+			TenantInfo:    f.tenant,
+			InvoiceIDs:    []pulid.ID{f.invoiceID, f.invoiceID},
+			InvoiceNumber: "INV-1001",
+			Event:         event,
+			ActorUserID:   f.userID,
+		}),
+	)
 
 	return hooks, ctx
 }
@@ -209,8 +215,8 @@ func TestSyncInvoiceBillingMarksTheChargesOnANewInvoiceBilled(t *testing.T) {
 
 	require.Len(t, f.evidence.appended, 2)
 	for _, entry := range f.evidence.appended {
-		assert.Equal(t, detention.EvidenceKindStatusChange, entry.Kind)
-		assert.Equal(t, detention.EvidenceSourceSystem, entry.Source)
+		assert.Equal(t, detentionevidence.EvidenceKindStatusChange, entry.Kind)
+		assert.Equal(t, detentionevidence.EvidenceSourceSystem, entry.Source)
 		assert.Equal(t, "Billed on invoice INV-1001 at 180.00 USD", entry.Summary)
 		require.NotNil(t, entry.RecordedByID)
 		assert.Equal(t, f.userID, *entry.RecordedByID)
@@ -295,7 +301,8 @@ func TestGuardShipmentsRefusesAndNamesEveryHeldCharge(t *testing.T) {
 
 	var business *errortypes.BusinessError
 	require.ErrorAs(t, err, &business)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"2 detention charges on this shipment still need approval before the shipment can be billed. "+
 			"Approve or waive them on the detention desk first.",
 		business.Error(),
@@ -311,24 +318,30 @@ func TestGuardShipmentsPassesAPendingChargeThatNeedsNoApproval(t *testing.T) {
 	f := newFixture(t)
 	f.occurrences.holds = []*detention.DetentionOccurrence{}
 
-	require.NoError(t, f.svc.GuardShipments(t.Context(), &detentionports.DetentionBillingHoldsRequest{
-		TenantInfo:  f.tenant,
-		ShipmentIDs: []pulid.ID{f.shipmentID},
-	}))
+	require.NoError(
+		t,
+		f.svc.GuardShipments(t.Context(), &detentionports.DetentionBillingHoldsRequest{
+			TenantInfo:  f.tenant,
+			ShipmentIDs: []pulid.ID{f.shipmentID},
+		}),
+	)
 }
 
 func (f *fixture) syncWaiving(t *testing.T, waivers ...detentionports.DetentionWaiver) {
 	t.Helper()
 
 	ctx, _ := kernelports.WithAfterCommitHooks(t.Context())
-	require.NoError(t, f.svc.SyncInvoiceBilling(ctx, &detentionports.SyncDetentionInvoiceBillingRequest{
-		TenantInfo:    f.tenant,
-		InvoiceIDs:    []pulid.ID{f.invoiceID},
-		InvoiceNumber: "INV-1001",
-		Event:         detentionports.DetentionBillingInvoiceAdjusted,
-		ActorUserID:   f.userID,
-		Waivers:       waivers,
-	}))
+	require.NoError(
+		t,
+		f.svc.SyncInvoiceBilling(ctx, &detentionports.SyncDetentionInvoiceBillingRequest{
+			TenantInfo:    f.tenant,
+			InvoiceIDs:    []pulid.ID{f.invoiceID},
+			InvoiceNumber: "INV-1001",
+			Event:         detentionports.DetentionBillingInvoiceAdjusted,
+			ActorUserID:   f.userID,
+			Waivers:       waivers,
+		}),
+	)
 }
 
 func TestSyncInvoiceBillingWaivesACreditedChargeTheAdjustmentWasForWaiving(t *testing.T) {
@@ -358,12 +371,12 @@ func TestSyncInvoiceBillingWaivesACreditedChargeTheAdjustmentWasForWaiving(t *te
 	assert.Equal(t, detention.OccurrenceStatusApproved, other.Status)
 
 	require.Len(t, f.evidence.appended, 2)
-	assert.Equal(t, detention.EvidenceKindWaiver, f.evidence.appended[0].Kind)
+	assert.Equal(t, detentionevidence.EvidenceKindWaiver, f.evidence.appended[0].Kind)
 	assert.Equal(t,
 		"Waived 180.00 USD after invoice INV-1001 was credited: Decided in Triage",
 		f.evidence.appended[0].Summary,
 	)
-	assert.Equal(t, detention.EvidenceKindStatusChange, f.evidence.appended[1].Kind)
+	assert.Equal(t, detentionevidence.EvidenceKindStatusChange, f.evidence.appended[1].Kind)
 }
 
 func TestSyncInvoiceBillingLeavesAWaiverAloneWhileAnInvoiceStillBillsTheCharge(t *testing.T) {
@@ -479,7 +492,12 @@ func TestSyncInvoiceBillingIsIdempotentForEveryStatus(t *testing.T) {
 		{detention.OccurrenceStatusDisputed, true, detention.OccurrenceStatusDisputed, false},
 		{detention.OccurrenceStatusDisputed, false, detention.OccurrenceStatusDisputed, false},
 		{detention.OccurrenceStatusNotBillable, true, detention.OccurrenceStatusNotBillable, false},
-		{detention.OccurrenceStatusNotBillable, false, detention.OccurrenceStatusNotBillable, false},
+		{
+			detention.OccurrenceStatusNotBillable,
+			false,
+			detention.OccurrenceStatusNotBillable,
+			false,
+		},
 	}
 
 	for _, tc := range cases {

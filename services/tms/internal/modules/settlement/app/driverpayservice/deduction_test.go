@@ -5,7 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,13 +20,13 @@ type fakePayCodeRepo struct {
 	getByID func(
 		ctx context.Context,
 		req driverpayports.GetPayCodeByIDRequest,
-	) (*driverpay.PayCode, error)
+	) (*paycode.PayCode, error)
 }
 
 func (f *fakePayCodeRepo) GetByID(
 	ctx context.Context,
 	req driverpayports.GetPayCodeByIDRequest,
-) (*driverpay.PayCode, error) {
+) (*paycode.PayCode, error) {
 	return f.getByID(ctx, req)
 }
 
@@ -32,25 +34,25 @@ type fakeDeductionRepo struct {
 	driverpayports.RecurringDeductionRepository
 	create func(
 		ctx context.Context,
-		entity *driverpay.RecurringDeduction,
-	) (*driverpay.RecurringDeduction, error)
+		entity *recurringpay.RecurringDeduction,
+	) (*recurringpay.RecurringDeduction, error)
 }
 
 func (f *fakeDeductionRepo) Create(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
-) (*driverpay.RecurringDeduction, error) {
+	entity *recurringpay.RecurringDeduction,
+) (*recurringpay.RecurringDeduction, error) {
 	return f.create(ctx, entity)
 }
 
-func newDeductionEntity() *driverpay.RecurringDeduction {
-	return &driverpay.RecurringDeduction{
+func newDeductionEntity() *recurringpay.RecurringDeduction {
+	return &recurringpay.RecurringDeduction{
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OrganizationID: pulid.MustNew("org_"),
 		WorkerID:       pulid.MustNew("wrk_"),
 		PayCodeID:      pulid.MustNew("payc_"),
-		Status:         driverpay.DeductionStatusActive,
-		Frequency:      driverpay.DeductionFrequencyEverySettlement,
+		Status:         recurringpay.DeductionStatusActive,
+		Frequency:      recurringpay.DeductionFrequencyEverySettlement,
 		Description:    "Escrow contribution",
 		AmountMinor:    25_000,
 		StartDate:      timeutils.NowUnix(),
@@ -58,8 +60,8 @@ func newDeductionEntity() *driverpay.RecurringDeduction {
 	}
 }
 
-func deductionPayCode(direction driverpay.PayCodeDirection) *driverpay.PayCode {
-	return &driverpay.PayCode{
+func deductionPayCode(direction paycode.PayCodeDirection) *paycode.PayCode {
+	return &paycode.PayCode{
 		ID:        pulid.MustNew("payc_"),
 		Direction: direction,
 		Code:      "ESCROW",
@@ -72,8 +74,8 @@ func TestCreateDeduction_RejectsEarningPayCode(t *testing.T) {
 	svc, _ := newTestService()
 
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
-			return deductionPayCode(driverpay.PayCodeDirectionEarning), nil
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*paycode.PayCode, error) {
+			return deductionPayCode(paycode.PayCodeDirectionEarning), nil
 		},
 	}
 
@@ -88,17 +90,17 @@ func TestCreateDeduction_AutoLinksActiveEscrowAccount(t *testing.T) {
 
 	account := activeEscrowAccount(0)
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
-			return deductionPayCode(driverpay.PayCodeDirectionDeduction), nil
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*paycode.PayCode, error) {
+			return deductionPayCode(paycode.PayCodeDirectionDeduction), nil
 		},
 	}
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
 	svc.deductionRepo = &fakeDeductionRepo{
-		create: func(_ context.Context, entity *driverpay.RecurringDeduction) (*driverpay.RecurringDeduction, error) {
+		create: func(_ context.Context, entity *recurringpay.RecurringDeduction) (*recurringpay.RecurringDeduction, error) {
 			entity.ID = pulid.MustNew("rded_")
 			return entity, nil
 		},
@@ -120,12 +122,12 @@ func TestCreateDeduction_AutoLinkFailsWithoutActiveEscrowAccount(t *testing.T) {
 	svc, _ := newTestService()
 
 	svc.payCodeRepo = &fakePayCodeRepo{
-		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*driverpay.PayCode, error) {
-			return deductionPayCode(driverpay.PayCodeDirectionDeduction), nil
+		getByID: func(context.Context, driverpayports.GetPayCodeByIDRequest) (*paycode.PayCode, error) {
+			return deductionPayCode(paycode.PayCodeDirectionDeduction), nil
 		},
 	}
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*payescrow.EscrowAccount, error) {
 			return nil, errors.New("not found")
 		},
 	}

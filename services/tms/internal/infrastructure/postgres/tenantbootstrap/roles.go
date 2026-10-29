@@ -5,8 +5,11 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -16,18 +19,18 @@ const (
 )
 
 type AdminRoleParams struct {
-	Scope     Scope
+	Scope     tenantscope.Scope
 	CreatedBy pulid.ID
-	Registry  *permission.Registry
+	Registry  *permissioncatalog.Registry
 }
 
 func CreateAdminRole(
 	ctx context.Context,
 	db *keel.DB,
 	params AdminRoleParams,
-) (*permission.Role, error) {
-	now := params.Scope.now()
-	role := &permission.Role{
+) (*rbac.Role, error) {
+	now := params.Scope.NowUnix()
+	role := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		BusinessUnitID: params.Scope.BusinessUnitID,
 		OrganizationID: params.Scope.OrganizationID,
@@ -40,17 +43,17 @@ func CreateAdminRole(
 		UpdatedAt:      now,
 	}
 
-	if err := permissiondb.Roles.Create(ctx, db, role); err != nil {
+	if err := rbacdb.Roles.Create(ctx, db, role); err != nil {
 		return nil, fmt.Errorf("create admin role: %w", err)
 	}
 
 	registry := params.Registry
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	grants := planAdminGrants(registry, role.ID, nil, now).add
-	if err := permissiondb.ResourcePermissions.CreateMany(ctx, db, grants); err != nil {
+	if err := rbacdb.ResourcePermissions.CreateMany(ctx, db, grants); err != nil {
 		return nil, fmt.Errorf("grant the admin role every resource: %w", err)
 	}
 
@@ -66,7 +69,7 @@ type RoleAssignmentParams struct {
 }
 
 func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) error {
-	assignment := &permission.UserRoleAssignment{
+	assignment := &rbac.UserRoleAssignment{
 		ID:             pulid.MustNew("ura_"),
 		UserID:         params.UserID,
 		OrganizationID: params.OrganizationID,
@@ -75,7 +78,7 @@ func AssignRole(ctx context.Context, db *keel.DB, params RoleAssignmentParams) e
 		AssignedAt:     params.AssignedAt,
 	}
 
-	if err := permissiondb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
+	if err := rbacdb.UserRoleAssignments.Create(ctx, db, assignment); err != nil {
 		return fmt.Errorf("assign role %s to user %s: %w", params.RoleID, params.UserID, err)
 	}
 

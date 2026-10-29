@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,8 +46,8 @@ func embeddingProbeServer(t *testing.T, returnedDims int) (*httptest.Server, *at
 func newTestProber() *Prober {
 	return &Prober{
 		logger:   zap.NewNop(),
-		cfg:      &config.AIConfig{},
-		adapters: modeladapter.NewRegistry(),
+		cfg:      &aiconfig.Config{},
+		adapters: adapterregistry.NewRegistry(),
 		clients:  make(map[bool]*http.Client, 2),
 	}
 }
@@ -59,7 +60,7 @@ func embeddingOnlyProvider(baseURL string, dims int) *aiprovider.Provider {
 		BaseURL:             baseURL,
 		Model:               "voyage-3.5",
 		AllowPrivateNetwork: true,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dims,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
 		Enabled:             true,

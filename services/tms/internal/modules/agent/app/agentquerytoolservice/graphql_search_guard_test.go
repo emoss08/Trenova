@@ -6,6 +6,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/graphqllisttool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/readspec"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -93,27 +97,27 @@ func TestConvertedLists_GuardEveryFieldTheirQueryMatches(t *testing.T) {
 	specs := graphQLListSpecs()
 	for idx := range specs {
 		spec := &specs[idx]
-		built, err := newGraphQLReadTool(spec, nil, &mocks.DenyResourcesPermissionEngine{})
-		require.NoError(t, err, spec.name)
-		tool, paged := built.(*graphQLListTool)
+		built, err := graphqllisttool.NewRead(spec, nil, &mocks.DenyResourcesPermissionEngine{})
+		require.NoError(t, err, spec.Name)
+		tool, paged := built.(*graphqllisttool.Tool)
 		if !paged {
 			continue
 		}
 		properties, _ := tool.ParamSchema()["properties"].(map[string]any)
-		if _, offered := properties[paramQuery]; !offered {
+		if _, offered := properties[querytool.ParamQuery]; !offered {
 			continue
 		}
 
 		switch {
-		case tool.input != "":
-			require.NotNil(t, tool.read.Entity, "%s: a table input's query needs the record "+
-				"its search configuration belongs to", spec.name)
-			entity := tool.read.Entity()
+		case tool.Input != "":
+			require.NotNil(t, tool.Read.Entity, "%s: a table input's query needs the record "+
+				"its search configuration belongs to", spec.Name)
+			entity := tool.Read.Entity()
 			config := entity.GetPostgresSearchConfig()
 			if config.UseSearchVector {
 				vector, built := vectors[entity.GetTableName()]
 				require.True(t, built, "%s: %s searches a vector no migration builds",
-					spec.name, entity.GetTableName())
+					spec.Name, entity.GetTableName())
 				named := make([]string, 0, len(config.SearchableFields))
 				for _, field := range config.SearchableFields {
 					named = append(named, field.Name)
@@ -121,31 +125,31 @@ func TestConvertedLists_GuardEveryFieldTheirQueryMatches(t *testing.T) {
 				for _, column := range vector {
 					assert.Contains(t, named, column, "%s: the search vector of %s matches %s, "+
 						"which its search configuration does not name, so the guard cannot "+
-						"judge it", spec.name, entity.GetTableName(), column)
+						"judge it", spec.Name, entity.GetTableName(), column)
 				}
 			}
-			assert.NotEmpty(t, tool.searched, "%s: its query matches no field", spec.name)
+			assert.NotEmpty(t, tool.Searched, "%s: its query matches no field", spec.Name)
 		default:
-			_, exempt := searchedElsewhere[spec.name]
-			assert.True(t, len(spec.searches) > 0 || exempt, "%s: a bespoke search names the "+
+			_, exempt := searchedElsewhere[spec.Name]
+			assert.True(t, len(spec.Searches) > 0 || exempt, "%s: a bespoke search names the "+
 				"fields it matches in searches, or says in searchedElsewhere why it reveals "+
-				"nothing withheld", spec.name)
+				"nothing withheld", spec.Name)
 		}
 
-		hidden := slices.ContainsFunc(tool.searched, func(field string) bool {
-			resource, name := tool.fieldOwner(field)
+		hidden := slices.ContainsFunc(tool.Searched, func(field string) bool {
+			resource, name := tool.FieldOwner(field)
 			return !fieldsensitivity.Visible(registry, resource, name,
 				permission.SensitivityInternal)
 		})
-		call := keyedCall(map[string]any{paramQuery: "probe"})
+		call := querytooltest.KeyedCall(map[string]any{querytool.ParamQuery: "probe"})
 		call.DataAccessCeiling = permission.SensitivityInternal
-		refused := tool.refuseSearch(t.Context(), call) != nil
+		refused := tool.RefuseSearch(t.Context(), call) != nil
 		assert.Equal(t, hidden, refused, "%s: at Internal a query is refused exactly when it "+
-			"matches a withheld field (%s)", spec.name, strings.Join(tool.searched, ", "))
+			"matches a withheld field (%s)", spec.Name, strings.Join(tool.Searched, ", "))
 	}
 	for name := range searchedElsewhere {
-		assert.True(t, slices.ContainsFunc(specs, func(spec graphQLListSpec) bool {
-			return spec.name == name
+		assert.True(t, slices.ContainsFunc(specs, func(spec readspec.List) bool {
+			return spec.Name == name
 		}), "searchedElsewhere names %s, which is no converted list", name)
 	}
 }
@@ -182,20 +186,20 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 			t.Parallel()
 
 			spec := keyedSpec(t, c.tool)
-			internal, err := newGraphQLReadTool(spec, &keyedReader{},
+			internal, err := graphqllisttool.NewRead(spec, &querytooltest.KeyedReader{},
 				&mocks.DenyResourcesPermissionEngine{})
 			require.NoError(t, err)
-			list, ok := internal.(*graphQLListTool)
+			list, ok := internal.(*graphqllisttool.Tool)
 			require.True(t, ok)
 			if c.withheld != "" {
-				assert.Contains(t, list.searched, c.withheld)
+				assert.Contains(t, list.Searched, c.withheld)
 			}
 
-			args := map[string]any{paramQuery: "probe"}
+			args := map[string]any{querytool.ParamQuery: "probe"}
 			for name, value := range c.args {
 				args[name] = value
 			}
-			call := keyedCall(args)
+			call := querytooltest.KeyedCall(args)
 			call.DataAccessCeiling = permission.SensitivityInternal
 			_, err = internal.Query(t.Context(), call)
 			if c.withheld == "" {
@@ -204,9 +208,13 @@ func TestConvertedLists_RefuseAQueryOverWithheldFields(t *testing.T) {
 			}
 			require.ErrorContains(t, err, "cannot search by query")
 
-			reached, err := newGraphQLReadTool(spec, &keyedReader{}, &restrictedRole{})
+			reached, err := graphqllisttool.NewRead(
+				spec,
+				&querytooltest.KeyedReader{},
+				&querytooltest.RestrictedRole{},
+			)
 			require.NoError(t, err)
-			call = keyedCall(map[string]any{paramQuery: "probe"})
+			call = querytooltest.KeyedCall(map[string]any{querytool.ParamQuery: "probe"})
 			call.DataAccessCeiling = permission.SensitivityRestricted
 			_, err = reached.Query(t.Context(), call)
 			if c.restricted {
@@ -226,15 +234,19 @@ func TestEscrowAccounts_SearchTheirStatusAndCurrencyOnly(t *testing.T) {
 	t.Parallel()
 
 	spec := keyedSpec(t, "settlement_list_escrow_accounts")
-	built, err := newGraphQLReadTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	built, err := graphqllisttool.NewRead(
+		spec,
+		&querytooltest.KeyedReader{},
+		&mocks.DenyResourcesPermissionEngine{},
+	)
 	require.NoError(t, err)
-	list, ok := built.(*graphQLListTool)
+	list, ok := built.(*graphqllisttool.Tool)
 	require.True(t, ok)
-	assert.Equal(t, []string{"status", "currencyCode"}, list.searched)
+	assert.Equal(t, []string{"status", "currencyCode"}, list.Searched)
 	for _, money := range []string{
 		"balanceMinor", "targetAmountMinor", "annualInterestRate",
 	} {
-		assert.NotContains(t, list.searched, money)
+		assert.NotContains(t, list.Searched, money)
 	}
 }
 
@@ -245,17 +257,21 @@ func TestFuelCards_SearchTheirLabelAndLastFourOnly(t *testing.T) {
 	t.Parallel()
 
 	spec := keyedSpec(t, "fuel_list_cards")
-	built, err := newGraphQLReadTool(spec, &keyedReader{}, &mocks.DenyResourcesPermissionEngine{})
+	built, err := graphqllisttool.NewRead(
+		spec,
+		&querytooltest.KeyedReader{},
+		&mocks.DenyResourcesPermissionEngine{},
+	)
 	require.NoError(t, err)
-	list, ok := built.(*graphQLListTool)
+	list, ok := built.(*graphqllisttool.Tool)
 	require.True(t, ok)
-	assert.Equal(t, []string{"label", "lastFour"}, list.searched)
+	assert.Equal(t, []string{"label", "lastFour"}, list.Searched)
 	registry := fieldsensitivity.DefaultRegistry()
-	for _, field := range list.searched {
+	for _, field := range list.Searched {
 		assert.True(t, fieldsensitivity.Visible(registry, permission.ResourceFuelCard, field,
 			permission.SensitivityInternal), field)
 	}
-	assert.NotContains(t, list.searched, "externalCardId")
+	assert.NotContains(t, list.Searched, "externalCardId")
 	assert.NotContains(t, searchVectors(t)["fuel_cards"], "external_card_id",
 		"the vector the migrations build no longer matches the provider's id")
 }

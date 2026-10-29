@@ -2,7 +2,7 @@ package tablechangealertresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func tcaSubscriptionConnectionToModel(
 	result *pagination.CursorListResult[*tablechangealert.TCASubscription],
 ) (*gqlmodel.TCASubscriptionConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *tablechangealert.TCASubscription, cursor string) *gqlmodel.TCASubscriptionEdge {
 			return &gqlmodel.TCASubscriptionEdge{

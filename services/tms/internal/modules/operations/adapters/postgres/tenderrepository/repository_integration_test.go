@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -47,7 +47,7 @@ func newHarness(t *testing.T) *harness {
 		BOL:          "BOL-TENDER",
 		ProNumber:    "PRO-TENDER",
 		ShipmentID:   pulid.MustNew("shp_"),
-		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+		MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 	})
 
 	return &harness{
@@ -100,7 +100,7 @@ func (h *harness) acceptedTender(t *testing.T) *tender.Tender {
 		offer := &tender.TenderOffer{
 			CarrierID:       h.carrier(t, "C"+string(rune('A'+idx))),
 			Rank:            int16(idx + 1),
-			RateMethod:      shipment.CarrierRateMethodFlat,
+			RateMethod:      shipmentvocab.CarrierRateMethodFlat,
 			Rate:            decimal.NewFromInt(int64(1500 + 100*idx)),
 			OfferTTLSeconds: 3600,
 			Channel:         tender.ChannelEmail,

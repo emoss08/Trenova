@@ -9,8 +9,9 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,8 +26,8 @@ const seedBytes = 32
 
 func (s *Service) ListPools(
 	ctx context.Context,
-	req *workerports.ListDOTRandomPoolsRequest,
-) (*pagination.CursorListResult[*worker.DOTRandomPool], error) {
+	req *workerdotports.ListDOTRandomPoolsRequest,
+) (*pagination.CursorListResult[*dotrandom.DOTRandomPool], error) {
 	return s.repo.ListPools(ctx, req)
 }
 
@@ -34,8 +35,8 @@ func (s *Service) GetPool(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.DOTRandomPool, error) {
-	return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
+) (*dotrandom.DOTRandomPool, error) {
+	return s.repo.GetPoolByID(ctx, &workerdotports.GetDOTRandomPoolByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -43,7 +44,7 @@ func (s *Service) GetPool(
 
 func (s *Service) preparePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *dotrandom.DOTRandomPool,
 	excludeID pulid.ID,
 ) error {
 	entity.Code = strings.ToUpper(strings.TrimSpace(entity.Code))
@@ -63,7 +64,7 @@ func (s *Service) preparePool(
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
-	exists, err := s.repo.PoolCodeExists(ctx, &workerports.DOTRandomPoolCodeExistsRequest{
+	exists, err := s.repo.PoolCodeExists(ctx, &workerdotports.DOTRandomPoolCodeExistsRequest{
 		TenantInfo: tenantInfo,
 		Code:       entity.Code,
 		ExcludeID:  excludeID,
@@ -84,9 +85,9 @@ func (s *Service) preparePool(
 
 func (s *Service) CreatePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *dotrandom.DOTRandomPool,
 	userID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*dotrandom.DOTRandomPool, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
@@ -122,15 +123,15 @@ func (s *Service) CreatePool(
 
 func (s *Service) UpdatePool(
 	ctx context.Context,
-	entity *worker.DOTRandomPool,
+	entity *dotrandom.DOTRandomPool,
 	userID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*dotrandom.DOTRandomPool, error) {
 	tenantInfo := pagination.TenantInfo{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	}
 
-	previous, err := s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
+	previous, err := s.repo.GetPoolByID(ctx, &workerdotports.GetDOTRandomPoolByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -169,8 +170,8 @@ func (s *Service) UpdatePool(
 
 func (s *Service) ListDraws(
 	ctx context.Context,
-	req *workerports.ListDOTRandomDrawsRequest,
-) ([]*worker.DOTRandomDraw, error) {
+	req *workerdotports.ListDOTRandomDrawsRequest,
+) ([]*dotrandom.DOTRandomDraw, error) {
 	return s.repo.ListDraws(ctx, req)
 }
 
@@ -178,8 +179,8 @@ func (s *Service) GetDraw(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.DOTRandomDraw, error) {
-	return s.repo.GetDrawByID(ctx, &workerports.GetDOTRandomDrawByIDRequest{
+) (*dotrandom.DOTRandomDraw, error) {
+	return s.repo.GetDrawByID(ctx, &workerdotports.GetDOTRandomDrawByIDRequest{
 		ID:             id,
 		TenantInfo:     tenantInfo,
 		IncludeEntries: true,
@@ -208,7 +209,7 @@ type RunDrawRequest struct {
 func (s *Service) RunDraw(
 	ctx context.Context,
 	req *RunDrawRequest,
-) (*worker.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	plan, err := s.planDraw(ctx, req)
 	if err != nil {
 		return nil, err
@@ -224,8 +225,8 @@ func (s *Service) RunDraw(
 	// not exclude anybody from the alcohol draw, and the rates are separate
 	// obligations. Salting the seed per substance keeps the two orders from
 	// being the same list twice.
-	drugPicks := worker.SelectRandom(plan.candidates, seed+":drug", int(draw.DrugTarget))
-	alcoholPicks := worker.SelectRandom(
+	drugPicks := dotrandom.SelectRandom(plan.candidates, seed+":drug", int(draw.DrugTarget))
+	alcoholPicks := dotrandom.SelectRandom(
 		plan.candidates,
 		seed+":alcohol",
 		int(draw.AlcoholTarget),
@@ -240,8 +241,8 @@ func (s *Service) RunDraw(
 		return nil, multiErr
 	}
 
-	entries := buildEntries(drugPicks, worker.DOTSubstanceDrug)
-	entries = append(entries, buildEntries(alcoholPicks, worker.DOTSubstanceAlcohol)...)
+	entries := buildEntries(drugPicks, workerdot.DOTSubstanceDrug)
+	entries = append(entries, buildEntries(alcoholPicks, workerdot.DOTSubstanceAlcohol)...)
 
 	created, err := s.repo.CreateDrawWithEntries(ctx, draw, entries)
 	if err != nil {
@@ -264,9 +265,9 @@ func (s *Service) RunDraw(
 }
 
 type drawPlan struct {
-	pool       *worker.DOTRandomPool
+	pool       *dotrandom.DOTRandomPool
 	candidates []pulid.ID
-	draw       *worker.DOTRandomDraw
+	draw       *dotrandom.DOTRandomDraw
 }
 
 func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan, error) {
@@ -280,10 +281,10 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 		at = timeutils.NowUnix()
 	}
 	drawTime := time.Unix(at, 0).UTC()
-	periodKey := worker.PeriodKeyFor(pool.Period, drawTime)
-	periodStart, periodEnd := worker.PeriodBoundsFor(pool.Period, drawTime)
+	periodKey := dotrandom.PeriodKeyFor(pool.Period, drawTime)
+	periodStart, periodEnd := dotrandom.PeriodBoundsFor(pool.Period, drawTime)
 
-	existing, err := s.repo.GetDrawByPeriod(ctx, &workerports.GetDOTRandomDrawByPeriodRequest{
+	existing, err := s.repo.GetDrawByPeriod(ctx, &workerdotports.GetDOTRandomDrawByPeriodRequest{
 		TenantInfo: req.TenantInfo,
 		PoolID:     pool.ID,
 		PeriodKey:  periodKey,
@@ -299,7 +300,7 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 		)
 	}
 
-	candidates, err := s.repo.ListPoolCandidates(ctx, &workerports.ListPoolCandidatesRequest{
+	candidates, err := s.repo.ListPoolCandidates(ctx, &workerdotports.ListPoolCandidatesRequest{
 		TenantInfo:  req.TenantInfo,
 		DriverTypes: pool.IncludedDriverTypes,
 	})
@@ -319,18 +320,18 @@ func (s *Service) planDraw(ctx context.Context, req *RunDrawRequest) (*drawPlan,
 	return &drawPlan{
 		pool:       pool,
 		candidates: candidates,
-		draw: &worker.DOTRandomDraw{
+		draw: &dotrandom.DOTRandomDraw{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			PoolID:         pool.ID,
 			PeriodKey:      periodKey,
 			PeriodStart:    periodStart,
 			PeriodEnd:      periodEnd,
-			Status:         worker.RandomDrawStatusDraft,
+			Status:         dotrandom.RandomDrawStatusDraft,
 			PoolSize:       int32(len(candidates)), //nolint:gosec // a pool's drivers fit in int32
 			DrugTarget:     int32(drugTarget),      //nolint:gosec // bounded by the pool size
 			AlcoholTarget:  int32(alcoholTarget),   //nolint:gosec // bounded by the pool size
-			Method:         worker.RandomSelectionMethod,
+			Method:         dotrandom.RandomSelectionMethod,
 			Notes:          strings.TrimSpace(req.Notes),
 			DrawnAt:        at,
 			DrawnByID:      req.UserID,
@@ -346,7 +347,7 @@ func (s *Service) FinalizeDraw(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 	userID pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	change, err := s.PlanFinalizeDraw(ctx, tenantInfo, id)
 	if err != nil {
 		return nil, err
@@ -381,12 +382,12 @@ func (s *Service) CancelDraw(
 	id pulid.ID,
 	reason string,
 	userID pulid.ID,
-) (*worker.DOTRandomDraw, error) {
+) (*dotrandom.DOTRandomDraw, error) {
 	change, err := s.PlanCancelDraw(ctx, tenantInfo, id, reason)
 	if err != nil {
 		return nil, err
 	}
-	if change.Before.Status == worker.RandomDrawStatusCancelled {
+	if change.Before.Status == dotrandom.RandomDrawStatusCancelled {
 		return change.Before, nil
 	}
 	reason = strings.TrimSpace(reason)
@@ -414,8 +415,8 @@ func (s *Service) CancelDraw(
 
 func (s *Service) ListDrawEntries(
 	ctx context.Context,
-	req *workerports.ListDOTRandomDrawEntriesRequest,
-) ([]*worker.DOTRandomDrawEntry, error) {
+	req *workerdotports.ListDOTRandomDrawEntriesRequest,
+) ([]*dotrandom.DOTRandomDrawEntry, error) {
 	return s.repo.ListDrawEntries(ctx, req)
 }
 
@@ -424,7 +425,7 @@ func (s *Service) ListDrawEntries(
 type UpdateEntryRequest struct {
 	TenantInfo   pagination.TenantInfo
 	EntryID      pulid.ID
-	Status       worker.RandomEntryStatus
+	Status       dotrandom.RandomEntryStatus
 	ExcuseReason string
 	UserID       pulid.ID
 }
@@ -432,7 +433,7 @@ type UpdateEntryRequest struct {
 func (s *Service) UpdateDrawEntry(
 	ctx context.Context,
 	req *UpdateEntryRequest,
-) (*worker.DOTRandomDrawEntry, error) {
+) (*dotrandom.DOTRandomDrawEntry, error) {
 	change, err := s.PlanUpdateDrawEntry(ctx, req)
 	if err != nil {
 		return nil, err
@@ -463,9 +464,9 @@ func (s *Service) resolvePool(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	poolID pulid.ID,
-) (*worker.DOTRandomPool, error) {
+) (*dotrandom.DOTRandomPool, error) {
 	if !poolID.IsNil() {
-		return s.repo.GetPoolByID(ctx, &workerports.GetDOTRandomPoolByIDRequest{
+		return s.repo.GetPoolByID(ctx, &workerdotports.GetDOTRandomPoolByIDRequest{
 			ID:         poolID,
 			TenantInfo: tenantInfo,
 		})
@@ -488,15 +489,15 @@ func (s *Service) resolvePool(
 
 func buildEntries(
 	picks []pulid.ID,
-	substance worker.DOTTestSubstance,
-) []*worker.DOTRandomDrawEntry {
-	entries := make([]*worker.DOTRandomDrawEntry, 0, len(picks))
+	substance workerdot.DOTTestSubstance,
+) []*dotrandom.DOTRandomDrawEntry {
+	entries := make([]*dotrandom.DOTRandomDrawEntry, 0, len(picks))
 	for i, workerID := range picks {
-		entries = append(entries, &worker.DOTRandomDrawEntry{
+		entries = append(entries, &dotrandom.DOTRandomDrawEntry{
 			WorkerID:  workerID,
 			Substance: substance,
 			Rank:      int32(i + 1),
-			Status:    worker.RandomEntrySelected,
+			Status:    dotrandom.RandomEntrySelected,
 		})
 	}
 	return entries

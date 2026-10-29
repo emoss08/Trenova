@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -19,15 +20,15 @@ import (
 // openBoardStatuses are the moves that still need a dispatcher's attention. They are the
 // board's default status filter, and they are also exempt from the window's lower bound:
 // an overdue move is the most urgent thing on the board, not history to be hidden.
-var openBoardStatuses = []shipment.MoveStatus{
-	shipment.MoveStatusNew,
-	shipment.MoveStatusAssigned,
-	shipment.MoveStatusInTransit,
+var openBoardStatuses = []shipmentvocab.MoveStatus{
+	shipmentvocab.MoveStatusNew,
+	shipmentvocab.MoveStatusAssigned,
+	shipmentvocab.MoveStatusInTransit,
 }
 
-var openMoveStatuses = []shipment.MoveStatus{
-	shipment.MoveStatusAssigned,
-	shipment.MoveStatusInTransit,
+var openMoveStatuses = []shipmentvocab.MoveStatus{
+	shipmentvocab.MoveStatusAssigned,
+	shipmentvocab.MoveStatusInTransit,
 }
 
 type moveQuery = keel.Query[*shipment.ShipmentMove]
@@ -80,7 +81,7 @@ func joinEdge[T any](q *keel.Query[*T], e stopEdge, moveID keel.Expr) *keel.Quer
 			).
 			Where(
 				st.ShipmentMoveID.EqCol(moveID),
-				st.Status.Ne(shipment.StopStatusCanceled),
+				st.Status.Ne(shipmentvocab.StopStatusCanceled),
 			).
 			Order(order).
 			Limit(1)).
@@ -115,14 +116,14 @@ func boardMoves() *moveQuery {
 		LeftJoin(asn, asn.ShipmentMoveID.EqCol(sm.ID), asn.ArchivedAt.IsNull()).
 		LeftJoin(ca,
 			ca.ShipmentMoveID.EqCol(sm.ID),
-			ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 		)
 	q = joinEdge(q, origin, sm.ID)
 
 	return joinEdge(q, destination, sm.ID)
 }
 
-func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
+func moveFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	sm := shipmentdb.ShipmentMoves
 	sp := shipmentdb.Shipments
 
@@ -165,7 +166,7 @@ func moveFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
 	return preds
 }
 
-func driverFilters(filter *shipmentports.DispatchBoardFilter) []keel.Pred {
+func driverFilters(filter *dispatchboardports.DispatchBoardFilter) []keel.Pred {
 	w := workerdb.Workers
 	return []keel.Pred{
 		w.Status.Eq(domaintypes.StatusActive),

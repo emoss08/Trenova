@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel/analytics"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -22,7 +22,7 @@ func TestEveryCannedReportCompilesAgainstTheCatalog(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, registry.All())
 
-	cfg := &config.ReportingConfig{}
+	cfg := &reportingconfig.Config{}
 	limits := reportengine.DefinitionLimits(cfg)
 	complexity := reportengine.ComplexityLimits(cfg)
 

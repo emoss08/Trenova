@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -61,12 +61,12 @@ func (s *Service) Prepare(
 	}
 
 	multiErr := errortypes.NewMultiError()
-	shipment.ValidateQuickFilters(opts.QuickFilters, multiErr)
+	quickfilter.ValidateQuickFilters(opts.QuickFilters, multiErr)
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 
-	margin, detention := shipment.QuickFiltersNeed(opts.QuickFilters)
+	margin, detention := quickfilter.QuickFiltersNeed(opts.QuickFilters)
 	basis, err := s.Resolve(ctx, &shipmentports.ResolveShipmentQuickFilterBasisRequest{
 		TenantInfo: tenantInfo,
 		Timezone:   opts.Timezone,

@@ -4,9 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderdismissal"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -20,7 +20,7 @@ func (s *Service) VisibleFailures(
 		return []aicontrolsummary.ProviderFailure{}, nil
 	}
 
-	dismissals, err := s.dismissals.List(ctx, &agentports.ListFailureDismissalsRequest{
+	dismissals, err := s.dismissals.List(ctx, &aiproviderports.ListFailureDismissalsRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 	})
@@ -28,7 +28,7 @@ func (s *Service) VisibleFailures(
 		return nil, err
 	}
 
-	byProvider := make(map[string]*aiprovider.FailureDismissal, len(dismissals))
+	byProvider := make(map[string]*aiproviderdismissal.FailureDismissal, len(dismissals))
 	for _, dismissal := range dismissals {
 		byProvider[dismissal.ProviderID.String()] = dismissal
 	}
@@ -52,14 +52,14 @@ func (s *Service) DismissFailure(
 	if req.UserID.IsNil() {
 		return errortypes.NewBusinessError("Only a person can put a notice away")
 	}
-	if _, err := s.providers.GetByID(ctx, agentports.GetAIProviderByIDRequest{
+	if _, err := s.providers.GetByID(ctx, aiproviderports.GetAIProviderByIDRequest{
 		ID:         req.ProviderID,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
 		return err
 	}
 
-	return s.dismissals.Upsert(ctx, &aiprovider.FailureDismissal{
+	return s.dismissals.Upsert(ctx, &aiproviderdismissal.FailureDismissal{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
 		UserID:         req.UserID,
@@ -73,7 +73,7 @@ func (s *Service) RestoreFailure(
 	ctx context.Context,
 	req *aicontrolsummaryports.ProviderFailureDismissal,
 ) error {
-	return s.dismissals.Delete(ctx, &agentports.DeleteFailureDismissalRequest{
+	return s.dismissals.Delete(ctx, &aiproviderports.DeleteFailureDismissalRequest{
 		TenantInfo: req.TenantInfo,
 		UserID:     req.UserID,
 		ProviderID: req.ProviderID,

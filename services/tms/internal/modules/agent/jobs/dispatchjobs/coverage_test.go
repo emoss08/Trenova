@@ -1,16 +1,18 @@
 package dispatchjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -21,11 +23,11 @@ import (
 const testNow = int64(1_767_225_600)
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
-	r.events = append(r.events, event)
+func (r *recordingPublisher) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.events = append(r.events, *event)
 }
 
 type recordingProjector struct {
@@ -61,7 +63,7 @@ func coverageActivities(
 	activities := NewActivities(ActivitiesParams{
 		DispatchControlRepo: controls,
 		ProposalRepo:        new(stubProposalRepo),
-		AutoAssign:          agentportsmock.NewMockDispatchAutoAssignService(t),
+		AutoAssign:          dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t),
 		Watchtower:          projector,
 		Publisher:           publisher,
 		Logger:              zap.NewNop(),
@@ -71,8 +73,8 @@ func coverageActivities(
 	return activities, publisher, projector
 }
 
-func uncoveredAt(hoursOut int64) *agentports.DispatchUncoveredMove {
-	return &agentports.DispatchUncoveredMove{
+func uncoveredAt(hoursOut int64) *dispatchconsoleports.DispatchUncoveredMove {
+	return &dispatchconsoleports.DispatchUncoveredMove{
 		MoveID:    pulid.MustNew("mov_"),
 		ProNumber: "PRO-1",
 		Reason:    "No eligible driver was available for this move",
@@ -126,7 +128,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			t.Parallel()
 
 			activities, publisher, projector := coverageActivities(t, tc.window)
-			moves := make([]*agentports.DispatchUncoveredMove, 0, len(tc.hoursOut))
+			moves := make([]*dispatchconsoleports.DispatchUncoveredMove, 0, len(tc.hoursOut))
 			for _, hours := range tc.hoursOut {
 				moves = append(moves, uncoveredAt(hours))
 			}
@@ -137,7 +139,7 @@ func TestRaiseCoverageRisk_OnlyMovesInsideTheWindow(t *testing.T) {
 			require.Len(t, publisher.events, tc.wantCount)
 			require.Len(t, projector.items, tc.wantCount)
 			for _, event := range publisher.events {
-				require.Equal(t, agent.EventShipmentMoveCoverageAtRisk, event.Kind)
+				require.Equal(t, agenttrigger.EventShipmentMoveCoverageAtRisk, event.Kind)
 			}
 			for _, item := range projector.items {
 				require.Equal(t, watchtower.SourceMoveCoverage, item.SourceKind)
@@ -155,7 +157,7 @@ func TestRaiseCoverageRisk_LeavesUndatedMovesAlone(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*agentports.DispatchUncoveredMove{
+		[]*dispatchconsoleports.DispatchUncoveredMove{
 			nil,
 			{MoveID: pulid.MustNew("mov_"), StartsAt: 0},
 		},
@@ -174,7 +176,7 @@ func TestRaiseCoverageRisk_SeverityRisesAsTheMoveNears(t *testing.T) {
 	raised := activities.raiseCoverageRisk(
 		t.Context(),
 		tenant(),
-		[]*agentports.DispatchUncoveredMove{
+		[]*dispatchconsoleports.DispatchUncoveredMove{
 			uncoveredAt(2),
 			uncoveredAt(10),
 		},

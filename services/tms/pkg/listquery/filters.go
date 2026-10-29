@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listcatalog"
+	"github.com/emoss08/trenova/pkg/listvalue"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -137,12 +140,12 @@ func (p *plan) equality(fd field, op dbtype.Operator, value any) (keel.Pred, boo
 		expr = expr.Cast(keel.TypeString)
 	}
 
-	kind, ok := kindOf(fd.col, text)
+	kind, ok := listvalue.KindOf(fd.col, text)
 	if !ok {
 		return nil, false
 	}
 
-	v, ok := convert(kind, value)
+	v, ok := listvalue.Convert(kind, value)
 	if !ok {
 		return nil, false
 	}
@@ -155,7 +158,7 @@ func (p *plan) equality(fd field, op dbtype.Operator, value any) (keel.Pred, boo
 }
 
 func scalarKind(fd field) bool {
-	_, ok := kindOf(fd.col, false)
+	_, ok := listvalue.KindOf(fd.col, false)
 	return ok
 }
 
@@ -164,12 +167,12 @@ func comparison(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
 		return nil, false
 	}
 
-	kind, ok := kindOf(fd.col, false)
+	kind, ok := listvalue.KindOf(fd.col, false)
 	if !ok {
 		return nil, false
 	}
 
-	v, ok := convert(kind, value)
+	v, ok := listvalue.Convert(kind, value)
 	if !ok {
 		return nil, false
 	}
@@ -197,12 +200,12 @@ func textExpr(fd field) keel.DynExpr {
 }
 
 func isText(fd field) bool {
-	kind, ok := kindOf(fd.col, false)
-	return ok && kind == valueText
+	kind, ok := listvalue.KindOf(fd.col, false)
+	return ok && kind == listvalue.KindText
 }
 
 func pattern(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
-	raw, ok := toText(value)
+	raw, ok := listvalue.ToText(value)
 	if !ok {
 		return nil, false
 	}
@@ -214,9 +217,9 @@ func pattern(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
 	case dbtype.OpContains:
 		return expr.ContainsFold(s), true
 	case dbtype.OpStartsWith:
-		return expr.ILike(escapeLike(s) + "%"), true
+		return expr.ILike(stringutils.EscapeLikePattern(s) + "%"), true
 	case dbtype.OpEndsWith:
-		return expr.ILike("%" + escapeLike(s)), true
+		return expr.ILike("%" + stringutils.EscapeLikePattern(s)), true
 	case dbtype.OpLike:
 		return expr.Like(s), true
 	case dbtype.OpILike:
@@ -233,12 +236,12 @@ func membership(fd field, op dbtype.Operator, value any) (keel.Pred, bool) {
 		expr = expr.Cast(keel.TypeString)
 	}
 
-	kind, ok := kindOf(fd.col, text)
+	kind, ok := listvalue.KindOf(fd.col, text)
 	if !ok {
 		return nil, false
 	}
 
-	list, ok := convertList(kind, value)
+	list, ok := listvalue.ConvertList(kind, value)
 	if !ok {
 		return nil, false
 	}
@@ -258,7 +261,7 @@ func dateRange(fd field, value any) (keel.Pred, bool) {
 
 	preds := make([]keel.Pred, 0, 2)
 	if from, hasFrom := bounds["from"]; hasFrom {
-		if f, isNumber := toFloat(from); isNumber {
+		if f, isNumber := listvalue.ToFloat(from); isNumber {
 			pred, valid := comparison(fd, dbtype.OpGreaterThanOrEqual, f)
 			if !valid {
 				return nil, false
@@ -268,7 +271,7 @@ func dateRange(fd field, value any) (keel.Pred, bool) {
 	}
 
 	if to, hasTo := bounds["to"]; hasTo {
-		if f, isNumber := toFloat(to); isNumber {
+		if f, isNumber := listvalue.ToFloat(to); isNumber {
 			end, _ := f.(float64)
 			pred, valid := comparison(fd, dbtype.OpLessThan, end+secondsPerDay)
 			if !valid {
@@ -315,8 +318,8 @@ func extractDays(value any) int {
 }
 
 func (p *plan) aggregate(af domaintypes.AggregateFilter) (keel.Pred, bool) {
-	rel, ok := p.cat.relation(af.Relation)
-	if !ok || !rel.countable() {
+	rel, ok := p.cat.Relation(af.Relation)
+	if !ok || !rel.Countable() {
 		return nil, false
 	}
 
@@ -342,16 +345,16 @@ func (p *plan) aggregate(af domaintypes.AggregateFilter) (keel.Pred, bool) {
 	}
 }
 
-func (p *plan) relatedCount(rel relation) (keel.DynExpr, bool) {
-	parent := &p.cat.table.Relations[rel.index]
+func (p *plan) relatedCount(rel listcatalog.Relation) (keel.DynExpr, bool) {
+	parent := &p.cat.Table.Relations[rel.Index]
 	if len(parent.Local) == 0 || len(parent.Local) != len(parent.Remote) {
 		return keel.DynExpr{}, false
 	}
 
-	sub := keel.DynFrom(rel.target)
+	sub := keel.DynFrom(rel.Target)
 	correlation := make([]keel.Pred, 0, len(parent.Remote))
 	for i, remote := range parent.Remote {
-		fk := sub.Path(rel.target.Columns[remote].Name)
+		fk := sub.Path(rel.Target.Columns[remote].Name)
 		correlation = append(correlation, fk.Eq(p.baseColumn(parent.Local[i])))
 	}
 	sub.Select(keel.DynCount()).Where(correlation...)

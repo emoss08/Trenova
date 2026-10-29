@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,7 +21,7 @@ func (e *engine) checkAgentPermission(
 	policies accessPolicySource,
 ) (*permissionports.PermissionCheckResult, error) {
 	result := &permissionports.PermissionCheckResult{
-		Allowed:   permission.IsAgentAllowed(permission.Resource(req.Resource), req.Operation),
+		Allowed:   agentceiling.Allows(permission.Resource(req.Resource), req.Operation),
 		Reason:    "agent_denied",
 		DataScope: permission.DataScopeOrganization,
 	}
@@ -53,7 +54,12 @@ func (e *engine) checkAgentBatch(
 ) error {
 	policies := e.newAccessPolicySource(req.OrganizationID, req.BusinessUnitID)
 	for i, check := range req.Checks {
-		result, err := e.checkAgentPermission(ctx, batchCheckRequest(req, check), time.Now(), policies)
+		result, err := e.checkAgentPermission(
+			ctx,
+			batchCheckRequest(req, check),
+			time.Now(),
+			policies,
+		)
 		if err != nil {
 			return err
 		}

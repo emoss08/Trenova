@@ -3,6 +3,7 @@ package worker_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -77,18 +78,33 @@ func TestApprovalScope_Covers(t *testing.T) {
 
 	// All covers everything; anything else covers only itself. A delegation
 	// that quietly covered more than it said would be worse than none.
-	assert.True(t, worker.ApprovalScopeAll.Covers(worker.ApprovalScopeTimeOff))
-	assert.True(t, worker.ApprovalScopeAll.Covers(worker.ApprovalScopeExpenses))
-	assert.True(t, worker.ApprovalScopeTimeOff.Covers(worker.ApprovalScopeTimeOff))
-	assert.False(t, worker.ApprovalScopeTimeOff.Covers(worker.ApprovalScopeExpenses))
-	assert.False(t, worker.ApprovalScopeTimeOff.Covers(worker.ApprovalScopeAll))
+	assert.True(
+		t,
+		approvaldelegation.ApprovalScopeAll.Covers(approvaldelegation.ApprovalScopeTimeOff),
+	)
+	assert.True(
+		t,
+		approvaldelegation.ApprovalScopeAll.Covers(approvaldelegation.ApprovalScopeExpenses),
+	)
+	assert.True(
+		t,
+		approvaldelegation.ApprovalScopeTimeOff.Covers(approvaldelegation.ApprovalScopeTimeOff),
+	)
+	assert.False(
+		t,
+		approvaldelegation.ApprovalScopeTimeOff.Covers(approvaldelegation.ApprovalScopeExpenses),
+	)
+	assert.False(
+		t,
+		approvaldelegation.ApprovalScopeTimeOff.Covers(approvaldelegation.ApprovalScopeAll),
+	)
 }
 
-func validDelegation() *worker.ApprovalDelegation {
-	return &worker.ApprovalDelegation{
+func validDelegation() *approvaldelegation.ApprovalDelegation {
+	return &approvaldelegation.ApprovalDelegation{
 		DelegatorID: "usr_1",
 		DelegateID:  "usr_2",
-		Scope:       worker.ApprovalScopeAll,
+		Scope:       approvaldelegation.ApprovalScopeAll,
 		StartsAt:    1_800_000_000,
 	}
 }

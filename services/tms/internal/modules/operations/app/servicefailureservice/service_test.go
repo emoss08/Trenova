@@ -4,22 +4,23 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/realtimeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/servicefailureportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -117,18 +118,21 @@ func TestNewServiceFailureEvaluationResultUsesEmptySlices(t *testing.T) {
 func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 	override := true
 	disabledOverride := false
-	shipperStop := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup}
-	otherPickup := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup}
-	delivery := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeDelivery}
-	splitDelivery := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeSplitDelivery}
+	shipperStop := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipmentvocab.StopTypePickup}
+	otherPickup := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipmentvocab.StopTypePickup}
+	delivery := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipmentvocab.StopTypeDelivery}
+	splitDelivery := &shipment.Stop{
+		ID:   pulid.MustNew("stp_"),
+		Type: shipmentvocab.StopTypeSplitDelivery,
+	}
 	overrideDelivery := &shipment.Stop{
 		ID:                pulid.MustNew("stp_"),
-		Type:              shipment.StopTypeDelivery,
+		Type:              shipmentvocab.StopTypeDelivery,
 		CountLateOverride: &override,
 	}
 	disabledPickup := &shipment.Stop{
 		ID:                pulid.MustNew("stp_"),
-		Type:              shipment.StopTypePickup,
+		Type:              shipmentvocab.StopTypePickup,
 		CountLateOverride: &disabledOverride,
 	}
 
@@ -248,7 +252,7 @@ func TestCreateOrUpdateDetectedUpdatesExistingSnapshotIdempotently(t *testing.T)
 		Type:               servicefailure.TypeLateDelivery,
 		Source:             servicefailure.SourceDetected,
 		Status:             servicefailure.StatusOpen,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    1_000,
 		ActualArrival:      1_301,
 		GracePeriodMinutes: 5,
@@ -305,7 +309,7 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 		Type:               servicefailure.TypeLateDelivery,
 		Source:             servicefailure.SourceDetected,
 		Status:             servicefailure.StatusOpen,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    1_000,
 		ActualArrival:      1_301,
 		GracePeriodMinutes: 5,
@@ -314,7 +318,7 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
 	reasonRepo := servicefailureportsmock.NewMockServiceFailureReasonCodeRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -363,7 +367,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 		buID,
 		moveID,
 		stopID,
-		shipment.StopTypeDelivery,
+		shipmentvocab.StopTypeDelivery,
 		actualArrival,
 	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
@@ -373,7 +377,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	dispatchRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:              zap.NewNop(),
 		repo:           repo,
@@ -437,7 +441,7 @@ func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
 	require.Equal(t, moveID, summary.ShipmentMoveID)
 	require.Equal(t, stopID, summary.StopID)
 	require.Equal(t, int64(2), summary.StopSequence)
-	require.Equal(t, shipment.StopTypeDelivery, summary.StopType)
+	require.Equal(t, shipmentvocab.StopTypeDelivery, summary.StopType)
 	require.Equal(t, "Warehouse 12", summary.LocationName)
 	require.Equal(t, "WH12", summary.LocationCode)
 	require.Equal(t, "Austin", summary.City)
@@ -461,7 +465,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 		buID,
 		moveID,
 		stopID,
-		shipment.StopTypeDelivery,
+		shipmentvocab.StopTypeDelivery,
 		actualArrival,
 	)
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
@@ -475,7 +479,7 @@ func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
 		Type:               servicefailure.TypeLateDelivery,
 		Source:             servicefailure.SourceDetected,
 		Status:             servicefailure.StatusOpen,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    900,
 		ActualArrival:      1_250,
 		GracePeriodMinutes: gracePeriod,
@@ -552,7 +556,14 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 	moveID := pulid.MustNew("sm_")
 	stopID := pulid.MustNew("stp_")
 	gracePeriod := 5
-	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, 0)
+	stop := serviceFailureStopFixture(
+		orgID,
+		buID,
+		moveID,
+		stopID,
+		shipmentvocab.StopTypeDelivery,
+		0,
+	)
 	stop.ActualArrival = nil
 	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
 
@@ -594,7 +605,7 @@ func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
 	require.Equal(t, moveID, summary.ShipmentMoveID)
 	require.Equal(t, stopID, summary.StopID)
 	require.Equal(t, int64(2), summary.StopSequence)
-	require.Equal(t, shipment.StopTypeDelivery, summary.StopType)
+	require.Equal(t, shipmentvocab.StopTypeDelivery, summary.StopType)
 	require.Equal(t, "Warehouse 12", summary.LocationName)
 	require.Equal(t, "WH12", summary.LocationCode)
 	require.Equal(t, "Austin", summary.City)
@@ -621,7 +632,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 		Type:               servicefailure.TypeLateDelivery,
 		Source:             servicefailure.SourceDetected,
 		Status:             servicefailure.StatusOpen,
-		StopType:           shipment.StopTypeDelivery,
+		StopType:           shipmentvocab.StopTypeDelivery,
 		ScheduledCutoff:    1_000,
 		ActualArrival:      1_301,
 		GracePeriodMinutes: 5,
@@ -629,7 +640,7 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	}
 	repo := servicefailureportsmock.NewMockServiceFailureRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	realtime := agentportsmock.NewMockRealtimeService(t)
+	realtime := realtimeportsmock.NewMockRealtimeService(t)
 	svc := &service{
 		l:            zap.NewNop(),
 		repo:         repo,
@@ -679,10 +690,10 @@ func TestTransitionShipmentToDelayedUsesMarker(t *testing.T) {
 		ID:             pulid.MustNew("sp_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		Status:         shipment.StatusInTransit,
+		Status:         shipmentvocab.StatusInTransit,
 	}
 	updated := *source
-	updated.Status = shipment.StatusDelayed
+	updated.Status = shipmentvocab.StatusDelayed
 	marker := &fakeDelayedShipmentMarker{updated: &updated}
 	svc := &service{l: zap.NewNop(), delayedMarker: marker}
 	failure := &servicefailure.ServiceFailure{ID: pulid.MustNew("sf_")}
@@ -692,14 +703,14 @@ func TestTransitionShipmentToDelayedUsesMarker(t *testing.T) {
 	require.True(t, marker.called)
 	require.Equal(t, source.ID, marker.params.shipment.ID)
 	require.Equal(t, failure.ID, marker.params.failure.ID)
-	require.Equal(t, shipment.StatusDelayed, source.Status)
+	require.Equal(t, shipmentvocab.StatusDelayed, source.Status)
 }
 
 func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-	ediSvc := ediportsmock.NewMockEDIService(t)
+	ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 	svc := &service{l: zap.NewNop(), ediService: ediSvc}
 
 	ediSvc.EXPECT().
@@ -708,8 +719,8 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
 			Action:    ediports.ServiceFailureEDIActionBlocked,
 			Mandatory: true,
-			Diagnostics: []edi.Diagnostic{{
-				Severity: edi.ValidationSeverityError,
+			Diagnostics: []edidocument.Diagnostic{{
+				Severity: edidocument.ValidationSeverityError,
 				Path:     "shipmentStatus.statusReasonCode",
 				Message:  "status reason required",
 			}},
@@ -749,7 +760,7 @@ func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testin
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := ediportsmock.NewMockEDIService(t)
+			ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 			svc := &service{l: zap.NewNop(), ediService: ediSvc}
 			ediSvc.EXPECT().
 				PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
@@ -791,9 +802,9 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
-			ediSvc := ediportsmock.NewMockEDIService(t)
+			ediSvc := ediportsmock.NewMockServiceFailure214Service(t)
 			audit := auditportsmock.NewMockAuditService(t)
-			comments := shipmentportsmock.NewMockShipmentCommentService(t)
+			comments := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 			svc := &service{
 				l:              zap.NewNop(),
 				ediService:     ediSvc,
@@ -815,7 +826,7 @@ func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T)
 					Return(nil).
 					Once()
 				comments.EXPECT().
-					CreateSystem(mock.Anything, mock.AnythingOfType("*shipmentports.CreateSystemShipmentCommentRequest")).
+					CreateSystem(mock.Anything, mock.AnythingOfType("*shipmentcommentports.CreateSystemShipmentCommentRequest")).
 					Return(&shipment.ShipmentComment{}, nil).
 					Once()
 			}
@@ -863,23 +874,23 @@ func serviceFailureShipmentFixture(
 	shipmentID pulid.ID,
 	moveID pulid.ID,
 	stopID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	actualArrival int64,
 ) *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{
 			{
 				ID:     moveID,
-				Status: shipment.MoveStatusNew,
+				Status: shipmentvocab.MoveStatusNew,
 				Stops: []*shipment.Stop{
 					{
 						ID:                   stopID,
 						Type:                 stopType,
-						Status:               shipment.StopStatusCompleted,
+						Status:               shipmentvocab.StopStatusCompleted,
 						ScheduledWindowStart: 1_000,
 						ActualArrival:        &actualArrival,
 					},
@@ -894,7 +905,7 @@ func serviceFailureStopFixture(
 	buID pulid.ID,
 	moveID pulid.ID,
 	stopID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	actualArrival int64,
 ) *shipment.Stop {
 	locationID := pulid.MustNew("loc_")
@@ -905,7 +916,7 @@ func serviceFailureStopFixture(
 		ShipmentMoveID:       moveID,
 		LocationID:           locationID,
 		Type:                 stopType,
-		Status:               shipment.StopStatusCompleted,
+		Status:               shipmentvocab.StopStatusCompleted,
 		Sequence:             2,
 		ScheduledWindowStart: 1_000,
 		ActualArrival:        &actualArrival,
@@ -930,11 +941,11 @@ func serviceFailureShipmentWithStops(
 		ID:             shipmentID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{
 			{
 				ID:     moveID,
-				Status: shipment.MoveStatusNew,
+				Status: shipmentvocab.MoveStatusNew,
 				Stops:  []*shipment.Stop{stop},
 			},
 		},

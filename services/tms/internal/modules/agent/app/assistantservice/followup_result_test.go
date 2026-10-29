@@ -4,8 +4,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/decisionnotes"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +32,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 		ID:       pulid.MustNew("ap_"),
 		ToolName: "report_create",
 		Status:   agent.ProposalStatusExecuted,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created",
 			Kind:   "report",
 			Name:   "Shipments for Peak Distributing",
@@ -36,18 +40,19 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 		},
 	}
 	svc, conversations, _ := followUpService(t, proposal)
-	actor := testActor()
+	actor := assistanttest.Actor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
-		ThreadID:           conversations.thread.ID,
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
+		ThreadID:           conversations.Thread.ID,
 		FollowUpProposalID: proposal.ID,
 		TenantInfo:         actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
-	note := conversations.appended[0].Content
+	note := conversations.Appended[0].Content
 	first, rest, _ := strings.Cut(note, "\n")
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		`Approved report_create, and it ran. It created the report "Shipments for Peak Distributing".`,
 		first,
 	)
@@ -56,48 +61,7 @@ func TestSendMessageStream_NamesWhatAnApprovedChangeMade(t *testing.T) {
 	assert.Contains(t, rest,
 		"It produced definitionId rd_01JPEAK; use that id, not the proposal's, "+
 			"when you refer to what it made.")
-	assert.Contains(t, rest, followUpInstruction)
-}
-
-// A result is only spoken of once the write ran. An approval still being
-// carried out has made nothing yet.
-func TestDecisionNote_SaysNothingMadeBeforeTheWriteRuns(t *testing.T) {
-	t.Parallel()
-
-	proposal := &agent.AgentProposal{
-		ToolName: "report_create",
-		Status:   agent.ProposalStatusAccepted,
-		ExecutionResult: &agent.ToolExecutionResult{
-			Action: "created",
-			Kind:   "report",
-			IDs:    map[string]string{"definitionId": "rd_01"},
-		},
-	}
-
-	assert.Equal(t, "Approved report_create; it is being carried out.", decisionLine(proposal))
-	assert.Empty(t, producedNote(proposal))
-}
-
-// A tool that names nothing leaves the note as it was.
-func TestDecisionNote_KeepsThePlainLineWithoutAResult(t *testing.T) {
-	t.Parallel()
-
-	proposal := &agent.AgentProposal{
-		ToolName: "report_create_dashboard",
-		Status:   agent.ProposalStatusExecuted,
-	}
-
-	assert.Equal(t, "Approved report_create_dashboard, and it ran.", decisionLine(proposal))
-	assert.Empty(t, producedNote(proposal))
-}
-
-func TestDecisionHeadline_IsTheFirstLineOnly(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "Approved report_create, and it ran.",
-		decisionHeadline("  Approved report_create, and it ran.\nDecision on proposal ap_1."))
-	assert.Equal(t, "Rejected dispatch_assign_move.", decisionHeadline("Rejected dispatch_assign_move."))
-	assert.Empty(t, decisionHeadline(" \n "))
+	assert.Contains(t, rest, decisionnotes.FollowUpInstruction)
 }
 
 /*
@@ -109,10 +73,10 @@ shows and by id on the agent's lines, step by step.
 func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	t.Parallel()
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		ID:             pulid.MustNew("apl_"),
 		Title:          "Dispatch: 2 changes",
-		Status:         agent.PlanStatusCompleted,
+		Status:         agentplan.PlanStatusCompleted,
 		StepCount:      2,
 		CompletedSteps: 2,
 	}
@@ -123,7 +87,7 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 		Status:   agent.ProposalStatusExecuted,
 		PlanID:   &planID,
 		PlanStep: 1,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "voided", Kind: "shipment", Name: "PRO-1001",
 			IDs: map[string]string{"shipmentId": "shp_old"},
 		},
@@ -134,26 +98,26 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 		Status:   agent.ProposalStatusExecuted,
 		PlanID:   &planID,
 		PlanStep: 2,
-		ExecutionResult: &agent.ToolExecutionResult{
+		ExecutionResult: &agentrecord.ToolExecutionResult{
 			Action: "created", Kind: "shipment", Name: "PRO-1002",
 			IDs: map[string]string{"shipmentId": "shp_new"},
 		},
 	}
 	svc, conversations, _ := followUpService(t, copied)
-	svc.proposals = &stubProposalRepo{byThread: []*agent.AgentProposal{
+	svc.proposals = &assistanttest.StubProposalRepo{ByThread: []*agent.AgentProposal{
 		copied, voided, {ID: pulid.MustNew("ap_"), ToolName: "dispatch_assign_move"},
 	}}
-	svc.plans = &stubPlanStore{plans: []*agent.AgentPlan{plan}}
-	actor := testActor()
+	svc.plans = &stubPlanStore{plans: []*agentplan.AgentPlan{plan}}
+	actor := assistanttest.Actor()
 
-	_, err := svc.sendMessage(t.Context(), &agentports.SendMessageRequest{
-		ThreadID:       conversations.thread.ID,
+	_, err := svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
+		ThreadID:       conversations.Thread.ID,
 		FollowUpPlanID: plan.ID,
 		TenantInfo:     actor.TenantInfo(),
 	}, actor, nil)
 	require.NoError(t, err)
 
-	first, rest, _ := strings.Cut(conversations.appended[0].Content, "\n")
+	first, rest, _ := strings.Cut(conversations.Appended[0].Content, "\n")
 	assert.Equal(t,
 		`Approved the plan "Dispatch: 2 changes", and all 2 steps ran. `+
 			`Step 1: It voided the shipment "PRO-1001". `+
@@ -165,5 +129,5 @@ func TestSendMessageStream_NamesWhatEachStepOfAPlanMade(t *testing.T) {
 	assert.Contains(t, rest, "Step 2 (shipment_duplicate): It produced shipmentId shp_new;")
 	assert.Less(t, strings.Index(rest, "Step 1 (void_shipment)"),
 		strings.Index(rest, "Step 2 (shipment_duplicate)"), "steps are told in order")
-	assert.Contains(t, rest, followUpInstruction)
+	assert.Contains(t, rest, decisionnotes.FollowUpInstruction)
 }

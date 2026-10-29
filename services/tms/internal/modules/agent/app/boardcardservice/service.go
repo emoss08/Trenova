@@ -8,9 +8,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardmarkdown"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -21,8 +26,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,9 +37,9 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Permissions   permissionports.PermissionEngine
-	Summaries     agentports.RecordSummarizer
+	Summaries     recordsummaryports.RecordSummarizer
 	Artifacts     assistantartifactports.AssistantArtifactRepository
-	Conversations agentports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Analytics     kernelports.AnalyticsService
 	Receivables   customerledgerports.ARSnapshotReader
 	Audit         auditports.AuditService
@@ -62,7 +67,10 @@ type artifactReader interface {
 }
 
 type threadReader interface {
-	GetThread(ctx context.Context, req agentports.GetThreadRequest) (*conversation.Thread, error)
+	GetThread(
+		ctx context.Context,
+		req *conversationports.GetThreadRequest,
+	) (*conversation.Thread, error)
 }
 
 type analyticsReader interface {
@@ -89,7 +97,7 @@ type activityReader interface {
 type Service struct {
 	l             *zap.Logger
 	permissions   permissionChecker
-	summaries     agentports.RecordSummarizer
+	summaries     recordsummaryports.RecordSummarizer
 	artifacts     artifactReader
 	threads       threadReader
 	analytics     analyticsReader
@@ -118,9 +126,9 @@ var errNotABoard = errortypes.NewNotFoundError("Board not found")
 
 func (s *Service) Card(
 	ctx context.Context,
-	req *agentports.BoardCardRequest,
-) (*agentports.BoardCard, error) {
-	if _, err := s.threads.GetThread(ctx, req.Thread); err != nil {
+	req *assistantports.BoardCardRequest,
+) (*assistantports.BoardCard, error) {
+	if _, err := s.threads.GetThread(ctx, &req.Thread); err != nil {
 		return nil, err
 	}
 	artifact, err := s.artifacts.GetByID(ctx, assistantartifactports.GetArtifactRequest{
@@ -138,7 +146,7 @@ func (s *Service) Card(
 		return nil, fmt.Errorf("read the board's payload: %w", err)
 	}
 
-	filled, err := s.Fill(ctx, &agentports.BoardFillRequest{
+	filled, err := s.Fill(ctx, &assistantports.BoardFillRequest{
 		Actor:    req.Actor,
 		ThreadID: artifact.ThreadID,
 		Board:    &payload.Board,
@@ -148,7 +156,7 @@ func (s *Service) Card(
 	}
 	filled.Compare(&payload.Snapshot)
 
-	card := &agentports.BoardCard{
+	card := &assistantports.BoardCard{
 		ArtifactID: artifact.ID,
 		ThreadID:   artifact.ThreadID,
 		Title:      artifact.Title,
@@ -165,7 +173,7 @@ func (s *Service) Card(
 		}
 		card.Question = questions[artifact.MessageID]
 	}
-	card.Markdown = filled.Markdown(board.MarkdownMeta{
+	card.Markdown = boardmarkdown.Markdown(filled, boardmarkdown.MarkdownMeta{
 		Question:   card.Question,
 		Author:     card.Author,
 		AnsweredAt: card.AnsweredAt,
@@ -187,16 +195,16 @@ func (s *Service) Location(ctx context.Context, tenant pagination.TenantInfo) *t
 
 func (s *Service) Fill(
 	ctx context.Context,
-	req *agentports.BoardFillRequest,
+	req *assistantports.BoardFillRequest,
 ) (*board.Filled, error) {
 	now := s.now().Unix()
 	tenant := req.Actor.TenantInfo()
-	reads := &board.Reads{
+	reads := &boardassemble.Reads{
 		Now:      now,
 		Readable: make(map[permission.Resource]bool, 4),
 		Metrics:  map[string]*board.Value{},
-		Analyses: map[pulid.ID]*board.AnalysisRead{},
-		Tables:   map[pulid.ID]*board.TableRead{},
+		Analyses: map[pulid.ID]*boardassemble.AnalysisRead{},
+		Tables:   map[pulid.ID]*boardassemble.TableRead{},
 		Events:   map[pulid.ID][]board.Event{},
 	}
 
@@ -212,7 +220,7 @@ func (s *Service) Fill(
 			readable[resource] = ids
 		}
 	}
-	summaries, err := s.summaries.Summaries(ctx, &agentports.RecordSummaryRequest{
+	summaries, err := s.summaries.Summaries(ctx, &recordsummaryports.RecordSummaryRequest{
 		Tenant: tenant,
 		Refs:   readable,
 		Now:    now,
@@ -230,7 +238,7 @@ func (s *Service) Fill(
 		return nil, err
 	}
 
-	return board.Assemble(req.Board, reads), nil
+	return boardassemble.Assemble(req.Board, reads), nil
 }
 
 func (s *Service) allowed(
@@ -248,10 +256,10 @@ func (s *Service) allowed(
 }
 
 func mistake(format string, args ...any) error {
-	return &agentports.PublishMistake{Reason: fmt.Sprintf(format, args...)}
+	return &agentruntimeports.PublishMistake{Reason: fmt.Sprintf(format, args...)}
 }
 
-func (s *Service) Check(ctx context.Context, req *agentports.BoardFillRequest) error {
+func (s *Service) Check(ctx context.Context, req *assistantports.BoardFillRequest) error {
 	for resource := range req.Board.Records() {
 		allowed, err := s.allowed(ctx, req.Actor, resource, permission.OpRead)
 		if err != nil {
@@ -259,7 +267,7 @@ func (s *Service) Check(ctx context.Context, req *agentports.BoardFillRequest) e
 		}
 		if !allowed {
 			return mistake("the person may not read %s, so leave the blocks that name them out",
-				stringutils.PluralNoun(resource.Noun()))
+				inflect.PluralNoun(resource.Noun()))
 		}
 	}
 	for _, key := range req.Board.Metrics() {

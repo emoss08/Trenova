@@ -6,18 +6,19 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type ediRecordView struct {
@@ -27,17 +28,17 @@ type ediRecordView struct {
 }
 
 var ediRecordLabels = map[string]string{
-	"deliveryStatus":   "Delivery",
-	common.FieldStatus: "File status",
-	"outcome":          "What happens",
+	"deliveryStatus":          "Delivery",
+	changepreview.FieldStatus: "File status",
+	"outcome":                 "What happens",
 }
 
 type plannedEDIRecord struct {
-	change  *agent.RecordChange
+	change  *agentpreview.RecordChange
 	refused bool
 }
 
-func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, going int) {
+func refusedFirst(planned []plannedEDIRecord) (changes []*agentpreview.RecordChange, going int) {
 	slices.SortStableFunc(planned, func(a, b plannedEDIRecord) int {
 		switch {
 		case a.refused == b.refused:
@@ -49,7 +50,7 @@ func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, go
 		}
 	})
 
-	changes = make([]*agent.RecordChange, 0, len(planned))
+	changes = make([]*agentpreview.RecordChange, 0, len(planned))
 	for _, record := range planned {
 		changes = append(changes, record.change)
 		if !record.refused {
@@ -61,14 +62,14 @@ func refusedFirst(planned []plannedEDIRecord) (changes []*agent.RecordChange, go
 }
 
 func previewedIDs(ids []pulid.ID) ([]pulid.ID, bool) {
-	if len(ids) <= agent.MaxPreviewRecords {
+	if len(ids) <= agentpreview.MaxPreviewRecords {
 		return ids, false
 	}
 
-	return ids[:agent.MaxPreviewRecords], true
+	return ids[:agentpreview.MaxPreviewRecords], true
 }
 
-func messageLabel(message *edi.EDIMessage) string {
+func messageLabel(message *edimessage.EDIMessage) string {
 	label := fmt.Sprintf("%s %s", message.TransactionSet, message.InterchangeControlNumber)
 	if message.Partner != nil && message.Partner.Name != "" {
 		label += " to " + message.Partner.Name
@@ -77,7 +78,7 @@ func messageLabel(message *edi.EDIMessage) string {
 	return strings.TrimSpace(label)
 }
 
-func messagePartner(message *edi.EDIMessage) string {
+func messagePartner(message *edimessage.EDIMessage) string {
 	if message.Partner != nil && message.Partner.Name != "" {
 		return message.Partner.Name
 	}
@@ -85,7 +86,7 @@ func messagePartner(message *edi.EDIMessage) string {
 	return tradingPartnerFallback
 }
 
-func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) {
+func deliveryChange(plan *edidelivery.DeliveryPlan) (*agentpreview.RecordChange, error) {
 	message := plan.Message
 	route := "over the partner's communication profile"
 	if plan.Profile != nil && plan.Profile.Name != "" {
@@ -96,9 +97,9 @@ func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) 
 		Resource: permission.ResourceEDI,
 		ID:       message.ID,
 		Label:    messageLabel(message),
-		Version:  common.PinnedVersion(message.Version),
+		Version:  changepreview.PinnedVersion(message.Version),
 	}, &ediRecordView{DeliveryStatus: string(message.DeliveryStatus)}, &ediRecordView{
-		DeliveryStatus: string(edi.MessageDeliveryStatusQueued),
+		DeliveryStatus: string(edimessage.MessageDeliveryStatusQueued),
 		Outcome:        "Sent again " + route,
 	}, toolpreview.Labels(ediRecordLabels))
 	if err != nil {
@@ -116,8 +117,8 @@ func deliveryChange(plan *ediservice.DeliveryPlan) (*agent.RecordChange, error) 
 	if message.DeliveryLastError != "" {
 		body += " The last attempt failed: " + message.DeliveryLastError
 	}
-	change.Message = &agent.MessagePreview{
-		Channel: agent.MessageChannelEDI,
+	change.Message = &agentpreview.MessagePreview{
+		Channel: agentpreview.MessageChannelEDI,
 		To:      []string{messagePartner(message)},
 		Subject: fmt.Sprintf("EDI %s %s", message.TransactionSet, message.InterchangeControlNumber),
 		Body:    body,
@@ -131,7 +132,7 @@ func refusedRecord(
 	label string,
 	before *ediRecordView,
 	refusal error,
-) (*agent.RecordChange, error) {
+) (*agentpreview.RecordChange, error) {
 	after := *before
 	after.Outcome = "Refused: " + strings.TrimSpace(refusal.Error())
 
@@ -144,9 +145,9 @@ func refusedRecord(
 
 func (t *RetryEDIMessageDeliveryTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	ids, err := ediRecordSet(t, &params, paramEDIMessageIDs)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	ids, err := ediRecordSet(t, params, paramEDIMessageIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -156,13 +157,13 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	for _, id := range checked {
 		plan, planErr := t.deliveries.PlanRetryMessageDelivery(
 			ctx,
-			&ediservice.RetryMessageDeliveryRequest{
+			&edidelivery.RetryMessageDeliveryRequest{
 				MessageID:  id,
-				TenantInfo: common.TenantFrom(params),
+				TenantInfo: toolparams.TenantFrom(params),
 			},
 		)
 		if planErr != nil {
-			if !common.IsRefusal(planErr) && !errortypes.IsNotFoundError(planErr) {
+			if !changepreview.IsRefusal(planErr) && !errortypes.IsNotFoundError(planErr) {
 				return nil, planErr
 			}
 			change, cErr := refusedRecord(id, "EDI message "+id.String(), &ediRecordView{}, planErr)
@@ -182,8 +183,8 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 	changes, going := refusedFirst(planned)
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would send %d of %d EDI %s checked to %s again.",
-		going, len(checked), stringutils.Pluralize("message", "messages", len(checked)),
-		stringutils.Pluralize("its trading partner", "their trading partners", going),
+		going, len(checked), inflect.Pluralize("message", "messages", len(checked)),
+		inflect.Pluralize("its trading partner", "their trading partners", going),
 	), changes...)
 
 	return finishBulkPreview(preview, going, more, len(ids)), nil
@@ -191,9 +192,9 @@ func (t *RetryEDIMessageDeliveryTool) Preview(
 
 func (t *ReplayEDIMessageTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +202,8 @@ func (t *ReplayEDIMessageTool) Preview(
 	summary := "Would send this EDI document to its trading partner again."
 	plan, err := t.deliveries.PlanReplayMessageDelivery(ctx, req)
 	if err != nil {
-		if common.IsRefusal(err) || errortypes.IsNotFoundError(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+		if changepreview.IsRefusal(err) || errortypes.IsNotFoundError(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
@@ -223,9 +224,9 @@ func (t *ReplayEDIMessageTool) Preview(
 
 func (t *ReprocessEDIInboundFilesTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	ids, err := ediRecordSet(t, &params, paramEDIInboundFileIDs)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	ids, err := ediRecordSet(t, params, paramEDIInboundFileIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +234,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 	checked, more := previewedIDs(ids)
 	planned := make([]plannedEDIRecord, 0, len(checked))
 	for _, id := range checked {
-		record, pErr := t.planFile(ctx, &params, id)
+		record, pErr := t.planFile(ctx, params, id)
 		if pErr != nil {
 			return nil, pErr
 		}
@@ -244,7 +245,7 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 	preview := toolpreview.Build(fmt.Sprintf(
 		"Would process %d of %d inbound EDI %s checked again. What each transaction "+
 			"becomes, and the acknowledgments its partner is sent, are decided when it runs.",
-		going, len(checked), stringutils.Pluralize("file", "files", len(checked)),
+		going, len(checked), inflect.Pluralize("file", "files", len(checked)),
 	), changes...)
 	preview.Partial = true
 
@@ -253,12 +254,12 @@ func (t *ReprocessEDIInboundFilesTool) Preview(
 
 func (t *ReprocessEDIInboundFilesTool) planFile(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 	id pulid.ID,
 ) (plannedEDIRecord, error) {
-	file, err := t.files.GetInboundFile(ctx, ediports.GetEDIInboundFileByIDRequest{
+	file, err := t.files.GetInboundFile(ctx, edimessageports.GetEDIInboundFileByIDRequest{
 		ID:         id,
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 	})
 	if err != nil {
 		if !errortypes.IsNotFoundError(err) {
@@ -288,7 +289,7 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 		Resource: permission.ResourceEDI,
 		ID:       file.ID,
 		Label:    label,
-		Version:  common.PinnedVersion(file.Version),
+		Version:  changepreview.PinnedVersion(file.Version),
 	}, before, &ediRecordView{Status: string(file.Status), Outcome: outcome},
 		toolpreview.Labels(ediRecordLabels))
 
@@ -296,11 +297,11 @@ func (t *ReprocessEDIInboundFilesTool) planFile(
 }
 
 func finishBulkPreview(
-	preview *agent.ToolPreview,
+	preview *agentpreview.ToolPreview,
 	going int,
 	more bool,
 	total int,
-) *agent.ToolPreview {
+) *agentpreview.ToolPreview {
 	if more {
 		preview.Partial = true
 		preview.Summary += fmt.Sprintf(
@@ -308,7 +309,7 @@ func finishBulkPreview(
 		)
 	}
 	if going == 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail,
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail,
 			"None of the checked records would go as they stand.")
 	}
 

@@ -6,11 +6,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/bootstrap/crossref"
-
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
@@ -84,12 +83,12 @@ func TestCountUsagesCountsTheBillingFallback(t *testing.T) {
 		"Fallback",
 		formulatemplate.StatusActive,
 	)
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 	updated, err := bc.Where(keel.True()).
 		Update(f.ctxA, f.db.Admin, bc.FallbackFormulaTemplateID.To(template.ID))
 	require.NoError(t, err)
 	if updated == 0 {
-		control := tenant.NewDefaultBillingControl(f.a.Info.OrgID, f.a.Info.BuID)
+		control := billingcontrol.NewDefaultBillingControl(f.a.Info.OrgID, f.a.Info.BuID)
 		control.FallbackFormulaTemplateID = &template.ID
 		require.NoError(t, bc.Create(f.ctxA, f.db.Admin, control))
 	}

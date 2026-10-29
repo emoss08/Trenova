@@ -6,10 +6,14 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/optional"
@@ -52,7 +56,7 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 func aiProviderConnectionToModel(
 	result *pagination.CursorListResult[*aiprovider.Provider],
 ) (*gqlmodel.AIProviderConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *aiprovider.Provider, cursor string) *gqlmodel.AIProviderEdge {
 			return &gqlmodel.AIProviderEdge{Node: node, Cursor: cursor}
@@ -73,22 +77,22 @@ func aiProviderConnectionToModel(
 
 func endpointFromInput(
 	input *gqlmodel.AIProviderEndpointInput,
-) (agentports.AIProviderEndpoint, error) {
+) (aiproviderports.AIProviderEndpoint, error) {
 	if input == nil {
-		return agentports.AIProviderEndpoint{}, errortypes.NewValidationError(
+		return aiproviderports.AIProviderEndpoint{}, errortypes.NewValidationError(
 			"endpoint", errortypes.ErrRequired, "Endpoint is required",
 		)
 	}
 
-	providerID, err := base.OptionalID(input.ProviderID)
+	providerID, err := gqlid.OptionalID(input.ProviderID)
 	if err != nil {
-		return agentports.AIProviderEndpoint{}, err
+		return aiproviderports.AIProviderEndpoint{}, err
 	}
 
-	endpoint := agentports.AIProviderEndpoint{
+	endpoint := aiproviderports.AIProviderEndpoint{
 		ProviderID:          providerID,
 		Kind:                input.Kind,
-		Platform:            aiprovider.PlatformDirect,
+		Platform:            aiplatform.PlatformDirect,
 		PlatformSettings:    platformSettingsFromInput(input.PlatformSettings),
 		BaseURL:             input.BaseURL,
 		APIKey:              input.APIKey,
@@ -103,19 +107,19 @@ func endpointFromInput(
 
 func platformSettingsFromInput(
 	input *gqlmodel.AIProviderPlatformSettingsInput,
-) *aiprovider.PlatformSettings {
+) *aiplatform.PlatformSettings {
 	if input == nil {
 		return nil
 	}
 
-	settings := &aiprovider.PlatformSettings{
-		Region:      base.StringValue(input.Region),
-		ProjectID:   base.StringValue(input.ProjectID),
-		WorkspaceID: base.StringValue(input.WorkspaceID),
-		AccessKeyID: base.StringValue(input.AccessKeyID),
-		Resource:    base.StringValue(input.Resource),
-		TenantID:    base.StringValue(input.TenantID),
-		ClientID:    base.StringValue(input.ClientID),
+	settings := &aiplatform.PlatformSettings{
+		Region:      gqlscalar.StringValue(input.Region),
+		ProjectID:   gqlscalar.StringValue(input.ProjectID),
+		WorkspaceID: gqlscalar.StringValue(input.WorkspaceID),
+		AccessKeyID: gqlscalar.StringValue(input.AccessKeyID),
+		Resource:    gqlscalar.StringValue(input.Resource),
+		TenantID:    gqlscalar.StringValue(input.TenantID),
+		ClientID:    gqlscalar.StringValue(input.ClientID),
 	}
 	if input.Auth != nil {
 		settings.Auth = *input.Auth
@@ -126,7 +130,7 @@ func platformSettingsFromInput(
 
 func patchFromInput(
 	input *gqlmodel.AIProviderPatchInput,
-) (*agentports.PatchAIProviderRequest, error) {
+) (*aiproviderports.PatchAIProviderRequest, error) {
 	inputCost, err := omittableDecimal("inputCostPerMillion", input.InputCostPerMillion)
 	if err != nil {
 		return nil, err
@@ -147,11 +151,11 @@ func patchFromInput(
 		return nil, err
 	}
 
-	req := &agentports.PatchAIProviderRequest{
-		Enabled:                  base.NullableOmittable(input.Enabled),
-		Trusted:                  base.NullableOmittable(input.Trusted),
-		AllowPrivateNetwork:      base.NullableOmittable(input.AllowPrivateNetwork),
-		APIKey:                   base.NullableOmittable(input.APIKey),
+	req := &aiproviderports.PatchAIProviderRequest{
+		Enabled:                  gqlscalar.NullableOmittable(input.Enabled),
+		Trusted:                  gqlscalar.NullableOmittable(input.Trusted),
+		AllowPrivateNetwork:      gqlscalar.NullableOmittable(input.AllowPrivateNetwork),
+		APIKey:                   gqlscalar.NullableOmittable(input.APIKey),
 		InputCostPerMillion:      inputCost,
 		OutputCostPerMillion:     outputCost,
 		CacheReadCostPerMillion:  cacheReadCost,
@@ -172,7 +176,7 @@ func omittableDecimal(
 		return optional.Value[*decimal.Decimal]{}, nil
 	}
 
-	parsed, err := base.NullDecimalFromStringPtr(value.Value(), field)
+	parsed, err := gqldecimal.NullDecimalFromStringPtr(value.Value(), field)
 	if err != nil {
 		return optional.Value[*decimal.Decimal]{}, err
 	}
@@ -184,7 +188,7 @@ func omittableDecimal(
 }
 
 func modelOptionsToModel(
-	models []agentports.AIProviderModelOption,
+	models []aiproviderports.AIProviderModelOption,
 ) []*gqlmodel.AIProviderModelOption {
 	out := make([]*gqlmodel.AIProviderModelOption, 0, len(models))
 	for idx := range models {
@@ -194,10 +198,10 @@ func modelOptionsToModel(
 			DisplayName:          model.DisplayName,
 			ContextWindow:        model.ContextWindow,
 			Embedding:            model.Embedding,
-			InputCostPerMillion:  base.DecimalPtrToStringPtr(model.InputCostPerMillion),
-			OutputCostPerMillion: base.DecimalPtrToStringPtr(model.OutputCostPerMillion),
+			InputCostPerMillion:  gqldecimal.DecimalPtrToStringPtr(model.InputCostPerMillion),
+			OutputCostPerMillion: gqldecimal.DecimalPtrToStringPtr(model.OutputCostPerMillion),
 			PriceSource:          priceSourceToModel(model.PriceSource),
-			CreatedAt:            base.Int64PtrToIntPtr(model.CreatedAt),
+			CreatedAt:            gqlscalar.Int64PtrToIntPtr(model.CreatedAt),
 		}
 		out = append(out, option)
 	}
@@ -205,7 +209,7 @@ func modelOptionsToModel(
 	return out
 }
 
-func priceSourceToModel(source agentports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
+func priceSourceToModel(source aiproviderports.ModelPriceSource) *gqlmodel.AIModelPriceSource {
 	if source == "" {
 		return nil
 	}

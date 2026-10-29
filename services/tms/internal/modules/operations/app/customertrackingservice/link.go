@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/trackingtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
@@ -42,7 +43,7 @@ func (s *Service) mintLink(
 	recipient string,
 	createdByID pulid.ID,
 ) (*mintedLink, error) {
-	base := s.cfg.PublicLinkBaseURL()
+	base := s.tenderingConfig.PublicLinkBaseURL(s.appConfig)
 	if base == "" {
 		return nil, errortypes.NewBusinessError(
 			"Customer tracking links need a public base URL; set app.webBaseUrl",
@@ -87,7 +88,7 @@ func (s *Service) shareable(
 			"Email delivery is not configured for this environment",
 		)
 	}
-	if s.cfg.PublicLinkBaseURL() == "" {
+	if s.tenderingConfig.PublicLinkBaseURL(s.appConfig) == "" {
 		return nil, nil, errortypes.NewBusinessError(
 			"Customer tracking links need a public base URL; set app.webBaseUrl",
 		)
@@ -290,7 +291,7 @@ func (s *Service) sendLinkEmail(
 ) error {
 	stops := route(sh)
 	origin, destination := originAndDestination(stops)
-	data := documenttemplate.CustomerTrackingLinkEmailContext{
+	data := trackingtemplate.CustomerTrackingLinkEmailContext{
 		CompanyName:       s.companyName(ctx, tenantInfo),
 		ShipmentProNumber: sh.ProNumber,
 		BOL:               sh.BOL,

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/require"
@@ -16,7 +17,7 @@ func TestPrepareDryRunRefusesWhatCannotBeTried(t *testing.T) {
 	svc := &Service{}
 	for name, req := range map[string]*DryRunRequest{
 		"empty":    {Definition: &agentdefinition.Definition{}, Prompt: "  "},
-		"too long": {Definition: &agentdefinition.Definition{}, Prompt: strings.Repeat("a", agentdefinition.MaxTestPromptRunes+1)},
+		"too long": {Definition: &agentdefinition.Definition{}, Prompt: strings.Repeat("a", agenttestprompt.MaxTestPromptRunes+1)},
 		"no agent": {Prompt: "Which invoices are on hold?"},
 	} {
 		_, err := svc.PrepareDryRun(t.Context(), req, &permissionports.RequestActor{})

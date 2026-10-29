@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/netsuite"
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -81,14 +82,14 @@ func TestQueryValidates(t *testing.T) {
 	})
 	var rows []map[string]any
 	_, err := client.Query(t.Context(), netsuite.Query{SQL: " "}, &rows)
-	require.ErrorIs(t, err, netsuite.ErrQueryRequired)
+	require.ErrorIs(t, err, netsuiteerrors.ErrQueryRequired)
 	_, err = client.Query(t.Context(), netsuite.Query{SQL: "SELECT 1", Limit: 1001}, &rows)
-	require.ErrorIs(t, err, netsuite.ErrInvalidLimit)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidLimit)
 	_, err = client.Query(t.Context(), netsuite.Query{SQL: "SELECT 1", Limit: -1}, &rows)
-	require.ErrorIs(t, err, netsuite.ErrInvalidLimit)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidLimit)
 	for _, bad := range []any{nil, rows, &struct{}{}, (*[]map[string]any)(nil)} {
 		_, err = client.Query(t.Context(), netsuite.Query{SQL: "SELECT 1"}, bad)
-		require.ErrorIs(t, err, netsuite.ErrInvalidRows)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidRows)
 	}
 }
 
@@ -118,12 +119,12 @@ func TestQueryUnsupportedTable(t *testing.T) {
 	var rows []map[string]any
 	_, err := client.Query(t.Context(), netsuite.Query{SQL: "SELECT id FROM subsidiary"}, &rows)
 	require.Error(t, err)
-	assert.True(t, netsuite.IsUnsupportedTable(err))
+	assert.True(t, netsuiteerrors.IsUnsupportedTable(err))
 
 	client, _ = newAPIClient(t, serveFixture(t, http.StatusBadRequest, "error_unknown_field.json"))
 	_, err = client.Query(t.Context(), netsuite.Query{SQL: "SELECT bogus FROM transaction"}, &rows)
 	require.Error(t, err)
-	assert.False(t, netsuite.IsUnsupportedTable(err), "an unknown field is a query bug")
+	assert.False(t, netsuiteerrors.IsUnsupportedTable(err), "an unknown field is a query bug")
 }
 
 func TestQueryTimes(t *testing.T) {
@@ -140,8 +141,8 @@ func TestQueryTimes(t *testing.T) {
 
 	for _, bad := range []string{"", "10/13/2026 2:04 pm", "2026-10-13T14:04:05Z", "2026-10-13"} {
 		_, err = netsuite.ParseQueryTime(bad)
-		require.ErrorIs(t, err, netsuite.ErrInvalidQueryTime, bad)
+		require.ErrorIs(t, err, netsuiteerrors.ErrInvalidQueryTime, bad)
 	}
 	_, err = netsuite.ParseQueryDate("10/13/2026")
-	require.ErrorIs(t, err, netsuite.ErrInvalidQueryTime)
+	require.ErrorIs(t, err, netsuiteerrors.ErrInvalidQueryTime)
 }

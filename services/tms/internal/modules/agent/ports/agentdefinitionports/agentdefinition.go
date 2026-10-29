@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,12 +40,12 @@ type ListAgentDefinitionConnectionRequest struct {
 type ListAgentDefinitionsByTriggerRequest struct {
 	TenantInfo pagination.TenantInfo
 	Mode       agentdefinition.TriggerMode
-	EventKind  agent.EventKind
+	EventKind  agenttrigger.EventKind
 }
 
 type ListAgentDefinitionsForEventsRequest struct {
 	TenantInfo pagination.TenantInfo
-	EventKinds []agent.EventKind
+	EventKinds []agenttrigger.EventKind
 }
 
 type ListDueAgentDefinitionsRequest struct {

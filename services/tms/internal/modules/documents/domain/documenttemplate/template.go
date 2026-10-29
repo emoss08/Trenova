@@ -23,12 +23,6 @@ const (
 	MaxDescriptionLength = 2000
 	MaxKindLength        = 100
 	MaxHashLength        = 64
-
-	MaxReferenceTypeLength = 50
-	MaxFileNameLength      = 255
-	MaxFilePathLength      = 500
-	MaxMimeTypeLength      = 100
-	MaxDeliveredToLength   = 255
 )
 
 var (

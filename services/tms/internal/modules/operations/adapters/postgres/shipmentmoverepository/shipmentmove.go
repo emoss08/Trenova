@@ -7,9 +7,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,7 +38,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) shipmentports.ShipmentMoveRepository {
+func New(p Params) shipmentmoveports.ShipmentMoveRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.shipment-move-repository"),
@@ -127,7 +129,7 @@ func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipm
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *shipmentports.GetMoveByIDRequest,
+	req *shipmentmoveports.GetMoveByIDRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
 		sm := shipmentdb.ShipmentMoves
@@ -156,7 +158,7 @@ func (r *repository) GetByID(
 
 func (r *repository) GetMovesByShipmentID(
 	ctx context.Context,
-	req *shipmentports.GetMovesByShipmentIDRequest,
+	req *shipmentmoveports.GetMovesByShipmentIDRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentMove, error) {
 		sm := shipmentdb.ShipmentMoves
@@ -226,7 +228,7 @@ func (r *repository) hydrateActiveAssignments(
 	ca := shipmentdb.CarrierAssignments
 	carrierAssignments, err := ca.Where(
 		ca.ShipmentMoveID.In(moveIDs...),
-		ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+		ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 	).
 		Load(ca.Carrier(), ca.Accessorials()).
 		All(ctx, r.db.Keel(ctx))
@@ -245,10 +247,10 @@ func (r *repository) hydrateActiveAssignments(
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *shipmentports.UpdateMoveStatusRequest,
+	req *shipmentmoveports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.ShipmentMove, error) {
-		move, err := r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		move, err := r.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:     req.MoveID,
 			TenantInfo: req.TenantInfo,
 		})
@@ -266,7 +268,7 @@ func (r *repository) UpdateStatus(
 			)
 		}
 
-		return r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		return r.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -302,7 +304,7 @@ func (r *repository) UpdateStopActuals(
 
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	if len(req.MoveIDs) == 0 {
 		return []*shipment.ShipmentMove{}, nil
@@ -339,13 +341,13 @@ func (r *repository) BulkUpdateStatus(
 
 func (r *repository) SplitMove(
 	ctx context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.SplitMoveResponse, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.SplitMoveResponse, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*shipmentports.SplitMoveResponse, error) {
-			originalMove, err := r.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		func(ctx context.Context) (*shipmentmoveports.SplitMoveResponse, error) {
+			originalMove, err := r.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 				MoveID:            req.MoveID,
 				TenantInfo:        req.TenantInfo,
 				ExpandMoveDetails: true,
@@ -354,7 +356,7 @@ func (r *repository) SplitMove(
 				return nil, err
 			}
 
-			split := shipment.PlanMoveSplit(originalMove, req.Spec())
+			split := movesplit.PlanMoveSplit(originalMove, req.Spec())
 
 			if err = r.shiftSubsequentMoveSequences(ctx, originalMove); err != nil {
 				return nil, err
@@ -373,7 +375,7 @@ func (r *repository) SplitMove(
 				return nil, err
 			}
 
-			response := &shipmentports.SplitMoveResponse{
+			response := &shipmentmoveports.SplitMoveResponse{
 				OriginalMove: moves[originalMove.ID],
 				NewMove:      moves[split.NewMove.ID],
 			}
@@ -517,7 +519,7 @@ func (r *repository) updateMove(
 		move.CoverageType = existingMove.CoverageType
 	}
 	if move.CoverageType == "" {
-		move.CoverageType = shipment.MoveCoverageTypeUnassigned
+		move.CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 	}
 	move.Version = existingMove.Version
 
@@ -653,7 +655,7 @@ func (r *repository) updateStop(
 	existingStop *shipment.Stop,
 ) error {
 	if stop.ScheduleType == "" {
-		stop.ScheduleType = shipment.StopScheduleTypeOpen
+		stop.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 	stop.Version = existingStop.Version
 

@@ -10,8 +10,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/accountingloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
@@ -43,12 +45,12 @@ func (r *JournalEntryLineResolver) GlAccount(ctx context.Context, obj *journalen
 	}
 
 	var account *glaccount.GLAccount
-	if loaders.Available(ctx) {
-		account, err = loaders.GLAccountByID(ctx, obj.GLAccountID.String())
+	if loadercore.Available(ctx) {
+		account, err = accountingloaders.GLAccountByID(ctx, obj.GLAccountID.String())
 	} else {
 		account, err = r.GlAccountRepo.GetByID(ctx, glaccountports.GetGLAccountByIDRequest{
 			ID:         obj.GLAccountID,
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 		})
 	}
 	if err != nil {
@@ -107,7 +109,7 @@ func (r *QueryResolver) JournalEntry(ctx context.Context, id string) (*journalen
 		)
 	}
 
-	return r.JournalEntryService.GetEntry(ctx, base.TenantInfo(authCtx), entryID)
+	return r.JournalEntryService.GetEntry(ctx, resolvercore.TenantInfo(authCtx), entryID)
 }
 
 func (r *QueryResolver) JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error) {
@@ -118,7 +120,7 @@ func (r *QueryResolver) JournalEntriesBySource(ctx context.Context, sourceType s
 
 	return r.JournalEntryService.ListEntriesBySource(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		sourceType,
 		sourceID,
 	)
@@ -132,7 +134,7 @@ func (r *QueryResolver) JournalSourceByObject(ctx context.Context, sourceType st
 
 	source, err := r.JournalEntryService.GetSourceByObject(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		sourceType,
 		sourceID,
 	)
@@ -148,13 +150,13 @@ func (r *QueryResolver) JournalReviewTable(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.JournalReview.List(ctx, &journalentryports.ListJournalReviewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Filter:     tableInput.Filter,
 		Cursor:     tableInput.Cursor,
 	})
@@ -171,7 +173,7 @@ func (r *QueryResolver) JournalReviewSummary(ctx context.Context) (*journalentry
 		return nil, err
 	}
 
-	return r.JournalReview.Summary(ctx, base.TenantInfo(authCtx))
+	return r.JournalReview.Summary(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *JournalCardLineResolver) Category(ctx context.Context, obj *journalcardservice.Line) (*accounttype.Category, error) {
@@ -210,7 +212,7 @@ func (r *QueryResolver) JournalEntryCard(ctx context.Context, id string) (*journ
 	}
 
 	return r.JournalCards.GetJournalEntryCard(ctx, &journalcardservice.GetJournalEntryCardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		EntryID:    entryID,
 		Parties: journalcardservice.Parties{
 			IncludeCustomers: r.HasPermission(ctx, authCtx, permission.ResourceCustomer, permission.OpRead),
@@ -230,7 +232,7 @@ func (r *QueryResolver) JournalEntries(ctx context.Context, input gqlmodel.DataT
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}

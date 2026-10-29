@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +25,7 @@ type WatchtowerItemInput struct {
 	Summary     string
 	SubjectType agent.SubjectType
 	SubjectID   pulid.ID
-	EventKind   agent.EventKind
+	EventKind   agenttrigger.EventKind
 	Path        string
 	OccurredAt  int64
 	OwnerID     pulid.ID
@@ -128,7 +130,7 @@ type HandOffWatchtowerItemResult struct {
 	Run         *agent.AgentRun
 	Subscribers []*agentdefinition.Definition
 	Candidates  []*agentdefinition.Definition
-	Templates   []agentdefinition.Template
+	Templates   []agenttemplate.Template
 }
 
 type WatchtowerSweepResult struct {

@@ -8,8 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,8 +18,8 @@ import (
 type toolTrustLister interface {
 	ListByDefinitionIDs(
 		ctx context.Context,
-		req agentports.ListToolTrustByDefinitionsRequest,
-	) (map[pulid.ID][]*agent.ToolTrust, error)
+		req agenttoolports.ListToolTrustByDefinitionsRequest,
+	) (map[pulid.ID][]*agenttooltrust.ToolTrust, error)
 }
 
 type safetySurvey struct {
@@ -29,7 +30,7 @@ type safetySurvey struct {
 func (s *Service) Summary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*agentports.AgentSafetySummary, error) {
+) (*agenttoolports.AgentSafetySummary, error) {
 	survey, err := s.survey(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
@@ -42,7 +43,7 @@ func (s *Service) Summary(
 		}
 	}
 
-	return &agentports.AgentSafetySummary{
+	return &agenttoolports.AgentSafetySummary{
 		ToolCount:             len(s.entries),
 		RunWithoutPerson:      len(survey.unattended),
 		LeaveOrganization:     leaving,
@@ -54,20 +55,20 @@ func (s *Service) Summary(
 	}, nil
 }
 
-func (s *Service) egressCounts() []agentports.AgentEgressCount {
+func (s *Service) egressCounts() []agenttoolports.AgentEgressCount {
 	counts := make(map[agent.EgressClass]int, len(agent.EgressClasses()))
 	for idx := range s.entries {
 		policy := s.entries[idx].view.Policy
-		if policy.EffectiveEffect() != agent.ToolEffectChange {
+		if policy.EffectiveEffect() != agenttooltrust.ToolEffectChange {
 			continue
 		}
 		counts[widestEgress(policy.Egress)]++
 	}
 
-	out := make([]agentports.AgentEgressCount, 0, len(counts))
+	out := make([]agenttoolports.AgentEgressCount, 0, len(counts))
 	for _, class := range agent.EgressClasses() {
 		if counts[class] > 0 {
-			out = append(out, agentports.AgentEgressCount{Egress: class, Count: counts[class]})
+			out = append(out, agenttoolports.AgentEgressCount{Egress: class, Count: counts[class]})
 		}
 	}
 
@@ -103,7 +104,7 @@ func (s *Service) survey(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*safetySurvey, error) {
-	definitions, err := s.listDefinitions(ctx, &agentports.ListAgentSafetyRequest{
+	definitions, err := s.listDefinitions(ctx, &agenttoolports.ListAgentSafetyRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -146,15 +147,15 @@ func (s *Service) survey(
 
 type surveyAgentInput struct {
 	definition *agentdefinition.Definition
-	control    *tenant.AgentControl
-	trust      []*agent.ToolTrust
-	rules      map[string]*agent.ToolRuleOverride
+	control    *agentcontrol.AgentControl
+	trust      []*agenttooltrust.ToolTrust
+	rules      map[string]*agenttooltrust.ToolRuleOverride
 	out        *safetySurvey
 }
 
 func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	held := s.heldPolicies(in.definition)
-	trustByTool := make(map[string]*agent.ToolTrust, len(in.trust))
+	trustByTool := make(map[string]*agenttooltrust.ToolTrust, len(in.trust))
 	for _, row := range in.trust {
 		if row != nil {
 			trustByTool[row.ToolName] = row
@@ -165,8 +166,8 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	}
 
 	for idx := range held {
-		policy := agenttoolpolicy.ApplyOverrides(held[idx], in.rules)
-		if policy.EffectiveEffect() != agent.ToolEffectChange {
+		policy := agenttoolpolicy.ApplyOverrides(&held[idx], in.rules)
+		if policy.EffectiveEffect() != agenttooltrust.ToolEffectChange {
 			continue
 		}
 		if _, known := in.out.unattended[policy.Name]; known {
@@ -185,17 +186,18 @@ func (s *Service) surveyAgent(ctx context.Context, in *surveyAgentInput) {
 	}
 }
 
-func RunsWithoutPerson(answer agent.AutonomyAnswer) bool {
-	return answer == agent.AutonomyRunsOnItsOwn || answer == agent.AutonomyConditional
+func RunsWithoutPerson(answer agenttooltrust.AutonomyAnswer) bool {
+	return answer == agenttooltrust.AutonomyRunsOnItsOwn ||
+		answer == agenttooltrust.AutonomyConditional
 }
 
 func (s *Service) trustFor(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	definitions []*agentdefinition.Definition,
-) (map[pulid.ID][]*agent.ToolTrust, error) {
+) (map[pulid.ID][]*agenttooltrust.ToolTrust, error) {
 	if s.trust == nil {
-		return map[pulid.ID][]*agent.ToolTrust{}, nil
+		return map[pulid.ID][]*agenttooltrust.ToolTrust{}, nil
 	}
 
 	ids := make([]pulid.ID, 0, len(definitions))
@@ -203,7 +205,7 @@ func (s *Service) trustFor(
 		ids = append(ids, definition.ID)
 	}
 
-	trust, err := s.trust.ListByDefinitionIDs(ctx, agentports.ListToolTrustByDefinitionsRequest{
+	trust, err := s.trust.ListByDefinitionIDs(ctx, agenttoolports.ListToolTrustByDefinitionsRequest{
 		TenantInfo:         tenantInfo,
 		AgentDefinitionIDs: ids,
 	})
@@ -217,8 +219,8 @@ func (s *Service) trustFor(
 func (s *Service) ToolHolders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]agentports.AgentToolHolders, error) {
-	definitions, err := s.listDefinitions(ctx, &agentports.ListAgentSafetyRequest{
+) ([]agenttoolports.AgentToolHolders, error) {
+	definitions, err := s.listDefinitions(ctx, &agenttoolports.ListAgentSafetyRequest{
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -236,11 +238,11 @@ func (s *Service) ToolHolders(
 		}
 	}
 
-	out := make([]agentports.AgentToolHolders, 0, len(byTool))
+	out := make([]agenttoolports.AgentToolHolders, 0, len(byTool))
 	for idx := range s.entries {
 		name := s.entries[idx].view.Policy.Name
 		if holders, ok := byTool[name]; ok {
-			out = append(out, agentports.AgentToolHolders{PolicyName: name, AgentIDs: holders})
+			out = append(out, agenttoolports.AgentToolHolders{PolicyName: name, AgentIDs: holders})
 		}
 	}
 
@@ -249,9 +251,9 @@ func (s *Service) ToolHolders(
 
 func (s *Service) RuleImpact(
 	ctx context.Context,
-	req *agentports.RuleImpactRequest,
-) ([]agentports.AgentToolRuleImpact, error) {
-	definitions, err := s.listDefinitions(ctx, &agentports.ListAgentSafetyRequest{
+	req *agenttoolports.RuleImpactRequest,
+) ([]agenttoolports.AgentToolRuleImpact, error) {
+	definitions, err := s.listDefinitions(ctx, &agenttoolports.ListAgentSafetyRequest{
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
@@ -260,13 +262,16 @@ func (s *Service) RuleImpact(
 
 	holders := make([]*agentdefinition.Definition, 0, len(definitions))
 	for _, definition := range definitions {
-		if slices.ContainsFunc(s.heldPolicies(definition), func(policy agentports.ToolPolicy) bool {
-			return policy.Name == req.ToolName
-		}) {
+		if slices.ContainsFunc(
+			s.heldPolicies(definition),
+			func(policy agenttoolports.ToolPolicy) bool {
+				return policy.Name == req.ToolName
+			},
+		) {
 			holders = append(holders, definition)
 		}
 	}
-	out := make([]agentports.AgentToolRuleImpact, 0, len(holders))
+	out := make([]agenttoolports.AgentToolRuleImpact, 0, len(holders))
 	if len(holders) == 0 {
 		return out, nil
 	}
@@ -281,13 +286,13 @@ func (s *Service) RuleImpact(
 	}
 
 	for _, definition := range holders {
-		var held *agent.ToolTrust
+		var held *agenttooltrust.ToolTrust
 		for _, row := range trust[definition.ID] {
 			if row != nil && row.ToolName == req.ToolName {
 				held = row
 			}
 		}
-		answer := func(policy agentports.ToolPolicy) agent.AutonomyAnswer {
+		answer := func(policy agenttoolports.ToolPolicy) agenttooltrust.AutonomyAnswer {
 			return agenttoolpolicy.Assess(ctx, &agenttoolpolicy.AssessInput{
 				Policy:     policy,
 				Definition: definition,
@@ -295,7 +300,7 @@ func (s *Service) RuleImpact(
 				Control:    control,
 			}).Answer
 		}
-		out = append(out, agentports.AgentToolRuleImpact{
+		out = append(out, agenttoolports.AgentToolRuleImpact{
 			AgentID:   definition.ID,
 			AgentName: definition.Name,
 			Before:    answer(req.Before),

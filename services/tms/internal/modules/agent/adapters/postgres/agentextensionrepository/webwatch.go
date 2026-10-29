@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,10 +41,10 @@ func NewWebWatchRepository(p Params) agentextensionports.WebWatchRepository {
 
 func (r *webWatchRepository) Create(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
-) (*agentextension.WebWatch, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		if err := agentextensiondb.WebWatches.Create(ctx, r.db.Keel(ctx), watch); err != nil {
+	watch *extensionwebwatch.WebWatch,
+) (*extensionwebwatch.WebWatch, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionwebwatch.WebWatch, error) {
+		if err := extensionwebwatchdb.WebWatches.Create(ctx, r.db.Keel(ctx), watch); err != nil {
 			r.l.Error("failed to create web watch", zap.Error(err))
 			return nil, fmt.Errorf("create web watch: %w", err)
 		}
@@ -57,9 +57,9 @@ func (r *webWatchRepository) Get(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	id pulid.ID,
-) (*agentextension.WebWatch, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		watch, err := agentextensiondb.WebWatches.Get(ctx, r.db.Keel(ctx), id)
+) (*extensionwebwatch.WebWatch, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*extensionwebwatch.WebWatch, error) {
+		watch, err := extensionwebwatchdb.WebWatches.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
 			return nil, webWatchErrors.Map(err, id.String())
 		}
@@ -70,10 +70,10 @@ func (r *webWatchRepository) Get(
 
 func (r *webWatchRepository) Update(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
-) (*agentextension.WebWatch, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		if err := agentextensiondb.WebWatches.Save(ctx, r.db.Keel(ctx), watch); err != nil {
+	watch *extensionwebwatch.WebWatch,
+) (*extensionwebwatch.WebWatch, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*extensionwebwatch.WebWatch, error) {
+		if err := extensionwebwatchdb.WebWatches.Save(ctx, r.db.Keel(ctx), watch); err != nil {
 			if dberror.IsVersionConflict(err) {
 				return nil, webWatchErrors.Map(err, watch.ID.String())
 			}
@@ -88,15 +88,15 @@ func (r *webWatchRepository) Update(
 func (r *webWatchRepository) List(
 	ctx context.Context,
 	req *agentextensionports.ListWebWatchesRequest,
-) ([]*agentextension.WebWatch, error) {
+) ([]*extensionwebwatch.WebWatch, error) {
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultWebWatches
 	}
 	limit = min(limit, maxWebWatches)
 
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.WebWatch, error) {
-		w := agentextensiondb.WebWatches
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*extensionwebwatch.WebWatch, error) {
+		w := extensionwebwatchdb.WebWatches
 		watches, err := w.Where(
 			keel.When(req.Status != "", w.Status.Eq(req.Status)),
 			keel.When(req.ThreadID.IsNotNil(), w.ThreadID.Eq(req.ThreadID)),
@@ -121,8 +121,8 @@ func (r *webWatchRepository) CountActive(
 	_ pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		w := agentextensiondb.WebWatches
-		count, err := w.Where(w.Status.Eq(agentextension.WebWatchStatusActive)).
+		w := extensionwebwatchdb.WebWatches
+		count, err := w.Where(w.Status.Eq(extensionwebwatch.WebWatchStatusActive)).
 			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count active web watches", zap.Error(err))
@@ -147,13 +147,13 @@ func NewWebWatchFindingRepository(p Params) agentextensionports.WebWatchFindingR
 
 func (r *webWatchFindingRepository) Create(
 	ctx context.Context,
-	finding *agentextension.WebWatchFinding,
-) (*agentextension.WebWatchFinding, error) {
+	finding *extensionwebwatch.WebWatchFinding,
+) (*extensionwebwatch.WebWatchFinding, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentextension.WebWatchFinding, error) {
-			err := agentextensiondb.WebWatchFindings.Create(ctx, r.db.Keel(ctx), finding)
+		func(ctx context.Context) (*extensionwebwatch.WebWatchFinding, error) {
+			err := extensionwebwatchdb.WebWatchFindings.Create(ctx, r.db.Keel(ctx), finding)
 			if err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, agentextensionports.ErrWebWatchFindingExists
@@ -172,7 +172,7 @@ func (r *webWatchFindingRepository) ListByWatch(
 	_ pagination.TenantInfo,
 	watchID pulid.ID,
 	limit int,
-) ([]*agentextension.WebWatchFinding, error) {
+) ([]*extensionwebwatch.WebWatchFinding, error) {
 	if limit <= 0 {
 		limit = defaultWatchFindings
 	}
@@ -189,7 +189,7 @@ func (r *webWatchFindingRepository) ListUndelivered(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	watchID pulid.ID,
-) ([]*agentextension.WebWatchFinding, error) {
+) ([]*extensionwebwatch.WebWatchFinding, error) {
 	return r.list(ctx, &findingQuery{
 		watchID:     watchID,
 		limit:       maxUndelivered,
@@ -207,12 +207,12 @@ type findingQuery struct {
 func (r *webWatchFindingRepository) list(
 	ctx context.Context,
 	q *findingQuery,
-) ([]*agentextension.WebWatchFinding, error) {
+) ([]*extensionwebwatch.WebWatchFinding, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*agentextension.WebWatchFinding, error) {
-			f := agentextensiondb.WebWatchFindings
+		func(ctx context.Context) ([]*extensionwebwatch.WebWatchFinding, error) {
+			f := extensionwebwatchdb.WebWatchFindings
 			order := f.FoundAt.Asc()
 			if q.newest {
 				order = f.FoundAt.Desc()
@@ -246,7 +246,7 @@ func (r *webWatchFindingRepository) MarkDelivered(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		f := agentextensiondb.WebWatchFindings
+		f := extensionwebwatchdb.WebWatchFindings
 		_, err := f.Where(f.ID.In(ids...), f.DeliveredAt.IsNull()).
 			Update(ctx, r.db.Keel(ctx), f.DeliveredAt.To(at))
 		if err != nil {

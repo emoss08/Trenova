@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 )
 
 const SignatureHeader = "x-xero-signature"
@@ -33,7 +34,7 @@ type WebhookPayload struct {
 type wireWebhookEvent struct {
 	ResourceURL   string   `json:"resourceUrl"`
 	ResourceID    string   `json:"resourceId"`
-	EventDateUTC  wireTime `json:"eventDateUtc"`
+	EventDateUTC  WireTime `json:"eventDateUtc"`
 	EventType     string   `json:"eventType"`
 	EventCategory string   `json:"eventCategory"`
 	TenantID      string   `json:"tenantId"`
@@ -49,17 +50,17 @@ type wireWebhookPayload struct {
 
 func VerifySignature(key string, body []byte, signature string) error {
 	if strings.TrimSpace(key) == "" {
-		return ErrWebhookKeyRequired
+		return xeroerrors.ErrWebhookKeyRequired
 	}
 	provided, err := base64.StdEncoding.DecodeString(strings.TrimSpace(signature))
 	if err != nil || len(provided) == 0 {
-		return ErrMissingSignature
+		return xeroerrors.ErrMissingSignature
 	}
 
 	mac := hmac.New(sha256.New, []byte(key))
 	mac.Write(body)
 	if !hmac.Equal(provided, mac.Sum(nil)) {
-		return ErrInvalidSignature
+		return xeroerrors.ErrInvalidSignature
 	}
 	return nil
 }
@@ -67,11 +68,11 @@ func VerifySignature(key string, body []byte, signature string) error {
 func ParseWebhook(body []byte) (*WebhookPayload, error) {
 	trimmed := bytes.TrimSpace(body)
 	if len(trimmed) == 0 || trimmed[0] != '{' {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 	var wire wireWebhookPayload
 	if err := sonic.Unmarshal(trimmed, &wire); err != nil {
-		return nil, ErrUnexpectedPayload
+		return nil, xeroerrors.ErrUnexpectedPayload
 	}
 
 	payload := &WebhookPayload{
@@ -85,7 +86,7 @@ func ParseWebhook(body []byte) (*WebhookPayload, error) {
 		payload.Events = append(payload.Events, WebhookEvent{
 			ResourceURL:   event.ResourceURL,
 			ResourceID:    event.ResourceID,
-			EventDate:     event.EventDateUTC.time(),
+			EventDate:     event.EventDateUTC.Time(),
 			EventType:     event.EventType,
 			EventCategory: event.EventCategory,
 			TenantID:      strings.TrimSpace(event.TenantID),

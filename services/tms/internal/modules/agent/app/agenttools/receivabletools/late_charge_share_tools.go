@@ -6,12 +6,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,12 +43,12 @@ var errNothingToCharge = errors.New(
 		"what is due is under the organization's minimum",
 )
 
-var shareTabs = agenttoolschema.Source("invoice.shareTab", []invoice.ShareTab{
-	invoice.ShareTabOverview,
-	invoice.ShareTabDelivery,
-	invoice.ShareTabCharges,
-	invoice.ShareTabDocuments,
-	invoice.ShareTabActivity,
+var shareTabs = agenttoolschema.Source("invoice.shareTab", []invoiceshare.ShareTab{
+	invoiceshare.ShareTabOverview,
+	invoiceshare.ShareTabDelivery,
+	invoiceshare.ShareTabCharges,
+	invoiceshare.ShareTabDocuments,
+	invoiceshare.ShareTabActivity,
 })
 
 type lateChargeAssessor interface {
@@ -72,8 +77,8 @@ type invoiceSharer interface {
 	) (*invoiceports.InvoiceSharePreview, error)
 }
 
-func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "receivable_assess_late_charges",
 		SearchTerms: []string{"late fees", "finance charge"},
 		Description: "Propose assessing late charges on overdue invoices as of a date, as one " +
@@ -92,7 +97,7 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 			paramAsOfDate: agenttoolschema.Date(
 				"The day overdue periods are counted to, usually today.",
 			),
-			common.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
+			toolparams.ParamCustomerIDs: toolschema.KeepEmpty(agenttoolschema.RecordIDs(
 				permission.ResourceCustomer,
 				"Only these customers, from customer_list or "+
 					"receivable_list_open_items.",
@@ -100,12 +105,12 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 			)),
 		},
 		Required: []string{paramAsOfDate},
-	}, common.ReceivablePlan[*latechargeports.LateChargeAssessmentRequest, *latechargeports.LateChargeAssessmentResult]{
+	}, toolspec.ReceivablePlan[*latechargeports.LateChargeAssessmentRequest, *latechargeports.LateChargeAssessmentResult]{
 		Request: lateChargeRequest,
 		Plan: func(
 			ctx context.Context,
 			req *latechargeports.LateChargeAssessmentRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*latechargeports.LateChargeAssessmentResult, error) {
 			result, err := charges.PlanAssess(ctx, req, params.Actor)
 			if err != nil {
@@ -123,8 +128,8 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 		Run: func(
 			ctx context.Context,
 			req *latechargeports.LateChargeAssessmentRequest,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := charges.Assess(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -132,19 +137,19 @@ func NewAssessLateChargesTool(charges lateChargeAssessor) agentports.AgentTool {
 }
 
 func lateChargeRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*latechargeports.LateChargeAssessmentRequest, error) {
-	asOf, err := common.RequireUTCDay(params.Params, paramAsOfDate)
+	asOf, err := toolparams.RequireUTCDay(params.Params, paramAsOfDate)
 	if err != nil {
 		return nil, err
 	}
 	req := &latechargeports.LateChargeAssessmentRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		AsOfDate:   asOf.Unix(),
 	}
-	if _, ok := params.Params[common.ParamCustomerIDs]; ok {
-		if req.CustomerIDs, err = common.RequirePulidSlice(
-			params.Params, common.ParamCustomerIDs, maxLateCustomers,
+	if _, ok := params.Params[toolparams.ParamCustomerIDs]; ok {
+		if req.CustomerIDs, err = toolparams.RequirePulidSlice(
+			params.Params, toolparams.ParamCustomerIDs, maxLateCustomers,
 		); err != nil {
 			return nil, err
 		}
@@ -162,8 +167,8 @@ type lateChargeMemoView struct {
 func renderLateCharges(
 	_ *latechargeports.LateChargeAssessmentRequest,
 	result *latechargeports.LateChargeAssessmentResult,
-) (*agent.ToolPreview, error) {
-	changes := make([]*agent.RecordChange, 0, len(result.Customers))
+) (*agentpreview.ToolPreview, error) {
+	changes := make([]*agentpreview.RecordChange, 0, len(result.Customers))
 	notes := make([]string, 0, len(result.Customers))
 	for _, customer := range result.Customers {
 		if customer.Skipped {
@@ -191,7 +196,7 @@ func renderLateCharges(
 				Invoices:   strings.Join(invoices, ", "),
 			},
 			toolpreview.WithRefs(map[string]permission.Resource{
-				common.ParamCustomerID: permission.ResourceCustomer,
+				toolparams.ParamCustomerID: permission.ResourceCustomer,
 			}),
 			toolpreview.Labels(map[string]string{lineCountFieldName: "Overdue periods charged"}),
 		)
@@ -199,9 +204,9 @@ func renderLateCharges(
 			return nil, err
 		}
 		toolpreview.AttachMoney(change, toolpreview.MoneyBlock(customer.CurrencyCode,
-			agent.MoneyLine{
+			agentpreview.MoneyLine{
 				Label: "Late charge",
-				After: common.KnownAmount(money.DecimalFromMinor(customer.TotalChargeMinor)),
+				After: changepreview.KnownAmount(money.DecimalFromMinor(customer.TotalChargeMinor)),
 			},
 		), toolpreview.SensitiveAs("totalAmount"))
 		changes = append(changes, change)
@@ -212,15 +217,15 @@ func renderLateCharges(
 		posting = "posted as it is raised, as the billing control says"
 	}
 	summary := fmt.Sprintf("Would raise %s for %s in all, each %s.",
-		common.CountOf(len(changes), "late charge debit memo"),
+		changepreview.CountOf(len(changes), "late charge debit memo"),
 		money.DecimalFromMinor(result.TotalChargeMinor).StringFixed(2),
 		posting)
 
-	return toolpreview.Build(common.WithNotes(summary, notes), changes...), nil
+	return toolpreview.Build(changepreview.WithNotes(summary, notes), changes...), nil
 }
 
-func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
-	return common.NewReceivableTool(&common.ReceivableSpec{
+func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
+	return toolspec.NewReceivableTool(&toolspec.ReceivableSpec{
 		Name:        "invoice_share",
 		Recipe:      []string{"invoice_list_share_candidates", "invoice_share"},
 		SearchTerms: []string{"loop in teammate", "teammate", "colleague"},
@@ -237,39 +242,39 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 		Rationale: "Notifies and emails colleagues in the name of the person who shares it, " +
 			"with a note they read as theirs; only that person sends it.",
 		Properties: map[string]any{
-			common.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
+			toolparams.ParamInvoiceID: agenttoolschema.RecordIDText(permission.ResourceInvoice,
 				"The invoice, from invoice_list or invoice_get."),
 			paramUserIDs: agenttoolschema.RecordIDs(
 				permission.ResourceUser,
 				"The teammates, from invoice_list_share_candidates.",
-				invoice.MaxShareRecipients,
+				invoiceshare.MaxShareRecipients,
 			),
-			paramShareNote: common.StringProperty("A note for them, such as what to look at.",
-				invoice.MaxShareNoteLength),
+			paramShareNote: toolparams.StringProperty("A note for them, such as what to look at.",
+				invoiceshare.MaxShareNoteLength),
 			paramShareTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
 				"Defaults to overview.", shareTabs),
 		},
-		Required: []string{common.ParamInvoiceID, paramUserIDs},
-		Target:   common.TargetInvoice,
-	}, common.ReceivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
+		Required: []string{toolparams.ParamInvoiceID, paramUserIDs},
+		Target:   toolparams.TargetInvoice,
+	}, toolspec.ReceivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
 		Request: shareRequest,
 		Plan: func(
 			ctx context.Context,
 			req *invoiceports.ShareInvoiceRequest,
-			params *agentports.ToolExecuteParams,
+			params *agenttoolports.ToolExecuteParams,
 		) (*invoiceports.InvoiceSharePreview, error) {
 			return shares.PreviewShare(ctx, req, params.Actor)
 		},
 		Refused: func(req *invoiceports.ShareInvoiceRequest) string {
 			return fmt.Sprintf("Would share the invoice with %s.",
-				common.CountOf(len(req.UserIDs), "teammate"))
+				changepreview.CountOf(len(req.UserIDs), "teammate"))
 		},
 		Render: renderShare,
 		Run: func(
 			ctx context.Context,
 			req *invoiceports.ShareInvoiceRequest,
-			params *agentports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
+			params *agenttoolports.ToolExecuteParams,
+		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := shares.Share(ctx, req, params.Actor)
 			return nil, err
 		},
@@ -277,31 +282,35 @@ func NewShareInvoiceTool(shares invoiceSharer) agentports.AgentTool {
 }
 
 func shareRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.ShareInvoiceRequest, error) {
-	invoiceID, err := common.RequirePulid(params.Params, common.ParamInvoiceID)
+	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
 	}
-	userIDs, err := common.RequirePulidSlice(
+	userIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramUserIDs,
-		invoice.MaxShareRecipients,
+		invoiceshare.MaxShareRecipients,
 	)
 	if err != nil {
 		return nil, err
 	}
-	note, err := common.BoundedText(params.Params, paramShareNote, invoice.MaxShareNoteLength)
+	note, err := toolparams.BoundedText(
+		params.Params,
+		paramShareNote,
+		invoiceshare.MaxShareNoteLength,
+	)
 	if err != nil {
 		return nil, err
 	}
-	tab, _, err := common.OptionalEnum(params.Params, paramShareTab, shareTabs.Values)
+	tab, _, err := toolparams.OptionalEnum(params.Params, paramShareTab, shareTabs.Values)
 	if err != nil {
 		return nil, err
 	}
 
 	return &invoiceports.ShareInvoiceRequest{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		InvoiceID:  invoiceID,
 		UserIDs:    userIDs,
 		Note:       note,
@@ -318,9 +327,9 @@ type shareView struct {
 func renderShare(
 	_ *invoiceports.ShareInvoiceRequest,
 	plan *invoiceports.InvoiceSharePreview,
-) (*agent.ToolPreview, error) {
-	label := common.InvoiceLabel(plan.Invoice)
-	changes := make([]*agent.RecordChange, 0, len(plan.Recipients))
+) (*agentpreview.ToolPreview, error) {
+	label := invoicepreview.InvoiceLabel(plan.Invoice)
+	changes := make([]*agentpreview.RecordChange, 0, len(plan.Recipients))
 	names := make([]string, 0, len(plan.Recipients))
 	for _, recipient := range plan.Recipients {
 		names = append(names, recipient.Name)
@@ -338,8 +347,8 @@ func renderShare(
 			return nil, err
 		}
 		if recipient.Emailed {
-			change.Message = &agent.MessagePreview{
-				Channel: agent.MessageChannelEmail,
+			change.Message = &agentpreview.MessagePreview{
+				Channel: agentpreview.MessageChannelEmail,
 				To:      []string{recipient.EmailAddress},
 				Subject: recipient.Subject,
 				Body:    recipient.Body,

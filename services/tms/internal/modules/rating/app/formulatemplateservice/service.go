@@ -6,31 +6,27 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type sourceChecker interface {
+type SourceChecker interface {
 	CheckSource(ctx context.Context, req *tariff.SourceCheckRequest) (*tariff.SourceCheck, error)
 	RunTests(ctx context.Context, req *tariff.TestRequest) (*rules.TariffTestRun, error)
 	TestChecked(
@@ -53,7 +49,7 @@ type sourceChecker interface {
 	SetName(ctx context.Context, source, name string) (string, error)
 }
 
-type billingResolver interface {
+type BillingResolver interface {
 	BillingVersion(
 		ctx context.Context,
 		template *formulatemplate.FormulaTemplate,
@@ -72,7 +68,7 @@ type billingResolver interface {
 	) (tariff.LibrarySet, error)
 }
 
-type approvedLibraries interface {
+type ApprovedLibraries interface {
 	ListLatestApproved(
 		ctx context.Context,
 		req *formulalibraryports.ListApprovedLibrariesRequest,
@@ -82,58 +78,34 @@ type approvedLibraries interface {
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	DB              kernelports.Transactor
-	Repo            formulatemplateports.FormulaTemplateRepository
-	VersionRepo     formulatemplateports.FormulaTemplateVersionRepository
-	ReviewRepo      formulatemplateports.FormulaTemplateReviewRepository
-	LibraryVersions formulalibraryports.FormulaLibraryVersionRepository
-	Checker         *tariff.Checker
-	Resolver        *tariff.TemplateResolver
-	Rater           tariffports.Rater
-	Dependents      rateagreementports.TemplateInputsLister
-	Records         tariffports.RecordBuilder  `optional:"true"`
-	RatedShipments  tariffports.RatedShipments `optional:"true"`
-	AuditService    auditports.AuditService
-	Notifications   *notificationservice.Service   `optional:"true"`
-	Roles           permissionports.RoleRepository `optional:"true"`
+	Logger       *zap.Logger
+	DB           kernelports.Transactor
+	Repo         formulatemplateports.FormulaTemplateRepository
+	VersionRepo  formulatemplateports.FormulaTemplateVersionRepository
+	Checker      *tariff.Checker
+	Resolver     *tariff.TemplateResolver
+	AuditService auditports.AuditService
 }
 
 type Service struct {
-	l             *zap.Logger
-	db            kernelports.Transactor
-	repo          formulatemplateports.FormulaTemplateRepository
-	versionRepo   formulatemplateports.FormulaTemplateVersionRepository
-	reviewRepo    formulatemplateports.FormulaTemplateReviewRepository
-	libraries     approvedLibraries
-	checker       sourceChecker
-	resolver      billingResolver
-	rater         tariffports.Rater
-	dependents    rateagreementports.TemplateInputsLister
-	records       tariffports.RecordBuilder
-	rated         tariffports.RatedShipments
-	auditService  auditports.AuditService
-	notifications *notificationservice.Service
-	roles         permissionports.RoleRepository
+	l            *zap.Logger
+	db           kernelports.Transactor
+	repo         formulatemplateports.FormulaTemplateRepository
+	versionRepo  formulatemplateports.FormulaTemplateVersionRepository
+	checker      SourceChecker
+	resolver     BillingResolver
+	auditService auditports.AuditService
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
-		l:             p.Logger.Named("service.formulatemplate"),
-		db:            p.DB,
-		repo:          p.Repo,
-		versionRepo:   p.VersionRepo,
-		reviewRepo:    p.ReviewRepo,
-		libraries:     p.LibraryVersions,
-		checker:       p.Checker,
-		resolver:      p.Resolver,
-		rater:         p.Rater,
-		dependents:    p.Dependents,
-		records:       p.Records,
-		rated:         p.RatedShipments,
-		auditService:  p.AuditService,
-		notifications: p.Notifications,
-		roles:         p.Roles,
+		l:            p.Logger.Named("service.formulatemplate"),
+		db:           p.DB,
+		repo:         p.Repo,
+		versionRepo:  p.VersionRepo,
+		checker:      p.Checker,
+		resolver:     p.Resolver,
+		auditService: p.AuditService,
 	}
 }
 
@@ -150,7 +122,7 @@ func (s *Service) Create(
 	entity.Status = formulatemplate.StatusDraft
 	clearApprovalFields(entity)
 
-	if err := s.prepareContent(ctx, entity); err != nil {
+	if err := s.PrepareContent(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -164,7 +136,7 @@ func (s *Service) Create(
 			return txErr
 		}
 
-		if txErr = s.createVersionSnapshot(
+		if txErr = s.CreateVersionSnapshot(
 			txCtx, created, 1, userID, "Initial version", nil,
 		); txErr != nil {
 			log.Error("failed to create version snapshot", zap.Error(txErr))
@@ -178,7 +150,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		createdEntity,
@@ -213,7 +185,7 @@ func (s *Service) Update(
 	}
 
 	entity := withContent(original, payload)
-	if err = s.prepareContent(ctx, entity); err != nil {
+	if err = s.PrepareContent(ctx, entity); err != nil {
 		return nil, err
 	}
 
@@ -254,7 +226,7 @@ func (s *Service) Update(
 		}
 
 		if material {
-			if txErr = s.createVersionSnapshot(
+			if txErr = s.CreateVersionSnapshot(
 				txCtx, updated, updated.CurrentVersionNumber, userID, "", changeSummary,
 			); txErr != nil {
 				log.Error("failed to create version snapshot", zap.Error(txErr))
@@ -263,7 +235,7 @@ func (s *Service) Update(
 		}
 
 		if revertsApproval {
-			cleared, clearErr := s.clearScheduledVersions(txCtx, updated)
+			cleared, clearErr := s.ClearScheduledVersions(txCtx, updated)
 			if clearErr != nil {
 				log.Error("failed to clear scheduled versions", zap.Error(clearErr))
 				return clearErr
@@ -278,7 +250,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.logAuditAction(
+	s.LogAuditAction(
 		ctx,
 		log,
 		updatedEntity,
@@ -345,7 +317,7 @@ func (s *Service) Duplicate(
 				}
 			}
 
-			if txErr = s.createVersionSnapshot(
+			if txErr = s.CreateVersionSnapshot(
 				txCtx,
 				entity,
 				1,
@@ -366,7 +338,7 @@ func (s *Service) Duplicate(
 	}
 
 	for _, entity := range entities {
-		s.logAuditAction(
+		s.LogAuditAction(
 			ctx,
 			log,
 			entity,
@@ -388,7 +360,7 @@ func (s *Service) materialChange(
 		return entity.HasMaterialChange(original), nil
 	}
 
-	renamedOriginal, err := s.renamed(ctx, original.Source, entity.Name)
+	renamedOriginal, err := s.Renamed(ctx, original.Source, entity.Name)
 	if err != nil {
 		return false, err
 	}
@@ -421,7 +393,7 @@ func (s *Service) namedCopies(
 
 		seed := formulatemplate.SeedFromTemplate(source)
 		seed.Name = name
-		if seed.Source, err = s.renamed(ctx, source.Source, name); err != nil {
+		if seed.Source, err = s.Renamed(ctx, source.Source, name); err != nil {
 			return nil, err
 		}
 		copies[i] = seed.Build()
@@ -505,7 +477,7 @@ func (s *Service) BulkUpdateStatus(
 		}
 
 		for _, template := range saved {
-			count, clearErr := s.clearScheduledVersions(txCtx, template)
+			count, clearErr := s.ClearScheduledVersions(txCtx, template)
 			if clearErr != nil {
 				return clearErr
 			}
@@ -521,7 +493,7 @@ func (s *Service) BulkUpdateStatus(
 
 	log := s.l.With(zap.String("operation", "BulkUpdateStatus"))
 	for _, template := range updated {
-		s.logAuditAction(
+		s.LogAuditAction(
 			ctx,
 			log,
 			template,
@@ -602,7 +574,7 @@ func describeUsages(usages []formulatemplateports.TemplateUsageCount) string {
 		if !ok {
 			noun = [2]string{usage.Type, usage.Type}
 		}
-		parts = append(parts, stringutils.CountNoun(usage.Count, noun[0], noun[1]))
+		parts = append(parts, inflect.CountNoun(usage.Count, noun[0], noun[1]))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -640,6 +612,13 @@ func (s *Service) GetByID(
 	}
 
 	return template, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req formulatemplateports.GetFormulaTemplatesByIDsRequest,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) List(
@@ -680,7 +659,7 @@ func (s *Service) getTemplateByID(
 	})
 }
 
-func (s *Service) getTemplateByIDWithTenant(
+func (s *Service) GetTemplateByIDWithTenant(
 	ctx context.Context,
 	id pulid.ID,
 	tenant pagination.TenantInfo,
@@ -691,7 +670,7 @@ func (s *Service) getTemplateByIDWithTenant(
 	})
 }
 
-func (s *Service) logAuditAction(
+func (s *Service) LogAuditAction(
 	ctx context.Context,
 	log *zap.Logger,
 	entity *formulatemplate.FormulaTemplate,

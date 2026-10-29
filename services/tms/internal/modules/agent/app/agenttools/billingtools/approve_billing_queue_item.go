@@ -4,9 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -20,13 +24,13 @@ import (
 type ApproveBillingQueueItemTool struct {
 	*BillingQueueDecisionTool
 
-	invoices common.ApprovalInvoicePlanner
+	invoices billingqueuepreview.ApprovalInvoicePlanner
 }
 
 func NewApproveBillingQueueItemTool(
-	billing common.BillingQueueDecider,
-	invoices common.ApprovalInvoicePlanner,
-) agentports.AgentTool {
+	billing billingqueuepreview.BillingQueueDecider,
+	invoices billingqueuepreview.ApprovalInvoicePlanner,
+) agenttoolports.AgentTool {
 	return &ApproveBillingQueueItemTool{
 		invoices: invoices,
 		BillingQueueDecisionTool: &BillingQueueDecisionTool{
@@ -51,9 +55,9 @@ func NewApproveBillingQueueItemTool(
 				rationale: "Approving creates the invoice a customer is billed on, so only a person " +
 					"approves; the agent proposes it with what it checked.",
 				properties: map[string]any{
-					common.ParamReviewNotes: map[string]any{
+					billingqueuepreview.ParamReviewNotes: map[string]any{
 						toolschema.KeyType:        toolschema.TypeString,
-						toolschema.KeyMaxLength:   common.MaxDecisionNoteChars,
+						toolschema.KeyMaxLength:   billingqueuepreview.MaxDecisionNoteChars,
 						toolschema.KeyDescription: "What you checked, kept on the item as its review notes.",
 					},
 				},
@@ -63,15 +67,15 @@ func NewApproveBillingQueueItemTool(
 	}
 }
 
-func (t *ApproveBillingQueueItemTool) Policy() agentports.ToolPolicy {
+func (t *ApproveBillingQueueItemTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.BillingQueueDecisionTool.Policy()
-	policy.Artifact = common.InvoiceRecordEntity
+	policy.Artifact = changepreview.InvoiceRecordEntity
 
 	return policy
 }
 
 func (t *ApproveBillingQueueItemTool) draftRequest(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*invoiceports.CreateInvoiceFromBillingQueueRequest, error) {
 	req, err := t.request(params)
 	if err != nil {
@@ -87,9 +91,9 @@ func (t *ApproveBillingQueueItemTool) draftRequest(
 
 func (t *ApproveBillingQueueItemTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	plan, item, err := t.planned(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, item, err := t.planned(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +103,13 @@ func (t *ApproveBillingQueueItemTool) Preview(
 		return plan.PlanPreview(summary + "."), nil
 	}
 
-	draftReq, err := t.draftRequest(&params)
+	draftReq, err := t.draftRequest(params)
 	if err != nil {
 		return nil, err
 	}
 	draft, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil {
-		return common.WarnRefusal(plan.PlanPreview(summary+"."), err)
+		return changepreview.WarnRefusal(plan.PlanPreview(summary+"."), err)
 	}
 
 	switch {
@@ -124,7 +128,7 @@ func (t *ApproveBillingQueueItemTool) Preview(
 		)), nil
 	}
 
-	invoiceChange, err := common.DraftInvoiceChange(draft.Invoice)
+	invoiceChange, err := billingqueuepreview.DraftInvoiceChange(draft.Invoice)
 	if err != nil {
 		return nil, err
 	}
@@ -144,32 +148,32 @@ func (t *ApproveBillingQueueItemTool) Preview(
 // and names the invoice approval made, which invoice_post takes next.
 func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
 	if err := t.BillingQueueDecisionTool.Execute(ctx, params); err != nil {
 		return nil, err
 	}
 
-	draftReq, err := t.draftRequest(&params)
+	draftReq, err := t.draftRequest(params)
 	if err != nil {
 		return nil, err
 	}
 	made, err := t.invoices.PreviewApprovalInvoice(ctx, draftReq)
 	if err != nil || made == nil || made.Invoice == nil || made.Invoice.ID.IsNil() {
 		//nolint:nilerr // the approval is made; not finding its invoice only costs the pointer
-		return &agent.ToolExecutionResult{
-			Action: common.PastApproved,
+		return &agentrecord.ToolExecutionResult{
+			Action: changepreview.PastApproved,
 			Kind:   "billing queue item",
 		}, nil
 	}
 
-	return &agent.ToolExecutionResult{
-		Action: common.ResultCreated,
-		Kind:   common.InvoiceRecordEntity,
+	return &agentrecord.ToolExecutionResult{
+		Action: changepreview.ResultCreated,
+		Kind:   changepreview.InvoiceRecordEntity,
 		Name:   made.Invoice.Number,
-		IDs:    map[string]string{common.ParamInvoiceID: made.Invoice.ID.String()},
-		Record: &agent.RecordRef{
-			EntityType: common.InvoiceRecordEntity,
+		IDs:    map[string]string{toolparams.ParamInvoiceID: made.Invoice.ID.String()},
+		Record: &agentrecord.RecordRef{
+			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         made.Invoice.ID.String(),
 		},
 	}, nil
@@ -177,7 +181,7 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 
 func (t *ApproveBillingQueueItemTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 

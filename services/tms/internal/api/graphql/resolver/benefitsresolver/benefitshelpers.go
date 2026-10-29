@@ -3,8 +3,7 @@ package benefitsresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +20,7 @@ func (r *Deps) TotalCompensationFor(
 	workerID pulid.ID,
 	planYear *int,
 ) (*benefitsservice.TotalCompensation, error) {
-	year := base.IntValue(planYear)
+	year := gqlscalar.IntValue(planYear)
 	if year <= 0 {
 		year = timeutils.YearOfUnix(timeutils.NowUnix())
 	}
@@ -36,7 +35,12 @@ func (r *Deps) TotalCompensationFor(
 	// failure to read it is not a reason to refuse the whole statement — the
 	// benefits half is still true — so it is left at zero.
 	if r.DriverSettlementService != nil {
-		summaries, err := r.DriverSettlementService.GetYTDPaySummaries(ctx, tenantInfo, year, "")
+		summaries, err := r.DriverSettlementWorkspaceService.GetYTDPaySummaries(
+			ctx,
+			tenantInfo,
+			year,
+			"",
+		)
 		if err == nil {
 			for _, summary := range summaries {
 				if summary != nil && summary.WorkerID == workerID {

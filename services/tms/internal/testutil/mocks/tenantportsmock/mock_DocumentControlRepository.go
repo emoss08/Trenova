@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
@@ -41,26 +41,26 @@ func (_m *MockDocumentControlRepository) EXPECT() *MockDocumentControlRepository
 }
 
 // Create provides a mock function for the type MockDocumentControlRepository
-func (_mock *MockDocumentControlRepository) Create(ctx context.Context, entity *tenant.DocumentControl) (*tenant.DocumentControl, error) {
+func (_mock *MockDocumentControlRepository) Create(ctx context.Context, entity *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *tenant.DocumentControl
+	var r0 *documentcontrol.DocumentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DocumentControl) (*tenant.DocumentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DocumentControl) *tenant.DocumentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentcontrol.DocumentControl) *documentcontrol.DocumentControl); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DocumentControl)
+			r0 = ret.Get(0).(*documentcontrol.DocumentControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.DocumentControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentcontrol.DocumentControl) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockDocumentControlRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *tenant.DocumentControl
+//   - entity *documentcontrol.DocumentControl
 func (_e *MockDocumentControlRepository_Expecter) Create(ctx any, entity any) *MockDocumentControlRepository_Create_Call {
 	return &MockDocumentControlRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockDocumentControlRepository_Create_Call) Run(run func(ctx context.Context, entity *tenant.DocumentControl)) *MockDocumentControlRepository_Create_Call {
+func (_c *MockDocumentControlRepository_Create_Call) Run(run func(ctx context.Context, entity *documentcontrol.DocumentControl)) *MockDocumentControlRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.DocumentControl
+		var arg1 *documentcontrol.DocumentControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.DocumentControl)
+			arg1 = args[1].(*documentcontrol.DocumentControl)
 		}
 		run(
 			arg0,
@@ -98,34 +98,34 @@ func (_c *MockDocumentControlRepository_Create_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Create_Call) Return(documentControl *tenant.DocumentControl, err error) *MockDocumentControlRepository_Create_Call {
+func (_c *MockDocumentControlRepository_Create_Call) Return(documentControl *documentcontrol.DocumentControl, err error) *MockDocumentControlRepository_Create_Call {
 	_c.Call.Return(documentControl, err)
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.DocumentControl) (*tenant.DocumentControl, error)) *MockDocumentControlRepository_Create_Call {
+func (_c *MockDocumentControlRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error)) *MockDocumentControlRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Get provides a mock function for the type MockDocumentControlRepository
-func (_mock *MockDocumentControlRepository) Get(ctx context.Context, req tenantports.GetDocumentControlRequest) (*tenant.DocumentControl, error) {
+func (_mock *MockDocumentControlRepository) Get(ctx context.Context, req tenantports.GetDocumentControlRequest) (*documentcontrol.DocumentControl, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *tenant.DocumentControl
+	var r0 *documentcontrol.DocumentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDocumentControlRequest) (*tenant.DocumentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDocumentControlRequest) (*documentcontrol.DocumentControl, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDocumentControlRequest) *tenant.DocumentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetDocumentControlRequest) *documentcontrol.DocumentControl); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DocumentControl)
+			r0 = ret.Get(0).(*documentcontrol.DocumentControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetDocumentControlRequest) error); ok {
@@ -166,34 +166,34 @@ func (_c *MockDocumentControlRepository_Get_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Get_Call) Return(documentControl *tenant.DocumentControl, err error) *MockDocumentControlRepository_Get_Call {
+func (_c *MockDocumentControlRepository_Get_Call) Return(documentControl *documentcontrol.DocumentControl, err error) *MockDocumentControlRepository_Get_Call {
 	_c.Call.Return(documentControl, err)
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetDocumentControlRequest) (*tenant.DocumentControl, error)) *MockDocumentControlRepository_Get_Call {
+func (_c *MockDocumentControlRepository_Get_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetDocumentControlRequest) (*documentcontrol.DocumentControl, error)) *MockDocumentControlRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOrCreate provides a mock function for the type MockDocumentControlRepository
-func (_mock *MockDocumentControlRepository) GetOrCreate(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*tenant.DocumentControl, error) {
+func (_mock *MockDocumentControlRepository) GetOrCreate(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*documentcontrol.DocumentControl, error) {
 	ret := _mock.Called(ctx, orgID, buID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOrCreate")
 	}
 
-	var r0 *tenant.DocumentControl
+	var r0 *documentcontrol.DocumentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*tenant.DocumentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) (*documentcontrol.DocumentControl, error)); ok {
 		return returnFunc(ctx, orgID, buID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *tenant.DocumentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) *documentcontrol.DocumentControl); ok {
 		r0 = returnFunc(ctx, orgID, buID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DocumentControl)
+			r0 = ret.Get(0).(*documentcontrol.DocumentControl)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
@@ -240,37 +240,37 @@ func (_c *MockDocumentControlRepository_GetOrCreate_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_GetOrCreate_Call) Return(documentControl *tenant.DocumentControl, err error) *MockDocumentControlRepository_GetOrCreate_Call {
+func (_c *MockDocumentControlRepository_GetOrCreate_Call) Return(documentControl *documentcontrol.DocumentControl, err error) *MockDocumentControlRepository_GetOrCreate_Call {
 	_c.Call.Return(documentControl, err)
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_GetOrCreate_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*tenant.DocumentControl, error)) *MockDocumentControlRepository_GetOrCreate_Call {
+func (_c *MockDocumentControlRepository_GetOrCreate_Call) RunAndReturn(run func(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*documentcontrol.DocumentControl, error)) *MockDocumentControlRepository_GetOrCreate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockDocumentControlRepository
-func (_mock *MockDocumentControlRepository) Update(ctx context.Context, entity *tenant.DocumentControl) (*tenant.DocumentControl, error) {
+func (_mock *MockDocumentControlRepository) Update(ctx context.Context, entity *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *tenant.DocumentControl
+	var r0 *documentcontrol.DocumentControl
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DocumentControl) (*tenant.DocumentControl, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DocumentControl) *tenant.DocumentControl); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentcontrol.DocumentControl) *documentcontrol.DocumentControl); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.DocumentControl)
+			r0 = ret.Get(0).(*documentcontrol.DocumentControl)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.DocumentControl) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentcontrol.DocumentControl) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -285,20 +285,20 @@ type MockDocumentControlRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *tenant.DocumentControl
+//   - entity *documentcontrol.DocumentControl
 func (_e *MockDocumentControlRepository_Expecter) Update(ctx any, entity any) *MockDocumentControlRepository_Update_Call {
 	return &MockDocumentControlRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockDocumentControlRepository_Update_Call) Run(run func(ctx context.Context, entity *tenant.DocumentControl)) *MockDocumentControlRepository_Update_Call {
+func (_c *MockDocumentControlRepository_Update_Call) Run(run func(ctx context.Context, entity *documentcontrol.DocumentControl)) *MockDocumentControlRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.DocumentControl
+		var arg1 *documentcontrol.DocumentControl
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.DocumentControl)
+			arg1 = args[1].(*documentcontrol.DocumentControl)
 		}
 		run(
 			arg0,
@@ -308,12 +308,12 @@ func (_c *MockDocumentControlRepository_Update_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Update_Call) Return(documentControl *tenant.DocumentControl, err error) *MockDocumentControlRepository_Update_Call {
+func (_c *MockDocumentControlRepository_Update_Call) Return(documentControl *documentcontrol.DocumentControl, err error) *MockDocumentControlRepository_Update_Call {
 	_c.Call.Return(documentControl, err)
 	return _c
 }
 
-func (_c *MockDocumentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.DocumentControl) (*tenant.DocumentControl, error)) *MockDocumentControlRepository_Update_Call {
+func (_c *MockDocumentControlRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documentcontrol.DocumentControl) (*documentcontrol.DocumentControl, error)) *MockDocumentControlRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

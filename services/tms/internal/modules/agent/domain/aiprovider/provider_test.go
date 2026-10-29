@@ -3,7 +3,11 @@ package aiprovider_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aipricing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,7 +25,7 @@ func validProvider() *aiprovider.Provider {
 		APIKey:               "sk-ant-test",
 		StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 		MaxTokens:            8192,
-		Tasks:                []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks:                []aitask.Task{aitask.TaskGeneral},
 		Enabled:              true,
 	}
 }
@@ -140,7 +144,7 @@ func TestValidate_LedgerTaskRequiresTrustedProvider(t *testing.T) {
 	t.Parallel()
 
 	p := validProvider()
-	p.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	p.Trusted = false
 
 	assert.True(t, fieldErrors(t, p)["tasks[0]"])
@@ -178,14 +182,14 @@ func TestCanServeTask(t *testing.T) {
 		p := validProvider()
 		p.Enabled = false
 
-		ok, reason := p.CanServeTask(aiprovider.TaskGeneral)
+		ok, reason := p.CanServeTask(aitask.TaskGeneral)
 		assert.False(t, ok)
 		assert.Contains(t, reason, "disabled")
 	})
 
 	t.Run("rejects unassigned task", func(t *testing.T) {
 		t.Parallel()
-		ok, reason := validProvider().CanServeTask(aiprovider.TaskDocumentExtraction)
+		ok, reason := validProvider().CanServeTask(aitask.TaskDocumentExtraction)
 		assert.False(t, ok)
 		assert.Contains(t, reason, "not assigned")
 	})
@@ -193,10 +197,10 @@ func TestCanServeTask(t *testing.T) {
 	t.Run("rejects untrusted provider for ledger task", func(t *testing.T) {
 		t.Parallel()
 		p := validProvider()
-		p.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+		p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 		p.Trusted = false
 
-		ok, reason := p.CanServeTask(aiprovider.TaskBillingDiagnosis)
+		ok, reason := p.CanServeTask(aitask.TaskBillingDiagnosis)
 		assert.False(t, ok)
 		assert.Contains(t, reason, "trusted")
 	})
@@ -204,10 +208,10 @@ func TestCanServeTask(t *testing.T) {
 	t.Run("accepts trusted provider for ledger task", func(t *testing.T) {
 		t.Parallel()
 		p := validProvider()
-		p.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+		p.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 		p.Trusted = true
 
-		ok, _ := p.CanServeTask(aiprovider.TaskBillingDiagnosis)
+		ok, _ := p.CanServeTask(aitask.TaskBillingDiagnosis)
 		assert.True(t, ok)
 	})
 }
@@ -258,11 +262,11 @@ func TestKindDefaults(t *testing.T) {
 func TestTaskWritesToLedger(t *testing.T) {
 	t.Parallel()
 
-	assert.True(t, aiprovider.TaskBillingDiagnosis.WritesToLedger())
-	assert.False(t, aiprovider.TaskDocumentClassification.WritesToLedger())
-	assert.False(t, aiprovider.TaskGeneral.WritesToLedger())
+	assert.True(t, aitask.TaskBillingDiagnosis.WritesToLedger())
+	assert.False(t, aitask.TaskDocumentClassification.WritesToLedger())
+	assert.False(t, aitask.TaskGeneral.WritesToLedger())
 
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		assert.True(t, task.IsValid(), "task %q should be valid", task)
 	}
 }
@@ -290,7 +294,7 @@ func embeddingProviderFixture(dimensions int) *aiprovider.Provider {
 		Model:               "voyage-3.5",
 		APIKey:              "pa-test",
 		MaxTokens:           8192,
-		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		Tasks:               []aitask.Task{aitask.TaskEmbedding},
 		EmbeddingDimensions: &dimensions,
 		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
 		Enabled:             true,
@@ -333,7 +337,7 @@ func TestValidate_AnthropicCannotServeEmbedding(t *testing.T) {
 
 	p := validProvider()
 	dims := 1024
-	p.Tasks = []aiprovider.Task{aiprovider.TaskEmbedding}
+	p.Tasks = []aitask.Task{aitask.TaskEmbedding}
 	p.EmbeddingDimensions = &dims
 
 	assert.True(t, fieldErrors(t, p)["tasks[0]"])
@@ -343,7 +347,7 @@ func TestValidate_EmbeddingCannotShareAProviderWithTextTasks(t *testing.T) {
 	t.Parallel()
 
 	p := embeddingProviderFixture(1024)
-	p.Tasks = []aiprovider.Task{aiprovider.TaskGeneral, aiprovider.TaskEmbedding}
+	p.Tasks = []aitask.Task{aitask.TaskGeneral, aitask.TaskEmbedding}
 
 	assert.True(t, fieldErrors(t, p)["tasks[1]"])
 }
@@ -379,20 +383,20 @@ func TestKindSupportsEmbedding(t *testing.T) {
 func TestCanServeTask_Embedding(t *testing.T) {
 	t.Parallel()
 
-	ok, _ := embeddingProviderFixture(1024).CanServeTask(aiprovider.TaskEmbedding)
+	ok, _ := embeddingProviderFixture(1024).CanServeTask(aitask.TaskEmbedding)
 	assert.True(t, ok)
 
 	missing := embeddingProviderFixture(1024)
 	missing.EmbeddingDimensions = nil
-	ok, reason := missing.CanServeTask(aiprovider.TaskEmbedding)
+	ok, reason := missing.CanServeTask(aitask.TaskEmbedding)
 	assert.False(t, ok)
 	assert.NotEmpty(t, reason)
 
 	anthropic := validProvider()
 	dims := 1024
-	anthropic.Tasks = []aiprovider.Task{aiprovider.TaskEmbedding}
+	anthropic.Tasks = []aitask.Task{aitask.TaskEmbedding}
 	anthropic.EmbeddingDimensions = &dims
-	ok, _ = anthropic.CanServeTask(aiprovider.TaskEmbedding)
+	ok, _ = anthropic.CanServeTask(aitask.TaskEmbedding)
 	assert.False(t, ok)
 }
 
@@ -427,22 +431,32 @@ func TestCostForTask_PricesEmbeddingOnInputAlone(t *testing.T) {
 	input := decimal.RequireFromString("0.06")
 	p.InputCostPerMillion = &input
 
-	cost := p.CostForTask(aiprovider.TaskEmbedding, aiprovider.TokenUsage{Input: 500_000})
+	cost := aipricing.CostForTask(p, aitask.TaskEmbedding, aipricing.TokenUsage{Input: 500_000})
 	require.NotNil(t, cost)
 	assert.True(t, cost.Equal(decimal.RequireFromString("0.03")), cost.String())
 
-	assert.Nil(t, p.CostForTask(aiprovider.TaskGeneral, aiprovider.TokenUsage{Input: 500_000, Output: 10}),
-		"a text task without an output price has an unknown cost")
+	assert.Nil(
+		t,
+		aipricing.CostForTask(
+			p,
+			aitask.TaskGeneral,
+			aipricing.TokenUsage{Input: 500_000, Output: 10},
+		),
+		"a text task without an output price has an unknown cost",
+	)
 
 	p.InputCostPerMillion = nil
-	assert.Nil(t, p.CostForTask(aiprovider.TaskEmbedding, aiprovider.TokenUsage{Input: 500_000}))
+	assert.Nil(
+		t,
+		aipricing.CostForTask(p, aitask.TaskEmbedding, aipricing.TokenUsage{Input: 500_000}),
+	)
 }
 
 func TestEmbeddingNeverWritesToTheLedger(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, aiprovider.TaskEmbedding.WritesToLedger())
-	assert.False(t, aiprovider.TaskEmbedding.Generates())
+	assert.False(t, aitask.TaskEmbedding.WritesToLedger())
+	assert.False(t, aitask.TaskEmbedding.Generates())
 }
 
 func TestClampMaxTokens_KeepsAValueInTheSupportedRange(t *testing.T) {
@@ -467,7 +481,12 @@ func TestProvider_KnowsWhenItIsOpenAIsOwnPlatform(t *testing.T) {
 	}{
 		{aiprovider.KindOpenAIResponses, "", "api.openai.com", true},
 		{aiprovider.KindOpenAIResponses, "https://api.openai.com/", "api.openai.com", true},
-		{aiprovider.KindOpenAIResponses, "https://bedrock-mantle.us-east-1.api.aws", "bedrock-mantle.us-east-1.api.aws", false},
+		{
+			aiprovider.KindOpenAIResponses,
+			"https://bedrock-mantle.us-east-1.api.aws",
+			"bedrock-mantle.us-east-1.api.aws",
+			false,
+		},
 		{aiprovider.KindOpenAIChat, "https://api.openai.com", "api.openai.com", false},
 		{aiprovider.KindOpenAIChat, "http://10.0.0.5:8000/v1", "10.0.0.5", false},
 		{aiprovider.KindOpenAIResponses, "::not a url", "", false},
@@ -487,25 +506,36 @@ func TestProvider_KnowsWhenItCallsTheClaudeAPI(t *testing.T) {
 
 	for _, tc := range []struct {
 		kind     aiprovider.Kind
-		platform aiprovider.Platform
+		platform aiplatform.Platform
 		baseURL  string
 		claude   bool
 	}{
 		{aiprovider.KindAnthropicMessages, "", "", true},
-		{aiprovider.KindAnthropicMessages, aiprovider.PlatformDirect, "https://API.anthropic.com/", true},
-		{aiprovider.KindAnthropicMessages, aiprovider.PlatformDirect, "https://gateway.example.com/anthropic", false},
-		{aiprovider.KindAnthropicMessages, aiprovider.PlatformClaudeAWS, "", false},
-		{aiprovider.KindAnthropicMessages, aiprovider.PlatformBedrock, "", false},
-		{aiprovider.KindAnthropicMessages, aiprovider.PlatformVertexAI, "", false},
+		{aiprovider.KindAnthropicMessages, aiplatform.PlatformDirect, "https://API.anthropic.com/", true},
+		{aiprovider.KindAnthropicMessages, aiplatform.PlatformDirect, "https://gateway.example.com/anthropic", false},
+		{aiprovider.KindAnthropicMessages, aiplatform.PlatformClaudeAWS, "", false},
+		{aiprovider.KindAnthropicMessages, aiplatform.PlatformBedrock, "", false},
+		{aiprovider.KindAnthropicMessages, aiplatform.PlatformVertexAI, "", false},
 		{aiprovider.KindOpenAIChat, "", "https://api.anthropic.com/v1", false},
 	} {
 		provider := &aiprovider.Provider{
-			Kind:             tc.kind,
-			Platform:         tc.platform,
-			BaseURL:          tc.baseURL,
-			PlatformSettings: &aiprovider.PlatformSettings{Region: "us-east-1", ProjectID: "trenova"},
+			Kind:     tc.kind,
+			Platform: tc.platform,
+			BaseURL:  tc.baseURL,
+			PlatformSettings: &aiplatform.PlatformSettings{
+				Region:    "us-east-1",
+				ProjectID: "trenova",
+			},
 		}
-		assert.Equal(t, tc.claude, provider.OnClaudeAPI(), "%s %s %s", tc.kind, tc.platform, tc.baseURL)
+		assert.Equal(
+			t,
+			tc.claude,
+			provider.OnClaudeAPI(),
+			"%s %s %s",
+			tc.kind,
+			tc.platform,
+			tc.baseURL,
+		)
 	}
 }
 
@@ -526,7 +556,7 @@ func TestValidate_DefaultsTheThinkingStyleToAuto(t *testing.T) {
 	p.Validate(multiErr)
 
 	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
-	assert.Equal(t, aiprovider.ThinkingStyleAuto, p.ThinkingStyle)
+	assert.Equal(t, aireasoning.ThinkingStyleAuto, p.ThinkingStyle)
 }
 
 // Only the Anthropic protocol has two ways of asking for thinking; a style on
@@ -534,9 +564,9 @@ func TestValidate_DefaultsTheThinkingStyleToAuto(t *testing.T) {
 func TestValidate_RejectsAThinkingStyleOnAnotherProtocol(t *testing.T) {
 	t.Parallel()
 
-	for _, style := range []aiprovider.ThinkingStyle{
-		aiprovider.ThinkingStyleEffort,
-		aiprovider.ThinkingStyleBudget,
+	for _, style := range []aireasoning.ThinkingStyle{
+		aireasoning.ThinkingStyleEffort,
+		aireasoning.ThinkingStyleBudget,
 	} {
 		p := validProvider()
 		p.Kind = aiprovider.KindOpenAIResponses
@@ -547,7 +577,7 @@ func TestValidate_RejectsAThinkingStyleOnAnotherProtocol(t *testing.T) {
 	}
 
 	p := validProvider()
-	p.ThinkingStyle = aiprovider.ThinkingStyleEffort
+	p.ThinkingStyle = aireasoning.ThinkingStyleEffort
 	assert.False(t, fieldErrors(t, p)["thinkingStyle"])
 }
 

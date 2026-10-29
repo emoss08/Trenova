@@ -3,6 +3,7 @@ package billingqueueports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -66,7 +67,7 @@ type ListBillingQueueActivityRequest struct {
 type ApproveIfReadyResult struct {
 	Item          *billingqueue.BillingQueueItem
 	Approved      bool
-	FailureCode   billingqueue.ApprovalFailureCode
+	FailureCode   billingapprovalrun.ApprovalFailureCode
 	Reason        string
 	InvoiceID     *pulid.ID
 	InvoiceNumber string
@@ -175,15 +176,15 @@ type BillingQueueApprovalService interface {
 	Start(
 		ctx context.Context,
 		req *StartBillingQueueApprovalRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 	Get(
 		ctx context.Context,
 		req *BillingQueueApprovalRunRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 	Undo(
 		ctx context.Context,
 		req *BillingQueueApprovalRunRequest,
-	) (*billingqueue.ApprovalRun, error)
+	) (*billingapprovalrun.ApprovalRun, error)
 }
 
 func (r *PostBillingQueueItemResult) WithoutFormulaContent() *PostBillingQueueItemResult {

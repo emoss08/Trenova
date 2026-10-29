@@ -14,8 +14,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment/payassignmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersyncdrift/workersyncdriftdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -62,7 +67,7 @@ func New(p Params) workerports.WorkerRepository {
 func ownerOperatorFilter(now int64) keel.Pred {
 	w := workerdb.Workers
 
-	wpa := driverpaydb.WorkerPayAssignments.As("wpa")
+	wpa := payassignmentdb.WorkerPayAssignments.As("wpa")
 	dpp := driverpaydb.PayProfiles.As("dpp")
 
 	return keel.Or(
@@ -158,7 +163,7 @@ func (r *repository) List(
 // case. A code that names none is refused rather than read as every worker
 // lacking it.
 func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.ID, error) {
-	t := workerdb.WorkerCredentialTypes
+	t := workercredentialdb.WorkerCredentialTypes
 	kind, err := t.Where(t.Code.Lower().Eq(strings.ToLower(code))).One(ctx, r.db.Keel(ctx))
 	if errors.Is(err, keel.ErrNotFound) {
 		return pulid.Nil, errortypes.NewValidationError(
@@ -177,13 +182,13 @@ func (r *repository) credentialTypeID(ctx context.Context, code string) (pulid.I
 
 // validCredential is a worker's active credential of a type that has not
 // expired, through the index on the worker's active credential of each type.
-func validCredential(typeID pulid.ID, now int64) *keel.Query[*worker.WorkerCredential] {
-	c := workerdb.WorkerCredentials
+func validCredential(typeID pulid.ID, now int64) *keel.Query[*workercredential.WorkerCredential] {
+	c := workercredentialdb.WorkerCredentials
 
 	return c.Where(
 		c.WorkerID.EqCol(workerdb.Workers.ID),
 		c.CredentialTypeID.Eq(typeID),
-		c.Status.Eq(worker.CredentialStatusActive),
+		c.Status.Eq(workercredential.CredentialStatusActive),
 		keel.Or(c.ExpiresAt.IsNull(), c.ExpiresAt.Gte(now)),
 	)
 }
@@ -204,6 +209,28 @@ func workerQuery(req *workerports.GetWorkerByIDRequest) *keel.Query[*worker.Work
 	loads = append(loads, listquery.When(req.IncludeManager, w.Manager())...)
 
 	return w.Where(w.ID.Eq(req.ID)).Load(loads...)
+}
+
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req workerports.GetWorkersByIDsRequest,
+) ([]*worker.Worker, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Worker, error) {
+		if len(req.WorkerIDs) == 0 {
+			return []*worker.Worker{}, nil
+		}
+
+		w := workerdb.Workers
+		entities, err := w.Where(w.ID.In(req.WorkerIDs...)).
+			Limit(len(req.WorkerIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get workers", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
 }
 
 func (r *repository) GetByID(
@@ -348,7 +375,7 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		db := r.db.Keel(ctx)
-		d := workerdb.WorkerSyncDrifts
+		d := workersyncdriftdb.WorkerSyncDrifts
 		if _, err := d.Where(keel.True()).Delete(ctx, db); err != nil {
 			return dberror.MapRetryableTransactionError(err, syncDriftBusyMessage)
 		}
@@ -357,10 +384,10 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 			return nil
 		}
 
-		models := make([]*worker.WorkerSyncDrift, 0, len(drifts))
+		models := make([]*workersyncdrift.WorkerSyncDrift, 0, len(drifts))
 		for idx := range drifts {
 			drift := drifts[idx]
-			models = append(models, &worker.WorkerSyncDrift{
+			models = append(models, &workersyncdrift.WorkerSyncDrift{
 				WorkerID:        drift.WorkerID,
 				DriftType:       drift.DriftType,
 				WorkerName:      drift.WorkerName,
@@ -387,7 +414,7 @@ func (r *repository) ListWorkerSyncDrifts(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.WorkerSyncDriftRecord, error) {
-			d := workerdb.WorkerSyncDrifts
+			d := workersyncdriftdb.WorkerSyncDrifts
 			models, err := d.Query().
 				Order(d.DetectedAt.Desc(), d.WorkerName.Asc()).
 				All(ctx, r.db.Keel(ctx))
@@ -414,25 +441,29 @@ func (r *repository) ListWorkerSyncDrifts(
 	)
 }
 
-func credentialFieldColumn(field worker.CredentialProfileField) (keel.Int64Col, error) {
+func credentialFieldColumn(field workercredential.CredentialProfileField) (keel.Int64Col, error) {
 	wp := workerdb.WorkerProfiles
 	switch field {
-	case worker.CredentialProfileFieldLicenseExpiry:
+	case workercredential.CredentialProfileFieldLicenseExpiry:
 		return wp.LicenseExpiry, nil
-	case worker.CredentialProfileFieldHazmatExpiry:
+	case workercredential.CredentialProfileFieldHazmatExpiry:
 		return wp.HazmatExpiry, nil
-	case worker.CredentialProfileFieldMedicalCardExpiry:
+	case workercredential.CredentialProfileFieldMedicalCardExpiry:
 		return wp.MedicalCardExpiry, nil
-	case worker.CredentialProfileFieldTWICExpiry:
+	case workercredential.CredentialProfileFieldTWICExpiry:
 		return wp.TWICExpiry, nil
-	case worker.CredentialProfileFieldPhysicalDueDate:
+	case workercredential.CredentialProfileFieldPhysicalDueDate:
 		return wp.PhysicalDueDate, nil
-	case worker.CredentialProfileFieldMVRDueDate:
+	case workercredential.CredentialProfileFieldMVRDueDate:
 		return wp.MVRDueDate, nil
-	case worker.CredentialProfileFieldNone:
+	case workercredential.CredentialProfileFieldNone:
 	}
 
-	return keel.Int64Col{}, fmt.Errorf("%w: %s", worker.ErrInvalidCredentialProfileField, field)
+	return keel.Int64Col{}, fmt.Errorf(
+		"%w: %s",
+		workercredential.ErrInvalidCredentialProfileField,
+		field,
+	)
 }
 
 func credentialFieldAssignments(
@@ -443,7 +474,7 @@ func credentialFieldAssignments(
 	sets := []keel.Assignment{wp.Version.Increment(0)}
 	hasExpiry := req.ExpiresAt != nil && *req.ExpiresAt > 0
 
-	if req.Field == worker.CredentialProfileFieldLicenseExpiry {
+	if req.Field == workercredential.CredentialProfileFieldLicenseExpiry {
 		if hasExpiry {
 			sets = append(sets, column.To(*req.ExpiresAt))
 		}
@@ -465,7 +496,7 @@ func (r *repository) PatchProfileCredentialField(
 	req *workerports.PatchProfileCredentialFieldRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if req.Field == worker.CredentialProfileFieldNone {
+		if req.Field == workercredential.CredentialProfileFieldNone {
 			return nil
 		}
 

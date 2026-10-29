@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 )
 
@@ -22,7 +22,7 @@ func (r *Deps) visibleTrace(ctx context.Context, trace map[string]any) map[strin
 		return nil
 	}
 	authCtx, ok := gqlctx.AuthContext(ctx)
-	if ok && r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins) {
+	if ok && r.VisibleFieldGroups(ctx, authCtx).Has(protectedfield.Margins) {
 		return trace
 	}
 	steps, ok := trace[traceStepsKey].([]any)

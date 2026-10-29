@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -129,10 +129,10 @@ func serviceFailure214Trigger(
 	}
 }
 
-func serviceFailure214DiagnosticsError(diagnostics []edi.Diagnostic) error {
+func serviceFailure214DiagnosticsError(diagnostics []edidocument.Diagnostic) error {
 	multiErr := errortypes.NewMultiError()
 	for _, diagnostic := range diagnostics {
-		if diagnostic.Severity != edi.ValidationSeverityError {
+		if diagnostic.Severity != edidocument.ValidationSeverityError {
 			continue
 		}
 		field := strings.TrimSpace(diagnostic.Path)

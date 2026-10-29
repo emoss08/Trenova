@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -15,8 +17,8 @@ import (
 
 func (f *fakeRepo) GetRecognitionByID(
 	_ context.Context,
-	req *workerports.GetWorkerRecognitionByIDRequest,
-) (*worker.WorkerRecognition, error) {
+	req *workersafetyports.GetWorkerRecognitionByIDRequest,
+) (*workerdiscipline.WorkerRecognition, error) {
 	for _, r := range f.recognitions {
 		if r.ID == req.ID {
 			copied := *r
@@ -28,8 +30,8 @@ func (f *fakeRepo) GetRecognitionByID(
 
 func (f *fakeRepo) GetViolationByID(
 	_ context.Context,
-	req *workerports.GetWorkerSafetyViolationByIDRequest,
-) (*worker.WorkerSafetyViolation, error) {
+	req *workersafetyports.GetWorkerSafetyViolationByIDRequest,
+) (*fleetsafety.WorkerSafetyViolation, error) {
 	for _, v := range f.violations {
 		if v.ID == req.ID {
 			copied := *v
@@ -44,18 +46,18 @@ func TestPlanCreateEvent_FillsTheEventWithoutRecordingIt(t *testing.T) {
 
 	planned, err := h.svc.PlanCreateEvent(
 		t.Context(),
-		h.event(worker.SafetyEventInspection, func(e *worker.WorkerSafetyEvent) {
-			e.InspectionResult = worker.InspectionResultOutOfService
+		h.event(workersafety.SafetyEventInspection, func(e *workersafety.WorkerSafetyEvent) {
+			e.InspectionResult = workersafety.InspectionResultOutOfService
 		}),
 		h.userID,
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusOpen, planned.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, planned.Status)
 	assert.Equal(t, h.userID, planned.RecordedByID)
 	assert.True(t, planned.OutOfService)
 	assert.Empty(t, h.repo.events, "a plan records nothing")
 
-	_, err = h.svc.PlanCreateEvent(t.Context(), h.event(worker.SafetyEventInspection, nil),
+	_, err = h.svc.PlanCreateEvent(t.Context(), h.event(workersafety.SafetyEventInspection, nil),
 		h.userID)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr, "the plan refuses what the create refuses")
@@ -63,7 +65,7 @@ func TestPlanCreateEvent_FillsTheEventWithoutRecordingIt(t *testing.T) {
 
 func TestPlanMoveEvent_ShowsTheMoveAndLeavesTheEvent(t *testing.T) {
 	h := newHarness(t)
-	created, err := h.svc.CreateEvent(t.Context(), h.event(worker.SafetyEventIncident, nil),
+	created, err := h.svc.CreateEvent(t.Context(), h.event(workersafety.SafetyEventIncident, nil),
 		h.userID)
 	require.NoError(t, err)
 
@@ -75,15 +77,15 @@ func TestPlanMoveEvent_ShowsTheMoveAndLeavesTheEvent(t *testing.T) {
 	}
 	change, err := h.svc.PlanCloseEvent(t.Context(), req)
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusOpen, change.Before.Status)
-	assert.Equal(t, worker.SafetyEventStatusClosed, change.After.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, change.Before.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusClosed, change.After.Status)
 	assert.Equal(t, "Coached on backing", change.After.Resolution)
 	assert.Equal(t, h.userID, change.After.ClosedByID)
-	assert.Equal(t, worker.SafetyEventStatusOpen, h.repo.events[0].Status)
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, h.repo.events[0].Status)
 
 	review, err := h.svc.PlanReviewEvent(t.Context(), req)
 	require.NoError(t, err)
-	assert.Equal(t, worker.SafetyEventStatusUnderReview, review.After.Status)
+	assert.Equal(t, workersafety.SafetyEventStatusUnderReview, review.After.Status)
 
 	same, err := h.svc.PlanReopenEvent(t.Context(), req)
 	require.NoError(t, err)
@@ -102,17 +104,17 @@ func TestPlanMoveEvent_ShowsTheMoveAndLeavesTheEvent(t *testing.T) {
 
 func TestPlanUpdateEvent_KeepsWhatTheUpdateKeeps(t *testing.T) {
 	h := newHarness(t)
-	created, err := h.svc.CreateEvent(t.Context(), h.event(worker.SafetyEventIncident, nil),
+	created, err := h.svc.CreateEvent(t.Context(), h.event(workersafety.SafetyEventIncident, nil),
 		h.userID)
 	require.NoError(t, err)
 
 	edit := *created
 	edit.Description = "Clipped a mirror in the yard"
-	edit.Status = worker.SafetyEventStatusClosed
+	edit.Status = workersafety.SafetyEventStatusClosed
 	change, err := h.svc.PlanUpdateEvent(t.Context(), &edit)
 	require.NoError(t, err)
 	assert.Equal(t, "Clipped a mirror in the yard", change.After.Description)
-	assert.Equal(t, worker.SafetyEventStatusOpen, change.After.Status,
+	assert.Equal(t, workersafety.SafetyEventStatusOpen, change.After.Status,
 		"an update never moves the status")
 	assert.Equal(t, "Backed into a dock door at the consignee", h.repo.events[0].Description)
 }
@@ -120,11 +122,11 @@ func TestPlanUpdateEvent_KeepsWhatTheUpdateKeeps(t *testing.T) {
 func TestPlanRecognitionAndViolations(t *testing.T) {
 	h := newHarness(t)
 
-	recognition, err := h.svc.PlanGiveRecognition(t.Context(), &worker.WorkerRecognition{
+	recognition, err := h.svc.PlanGiveRecognition(t.Context(), &workerdiscipline.WorkerRecognition{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.wrk.ID,
-		Kind:           worker.RecognitionKindSafetyMilestone,
+		Kind:           workerdiscipline.RecognitionKindSafetyMilestone,
 		Title:          "  A million safe miles  ",
 	}, h.userID)
 	require.NoError(t, err)
@@ -133,8 +135,10 @@ func TestPlanRecognitionAndViolations(t *testing.T) {
 	assert.Positive(t, recognition.OccurredAt)
 	assert.Empty(t, h.repo.recognitions)
 
-	event, err := h.svc.CreateEvent(t.Context(), h.event(worker.SafetyEventInspection,
-		func(e *worker.WorkerSafetyEvent) { e.InspectionResult = worker.InspectionResultFail }),
+	event, err := h.svc.CreateEvent(t.Context(), h.event(
+		workersafety.SafetyEventInspection,
+		func(e *workersafety.WorkerSafetyEvent) { e.InspectionResult = workersafety.InspectionResultFail },
+	),
 		h.userID)
 	require.NoError(t, err)
 	violation, err := h.svc.PlanRecordViolation(t.Context(),

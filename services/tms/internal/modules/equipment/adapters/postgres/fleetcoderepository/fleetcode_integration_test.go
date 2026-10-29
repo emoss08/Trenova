@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -120,6 +121,18 @@ func TestFleetCodeRepository(t *testing.T) {
 
 		_, err = f.repo.GetByID(a.Ctx, fleetcodeports.GetFleetCodeByIDRequest{ID: f.other.ID})
 		assert.True(t, errortypes.IsNotFoundError(err))
+	})
+
+	t.Run("get by ids reads only the caller's tenant", func(t *testing.T) {
+		got, err := f.repo.GetByIDs(a.Ctx, fleetcodeports.GetFleetCodesByIDsRequest{
+			FleetCodeIDs: []pulid.ID{f.codes[3].ID, f.other.ID, f.codes[1].ID, pulid.MustNew("fc_")},
+		})
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"FC1", "FC3"}, codesOf(got))
+
+		none, err := f.repo.GetByIDs(a.Ctx, fleetcodeports.GetFleetCodesByIDsRequest{})
+		require.NoError(t, err)
+		assert.Empty(t, none)
 	})
 
 	t.Run("update checks the version", func(t *testing.T) {
@@ -265,7 +278,7 @@ func TestFleetCodeRepository(t *testing.T) {
 	})
 
 	t.Run("the keel checker answers uniqueness and references", func(t *testing.T) {
-		checker := validationframework.NewKeelChecker(f.db.Conn, fleetcodedb.FleetCodesSchema())
+		checker := keelcheck.NewChecker(f.db.Conn, fleetcodedb.FleetCodesSchema())
 
 		taken, err := checker.CheckUniqueness(a.Ctx, &validationframework.UniquenessRequest{
 			TableName:      "fleet_codes",

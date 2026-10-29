@@ -3,12 +3,12 @@
 package extractionrolloutresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	extractionrolloutports "github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	ExtractionRolloutService extractionrolloutports.ExtractionRolloutService
 }
 

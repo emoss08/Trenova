@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
@@ -73,7 +73,7 @@ var multilineNames = map[string]struct{}{
 // ones first and then by name, since a map carries no order of its own.
 func Fields(schema map[string]any) []Field {
 	properties, _ := schema["properties"].(map[string]any)
-	required := requiredSet(schema)
+	required := RequiredSet(schema)
 
 	fields := make([]Field, 0, len(properties))
 	for name, raw := range properties {
@@ -95,7 +95,7 @@ func Fields(schema map[string]any) []Field {
 	return fields
 }
 
-func requiredSet(schema map[string]any) map[string]bool {
+func RequiredSet(schema map[string]any) map[string]bool {
 	required := make(map[string]bool)
 	switch names := schema["required"].(type) {
 	case []string:
@@ -116,7 +116,7 @@ func requiredSet(schema map[string]any) map[string]bool {
 func fieldFrom(name string, property map[string]any, required bool) Field {
 	field := Field{
 		Name:        name,
-		Label:       stringutils.HumanizeCamelCaseSentence(name),
+		Label:       textcase.HumanizeCamelCaseSentence(name),
 		Description: typeutils.StringOf(property["description"]),
 		Required:    required,
 		Options:     []string{},
@@ -187,13 +187,13 @@ func typeOf(raw any) string {
 		return value
 	case []string:
 		for _, name := range value {
-			if name != "null" {
+			if name != TypeNull {
 				return name
 			}
 		}
 	case []any:
 		for _, name := range value {
-			if text, ok := name.(string); ok && text != "null" {
+			if text, ok := name.(string); ok && text != TypeNull {
 				return text
 			}
 		}

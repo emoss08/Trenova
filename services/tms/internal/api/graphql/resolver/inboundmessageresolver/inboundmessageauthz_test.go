@@ -7,7 +7,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,7 +28,7 @@ func triageDeps(grants ...string) *Deps {
 		engine.Granted[g] = true
 	}
 
-	return &Deps{Core: &base.Core{PermissionEngine: engine}}
+	return &Deps{Core: &resolvercore.Core{PermissionEngine: engine}}
 }
 
 func triageCtx(t *testing.T) context.Context {
@@ -110,7 +110,10 @@ func triageCalls() []triageCall {
 			return err
 		}},
 		{"updateTriageSettings", func(ctx context.Context, d *Deps) error {
-			_, err := (&MutationResolver{d}).UpdateTriageSettings(ctx, gqlmodel.TriageSettingsInput{})
+			_, err := (&MutationResolver{d}).UpdateTriageSettings(
+				ctx,
+				gqlmodel.TriageSettingsInput{},
+			)
 			return err
 		}},
 		{"createMyTriageView", func(ctx context.Context, d *Deps) error {

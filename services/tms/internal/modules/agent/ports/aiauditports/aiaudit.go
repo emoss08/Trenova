@@ -4,9 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -216,12 +221,18 @@ type OwnerCall struct {
 // itself, by id within a tenant.
 type AIAuditSourceRepository interface {
 	ListRuns(ctx context.Context, page AIAuditSourcePage) ([]*agent.AgentRun, error)
-	ListTurns(ctx context.Context, page AIAuditSourcePage) ([]*conversation.AssistantTurn, error)
+	ListTurns(
+		ctx context.Context,
+		page AIAuditSourcePage,
+	) ([]*conversationturn.AssistantTurn, error)
 	ListUsage(ctx context.Context, page AIAuditSourcePage) ([]*aiusage.AIUsageRecord, error)
-	ListSteps(ctx context.Context, page AIAuditSourcePage) ([]*agent.AgentRunStep, error)
-	ListEvents(ctx context.Context, page AIAuditSourcePage) ([]*agent.AgentRunEvent, error)
+	ListSteps(ctx context.Context, page AIAuditSourcePage) ([]*agentrunstep.AgentRunStep, error)
+	ListEvents(ctx context.Context, page AIAuditSourcePage) ([]*agentrunevent.AgentRunEvent, error)
 	ListProposals(ctx context.Context, page AIAuditSourcePage) ([]*agent.AgentProposal, error)
-	ListDecisions(ctx context.Context, page AIAuditSourcePage) ([]*agent.AgentDecision, error)
+	ListDecisions(
+		ctx context.Context,
+		page AIAuditSourcePage,
+	) ([]*agentdecision.AgentDecision, error)
 
 	RunsByIDs(
 		ctx context.Context,
@@ -232,16 +243,16 @@ type AIAuditSourceRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ids []pulid.ID,
-	) ([]*conversation.AssistantTurn, error)
+	) ([]*conversationturn.AssistantTurn, error)
 	TurnsByRunIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		runIDs []pulid.ID,
-	) ([]*conversation.AssistantTurn, error)
+	) ([]*conversationturn.AssistantTurn, error)
 	TurnsInWindow(
 		ctx context.Context,
 		req *AIAuditTurnWindow,
-	) ([]*conversation.AssistantTurn, error)
+	) ([]*conversationturn.AssistantTurn, error)
 	ThreadsByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -251,7 +262,7 @@ type AIAuditSourceRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ids []pulid.ID,
-	) ([]*agent.Evaluation, error)
+	) ([]*agentevaluation.Evaluation, error)
 	ProposalsByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -261,7 +272,7 @@ type AIAuditSourceRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		ownerIDs []pulid.ID,
-	) ([]*agent.AgentRunStep, error)
+	) ([]*agentrunstep.AgentRunStep, error)
 	ToolStepCalls(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

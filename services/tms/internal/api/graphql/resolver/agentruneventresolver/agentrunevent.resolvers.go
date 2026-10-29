@@ -10,17 +10,18 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 )
 
 // OwnerKind is a field resolver because the column is a varchar with a check
 // constraint rather than a postgres enum -- the table takes far more writes
 // than it takes new event kinds, and a native enum would make every added kind
 // a non-transactional migration.
-func (r *AgentRunEventResolver) OwnerKind(ctx context.Context, obj *agent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error) {
+func (r *AgentRunEventResolver) OwnerKind(ctx context.Context, obj *agentrunevent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error) {
 	kind := gqlmodel.AgentRunEventOwnerKind(obj.OwnerKind)
 	if !kind.IsValid() {
 		return "", fmt.Errorf("unknown agent run event owner kind: %s", obj.OwnerKind)
@@ -41,19 +42,19 @@ func (r *QueryResolver) AgentRunEvents(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.AgentRunEventRepo.ListConnection(
 		ctx,
-		&agentports.ListAgentRunEventConnectionRequest{
+		&agentruntimeports.ListAgentRunEventConnectionRequest{
 			Filter:    tableInput.Filter,
 			Cursor:    tableInput.Cursor,
 			Columns:   agentRunEventColumns(ctx, "edges.node"),
-			OwnerKind: string(agentports.RunStepOwnerAgentRun),
-			Reader:    agentports.PersonRunRead(authCtx.UserID),
+			OwnerKind: string(agentruntimeports.RunStepOwnerAgentRun),
+			Reader:    agentruntimeports.PersonRunRead(authCtx.UserID),
 		},
 	)
 	if err != nil {

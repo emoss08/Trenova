@@ -7,16 +7,18 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const testSubscription = "3a6f0b1c2d4e4f5a8b9c0d1e2f3a4b5c"
 
-func subscriptionInput(clientState string) *businesscentral.SubscriptionInput {
-	return &businesscentral.SubscriptionInput{
+func subscriptionInput(clientState string) *businesscentralwebhook.SubscriptionInput {
+	return &businesscentralwebhook.SubscriptionInput{
 		NotificationURL: "https://hooks.trenova.example/bc/notify",
-		Resource:        businesscentral.SubscriptionResource(testRef(), "salesInvoices"),
+		Resource:        businesscentralwebhook.SubscriptionResource(testRef(), "salesInvoices"),
 		ClientState:     clientState,
 	}
 }
@@ -25,9 +27,12 @@ func TestSubscriptionResource(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "/api/v2.0/companies("+testCompany+")/salesInvoices",
-		businesscentral.SubscriptionResource(testRef(), "salesInvoices"))
-	assert.Empty(t, businesscentral.SubscriptionResource(testRef(), "sales/../x"))
-	assert.Empty(t, businesscentral.SubscriptionResource(businesscentral.CompanyRef{}, "items"))
+		businesscentralwebhook.SubscriptionResource(testRef(), "salesInvoices"))
+	assert.Empty(t, businesscentralwebhook.SubscriptionResource(testRef(), "sales/../x"))
+	assert.Empty(
+		t,
+		businesscentralwebhook.SubscriptionResource(businesscentral.CompanyRef{}, "items"),
+	)
 }
 
 func TestSubscriptions(t *testing.T) {
@@ -39,7 +44,7 @@ func TestSubscriptions(t *testing.T) {
 		_, _ = w.Write(fixture(t, "subscriptions.json"))
 	})
 
-	subs, err := client.Subscriptions(t.Context())
+	subs, err := businesscentralwebhook.Subscriptions(t.Context(), client)
 	require.NoError(t, err)
 	require.Len(t, subs, 1)
 	assert.Equal(t, testSubscription, subs[0].ID)
@@ -62,7 +67,11 @@ func TestCreateSubscription(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_subscription.json"))
 	})
 
-	sub, err := client.CreateSubscription(t.Context(), subscriptionInput("s3cr3t-state"))
+	sub, err := businesscentralwebhook.CreateSubscription(
+		t.Context(),
+		client,
+		subscriptionInput("s3cr3t-state"),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testSubscription, sub.ID)
 	assert.Equal(t, `W/"JzE5OzI="`, sub.ETag)
@@ -77,17 +86,17 @@ func TestCreateSubscriptionValidatesInput(t *testing.T) {
 	})
 	in := subscriptionInput("")
 	in.NotificationURL = "http://hooks.trenova.example/bc"
-	_, err := client.CreateSubscription(t.Context(), in)
-	require.ErrorIs(t, err, businesscentral.ErrNotificationURL)
+	_, err := businesscentralwebhook.CreateSubscription(t.Context(), client, in)
+	require.ErrorIs(t, err, businesscentralerrors.ErrNotificationURL)
 
 	in = subscriptionInput("")
 	in.Resource = ""
-	_, err = client.CreateSubscription(t.Context(), in)
-	require.ErrorIs(t, err, businesscentral.ErrResourceRequired)
+	_, err = businesscentralwebhook.CreateSubscription(t.Context(), client, in)
+	require.ErrorIs(t, err, businesscentralerrors.ErrResourceRequired)
 
-	_, err = client.CreateSubscription(t.Context(),
+	_, err = businesscentralwebhook.CreateSubscription(t.Context(), client,
 		subscriptionInput(strings.Repeat("s", businesscentral.MaxClientStateLength+1)))
-	require.ErrorIs(t, err, businesscentral.ErrClientStateTooLong)
+	require.ErrorIs(t, err, businesscentralerrors.ErrClientStateTooLong)
 }
 
 func TestRenewSubscriptionOmitsAnUnknownClientState(t *testing.T) {
@@ -103,13 +112,24 @@ func TestRenewSubscriptionOmitsAnUnknownClientState(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_subscription.json"))
 	})
 
-	sub, err := client.RenewSubscription(t.Context(), testSubscription, `W/"JzE5OzI="`,
-		subscriptionInput(""))
+	sub, err := businesscentralwebhook.RenewSubscription(
+		t.Context(),
+		client,
+		testSubscription,
+		`W/"JzE5OzI="`,
+		subscriptionInput(""),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, testSubscription, sub.ID)
 
-	_, err = client.RenewSubscription(t.Context(), "abc')/x", "", subscriptionInput(""))
-	require.ErrorIs(t, err, businesscentral.ErrInvalidSubscriptionID)
+	_, err = businesscentralwebhook.RenewSubscription(
+		t.Context(),
+		client,
+		"abc')/x",
+		"",
+		subscriptionInput(""),
+	)
+	require.ErrorIs(t, err, businesscentralerrors.ErrInvalidSubscriptionID)
 }
 
 func TestDeleteSubscription(t *testing.T) {
@@ -121,7 +141,18 @@ func TestDeleteSubscription(t *testing.T) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	require.NoError(t, client.DeleteSubscription(t.Context(), testSubscription, ""))
-	require.ErrorIs(t, client.DeleteSubscription(t.Context(), strings.Repeat("a", 101), ""),
-		businesscentral.ErrInvalidSubscriptionID)
+	require.NoError(
+		t,
+		businesscentralwebhook.DeleteSubscription(t.Context(), client, testSubscription, ""),
+	)
+	require.ErrorIs(
+		t,
+		businesscentralwebhook.DeleteSubscription(
+			t.Context(),
+			client,
+			strings.Repeat("a", 101),
+			"",
+		),
+		businesscentralerrors.ErrInvalidSubscriptionID,
+	)
 }

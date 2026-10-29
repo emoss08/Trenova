@@ -81,7 +81,7 @@ purpose `Evaluation`, so a reader can keep them apart from live work.
 
 ### What is kept of arguments
 
-Tool arguments go through `aiauditservice.Redactor` before they are hashed:
+Tool arguments go through `aiauditredact.Redactor` before they are hashed:
 
 - A field the tool's policy marks confidential is replaced with `[confidential]` and is never
   recorded.
@@ -316,9 +316,17 @@ operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 | Domain, canonical form, hashing | `internal/modules/agent/domain/aiaudit/` |
 | Ports | `internal/modules/agent/ports/aiauditports/aiaudit.go`, `internal/modules/agent/ports/aiauditports/aiaudit_services.go` |
 | Repositories | `internal/modules/agent/adapters/postgres/aiauditrepository/` |
-| Projector, derivation, redaction, verification, retention, exports | `internal/modules/agent/app/aiauditservice/` |
+| API service and wiring | `internal/modules/agent/app/aiauditservice/` |
+| Projector and derivation | `internal/modules/agent/app/aiauditprojector/` |
+| Redaction | `internal/modules/agent/app/aiauditredact/` |
+| Verification | `internal/modules/agent/app/aiauditverify/` |
+| Retention | `internal/modules/agent/app/aiauditretention/` |
+| Exports | `internal/modules/agent/app/aiauditexport/` |
+| Audit log correlation | `internal/modules/agent/app/aiauditcorrelate/` |
+| Chain keys and pass heartbeat | `internal/modules/agent/app/aiauditkeyring/`, `aiauditheartbeat/` |
+| Test fakes | `internal/modules/agent/app/aiaudittest/` |
 | Workflows and schedules | `internal/modules/agent/jobs/aiauditjobs/` |
-| GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/aiauditentriesloader.go` |
+| GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/agentloaders/aiauditentriesloader.go` |
 | Field sensitivity | `internal/modules/identity/app/fieldsensitivity/` |
 
 ## In the app

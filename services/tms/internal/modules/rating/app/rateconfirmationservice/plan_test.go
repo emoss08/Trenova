@@ -3,17 +3,19 @@ package rateconfirmationservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/emailportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -28,7 +30,7 @@ import (
 // fails the test that runs it.
 type planTestDeps struct {
 	repo                  *fakeRateConRepo
-	carrierAssignmentRepo *shipmentportsmock.MockCarrierAssignmentRepository
+	carrierAssignmentRepo *carrierassignmentportsmock.MockCarrierAssignmentRepository
 	carrierRepo           *carrierportsmock.MockCarrierRepository
 	shipmentRepo          *shipmentportsmock.MockShipmentRepository
 	templates             *documenttemplateportsmock.MockDocumentTemplateResolver
@@ -41,7 +43,7 @@ func setupPlanTest(t *testing.T) *planTestDeps {
 
 	deps := &planTestDeps{
 		repo:                  newFakeRateConRepo(),
-		carrierAssignmentRepo: shipmentportsmock.NewMockCarrierAssignmentRepository(t),
+		carrierAssignmentRepo: carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t),
 		carrierRepo:           carrierportsmock.NewMockCarrierRepository(t),
 		shipmentRepo:          shipmentportsmock.NewMockShipmentRepository(t),
 		templates:             documenttemplateportsmock.NewMockDocumentTemplateResolver(t),
@@ -82,7 +84,7 @@ func TestPreviewGenerate_IsTheNextRevisionAndVoidsTheStandingOne(t *testing.T) {
 		ID:             pulid.MustNew("cass_"),
 		CarrierID:      pulid.MustNew("car_"),
 		ShipmentMoveID: moveID,
-		Status:         shipment.CarrierAssignmentStatusPending,
+		Status:         shipmentvocab.CarrierAssignmentStatusPending,
 		ShipmentMove:   &shipment.ShipmentMove{ID: moveID, ShipmentID: shipmentID},
 	}
 	standing := &rateconfirmation.RateConfirmation{
@@ -148,9 +150,8 @@ func TestPreviewSend_IsTheEmailSendWouldSend(t *testing.T) {
 		PayloadSnapshot:     map[string]any{"CarrierName": "Eastline Transport"},
 	}
 	deps.repo.add(entity)
-	deps.svc.cfg = &config.Config{
-		Tendering: config.TenderingConfig{PublicBaseURL: "https://tender.example"},
-	}
+	deps.svc.appConfig = &appconfig.Config{}
+	deps.svc.tenderingConfig = &tenderingconfig.Config{PublicBaseURL: "https://tender.example"}
 	deps.carrierRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
 		Return(carrierWithRateConContacts(entity.CarrierID), nil).
@@ -211,7 +212,7 @@ func TestPreviewVoid_RevertsTheAssignmentOfAConfirmedAgreement(t *testing.T) {
 	deps.repo.add(entity)
 	assignment := &shipment.CarrierAssignment{
 		ID:          entity.CarrierAssignmentID,
-		Status:      shipment.CarrierAssignmentStatusConfirmed,
+		Status:      shipmentvocab.CarrierAssignmentStatusConfirmed,
 		ConfirmedAt: &confirmedAt,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
@@ -222,10 +223,10 @@ func TestPreviewVoid_RevertsTheAssignmentOfAConfirmedAgreement(t *testing.T) {
 	assert.Equal(t, rateconfirmation.StatusVoided, plan.After.Status)
 	assert.Equal(t, "Rate renegotiated", plan.After.VoidReason)
 	require.NotNil(t, plan.AssignmentAfter)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, plan.AssignmentBefore.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusPending, plan.AssignmentAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, plan.AssignmentBefore.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusPending, plan.AssignmentAfter.Status)
 	assert.Equal(t, rateconfirmation.StatusConfirmed, entity.Status)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, assignment.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, assignment.Status)
 	assert.Empty(t, deps.repo.revokedFor, "a preview revokes no sign link")
 }
 
@@ -248,7 +249,7 @@ func TestPreviewMarkConfirmed_ConfirmsTheAgreementAndItsAssignment(t *testing.T)
 	deps.repo.add(entity)
 	assignment := &shipment.CarrierAssignment{
 		ID:     entity.CarrierAssignmentID,
-		Status: shipment.CarrierAssignmentStatusPending,
+		Status: shipmentvocab.CarrierAssignmentStatusPending,
 	}
 	deps.carrierAssignmentRepo.On("GetByID", mock.Anything, mock.Anything).Return(assignment, nil)
 
@@ -258,7 +259,7 @@ func TestPreviewMarkConfirmed_ConfirmsTheAgreementAndItsAssignment(t *testing.T)
 	assert.Equal(t, rateconfirmation.StatusConfirmed, plan.After.Status)
 	assert.Equal(t, "Dana Ruiz", plan.After.ConfirmedByName)
 	assert.Equal(t, rateconfirmation.ViaDispatcher, plan.After.ConfirmedVia)
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, plan.AssignmentAfter.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, plan.AssignmentAfter.Status)
 	assert.Equal(t, rateconfirmation.StatusSent, entity.Status)
 	assert.Empty(t, deps.repo.updated)
 }

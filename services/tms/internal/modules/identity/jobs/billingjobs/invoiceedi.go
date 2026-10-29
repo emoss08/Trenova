@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/billingjobs/billingcontract"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -81,7 +82,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		BuID:   payload.BusinessUnitID,
 		UserID: payload.UserID,
 	}
-	current, err := a.invoiceService.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
+	current, err := a.invoices.GetByID(ctx, invoiceports.GetInvoiceByIDRequest{
 		ID:         payload.InvoiceID,
 		TenantInfo: tenantInfo,
 	})
@@ -104,7 +105,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 		}, nil
 	}
 
-	plans, err := a.invoiceService.ResolveEDISendPlans(
+	plans, err := a.invoiceEDI.ResolveEDISendPlans(
 		ctx,
 		&invoiceports.ResolveInvoiceEDISendPlansRequest{
 			TenantInfo: tenantInfo,
@@ -142,8 +143,8 @@ func (a *Activities) SendInvoiceEDIActivity(
 		TenantInfo:     tenantInfo,
 		EDIPartnerID:   plan.PartnerID,
 		InvoiceID:      current.ID,
-		TransactionSet: edi.TransactionSet210,
-		Direction:      edi.DocumentDirectionOutbound,
+		TransactionSet: edidocument.TransactionSet210,
+		Direction:      edidocument.DocumentDirectionOutbound,
 		GeneratedByID:  payload.UserID,
 	})
 	if errors.Is(err, ediports.ErrSendDeferred) {

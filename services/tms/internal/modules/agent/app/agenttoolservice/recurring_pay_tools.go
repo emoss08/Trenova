@@ -1,23 +1,23 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementtools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/paytermtools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 )
 
-var _ agentports.ToolPreviewer = (*settlementtools.RecurringPayTool[driverpay.RecurringDeduction])(
+var _ agenttoolports.ToolPreviewer = (*paytermtools.RecurringPayTool[recurringpay.RecurringDeduction])(
 	nil,
 )
 
-var _ agentports.ToolValidator = (*settlementtools.RecurringPayTool[driverpay.RecurringDeduction])(
+var _ agenttoolports.ToolValidator = (*paytermtools.RecurringPayTool[recurringpay.RecurringDeduction])(
 	nil,
 )
 
-var _ agentports.TargetedTool = (*settlementtools.RecurringPayTool[driverpay.RecurringDeduction])(
+var _ agenttoolports.TargetedTool = (*paytermtools.RecurringPayTool[recurringpay.RecurringDeduction])(
 	nil,
 )
 
-var _ settlementtools.RecurringBook[driverpay.RecurringDeduction] = settlementtools.DeductionBook{}
+var _ paytermtools.RecurringBook[recurringpay.RecurringDeduction] = paytermtools.DeductionBook{}
 
-var _ settlementtools.RecurringBook[driverpay.RecurringEarning] = settlementtools.EarningBook{}
+var _ paytermtools.RecurringBook[recurringpay.RecurringEarning] = paytermtools.EarningBook{}

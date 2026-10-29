@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel/analytics/export"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
@@ -13,7 +13,7 @@ import (
 type WriterParams struct {
 	fx.In
 
-	Config *config.Config
+	ReportingConfig *reportingconfig.Config
 }
 
 type CSVRenderer struct {
@@ -22,7 +22,7 @@ type CSVRenderer struct {
 }
 
 func NewCSV(p WriterParams) *CSVRenderer {
-	cfg := p.Config.GetReportingConfig()
+	cfg := p.ReportingConfig
 	return NewCSVRenderer(cfg.CSVIncludeBOM, cfg.GetMaxArtifactBytes())
 }
 
@@ -51,7 +51,7 @@ type JSONRenderer struct {
 }
 
 func NewJSON(p WriterParams) *JSONRenderer {
-	return &JSONRenderer{maxBytes: p.Config.GetReportingConfig().GetMaxArtifactBytes()}
+	return &JSONRenderer{maxBytes: p.ReportingConfig.GetMaxArtifactBytes()}
 }
 
 func (r *JSONRenderer) Format() report.Format { return report.FormatJSON }
@@ -72,7 +72,7 @@ type XLSXRenderer struct {
 }
 
 func NewXLSX(p WriterParams) *XLSXRenderer {
-	return &XLSXRenderer{maxBytes: p.Config.GetReportingConfig().GetMaxArtifactBytes()}
+	return &XLSXRenderer{maxBytes: p.ReportingConfig.GetMaxArtifactBytes()}
 }
 
 func (r *XLSXRenderer) Format() report.Format { return report.FormatXLSX }

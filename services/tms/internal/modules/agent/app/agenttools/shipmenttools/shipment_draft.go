@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -157,7 +159,7 @@ func (r draftReader) sequence(field string, given *int64, position int) {
 
 func (d *ShipmentDraft) Build(
 	tenant pagination.TenantInfo,
-	zones common.LocationZones,
+	zones shipmentpreview.LocationZones,
 ) (*shipment.Shipment, error) {
 	multiErr := errortypes.NewMultiError()
 	read := draftReader{multiErr: multiErr}
@@ -166,7 +168,7 @@ func (d *ShipmentDraft) Build(
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		EnteredByID:       tenant.UserID,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		CustomerID:        read.requiredID("customerId", d.CustomerID),
 		ServiceTypeID:     read.requiredID("serviceTypeId", d.ServiceTypeID),
 		ShipmentTypeID:    read.requiredID("shipmentTypeId", d.ShipmentTypeID),
@@ -189,7 +191,7 @@ func (d *ShipmentDraft) Build(
 		entity.BillToCustomerID = &billTo
 	}
 	if terms := strings.TrimSpace(d.FreightTerms); terms != "" {
-		entity.FreightTerms = shipment.FreightTerms(terms)
+		entity.FreightTerms = shipmentvocab.FreightTerms(terms)
 		if !entity.FreightTerms.IsValid() {
 			multiErr.Add("freightTerms", errortypes.ErrInvalid,
 				"{0} is not one of Prepaid, Collect or ThirdParty", terms)
@@ -210,7 +212,7 @@ func (d *ShipmentDraft) Build(
 func (d *ShipmentDraft) buildMoves(
 	entity *shipment.Shipment,
 	read draftReader,
-	zones common.LocationZones,
+	zones shipmentpreview.LocationZones,
 ) {
 	if len(d.Moves) == 0 {
 		read.multiErr.Add("moves", errortypes.ErrRequired,
@@ -228,7 +230,7 @@ func (d *ShipmentDraft) buildMoves(
 		move := &shipment.ShipmentMove{
 			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         draft.Loaded == nil || *draft.Loaded,
 			Sequence:       int64(moveIdx),
 			Stops:          make([]*shipment.Stop, 0, len(draft.Stops)),
@@ -251,7 +253,7 @@ type stopBuild struct {
 	path     string
 	position int
 	read     draftReader
-	zones    common.LocationZones
+	zones    shipmentpreview.LocationZones
 	tenant   *shipment.Shipment
 }
 
@@ -262,23 +264,23 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 		OrganizationID: b.tenant.OrganizationID,
 		BusinessUnitID: b.tenant.BusinessUnitID,
 		LocationID:     b.read.requiredID(b.path+".locationId", draft.LocationID),
-		Status:         shipment.StopStatusNew,
-		Type:           shipment.StopType(strings.TrimSpace(draft.Type)),
-		ScheduleType:   shipment.StopScheduleType(strings.TrimSpace(draft.ScheduleType)),
+		Status:         shipmentvocab.StopStatusNew,
+		Type:           shipmentvocab.StopType(strings.TrimSpace(draft.Type)),
+		ScheduleType:   shipmentvocab.StopScheduleType(strings.TrimSpace(draft.ScheduleType)),
 		Sequence:       int64(b.position),
 		Pieces:         draft.Pieces,
 		Weight:         draft.Weight,
 		AddressLine:    strings.TrimSpace(draft.AddressLine),
 	}
 	if stop.ScheduleType == "" {
-		stop.ScheduleType = shipment.StopScheduleTypeOpen
+		stop.ScheduleType = shipmentvocab.StopScheduleTypeOpen
 	}
 
 	zone := b.zones.At(stop.LocationID)
 	if strings.TrimSpace(draft.ScheduledWindowStart) == "" {
 		b.read.multiErr.Add(b.path+".scheduledWindowStart", errortypes.ErrRequired,
 			"A local date and time such as 2026-10-01T08:00 is required")
-	} else if start, err := common.ParseLocalTime(
+	} else if start, err := toolparams.ParseLocalTime(
 		b.path+".scheduledWindowStart", draft.ScheduledWindowStart, zone,
 	); err != nil {
 		b.read.multiErr.AddError(err)
@@ -287,7 +289,7 @@ func buildStop(draft *stopDraft, b stopBuild) *shipment.Stop {
 	}
 
 	if strings.TrimSpace(draft.ScheduledWindowEnd) != "" {
-		end, err := common.ParseLocalTime(
+		end, err := toolparams.ParseLocalTime(
 			b.path+".scheduledWindowEnd",
 			draft.ScheduledWindowEnd,
 			zone,

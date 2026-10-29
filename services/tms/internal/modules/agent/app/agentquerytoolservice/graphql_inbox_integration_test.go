@@ -10,24 +10,27 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/capturerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundmessagerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/inboundreplyrepository"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundqueue"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -36,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/emailrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -86,8 +90,8 @@ var errOrganizationNotCached = errors.New("organization not cached")
 type inboxEnv struct {
 	admin     *keel.DB
 	engine    permissionports.PermissionEngine
-	reader    agentports.GraphQLReader
-	public    agentports.GraphQLReader
+	reader    graphqlreadports.GraphQLReader
+	public    graphqlreadports.GraphQLReader
 	directory *inboxDirectory
 	attach    func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context
 }
@@ -108,12 +112,11 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 	directory := &inboxDirectory{people: map[pulid.ID][]permissionports.PermittedUser{}}
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	captures := capturerepository.Params{DB: conn, Logger: logger}
+	captureSupport := capturesupport.New(capturesupport.Params{Logger: logger, Permissions: engine})
 
 	resolvers := agentread.ResolverParams{
-		InboundMessageService: inboundmessageservice.New(inboundmessageservice.Params{
-			Logger: logger,
-			MailboxRepo: inboundmessagerepository.NewMailboxRepository(
-				inboundmessagerepository.MailboxParams{DB: conn, Logger: logger}),
+		InboundQueueService: inboundqueue.New(inboundqueue.Params{
+			Logger:       logger,
 			MessageRepo:  messages,
 			DB:           conn,
 			QueueRepo:    queue,
@@ -123,14 +126,26 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 				DB: conn, Logger: logger, Cache: organizationCacheMiss{},
 			}),
 		}),
-		CaptureService: captureservice.New(captureservice.Params{
-			Logger:      logger,
-			DB:          conn,
-			Batches:     capturerepository.NewBatchRepository(captures),
-			Items:       capturerepository.NewItemRepository(captures),
-			Pages:       capturerepository.NewPageRepository(captures),
-			Devices:     capturerepository.NewDeviceRepository(captures),
-			Permissions: engine,
+		InboundReadService: inboundreads.New(inboundreads.Params{
+			MailboxRepo: inboundmessagerepository.NewMailboxRepository(
+				inboundmessagerepository.MailboxParams{DB: conn, Logger: logger}),
+			MessageRepo: messages,
+			QueueRepo:   queue,
+		}),
+		CaptureSupportService: captureSupport,
+		CaptureFilingService: capturefiling.New(capturefiling.Params{
+			Logger:  logger,
+			DB:      conn,
+			Batches: capturerepository.NewBatchRepository(captures),
+			Items:   capturerepository.NewItemRepository(captures),
+			Pages:   capturerepository.NewPageRepository(captures),
+			Support: captureSupport,
+		}),
+		CaptureDeviceService: capturedevices.New(capturedevices.Params{
+			Logger:     logger,
+			DB:         conn,
+			DeviceRepo: capturerepository.NewDeviceRepository(captures),
+			Support:    captureSupport,
 		}),
 		EmailService: emailservice.New(emailservice.Params{
 			Logger: logger,
@@ -138,15 +153,17 @@ func newInboxEnv(t *testing.T) *inboxEnv {
 		}),
 	}
 
-	people := loaders.NewUserByIDLoaderFactory(loaders.UserByIDLoaderFactoryParams{Repo: users})
-	counts := loaders.NewInboundAttachmentCountLoaderFactory(
-		loaders.InboundAttachmentCountLoaderFactoryParams{MessageRepo: messages})
-	threads := loaders.NewInboundThreadCountLoaderFactory(
-		loaders.InboundThreadCountLoaderFactoryParams{QueueRepo: queue})
-	attachments := loaders.NewInboundAttachmentsByMessageIDLoaderFactory(
-		loaders.InboundAttachmentsByMessageIDLoaderFactoryParams{MessageRepo: messages})
-	drafts := loaders.NewInboundReplyLoaderFactory(
-		loaders.InboundReplyLoaderFactoryParams{ReplyRepo: replies})
+	people := identityloaders.NewUserByIDLoaderFactory(
+		identityloaders.UserByIDLoaderFactoryParams{Repo: users},
+	)
+	counts := documentloaders.NewInboundAttachmentCountLoaderFactory(
+		documentloaders.InboundAttachmentCountLoaderFactoryParams{MessageRepo: messages})
+	threads := documentloaders.NewInboundThreadCountLoaderFactory(
+		documentloaders.InboundThreadCountLoaderFactoryParams{QueueRepo: queue})
+	attachments := documentloaders.NewInboundAttachmentsByMessageIDLoaderFactory(
+		documentloaders.InboundAttachmentsByMessageIDLoaderFactoryParams{MessageRepo: messages})
+	drafts := documentloaders.NewInboundReplyLoaderFactory(
+		documentloaders.InboundReplyLoaderFactoryParams{ReplyRepo: replies})
 
 	return &inboxEnv{
 		admin:     admin,
@@ -265,7 +282,9 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		ID: pulid.MustNew("cdev_"), OrganizationID: org, BusinessUnitID: bu, UserID: user,
 		Name: "Scanner " + label, MachineName: "DESK-" + label, AgentVersion: "1.0.0",
 		Architecture: capture.ArchitectureX64, Status: capture.DeviceActive,
-		RefreshTokenHash: pulid.MustNew("rt_").String(), AccessTokenHash: pulid.MustNew("at_").String(),
+		RefreshTokenHash: pulid.MustNew("rt_").
+			String(),
+		AccessTokenHash:      pulid.MustNew("at_").String(),
 		AccessTokenExpiresAt: 10,
 	}
 	must(capturedb.CaptureDevices.Create(writeCtx, e.admin, device))
@@ -295,7 +314,9 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 		}
 	}
 
-	e.directory.people[org] = []permissionports.PermittedUser{{UserID: user, Name: "Reader " + label}}
+	e.directory.people[org] = []permissionports.PermittedUser{
+		{UserID: user, Name: "Reader " + label},
+	}
 	settings := triage.DefaultSettings(org, bu)
 	settings.OnCallUserID, settings.EndOfDayMinute = user, inboxEndOfDayMinute
 	must(triagedb.Settingses.Create(writeCtx, e.admin, settings))
@@ -306,7 +327,7 @@ func (e *inboxEnv) write(t *testing.T, tenant *agentreadtest.Tenant, label strin
 // inboxCall is a call as the tenant's person at a data access ceiling.
 func inboxCall(
 	t *testing.T,
-	tool agentports.AgentQueryTool,
+	tool agenttoolports.AgentQueryTool,
 	tenant *inboxTenant,
 	ceiling permission.FieldSensitivity,
 	args map[string]any,
@@ -314,7 +335,7 @@ func inboxCall(
 	t.Helper()
 
 	actor := tenant.tenant.Actor
-	data, err := tool.Query(tenant.ctx, &agentports.QueryToolParams{
+	data, err := tool.Query(tenant.ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: actor.OrganizationID, BusinessUnitID: actor.BusinessUnitID,
 		Actor: actor, Timezone: "America/Chicago", Params: args,
 		DataAccessCeiling: ceiling, RunID: pulid.MustNew("ar_"),
@@ -347,7 +368,7 @@ func TestConvertedLists_InboxReadsUnderRowLevelSecurity(t *testing.T) {
 	other := env.write(t, agentreadtest.SeedTenant(t, env.admin, "B"), "B")
 	actor := ours.tenant.Actor
 
-	list := func(t *testing.T, name string, reader agentports.GraphQLReader) agentports.AgentQueryTool {
+	list := func(t *testing.T, name string, reader graphqlreadports.GraphQLReader) agenttoolports.AgentQueryTool {
 		t.Helper()
 		tool, err := agentquerytoolservice.ConvertedListTool(name, reader, env.engine)
 		require.NoError(t, err)
@@ -516,7 +537,11 @@ func TestConvertedGets_InboundMessageReadsUnderRowLevelSecurity(t *testing.T) {
 	ours := env.write(t, agentreadtest.SeedTenant(t, env.admin, "A"), "A")
 	other := env.write(t, agentreadtest.SeedTenant(t, env.admin, "B"), "B")
 
-	get, err := agentquerytoolservice.ConvertedGetTool("inbox_get_inbound_message", env.reader, env.engine)
+	get, err := agentquerytoolservice.ConvertedGetTool(
+		"inbox_get_inbound_message",
+		env.reader,
+		env.engine,
+	)
 	require.NoError(t, err)
 
 	record, err := inboxCall(t, get, ours, permission.SensitivityInternal,
@@ -531,7 +556,11 @@ func TestConvertedGets_InboundMessageReadsUnderRowLevelSecurity(t *testing.T) {
 	mailbox, _ := record["mailbox"].(map[string]any)
 	assert.Equal(t, ours.address, mailbox["address"])
 
-	hidden, err := agentquerytoolservice.ConvertedGetTool("inbox_get_inbound_message", env.public, env.engine)
+	hidden, err := agentquerytoolservice.ConvertedGetTool(
+		"inbox_get_inbound_message",
+		env.public,
+		env.engine,
+	)
 	require.NoError(t, err)
 	record, err = inboxCall(t, hidden, ours, permission.SensitivityInternal,
 		map[string]any{"messageId": ours.waiting[0]})

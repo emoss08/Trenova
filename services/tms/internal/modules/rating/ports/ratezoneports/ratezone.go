@@ -24,6 +24,11 @@ type GetRateZoneByIDRequest struct {
 	IncludeMembers bool                  `json:"includeMembers"`
 }
 
+type GetRateZonesByIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	RateZoneIDs []pulid.ID            `json:"rateZoneIds"`
+}
+
 type ResolveLaneZonesRequest struct {
 	TenantInfo      pagination.TenantInfo `json:"-"`
 	OriginKeys      []string              `json:"originKeys"`
@@ -70,6 +75,7 @@ type RateZoneRepository interface {
 		req *pagination.SelectQueryRequest,
 	) (*pagination.ListResult[*ratezone.RateZone], error)
 	GetByID(ctx context.Context, req *GetRateZoneByIDRequest) (*ratezone.RateZone, error)
+	GetByIDs(ctx context.Context, req *GetRateZonesByIDsRequest) ([]*ratezone.RateZone, error)
 	Create(ctx context.Context, entity *ratezone.RateZone) (*ratezone.RateZone, error)
 	Update(ctx context.Context, entity *ratezone.RateZone) (*ratezone.RateZone, error)
 	Delete(ctx context.Context, req *GetRateZoneByIDRequest) error

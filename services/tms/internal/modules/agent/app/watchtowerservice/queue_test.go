@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -40,7 +41,7 @@ func newHandOffFixture(t *testing.T) *handOffFixture {
 	)
 	in.SubjectType = agent.SubjectDetentionOccurrence
 	in.SubjectID = pulid.MustNew("dto_")
-	in.EventKind = agent.EventDetentionOccurrenceOpened
+	in.EventKind = agenttrigger.EventDetentionOccurrenceOpened
 	require.NoError(t, svc.projector.upsert(t.Context(), in))
 	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
 	repo.events = nil

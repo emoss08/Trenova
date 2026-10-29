@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -15,7 +17,7 @@ import (
 type moveStatusRequest struct {
 	tenantInfo pagination.TenantInfo
 	moveIDs    []pulid.ID
-	status     shipment.MoveStatus
+	status     shipmentvocab.MoveStatus
 	// forUpdate locks each move for the write; a preview reads without it.
 	forUpdate bool
 }
@@ -25,7 +27,7 @@ type moveStatusRequest struct {
 // in the order their moves were asked for.
 type moveStatusPlan struct {
 	moves       []*shipment.ShipmentMove
-	previous    map[pulid.ID]shipment.MoveStatus
+	previous    map[pulid.ID]shipmentvocab.MoveStatus
 	shipmentIDs []pulid.ID
 }
 
@@ -34,8 +36,8 @@ type moveStatusPlan struct {
 // shipment with its state re-derived by the coordinator.
 func (s *service) PreviewUpdateStatus(
 	ctx context.Context,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
-) (*shipmentports.MoveStatusPlan, error) {
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
+) (*shipmentmoveports.MoveStatusPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
@@ -52,7 +54,7 @@ func (s *service) PreviewUpdateStatus(
 		return nil, err
 	}
 
-	out := &shipmentports.MoveStatusPlan{
+	out := &shipmentmoveports.MoveStatusPlan{
 		MovesBefore:     plan.moves,
 		MovesAfter:      make([]*shipment.ShipmentMove, 0, len(plan.moves)),
 		ShipmentsBefore: make([]*shipment.Shipment, 0, len(plan.shipmentIDs)),
@@ -89,7 +91,7 @@ func (s *service) planMoveStatus(
 ) (*moveStatusPlan, error) {
 	plan := &moveStatusPlan{
 		moves:       make([]*shipment.ShipmentMove, 0, len(req.moveIDs)),
-		previous:    make(map[pulid.ID]shipment.MoveStatus, len(req.moveIDs)),
+		previous:    make(map[pulid.ID]shipmentvocab.MoveStatus, len(req.moveIDs)),
 		shipmentIDs: make([]pulid.ID, 0, len(req.moveIDs)),
 	}
 	seenTractors := make(map[pulid.ID]pulid.ID, len(req.moveIDs))
@@ -97,7 +99,7 @@ func (s *service) planMoveStatus(
 	seenShipments := make(map[pulid.ID]struct{}, len(req.moveIDs))
 
 	for _, moveID := range req.moveIDs {
-		move, err := s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+		move, err := s.repo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            moveID,
 			TenantInfo:        req.tenantInfo,
 			ExpandMoveDetails: false,
@@ -149,14 +151,14 @@ func (s *service) planMoveStatus(
 func (s *service) projectShipmentState(
 	ctx context.Context,
 	shipmentID pulid.ID,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 ) (before, after *shipment.Shipment, err error) {
 	before, err = s.loadShipment(ctx, shipmentID, req.TenantInfo)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	after = shipment.CloneForUpdate(before)
+	after = shipmentcoverage.CloneForUpdate(before)
 	for _, moveID := range req.MoveIDs {
 		if move := after.FindMove(moveID); move != nil {
 			move.Status = req.Status

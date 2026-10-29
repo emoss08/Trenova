@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *MockSequenceConfigRepository) EXPECT() *MockSequenceConfigRepository_E
 }
 
 // GetByTenant provides a mock function for the type MockSequenceConfigRepository
-func (_mock *MockSequenceConfigRepository) GetByTenant(ctx context.Context, req tenantports.GetSequenceConfigRequest) (*tenant.SequenceConfigDocument, error) {
+func (_mock *MockSequenceConfigRepository) GetByTenant(ctx context.Context, req tenantports.GetSequenceConfigRequest) (*sequenceconfig.SequenceConfigDocument, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByTenant")
 	}
 
-	var r0 *tenant.SequenceConfigDocument
+	var r0 *sequenceconfig.SequenceConfigDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetSequenceConfigRequest) (*tenant.SequenceConfigDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetSequenceConfigRequest) (*sequenceconfig.SequenceConfigDocument, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetSequenceConfigRequest) *tenant.SequenceConfigDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, tenantports.GetSequenceConfigRequest) *sequenceconfig.SequenceConfigDocument); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.SequenceConfigDocument)
+			r0 = ret.Get(0).(*sequenceconfig.SequenceConfigDocument)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, tenantports.GetSequenceConfigRequest) error); ok {
@@ -97,37 +97,37 @@ func (_c *MockSequenceConfigRepository_GetByTenant_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockSequenceConfigRepository_GetByTenant_Call) Return(sequenceConfigDocument *tenant.SequenceConfigDocument, err error) *MockSequenceConfigRepository_GetByTenant_Call {
+func (_c *MockSequenceConfigRepository_GetByTenant_Call) Return(sequenceConfigDocument *sequenceconfig.SequenceConfigDocument, err error) *MockSequenceConfigRepository_GetByTenant_Call {
 	_c.Call.Return(sequenceConfigDocument, err)
 	return _c
 }
 
-func (_c *MockSequenceConfigRepository_GetByTenant_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetSequenceConfigRequest) (*tenant.SequenceConfigDocument, error)) *MockSequenceConfigRepository_GetByTenant_Call {
+func (_c *MockSequenceConfigRepository_GetByTenant_Call) RunAndReturn(run func(ctx context.Context, req tenantports.GetSequenceConfigRequest) (*sequenceconfig.SequenceConfigDocument, error)) *MockSequenceConfigRepository_GetByTenant_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateByTenant provides a mock function for the type MockSequenceConfigRepository
-func (_mock *MockSequenceConfigRepository) UpdateByTenant(ctx context.Context, doc *tenant.SequenceConfigDocument) (*tenant.SequenceConfigDocument, error) {
+func (_mock *MockSequenceConfigRepository) UpdateByTenant(ctx context.Context, doc *sequenceconfig.SequenceConfigDocument) (*sequenceconfig.SequenceConfigDocument, error) {
 	ret := _mock.Called(ctx, doc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateByTenant")
 	}
 
-	var r0 *tenant.SequenceConfigDocument
+	var r0 *sequenceconfig.SequenceConfigDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.SequenceConfigDocument) (*tenant.SequenceConfigDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *sequenceconfig.SequenceConfigDocument) (*sequenceconfig.SequenceConfigDocument, error)); ok {
 		return returnFunc(ctx, doc)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.SequenceConfigDocument) *tenant.SequenceConfigDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *sequenceconfig.SequenceConfigDocument) *sequenceconfig.SequenceConfigDocument); ok {
 		r0 = returnFunc(ctx, doc)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.SequenceConfigDocument)
+			r0 = ret.Get(0).(*sequenceconfig.SequenceConfigDocument)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.SequenceConfigDocument) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *sequenceconfig.SequenceConfigDocument) error); ok {
 		r1 = returnFunc(ctx, doc)
 	} else {
 		r1 = ret.Error(1)
@@ -142,20 +142,20 @@ type MockSequenceConfigRepository_UpdateByTenant_Call struct {
 
 // UpdateByTenant is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doc *tenant.SequenceConfigDocument
+//   - doc *sequenceconfig.SequenceConfigDocument
 func (_e *MockSequenceConfigRepository_Expecter) UpdateByTenant(ctx any, doc any) *MockSequenceConfigRepository_UpdateByTenant_Call {
 	return &MockSequenceConfigRepository_UpdateByTenant_Call{Call: _e.mock.On("UpdateByTenant", ctx, doc)}
 }
 
-func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) Run(run func(ctx context.Context, doc *tenant.SequenceConfigDocument)) *MockSequenceConfigRepository_UpdateByTenant_Call {
+func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) Run(run func(ctx context.Context, doc *sequenceconfig.SequenceConfigDocument)) *MockSequenceConfigRepository_UpdateByTenant_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.SequenceConfigDocument
+		var arg1 *sequenceconfig.SequenceConfigDocument
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.SequenceConfigDocument)
+			arg1 = args[1].(*sequenceconfig.SequenceConfigDocument)
 		}
 		run(
 			arg0,
@@ -165,12 +165,12 @@ func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) Return(sequenceConfigDocument *tenant.SequenceConfigDocument, err error) *MockSequenceConfigRepository_UpdateByTenant_Call {
+func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) Return(sequenceConfigDocument *sequenceconfig.SequenceConfigDocument, err error) *MockSequenceConfigRepository_UpdateByTenant_Call {
 	_c.Call.Return(sequenceConfigDocument, err)
 	return _c
 }
 
-func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) RunAndReturn(run func(ctx context.Context, doc *tenant.SequenceConfigDocument) (*tenant.SequenceConfigDocument, error)) *MockSequenceConfigRepository_UpdateByTenant_Call {
+func (_c *MockSequenceConfigRepository_UpdateByTenant_Call) RunAndReturn(run func(ctx context.Context, doc *sequenceconfig.SequenceConfigDocument) (*sequenceconfig.SequenceConfigDocument, error)) *MockSequenceConfigRepository_UpdateByTenant_Call {
 	_c.Call.Return(run)
 	return _c
 }

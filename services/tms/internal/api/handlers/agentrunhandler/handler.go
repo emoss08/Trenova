@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -21,15 +21,15 @@ import (
 type Params struct {
 	fx.In
 
-	Service              agentports.AgentRunService
-	Transcripts          agentports.AgentRunTranscriptService
+	Service              agentruntimeports.AgentRunService
+	Transcripts          agentruntimeports.AgentRunTranscriptService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service     agentports.AgentRunService
-	transcripts agentports.AgentRunTranscriptService
+	service     agentruntimeports.AgentRunService
+	transcripts agentruntimeports.AgentRunTranscriptService
 	eh          *helpers.ErrorHandler
 	pm          *middleware.PermissionMiddleware
 }
@@ -92,7 +92,7 @@ func (h *Handler) start(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	run, err := h.service.StartForDefinition(
 		c.Request.Context(),
-		&agentports.StartAgentRunForDefinitionRequest{
+		&agentruntimeports.StartAgentRunForDefinitionRequest{
 			DefinitionID: body.AgentDefinitionID,
 			SystemKey:    body.SystemKey,
 			SubjectType:  body.SubjectType,
@@ -110,21 +110,21 @@ func (h *Handler) start(c *gin.Context) {
 	helpers.JSON(c, http.StatusAccepted, run)
 }
 
-func runRequest(c *gin.Context) (agentports.GetAgentRunByIDRequest, error) {
+func runRequest(c *gin.Context) (agentruntimeports.GetAgentRunByIDRequest, error) {
 	runID, err := pulid.Parse(c.Param("runID"))
 	if err != nil {
-		return agentports.GetAgentRunByIDRequest{}, err
+		return agentruntimeports.GetAgentRunByIDRequest{}, err
 	}
 
 	authCtx := authctx.GetAuthContext(c)
 
-	return agentports.GetAgentRunByIDRequest{
+	return agentruntimeports.GetAgentRunByIDRequest{
 		ID: runID,
 		TenantInfo: &pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
 			BuID:  authCtx.BusinessUnitID,
 		},
-		Reader: agentports.PersonRunRead(authCtx.UserID),
+		Reader: agentruntimeports.PersonRunRead(authCtx.UserID),
 	}, nil
 }
 

@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -54,7 +54,7 @@ func (r *invoiceStateRepository) ListShipmentContacts(
 			cm := ca.ShipmentMove()
 			carriers, err := ca.Where(
 				cm.ShipmentID.In(req.ShipmentIDs...),
-				ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+				ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 			).
 				Load(cm, ca.Carrier()).
 				Order(ca.CreatedAt.Desc()).

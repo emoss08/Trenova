@@ -6,10 +6,12 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -31,7 +33,7 @@ func agentEvalCaseColumns(ctx context.Context, nodePathPrefix string) []string {
 func agentEvalCaseConnectionToModel(
 	result *pagination.CursorListResult[*agentquality.EvalCase],
 ) (*gqlmodel.AgentEvalCaseConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *agentquality.EvalCase, cursor string) *gqlmodel.AgentEvalCaseEdge {
 			return &gqlmodel.AgentEvalCaseEdge{Node: node, Cursor: cursor}
@@ -77,7 +79,7 @@ func evalCaseSources(input gqlmodel.CreateAgentEvalCaseInput) int {
 
 func evalCaseFromMessage(
 	input *gqlmodel.AgentEvalCaseFromMessageInput,
-) (*agentports.CreateEvalCaseFromMessageRequest, error) {
+) (*agentqualityports.CreateEvalCaseFromMessageRequest, error) {
 	threadID, err := pulid.MustParse(input.ThreadID)
 	if err != nil {
 		return nil, err
@@ -87,16 +89,16 @@ func evalCaseFromMessage(
 		return nil, err
 	}
 
-	return &agentports.CreateEvalCaseFromMessageRequest{
+	return &agentqualityports.CreateEvalCaseFromMessageRequest{
 		ThreadID:  threadID,
 		MessageID: messageID,
-		Title:     base.DerefString(input.Title),
+		Title:     gqlscalar.DerefString(input.Title),
 	}, nil
 }
 
 func evalCaseCurated(
 	input *gqlmodel.AgentEvalCaseCuratedInput,
-) (*agentports.CreateCuratedEvalCaseRequest, error) {
+) (*agentqualityports.CreateCuratedEvalCaseRequest, error) {
 	definitionID, err := pulid.MustParse(input.AgentDefinitionID)
 	if err != nil {
 		return nil, err
@@ -107,20 +109,20 @@ func evalCaseCurated(
 		return nil, err
 	}
 
-	request := &agentports.CreateCuratedEvalCaseRequest{
+	request := &agentqualityports.CreateCuratedEvalCaseRequest{
 		AgentDefinitionID: definitionID,
-		Title:             base.DerefString(input.Title),
+		Title:             gqlscalar.DerefString(input.Title),
 		Input:             input.Input,
 		HeldTools:         input.HeldTools,
 		Expected:          *expected,
-		Rubric:            base.DerefString(input.Rubric),
-		ExpiresAt:         base.OptionalInt64(input.ExpiresAt),
+		Rubric:            gqlscalar.DerefString(input.Rubric),
+		ExpiresAt:         gqlscalar.OptionalInt64(input.ExpiresAt),
 	}
 	if input.Trigger != nil {
 		request.Trigger = *input.Trigger
 	}
 	if input.PageContext != nil {
-		request.PageContext = new(agent.PageContext)
+		request.PageContext = new(agentpagecontext.PageContext)
 		if err = jsonutils.Convert(input.PageContext, request.PageContext); err != nil {
 			return nil, invalidJSON(
 				"pageContext",
@@ -135,7 +137,7 @@ func evalCaseCurated(
 				"Mentions must be records with a type, id and label",
 			)
 		}
-		request.Mentions = agent.NormalizeEntityRefs(request.Mentions)
+		request.Mentions = agentpagecontext.NormalizeEntityRefs(request.Mentions)
 	}
 	if input.SubjectType != nil && *input.SubjectType != "" {
 		request.SubjectType = agent.SubjectType(*input.SubjectType)
@@ -152,8 +154,8 @@ func evalCaseCurated(
 func evalCaseUpdate(
 	caseID pulid.ID,
 	input gqlmodel.UpdateAgentEvalCaseInput,
-) (*agentports.UpdateEvalCaseRequest, error) {
-	request := &agentports.UpdateEvalCaseRequest{
+) (*agentqualityports.UpdateEvalCaseRequest, error) {
+	request := &agentqualityports.UpdateEvalCaseRequest{
 		ID:        caseID,
 		Version:   int64(input.Version),
 		Title:     input.Title,
@@ -173,7 +175,7 @@ func evalCaseUpdate(
 		if value == nil {
 			request.ClearExpiry = true
 		} else {
-			request.ExpiresAt = base.OptionalInt64(value)
+			request.ExpiresAt = gqlscalar.OptionalInt64(value)
 		}
 	}
 

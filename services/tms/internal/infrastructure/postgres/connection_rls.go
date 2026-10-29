@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
@@ -47,38 +47,38 @@ type rlsRuntime struct {
 	reporter *scopeLogReporter
 }
 
-func rlsConfigured(cfg *config.Config) bool {
-	return cfg != nil && cfg.Database.RLS.Enabled()
+func rlsConfigured(cfg *databaseconfig.Config) bool {
+	return cfg != nil && cfg.RLS.Enabled()
 }
 
 func newRLSRuntime(
-	cfg *config.Config,
+	cfg *databaseconfig.Config,
 	logger *observability.ContextLogger,
 	registry *metrics.Registry,
 ) (*rlsRuntime, error) {
-	key, err := cfg.Database.RLS.DecodeScopeKey()
+	key, err := cfg.RLS.DecodeScopeKey()
 	if err != nil {
 		return nil, err
 	}
 
 	signer, err := newScopeSigner(
-		strings.TrimSpace(cfg.Database.RLS.ScopeKeyID),
+		strings.TrimSpace(cfg.RLS.ScopeKeyID),
 		key,
-		cfg.Database.RLS.GetScopeTTL(),
+		cfg.RLS.GetScopeTTL(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &rlsRuntime{
-		mode:     cfg.Database.RLS.GetMode(),
+		mode:     cfg.RLS.GetMode(),
 		signer:   signer,
 		reporter: newScopeLogReporter(logger, registry),
 	}, nil
 }
 
 func (r *rlsRuntime) enforced() bool {
-	return r != nil && r.mode == config.RLSModeEnforce
+	return r != nil && r.mode == databaseconfig.RLSModeEnforce
 }
 
 func (r *rlsRuntime) guard(pool scopePool, systemFallback bool) *scopeGuard {
@@ -174,13 +174,13 @@ func (r *scopeLogReporter) firstSighting(event *scopeEvent) bool {
 }
 
 func (c *Connection) connectSystem(ctx context.Context) error {
-	if c.rls == nil || !c.cfg.Database.System.Configured() {
+	if c.rls == nil || !c.databaseConfig.System.Configured() {
 		return nil
 	}
 
-	role := c.cfg.Database.System
+	role := c.databaseConfig.System
 	system, err := c.openPool(ctx, &dbpool.Options{
-		DSN:             c.cfg.GetDSNForRole(role),
+		DSN:             c.databaseConfig.DSNForRole(c.appConfig.Name, role),
 		MaxConns:        role.GetMaxOpenConns(),
 		MaxConnLifetime: c.settings.connMaxLifetime,
 		MaxConnIdleTime: c.settings.connMaxIdleTime,

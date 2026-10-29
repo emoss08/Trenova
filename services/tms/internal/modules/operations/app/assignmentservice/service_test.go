@@ -4,25 +4,20 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/trailerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -31,6 +26,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/capabilitytest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/assignmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchcontrolportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmentcontinuityportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/locationportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/trailerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,9 +73,9 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	}
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -78,8 +83,8 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -91,10 +96,10 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*assignmentports.GetAssignmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *shipmentports.GetAssignmentByIDRequest,
+			req *assignmentports.GetAssignmentByIDRequest,
 		) (*shipment.Assignment, error) {
 			return &shipment.Assignment{
 				ID:              req.AssignmentID,
@@ -103,10 +108,10 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 				ShipmentMoveID:  moveID,
 				PrimaryWorkerID: pulid.Must("wrk_"),
 				TractorID:       pulid.Must("trac_"),
-				Status:          shipment.AssignmentStatusNew,
+				Status:          shipmentvocab.AssignmentStatusNew,
 				ShipmentMove: &shipment.ShipmentMove{
 					ID:     moveID,
-					Status: shipment.MoveStatusAssigned,
+					Status: shipmentvocab.MoveStatusAssigned,
 				},
 			}, nil
 		}).
@@ -119,7 +124,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -128,16 +133,16 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			_ context.Context,
 			entity *shipment.Shipment,
 		) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StatusAssigned, entity.Status)
-			assert.Equal(t, shipment.MoveStatusAssigned, entity.Moves[0].Status)
-			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
+			assert.Equal(t, shipmentvocab.StatusAssigned, entity.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusAssigned, entity.Moves[0].Status)
+			assert.Equal(t, shipmentvocab.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
 			require.NotNil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
 		Once()
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.MatchedBy(func(req *shipmentports.ActiveShipmentHoldRequest) bool {
+		HasActiveDispatchHold(mock.Anything, mock.MatchedBy(func(req *shipmentholdports.ActiveShipmentHoldRequest) bool {
 			return req.ShipmentID == shipmentID && req.TenantInfo == tenantInfo
 		})).
 		Return(false, nil).
@@ -145,7 +150,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	svc := &service{
@@ -166,7 +171,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -175,7 +180,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 
 	require.NoError(t, err)
 	require.NotNil(t, entity)
-	assert.Equal(t, shipment.AssignmentStatusNew, entity.Status)
+	assert.Equal(t, shipmentvocab.AssignmentStatusNew, entity.Status)
 }
 
 func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
@@ -191,16 +196,16 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		orgRepo: assetOperationsOrgRepo(t, tenantInfo, true),
 		l:       zap.NewNop(),
 		db:      dbtest.NopConnection{},
-		repo: func() *shipmentportsmock.MockAssignmentRepository {
-			repo := shipmentportsmock.NewMockAssignmentRepository(t)
+		repo: func() *assignmentportsmock.MockAssignmentRepository {
+			repo := assignmentportsmock.NewMockAssignmentRepository(t)
 			repo.EXPECT().
 				GetMoveByID(mock.Anything, tenantInfo, moveID).
-				Return(&shipment.ShipmentMove{ID: moveID, Status: shipment.MoveStatusCompleted}, nil).
+				Return(&shipment.ShipmentMove{ID: moveID, Status: shipmentvocab.MoveStatusCompleted}, nil).
 				Once()
 			return repo
 		}(),
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
-		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
 			RateEngine:      ratingtest.NewEngine(t),
@@ -211,7 +216,7 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -234,19 +239,19 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
 			ID:         moveID,
 			ShipmentID: shipmentID,
-			Status:     shipment.MoveStatusNew,
+			Status:     shipmentvocab.MoveStatusNew,
 		}, nil).
 		Once()
 
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.MatchedBy(func(req *shipmentports.ActiveShipmentHoldRequest) bool {
+		HasActiveDispatchHold(mock.Anything, mock.MatchedBy(func(req *shipmentholdports.ActiveShipmentHoldRequest) bool {
 			return req.ShipmentID == shipmentID && req.TenantInfo == tenantInfo
 		})).
 		Return(true, nil).
@@ -269,7 +274,7 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -295,7 +300,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	original := validShipment(shipmentID, moveID, tenantInfo)
 	original.Moves[0].Stops[0].LocationID = pulid.MustNew("loc_pickup_")
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -303,7 +308,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -311,12 +316,12 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentholdports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 
@@ -392,7 +397,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -421,7 +426,7 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -429,7 +434,7 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -440,9 +445,9 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 		Return(validShipment(shipmentID, moveID, tenantInfo), nil).
 		Once()
 
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentholdports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 
@@ -466,7 +471,7 @@ func TestAssignToMove_RejectsDriverNotInOrganization(t *testing.T) {
 		coordinator:  shipmentstate.NewCoordinator(),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: madeUpWorkerID,
@@ -493,7 +498,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -501,7 +506,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -513,7 +518,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*assignmentports.GetAssignmentByIDRequest")).
 		Return(&shipment.Assignment{
 			ID:              pulid.MustNew("asn_"),
 			OrganizationID:  tenantInfo.OrgID,
@@ -522,25 +527,25 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 			PrimaryWorkerID: pulid.Must("wrk_"),
 			TractorID:       pulid.Must("trac_"),
 			TrailerID:       &trailerID,
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 		}, nil).
 		Once()
 
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 	shipmentRepo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
-		Return(shipment.CloneForUpdate(original), nil).
+		Return(shipmentcoverage.CloneForUpdate(original), nil).
 		Once()
 
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
 		HasActiveDispatchHold(
 			mock.Anything,
-			mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest"),
+			mock.AnythingOfType("*shipmentholdports.ActiveShipmentHoldRequest"),
 		).
 		Return(false, nil).
 		Once()
@@ -548,7 +553,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	dispatchControlRepo := dispatchcontrolportsmock.NewMockDispatchControlRepository(t)
@@ -587,7 +592,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -615,9 +620,9 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 
 	assignmentID := pulid.MustNew("asn_")
 	original := validShipment(shipmentID, moveID, tenantInfo)
-	original.Status = shipment.StatusAssigned
-	original.Moves[0].Status = shipment.MoveStatusAssigned
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeDriver
+	original.Status = shipmentvocab.StatusAssigned
+	original.Moves[0].Status = shipmentvocab.MoveStatusAssigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeDriver
 	original.Moves[0].Assignment = &shipment.Assignment{
 		ID:              assignmentID,
 		OrganizationID:  tenantInfo.OrgID,
@@ -625,10 +630,10 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.Must("wrk_"),
 		TractorID:       pulid.Must("trc_"),
-		Status:          shipment.AssignmentStatusNew,
+		Status:          shipmentvocab.AssignmentStatusNew,
 	}
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -636,8 +641,8 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusAssigned,
-			CoverageType:   shipment.MoveCoverageTypeDriver,
+			Status:         shipmentvocab.MoveStatusAssigned,
+			CoverageType:   shipmentvocab.MoveCoverageTypeDriver,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -649,7 +654,7 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 			ShipmentMoveID:  moveID,
 			PrimaryWorkerID: pulid.Must("wrk_"),
 			TractorID:       pulid.Must("trc_"),
-			Status:          shipment.AssignmentStatusNew,
+			Status:          shipmentvocab.AssignmentStatusNew,
 			Version:         2,
 		}, nil).
 		Once()
@@ -664,24 +669,24 @@ func newUnassignService(t *testing.T, params unassignServiceParams) *service {
 	shipmentRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetShipmentByIDRequest")).
 		RunAndReturn(func(_ context.Context, _ *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
 		Update(mock.Anything, mock.AnythingOfType("*shipment.Shipment")).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.StatusNew, entity.Status)
-			assert.Equal(t, shipment.MoveStatusNew, entity.Moves[0].Status)
-			assert.Equal(t, shipment.MoveCoverageTypeUnassigned, entity.Moves[0].CoverageType)
+			assert.Equal(t, shipmentvocab.StatusNew, entity.Status)
+			assert.Equal(t, shipmentvocab.MoveStatusNew, entity.Moves[0].Status)
+			assert.Equal(t, shipmentvocab.MoveCoverageTypeUnassigned, entity.Moves[0].CoverageType)
 			assert.Nil(t, entity.Moves[0].Assignment)
 			return entity, nil
 		}).
 		Once()
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	svc := &service{
@@ -721,7 +726,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 		MoveID:     moveID,
 	})
 
-	err := svc.Unassign(t.Context(), &shipmentports.UnassignShipmentMoveRequest{
+	err := svc.Unassign(t.Context(), &assignmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})
@@ -738,12 +743,12 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
 			ID:     moveID,
-			Status: shipment.MoveStatusAssigned,
+			Status: shipmentvocab.MoveStatusAssigned,
 		}, nil).
 		Once()
 
@@ -763,7 +768,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentRepo,
-		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
 			RateEngine:      ratingtest.NewEngine(t),
@@ -774,7 +779,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
-	err := svc.Unassign(t.Context(), &shipmentports.UnassignShipmentMoveRequest{
+	err := svc.Unassign(t.Context(), &assignmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})
@@ -793,12 +798,12 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		BuID:  pulid.MustNew("bu_"),
 	}
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
 			ID:     moveID,
-			Status: shipment.MoveStatusInTransit,
+			Status: shipmentvocab.MoveStatusInTransit,
 		}, nil).
 		Once()
 
@@ -807,7 +812,7 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		db:           dbtest.NopConnection{},
 		repo:         repo,
 		shipmentRepo: shipmentportsmock.NewMockShipmentRepository(t),
-		holdRepo:     shipmentportsmock.NewMockShipmentHoldRepository(t),
+		holdRepo:     shipmentholdportsmock.NewMockShipmentHoldRepository(t),
 		commercial: shipmentcommercial.New(shipmentcommercial.Params{
 			Logger:          zap.NewNop(),
 			RateEngine:      ratingtest.NewEngine(t),
@@ -818,7 +823,7 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
-	err := svc.Unassign(t.Context(), &shipmentports.UnassignShipmentMoveRequest{
+	err := svc.Unassign(t.Context(), &assignmentports.UnassignShipmentMoveRequest{
 		TenantInfo:     tenantInfo,
 		ShipmentMoveID: moveID,
 	})
@@ -840,14 +845,14 @@ func validShipment(
 		CustomerID:        pulid.MustNew("cust_"),
 		BOL:               "BOL-1",
 		FormulaTemplateID: pulid.MustNew("ft_"),
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{
 			{
 				ID:             moveID,
 				ShipmentID:     shipmentID,
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,
-				Status:         shipment.MoveStatusNew,
+				Status:         shipmentvocab.MoveStatusNew,
 				Loaded:         true,
 				Stops: []*shipment.Stop{
 					{
@@ -856,10 +861,10 @@ func validShipment(
 						OrganizationID:       tenantInfo.OrgID,
 						BusinessUnitID:       tenantInfo.BuID,
 						Sequence:             0,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypePickup,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypePickup,
 						LocationID:           pulid.MustNew("loc_"),
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						ScheduledWindowStart: 1,
 						ScheduledWindowEnd:   new(int64(2)),
 					},
@@ -869,10 +874,10 @@ func validShipment(
 						OrganizationID:       tenantInfo.OrgID,
 						BusinessUnitID:       tenantInfo.BuID,
 						Sequence:             1,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypeDelivery,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypeDelivery,
 						LocationID:           pulid.MustNew("loc_"),
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						ScheduledWindowStart: 3,
 						ScheduledWindowEnd:   new(int64(4)),
 					},
@@ -904,15 +909,19 @@ func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *tes
 	assert.Equal(
 		t,
 		shipmentstate.DisabledDelayThresholdMinutes,
-		shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
 			AutoDelayShipments:          false,
 			AutoDelayShipmentsThreshold: new(int16(30)),
 		}),
 	)
-	assert.Equal(t, int16(30), shipmentstate.ResolveControlDelayThreshold(&tenant.ShipmentControl{
-		AutoDelayShipments:          true,
-		AutoDelayShipmentsThreshold: new(int16(30)),
-	}))
+	assert.Equal(
+		t,
+		int16(30),
+		shipmentstate.ResolveControlDelayThreshold(&shipmentcontrol.ShipmentControl{
+			AutoDelayShipments:          true,
+			AutoDelayShipmentsThreshold: new(int16(30)),
+		}),
+	)
 }
 
 type recordingTenderGuard struct {
@@ -950,9 +959,9 @@ func newAssignToMoveService(
 	t.Helper()
 
 	original := validShipment(shipmentID, moveID, tenantInfo)
-	original.Moves[0].CoverageType = shipment.MoveCoverageTypeUnassigned
+	original.Moves[0].CoverageType = shipmentvocab.MoveCoverageTypeUnassigned
 
-	repo := shipmentportsmock.NewMockAssignmentRepository(t)
+	repo := assignmentportsmock.NewMockAssignmentRepository(t)
 	repo.EXPECT().
 		GetMoveByID(mock.Anything, tenantInfo, moveID).
 		Return(&shipment.ShipmentMove{
@@ -960,8 +969,8 @@ func newAssignToMoveService(
 			ShipmentID:     shipmentID,
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
-			CoverageType:   shipment.MoveCoverageTypeUnassigned,
+			Status:         shipmentvocab.MoveStatusNew,
+			CoverageType:   shipmentvocab.MoveCoverageTypeUnassigned,
 		}, nil).
 		Once()
 	repo.EXPECT().GetByMoveID(mock.Anything, tenantInfo, moveID).Return(nil, nil).Once()
@@ -973,10 +982,10 @@ func newAssignToMoveService(
 		}).
 		Once()
 	repo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*shipmentports.GetAssignmentByIDRequest")).
+		GetByID(mock.Anything, mock.AnythingOfType("*assignmentports.GetAssignmentByIDRequest")).
 		RunAndReturn(func(
 			_ context.Context,
-			req *shipmentports.GetAssignmentByIDRequest,
+			req *assignmentports.GetAssignmentByIDRequest,
 		) (*shipment.Assignment, error) {
 			return &shipment.Assignment{
 				ID:              req.AssignmentID,
@@ -985,11 +994,11 @@ func newAssignToMoveService(
 				ShipmentMoveID:  moveID,
 				PrimaryWorkerID: pulid.Must("wrk_"),
 				TractorID:       pulid.Must("trac_"),
-				Status:          shipment.AssignmentStatusNew,
+				Status:          shipmentvocab.AssignmentStatusNew,
 				ShipmentMove: &shipment.ShipmentMove{
 					ID:         moveID,
 					ShipmentID: shipmentID,
-					Status:     shipment.MoveStatusAssigned,
+					Status:     shipmentvocab.MoveStatusAssigned,
 				},
 			}, nil
 		}).
@@ -1002,7 +1011,7 @@ func newAssignToMoveService(
 			_ context.Context,
 			_ *shipmentports.GetShipmentByIDRequest,
 		) (*shipment.Shipment, error) {
-			return shipment.CloneForUpdate(original), nil
+			return shipmentcoverage.CloneForUpdate(original), nil
 		}).
 		Once()
 	shipmentRepo.EXPECT().
@@ -1011,21 +1020,21 @@ func newAssignToMoveService(
 			_ context.Context,
 			entity *shipment.Shipment,
 		) (*shipment.Shipment, error) {
-			assert.Equal(t, shipment.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
+			assert.Equal(t, shipmentvocab.MoveCoverageTypeDriver, entity.Moves[0].CoverageType)
 			return entity, nil
 		}).
 		Once()
 
-	holdRepo := shipmentportsmock.NewMockShipmentHoldRepository(t)
+	holdRepo := shipmentholdportsmock.NewMockShipmentHoldRepository(t)
 	holdRepo.EXPECT().
-		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentports.ActiveShipmentHoldRequest")).
+		HasActiveDispatchHold(mock.Anything, mock.AnythingOfType("*shipmentholdports.ActiveShipmentHoldRequest")).
 		Return(false, nil).
 		Once()
 
 	controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 	controlRepo.EXPECT().
 		Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-		Return(&tenant.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
+		Return(&shipmentcontrol.ShipmentControl{AutoDelayShipmentsThreshold: new(int16(30))}, nil).
 		Once()
 
 	return &service{
@@ -1061,7 +1070,7 @@ func TestAssignToMove_WithdrawsLiveTenderForCoveredMove(t *testing.T) {
 	guard := &recordingTenderGuard{}
 	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, guard)
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -1088,7 +1097,7 @@ func TestAssignToMove_TenderWithdrawFailureDoesNotFailAssignment(t *testing.T) {
 	guard := &recordingTenderGuard{err: errortypes.NewBusinessError("tender withdraw exploded")}
 	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, guard)
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),
@@ -1112,7 +1121,7 @@ func TestAssignToMove_WithoutTenderGuardIsNoOp(t *testing.T) {
 
 	svc := newAssignToMoveService(t, tenantInfo, shipmentID, moveID, nil)
 
-	entity, err := svc.AssignToMove(t.Context(), &shipmentports.AssignShipmentMoveRequest{
+	entity, err := svc.AssignToMove(t.Context(), &assignmentports.AssignShipmentMoveRequest{
 		TenantInfo:      tenantInfo,
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: pulid.MustNew("wrk_"),

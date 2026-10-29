@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,7 +33,7 @@ func (r *MutationResolver) StartBulkEdit(
 	}
 
 	entity, err := r.BulkEditService.Start(ctx, &bulkeditservice.StartRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Resource:   resource,
 		Field:      input.Field,
 		Value:      input.Value,
@@ -57,7 +57,7 @@ func (r *MutationResolver) UndoMyBulkEdit(
 	if err != nil {
 		return nil, err
 	}
-	existing, err := r.BulkEditService.Get(ctx, base.TenantInfo(authCtx), editID)
+	existing, err := r.BulkEditService.Get(ctx, resolvercore.TenantInfo(authCtx), editID)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (r *MutationResolver) UndoMyBulkEdit(
 		return nil, err
 	}
 
-	entity, err := r.BulkEditService.Undo(ctx, base.TenantInfo(authCtx), editID)
+	entity, err := r.BulkEditService.Undo(ctx, resolvercore.TenantInfo(authCtx), editID)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (r *QueryResolver) PreviewBulkEdit(
 	}
 
 	preview, err := r.BulkEditService.Preview(ctx, &bulkeditservice.PreviewRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Resource:   resource,
 		Selection:  selection,
 	})
@@ -127,7 +127,7 @@ func (r *QueryResolver) MyBulkEdit(ctx context.Context, id string) (*gqlmodel.Bu
 	if err != nil {
 		return nil, err
 	}
-	entity, err := r.BulkEditService.Get(ctx, base.TenantInfo(authCtx), editID)
+	entity, err := r.BulkEditService.Get(ctx, resolvercore.TenantInfo(authCtx), editID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (r *QueryResolver) MyBulkEdits(
 	}
 	entities, err := r.BulkEditService.ListMine(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		filterResource,
 		pageSize,
 	)

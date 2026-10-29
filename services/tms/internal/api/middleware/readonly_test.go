@@ -6,10 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/subscription"
-	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/testutil/plantest"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -39,8 +39,8 @@ func serveThroughGuard(t *testing.T, tc guardCase) (*httptest.ResponseRecorder, 
 	guard := NewReadOnlyGuard(ReadOnlyGuardParams{
 		Plans: tc.plans,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: &config.Config{},
+			Logger:    zap.NewNop(),
+			AppConfig: &appconfig.Config{},
 		}),
 		Logger: zap.NewNop(),
 	})

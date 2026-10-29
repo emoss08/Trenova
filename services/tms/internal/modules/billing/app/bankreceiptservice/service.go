@@ -5,20 +5,19 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -48,7 +47,7 @@ type Params struct {
 	// Events is told about each receipt that could not be matched on its
 	// own, so an agent subscribed to bank_receipt.exception can work it. It
 	// is optional because an import is worth running with nobody listening.
-	Events agentports.AgentEventPublisher `optional:"true"`
+	Events agenteventports.AgentEventPublisher `optional:"true"`
 }
 
 type Service struct {
@@ -60,7 +59,7 @@ type Service struct {
 	accountingRepo      tenantports.AccountingControlRepository
 	notificationService *notificationservice.Service
 	auditService        auditports.AuditService
-	events              agentports.AgentEventPublisher
+	events              agenteventports.AgentEventPublisher
 }
 
 //nolint:gocritic // dependency injection
@@ -303,7 +302,7 @@ func (s *Service) applyReconciliationPolicy(
 	if err != nil {
 		return receipt, err
 	}
-	if control.ReconciliationMode == tenant.ReconciliationModeDisabled {
+	if control.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
 		return receipt, nil
 	}
 	if strings.TrimSpace(receipt.ReferenceNumber) == "" {
@@ -422,8 +421,8 @@ func (s *Service) markException(
 			)
 		}
 	}
-	agentports.PublishAgentEvent(ctx, s.events, agentports.AgentEvent{
-		Kind:       agent.EventBankReceiptException,
+	agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
+		Kind:       agenttrigger.EventBankReceiptException,
 		SubjectID:  updated.ID,
 		TenantInfo: tenantInfo,
 	})

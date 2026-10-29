@@ -6,31 +6,32 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionnoticeservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/toolschema"
-	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 )
 
@@ -59,430 +60,6 @@ var waiverReasons = agenttoolschema.Source("detention.waiverReason", []detention
 	detention.WaiverReasonOther,
 })
 
-type ServiceFailureDecider interface {
-	EvaluateShipment(
-		ctx context.Context,
-		req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
-		actor *permissionports.RequestActor,
-	) (*servicefailureports.ServiceFailureEvaluationResult, error)
-	EvaluateStop(
-		ctx context.Context,
-		req *servicefailureports.EvaluateStopServiceFailuresRequest,
-		actor *permissionports.RequestActor,
-	) (*servicefailureports.ServiceFailureEvaluationResult, error)
-	BulkEvaluate(
-		ctx context.Context,
-		req *servicefailureports.BulkEvaluateServiceFailuresRequest,
-		actor *permissionports.RequestActor,
-	) (*servicefailureports.ServiceFailureEvaluationResult, error)
-	GetByID(
-		ctx context.Context,
-		req *servicefailureports.GetServiceFailureByIDRequest,
-	) (*servicefailure.ServiceFailure, error)
-	Resolve(
-		ctx context.Context,
-		req *servicefailureports.ServiceFailureLifecycleRequest,
-		actor *permissionports.RequestActor,
-	) (*servicefailure.ServiceFailure, error)
-	PreviewEvaluateShipment(
-		ctx context.Context,
-		req *servicefailureports.EvaluateShipmentServiceFailuresRequest,
-	) (*servicefailureports.ServiceFailureDetectionPlan, error)
-}
-
-// errBothEvaluationScopes answers a call whose shipmentId and shipmentIds name
-// different shipments. One shipment checks its stops, or one of them; a list
-// checks each shipment in it. Which the person meant cannot be read from the
-// call, so the refusal spells out both calls.
-var ErrBothEvaluationScopes = errors.New(
-	"shipmentId and shipmentIds name different shipments, so it is not clear which to " +
-		"check. To check one shipment, send shipmentId without shipmentIds, for example " +
-		`{"shipmentId": "shp_…"}, adding stopId to check one of its stops. To check several ` +
-		`shipments in one pass, send shipmentIds without shipmentId, for example ` +
-		`{"shipmentIds": ["shp_…", "shp_…"]}`,
-)
-
-type EvaluateServiceFailuresTool struct {
-	failures ServiceFailureDecider
-}
-
-const toolShipmentGetTracking = "shipment_get_tracking"
-
-func NewEvaluateServiceFailuresTool(failures ServiceFailureDecider) agentports.AgentTool {
-	return &EvaluateServiceFailuresTool{failures: failures}
-}
-
-func (t *EvaluateServiceFailuresTool) Name() string { return "exception_evaluate_service_failures" }
-
-func (t *EvaluateServiceFailuresTool) Recipe() []string {
-	return []string{
-		toolShipmentGetTracking,
-		"exception_list_service_failures",
-		"exception_evaluate_service_failures",
-	}
-}
-
-func (t *EvaluateServiceFailuresTool) Description() string {
-	return "Run the service failure check on a shipment now, opening a failure for a " +
-		"late or missed stop that has none. Every stop is compared against its window " +
-		"and the grace period; send stopId to check one stop, or shipmentIds to check " +
-		"several shipments in one pass. Use it when shipment_get_tracking shows a stop " +
-		"late or overdue and exception_list_service_failures shows nothing for it, so the " +
-		"failure is on record before anyone is told. It records what the stop " +
-		"actuals prove and nothing else; it cannot create a failure from a guess."
-}
-
-func (t *EvaluateServiceFailuresTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
-				permission.ResourceShipment,
-				"The shipment to check, from shipment_get_tracking, "+
-					"shipment_list or this run's subject. For several shipments send "+
-					"shipmentIds instead.",
-			),
-			common.ParamStopID: agenttoolschema.RecordIDText(
-				permission.ResourceShipmentStop,
-				"One stop of that shipment to check on its own, from "+
-					"shipment_get_tracking or shipment_get. Needs shipmentId.",
-			),
-			"shipmentIds": agenttoolschema.RecordIDs(
-				permission.ResourceShipment,
-				"Several shipments to check in one pass, from "+
-					"shipment_list. Leave it out when checking one "+
-					"shipment by shipmentId.",
-				MaxBulkEvaluationShipments,
-			),
-			"force": map[string]any{
-				"type": "boolean",
-				"description": "Re-check stops that were already evaluated. Default false; " +
-					"set it only when an actual arrival was corrected.",
-			},
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *EvaluateServiceFailuresTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceServiceFailure,
-		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
-		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
-		Rationale: "Opens service failures from stop actuals inside Trenova; an open failure " +
-			"sends nothing.",
-	}
-}
-
-func (t *EvaluateServiceFailuresTool) Target(
-	params map[string]any,
-) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
-}
-
-func (t *EvaluateServiceFailuresTool) Execute(
-	ctx context.Context,
-	params agentports.ToolExecuteParams,
-) error {
-	if err := common.GuardExecute(t, params); err != nil {
-		return err
-	}
-
-	scope, err := t.request(&params)
-	if err != nil {
-		return err
-	}
-
-	switch {
-	case len(scope.shipmentIDs) > 0:
-		_, err = t.failures.BulkEvaluate(
-			ctx,
-			&servicefailureports.BulkEvaluateServiceFailuresRequest{
-				TenantInfo:  scope.tenant,
-				ShipmentIDs: scope.shipmentIDs,
-				Force:       scope.force,
-			},
-			params.Actor,
-		)
-	case scope.stopID.IsNotNil():
-		_, err = t.failures.EvaluateStop(
-			ctx,
-			&servicefailureports.EvaluateStopServiceFailuresRequest{
-				TenantInfo: scope.tenant,
-				ShipmentID: scope.shipmentID,
-				StopID:     scope.stopID,
-				Force:      scope.force,
-			},
-			params.Actor,
-		)
-	default:
-		_, err = t.failures.EvaluateShipment(ctx, scope.shipmentRequest(scope.shipmentID),
-			params.Actor)
-	}
-
-	return err
-}
-
-const MaxBulkEvaluationShipments = 50
-
-type evaluationScope struct {
-	tenant      pagination.TenantInfo
-	shipmentID  pulid.ID
-	stopID      pulid.ID
-	shipmentIDs []pulid.ID
-	force       bool
-}
-
-func (s *evaluationScope) shipmentRequest(
-	shipmentID pulid.ID,
-) *servicefailureports.EvaluateShipmentServiceFailuresRequest {
-	return &servicefailureports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: s.tenant,
-		ShipmentID: shipmentID,
-		Force:      s.force,
-	}
-}
-
-func (t *EvaluateServiceFailuresTool) request(
-	params *agentports.ToolExecuteParams,
-) (*evaluationScope, error) {
-	scope := &evaluationScope{
-		tenant: common.TenantFrom(*params),
-		force:  common.OptionalBool(params.Params, "force"),
-	}
-
-	var err error
-	if scope.shipmentID, _, err = common.OptionalPulid(
-		params.Params,
-		common.ParamShipmentID,
-	); err != nil {
-		return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", err)
-	}
-	if scope.stopID, _, err = common.OptionalPulid(params.Params, common.ParamStopID); err != nil {
-		return nil, fmt.Errorf("parameter %q is not a valid id: %w", common.ParamStopID, err)
-	}
-	if _, given := params.Params["shipmentIds"]; given {
-		ids, idsErr := common.RequirePulidSlice(
-			params.Params, "shipmentIds", MaxBulkEvaluationShipments)
-		if idsErr != nil {
-			return nil, idsErr
-		}
-		scope.shipmentIDs = sliceutils.Dedupe(ids)
-	}
-	scope.oneListed()
-
-	switch {
-	case len(scope.shipmentIDs) > 0 && scope.shipmentID.IsNotNil():
-		return nil, ErrBothEvaluationScopes
-	case len(scope.shipmentIDs) > 0 && scope.stopID.IsNotNil():
-		return nil, errors.New("stopId checks one stop of one shipment; send it with shipmentId")
-	case len(scope.shipmentIDs) == 0 && scope.shipmentID.IsNil():
-		return nil, errors.New("parameter \"shipmentId\" is required unless shipmentIds is sent")
-	}
-
-	return scope, nil
-}
-
-// oneListed reads a list of one shipment as that shipment when the call also
-// names it, or names a stop of it. Models fill every parameter they are
-// offered, so a check of one shipment arrived as shipmentId and as shipmentIds
-// of that same shipment, and was refused for naming both, though both said
-// the same thing.
-func (s *evaluationScope) oneListed() {
-	if len(s.shipmentIDs) != 1 {
-		return
-	}
-	only := s.shipmentIDs[0]
-	switch {
-	case s.shipmentID == only:
-	case s.shipmentID.IsNil() && s.stopID.IsNotNil():
-		s.shipmentID = only
-	default:
-		return
-	}
-	s.shipmentIDs = nil
-}
-
-// ResolveSelection files a call that named its one shipment twice as the
-// single shipmentId it means, so the approval card shows one shipment rather
-// than a list beside it. A call the scope cannot read is left as sent for
-// Validate to refuse by name.
-func (t *EvaluateServiceFailuresTool) ResolveSelection(
-	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolSelectionResolver interface passes params by value
-) (map[string]any, error) {
-	if _, listed := params.Params["shipmentIds"]; !listed {
-		return params.Params, nil
-	}
-	scope, err := t.request(&params)
-	if err != nil || len(scope.shipmentIDs) > 0 {
-		return params.Params, nil //nolint:nilerr // Validate refuses the call with its own reason
-	}
-
-	resolved := maputils.WithoutKeys(params.Params, "shipmentIds")
-	resolved[common.ParamShipmentID] = scope.shipmentID.String()
-
-	return resolved, nil
-}
-
-type ResolveServiceFailureTool struct {
-	failures serviceFailureResolver
-}
-
-func NewResolveServiceFailureTool(failures serviceFailureResolver) agentports.AgentTool {
-	return &ResolveServiceFailureTool{failures: failures}
-}
-
-func (t *ResolveServiceFailureTool) Name() string { return "exception_resolve_service_failure" }
-
-func (t *ResolveServiceFailureTool) Recipe() []string {
-	return []string{
-		"exception_list_service_failures",
-		"exception_get_service_failure",
-		toolShipmentGetTracking,
-		"exception_list_service_failure_reason_codes",
-		"exception_resolve_service_failure",
-	}
-}
-
-func (t *ResolveServiceFailureTool) SearchTerms() []string {
-	return []string{"close service failure", "close out failure"}
-}
-
-func (t *ResolveServiceFailureTool) Description() string {
-	return "Close an open service failure with the reason it happened and a note on " +
-		"what was done. The reason code comes from exception_list_service_failure_reason_codes " +
-		"and must match the cause; a failure that already carries one keeps it " +
-		"unless you send another. Do not resolve a failure nobody has looked into: " +
-		"the note should say what was learned, not that the stop was late."
-}
-
-func (t *ResolveServiceFailureTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"serviceFailureId": agenttoolschema.RecordIDText(
-				permission.ResourceServiceFailure,
-				"The failure's id, from exception_list_service_failures.",
-			),
-			"reasonCodeId": agenttoolschema.RecordIDText(
-				permission.ResourceServiceFailureReasonCode,
-				"The reason code, from exception_list_service_failure_reason_codes. "+
-					"Required when the failure has none; otherwise replaces it.",
-			),
-			common.ParamNote: map[string]any{
-				"type":        "string",
-				"description": "What was found and done. Required.",
-			},
-		},
-		toolschema.KeyRequired: []string{"serviceFailureId", common.ParamNote},
-		"additionalProperties": false,
-	}
-}
-
-func (t *ResolveServiceFailureTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
-		Resource:      permission.ResourceServiceFailure,
-		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierActWithApproval,
-		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
-		Rationale: "Resolving a failure generates an EDI 214 to the customer's trading " +
-			"partner carrying the reason chosen.",
-	}
-}
-
-func (t *ResolveServiceFailureTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, "serviceFailureId", permission.ResourceServiceFailure)
-}
-
-func (t *ResolveServiceFailureTool) Execute(
-	ctx context.Context,
-	params agentports.ToolExecuteParams,
-) error {
-	request, _, err := t.request(ctx, &params)
-	if err != nil {
-		return err
-	}
-
-	_, err = t.failures.Resolve(ctx, request, params.Actor)
-
-	return err
-}
-
-// request is the resolution the preview shows and the write makes: an open
-// failure, closed at the version read, with the reason code the call sends
-// or the one already on file.
-func (t *ResolveServiceFailureTool) request(
-	ctx context.Context,
-	params *agentports.ToolExecuteParams,
-) (*servicefailureports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
-		return nil, nil, err
-	}
-
-	failureID, err := common.RequirePulid(params.Params, "serviceFailureId")
-	if err != nil {
-		return nil, nil, err
-	}
-	notes, err := common.RequireString(params.Params, common.ParamNote)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tenant := common.TenantFrom(*params)
-	existing, err := t.failures.GetByID(ctx, &servicefailureports.GetServiceFailureByIDRequest{
-		ID:         failureID,
-		TenantInfo: tenant,
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-	if existing.IsTerminal() {
-		return nil, nil, fmt.Errorf(
-			"service failure %s is already %s and cannot be resolved again",
-			existing.Number, existing.Status,
-		)
-	}
-
-	request := &servicefailureports.ServiceFailureLifecycleRequest{
-		TenantInfo: tenant,
-		ID:         existing.ID,
-		ShipmentID: existing.ShipmentID,
-		Notes:      strings.TrimSpace(notes),
-		Version:    existing.Version,
-	}
-	if raw := common.OptionalString(params.Params, "reasonCodeId"); raw != "" {
-		reasonID, parseErr := pulid.Parse(raw)
-		if parseErr != nil {
-			return nil, nil, fmt.Errorf(
-				"parameter \"reasonCodeId\" is not a valid id: %w", parseErr,
-			)
-		}
-		request.ReasonCodeID = reasonID
-	} else if existing.ReasonCodeID == nil || existing.ReasonCodeID.IsNil() {
-		return nil, nil, errors.New(
-			"this failure has no reason code yet; pick one from " +
-				"exception_list_service_failure_reason_codes and send it as reasonCodeId",
-		)
-	}
-
-	return request, existing, nil
-}
-
 // driverNotifier is the driver portal's notification path. The wording
 // comes from the organization's template for the kind; the tool supplies
 // the title and the text, and the template decides how they are dressed.
@@ -502,7 +79,7 @@ type NotifyDriverTool struct {
 	drivers driverNotifier
 }
 
-func NewNotifyDriverTool(drivers driverNotifier) agentports.AgentTool {
+func NewNotifyDriverTool(drivers driverNotifier) agenttoolports.AgentTool {
 	return &NotifyDriverTool{drivers: drivers}
 }
 
@@ -545,7 +122,7 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 				"How urgently the phone should show it. Default medium.",
 				driverMessagePriorities,
 			),
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"Optional: the shipment the message is about, so Dash can open "+
 					"it; from dispatch_get_board, shipment_get_tracking or shipment_list.",
@@ -556,27 +133,27 @@ func (t *NotifyDriverTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *NotifyDriverTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *NotifyDriverTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDriverMessage,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Sends a driver a message the model wrote to their phone.",
 	}
 }
 
 func (t *NotifyDriverTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
@@ -589,21 +166,21 @@ func (t *NotifyDriverTool) Execute(
 // request is the message the preview renders and the write sends: the
 // dispatch template, the model's title and text, and the shipment it opens.
 func (t *NotifyDriverTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*drivernotificationservice.DriverNotification, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	workerID, err := common.RequirePulid(params.Params, "workerId")
+	workerID, err := toolparams.RequirePulid(params.Params, "workerId")
 	if err != nil {
 		return nil, err
 	}
-	title, err := common.RequireString(params.Params, "title")
+	title, err := toolparams.RequireString(params.Params, "title")
 	if err != nil {
 		return nil, err
 	}
-	message, err := common.RequireString(params.Params, "message")
+	message, err := toolparams.RequireString(params.Params, "message")
 	if err != nil {
 		return nil, err
 	}
@@ -614,7 +191,7 @@ func (t *NotifyDriverTool) request(
 		)
 	}
 
-	priority := notification.Priority(common.OptionalString(params.Params, "priority"))
+	priority := notification.Priority(toolparams.OptionalString(params.Params, "priority"))
 	switch priority {
 	case notification.PriorityLow, notification.PriorityMedium,
 		notification.PriorityHigh, notification.PriorityCritical:
@@ -625,21 +202,21 @@ func (t *NotifyDriverTool) request(
 	}
 
 	request := &drivernotificationservice.DriverNotification{
-		TenantInfo: common.TenantFrom(*params),
+		TenantInfo: toolparams.TenantFrom(params),
 		WorkerID:   workerID,
 		EventType:  DispatchMessageEvent,
 		Priority:   priority,
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			AlertTitle:   strings.TrimSpace(title),
 			AlertMessage: strings.TrimSpace(message),
 		},
 	}
-	if raw := common.OptionalString(params.Params, common.ParamShipmentID); raw != "" {
+	if raw := toolparams.OptionalString(params.Params, toolparams.ParamShipmentID); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
-		request.RelatedEntities = map[string]any{common.ParamShipmentID: shipmentID.String()}
+		request.RelatedEntities = map[string]any{toolparams.ParamShipmentID: shipmentID.String()}
 		request.Link = "/loads/" + shipmentID.String()
 	}
 
@@ -654,10 +231,10 @@ type CustomerMailer struct {
 	Templates documenttemplateports.DocumentTemplateResolver `json:"-"`
 	orgRepo   tenantports.OrganizationRepository
 	inliner   documenttemplateports.AssetInliner
-	Customers customerports.CustomerRepository     `json:"-"`
-	Shipments shipmentports.ShipmentRepository     `json:"-"`
-	Comments  shipmentports.ShipmentCommentService `json:"-"`
-	Senders   emailports.EmailSenderResolver       `json:"-"`
+	Customers customerports.CustomerRepository            `json:"-"`
+	Shipments shipmentports.ShipmentRepository            `json:"-"`
+	Comments  shipmentcommentports.ShipmentCommentService `json:"-"`
+	Senders   emailports.EmailSenderResolver              `json:"-"`
 }
 
 type emailCustomerParams struct {
@@ -669,7 +246,7 @@ type emailCustomerParams struct {
 	Inliner   documenttemplateports.AssetInliner
 	Customers customerports.CustomerRepository
 	Shipments shipmentports.ShipmentRepository
-	Comments  shipmentports.ShipmentCommentService
+	Comments  shipmentcommentports.ShipmentCommentService
 	Senders   emailports.EmailSenderResolver `optional:"true"`
 }
 
@@ -677,7 +254,9 @@ type EmailCustomerTool struct {
 	Deps CustomerMailer `json:"-"`
 }
 
-func NewEmailCustomerTool(p emailCustomerParams) agentports.AgentTool {
+func NewEmailCustomerTool(
+	p emailCustomerParams, //nolint:gocritic // fx params are passed by value
+) agenttoolports.AgentTool {
 	return &EmailCustomerTool{Deps: CustomerMailer{
 		Email:     p.Email,
 		Templates: p.Templates,
@@ -696,7 +275,7 @@ func (t *EmailCustomerTool) Name() string { return emailCustomerToolName }
 
 func (t *EmailCustomerTool) Recipe() []string {
 	return []string{
-		toolShipmentGetTracking,
+		toolparams.ToolShipmentGetTracking,
 		"customer_get_update_preferences",
 		emailCustomerToolName,
 	}
@@ -716,7 +295,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			common.ParamShipmentID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"The shipment the update is about, from "+
 					"shipment_list or this run's subject. Its customer is who receives it.",
@@ -734,42 +313,42 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 					"shipment reference and the sign-off, so leave those out.",
 			},
 		},
-		"required":             []string{common.ParamShipmentID, "subject", "body"},
+		"required":             []string{toolparams.ParamShipmentID, "subject", "body"},
 		"additionalProperties": false,
 	}
 }
 
-func (t *EmailCustomerTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *EmailCustomerTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Emails the customer's contacts a message the model wrote.",
 	}
 }
 
-func (t *EmailCustomerTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, common.ParamShipmentID, permission.ResourceShipment)
+func (t *EmailCustomerTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, toolparams.ParamShipmentID, permission.ResourceShipment)
 }
 
 func (t *EmailCustomerTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, &params)
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}
 	if composed.AlreadyTold {
-		return common.ErrCustomerAlreadyTold
+		return outboundpreview.ErrCustomerAlreadyTold
 	}
 
 	if _, err = t.Deps.Email.Send(ctx, composed.Send); err != nil {
@@ -782,14 +361,17 @@ func (t *EmailCustomerTool) Execute(
 // record leaves the email on the shipment's thread so the desk sees what the
 // customer was told. A failure to record never undoes a send that already
 // happened; it is reported so the run shows it.
-func (t *EmailCustomerTool) record(ctx context.Context, composed *common.CustomerEmail) error {
+func (t *EmailCustomerTool) record(
+	ctx context.Context,
+	composed *outboundpreview.CustomerEmail,
+) error {
 	if t.Deps.Comments == nil {
 		return nil
 	}
 
 	if _, err := t.Deps.Comments.CreateSystem(
 		ctx,
-		common.CustomerUpdateComment(composed),
+		outboundpreview.CustomerUpdateComment(composed),
 	); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
 	}
@@ -797,34 +379,40 @@ func (t *EmailCustomerTool) record(ctx context.Context, composed *common.Custome
 	return nil
 }
 
-// detentionActor is the slice of the detention service the tools act
-// through: send the customer notice, or waive the charge.
-type detentionActor interface {
+type detentionNoticeSender interface {
 	SendOccurrenceNotice(
 		ctx context.Context,
-		params detentionservice.SendOccurrenceNoticeParams,
-	) (*detention.DetentionOccurrence, error)
-	Waive(
-		ctx context.Context,
-		params detentionservice.WaiveParams,
+		params *detentionnoticeservice.SendOccurrenceNoticeParams,
 	) (*detention.DetentionOccurrence, error)
 	PreviewOccurrenceNotice(
 		ctx context.Context,
-		params *detentionservice.SendOccurrenceNoticeParams,
-	) (*detentionservice.NoticePreview, error)
+		params *detentionnoticeservice.SendOccurrenceNoticeParams,
+	) (*detentionnoticeservice.NoticePreview, error)
+}
+
+type detentionWaiver interface {
+	Waive(
+		ctx context.Context,
+		params *detentionreview.WaiveParams,
+	) (*detention.DetentionOccurrence, error)
 	PreviewWaive(
 		ctx context.Context,
-		params *detentionservice.WaiveParams,
-	) (*detentionservice.OccurrenceChange, error)
-	common.DetentionDisputer
+		params *detentionreview.WaiveParams,
+	) (*detentionreview.OccurrenceChange, error)
 }
 
 type SendDetentionNoticeTool struct {
-	detention detentionActor
+	detention detentionNoticeSender
 }
 
-func NewSendDetentionNoticeTool(detentions detentionActor) agentports.AgentTool {
+func NewSendDetentionNoticeTool(detentions detentionNoticeSender) agenttoolports.AgentTool {
 	return &SendDetentionNoticeTool{detention: detentions}
+}
+
+func ProvideSendDetentionNoticeTool(
+	detentions *detentionnoticeservice.Service,
+) agenttoolports.AgentTool {
+	return NewSendDetentionNoticeTool(detentions)
 }
 
 func (t *SendDetentionNoticeTool) Name() string { return "detention_send_notice" }
@@ -852,7 +440,7 @@ func (t *SendDetentionNoticeTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id from detention_list_occurrences.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 		},
 		"required":             []string{"occurrenceId"},
@@ -860,61 +448,65 @@ func (t *SendDetentionNoticeTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *SendDetentionNoticeTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *SendDetentionNoticeTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceCustomerCommunication,
 		Operation:     permission.OpCreate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierActWithApproval,
 		MaxTier:       agent.TierActWithApproval,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "Sends the customer a detention notice that starts a charge.",
 	}
 }
 
 func (t *SendDetentionNoticeTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.SendOccurrenceNotice(ctx, request)
+	_, err = t.detention.SendOccurrenceNotice(ctx, &request)
 
 	return err
 }
 
 func (t *SendDetentionNoticeTool) request(
-	params *agentports.ToolExecuteParams,
-) (detentionservice.SendOccurrenceNoticeParams, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
-		return detentionservice.SendOccurrenceNoticeParams{}, err
+	params *agenttoolports.ToolExecuteParams,
+) (detentionnoticeservice.SendOccurrenceNoticeParams, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
+		return detentionnoticeservice.SendOccurrenceNoticeParams{}, err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
-		return detentionservice.SendOccurrenceNoticeParams{}, err
+		return detentionnoticeservice.SendOccurrenceNoticeParams{}, err
 	}
 
-	return detentionservice.SendOccurrenceNoticeParams{
+	return detentionnoticeservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		UserID:       params.Actor.UserID,
 	}, nil
 }
 
 type WaiveDetentionTool struct {
-	detention detentionActor
+	detention detentionWaiver
 }
 
-func NewWaiveDetentionTool(detentions detentionActor) agentports.AgentTool {
+func NewWaiveDetentionTool(detentions detentionWaiver) agenttoolports.AgentTool {
 	return &WaiveDetentionTool{detention: detentions}
+}
+
+func ProvideWaiveDetentionTool(detentions *detentionreview.Service) agenttoolports.AgentTool {
+	return NewWaiveDetentionTool(detentions)
 }
 
 func (t *WaiveDetentionTool) Name() string { return "detention_waive" }
@@ -936,9 +528,9 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"occurrenceId": agenttoolschema.KindID(
 				"The occurrence id from detention_list_occurrences.",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
-			common.FieldReason: agenttoolschema.Enum(
+			changepreview.FieldReason: agenttoolschema.Enum(
 				"The coded reason for the waiver.",
 				waiverReasons,
 			),
@@ -947,23 +539,23 @@ func (t *WaiveDetentionTool) ParamSchema() map[string]any {
 				"description": "Why, in a sentence a person can read on the occurrence later.",
 			},
 		},
-		"required":             []string{"occurrenceId", common.FieldReason, "note"},
+		"required":             []string{"occurrenceId", changepreview.FieldReason, "note"},
 		"additionalProperties": false,
 	}
 }
 
-func (t *WaiveDetentionTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *WaiveDetentionTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceDetention,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale: "Gives up detention revenue the organization would otherwise bill; only a " +
 			"person approves it.",
 	}
@@ -971,54 +563,54 @@ func (t *WaiveDetentionTool) Policy() agentports.ToolPolicy {
 
 func (t *WaiveDetentionTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
-		return common.ErrApprovalNeedsAPerson
+		return detentionpreview.ErrApprovalNeedsAPerson
 	}
 
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.Waive(ctx, request)
+	_, err = t.detention.Waive(ctx, &request)
 
 	return err
 }
 
 func (t *WaiveDetentionTool) request(
-	params *agentports.ToolExecuteParams,
-) (detentionservice.WaiveParams, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
-		return detentionservice.WaiveParams{}, err
+	params *agenttoolports.ToolExecuteParams,
+) (detentionreview.WaiveParams, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
+		return detentionreview.WaiveParams{}, err
 	}
 
-	occurrenceID, err := common.RequirePulid(params.Params, "occurrenceId")
+	occurrenceID, err := toolparams.RequirePulid(params.Params, "occurrenceId")
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
-	rawReason, err := common.RequireString(params.Params, common.FieldReason)
+	rawReason, err := toolparams.RequireString(params.Params, changepreview.FieldReason)
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 	reason, err := detention.WaiverReasonFromString(rawReason)
 	if err != nil {
-		return detentionservice.WaiveParams{}, fmt.Errorf(
+		return detentionreview.WaiveParams{}, fmt.Errorf(
 			"parameter \"reason\" is not a waiver reason: %w", err,
 		)
 	}
-	note, err := common.RequireString(params.Params, "note")
+	note, err := toolparams.RequireString(params.Params, "note")
 	if err != nil {
-		return detentionservice.WaiveParams{}, err
+		return detentionreview.WaiveParams{}, err
 	}
 
-	return detentionservice.WaiveParams{
+	return detentionreview.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   common.TenantFrom(*params),
+		TenantInfo:   toolparams.TenantFrom(params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,

@@ -2,8 +2,9 @@ package agentscorecardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 )
 
 // toGQLAgentScorecard shapes the counted record for the wire.
@@ -11,7 +12,9 @@ import (
 // The trust ladder rides along on the same object rather than as a field
 // resolver: it comes from one query the service already made, and a lazy
 // field would turn one request into two for a panel that always shows both.
-func toGQLAgentScorecard(result *agentports.AgentScorecardResult) *gqlmodel.AgentScorecard {
+func toGQLAgentScorecard(
+	result *agentevaluationports.AgentScorecardResult,
+) *gqlmodel.AgentScorecard {
 	card := result.Scorecard
 
 	out := &gqlmodel.AgentScorecard{
@@ -34,9 +37,9 @@ func toGQLAgentScorecard(result *agentports.AgentScorecardResult) *gqlmodel.Agen
 		OutputTokens:          card.OutputTokens,
 		CostUsd:               card.CostUSD.String(),
 		EstimatedMinutesSaved: card.EstimatedMinutesSaved,
-		ByTool:                make([]*agent.ToolOutcomeCount, 0, len(card.ByTool)),
-		ToolVerdicts:          make([]*agent.ToolVerdictCount, 0, len(card.ToolVerdicts)),
-		Trend:                 make([]*agent.ScorecardPoint, 0, len(card.Trend)),
+		ByTool:                make([]*agentevaluation.ToolOutcomeCount, 0, len(card.ByTool)),
+		ToolVerdicts:          make([]*agentevaluation.ToolVerdictCount, 0, len(card.ToolVerdicts)),
+		Trend:                 make([]*agentevaluation.ScorecardPoint, 0, len(card.Trend)),
 		ToolTrust:             make([]*gqlmodel.AgentToolTrust, 0, len(result.ToolTrust)),
 	}
 
@@ -56,7 +59,7 @@ func toGQLAgentScorecard(result *agentports.AgentScorecardResult) *gqlmodel.Agen
 	return out
 }
 
-func toGQLAgentToolTrust(trust *agent.ToolTrust) *gqlmodel.AgentToolTrust {
+func toGQLAgentToolTrust(trust *agenttooltrust.ToolTrust) *gqlmodel.AgentToolTrust {
 	out := &gqlmodel.AgentToolTrust{
 		ToolName:          trust.ToolName,
 		Streak:            trust.Streak,

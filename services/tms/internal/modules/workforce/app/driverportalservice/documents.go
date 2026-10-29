@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
@@ -114,7 +114,7 @@ func (s *Service) MyProfileDocuments(
 		if item.Status == document.StatusArchived {
 			continue
 		}
-		views = append(views, portalDocumentView(item))
+		views = append(views, PortalDocumentView(item))
 	}
 	return views, nil
 }
@@ -133,8 +133,8 @@ func (s *Service) UploadMyProfileDocument(
 	if err != nil {
 		return nil, err
 	}
-	if _, err = s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowProfileDocumentUpload },
+	if _, err = s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowProfileDocumentUpload },
 		"Your carrier collects qualification documents outside Dash — see your fleet manager.",
 	); err != nil {
 		return nil, err
@@ -156,7 +156,7 @@ func (s *Service) UploadMyProfileDocument(
 	if err != nil {
 		return nil, err
 	}
-	return portalDocumentView(result.Document), nil
+	return PortalDocumentView(result.Document), nil
 }
 
 func (s *Service) MyLoadDocuments(
@@ -186,7 +186,7 @@ func (s *Service) MyLoadDocuments(
 		if item.Status == document.StatusArchived {
 			continue
 		}
-		views = append(views, portalDocumentView(item))
+		views = append(views, PortalDocumentView(item))
 	}
 	return views, nil
 }
@@ -202,8 +202,8 @@ func (s *Service) UploadMyLoadDocument(
 	if err := s.requireAssignedShipment(ctx, tenantInfo, shipmentID); err != nil {
 		return nil, err
 	}
-	if _, err := s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowLoadDocumentUpload },
+	if _, err := s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowLoadDocumentUpload },
 		"Your carrier collects paperwork outside Dash — turn in documents the way you do today.",
 	); err != nil {
 		return nil, err
@@ -225,7 +225,7 @@ func (s *Service) UploadMyLoadDocument(
 	if err != nil {
 		return nil, err
 	}
-	return portalDocumentView(result.Document), nil
+	return PortalDocumentView(result.Document), nil
 }
 
 func (s *Service) requireAssignedShipment(
@@ -247,7 +247,7 @@ func (s *Service) requireAssignedShipment(
 	return nil
 }
 
-func portalDocumentView(item *document.Document) *PortalDocument {
+func PortalDocumentView(item *document.Document) *PortalDocument {
 	if item == nil {
 		return nil
 	}

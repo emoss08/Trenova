@@ -7,6 +7,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -255,25 +257,25 @@ func buildShipment(
 	zone *time.Location,
 ) *shipmentRoot {
 	weight := ratingWeight(entity)
-	volume := entity.RatingCubicFeet()
+	volume := shipmentrating.CubicFeet(entity)
 	out := &shipmentRoot{
 		ProNumber:  entity.ProNumber,
-		Status:     orNew(string(entity.Status), string(shipment.StatusNew)),
+		Status:     orNew(string(entity.Status), string(shipmentvocab.StatusNew)),
 		Weight:     optionalQuantity(weight, unitWeight),
 		Pieces:     optionalInt(ratingPieces(entity)),
-		Distance:   rules.QuantityValue(entity.RatingDistance(), distanceUnit),
-		Duration:   rules.QuantityValue(entity.RatingDurationHours(), unitDuration),
-		LinearFeet: rules.QuantityValue(entity.RatingLinearFeet(), unitLength),
+		Distance:   rules.QuantityValue(shipmentrating.Distance(entity), distanceUnit),
+		Duration:   rules.QuantityValue(shipmentrating.DurationHours(entity), unitDuration),
+		LinearFeet: rules.QuantityValue(shipmentrating.LinearFeet(entity), unitLength),
 		Volume:     rules.QuantityValue(volume, unitVolume),
 		Density:    density(weight, volume),
-		Hazmat:     entity.HasHazardousMaterial(),
+		Hazmat:     shipmentrating.HasHazardousMaterial(entity),
 		Reefer:     entity.TemperatureMin != nil || entity.TemperatureMax != nil,
 		Temperature: temperature{
 			Min: temperatureValue(entity.TemperatureMin),
 			Max: temperatureValue(entity.TemperatureMax),
 		},
-		FreightClass: freightClass(entity.PrimaryFreightClass()),
-		HighestClass: freightClass(entity.HighestFreightClass()),
+		FreightClass: freightClass(shipmentrating.PrimaryFreightClass(entity)),
+		HighestClass: freightClass(shipmentrating.HighestFreightClass(entity)),
 		ServiceType:  reference{},
 		Stops:        make([]*stopRecord, 0, len(entity.Moves)*2),
 		Commodities:  make([]*commodityRecord, 0, len(entity.Commodities)),
@@ -302,7 +304,7 @@ func buildShipment(
 			Description: entity.TrailerType.Description,
 		}
 	}
-	ordered := entity.OrderedStops()
+	ordered := shipmentrating.OrderedStops(entity)
 	legs := legDistances(entity, ordered)
 	for i, stop := range ordered {
 		record := buildStop(stop, int64(i+1), zone)
@@ -329,7 +331,7 @@ func buildShipment(
 }
 
 func ratingWeight(entity *shipment.Shipment) decimal.NullDecimal {
-	weight := entity.RatingWeight()
+	weight := shipmentrating.Weight(entity)
 	if weight.IsPositive() {
 		return decimal.NewNullDecimal(weight)
 	}
@@ -340,7 +342,7 @@ func ratingWeight(entity *shipment.Shipment) decimal.NullDecimal {
 }
 
 func ratingPieces(entity *shipment.Shipment) *int64 {
-	pieces := entity.RatingPieces()
+	pieces := shipmentrating.Pieces(entity)
 	if pieces > 0 {
 		return &pieces
 	}
@@ -370,8 +372,8 @@ func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *st
 	record := &stopRecord{
 		Sequence:    rules.IntValue(sequence),
 		Kind:        string(stop.Type),
-		Status:      orNew(string(stop.Status), string(shipment.StopStatusNew)),
-		Appointment: stop.ScheduleType == shipment.StopScheduleTypeAppointment,
+		Status:      orNew(string(stop.Status), string(shipmentvocab.StopStatusNew)),
+		Appointment: stop.ScheduleType == shipmentvocab.StopScheduleTypeAppointment,
 		Window: window{
 			Start: rules.NoneValue(),
 			End:   optionalTime(stop.ScheduledWindowEnd, zone),
@@ -387,7 +389,7 @@ func buildStop(stop *shipment.Stop, sequence int64, fallback *time.Location) *st
 	if stop.ScheduledWindowStart > 0 {
 		record.Window.Start = timeValue(stop.ScheduledWindowStart, zone)
 	}
-	if seconds, ok := stop.DwellSeconds(); ok {
+	if seconds, ok := shipmentrating.DwellSeconds(stop); ok {
 		record.Dwell = rules.QuantityValue(
 			decimal.NewFromInt(seconds).Div(decimal.NewFromInt(3600)),
 			unitDuration,
@@ -502,7 +504,7 @@ func buildCommodity(line *shipment.ShipmentCommodity) *commodityRecord {
 		FreightClass: rules.NoneValue(),
 	}
 	if line.HasDimensions() && line.Pieces > 0 {
-		volume := line.CubicFeet()
+		volume := shipmentrating.LineCubicFeet(line)
 		out.Volume = rules.QuantityValue(volume, unitVolume)
 		out.Density = density(decimal.NewNullDecimal(weight), volume)
 	}

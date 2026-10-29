@@ -7,8 +7,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/shared/quickbooksref"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 )
 
 var errPurchaseDocumentType = errors.New(
@@ -17,25 +18,28 @@ var errPurchaseDocumentType = errors.New(
 
 func (c *Connector) UpsertVendor(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingVendorDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingVendorDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	client, err := c.client(doc.Auth)
 	if err != nil {
 		return nil, err
 	}
 	draft := partyDraftOf(&doc.Party)
-	draft.DisplayName = quickbooks.SanitizeName(draft.DisplayName, quickbooks.MaxPartyNameLength)
+	draft.DisplayName = quickbooksref.SanitizeName(
+		draft.DisplayName,
+		quickbooksref.MaxPartyNameLength,
+	)
 
-	var saved *quickbooks.ReferenceObject
+	var saved *quickbooksref.ReferenceObject
 	if id := strings.TrimSpace(doc.ExternalID); id != "" {
-		saved, err = client.UpdateVendor(ctx, doc.RequestID, id, draft)
+		saved, err = quickbookstxn.UpdateVendor(ctx, client, doc.RequestID, id, draft)
 	} else {
-		saved, err = client.CreateVendor(ctx, doc.RequestID, draft)
+		saved, err = quickbooksref.CreateVendor(ctx, client, doc.RequestID, draft)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: saved.ID,
 		DocNumber:  saved.Name,
 	}, nil
@@ -43,8 +47,8 @@ func (c *Connector) UpsertVendor(
 
 func (c *Connector) CreatePurchaseDocument(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingPurchaseDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -54,34 +58,36 @@ func (c *Connector) CreatePurchaseDocument(
 	}
 
 	txn := purchaseTxnOf(doc)
-	kind := quickbooks.TxnBill
-	var created *quickbooks.TxnResult
+	kind := quickbookstxn.TxnBill
+	var created *quickbookstxn.TxnResult
 	if doc.VendorCredit {
-		kind = quickbooks.TxnVendorCredit
-		created, err = client.CreateVendorCredit(ctx, doc.RequestID, txn)
+		kind = quickbookstxn.TxnVendorCredit
+		created, err = quickbookstxn.CreateVendorCredit(ctx, client, doc.RequestID, txn)
 	} else {
-		created, err = client.CreateBill(ctx, doc.RequestID, txn)
+		created, err = quickbookstxn.CreateBill(ctx, client, doc.RequestID, txn)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: created.ID,
 		DocNumber:  created.DocNumber,
 		Refs: map[string]string{
 			accountingsync.ExternalRefDocument:     created.ID,
 			accountingsync.ExternalRefDocumentType: string(kind),
 			accountingsync.ExternalRefCreditDocument: strconv.FormatBool(
-				kind == quickbooks.TxnVendorCredit,
+				kind == quickbookstxn.TxnVendorCredit,
 			),
 			accountingsync.ExternalRefURL: c.appURL(kind.AppPath(), created.ID),
 		},
 	}, nil
 }
 
-func purchaseTxnOf(doc *accountingsyncports.AccountingPurchaseDocument) *quickbooks.PurchaseTxn {
-	txn := &quickbooks.PurchaseTxn{
+func purchaseTxnOf(
+	doc *accountingconnectorports.AccountingPurchaseDocument,
+) *quickbookstxn.PurchaseTxn {
+	txn := &quickbookstxn.PurchaseTxn{
 		VendorID:     doc.VendorExternalID,
 		APAccountID:  doc.APAccountExternalID,
 		DocNumber:    doc.DocNumber,
@@ -90,14 +96,14 @@ func purchaseTxnOf(doc *accountingsyncports.AccountingPurchaseDocument) *quickbo
 		CurrencyCode: doc.CurrencyCode,
 		ExchangeRate: doc.ExchangeRate,
 		PrivateNote:  doc.PrivateNote,
-		Lines:        make([]quickbooks.PurchaseLine, 0, len(doc.Lines)),
+		Lines:        make([]quickbookstxn.PurchaseLine, 0, len(doc.Lines)),
 	}
 	if doc.VendorCredit {
 		txn.DueDate = ""
 	}
 	for idx := range doc.Lines {
 		line := &doc.Lines[idx]
-		txn.Lines = append(txn.Lines, quickbooks.PurchaseLine{
+		txn.Lines = append(txn.Lines, quickbookstxn.PurchaseLine{
 			Description: line.Description,
 			AccountID:   line.AccountExternalID,
 			Amount:      line.Amount,
@@ -108,8 +114,8 @@ func purchaseTxnOf(doc *accountingsyncports.AccountingPurchaseDocument) *quickbo
 
 func (c *Connector) VoidPurchaseDocument(
 	ctx context.Context,
-	ref *accountingsyncports.AccountingDocumentRef,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	ref *accountingconnectorports.AccountingDocumentRef,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !ref.Kind.IsBill() {
 		return nil, errDocumentKind
 	}
@@ -124,27 +130,28 @@ func (c *Connector) VoidPurchaseDocument(
 	result := newResult(ref.Refs)
 	result.ExternalID = ref.ExternalID
 
-	if kind == quickbooks.TxnVendorCredit {
-		_, err = client.DeleteVendorCredit(ctx, ref.RequestID, ref.ExternalID)
+	if kind == quickbookstxn.TxnVendorCredit {
+		_, err = quickbookstxn.DeleteVendorCredit(ctx, client, ref.RequestID, ref.ExternalID)
 	} else {
-		_, err = client.DeleteBill(ctx, ref.RequestID, ref.ExternalID)
+		_, err = quickbookstxn.DeleteBill(ctx, client, ref.RequestID, ref.ExternalID)
 	}
-	if err != nil && !quickbooks.IsObjectNotFound(err) {
+	if err != nil && !quickbookstxn.IsObjectNotFound(err) {
 		return result, err
 	}
 	return result, nil
 }
 
-func purchaseKindOf(refs map[string]string) (quickbooks.TxnKind, error) {
-	switch kind := quickbooks.TxnKind(strings.TrimSpace(refs[accountingsync.ExternalRefDocumentType])); kind {
-	case "", quickbooks.TxnBill:
-		return quickbooks.TxnBill, nil
-	case quickbooks.TxnVendorCredit:
-		return quickbooks.TxnVendorCredit, nil
-	case quickbooks.TxnInvoice,
-		quickbooks.TxnCreditMemo,
-		quickbooks.TxnPayment,
-		quickbooks.TxnBillPayment:
+func purchaseKindOf(refs map[string]string) (quickbookstxn.TxnKind, error) {
+	switch kind := quickbookstxn.TxnKind(strings.TrimSpace(refs[accountingsync.ExternalRefDocumentType])); kind {
+	case "", quickbookstxn.TxnBill:
+		return quickbookstxn.TxnBill, nil
+	case quickbookstxn.TxnVendorCredit:
+		return quickbookstxn.TxnVendorCredit, nil
+	case quickbookstxn.TxnInvoice,
+		quickbookstxn.TxnCreditMemo,
+		quickbookstxn.TxnPayment,
+		quickbookstxn.TxnBillPayment,
+		quickbookstxn.TxnJournalEntry:
 		return "", errPurchaseDocumentType
 	default:
 		return "", errPurchaseDocumentType
@@ -153,8 +160,8 @@ func purchaseKindOf(refs map[string]string) (quickbooks.TxnKind, error) {
 
 func (c *Connector) CreateBillPayment(
 	ctx context.Context,
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) (*accountingsyncports.AccountingDocumentResult, error) {
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) (*accountingconnectorports.AccountingDocumentResult, error) {
 	if !doc.Kind.IsBillPayment() {
 		return nil, errDocumentKind
 	}
@@ -163,11 +170,11 @@ func (c *Connector) CreateBillPayment(
 		return nil, err
 	}
 
-	paid, err := client.CreateBillPayment(ctx, doc.RequestID, billPaymentTxnOf(doc))
+	paid, err := quickbookstxn.CreateBillPayment(ctx, client, doc.RequestID, billPaymentTxnOf(doc))
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDocumentResult{
+	return &accountingconnectorports.AccountingDocumentResult{
 		ExternalID: paid.ID,
 		DocNumber:  paid.DocNumber,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: paid.ID},
@@ -175,9 +182,9 @@ func (c *Connector) CreateBillPayment(
 }
 
 func billPaymentTxnOf(
-	doc *accountingsyncports.AccountingBillPaymentDocument,
-) *quickbooks.BillPaymentTxn {
-	return &quickbooks.BillPaymentTxn{
+	doc *accountingconnectorports.AccountingBillPaymentDocument,
+) *quickbookstxn.BillPaymentTxn {
+	return &quickbookstxn.BillPaymentTxn{
 		VendorID:      doc.VendorExternalID,
 		BankAccountID: doc.BankAccountExternalID,
 		BillID:        doc.BillExternalID,

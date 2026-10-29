@@ -3,7 +3,8 @@ package ediinboundservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +27,7 @@ func TestParseAcknowledgments997(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	transaction := interchange.transactions[0]
-	require.Equal(t, edi.TransactionSet997, transaction.set)
+	require.Equal(t, edidocument.TransactionSet997, transaction.set)
 
 	entries := parseAcknowledgments(&transaction)
 	require.Len(t, entries, 1)
@@ -39,7 +40,7 @@ func TestParseAcknowledgments997(t *testing.T) {
 	require.EqualValues(t, 1, entry.acceptedCount)
 
 	status, ackErr := acknowledgmentResolution(&entry)
-	require.Equal(t, edi.MessageAcknowledgmentStatusAccepted, status)
+	require.Equal(t, edimessage.MessageAcknowledgmentStatusAccepted, status)
 	require.Empty(t, ackErr)
 }
 
@@ -66,7 +67,7 @@ func TestAcknowledgmentResolution_AcceptedWithErrorsKeepsWhatThePartnerNoted(t *
 	require.Equal(t, "E", entries[0].acknowledgmentCode)
 
 	status, ackErr := acknowledgmentResolution(&entries[0])
-	require.Equal(t, edi.MessageAcknowledgmentStatusAcceptedWithErrors, status)
+	require.Equal(t, edimessage.MessageAcknowledgmentStatusAcceptedWithErrors, status)
 	require.Contains(t, ackErr, "acknowledgment code E")
 	require.Contains(t, ackErr, "segment N1")
 }
@@ -96,7 +97,7 @@ func TestParseAcknowledgmentsRejected999(t *testing.T) {
 	require.Len(t, entries[0].diagnostics, 1)
 
 	status, ackErr := acknowledgmentResolution(&entries[0])
-	require.Equal(t, edi.MessageAcknowledgmentStatusRejected, status)
+	require.Equal(t, edimessage.MessageAcknowledgmentStatusRejected, status)
 	require.Contains(t, ackErr, "acknowledgment code R")
 }
 
@@ -123,12 +124,12 @@ func TestParseInterchangeKeepsEachTransactionInItsOwnGroup(t *testing.T) {
 	require.Len(t, interchange.transactions, 2)
 
 	tender := interchange.transactions[0]
-	require.Equal(t, edi.TransactionSet204, tender.set)
+	require.Equal(t, edidocument.TransactionSet204, tender.set)
 	require.Equal(t, "SM", tender.functionalGroupID)
 	require.Equal(t, "317", tender.groupControlNumber)
 
 	ack := interchange.transactions[1]
-	require.Equal(t, edi.TransactionSet997, ack.set)
+	require.Equal(t, edidocument.TransactionSet997, ack.set)
 	require.Equal(t, "FA", ack.functionalGroupID)
 	require.Equal(t, "318", ack.groupControlNumber)
 }

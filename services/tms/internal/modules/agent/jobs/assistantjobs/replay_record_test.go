@@ -21,12 +21,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -110,9 +113,9 @@ func registerTurnStandIns(
 		activity.RegisterOptions{Name: "PrepareTurnActivity"},
 	)
 
-	replies := []*agentruntime.ModelReply{
-		{Completion: &agentports.ChatCompletionResult{
-			ToolCalls: []agentports.ToolCall{{
+	replies := []*modelstream.ModelReply{
+		{Completion: &llmports.ChatCompletionResult{
+			ToolCalls: []llmports.ToolCall{{
 				ID:        "call_recorded_1",
 				Name:      replayToolName,
 				Arguments: map[string]any{"proNumber": "12345"},
@@ -121,7 +124,7 @@ func registerTurnStandIns(
 			InputTokens:     1200,
 			OutputTokens:    40,
 		}},
-		{Completion: &agentports.ChatCompletionResult{
+		{Completion: &llmports.ChatCompletionResult{
 			Text:            "Load 12345 is in Memphis.",
 			ModelIdentifier: "recorded-model",
 			InputTokens:     1300,
@@ -130,7 +133,7 @@ func registerTurnStandIns(
 	}
 	calls := 0
 	w.RegisterActivityWithOptions(
-		func(context.Context, *agentflow.ModelCallInput) (*agentruntime.ModelReply, error) {
+		func(context.Context, *agentflow.ModelCallInput) (*modelstream.ModelReply, error) {
 			reply := replies[min(calls, len(replies)-1)]
 			calls++
 
@@ -141,7 +144,7 @@ func registerTurnStandIns(
 
 	w.RegisterActivityWithOptions(
 		func(_ context.Context, in *agentflow.ToolInput) (*agentflow.ToolResult, error) {
-			return &agentflow.ToolResult{Outcome: agentruntime.ToolOutcome{
+			return &agentflow.ToolResult{Outcome: toolcall.ToolOutcome{
 				Content: "<tool_result name=\"" + in.Call.Call.Name +
 					"\">{\"status\":\"InTransit\",\"city\":\"Memphis\"}</tool_result>",
 				Summary: "Load 12345",
@@ -157,7 +160,7 @@ func registerTurnStandIns(
 					Status: string(conversation.AssistantTurnStatusCompleted),
 				},
 				Event: temporaltype.StreamItem{
-					Event: agentports.AssistantEventDone,
+					Event: assistantstreamports.AssistantEventDone,
 					Data:  map[string]any{"turnId": in.Payload.TurnID.String()},
 				},
 			}, nil
@@ -169,9 +172,12 @@ func registerTurnStandIns(
 		return nil
 	}, activity.RegisterOptions{Name: "NotifyUnseenTurnActivity"})
 
-	w.RegisterActivityWithOptions(func(context.Context, *assistantcontract.AssistantTurnPayload, string) error {
-		return nil
-	}, activity.RegisterOptions{Name: "CloseTurnActivity"})
+	w.RegisterActivityWithOptions(
+		func(context.Context, *assistantcontract.AssistantTurnPayload, string) error {
+			return nil
+		},
+		activity.RegisterOptions{Name: "CloseTurnActivity"},
+	)
 }
 
 func writeTurnHistory(t *testing.T, c client.Client, run client.WorkflowRun, path string) {

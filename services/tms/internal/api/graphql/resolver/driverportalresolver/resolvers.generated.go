@@ -3,21 +3,25 @@
 package driverportalresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	dashcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
-	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	driversettlementreviewservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
+	driverportalinvitationservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 )
 
 type Deps struct {
-	*base.Core
-	TelematicsService       *telematicsservice.Service
-	NotificationService     *notificationservice.Service
-	DriverSettlementService *driversettlementservice.Service
-	DriverPortalService     *driverportalservice.Service
-	DashControlService      *dashcontrolservice.Service
+	*resolvercore.Core
+	TelematicsService             *telematicsservice.Service
+	NotificationService           *notificationservice.Service
+	DriverSettlementReviewService *driversettlementreviewservice.Service
+	DriverPortalService           *driverportalservice.Service
+	DriverPortalInvitationService *driverportalinvitationservice.Service
+	DriverPortalRecordsService    *driverportalrecordsservice.Service
+	DashControlService            *dashcontrolservice.Service
 }
 
 type MutationResolver struct{ *Deps }

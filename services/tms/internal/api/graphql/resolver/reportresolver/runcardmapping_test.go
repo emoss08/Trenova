@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -27,7 +27,7 @@ func TestReportRunDeskCardRefusesSomeoneWhoMayNotReadReports(t *testing.T) {
 	t.Parallel()
 
 	resolver := &QueryResolver{&Deps{
-		Core: &base.Core{
+		Core: &resolvercore.Core{
 			L: zap.NewNop(),
 			PermissionEngine: &mocks.DenyResourcesPermissionEngine{
 				Denied: []string{permission.ResourceReport.String()},

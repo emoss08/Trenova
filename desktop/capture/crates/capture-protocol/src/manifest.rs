@@ -1,6 +1,6 @@
 //! The digest a batch is sealed with.
 //!
-//! `captureservice.ManifestDigest`: SHA-256 over each page's own SHA-256 hex
+//! `captureintake.ManifestDigest`: SHA-256 over each page's own SHA-256 hex
 //! digest followed by a newline, in sequence order. The server recomputes it
 //! from the pages it stored, so a seal proves it holds exactly the pages this
 //! device captured, in the order it captured them.

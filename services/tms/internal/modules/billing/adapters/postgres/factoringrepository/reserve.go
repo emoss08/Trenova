@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger/factoringledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
@@ -26,7 +26,7 @@ type reserveEntryRepository struct {
 	l  *zap.Logger
 }
 
-func NewReserveEntryRepository(p Params) factoringports.ReserveEntryRepository {
+func NewReserveEntryRepository(p Params) factoringledgerports.ReserveEntryRepository {
 	return &reserveEntryRepository{
 		db: p.DB,
 		l:  p.Logger.Named("repository.factoring-reserve-entry"),
@@ -35,10 +35,10 @@ func NewReserveEntryRepository(p Params) factoringports.ReserveEntryRepository {
 
 func (r *reserveEntryRepository) Create(
 	ctx context.Context,
-	entity *factoring.ReserveEntry,
-) (*factoring.ReserveEntry, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.ReserveEntry, error) {
-		if err := factoringdb.ReserveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *factoringledger.ReserveEntry,
+) (*factoringledger.ReserveEntry, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoringledger.ReserveEntry, error) {
+		if err := factoringledgerdb.ReserveEntries.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) &&
 				dberror.ExtractConstraintName(err) == reserveReversalIndex {
 				return nil, errortypes.NewConflictError(
@@ -54,18 +54,21 @@ func (r *reserveEntryRepository) Create(
 
 func (r *reserveEntryRepository) ListConnection(
 	ctx context.Context,
-	req *factoringports.ListReserveEntryConnectionRequest,
-) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
+	req *factoringledgerports.ListReserveEntryConnectionRequest,
+) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*factoring.ReserveEntry], error) {
+		func(ctx context.Context) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error) {
 			filter, term := withoutQuery(req.Filter)
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
 				reserveScope(req, term),
-				&listquery.Request[factoring.ReserveEntry]{Filter: filter, Cursor: req.Cursor},
+				&listquery.Request[factoringledger.ReserveEntry]{
+					Filter: filter,
+					Cursor: req.Cursor,
+				},
 			)
 			if err != nil {
 				r.l.Error("failed to list factoring reserve entries", zap.Error(err))
@@ -78,10 +81,10 @@ func (r *reserveEntryRepository) ListConnection(
 }
 
 func reserveScope(
-	req *factoringports.ListReserveEntryConnectionRequest,
+	req *factoringledgerports.ListReserveEntryConnectionRequest,
 	term string,
-) *keel.Query[*factoring.ReserveEntry] {
-	re := factoringdb.ReserveEntries
+) *keel.Query[*factoringledger.ReserveEntry] {
+	re := factoringledgerdb.ReserveEntries
 	pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 	return re.Where(
 		keel.When(term != "", keel.Or(
@@ -100,10 +103,10 @@ func reserveScope(
 
 func (r *reserveEntryRepository) ListForItem(
 	ctx context.Context,
-	req factoringports.ListReserveEntriesForItemRequest,
-) ([]*factoring.ReserveEntry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.ReserveEntry, error) {
-		re := factoringdb.ReserveEntries
+	req factoringledgerports.ListReserveEntriesForItemRequest,
+) ([]*factoringledger.ReserveEntry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoringledger.ReserveEntry, error) {
+		re := factoringledgerdb.ReserveEntries
 		rows, err := re.Where(re.SubmissionItemID.Eq(req.SubmissionItemID)).
 			Order(re.CreatedAt.Asc(), re.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -111,7 +114,7 @@ func (r *reserveEntryRepository) ListForItem(
 			return nil, err
 		}
 		if rows == nil {
-			return []*factoring.ReserveEntry{}, nil
+			return []*factoringledger.ReserveEntry{}, nil
 		}
 
 		return rows, nil
@@ -131,48 +134,52 @@ type reserveTotals struct {
 
 func (r *reserveEntryRepository) GetBalance(
 	ctx context.Context,
-	req factoringports.GetReserveBalanceRequest,
-) (*factoringports.ReserveBalance, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringports.ReserveBalance, error) {
-		totals, err := keel.IntoOne[reserveTotals](
-			ctx,
-			r.db.Keel(ctx),
-			reserveBalance(&req),
-		)
-		if err != nil {
-			return nil, err
-		}
+	req factoringledgerports.GetReserveBalanceRequest,
+) (*factoringledgerports.ReserveBalance, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringledgerports.ReserveBalance, error) {
+			totals, err := keel.IntoOne[reserveTotals](
+				ctx,
+				r.db.Keel(ctx),
+				reserveBalance(&req),
+			)
+			if err != nil {
+				return nil, err
+			}
 
-		return &factoringports.ReserveBalance{
-			FactoringCompanyID: req.FactoringCompanyID,
-			ReserveMinor:       totals.ReserveMinor,
-			LiabilityMinor:     totals.LiabilityMinor,
-			AdvancedMinor:      totals.AdvancedMinor,
-			ReleasedMinor:      totals.ReleasedMinor,
-			ChargedBackMinor:   totals.ChargedBackMinor,
-			FeeMinor:           totals.FeeMinor,
-			EntryCount:         totals.EntryCount,
-			LastOccurredOn:     totals.LastOccurredOn,
-		}, nil
-	})
+			return &factoringledgerports.ReserveBalance{
+				FactoringCompanyID: req.FactoringCompanyID,
+				ReserveMinor:       totals.ReserveMinor,
+				LiabilityMinor:     totals.LiabilityMinor,
+				AdvancedMinor:      totals.AdvancedMinor,
+				ReleasedMinor:      totals.ReleasedMinor,
+				ChargedBackMinor:   totals.ChargedBackMinor,
+				FeeMinor:           totals.FeeMinor,
+				EntryCount:         totals.EntryCount,
+				LastOccurredOn:     totals.LastOccurredOn,
+			}, nil
+		},
+	)
 }
 
 func reserveBalance(
-	req *factoringports.GetReserveBalanceRequest,
-) *keel.Query[*factoring.ReserveEntry] {
-	re := factoringdb.ReserveEntries
-	cash := func(kinds ...factoring.ReserveEntryKind) keel.Agg {
+	req *factoringledgerports.GetReserveBalanceRequest,
+) *keel.Query[*factoringledger.ReserveEntry] {
+	re := factoringledgerdb.ReserveEntries
+	cash := func(kinds ...factoringledger.ReserveEntryKind) keel.Agg {
 		return re.CashMinor.Sum().Filter(re.Kind.In(kinds...))
 	}
 
 	return re.Pick(
 		keel.NumericOf(re.ReserveMinor.Sum()).Coalesce(0),
 		keel.NumericOf(re.LiabilityMinor.Sum()).Coalesce(0),
-		keel.NumericOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
-		keel.NumericOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
+		keel.NumericOf(cash(factoringledger.ReserveEntryFunding)).Coalesce(0),
+		keel.NumericOf(cash(factoringledger.ReserveEntryRelease)).Coalesce(0),
 		keel.NumericOf(cash(
-			factoring.ReserveEntryChargeback,
-			factoring.ReserveEntryChargebackReversal,
+			factoringledger.ReserveEntryChargeback,
+			factoringledger.ReserveEntryChargebackReversal,
 		)).Neg().Coalesce(0),
 		keel.NumericOf(re.FeeMinor.Sum()).Coalesce(0),
 		keel.Count(),

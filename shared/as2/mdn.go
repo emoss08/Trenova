@@ -119,7 +119,7 @@ func BuildMDN(opts *BuildMDNOptions) (*BuiltMDN, error) {
 		Body:        body,
 		Headers:     textproto.MIMEHeader{},
 	}
-	built.Headers.Set(HeaderAS2Version, Version)
+	built.Headers.Set(HeaderAS2Version, ProtocolVersion)
 	built.Headers.Set(HeaderAS2From, opts.From)
 	built.Headers.Set(HeaderAS2To, opts.To)
 	built.Headers.Set(HeaderMessageID, built.MessageID)

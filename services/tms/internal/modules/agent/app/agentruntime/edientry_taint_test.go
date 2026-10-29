@@ -3,17 +3,20 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func ediShipmentSubject(shipmentID string) *agentdefinition.RuntimeSubject {
-	return &agentdefinition.RuntimeSubject{
+func ediShipmentSubject(shipmentID string) *agentturn.RuntimeSubject {
+	return &agentturn.RuntimeSubject{
 		Type:            agent.SubjectShipment,
 		ID:              shipmentID,
 		Label:           "Shipment PRO S-2001",
@@ -28,12 +31,12 @@ func TestOpenTurn_AShipmentEnteredByEDIOpensTainted(t *testing.T) {
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	shipmentID := pulid.MustNew("shp_").String()
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Trigger: agent.RunTriggerEvent,
 			Subject: ediShipmentSubject(shipmentID),
 		},
@@ -57,12 +60,12 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 	subject := ediShipmentSubject(pulid.MustNew("shp_").String())
 	subject.OutsideAuthored = ""
 
-	turn := rt.OpenTurn(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context:    agentdefinition.RuntimeContext{Subject: subject},
+		Context:    agentturn.RuntimeContext{Subject: subject},
 	})
 
 	require.NotNil(t, turn.Taint())
@@ -72,21 +75,21 @@ func TestOpenTurn_AShipmentEnteredByHandOpensClean(t *testing.T) {
 func TestRun_AnEDIEnteredShipmentHoldsMoneyForAPerson(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2001"}),
-		textTurn("The payment waits for approval."),
+	pay := runtimetest.MoneyTool()
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_2001"}),
+		runtimetest.TextTurn("The payment waits for approval."),
 	}}
 	rt := newRuntime(completion,
 		&stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 
-	run := runTainted(t, rt, &agentports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Check the new shipment.",
 		Unattended: true,
-		Context: agentdefinition.RuntimeContext{
+		Context: agentturn.RuntimeContext{
 			Trigger: agent.RunTriggerEvent,
 			Subject: ediShipmentSubject(pulid.MustNew("shp_").String()),
 		},

@@ -4,7 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditexport"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditheartbeat"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditprojector"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditretention"
+	"github.com/emoss08/trenova/internal/modules/agent/app/aiauditverify"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,9 +40,9 @@ type VerifyResult struct {
 	Errors  int                   `json:"errors"`
 }
 
-type PruneResult = aiauditservice.PruneResult
+type PruneResult = aiauditretention.PruneResult
 
-type CleanupResult = aiauditservice.CleanupResult
+type CleanupResult = aiauditexport.CleanupResult
 
 type ExportResult struct {
 	ExportID string               `json:"exportId"`
@@ -47,7 +51,7 @@ type ExportResult struct {
 }
 
 // heartbeat reports progress to Temporal from inside an activity.
-func heartbeat(ctx context.Context) aiauditservice.Heartbeat {
+func heartbeat(ctx context.Context) aiauditheartbeat.Heartbeat {
 	return func(details ...any) {
 		activity.RecordHeartbeat(ctx, details...)
 	}
@@ -56,19 +60,19 @@ func heartbeat(ctx context.Context) aiauditservice.Heartbeat {
 type ActivitiesParams struct {
 	fx.In
 
-	Projector *aiauditservice.Projector
-	Verifier  *aiauditservice.Verifier
-	Retention *aiauditservice.Retention
-	Exports   *aiauditservice.Exports
+	Projector *aiauditprojector.Projector
+	Verifier  *aiauditverify.Verifier
+	Retention *aiauditretention.Retention
+	Exports   *aiauditexport.Exports
 }
 
 // Activities run on the audit queue: the projector, verification, retention
 // and export cleanup.
 type Activities struct {
-	projector *aiauditservice.Projector
-	verifier  *aiauditservice.Verifier
-	retention *aiauditservice.Retention
-	exports   *aiauditservice.Exports
+	projector *aiauditprojector.Projector
+	verifier  *aiauditverify.Verifier
+	retention *aiauditretention.Retention
+	exports   *aiauditexport.Exports
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -136,12 +140,12 @@ func (a *Activities) CleanupAIAuditExportsActivity(ctx context.Context) (*Cleanu
 type ExportActivitiesParams struct {
 	fx.In
 
-	Exports *aiauditservice.Exports
+	Exports *aiauditexport.Exports
 }
 
 // ExportActivities run on the report queue, beside the report renderers.
 type ExportActivities struct {
-	exports *aiauditservice.Exports
+	exports *aiauditexport.Exports
 }
 
 func NewExportActivities(p ExportActivitiesParams) *ExportActivities {

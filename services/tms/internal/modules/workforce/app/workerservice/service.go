@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workeremploymentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -40,7 +41,7 @@ type Params struct {
 	TemporalClient            client.Client
 	Validator                 *Validator
 	AuditService              auditports.AuditService
-	Realtime                  agentports.RealtimeService
+	Realtime                  realtimeports.RealtimeService
 	CustomFieldsValuesService *customfieldservice.ValuesService
 	PTOPolicyService          *ptopolicyservice.Service                  `optional:"true"`
 	CredentialService         *workercredentialservice.Service           `optional:"true"`
@@ -56,12 +57,12 @@ type Service struct {
 	userRepo                  tenantports.UserRepository
 	temporalClient            client.Client
 	auditService              auditports.AuditService
-	realtime                  agentports.RealtimeService
+	realtime                  realtimeports.RealtimeService
 	customFieldsValuesService *customfieldservice.ValuesService
 	validator                 *Validator
 	ptoPolicyService          *ptopolicyservice.Service
 	credentialService         *workercredentialservice.Service
-	employmentRecorder        workerports.EmploymentEventRecorder
+	employmentRecorder        workeremploymentports.EmploymentEventRecorder
 	db                        kernelports.Transactor
 	sync                      accountingsyncports.AccountingSyncEnqueuer
 	fields                    permissionports.FieldAccess
@@ -127,7 +128,7 @@ func (s *Service) updateAndQueueSync(
 // service (which opens a timeline when a worker is hired) and the employment
 // service (which applies event effects through the worker service): the
 // recorder arrives after both are built.
-func (s *Service) SetEmploymentRecorder(recorder workerports.EmploymentEventRecorder) {
+func (s *Service) SetEmploymentRecorder(recorder workeremploymentports.EmploymentEventRecorder) {
 	s.employmentRecorder = recorder
 }
 
@@ -235,6 +236,13 @@ func (s *Service) Get(
 	}
 
 	return entity, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req workerports.GetWorkersByIDsRequest,
+) ([]*worker.Worker, error) {
+	return s.repo.GetByIDs(ctx, req)
 }
 
 func (s *Service) Create(

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -21,17 +22,17 @@ const (
 )
 
 func draftSections(
-	draft *agentports.FormulaStudioDraft,
+	draft *formulastudioports.FormulaStudioDraft,
 	inputs []tarifftypes.InputDecl,
-) []agentports.ContextSection {
-	return []agentports.ContextSection{
+) []llmports.ContextSection {
+	return []llmports.ContextSection{
 		{Title: "Template", Content: templateText(draft)},
 		{Title: "Source", Content: draft.Source},
 		{Title: "Inputs", Content: inputsText(inputs)},
 	}
 }
 
-func templateText(draft *agentports.FormulaStudioDraft) string {
+func templateText(draft *formulastudioports.FormulaStudioDraft) string {
 	return "Name: " + stringutils.WithDefault(strings.TrimSpace(draft.Name), "(none yet)") +
 		"\nDescription: " +
 		stringutils.WithDefault(strings.TrimSpace(draft.Description), "(none yet)")

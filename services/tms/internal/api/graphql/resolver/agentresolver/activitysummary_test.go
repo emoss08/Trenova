@@ -3,16 +3,16 @@ package agentresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func activitySummary() *agentports.AgentActivitySummary {
+func activitySummary() *agentactivityports.AgentActivitySummary {
 	oldest := int64(1_799_996_400)
 	share := 0.75
 
-	return &agentports.AgentActivitySummary{
+	return &agentactivityports.AgentActivitySummary{
 		Since:              1_799_967_600,
 		Runs:               14,
 		RunsFailed:         2,
@@ -30,7 +30,10 @@ func activitySummary() *agentports.AgentActivitySummary {
 func TestActivitySummaryShowsWhatTheReaderMaySee(t *testing.T) {
 	t.Parallel()
 
-	out := ActivitySummaryToModel(activitySummary(), ActivityVisibility{Proposals: true, Exceptions: true})
+	out := ActivitySummaryToModel(
+		activitySummary(),
+		ActivityVisibility{Proposals: true, Exceptions: true},
+	)
 
 	assert.Equal(t, 14, out.Runs)
 	assert.Equal(t, 2, out.RunsFailed)

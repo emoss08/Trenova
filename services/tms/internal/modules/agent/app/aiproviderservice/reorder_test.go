@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aireasoning"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -18,7 +20,7 @@ import (
 )
 
 type chainRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	order     []pulid.ID
 	updated   []*aiprovider.Provider
@@ -48,7 +50,7 @@ func (r *chainRepo) ListOrdered(
 
 func (r *chainRepo) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	provider, ok := r.providers[req.ID]
 	if !ok {
@@ -79,7 +81,7 @@ func (a *auditLog) LogAction(*auditports.LogActionParams, ...auditports.LogOptio
 	return nil
 }
 
-func chainProvider(id string, priority int, tasks ...aiprovider.Task) *aiprovider.Provider {
+func chainProvider(id string, priority int, tasks ...aitask.Task) *aiprovider.Provider {
 	return &aiprovider.Provider{
 		ID:                   pulid.ID(id),
 		OrganizationID:       pulid.ID("org_1"),
@@ -90,8 +92,8 @@ func chainProvider(id string, priority int, tasks ...aiprovider.Task) *aiprovide
 		Model:                "model",
 		APIKey:               "encrypted-" + id,
 		StructuredOutputMode: aiprovider.StructuredOutputJSONMode,
-		ReasoningEffort:      aiprovider.ReasoningOff,
-		ThinkingStyle:        aiprovider.ThinkingStyleAuto,
+		ReasoningEffort:      aireasoning.ReasoningOff,
+		ThinkingStyle:        aireasoning.ThinkingStyleAuto,
 		EmbeddingInputStyle:  aiprovider.EmbeddingInputStyleNone,
 		MaxTokens:            8192,
 		Priority:             priority,
@@ -118,13 +120,13 @@ func TestReorderWritesOnlyTheProvidersWhosePlaceChanged(t *testing.T) {
 	t.Parallel()
 
 	repo := newChainRepo(
-		chainProvider("aip_a", 10, aiprovider.TaskGeneral),
-		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
-		chainProvider("aip_c", 30, aiprovider.TaskGeneral),
+		chainProvider("aip_a", 10, aitask.TaskGeneral),
+		chainProvider("aip_b", 20, aitask.TaskGeneral),
+		chainProvider("aip_c", 30, aitask.TaskGeneral),
 	)
 	svc, audit, versions := chainService(repo)
 
-	ordered, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	ordered, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_a", "aip_c", "aip_b"},
 	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})
@@ -151,8 +153,8 @@ func TestReorderRefusesAnOrderThatDoesNotNameEveryProviderOnce(t *testing.T) {
 	t.Parallel()
 
 	repo := newChainRepo(
-		chainProvider("aip_a", 10, aiprovider.TaskGeneral),
-		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
+		chainProvider("aip_a", 10, aitask.TaskGeneral),
+		chainProvider("aip_b", 20, aitask.TaskGeneral),
 	)
 	svc, _, _ := chainService(repo)
 
@@ -161,7 +163,7 @@ func TestReorderRefusesAnOrderThatDoesNotNameEveryProviderOnce(t *testing.T) {
 		"duplicate": {"aip_a", "aip_a"},
 		"unknown":   {"aip_a", "aip_x"},
 	} {
-		_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+		_, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 			TenantInfo: chainTenant, ProviderIDs: ids,
 		}, nil)
 		require.Error(t, err, name)
@@ -172,21 +174,21 @@ func TestReorderRefusesAnOrderThatDoesNotNameEveryProviderOnce(t *testing.T) {
 func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 	t.Parallel()
 
-	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskAssistantChat))
+	repo := newChainRepo(chainProvider("aip_a", 10, aitask.TaskAssistantChat))
 	svc, audit, _ := chainService(repo)
 
-	saved, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
-		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
+	saved, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
 	assert.Equal(t,
-		[]aiprovider.Task{aiprovider.TaskAssistantChat, aiprovider.TaskOperationalInsights},
+		[]aitask.Task{aitask.TaskAssistantChat, aitask.TaskOperationalInsights},
 		saved.Tasks)
 	assert.Empty(t, saved.APIKey)
 	assert.Equal(t, 1, audit.comments)
 
-	again, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
-		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.TaskOperationalInsights,
+	again, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.TaskOperationalInsights,
 	}, nil)
 	require.NoError(t, err)
 	assert.Len(t, again.Tasks, 2)
@@ -195,11 +197,11 @@ func TestAssignTaskAddsTheTaskOnce(t *testing.T) {
 func TestAssignTaskRefusesAnUnknownTask(t *testing.T) {
 	t.Parallel()
 
-	repo := newChainRepo(chainProvider("aip_a", 10, aiprovider.TaskGeneral))
+	repo := newChainRepo(chainProvider("aip_a", 10, aitask.TaskGeneral))
 	svc, _, _ := chainService(repo)
 
-	_, err := svc.AssignTask(t.Context(), &agentports.AssignAIProviderTaskRequest{
-		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aiprovider.Task("Juggling"),
+	_, err := svc.AssignTask(t.Context(), &aiproviderports.AssignAIProviderTaskRequest{
+		TenantInfo: chainTenant, ProviderID: "aip_a", Task: aitask.Task("Juggling"),
 	}, nil)
 	require.Error(t, err)
 	assert.Empty(t, repo.updated)
@@ -219,21 +221,21 @@ func TestRoutingChangesForgetCachedAnalytics(t *testing.T) {
 	t.Parallel()
 
 	repo := newChainRepo(
-		chainProvider("aip_a", 10, aiprovider.TaskGeneral, aiprovider.TaskAssistantChat),
-		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
+		chainProvider("aip_a", 10, aitask.TaskGeneral, aitask.TaskAssistantChat),
+		chainProvider("aip_b", 20, aitask.TaskGeneral),
 	)
 	svc, _, _ := chainService(repo)
 	epochs := &analyticsEpochs{}
 	svc.analytics = epochs
 	actor := &permissionports.RequestActor{UserID: pulid.ID("usr_1")}
 
-	_, err := svc.RouteTask(t.Context(), &agentports.RouteAIProviderTaskRequest{
+	_, err := svc.RouteTask(t.Context(), &aiproviderports.RouteAIProviderTaskRequest{
 		TenantInfo: chainTenant,
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		ProviderID: pulid.ID("aip_b"),
 	}, actor)
 	require.NoError(t, err)
-	_, err = svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	_, err = svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_b", "aip_a"},
 	}, actor)
@@ -246,14 +248,14 @@ func TestAReorderThatMovesNothingKeepsCachedAnalytics(t *testing.T) {
 	t.Parallel()
 
 	repo := newChainRepo(
-		chainProvider("aip_a", 10, aiprovider.TaskGeneral),
-		chainProvider("aip_b", 20, aiprovider.TaskGeneral),
+		chainProvider("aip_a", 10, aitask.TaskGeneral),
+		chainProvider("aip_b", 20, aitask.TaskGeneral),
 	)
 	svc, _, _ := chainService(repo)
 	epochs := &analyticsEpochs{}
 	svc.analytics = epochs
 
-	_, err := svc.Reorder(t.Context(), &agentports.ReorderAIProvidersRequest{
+	_, err := svc.Reorder(t.Context(), &aiproviderports.ReorderAIProvidersRequest{
 		TenantInfo:  chainTenant,
 		ProviderIDs: []pulid.ID{"aip_a", "aip_b"},
 	}, &permissionports.RequestActor{UserID: pulid.ID("usr_1")})

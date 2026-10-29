@@ -4,19 +4,19 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var ErrCircularRoleHierarchy = errors.New("role hierarchy would create a cycle")
 
 type ConstraintViolation struct {
-	ConstraintID   pulid.ID                      `json:"constraintId"`
-	ConstraintName string                        `json:"constraintName"`
-	Type           permission.RoleConstraintType `json:"type"`
-	MaxRoles       int                           `json:"maxRoles"`
-	RoleIDs        []pulid.ID                    `json:"roleIds"`
-	MatchedRoleIDs []pulid.ID                    `json:"matchedRoleIds"`
+	ConstraintID   pulid.ID                `json:"constraintId"`
+	ConstraintName string                  `json:"constraintName"`
+	Type           rbac.RoleConstraintType `json:"type"`
+	MaxRoles       int                     `json:"maxRoles"`
+	RoleIDs        []pulid.ID              `json:"roleIds"`
+	MatchedRoleIDs []pulid.ID              `json:"matchedRoleIds"`
 }
 
 type RBACPreflightReport struct {
@@ -44,11 +44,11 @@ type DeleteRoleHierarchyEdgeRequest struct {
 
 type ListRoleConstraintsRequest struct {
 	OrganizationID pulid.ID
-	Type           permission.RoleConstraintType
+	Type           rbac.RoleConstraintType
 }
 
 type SaveRoleConstraintRequest struct {
-	Constraint *permission.RoleConstraint
+	Constraint *rbac.RoleConstraint
 	RoleIDs    []pulid.ID
 }
 
@@ -56,20 +56,20 @@ type RBACRepository interface {
 	ListRoleHierarchyEdges(
 		ctx context.Context,
 		orgID pulid.ID,
-	) ([]*permission.RoleHierarchyEdge, error)
+	) ([]*rbac.RoleHierarchyEdge, error)
 	UpsertRoleHierarchyEdge(ctx context.Context, req *UpsertRoleHierarchyEdgeRequest) error
 	DeleteRoleHierarchyEdge(ctx context.Context, req DeleteRoleHierarchyEdgeRequest) error
 	GetRoleClosure(ctx context.Context, roleIDs []pulid.ID) ([]pulid.ID, error)
-	GetAuthorizedRoles(ctx context.Context, userID, orgID pulid.ID) ([]*permission.Role, error)
+	GetAuthorizedRoles(ctx context.Context, userID, orgID pulid.ID) ([]*rbac.Role, error)
 	CountRolePermissions(ctx context.Context, roleIDs []pulid.ID) (map[pulid.ID]int, error)
 	ListRoleConstraints(
 		ctx context.Context,
 		req ListRoleConstraintsRequest,
-	) ([]*permission.RoleConstraint, error)
+	) ([]*rbac.RoleConstraint, error)
 	GetRoleConstraint(
 		ctx context.Context,
 		orgID, constraintID pulid.ID,
-	) (*permission.RoleConstraint, error)
+	) (*rbac.RoleConstraint, error)
 	SaveRoleConstraint(ctx context.Context, req *SaveRoleConstraintRequest) error
 	DeleteRoleConstraint(ctx context.Context, orgID, constraintID pulid.ID) error
 	ValidateStaticSeparationOfDuty(

@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementcostservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,35 +26,35 @@ import (
 
 type fakeMatches struct {
 	match     *carriersettlement.InvoiceMatch
-	performed *carriersettlementservice.MatchDecisionRequest
+	performed *carriersettlementcostservice.MatchDecisionRequest
 }
 
 func (f *fakeMatches) PlanMatchDecision(
 	_ context.Context,
-	req *carriersettlementservice.MatchDecisionRequest,
-) (*carriersettlementservice.MatchDecisionPlan, error) {
+	req *carriersettlementcostservice.MatchDecisionRequest,
+) (*carriersettlementcostservice.MatchDecisionPlan, error) {
 	after := *f.match
-	plan := &carriersettlementservice.MatchDecisionPlan{Before: f.match, After: &after}
+	plan := &carriersettlementcostservice.MatchDecisionPlan{Before: f.match, After: &after}
 	const now = int64(1_790_000_000)
 	userID := req.TenantInfo.UserID
 	switch req.Decision {
-	case carriersettlementservice.MatchDecisionAccept:
-		plan.Refusal = carriersettlementservice.PlanAcceptMatch(&after, req.Note, userID, now)
-	case carriersettlementservice.MatchDecisionAcceptWithVariance:
-		plan.Refusal = carriersettlementservice.PlanAcceptWithVariance(
+	case carriersettlementcostservice.MatchDecisionAccept:
+		plan.Refusal = carriersettlementcostservice.PlanAcceptMatch(&after, req.Note, userID, now)
+	case carriersettlementcostservice.MatchDecisionAcceptWithVariance:
+		plan.Refusal = carriersettlementcostservice.PlanAcceptWithVariance(
 			&after,
-			&carriersettlementservice.VarianceResolution{
+			&carriersettlementcostservice.VarianceResolution{
 				Note:       req.Note,
 				UserID:     userID,
 				ResolvedAt: now,
 			},
 		)
 		if plan.Refusal == nil {
-			plan.Adjustment = carriersettlementservice.VarianceAdjustmentEvent(
+			plan.Adjustment = carriersettlementcostservice.VarianceAdjustmentEvent(
 				req.TenantInfo, f.match, now)
 		}
-	case carriersettlementservice.MatchDecisionReject:
-		plan.Refusal = carriersettlementservice.PlanRejectMatch(&after, req.Note, userID, now)
+	case carriersettlementcostservice.MatchDecisionReject:
+		plan.Refusal = carriersettlementcostservice.PlanRejectMatch(&after, req.Note, userID, now)
 	}
 
 	return plan, nil
@@ -59,7 +62,7 @@ func (f *fakeMatches) PlanMatchDecision(
 
 func (f *fakeMatches) PerformMatchDecision(
 	_ context.Context,
-	req *carriersettlementservice.MatchDecisionRequest,
+	req *carriersettlementcostservice.MatchDecisionRequest,
 	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.performed = req
@@ -122,16 +125,24 @@ func TestAcceptCarrierInvoiceMatchWithVariance_AccruesTheDifference(t *testing.T
 	assert.Equal(
 		t,
 		"Resolved",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldMatchStatus).After,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldMatchStatus,
+		).After,
 	)
 	adjustment := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, adjustment.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, adjustment.Operation)
 	require.NotNil(t, adjustment.Money)
 	assert.True(t, adjustment.Money.TotalAfter.Decimal.Equal(decimal.NewFromInt(150)))
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)), common.ErrSettlementNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)),
+		settlementpreview.ErrSettlementNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(raw)))
-	assert.Equal(t, carriersettlementservice.MatchDecisionAcceptWithVariance,
+	assert.Equal(t, carriersettlementcostservice.MatchDecisionAcceptWithVariance,
 		matches.performed.Decision)
 	assert.Equal(t, "Two hours of agreed detention at the consignee", matches.performed.Note)
 }
@@ -145,7 +156,7 @@ func TestAcceptCarrierInvoiceMatch_RefusesAVariance(t *testing.T) {
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 
 	matches.match.Status = carriersettlement.InvoiceMatchStatusMatched
 	matches.match.VarianceMinor = 0
@@ -174,24 +185,28 @@ func TestRejectCarrierInvoiceMatch_RunsInsideAndHoldsOnOutsideText(t *testing.T)
 	assert.Equal(
 		t,
 		"Rejected",
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), fieldMatchStatus).After,
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			fieldMatchStatus,
+		).After,
 	)
 	assert.NotContains(t, preview.Summary, "reconciled")
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)))
-	assert.Equal(t, carriersettlementservice.MatchDecisionReject, matches.performed.Decision)
+	assert.Equal(t, carriersettlementcostservice.MatchDecisionReject, matches.performed.Decision)
 }
 
 type fakeMatchCreator struct {
-	plan    *carriersettlementservice.CreateMatchPlan
-	created *carriersettlementservice.CreateMatchRequest
-	planned *carriersettlementservice.CreateMatchRequest
+	plan    *carriersettlementcostservice.CreateMatchPlan
+	created *carriersettlementcostservice.CreateMatchRequest
+	planned *carriersettlementcostservice.CreateMatchRequest
 }
 
 func (f *fakeMatchCreator) PlanCreateMatch(
 	_ context.Context,
-	req *carriersettlementservice.CreateMatchRequest,
-) (*carriersettlementservice.CreateMatchPlan, error) {
+	req *carriersettlementcostservice.CreateMatchRequest,
+) (*carriersettlementcostservice.CreateMatchPlan, error) {
 	f.planned = req
 
 	return f.plan, nil
@@ -199,7 +214,7 @@ func (f *fakeMatchCreator) PlanCreateMatch(
 
 func (f *fakeMatchCreator) CreateMatch(
 	_ context.Context,
-	req *carriersettlementservice.CreateMatchRequest,
+	req *carriersettlementcostservice.CreateMatchRequest,
 	_ *permissionports.RequestActor,
 ) (*carriersettlement.InvoiceMatch, error) {
 	f.created = req
@@ -211,16 +226,16 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	t.Parallel()
 
 	match := varianceMatch()
-	creator := &fakeMatchCreator{plan: &carriersettlementservice.CreateMatchPlan{
+	creator := &fakeMatchCreator{plan: &carriersettlementcostservice.CreateMatchPlan{
 		Match:   match,
-		Invoice: &edi.CarrierInvoice{},
+		Invoice: &edicarrierinvoice.CarrierInvoice{},
 	}}
 	tool := &CreateCarrierInvoiceMatchTool{matches: creator}
 	shipmentID := pulid.MustNew("shp_")
 	raw := map[string]any{
-		paramEDIInvoiceID:      match.EDICarrierInvoiceID.String(),
-		common.FieldShipmentID: shipmentID.String(),
-		paramMatchProNumber:    "  PRO-7781  ",
+		paramEDIInvoiceID:             match.EDICarrierInvoiceID.String(),
+		changepreview.FieldShipmentID: shipmentID.String(),
+		paramMatchProNumber:           "  PRO-7781  ",
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
@@ -229,7 +244,11 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	assert.Equal(t, shipmentID, creator.planned.ShipmentID)
 	assert.Equal(t, "PRO-7781", creator.planned.ProNumber)
 	assert.Contains(t, preview.Summary, "against 1500.00 USD expected: Variance.")
-	assert.Equal(t, agent.PreviewOperationCreate, agenttoolstest.PreviewChange(t, preview, 0).Operation)
+	assert.Equal(
+		t,
+		agentpreview.PreviewOperationCreate,
+		agenttoolstest.PreviewChange(t, preview, 0).Operation,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(raw)))
 	require.NotNil(t, creator.created)
@@ -237,7 +256,7 @@ func TestCreateCarrierInvoiceMatch_MatchesAnEDIInvoiceOnly(t *testing.T) {
 	creator.plan.Refusal = errortypes.NewBusinessError("The invoice is already matched")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 }
 
 type fakeInvoiceLinker struct {
@@ -249,15 +268,15 @@ func (f *fakeInvoiceLinker) PlanLinkInvoice(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	invoiceID, carrierID pulid.ID,
-) (*carriersettlementservice.LinkInvoicePlan, error) {
+) (*carriersettlementcostservice.LinkInvoicePlan, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
-	before := &edi.CarrierInvoice{ID: invoiceID, InvoiceNumber: "INV-8812"}
+	before := &edicarrierinvoice.CarrierInvoice{ID: invoiceID, InvoiceNumber: "INV-8812"}
 	after := *before
 	after.CarrierID = carrierID
 
-	return &carriersettlementservice.LinkInvoicePlan{
+	return &carriersettlementcostservice.LinkInvoicePlan{
 		Carrier: &carrier.Carrier{ID: carrierID, Name: "Blue Ridge Haulers"},
 		Before:  before,
 		After:   &after,
@@ -269,10 +288,10 @@ func (f *fakeInvoiceLinker) LinkInvoiceToCarrier(
 	_ pagination.TenantInfo,
 	_, carrierID pulid.ID,
 	_ *permissionports.RequestActor,
-) (*edi.CarrierInvoice, error) {
+) (*edicarrierinvoice.CarrierInvoice, error) {
 	f.linked = carrierID
 
-	return &edi.CarrierInvoice{}, nil
+	return &edicarrierinvoice.CarrierInvoice{}, nil
 }
 
 func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
@@ -282,15 +301,19 @@ func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
 	tool := &LinkEDICarrierInvoiceTool{invoices: linker}
 	carrierID := pulid.MustNew("car_")
 	raw := map[string]any{
-		paramEDIInvoiceID:     pulid.MustNew("edici_").String(),
-		common.ParamCarrierID: carrierID.String(),
+		paramEDIInvoiceID:         pulid.MustNew("edici_").String(),
+		toolparams.ParamCarrierID: carrierID.String(),
 	}
 
 	preview, err := tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
 	assert.Contains(t, preview.Summary,
 		"Would link EDI carrier invoice INV-8812 to Blue Ridge Haulers so it can be matched.")
-	field := agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.ParamCarrierID)
+	field := agenttoolstest.FieldByPath(
+		t,
+		agenttoolstest.PreviewChange(t, preview, 0),
+		toolparams.ParamCarrierID,
+	)
 	require.NotNil(t, field.AfterRef)
 	assert.Equal(t, permission.ResourceCarrier, field.AfterRef.Resource)
 
@@ -300,6 +323,6 @@ func TestLinkEDICarrierInvoice_NamesTheCarrier(t *testing.T) {
 	linker.refusal = errortypes.NewNotFoundError("Carrier not found")
 	preview, err = tool.Preview(t.Context(), agenttoolstest.ExecuteParams(raw))
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.ExecuteParams(raw)))
 }

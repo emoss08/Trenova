@@ -5,14 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
@@ -24,6 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentshipmentdraftportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -167,13 +167,15 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		Return(draft, nil)
 
 	cfg := &config.Config{
-		Storage: config.StorageConfig{
+		Storage: storageconfig.Config{
 			AllowedMIMETypes:   []string{"application/pdf"},
 			MaxFileSize:        50 * 1024 * 1024,
 			PresignedURLExpiry: 15 * time.Minute,
 		},
 	}
-	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
+	validator := documentservice.NewValidator(
+		documentservice.ValidatorParams{StorageConfig: &cfg.Storage},
+	)
 
 	service := documentservice.New(documentservice.Params{
 		Logger:               zap.NewNop(),
@@ -187,7 +189,7 @@ func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
 		AuditService:         &mocks.NoopAuditService{},
 		DocumentIntelligence: contentService,
 		SearchProjection:     searchProjection,
-		Config:               cfg,
+		StorageConfig:        &cfg.Storage,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(nil),
 		WorkflowStarter:      workflowstarter.New(workflowstarter.Params{}),
 		AICorrections:        correctionService(corrections),
@@ -255,13 +257,15 @@ func TestAttachLineageToResourceRefusesAShipmentTheTenantDoesNotHave(t *testing.
 
 	cfg := &config.Config{}
 	service := documentservice.New(documentservice.Params{
-		Logger:       zap.NewNop(),
-		Repo:         repo,
-		Shipments:    shipments,
-		Storage:      &mockStorageClient{},
-		Validator:    documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg}),
-		AuditService: &mocks.NoopAuditService{},
-		Config:       cfg,
+		Logger:    zap.NewNop(),
+		Repo:      repo,
+		Shipments: shipments,
+		Storage:   &mockStorageClient{},
+		Validator: documentservice.NewValidator(
+			documentservice.ValidatorParams{StorageConfig: &cfg.Storage},
+		),
+		AuditService:  &mocks.NoopAuditService{},
+		StorageConfig: &cfg.Storage,
 	})
 
 	_, err := service.AttachLineageToResource(

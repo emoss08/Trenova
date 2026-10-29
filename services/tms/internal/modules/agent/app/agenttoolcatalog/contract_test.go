@@ -10,11 +10,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -236,7 +237,7 @@ func recordMarkProblems(tool, at string, property map[string]any) []string {
 
 	problems := make([]string, 0, len(marks))
 	for _, resource := range marks {
-		if _, known := permission.Resource(resource).IDPrefix(); !known {
+		if _, known := recordkind.ResourcePrefix(permission.Resource(resource)); !known {
 			problems = append(problems, fmt.Sprintf(
 				"%s.%s: marked as a %s id, which has no prefix in permission's table",
 				tool, at, resource))
@@ -283,23 +284,23 @@ func TestEveryRecipeNamesRegisteredTools(t *testing.T) {
 	queries := make(map[string]struct{})
 	for _, tool := range buildTools(t) {
 		known[tool.Name()] = struct{}{}
-		if _, ok := tool.(agentports.AgentQueryTool); ok {
+		if _, ok := tool.(agenttoolports.AgentQueryTool); ok {
 			queries[tool.Name()] = struct{}{}
 		}
 	}
-	for _, policy := range agentruntime.RuntimePolicies() {
+	for _, policy := range runtimetools.Policies() {
 		known[policy.Name] = struct{}{}
 	}
 
 	var problems []string
 	for _, tool := range buildTools(t) {
 		steps := make([]string, 0, 8)
-		if recipe, ok := tool.(agentports.RecipeTool); ok {
+		if recipe, ok := tool.(agenttoolports.RecipeTool); ok {
 			steps = append(steps, recipe.Recipe()...)
 			problems = append(problems, recipeOrderProblems(
 				tool.Name(), recipe.Recipe(), queries)...)
 		}
-		if needs, ok := tool.(agentports.PrerequisiteTool); ok {
+		if needs, ok := tool.(agenttoolports.PrerequisiteTool); ok {
 			steps = append(steps, needs.Prerequisites()...)
 			for _, need := range needs.Prerequisites() {
 				if _, ok := queries[need]; !ok {
@@ -374,7 +375,7 @@ func TestEveryWriteWhoseOmissionWidensKeepsAnEmptyList(t *testing.T) {
 
 	var problems []string
 	for _, tool := range buildTools(t) {
-		if _, read := tool.(agentports.AgentQueryTool); read {
+		if _, read := tool.(agenttoolports.AgentQueryTool); read {
 			continue
 		}
 		properties, _ := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)

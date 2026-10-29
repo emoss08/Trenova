@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v5"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"go.uber.org/fx"
@@ -41,8 +41,8 @@ var errBadRequest = errors.New("renderer rejected the request")
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	RendererConfig *rendererconfig.Config
+	Logger         *zap.Logger
 }
 
 type Client struct {
@@ -50,13 +50,13 @@ type Client struct {
 	sem     *semaphore.Weighted
 	l       *zap.Logger
 	baseURL string
-	cfg     *config.RendererConfig
+	cfg     *rendererconfig.Config
 }
 
 var _ documenttemplateports.PDFRenderer = (*Client)(nil)
 
 func New(p Params) *Client {
-	cfg := p.Config.GetRendererConfig()
+	cfg := p.RendererConfig
 	maxConcurrent := cfg.GetMaxConcurrent()
 
 	return &Client{

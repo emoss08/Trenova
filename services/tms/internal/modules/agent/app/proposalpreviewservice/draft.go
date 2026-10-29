@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -37,15 +40,15 @@ type draftInput struct {
 type draft struct {
 	proposal *agent.AgentProposal
 	params   map[string]any
-	preview  *agent.ProposalPreview
+	preview  *agentpreview.ProposalPreview
 }
 
 func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 	proposal := in.proposal
 	d := &draft{
 		proposal: proposal,
-		preview: &agent.ProposalPreview{
-			Schema:     agent.PreviewSchemaVersion,
+		preview: &agentpreview.ProposalPreview{
+			Schema:     agentpreview.PreviewSchemaVersion,
 			ProposalID: proposal.ID,
 			Tool:       proposal.ToolName,
 			ComputedAt: s.now(),
@@ -91,18 +94,19 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 	d.preview.TargetVersion = found.version
 	if proposal.TargetID.IsNil() {
 		if _, targeted := targetOf(tool, params); targeted {
-			d.preview.AddWarning(agent.PreviewWarning{
-				Code: agent.PreviewWarningUnpinned,
+			d.preview.AddWarning(&agentpreview.PreviewWarning{
+				Code: agentpreview.PreviewWarningUnpinned,
 				Message: "The record this change is for was not pinned when it was proposed, " +
 					"so whether it has changed since cannot be told.",
 			})
 		}
 	}
 	if d.preview.IsStale() {
-		d.preview.AddWarning(staleWarning(d.preview.Staleness, proposal.TargetResource))
+		stale := staleWarning(d.preview.Staleness, proposal.TargetResource)
+		d.preview.AddWarning(&stale)
 	}
-	for _, warning := range warnings {
-		d.preview.AddWarning(warning)
+	for i := range warnings {
+		d.preview.AddWarning(&warnings[i])
 	}
 
 	return d, nil
@@ -118,9 +122,9 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 // of a stored or typed value never differs from what runs on approval.
 func (s *Service) settleParams(
 	ctx context.Context,
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	in *draftInput,
-) (map[string]any, []agent.PreviewWarning, error) {
+) (map[string]any, []agentpreview.PreviewWarning, error) {
 	proposal := in.proposal
 	if in.params != nil {
 		return proposalexecutor.CoerceParams(tool, in.params), nil, nil
@@ -142,7 +146,7 @@ func (s *Service) settleParams(
 	}
 
 	params := proposalexecutor.CoerceParams(tool, maps.Clone(proposal.ToolParams))
-	validator, validates := tool.(agentports.ToolValidator)
+	validator, validates := tool.(agenttoolports.ToolValidator)
 	if !validates {
 		return params, nil, nil
 	}
@@ -152,7 +156,7 @@ func (s *Service) settleParams(
 		return nil, nil, err
 	}
 	if err = validator.Validate(ctx, execParams); err != nil {
-		warnings := []agent.PreviewWarning{toolpreview.WouldFail(err)}
+		warnings := []agentpreview.PreviewWarning{toolpreview.WouldFail(err)}
 		toolpreview.LocateReasons(warnings, tool.ParamSchema())
 
 		//nolint:nilerr // a call that would fail is shown with a warning, not refused
@@ -165,10 +169,10 @@ func (s *Service) settleParams(
 func (s *Service) executionParams(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy *agentports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 	params map[string]any,
 	actor *permissionports.RequestActor,
-) (agentports.ToolExecuteParams, error) {
+) (*agenttoolports.ToolExecuteParams, error) {
 	execParams, err := proposalexecutor.WithTimezone(
 		ctx, s.zones, proposalexecutor.ExecutionParams(proposal, policy, params, actor),
 	)
@@ -182,15 +186,15 @@ func (s *Service) executionParams(
 // assertOwner keeps a self-scoped proposal's preview to the person it is
 // for: it is about their own records, and nobody else's queue shows it.
 func assertOwner(
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	proposal *agent.AgentProposal,
 	actor *permissionports.RequestActor,
 ) error {
-	if !agentports.IsSelfScoped(tool) {
+	if !agenttoolports.IsSelfScoped(tool) {
 		return nil
 	}
 
-	owner, _ := proposal.ToolParams[agentports.SelfScopeOwnerParam].(string)
+	owner, _ := proposal.ToolParams[agenttoolports.SelfScopeOwnerParam].(string)
 	if actor == nil || actor.UserID.IsNil() || owner != actor.UserID.String() {
 		return errortypes.NewNotFoundError("That proposal is not one you can preview")
 	}
@@ -199,7 +203,7 @@ func assertOwner(
 }
 
 type pin struct {
-	target  agentports.ToolTarget
+	target  agenttoolports.ToolTarget
 	version int64
 }
 
@@ -209,7 +213,7 @@ func pinOf(proposal *agent.AgentProposal) *pin {
 	}
 
 	return &pin{
-		target: agentports.ToolTarget{
+		target: agenttoolports.ToolTarget{
 			Resource: permission.Resource(proposal.TargetResource),
 			ID:       proposal.TargetID,
 		},
@@ -217,18 +221,21 @@ func pinOf(proposal *agent.AgentProposal) *pin {
 	}
 }
 
-func targetOf(tool agentports.AgentTool, params map[string]any) (agentports.ToolTarget, bool) {
-	targeted, ok := tool.(agentports.TargetedTool)
+func targetOf(
+	tool agenttoolports.AgentTool,
+	params map[string]any,
+) (agenttoolports.ToolTarget, bool) {
+	targeted, ok := tool.(agenttoolports.TargetedTool)
 	if !ok {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
 	return targeted.Target(params)
 }
 
 type snapshotInput struct {
-	tool     agentports.AgentTool
-	params   agentports.ToolExecuteParams
+	tool     agenttoolports.AgentTool
+	params   *agenttoolports.ToolExecuteParams
 	pin      *pin
 	timeout  time.Duration
 	labelled bool
@@ -242,20 +249,20 @@ type snapshotResult struct {
 	pinRead    bool
 	version    *int64
 	missing    bool
-	preview    *agent.ToolPreview
+	preview    *agentpreview.ToolPreview
 	previewErr error
-	labels     agentports.RecordLabels
+	labels     agentruntimeports.RecordLabels
 }
 
 // staleness compares the pinned version with the one read now. It is
 // unknown, and nil, when the record's version could not be read: the
 // executor still refuses a changed record when the write runs.
-func (r *snapshotResult) staleness(proposal *agent.AgentProposal) *agent.PreviewStaleness {
+func (r *snapshotResult) staleness(proposal *agent.AgentProposal) *agentpreview.PreviewStaleness {
 	if proposal.TargetID.IsNil() || !r.pinRead {
 		return nil
 	}
 
-	staleness := &agent.PreviewStaleness{
+	staleness := &agentpreview.PreviewStaleness{
 		Pinned:          true,
 		ProposedVersion: proposal.TargetVersion,
 		Missing:         r.missing,
@@ -281,9 +288,9 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 			return err
 		}
 
-		if previewer, ok := in.tool.(agentports.ToolPreviewer); ok {
+		if previewer, ok := in.tool.(agenttoolports.ToolPreviewer); ok {
 			previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
-			result.preview, result.previewErr = runPreview(previewCtx, previewer, &in.params)
+			result.preview, result.previewErr = runPreview(previewCtx, previewer, in.params)
 			cancel()
 			if result.preview != nil {
 				toolpreview.LocateReasons(result.preview.Warnings, in.tool.ParamSchema())
@@ -291,7 +298,7 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 		}
 
 		if in.labelled && result.previewErr == nil && result.preview != nil {
-			result.labels = s.labels(txCtx, tenantOfParams(&in.params), result.preview.Changes)
+			result.labels = s.labels(txCtx, tenantOfParams(in.params), result.preview.Changes)
 		}
 		result.done = true
 
@@ -312,7 +319,7 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 		return nil
 	}
 
-	version, err := s.versions.Version(ctx, tenantOfParams(&in.params), in.pin.target)
+	version, err := s.versions.Version(ctx, tenantOfParams(in.params), in.pin.target)
 	switch {
 	case err == nil:
 		result.version = &version
@@ -320,7 +327,7 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 	case errors.Is(err, sql.ErrNoRows):
 		result.missing = true
 		result.pinRead = true
-	case errors.Is(err, agentports.ErrRecordVersionUnsupported):
+	case errors.Is(err, agenttoolports.ErrRecordVersionUnsupported):
 	default:
 		return fmt.Errorf("read the %s this change is for: %w", in.pin.target.Resource, err)
 	}
@@ -332,9 +339,9 @@ func (s *Service) readPin(ctx context.Context, in *snapshotInput, result *snapsh
 // failed its preview, never the request.
 func runPreview(
 	ctx context.Context,
-	previewer agentports.ToolPreviewer,
-	params *agentports.ToolExecuteParams,
-) (preview *agent.ToolPreview, err error) {
+	previewer agenttoolports.ToolPreviewer,
+	params *agenttoolports.ToolExecuteParams,
+) (preview *agentpreview.ToolPreview, err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			preview = nil
@@ -342,7 +349,7 @@ func runPreview(
 		}
 	}()
 
-	preview, err = previewer.Preview(ctx, *params)
+	preview, err = previewer.Preview(ctx, params)
 	if err == nil && preview == nil {
 		err = errors.New("the tool returned no preview")
 	}
@@ -350,13 +357,13 @@ func runPreview(
 	return preview.Bounded(), err
 }
 
-func tenantOfParams(params *agentports.ToolExecuteParams) pagination.TenantInfo {
+func tenantOfParams(params *agenttoolports.ToolExecuteParams) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: params.OrganizationID, BuID: params.BusinessUnitID}
 }
 
 // assemble turns the tool's preview into the proposal's: its coverage, its
 // changes named by their labels, or the fallback when it had nothing to say.
-func (s *Service) assemble(d *draft, tool agentports.AgentTool, found *snapshotResult) {
+func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snapshotResult) {
 	preview := d.preview
 	switch {
 	case found.previewErr != nil:
@@ -366,8 +373,8 @@ func (s *Service) assemble(d *draft, tool agentports.AgentTool, found *snapshotR
 			zap.Error(found.previewErr),
 		)
 		s.fallback(d, tool)
-		preview.AddWarning(agent.PreviewWarning{
-			Code: agent.PreviewWarningPreviewFailed,
+		preview.AddWarning(&agentpreview.PreviewWarning{
+			Code: agentpreview.PreviewWarningPreviewFailed,
 			Args: []string{previewFailure(found.previewErr)},
 			Message: "What this change would do could not be worked out: " + previewFailure(
 				found.previewErr,
@@ -384,31 +391,31 @@ func (s *Service) assemble(d *draft, tool agentports.AgentTool, found *snapshotR
 	preview.Summary = found.preview.Summary
 	preview.Changes = found.preview.Changes
 	preview.OmittedRecords = found.preview.OmittedRecords
-	for _, warning := range found.preview.Warnings {
-		preview.AddWarning(warning)
+	for i := range found.preview.Warnings {
+		preview.AddWarning(&found.preview.Warnings[i])
 	}
-	preview.Coverage = agent.PreviewCoverageFull
+	preview.Coverage = agentpreview.PreviewCoverageFull
 	if found.preview.Partial {
-		preview.Coverage = agent.PreviewCoveragePartial
+		preview.Coverage = agentpreview.PreviewCoveragePartial
 	}
 	applyLabels(preview.Changes, found.labels)
 }
 
 // fallback is a tool that cannot say what it would change: the parameters it
 // would run with, without the ones its policy holds Confidential.
-func (s *Service) fallback(d *draft, tool agentports.AgentTool) {
+func (s *Service) fallback(d *draft, tool agenttoolports.AgentTool) {
 	params := toolpreview.Parameters(d.proposal.ToolName, tool.Policy().Resource, d.params)
 	d.preview.Summary = params.Summary
 	d.preview.Changes = params.Changes
-	d.preview.Coverage = agent.PreviewCoverageUnavailable
+	d.preview.Coverage = agentpreview.PreviewCoverageUnavailable
 }
 
 func (s *Service) toolRemoved(d *draft) {
 	d.preview.Summary = "The tool " + d.proposal.ToolName + " that this change would run " +
 		"no longer exists, so it cannot run."
-	d.preview.Coverage = agent.PreviewCoverageUnavailable
-	d.preview.AddWarning(agent.PreviewWarning{
-		Code:    agent.PreviewWarningToolRemoved,
+	d.preview.Coverage = agentpreview.PreviewCoverageUnavailable
+	d.preview.AddWarning(&agentpreview.PreviewWarning{
+		Code:    agentpreview.PreviewWarningToolRemoved,
 		Args:    []string{d.proposal.ToolName},
 		Message: "The tool " + d.proposal.ToolName + " no longer exists.",
 	})
@@ -425,7 +432,7 @@ func (s *Service) pinOutside(ctx context.Context, d *draft) error {
 	result := &snapshotResult{}
 	if err := s.readPin(ctx, &snapshotInput{
 		pin: p,
-		params: agentports.ToolExecuteParams{
+		params: &agenttoolports.ToolExecuteParams{
 			OrganizationID: d.proposal.OrganizationID,
 			BusinessUnitID: d.proposal.BusinessUnitID,
 		},
@@ -446,17 +453,20 @@ func previewFailure(err error) string {
 	return err.Error()
 }
 
-func staleWarning(staleness *agent.PreviewStaleness, resource string) agent.PreviewWarning {
+func staleWarning(
+	staleness *agentpreview.PreviewStaleness,
+	resource string,
+) agentpreview.PreviewWarning {
 	if staleness.Missing {
-		return agent.PreviewWarning{
-			Code:    agent.PreviewWarningRecordMissing,
+		return agentpreview.PreviewWarning{
+			Code:    agentpreview.PreviewWarningRecordMissing,
 			Args:    []string{resource},
 			Message: "The " + resource + " this change is for no longer exists.",
 		}
 	}
 
-	return agent.PreviewWarning{
-		Code: agent.PreviewWarningTargetChanged,
+	return agentpreview.PreviewWarning{
+		Code: agentpreview.PreviewWarningTargetChanged,
 		Args: []string{
 			resource,
 			strconv.FormatInt(staleness.ProposedVersion, 10),
@@ -474,8 +484,8 @@ func staleWarning(staleness *agent.PreviewStaleness, resource string) agent.Prev
 func (s *Service) labels(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	changes []agent.RecordChange,
-) agentports.RecordLabels {
+	changes []agentpreview.RecordChange,
+) agentruntimeports.RecordLabels {
 	if s.labeler == nil {
 		return nil
 	}
@@ -486,7 +496,7 @@ func (s *Service) labels(
 			refs[resource] = append(refs[resource], id)
 		}
 	}
-	addRef := func(ref *agent.PreviewRef) {
+	addRef := func(ref *agentpreview.PreviewRef) {
 		if ref != nil && ref.Label == "" {
 			add(ref.Resource, ref.ID)
 		}
@@ -515,7 +525,7 @@ func (s *Service) labels(
 	return labels
 }
 
-func applyLabels(changes []agent.RecordChange, labels agentports.RecordLabels) {
+func applyLabels(changes []agentpreview.RecordChange, labels agentruntimeports.RecordLabels) {
 	for i := range changes {
 		change := &changes[i]
 		if change.Label == "" {
@@ -531,7 +541,7 @@ func applyLabels(changes []agent.RecordChange, labels agentports.RecordLabels) {
 	}
 }
 
-func labelRef(ref *agent.PreviewRef, labels agentports.RecordLabels) {
+func labelRef(ref *agentpreview.PreviewRef, labels agentruntimeports.RecordLabels) {
 	if ref == nil {
 		return
 	}
@@ -545,7 +555,7 @@ func labelRef(ref *agent.PreviewRef, labels agentports.RecordLabels) {
 
 // recordLink is where a record opens, when the record-link registry has a
 // page for its kind.
-func recordLink(resource permission.Resource, id pulid.ID) *agent.RecordRef {
+func recordLink(resource permission.Resource, id pulid.ID) *agentrecord.RecordRef {
 	if resource == "" || id.IsNil() {
 		return nil
 	}
@@ -553,5 +563,5 @@ func recordLink(resource permission.Resource, id pulid.ID) *agent.RecordRef {
 		return nil
 	}
 
-	return (&agent.RecordRef{EntityType: resource.String(), ID: id.String()}).Bounded()
+	return (&agentrecord.RecordRef{EntityType: resource.String(), ID: id.String()}).Bounded()
 }

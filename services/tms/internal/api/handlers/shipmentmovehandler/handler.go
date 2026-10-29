@@ -6,9 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -21,14 +21,14 @@ import (
 type Params struct {
 	fx.In
 
-	Service              shipmentports.ShipmentMoveService
+	Service              shipmentmoveports.ShipmentMoveService
 	TrackingEvents       trackingeventports.TrackingEventService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service        shipmentports.ShipmentMoveService
+	service        shipmentmoveports.ShipmentMoveService
 	trackingEvents trackingeventports.TrackingEventService
 	eh             *helpers.ErrorHandler
 	pm             *middleware.PermissionMiddleware
@@ -82,11 +82,11 @@ type recordStopActualRequest struct {
 }
 
 type splitMoveRequest struct {
-	NewDeliveryLocationID pulid.ID                     `json:"newDeliveryLocationId"`
-	SplitPickupTimes      shipmentports.SplitStopTimes `json:"splitPickupTimes"`
-	NewDeliveryTimes      shipmentports.SplitStopTimes `json:"newDeliveryTimes"`
-	Pieces                *int64                       `json:"pieces,omitempty"`
-	Weight                *int64                       `json:"weight,omitempty"`
+	NewDeliveryLocationID pulid.ID                         `json:"newDeliveryLocationId"`
+	SplitPickupTimes      shipmentmoveports.SplitStopTimes `json:"splitPickupTimes"`
+	NewDeliveryTimes      shipmentmoveports.SplitStopTimes `json:"newDeliveryTimes"`
+	Pieces                *int64                           `json:"pieces,omitempty"`
+	Weight                *int64                           `json:"weight,omitempty"`
 }
 
 // @Summary Update a shipment move status
@@ -119,10 +119,10 @@ func (h *Handler) updateStatus(c *gin.Context) {
 
 	entity, err := h.service.UpdateStatus(
 		c.Request.Context(),
-		&shipmentports.UpdateMoveStatusRequest{
+		&shipmentmoveports.UpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveID:     moveID,
-			Status:     shipment.MoveStatus(body.Status),
+			Status:     shipmentvocab.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {
@@ -156,10 +156,10 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 
 	entities, err := h.service.BulkUpdateStatus(
 		c.Request.Context(),
-		&shipmentports.BulkUpdateMoveStatusRequest{
+		&shipmentmoveports.BulkUpdateMoveStatusRequest{
 			TenantInfo: pagination.FromAuth(authCtx),
 			MoveIDs:    body.MoveIDs,
-			Status:     shipment.MoveStatus(body.Status),
+			Status:     shipmentvocab.MoveStatus(body.Status),
 		},
 	)
 	if err != nil {
@@ -213,7 +213,7 @@ func (h *Handler) recordStopActual(c *gin.Context) {
 			TenantInfo:   pagination.FromAuthAsUser(authCtx),
 			MoveID:       moveID,
 			StopID:       stopID,
-			Action:       shipmentports.StopActualAction(body.Action),
+			Action:       shipmentmoveports.StopActualAction(body.Action),
 			OccurredAt:   body.OccurredAt,
 			Source:       trackingevent.SourceDispatcher,
 			SourceKey:    sourceKey,
@@ -256,7 +256,7 @@ func (h *Handler) splitMove(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.SplitMove(c.Request.Context(), &shipmentports.SplitMoveRequest{
+	entity, err := h.service.SplitMove(c.Request.Context(), &shipmentmoveports.SplitMoveRequest{
 		TenantInfo:            pagination.FromAuth(authCtx),
 		MoveID:                moveID,
 		NewDeliveryLocationID: body.NewDeliveryLocationID,

@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/jobs/accountingsyncjobs/accountingsynccontract"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -117,7 +118,7 @@ func reconcileRecords(
 	a *Activities,
 	payload *accountingsynccontract.DriftPayload,
 ) error {
-	var batch accountingsyncports.AccountingDriftBatchResult
+	var batch accountingdriftports.AccountingDriftBatchResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftActivity, payload).
 		Get(actx, &batch); err != nil {
 		return err
@@ -142,7 +143,7 @@ func reconcileBalances(
 	a *Activities,
 	payload *accountingsynccontract.DriftPayload,
 ) (bool, error) {
-	var page accountingsyncports.AccountingDriftBalanceResult
+	var page accountingdriftports.AccountingDriftBalanceResult
 	if err := workflow.ExecuteActivity(actx, a.ReconcileAccountingDriftBalancesActivity, payload).
 		Get(actx, &page); err != nil {
 		return false, err
@@ -181,13 +182,16 @@ func AnnounceAccountingReconciliationDueWorkflow(
 func (a *Activities) ReconcileAccountingDriftActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.DriftPayload,
-) (*accountingsyncports.AccountingDriftBatchResult, error) {
-	result, err := a.drift.ReconcileBatch(ctx, &accountingsyncports.ReconcileAccountingDriftRequest{
-		TenantInfo:   payload.TenantInfo(),
-		ConnectionID: payload.ConnectionID,
-		AfterID:      payload.AfterID,
-		EventBudget:  payload.EventsLeft,
-	})
+) (*accountingdriftports.AccountingDriftBatchResult, error) {
+	result, err := a.drift.ReconcileBatch(
+		ctx,
+		&accountingdriftports.ReconcileAccountingDriftRequest{
+			TenantInfo:   payload.TenantInfo(),
+			ConnectionID: payload.ConnectionID,
+			AfterID:      payload.AfterID,
+			EventBudget:  payload.EventsLeft,
+		},
+	)
 	if err != nil {
 		return result, syncError(err)
 	}
@@ -197,10 +201,10 @@ func (a *Activities) ReconcileAccountingDriftActivity(
 func (a *Activities) ReconcileAccountingDriftBalancesActivity(
 	ctx context.Context,
 	payload *accountingsynccontract.DriftPayload,
-) (*accountingsyncports.AccountingDriftBalanceResult, error) {
+) (*accountingdriftports.AccountingDriftBalanceResult, error) {
 	result, err := a.drift.ReconcileBalances(
 		ctx,
-		&accountingsyncports.ReconcileAccountingDriftBalancesRequest{
+		&accountingdriftports.ReconcileAccountingDriftBalancesRequest{
 			TenantInfo:      payload.TenantInfo(),
 			ConnectionID:    payload.ConnectionID,
 			AfterCustomerID: payload.AfterCustomerID,
@@ -218,7 +222,7 @@ func (a *Activities) FinishAccountingDriftCheckActivity(
 	payload *accountingsynccontract.DriftPayload,
 ) error {
 	return syncError(
-		a.drift.FinishCheck(ctx, &accountingsyncports.FinishAccountingDriftCheckRequest{
+		a.drift.FinishCheck(ctx, &accountingdriftports.FinishAccountingDriftCheckRequest{
 			TenantInfo:   payload.TenantInfo(),
 			ConnectionID: payload.ConnectionID,
 		}),
@@ -234,7 +238,7 @@ func (a *Activities) eachDriftConnection(
 	for {
 		conns, err := a.connRepo.ListActive(
 			ctx,
-			accountingsyncports.ListActiveAccountingConnectionsRequest{
+			accountingconnectionports.ListActiveAccountingConnectionsRequest{
 				AfterID: afterID,
 				Limit:   driftConnectionsPage,
 			},
@@ -288,11 +292,11 @@ func (a *Activities) AnnounceAccountingReconciliationActivity(
 	connections, err := a.eachDriftConnection(
 		ctx,
 		func(tenant pagination.TenantInfo, connectionID pulid.ID) error {
-			agentports.PublishAgentEvent(
+			agenteventports.PublishAgentEvent(
 				dbscope.WithTenant(ctx, tenant.DBTenant()),
 				a.publisher,
-				agentports.AgentEvent{
-					Kind:       agent.EventAccountingReconciliationDue,
+				agenteventports.AgentEvent{
+					Kind:       agenttrigger.EventAccountingReconciliationDue,
 					SubjectID:  connectionID,
 					TenantInfo: tenant,
 				},

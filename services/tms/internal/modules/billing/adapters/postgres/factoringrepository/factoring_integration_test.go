@@ -9,23 +9,22 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/parties/adapters/postgres/factoringcompanyrepository"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -360,8 +359,8 @@ func TestInvoiceStateProjection(t *testing.T) {
 	assert.Contains(t, candidates, factored.ID)
 	assert.NotContains(t, candidates, unfactored.ID)
 
-	ready := &factoring.Readiness{Verdict: factoring.VerdictReady}
-	state := &factoring.InvoiceState{
+	ready := &factoringreadiness.Readiness{Verdict: factoringreadiness.VerdictReady}
+	state := &factoringreadiness.InvoiceState{
 		InvoiceID:          factored.ID,
 		OrganizationID:     env.tenantInfo.OrgID,
 		BusinessUnitID:     env.tenantInfo.BuID,
@@ -369,7 +368,12 @@ func TestInvoiceStateProjection(t *testing.T) {
 		CustomerID:         env.customerID,
 		OpenBalanceMinor:   factored.TotalAmountMinor,
 	}
-	factoring.NextState(nil, state, ready, now-2*factoring.ReadyUnsubmittedSeconds)
+	factoringreadiness.NextState(
+		nil,
+		state,
+		ready,
+		now-2*factoringreadiness.ReadyUnsubmittedSeconds,
+	)
 	require.NoError(t, env.states.Upsert(env.ctx, state))
 
 	claimed, err := env.states.ClaimReadyAnnouncement(
@@ -384,7 +388,7 @@ func TestInvoiceStateProjection(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, claimed)
 
-	stale := &factoring.InvoiceState{
+	stale := &factoringreadiness.InvoiceState{
 		InvoiceID:          factored.ID,
 		OrganizationID:     env.tenantInfo.OrgID,
 		BusinessUnitID:     env.tenantInfo.BuID,
@@ -392,7 +396,7 @@ func TestInvoiceStateProjection(t *testing.T) {
 		CustomerID:         env.customerID,
 		OpenBalanceMinor:   factored.TotalAmountMinor,
 	}
-	factoring.NextState(nil, stale, ready, now)
+	factoringreadiness.NextState(nil, stale, ready, now)
 	require.NoError(t, env.states.Upsert(env.ctx, stale))
 
 	saved, err := env.states.Get(env.ctx, factoringports.GetInvoiceStateRequest{
@@ -405,7 +409,7 @@ func TestInvoiceStateProjection(t *testing.T) {
 
 	summary, err := env.states.GetSummary(env.ctx, factoringports.GetSummaryRequest{
 		TenantInfo:  env.tenantInfo,
-		ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
+		ReadyBefore: now - factoringreadiness.ReadyUnsubmittedSeconds,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, summary.Ready.Count)
@@ -416,13 +420,13 @@ func TestInvoiceStateProjection(t *testing.T) {
 		env.ctx,
 		factoringports.ListReadyUnsubmittedRequest{
 			TenantInfo:  env.tenantInfo,
-			ReadyBefore: now - factoring.ReadyUnsubmittedSeconds,
+			ReadyBefore: now - factoringreadiness.ReadyUnsubmittedSeconds,
 		},
 	)
 	require.NoError(t, err)
 	require.Len(t, late, 1)
 
-	notReady := &factoring.InvoiceState{
+	notReady := &factoringreadiness.InvoiceState{
 		InvoiceID:          factored.ID,
 		OrganizationID:     env.tenantInfo.OrgID,
 		BusinessUnitID:     env.tenantInfo.BuID,
@@ -430,9 +434,11 @@ func TestInvoiceStateProjection(t *testing.T) {
 		CustomerID:         env.customerID,
 		OpenBalanceMinor:   factored.TotalAmountMinor,
 	}
-	factoring.NextState(saved, notReady, &factoring.Readiness{
-		Verdict: factoring.VerdictNotReady,
-		Checks:  []factoring.Check{{Code: factoring.CheckNoa, Fix: factoring.FixSendNoa}},
+	factoringreadiness.NextState(saved, notReady, &factoringreadiness.Readiness{
+		Verdict: factoringreadiness.VerdictNotReady,
+		Checks: []factoringreadiness.Check{
+			{Code: factoringreadiness.CheckNoa, Fix: factoringreadiness.FixSendNoa},
+		},
 	}, now)
 	require.NoError(t, env.states.Upsert(env.ctx, notReady))
 
@@ -444,16 +450,16 @@ func TestInvoiceStateProjection(t *testing.T) {
 				Pagination: pagination.Info{Limit: 10},
 			},
 			Cursor:   pagination.CursorInfo{Limit: 10},
-			Verdicts: []factoring.Verdict{factoring.VerdictNotReady},
+			Verdicts: []factoringreadiness.Verdict{factoringreadiness.VerdictNotReady},
 		},
 	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Nil(t, page.Items[0].ReadySince)
 	require.Len(t, page.Items[0].Checks, 1)
-	assert.Equal(t, factoring.FixSendNoa, page.Items[0].Checks[0].Fix)
+	assert.Equal(t, factoringreadiness.FixSendNoa, page.Items[0].Checks[0].Fix)
 
-	search := func(term string) *pagination.CursorListResult[*factoring.InvoiceState] {
+	search := func(term string) *pagination.CursorListResult[*factoringreadiness.InvoiceState] {
 		t.Helper()
 		found, searchErr := env.states.ListConnection(
 			env.ctx,

@@ -3,7 +3,7 @@ package servicefailure
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,48 +50,48 @@ func TestReasonCodeAppliesToAllowsExpectedStopTypes(t *testing.T) {
 	tests := []struct {
 		name     string
 		applies  ReasonCodeAppliesTo
-		stopType shipment.StopType
+		stopType shipmentvocab.StopType
 		want     bool
 	}{
 		{
 			name:     "pickup allows pickup",
 			applies:  ReasonCodeAppliesToPickup,
-			stopType: shipment.StopTypePickup,
+			stopType: shipmentvocab.StopTypePickup,
 			want:     true,
 		},
 		{
 			name:     "pickup allows split pickup",
 			applies:  ReasonCodeAppliesToPickup,
-			stopType: shipment.StopTypeSplitPickup,
+			stopType: shipmentvocab.StopTypeSplitPickup,
 			want:     true,
 		},
 		{
 			name:     "pickup rejects delivery",
 			applies:  ReasonCodeAppliesToPickup,
-			stopType: shipment.StopTypeDelivery,
+			stopType: shipmentvocab.StopTypeDelivery,
 		},
 		{
 			name:     "delivery allows delivery",
 			applies:  ReasonCodeAppliesToDelivery,
-			stopType: shipment.StopTypeDelivery,
+			stopType: shipmentvocab.StopTypeDelivery,
 			want:     true,
 		},
 		{
 			name:     "delivery allows split delivery",
 			applies:  ReasonCodeAppliesToDelivery,
-			stopType: shipment.StopTypeSplitDelivery,
+			stopType: shipmentvocab.StopTypeSplitDelivery,
 			want:     true,
 		},
 		{
 			name:     "both allows pickup",
 			applies:  ReasonCodeAppliesToBoth,
-			stopType: shipment.StopTypePickup,
+			stopType: shipmentvocab.StopTypePickup,
 			want:     true,
 		},
 		{
 			name:     "both allows delivery",
 			applies:  ReasonCodeAppliesToBoth,
-			stopType: shipment.StopTypeDelivery,
+			stopType: shipmentvocab.StopTypeDelivery,
 			want:     true,
 		},
 	}

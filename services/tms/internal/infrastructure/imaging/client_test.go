@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -133,7 +133,7 @@ func serve(t *testing.T, worker imagingpb.ImagingServiceServer) string {
 
 func dial(t *testing.T, addresses ...string) *Client {
 	t.Helper()
-	cfg := &config.ImagingConfig{
+	cfg := &imagingconfig.Config{
 		Endpoint:       "passthrough:///" + addresses[0],
 		ChunkBytes:     16 << 10,
 		InitialBackoff: time.Millisecond,
@@ -257,7 +257,7 @@ func TestAnUnreadPageBodyIsDrainedSoTheStreamCarriesOn(t *testing.T) {
 func TestTheBreakerTakesAFailingEndpointOutOfRotation(t *testing.T) {
 	t.Parallel()
 
-	breaker := &config.ImagingBreakerConfig{ConsecutiveFailures: 2, OpenFor: time.Minute}
+	breaker := &imagingconfig.BreakerConfig{ConsecutiveFailures: 2, OpenFor: time.Minute}
 	e := &endpoint{address: "a"}
 	now := time.Now()
 	unavailable := status.Error(codes.Unavailable, "gone")
@@ -269,8 +269,24 @@ func TestTheBreakerTakesAFailingEndpointOutOfRotation(t *testing.T) {
 	assert.True(t, e.available(now.Add(2*time.Minute)), "it closes again after openFor")
 
 	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: nil}, breaker, now)
-	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: status.Error(codes.InvalidArgument, "bad document")}, breaker, now)
-	e.record(callOutcome{ctx: t.Context(), parent: t.Context(), err: status.Error(codes.InvalidArgument, "bad document")}, breaker, now)
+	e.record(
+		callOutcome{
+			ctx:    t.Context(),
+			parent: t.Context(),
+			err:    status.Error(codes.InvalidArgument, "bad document"),
+		},
+		breaker,
+		now,
+	)
+	e.record(
+		callOutcome{
+			ctx:    t.Context(),
+			parent: t.Context(),
+			err:    status.Error(codes.InvalidArgument, "bad document"),
+		},
+		breaker,
+		now,
+	)
 	assert.True(t, e.available(now), "a bad document says nothing about the endpoint")
 
 	draining := refusal(codes.Unavailable, "DRAINING", time.Second)
@@ -308,9 +324,9 @@ func TestOnlyTheTransportsFailuresCountAgainstAnEndpoint(t *testing.T) {
 
 	e := &endpoint{address: "a"}
 	client := &Client{
-		cfg: &config.ImagingConfig{
+		cfg: &imagingconfig.Config{
 			MaxAttempts: 1,
-			Breaker:     config.ImagingBreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
+			Breaker:     imagingconfig.BreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
 		},
 		endpoints: &endpointSet{static: true, endpoints: []*endpoint{e}},
 		logger:    zap.NewNop(),
@@ -339,7 +355,11 @@ func TestOnlyTheTransportsFailuresCountAgainstAnEndpoint(t *testing.T) {
 		failWith(cancelled, status.Error(codes.Canceled, context.Canceled.Error()))
 		failWith(expired, status.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error()))
 	}
-	assert.True(t, e.available(time.Now()), "a cancelled caller, or one already past its deadline, is not the worker's")
+	assert.True(
+		t,
+		e.available(time.Now()),
+		"a cancelled caller, or one already past its deadline, is not the worker's",
+	)
 
 	for range 5 {
 		failWith(t.Context(), status.Error(codes.Unavailable, "connection refused"))
@@ -349,16 +369,18 @@ func TestOnlyTheTransportsFailuresCountAgainstAnEndpoint(t *testing.T) {
 
 func breakerClient(e *endpoint) *Client {
 	return &Client{
-		cfg: &config.ImagingConfig{
+		cfg: &imagingconfig.Config{
 			MaxAttempts: 1,
-			Breaker:     config.ImagingBreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
+			Breaker:     imagingconfig.BreakerConfig{ConsecutiveFailures: 5, OpenFor: time.Minute},
 		},
 		endpoints: &endpointSet{static: true, endpoints: []*endpoint{e}},
 		logger:    zap.NewNop(),
 	}
 }
 
-func waitForTheEnd(progress bool) func(context.Context, imagingpb.ImagingServiceClient, *bool) error {
+func waitForTheEnd(
+	progress bool,
+) func(context.Context, imagingpb.ImagingServiceClient, *bool) error {
 	return func(ctx context.Context, _ imagingpb.ImagingServiceClient, progressed *bool) error {
 		if progress {
 			*progressed = true
@@ -374,7 +396,12 @@ func TestAWorkerThatNeverAnswersIsTakenOutOfRotation(t *testing.T) {
 	e := &endpoint{address: "a"}
 	client := breakerClient(e)
 	for range 5 {
-		err := client.call(t.Context(), 5*time.Millisecond, kernelports.ImagingBatch, waitForTheEnd(false))
+		err := client.call(
+			t.Context(),
+			5*time.Millisecond,
+			kernelports.ImagingBatch,
+			waitForTheEnd(false),
+		)
 		require.ErrorIs(t, err, kernelports.ErrImagingTimeout)
 	}
 	assert.False(t, e.available(time.Now()), "five silent deadlines open the breaker")
@@ -386,7 +413,12 @@ func TestADeadlineAfterTheWorkerAnsweredDoesNotCount(t *testing.T) {
 	e := &endpoint{address: "a"}
 	client := breakerClient(e)
 	for range 5 {
-		err := client.call(t.Context(), 5*time.Millisecond, kernelports.ImagingBatch, waitForTheEnd(true))
+		err := client.call(
+			t.Context(),
+			5*time.Millisecond,
+			kernelports.ImagingBatch,
+			waitForTheEnd(true),
+		)
 		require.Error(t, err)
 	}
 	assert.True(t, e.available(time.Now()), "a worker that was answering is slow, not gone")

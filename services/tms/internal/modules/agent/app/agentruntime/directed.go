@@ -1,29 +1,16 @@
 package agentruntime
 
 import (
-	"strings"
-
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
-
-// directedTask is the task the person handed another agent, on a turn that
-// can run one: the person's own, read as it runs, in a conversation that
-// keeps what the other agent does.
-func directedTask(req *agentports.RunRequest) *agentports.DirectedTask {
-	if req.Directed == nil || req.Delegation != nil || req.Unattended ||
-		req.ThreadID.IsNil() {
-		return nil
-	}
-	task := *req.Directed
-	if len(task.Records) == 0 {
-		task.Records = recordsInPlay(req)
-	}
-
-	return &task
-}
 
 // driveDirected runs a task the person handed straight to another agent
 // from the conversation, in place of the conversation's own agent's reply.
@@ -39,116 +26,58 @@ func directedTask(req *agentports.RunRequest) *agentports.DirectedTask {
 // The person's choice stands in for the conversation's agent's list; every
 // other check is made again when the task opens: the agent exists, is
 // enabled and talked to, the person may use it, and its budget is not spent.
-func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentports.RunResult {
+func (s *Service) driveDirected(t *Turn, fx TurnEffects) *agentruntimeports.RunResult {
 	directed := t.directed
 	result := t.result
-	call := agentports.ToolCall{
+	call := llmports.ToolCall{
 		ID:   fx.NewCallID(),
-		Name: delegateTaskName,
+		Name: runtimetools.DelegateTaskName,
 		Arguments: map[string]any{
-			delegateAgentParam: directed.Delegate.ID.String(),
-			delegateTaskParam:  directed.Task,
+			runtimetools.DelegateAgentParam: directed.Delegate.ID.String(),
+			runtimetools.DelegateTaskParam:  directed.Task,
 		},
 	}
 	t.ReserveCallIDs([]string{call.ID})
 
 	opening := conversation.Message{
 		Role:      conversation.RoleAssistant,
-		ToolCalls: toToolCallRecords([]agentports.ToolCall{call}),
+		ToolCalls: turnhistory.ToToolCallRecords([]llmports.ToolCall{call}),
 		CreatedAt: fx.Now(),
 	}
 	result.Messages = append(result.Messages, opening)
-	t.messages = append(t.messages, agentports.Message{
-		Role:      agentports.RoleAssistant,
-		ToolCalls: []agentports.ToolCall{call},
+	t.messages = append(t.messages, llmports.Message{
+		Role:      llmports.RoleAssistant,
+		ToolCalls: []llmports.ToolCall{call},
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventMessage,
-		Data: agentports.AssistantMessageEvent{
-			ToolCalls: s.callsWithEffects(opening.ToolCalls),
+		Event: assistantstreamports.AssistantEventMessage,
+		Data: assistantstreamports.AssistantMessageEvent{
+			ToolCalls: s.access.CallsWithEffects(opening.ToolCalls),
 		},
 	})
 	fx.Emit(kernelports.StreamEvent{
-		Event: agentports.AssistantEventToolStarted,
-		Data: agentports.AssistantToolStartedEvent{
+		Event: assistantstreamports.AssistantEventToolStarted,
+		Data: assistantstreamports.AssistantToolStartedEvent{
 			CallID:    call.ID,
 			Name:      call.Name,
 			Arguments: call.Arguments,
-			Effect:    s.ToolEffect(call.Name),
+			Effect:    s.access.ToolEffect(call.Name),
 		},
 	})
 
-	t.delegations++
-	outcome, report := s.handTask(t, fx, &handedTask{
-		call:     call,
-		delegate: directed.Delegate,
-		task:     directed.Task,
-		handed:   handedRecords(directed.Records),
-		directed: true,
+	t.CountDelegation()
+	outcome, report := delegation.Hand(t, s.handing(t, fx), &delegation.HandedTask{
+		Call:     call,
+		Delegate: directed.Delegate,
+		Task:     directed.Task,
+		Handed:   delegation.HandedRecords(directed.Records),
+		Directed: true,
 	})
 	result.ToolCallsUsed++
-	s.recordToolResult(t, fx, call, outcome)
+	s.recordToolResult(t, fx, &call, &outcome)
 
-	reply := directedReply(&report)
-	fx.Emit(deltaEvent(reply))
+	reply := delegation.DirectedReply(&report)
+	fx.Emit(modelstream.DeltaEvent(reply))
 
-	return s.finish(result, &agentports.ChatCompletionResult{Text: reply}, fx)
-}
-
-// recordsInPlay hands the conversation's subject and the records it has been
-// working on to the agent the person turned to. Without them "bill it" reached
-// the billing agent as two words, and it went looking for which load.
-func recordsInPlay(req *agentports.RunRequest) []agent.RecordRef {
-	watched := watchedRecords(req)
-	records := make([]agent.RecordRef, 0, min(len(watched), maxDelegateRecords))
-	for _, record := range watched {
-		if len(records) == maxDelegateRecords {
-			break
-		}
-		if record.Type == "" || record.ID == "" {
-			continue
-		}
-		records = append(records, agent.RecordRef{EntityType: record.Type, ID: record.ID})
-	}
-	if len(records) == 0 {
-		return nil
-	}
-
-	return records
-}
-
-func handedRecords(records []agent.RecordRef) *DelegateContext {
-	if len(records) == 0 {
-		return nil
-	}
-
-	return &DelegateContext{Records: records}
-}
-
-// directedReply is what closes a directed turn: the other agent's answer,
-// or why there is none, so the conversation never ends on a tool result
-// and the person reads the outcome where they read every reply.
-func directedReply(report *agentports.AssistantDelegateFinishedEvent) string {
-	reply := strings.TrimSpace(report.Reply)
-	switch report.Status {
-	case agentports.DelegateStatusCompleted:
-		if reply != "" {
-			return reply
-		}
-		return report.AgentName + " finished without saying anything more."
-	case agentports.DelegateStatusExhausted:
-		if reply != "" {
-			return reply + "\n\n" + report.Reason
-		}
-		return report.Reason
-	case agentports.DelegateStatusDeclined,
-		agentports.DelegateStatusRefused,
-		agentports.DelegateStatusStopped,
-		agentports.DelegateStatusFailed:
-		if report.Reason != "" {
-			return report.Reason
-		}
-	}
-
-	return report.AgentName + " did not report back."
+	return s.finish(result, &llmports.ChatCompletionResult{Text: reply}, fx)
 }

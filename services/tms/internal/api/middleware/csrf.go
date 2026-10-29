@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
@@ -15,11 +16,14 @@ import (
 )
 
 type CSRFMiddleware struct {
-	cfg          *config.Config
+	cfg          *securityconfig.Config
 	errorHandler *helpers.ErrorHandler
 }
 
-func NewCSRFMiddleware(cfg *config.Config, errorHandler *helpers.ErrorHandler) *CSRFMiddleware {
+func NewCSRFMiddleware(
+	cfg *securityconfig.Config,
+	errorHandler *helpers.ErrorHandler,
+) *CSRFMiddleware {
 	return &CSRFMiddleware{
 		cfg:          cfg,
 		errorHandler: errorHandler,
@@ -27,7 +31,7 @@ func NewCSRFMiddleware(cfg *config.Config, errorHandler *helpers.ErrorHandler) *
 }
 
 type CSRFBrowserGuard struct {
-	cfg            *config.Config
+	cfg            *securityconfig.Config
 	errorHandler   *helpers.ErrorHandler
 	logger         *zap.Logger
 	trustedOrigins map[string]struct{}
@@ -35,11 +39,12 @@ type CSRFBrowserGuard struct {
 }
 
 func NewCSRFBrowserGuard(
-	cfg *config.Config,
+	cfg *securityconfig.Config,
+	server *serverconfig.Config,
 	errorHandler *helpers.ErrorHandler,
 	logger *zap.Logger,
 ) *CSRFBrowserGuard {
-	trustedOrigins, trustAll := buildTrustedOrigins(cfg)
+	trustedOrigins, trustAll := buildTrustedOrigins(cfg, server)
 
 	return &CSRFBrowserGuard{
 		cfg:            cfg,
@@ -68,9 +73,9 @@ func (m *CSRFMiddleware) RequireToken() gin.HandlerFunc {
 			return
 		}
 
-		token := c.GetHeader(m.cfg.Security.CSRF.HeaderName)
+		token := c.GetHeader(m.cfg.CSRF.HeaderName)
 		if token == "" ||
-			!csrf.Verify(token, authCtx.SessionID.String(), m.cfg.Security.Session.Secret) {
+			!csrf.Verify(token, authCtx.SessionID.String(), m.cfg.Session.Secret) {
 			m.reject(c)
 			return
 		}
@@ -81,7 +86,7 @@ func (m *CSRFMiddleware) RequireToken() gin.HandlerFunc {
 
 func (m *CSRFBrowserGuard) Guard() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		mode := strings.ToLower(strings.TrimSpace(m.cfg.Security.CSRF.BrowserGuard.Mode))
+		mode := strings.ToLower(strings.TrimSpace(m.cfg.CSRF.BrowserGuard.Mode))
 		if mode == "" {
 			mode = "report"
 		}
@@ -140,7 +145,7 @@ func (m *CSRFBrowserGuard) violation(c *gin.Context) string {
 }
 
 func (m *CSRFBrowserGuard) hasSessionCookie(c *gin.Context) bool {
-	sessionID, err := c.Cookie(m.cfg.Security.Session.Name)
+	sessionID, err := c.Cookie(m.cfg.Session.Name)
 	return err == nil && strings.TrimSpace(sessionID) != ""
 }
 
@@ -193,10 +198,13 @@ func isSafeMethod(method string) bool {
 	}
 }
 
-func buildTrustedOrigins(cfg *config.Config) (map[string]struct{}, bool) {
-	origins := cfg.Security.CSRF.TrustedOrigins
+func buildTrustedOrigins(
+	securityConfig *securityconfig.Config,
+	serverConfig *serverconfig.Config,
+) (map[string]struct{}, bool) {
+	origins := securityConfig.CSRF.TrustedOrigins
 	if len(origins) == 0 {
-		origins = cfg.Server.CORS.AllowedOrigins
+		origins = serverConfig.CORS.AllowedOrigins
 	}
 
 	trustedOrigins := make(map[string]struct{}, len(origins))

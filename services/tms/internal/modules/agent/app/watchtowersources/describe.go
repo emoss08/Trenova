@@ -5,30 +5,31 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-
+	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/checkcallports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 /*
@@ -49,7 +50,6 @@ const (
 	pathServiceFailures = "/shipment-management/service-failures"
 	pathCarrierMonitor  = "/dispatch/carrier-monitoring"
 	pathWorkers         = "/hr/workers"
-	pathDispatchConsole = "/dispatch/console"
 	pathEDIInbound      = "/edi/inbound-files"
 	pathBillingQueue    = "/billing/queue"
 	pathDetentionDesk   = "/detention/desk"
@@ -61,24 +61,11 @@ const (
 	// being a problem; one already expired is a driver who cannot roll.
 	credentialWarningDays = int64(7)
 	// A move this close to its start has run out of room to plan around.
-	coverageCriticalHours   = int64(4)
-	maxStopVisitTitleLength = 200
+	coverageCriticalHours = int64(4)
 )
 
 func panelPath(base string, id string) string {
 	return base + "?panelType=edit&panelEntityId=" + id
-}
-
-// firstNonZero is for the timestamps a record keeps in more than one place:
-// an EDI file's received time, or failing that when the row was written.
-func firstNonZero(values ...int64) int64 {
-	for _, value := range values {
-		if value > 0 {
-			return value
-		}
-	}
-
-	return 0
 }
 
 // DescribeInsight is a finding as the tower shows it: the headline, the
@@ -108,7 +95,7 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 		Summary:     stringutils.FirstNonEmpty(entity.Recommendation, entity.Narrative),
 		SubjectType: agent.SubjectInsight,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventInsightDetected,
+		EventKind:   agenttrigger.EventInsightDetected,
 		Path:        path,
 		OccurredAt:  entity.DetectedAt,
 	}
@@ -133,21 +120,27 @@ func DescribeProposal(
 		SourceKind: watchtower.SourceAgentProposal,
 		SourceID:   entity.ID.String(),
 		Severity:   watchtower.SeverityInfo,
-		Title: who + " wants to " + stringutils.HumanizeSnakeCase(
-			agentports.ReadingOrder(entity.ToolName),
+		Title: who + " wants to " + textcase.HumanizeSnakeCase(
+			agenttoolports.ReadingOrder(entity.ToolName),
 		),
 		Summary: entity.Rationale,
 		Path:    pathDecisions + "?run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
-			fact("Agent", who),
-			fact("Change", stringutils.HumanizeSnakeCase(agentports.ReadingOrder(entity.ToolName))),
+			watchtoweritem.Fact("Agent", who),
+			watchtoweritem.Fact(
+				"Change",
+				textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(entity.ToolName)),
+			),
 		},
 		OccurredAt: entity.CreatedAt,
 	}
 }
 
 // DescribePlan is a plan waiting on a person, decided as one.
-func DescribePlan(entity *agent.AgentPlan, agentName string) watchtowerports.WatchtowerItemInput {
+func DescribePlan(
+	entity *agentplan.AgentPlan,
+	agentName string,
+) watchtowerports.WatchtowerItemInput {
 	who := agentName
 	if who == "" {
 		who = "An agent"
@@ -169,8 +162,8 @@ func DescribePlan(entity *agent.AgentPlan, agentName string) watchtowerports.Wat
 		Summary:    entity.Summary,
 		Path:       pathDecisions + "?run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
-			fact("Agent", who),
-			fact("Steps", strconv.Itoa(entity.StepCount)),
+			watchtoweritem.Fact("Agent", who),
+			watchtoweritem.Fact("Steps", strconv.Itoa(entity.StepCount)),
 		},
 		OccurredAt: entity.CreatedAt,
 	}
@@ -213,9 +206,9 @@ func DescribeFailedRun(
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=runs&run=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
-			fact("Agent", who),
-			fact("Error", entity.ErrorMessage),
-			fact("Run", entity.ID.String()),
+			watchtoweritem.Fact("Agent", who),
+			watchtoweritem.Fact("Error", entity.ErrorMessage),
+			watchtoweritem.Fact("Run", entity.ID.String()),
 		},
 		Trail:      trail,
 		OccurredAt: occurredAt,
@@ -224,9 +217,9 @@ func DescribeFailedRun(
 
 // DescribeException is what an agent raised because it could not do its
 // work the way it was asked.
-func DescribeException(entity *agent.AgentException) watchtowerports.WatchtowerItemInput {
+func DescribeException(entity *agentexception.AgentException) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityWarning
-	if entity.Severity == agent.SeverityCritical {
+	if entity.Severity == agentexception.SeverityCritical {
 		severity = watchtower.SeverityCritical
 	}
 
@@ -238,13 +231,13 @@ func DescribeException(entity *agent.AgentException) watchtowerports.WatchtowerI
 		SourceKind:  watchtower.SourceAgentException,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
-		Title:       "Agent exception: " + stringutils.HumanizeSnakeCase(string(entity.Category)),
+		Title:       "Agent exception: " + textcase.HumanizeSnakeCase(string(entity.Category)),
 		Summary:     entity.AttemptSummary,
 		SubjectType: entity.SubjectType,
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=exceptions&exception=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
-			fact("Category", stringutils.HumanizeSnakeCase(string(entity.Category))),
+			watchtoweritem.Fact("Category", textcase.HumanizeSnakeCase(string(entity.Category))),
 		},
 		OccurredAt: entity.CreatedAt,
 	}
@@ -261,7 +254,7 @@ func DescribeServiceFailure(
 	}
 	summary := fmt.Sprintf(
 		"%s, %d minutes late",
-		stringutils.HumanizeSnakeCase(string(entity.Type)),
+		textcase.HumanizeSnakeCase(string(entity.Type)),
 		entity.LateMinutes,
 	)
 	if entity.Notes != "" {
@@ -280,13 +273,16 @@ func DescribeServiceFailure(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   entity.ShipmentID,
-		EventKind:   agent.EventServiceFailureDetected,
+		EventKind:   agenttrigger.EventServiceFailureDetected,
 		Path:        panelPath(pathServiceFailures, entity.ID.String()),
-		Record:      resourceRecord(permission.ResourceServiceFailure, entity.Number),
+		Record: watchtoweritem.ResourceRecord(
+			permission.ResourceServiceFailure,
+			entity.Number,
+		),
 		Facts: []watchtower.Fact{
-			fact("Failure", stringutils.HumanizeSnakeCase(string(entity.Type))),
-			fact("Late by", minutesPhrase(int64(entity.LateMinutes))),
-			factAt("Detected", entity.DetectedAt),
+			watchtoweritem.Fact("Failure", textcase.HumanizeSnakeCase(string(entity.Type))),
+			watchtoweritem.Fact("Late by", watchtoweritem.MinutesPhrase(entity.LateMinutes)),
+			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
 		OccurredAt: entity.DetectedAt,
 	}
@@ -295,7 +291,7 @@ func DescribeServiceFailure(
 // CarrierIntelEventOnTower reports whether a change belongs on the feed.
 // An informational or low finding is part of the carrier's record rather
 // than something a person has to act on, and a closed event is over.
-func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
+func CarrierIntelEventOnTower(entity *carrierintelevent.CarrierIntelEvent) bool {
 	if entity == nil || entity.Status.IsClosed() {
 		return false
 	}
@@ -307,7 +303,7 @@ func CarrierIntelEventOnTower(entity *carrierintel.CarrierIntelEvent) bool {
 // DescribeCarrierIntelEvent is a change on a carrier's authority, insurance
 // or safety record.
 func DescribeCarrierIntelEvent(
-	entity *carrierintel.CarrierIntelEvent,
+	entity *carrierintelevent.CarrierIntelEvent,
 ) watchtowerports.WatchtowerItemInput {
 	severity := watchtower.SeverityInfo
 	switch entity.Severity {
@@ -329,17 +325,17 @@ func DescribeCarrierIntelEvent(
 		SourceKind:  watchtower.SourceCarrierIntelEvent,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
-		Title:       name + ": " + stringutils.HumanizeSnakeCase(string(entity.Category)),
+		Title:       name + ": " + textcase.HumanizeSnakeCase(string(entity.Category)),
 		Summary:     entity.Summary,
 		SubjectType: agent.SubjectCarrierIntelEvent,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventCarrierIntelEventOpened,
+		EventKind:   agenttrigger.EventCarrierIntelEventOpened,
 		Path:        pathCarrierMonitor + "?tab=events&event=" + entity.ID.String(),
-		Record:      resourceRecord(permission.ResourceCarrier, name),
+		Record:      watchtoweritem.ResourceRecord(permission.ResourceCarrier, name),
 		Facts: []watchtower.Fact{
-			fact("DOT", entity.DOTNumber),
-			fact("Change", stringutils.HumanizeSnakeCase(string(entity.Category))),
-			factAt("Detected", entity.DetectedAt),
+			watchtoweritem.Fact("DOT", entity.DOTNumber),
+			watchtoweritem.Fact("Change", textcase.HumanizeSnakeCase(string(entity.Category))),
+			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
 		OccurredAt: entity.DetectedAt,
 	}
@@ -370,7 +366,7 @@ func DescribeHOSViolation(
 		SourceKind: watchtower.SourceHOSViolation,
 		SourceID:   HOSViolationSourceID(entity),
 		Severity:   watchtower.SeverityWarning,
-		Title:      who + ": " + stringutils.HumanizeSnakeCase(entity.ViolationType),
+		Title:      who + ": " + textcase.HumanizeSnakeCase(entity.ViolationType),
 		Summary:    entity.Description,
 		// Nothing is woken by an hours violation, so the item carries its
 		// driver for a conversation to start from rather than an event to
@@ -378,10 +374,10 @@ func DescribeHOSViolation(
 		SubjectType: agent.SubjectWorker,
 		SubjectID:   entity.WorkerID,
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
-		Record:      resourceRecord(permission.ResourceWorker, who),
+		Record:      watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
 		Facts: []watchtower.Fact{
-			fact("Violation", stringutils.HumanizeSnakeCase(entity.ViolationType)),
-			factAt("Started", entity.ViolationStartAt),
+			watchtoweritem.Fact("Violation", textcase.HumanizeSnakeCase(entity.ViolationType)),
+			watchtoweritem.FactAt("Started", entity.ViolationStartAt),
 		},
 		OccurredAt: entity.ViolationStartAt,
 	}
@@ -419,19 +415,21 @@ func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) watchtowerports.Wat
 		Severity:   severity,
 		Title:      stringutils.FirstNonEmpty(entity.Headline, entity.Event),
 		Summary:    entity.AreaDesc,
-		Path:       pathDispatchConsole,
+		Path:       watchtoweritem.PathDispatchConsole,
 		Facts: []watchtower.Fact{
-			fact("Event", entity.Event),
-			fact("Severity", entity.Severity),
-			factAtPtr("Ends", entity.Ends),
+			watchtoweritem.Fact("Event", entity.Event),
+			watchtoweritem.Fact("Severity", entity.Severity),
+			watchtoweritem.FactAtPtr("Ends", entity.Ends),
 		},
-		Deadline:   deadlineAtPtr(entity.Expires, "Alert expires"),
+		Deadline:   watchtoweritem.DeadlineAtPtr(entity.Expires, "Alert expires"),
 		OccurredAt: occurredAt,
 	}
 }
 
 // DescribeQuarantinedFile is an EDI file that could not be processed.
-func DescribeQuarantinedFile(entity *edi.EDIInboundFile) watchtowerports.WatchtowerItemInput {
+func DescribeQuarantinedFile(
+	entity *ediinboundfile.EDIInboundFile,
+) watchtowerports.WatchtowerItemInput {
 	return watchtowerports.WatchtowerItemInput{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
@@ -447,14 +445,17 @@ func DescribeQuarantinedFile(entity *edi.EDIInboundFile) watchtowerports.Watchto
 		Summary:     entity.FailureReason,
 		SubjectType: agent.SubjectEDIInboundFile,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventEDIFileQuarantined,
+		EventKind:   agenttrigger.EventEDIFileQuarantined,
 		Path:        panelPath(pathEDIInbound, entity.ID.String()),
-		Record:      kindRecord(permission.KindEDIInboundFile, entity.FileName),
+		Record:      watchtoweritem.KindRecord(recordkind.EDIInboundFile, entity.FileName),
 		Facts: []watchtower.Fact{
-			fact("Reason", entity.FailureReason),
-			factAt("Received", firstNonZero(entity.ReceivedAt, entity.CreatedAt)),
+			watchtoweritem.Fact("Reason", entity.FailureReason),
+			watchtoweritem.FactAt(
+				"Received",
+				intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
+			),
 		},
-		OccurredAt: firstNonZero(entity.ReceivedAt, entity.CreatedAt),
+		OccurredAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 	}
 }
 
@@ -465,7 +466,7 @@ func DescribeBillingException(
 ) watchtowerports.WatchtowerItemInput {
 	reason := "Needs review"
 	if entity.ExceptionReasonCode != nil {
-		reason = stringutils.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
+		reason = textcase.HumanizeSnakeCase(string(*entity.ExceptionReasonCode))
 	}
 
 	return watchtowerports.WatchtowerItemInput{
@@ -480,10 +481,10 @@ func DescribeBillingException(
 		Summary:     entity.ExceptionNotes,
 		SubjectType: agent.SubjectBillingQueueItem,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventBillingQueueItemException,
+		EventKind:   agenttrigger.EventBillingQueueItemException,
 		Path:        panelPath(pathBillingQueue, entity.ID.String()),
 		Facts: []watchtower.Fact{
-			fact("Reason", reason),
+			watchtoweritem.Fact("Reason", reason),
 		},
 		OccurredAt: entity.UpdatedAt,
 	}
@@ -519,13 +520,16 @@ func DescribeDetentionOccurrence(
 		dueLabel = "Detention is accruing"
 	}
 	facts := []watchtower.Fact{
-		factAtPtr("Arrived", entity.ArrivedAt),
-		fact("Free time", minutesPhrase(int64(entity.FreeMinutesGranted))),
+		watchtoweritem.FactAtPtr("Arrived", entity.ArrivedAt),
+		watchtoweritem.Fact(
+			"Free time",
+			watchtoweritem.MinutesPhrase(int64(entity.FreeMinutesGranted)),
+		),
 	}
 	impact := make([]string, 0, 2)
 	if !entity.BillableAmount.IsZero() {
 		accrued := entity.BillableAmount.StringFixed(2) + " " + entity.Currency
-		facts = append(facts, fact("Accrued", accrued))
+		facts = append(facts, watchtoweritem.Fact("Accrued", accrued))
 		impact = append(impact, accrued+" so far")
 	}
 	if entity.CustomerName != "" {
@@ -560,13 +564,13 @@ func DescribeDetentionOccurrence(
 		Summary:     summary,
 		SubjectType: agent.SubjectDetentionOccurrence,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventDetentionOccurrenceOpened,
+		EventKind:   agenttrigger.EventDetentionOccurrenceOpened,
 		Path:        pathDetentionDesk + "?occurrence=" + entity.ID.String(),
-		Record:      shipmentRecord(entity.ShipmentProNumber),
+		Record:      watchtoweritem.ShipmentRecord(entity.ShipmentProNumber),
 		Facts:       facts,
 		Impact:      impact,
 		Trail:       trail,
-		Deadline:    deadlineAt(entity.FreeTimeExpiresAt, dueLabel),
+		Deadline:    watchtoweritem.DeadlineAt(entity.FreeTimeExpiresAt, dueLabel),
 		OccurredAt:  entity.ClockStartAt,
 	}
 }
@@ -614,9 +618,9 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 	for i := range entity.Papers {
 		paper := &entity.Papers[i]
 		if paper.ExpiresAt > 0 {
-			facts = append(facts, factAt(paper.Name, paper.ExpiresAt))
+			facts = append(facts, watchtoweritem.FactAt(paper.Name, paper.ExpiresAt))
 		} else {
-			facts = append(facts, fact(paper.Name, expiryPhrase(paper.DaysLeft)))
+			facts = append(facts, watchtoweritem.Fact(paper.Name, expiryPhrase(paper.DaysLeft)))
 		}
 		if paper.ExpiresAt > 0 &&
 			(soonestPaper == nil || paper.ExpiresAt < soonestPaper.ExpiresAt) {
@@ -625,7 +629,7 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 	}
 	var deadline *watchtower.Deadline
 	if soonestPaper != nil {
-		deadline = deadlineAt(soonestPaper.ExpiresAt, soonestPaper.Name+" expires")
+		deadline = watchtoweritem.DeadlineAt(soonestPaper.ExpiresAt, soonestPaper.Name+" expires")
 	}
 
 	who := entity.WorkerName
@@ -642,9 +646,9 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 		Summary:     strings.Join(parts, ", "),
 		SubjectType: agent.SubjectWorker,
 		SubjectID:   entity.WorkerID,
-		EventKind:   agent.EventWorkerCredentialExpiring,
+		EventKind:   agenttrigger.EventWorkerCredentialExpiring,
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
-		Record:      resourceRecord(permission.ResourceWorker, who),
+		Record:      watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
 		Facts:       facts,
 		Deadline:    deadline,
 		OccurredAt:  entity.OccurredAt,
@@ -715,14 +719,17 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   entity.MoveID,
-		EventKind:   agent.EventShipmentMoveCoverageAtRisk,
-		Path:        pathDispatchConsole,
-		Record:      resourceRecord(permission.ResourceShipmentMove, entity.ProNumber),
+		EventKind:   agenttrigger.EventShipmentMoveCoverageAtRisk,
+		Path:        watchtoweritem.PathDispatchConsole,
+		Record: watchtoweritem.ResourceRecord(
+			permission.ResourceShipmentMove,
+			entity.ProNumber,
+		),
 		Facts: []watchtower.Fact{
-			factAt("Starts", entity.StartsAt),
-			fact("Reason", entity.Reason),
+			watchtoweritem.FactAt("Starts", entity.StartsAt),
+			watchtoweritem.Fact("Reason", entity.Reason),
 		},
-		Deadline:   deadlineAt(entity.StartsAt, "Move starts"),
+		Deadline:   watchtoweritem.DeadlineAt(entity.StartsAt, "Move starts"),
 		OccurredAt: entity.StartsAt,
 	}
 }
@@ -752,18 +759,21 @@ func DescribeInboundMessage(
 		Summary:     inboundMessageSummary(entity),
 		SubjectType: agent.SubjectInboundMessage,
 		SubjectID:   entity.ID,
-		EventKind:   agent.EventInboundMessageClassified,
+		EventKind:   agenttrigger.EventInboundMessageClassified,
 		Path:        pathInbox + "?message=" + entity.ID.String(),
-		Record: resourceRecord(
+		Record: watchtoweritem.ResourceRecord(
 			permission.ResourceInboundMessage,
 			stringutils.FirstNonEmpty(entity.Subject, "(no subject)"),
 		),
 		Facts: []watchtower.Fact{
-			fact("From", entity.FromAddress),
-			fact("Kind", string(entity.Classification)),
-			factAt("Received", firstNonZero(entity.ReceivedAt, entity.CreatedAt)),
+			watchtoweritem.Fact("From", entity.FromAddress),
+			watchtoweritem.Fact("Kind", string(entity.Classification)),
+			watchtoweritem.FactAt(
+				"Received",
+				intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
+			),
 		},
-		OccurredAt: firstNonZero(entity.ReceivedAt, entity.CreatedAt),
+		OccurredAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 	}
 }
 
@@ -797,204 +807,4 @@ func inboundMessageSummary(entity *inboundmessage.InboundMessage) string {
 	}
 
 	return strings.Join(parts, " · ")
-}
-
-func TelematicsStopVisitSourceID(event *telematics.TelematicsEvent) string {
-	target := "unlocated"
-	switch {
-	case event.StopID.IsNotNil():
-		target = event.StopID.String()
-	case event.LocationID.IsNotNil():
-		target = event.LocationID.String()
-	}
-
-	return event.ShipmentMoveID.String() + ":" + target + ":" + string(event.StopVisit)
-}
-
-func DescribeTelematicsStopVisit(
-	review *telematicsports.StopReview,
-) watchtowerports.WatchtowerItemInput {
-	event := review.Event
-
-	visit := "Arrival"
-	if event.StopVisit == shipment.VisitDeparture {
-		visit = "Departure"
-	}
-	title := visit + " not recorded"
-	if place := strings.TrimSpace(event.AddressName); place != "" {
-		title = visit + " at " + place + " not recorded"
-	}
-
-	path := pathDispatchConsole
-	if review.ShipmentID.IsNotNil() {
-		if recordPath, ok := productguide.RecordPath("shipment", review.ShipmentID.String()); ok {
-			path = recordPath
-		}
-	}
-
-	return watchtowerports.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: event.OrganizationID,
-			BuID:  event.BusinessUnitID,
-		},
-		SourceKind:  watchtower.SourceTelematicsStopVisit,
-		SourceID:    TelematicsStopVisitSourceID(event),
-		Severity:    watchtower.SeverityWarning,
-		Title:       stringutils.TruncateRunes(title, maxStopVisitTitleLength),
-		Summary:     event.StopOutcomeReason,
-		SubjectType: agent.SubjectShipmentMove,
-		SubjectID:   event.ShipmentMoveID,
-		Path:        path,
-		Facts: []watchtower.Fact{
-			fact("Place", event.AddressName),
-			factAt("Seen", event.OccurredAt),
-		},
-		OccurredAt: event.OccurredAt,
-	}
-}
-
-func DescribeNoCheckCall(
-	tenant pagination.TenantInfo,
-	move *checkcallports.OverdueMove,
-) watchtowerports.WatchtowerItemInput {
-	window := int64(move.IntervalHours) * 60 * 60
-	severity := watchtower.SeverityWarning
-	if window > 0 && move.OverdueBy >= window {
-		severity = watchtower.SeverityCritical
-	}
-
-	title := "No check call"
-	if move.ProNumber != "" {
-		title = "No check call on " + move.ProNumber
-	}
-
-	carrier := stringutils.FirstNonEmpty(move.CarrierName, "The carrier")
-	hours := strconv.FormatInt(int64(move.IntervalHours), 10)
-	summary := carrier + " has not checked in within the " + hours + "h window for this load."
-	if severity == watchtower.SeverityCritical {
-		summary = carrier + " has been silent for more than twice the " + hours +
-			"h check call window on this load."
-	}
-
-	return watchtowerports.WatchtowerItemInput{
-		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceNoCheckCall,
-		SourceID:    move.MoveID.String(),
-		Severity:    severity,
-		Title:       title,
-		Summary:     summary,
-		SubjectType: agent.SubjectShipmentMove,
-		SubjectID:   move.MoveID,
-		Path:        shipmentPath(move.ShipmentID),
-		Record:      shipmentRecord(move.ProNumber),
-		Facts: []watchtower.Fact{
-			fact("Carrier", move.CarrierName),
-			factAt("Last contact", move.LastContactAt),
-			fact("Window", hours+"h"),
-		},
-		Trail: []watchtower.TrailEvent{
-			{At: move.LastContactAt, Text: "Last heard from " + carrier},
-			{At: move.LastContactAt + window, Text: "Check call window closed"},
-		},
-		OccurredAt: move.LastContactAt + window,
-		OwnerID:    move.OwnerID,
-	}
-}
-
-func DescribeEtaRisk(
-	tenant pagination.TenantInfo,
-	stop *stopetaports.AttentionStop,
-) watchtowerports.WatchtowerItemInput {
-	row := stop.ETA
-	late := row.Verdict == stopeta.VerdictLate
-	severity := watchtower.SeverityWarning
-	if late {
-		severity = watchtower.SeverityCritical
-	}
-
-	place := etaStopPlace(stop)
-	title := "ETA at risk"
-	summary := "Projected to reach " + place + " with less than " +
-		strconv.FormatInt(row.ThresholdMinutes, 10) + " minutes to spare."
-	if late {
-		title = "Projected late"
-		summary = "Projected to reach " + place + " after its window closes."
-	}
-	if stop.ProNumber != "" {
-		title += " on " + stop.ProNumber
-	}
-	if row.InputStale {
-		summary += " The projection is working from old information."
-	}
-
-	windowLabel := "Delivery window closes"
-	if stop.StopType == shipment.StopTypePickup {
-		windowLabel = "Pickup window closes"
-	}
-	facts := []watchtower.Fact{fact("Stop", place), factAtPtr("Window closes", row.WindowEnd)}
-	if row.EstimatedArrival != nil {
-		facts = append(facts, factAt("New ETA", *row.EstimatedArrival))
-	}
-	if row.MilesRemaining > 0 {
-		facts = append(
-			facts,
-			fact("Miles to go", strconv.FormatFloat(row.MilesRemaining, 'f', 0, 64)),
-		)
-	}
-	trail := make([]watchtower.TrailEvent, 0, 2)
-	if row.InputAt != nil {
-		trail = append(
-			trail,
-			watchtower.TrailEvent{At: *row.InputAt, Text: "Last position or check call"},
-		)
-	}
-	if reason := strings.TrimSpace(row.Reason); reason != "" {
-		trail = append(trail, watchtower.TrailEvent{Text: reason})
-	}
-
-	return watchtowerports.WatchtowerItemInput{
-		TenantInfo:  tenant,
-		SourceKind:  watchtower.SourceEtaAtRisk,
-		SourceID:    row.ShipmentID.String(),
-		Severity:    severity,
-		Title:       title,
-		Summary:     summary,
-		SubjectType: agent.SubjectShipment,
-		SubjectID:   row.ShipmentID,
-		Path:        shipmentPath(row.ShipmentID),
-		Record:      shipmentRecord(stop.ProNumber),
-		Facts:       facts,
-		Trail:       trail,
-		Deadline:    deadlineAtPtr(row.WindowEnd, windowLabel),
-		OccurredAt:  etaRiskOccurredAt(row, late),
-		OwnerID:     stop.OwnerID,
-	}
-}
-
-func etaStopPlace(stop *stopetaports.AttentionStop) string {
-	kind := "the " + strings.ToLower(stringutils.FirstNonEmpty(string(stop.StopType), "stop"))
-	city := stop.City
-	if city != "" && stop.StateCode != "" {
-		city += ", " + stop.StateCode
-	}
-	switch {
-	case stop.LocationName != "" && city != "":
-		return kind + " at " + stop.LocationName + " in " + city
-	case stop.LocationName != "":
-		return kind + " at " + stop.LocationName
-	case city != "":
-		return kind + " in " + city
-	default:
-		return kind
-	}
-}
-
-func etaRiskOccurredAt(row *stopeta.StopETA, late bool) int64 {
-	if row.WindowEnd == nil {
-		return row.ComputedAt
-	}
-	if late {
-		return min(*row.WindowEnd, row.ComputedAt)
-	}
-	return min(*row.WindowEnd-row.ThresholdMinutes*60, row.ComputedAt)
 }

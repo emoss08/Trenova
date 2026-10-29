@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -49,10 +51,10 @@ type sourceWork struct {
 	retryAt int64
 }
 
-func (w *sourceWork) ref() agentports.AIRetrievalSourceRef {
+func (w *sourceWork) ref() retrievalports.AIRetrievalSourceRef {
 	key := w.entry.Key()
 
-	return agentports.AIRetrievalSourceRef{
+	return retrievalports.AIRetrievalSourceRef{
 		TenantInfo: key.TenantInfo(),
 		SourceType: w.entry.SourceType,
 		SourceID:   w.entry.SourceID,
@@ -134,7 +136,7 @@ func (b *indexBatch) readMemories(ctx context.Context) error {
 		return nil
 	}
 
-	memories, err := b.service.sources.GetMemories(ctx, agentports.RetrievalSourcesRequest{
+	memories, err := b.service.sources.GetMemories(ctx, retrievalports.RetrievalSourcesRequest{
 		TenantInfo: b.tenant,
 		IDs:        ids,
 	})
@@ -142,7 +144,7 @@ func (b *indexBatch) readMemories(ctx context.Context) error {
 		return fmt.Errorf("read memories: %w", err)
 	}
 
-	found := make(map[pulid.ID]*agent.Memory, len(memories))
+	found := make(map[pulid.ID]*agentmemory.Memory, len(memories))
 	for _, memory := range memories {
 		found[memory.ID] = memory
 	}
@@ -167,7 +169,7 @@ func (b *indexBatch) readDocuments(ctx context.Context) error {
 		return nil
 	}
 
-	sources, err := b.service.sources.GetDocuments(ctx, &agentports.RetrievalDocumentsRequest{
+	sources, err := b.service.sources.GetDocuments(ctx, &retrievalports.RetrievalDocumentsRequest{
 		TenantInfo:   b.tenant,
 		IDs:          ids,
 		IncludePages: true,
@@ -176,7 +178,7 @@ func (b *indexBatch) readDocuments(ctx context.Context) error {
 		return fmt.Errorf("read documents: %w", err)
 	}
 
-	found := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(sources))
+	found := make(map[pulid.ID]*retrievalports.RetrievalDocumentSource, len(sources))
 	for _, source := range sources {
 		found[source.Document.ID] = source
 	}
@@ -208,7 +210,7 @@ func (b *indexBatch) readMessages(ctx context.Context) error {
 
 	messages, err := b.service.sources.GetInboundMessages(
 		ctx,
-		agentports.RetrievalSourcesRequest{TenantInfo: b.tenant, IDs: ids},
+		retrievalports.RetrievalSourcesRequest{TenantInfo: b.tenant, IDs: ids},
 	)
 	if err != nil {
 		return fmt.Errorf("read inbound messages: %w", err)
@@ -233,7 +235,7 @@ func (b *indexBatch) readMessages(ctx context.Context) error {
 	return nil
 }
 
-func DocumentTextEmbeddable(registry *permission.Registry, owner permission.Resource) bool {
+func DocumentTextEmbeddable(registry *permissioncatalog.Registry, owner permission.Resource) bool {
 	if registry == nil || owner == "" {
 		return false
 	}
@@ -259,7 +261,7 @@ func (b *indexBatch) diff(ctx context.Context) error {
 
 		stored, err := b.service.repo.ListChunkHashes(
 			ctx,
-			&agentports.ListEmbeddingChunkHashesRequest{
+			&retrievalports.ListEmbeddingChunkHashesRequest{
 				Source:   work.ref(),
 				ModelKey: b.modelKey,
 			},
@@ -274,7 +276,7 @@ func (b *indexBatch) diff(ctx context.Context) error {
 	return nil
 }
 
-func ChangedChunks(chunks []Chunk, stored []agentports.EmbeddingChunkHash) []int {
+func ChangedChunks(chunks []Chunk, stored []retrievalports.EmbeddingChunkHash) []int {
 	hashes := make(map[int]string, len(stored))
 	for _, chunk := range stored {
 		hashes[chunk.ChunkIndex] = chunk.ContentHash
@@ -344,7 +346,7 @@ func (b *indexBatch) failEmbedding(err error, owners []*sourceWork) {
 	)
 
 	permanent := errortypes.IsBusinessError(err) &&
-		!errors.Is(err, agentports.ErrNoProviderConfigured)
+		!errors.Is(err, llmports.ErrNoProviderConfigured)
 	for _, work := range owners {
 		if work.outcome == outcomeFailed {
 			continue
@@ -370,9 +372,9 @@ func (b *indexBatch) write(ctx context.Context) error {
 				return err
 			}
 		case outcomeIndexed:
-			chunks := make([]agentports.EmbeddingChunk, 0, len(work.chunks))
+			chunks := make([]retrievalports.EmbeddingChunk, 0, len(work.chunks))
 			for idx, chunk := range work.chunks {
-				chunks = append(chunks, agentports.EmbeddingChunk{
+				chunks = append(chunks, retrievalports.EmbeddingChunk{
 					ChunkIndex:  chunk.Index,
 					ContentHash: chunk.Hash,
 					Vector:      work.vectors[idx],
@@ -391,9 +393,9 @@ func (b *indexBatch) write(ctx context.Context) error {
 func (b *indexBatch) replace(
 	ctx context.Context,
 	work *sourceWork,
-	chunks []agentports.EmbeddingChunk,
+	chunks []retrievalports.EmbeddingChunk,
 ) error {
-	_, err := b.service.repo.ReplaceChunks(ctx, &agentports.ReplaceEmbeddingChunksRequest{
+	_, err := b.service.repo.ReplaceChunks(ctx, &retrievalports.ReplaceEmbeddingChunksRequest{
 		Source:     work.ref(),
 		ModelKey:   b.modelKey,
 		Dimensions: b.dimensions,
@@ -410,13 +412,13 @@ func (b *indexBatch) replace(
 	}
 }
 
-func (b *indexBatch) outcomes(outcome sourceOutcome) []agentports.IndexEntryOutcome {
-	outcomes := make([]agentports.IndexEntryOutcome, 0, len(b.works))
+func (b *indexBatch) outcomes(outcome sourceOutcome) []retrievalports.IndexEntryOutcome {
+	outcomes := make([]retrievalports.IndexEntryOutcome, 0, len(b.works))
 	for _, work := range b.works {
 		if work.outcome != outcome {
 			continue
 		}
-		outcomes = append(outcomes, agentports.IndexEntryOutcome{
+		outcomes = append(outcomes, retrievalports.IndexEntryOutcome{
 			Key:        work.entry.Key(),
 			Generation: work.entry.Generation,
 			ChunkCount: len(work.chunks),
@@ -431,7 +433,7 @@ func (b *indexBatch) outcomes(outcome sourceOutcome) []agentports.IndexEntryOutc
 func (b *indexBatch) mark(ctx context.Context) error {
 	marks := []struct {
 		outcome sourceOutcome
-		apply   func(context.Context, agentports.MarkIndexEntriesRequest) (agentports.MarkIndexEntriesResult, error)
+		apply   func(context.Context, retrievalports.MarkIndexEntriesRequest) (retrievalports.MarkIndexEntriesResult, error)
 	}{
 		{outcome: outcomeIndexed, apply: b.service.repo.MarkIndexed},
 		{outcome: outcomeSkipped, apply: b.service.repo.MarkSkipped},
@@ -443,7 +445,7 @@ func (b *indexBatch) mark(ctx context.Context) error {
 		if len(outcomes) == 0 {
 			continue
 		}
-		applied, err := mark.apply(ctx, agentports.MarkIndexEntriesRequest{
+		applied, err := mark.apply(ctx, retrievalports.MarkIndexEntriesRequest{
 			Outcomes: outcomes,
 			Now:      b.service.now(),
 		})
@@ -456,7 +458,7 @@ func (b *indexBatch) mark(ctx context.Context) error {
 	return nil
 }
 
-func (b *indexBatch) fill(result *agentports.RetrievalIndexBatchResult) {
+func (b *indexBatch) fill(result *retrievalports.RetrievalIndexBatchResult) {
 	for _, work := range b.works {
 		switch work.outcome {
 		case outcomeIndexed:

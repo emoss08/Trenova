@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -31,13 +32,13 @@ type attachableSource struct {
 func (s *Service) Attachables(
 	ctx context.Context,
 	req *AttachablesRequest,
-) ([]*inboundmessageports.ReplyAttachable, error) {
+) ([]*inboundreplyports.ReplyAttachable, error) {
 	message, err := s.message(ctx, req.TenantInfo, req.MessageID, false)
 	if err != nil {
 		return nil, err
 	}
 	if s.documents == nil {
-		return []*inboundmessageports.ReplyAttachable{}, nil
+		return []*inboundreplyports.ReplyAttachable{}, nil
 	}
 
 	sources := []attachableSource{{
@@ -82,7 +83,7 @@ func (s *Service) Attachables(
 		return nil, err
 	}
 
-	out := make([]*inboundmessageports.ReplyAttachable, 0, len(docs))
+	out := make([]*inboundreplyports.ReplyAttachable, 0, len(docs))
 	for _, doc := range docs {
 		kind, ok := kinds[documentports.MailDocumentSource{
 			ResourceType: doc.ResourceType,
@@ -100,8 +101,8 @@ func (s *Service) Attachables(
 func attachableOf(
 	doc *document.Document,
 	kind triage.AttachableSource,
-) *inboundmessageports.ReplyAttachable {
-	attachable := &inboundmessageports.ReplyAttachable{
+) *inboundreplyports.ReplyAttachable {
+	attachable := &inboundreplyports.ReplyAttachable{
 		ID:          doc.ID,
 		FileName:    doc.MailFileName(),
 		ContentType: doc.FileType,

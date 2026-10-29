@@ -3,26 +3,28 @@ package accountingdriftservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/shared/money"
 )
 
-func describeFinding(finding *accountingsync.AccountingDriftFinding) string {
+func describeFinding(finding *accountingdrift.AccountingDriftFinding) string {
 	label := finding.ObjectNumber
 	if label == "" {
 		label = finding.PartyName
 	}
 	switch finding.Kind {
-	case accountingsync.DriftAmountMismatch:
+	case accountingdrift.DriftAmountMismatch:
 		return "the difference in the total of " + label
-	case accountingsync.DriftStatusMismatch:
+	case accountingdrift.DriftStatusMismatch:
 		return "the difference in the status of " + label
-	case accountingsync.DriftDeletedInProvider:
+	case accountingdrift.DriftDeletedInProvider:
 		return "the deletion of " + label
-	case accountingsync.DriftVoidedInProvider:
+	case accountingdrift.DriftVoidedInProvider:
 		return "the void of " + label
-	case accountingsync.DriftCustomerBalanceMismatch:
+	case accountingdrift.DriftCustomerBalanceMismatch:
 		return "the difference in " + label + "'s balance"
 	default:
 		return "the difference in " + label
@@ -39,12 +41,12 @@ func valueOf(minor *int64, currency string) string {
 func (s *Service) preview(
 	ctx context.Context,
 	plan *fixPlan,
-) (*accountingsyncports.AccountingDriftFixPreview, error) {
+) (*accountingdriftports.AccountingDriftFixPreview, error) {
 	tolerance, err := s.toleranceMinor(ctx, plan.finding.TenantInfo())
 	if err != nil {
 		return nil, err
 	}
-	return &accountingsyncports.AccountingDriftFixPreview{
+	return &accountingdriftports.AccountingDriftFixPreview{
 		Finding:         plan.finding,
 		Direction:       plan.direction,
 		FixObject:       plan.fixObject,
@@ -59,26 +61,26 @@ func (s *Service) preview(
 
 func planSummary(plan *fixPlan) string {
 	finding := plan.finding
-	provider := accountingsync.ProviderName(plan.conn.IntegrationType)
+	provider := accountingprovider.ProviderName(plan.conn.IntegrationType)
 	currency := finding.CurrencyCode
 	switch plan.fixObject {
-	case accountingsync.DriftFixSyncRecord:
+	case accountingdrift.DriftFixSyncRecord:
 		return pushSummary(plan, provider)
-	case accountingsync.DriftFixCreditMemo:
+	case accountingdrift.DriftFixCreditMemo:
 		return "Post a credit memo of " + money.FormatMinor(plan.amountMinor, currency) +
 			" against " + finding.ObjectNumber + ", bringing it to " +
 			valueOf(finding.ProviderMinor, currency) + " as in " + provider +
 			". The memo is not sent to " + provider + "."
-	case accountingsync.DriftFixDebitMemo:
+	case accountingdrift.DriftFixDebitMemo:
 		return "Post a debit memo of " + money.FormatMinor(plan.amountMinor, currency) +
 			" against " + finding.ObjectNumber + ", bringing it to " +
 			valueOf(finding.ProviderMinor, currency) + " as in " + provider +
 			". The memo is not sent to " + provider + "."
-	case accountingsync.DriftFixInvoiceVoid:
+	case accountingdrift.DriftFixInvoiceVoid:
 		return "Void " + finding.ObjectNumber + " in Trenova without rebilling, as it was " +
 			goneWord(finding.Kind) + " in " + provider + ". The reversal is not sent to " +
 			provider + "."
-	case accountingsync.DriftFixPaymentReversal:
+	case accountingdrift.DriftFixPaymentReversal:
 		return "Reverse payment " + finding.ObjectNumber + " of " +
 			money.FormatMinor(plan.amountMinor, currency) + " in Trenova, as it was " +
 			goneWord(finding.Kind) + " in " + provider + ". The reversal is not sent to " +

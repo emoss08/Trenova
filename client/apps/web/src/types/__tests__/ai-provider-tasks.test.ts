@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest";
  */
 function serverTasks(): string[] {
   return goEnumValues({
-    file: "services/tms/internal/modules/agent/domain/aiprovider/enums.go",
+    file: "services/tms/internal/modules/agent/domain/aitask/task.go",
     typeName: "Task",
   });
 }

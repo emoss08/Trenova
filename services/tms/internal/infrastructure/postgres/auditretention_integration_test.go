@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -67,7 +67,7 @@ func execInTransaction(ctx context.Context, conn *Connection, statements ...stri
 }
 
 func TestAuditRetention_TheApplicationRoleCannotDeleteOrUpdate(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	f.seedAuditEntry(t, false, daysAgo(400))
 
@@ -86,7 +86,7 @@ func TestAuditRetention_TheApplicationRoleCannotDeleteOrUpdate(t *testing.T) {
 }
 
 func TestAuditRetention_TheSystemRoleMustOptInToDelete(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	f.seedAuditEntry(t, false, daysAgo(400))
 
@@ -95,15 +95,19 @@ func TestAuditRetention_TheSystemRoleMustOptInToDelete(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "append-only")
 
-	err = execInTransaction(ctx, conn,
-		"SET LOCAL trenova.audit_retention = 'on'", "UPDATE audit_entries SET comment = 'rewritten'")
+	err = execInTransaction(
+		ctx,
+		conn,
+		"SET LOCAL trenova.audit_retention = 'on'",
+		"UPDATE audit_entries SET comment = 'rewritten'",
+	)
 	require.Error(t, err, "retention never permits an update")
 
 	assert.Len(t, f.auditEntryIDs(t), 1)
 }
 
 func TestAuditRetention_KeepsCriticalEntriesForAYear(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 
 	oldRoutine := f.seedAuditEntry(t, false, daysAgo(400))
@@ -113,11 +117,19 @@ func TestAuditRetention_KeepsCriticalEntriesForAYear(t *testing.T) {
 
 	ctx := dbscope.WithSystem(t.Context(), "integration test retention")
 
-	_, err := DeleteUnderAuditRetention(ctx, conn, deleteAuditEntriesBefore(daysAgo(30), daysAgo(30)))
+	_, err := DeleteUnderAuditRetention(
+		ctx,
+		conn,
+		deleteAuditEntriesBefore(daysAgo(30), daysAgo(30)),
+	)
 	require.Error(t, err, "a critical entry younger than a year is refused even when asked for")
 	assert.Len(t, f.auditEntryIDs(t), 4, "the refused sweep rolls back as a whole")
 
-	deleted, err := DeleteUnderAuditRetention(ctx, conn, deleteAuditEntriesBefore(daysAgo(30), daysAgo(365)))
+	deleted, err := DeleteUnderAuditRetention(
+		ctx,
+		conn,
+		deleteAuditEntriesBefore(daysAgo(30), daysAgo(365)),
+	)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, deleted)
 
@@ -128,7 +140,7 @@ func TestAuditRetention_KeepsCriticalEntriesForAYear(t *testing.T) {
 }
 
 func TestAuditRetention_AuthEventsAreAppendOnly(t *testing.T) {
-	f := newRLSFixture(t, config.RLSModeEnforce)
+	f := newRLSFixture(t, databaseconfig.RLSModeEnforce)
 	conn := f.connect(t)
 	ctx := t.Context()
 
@@ -146,7 +158,12 @@ func TestAuditRetention_AuthEventsAreAppendOnly(t *testing.T) {
 	recent := insert(daysAgo(5))
 	expired := insert(daysAgo(400))
 
-	_, err := keel.Exec(ctx, f.admin, "UPDATE auth_events SET outcome = 'failed' WHERE id = $1", recent)
+	_, err := keel.Exec(
+		ctx,
+		f.admin,
+		"UPDATE auth_events SET outcome = 'failed' WHERE id = $1",
+		recent,
+	)
 	require.Error(t, err)
 
 	_, err = keel.Exec(ctx, f.admin, "UPDATE auth_events SET user_id = NULL WHERE id = $1", recent)
@@ -156,14 +173,27 @@ func TestAuditRetention_AuthEventsAreAppendOnly(t *testing.T) {
 	require.Error(t, err)
 
 	systemCtx := dbscope.WithSystem(ctx, "integration test retention")
-	deleted, err := DeleteUnderAuditRetention(systemCtx, conn, func(ctx context.Context, db *keel.DB) (int64, error) {
-		return keel.Exec(ctx, db, "DELETE FROM auth_events WHERE occurred_at < $1", daysAgo(365))
-	})
+	deleted, err := DeleteUnderAuditRetention(
+		systemCtx,
+		conn,
+		func(ctx context.Context, db *keel.DB) (int64, error) {
+			return keel.Exec(
+				ctx,
+				db,
+				"DELETE FROM auth_events WHERE occurred_at < $1",
+				daysAgo(365),
+			)
+		},
+	)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, deleted)
 
-	_, err = DeleteUnderAuditRetention(systemCtx, conn, func(ctx context.Context, db *keel.DB) (int64, error) {
-		return keel.Exec(ctx, db, "DELETE FROM auth_events WHERE id = $1", recent)
-	})
+	_, err = DeleteUnderAuditRetention(
+		systemCtx,
+		conn,
+		func(ctx context.Context, db *keel.DB) (int64, error) {
+			return keel.Exec(ctx, db, "DELETE FROM auth_events WHERE id = $1", recent)
+		},
+	)
 	require.Error(t, err, "an event younger than the retention period cannot be deleted")
 }

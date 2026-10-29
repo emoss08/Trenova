@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -34,7 +35,7 @@ func ReferenceFragmentName(typeName string) string {
 // them, such as a summary of a kind's records, has no reference view.
 func referenceTypes(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 ) (names []string, kinds map[string]permission.Resource, err error) {
 	kinds, err = KindTypes(schema, registry)
 	if err != nil {
@@ -80,7 +81,10 @@ func linkable(def *ast.Definition, view []string) bool {
 // RenderReferenceFragments writes one fragment per kind type selecting its
 // reference view: scalars as they are, a kind it links to through that
 // kind's own fragment, and a plain object such as a state by its scalars.
-func RenderReferenceFragments(schema *ast.Schema, registry *permission.Registry) (string, error) {
+func RenderReferenceFragments(
+	schema *ast.Schema,
+	registry *permissioncatalog.Registry,
+) (string, error) {
 	names, kinds, err := referenceTypes(schema, registry)
 	if err != nil {
 		return "", err
@@ -157,7 +161,10 @@ func scalarFields(schema *ast.Schema, def *ast.Definition) []string {
 // view and of which GraphQL type shows which kind, so a screen can tell a
 // field withheld for want of a kind's read from one that is empty. A kind
 // only REST responses carry, such as a document, is listed by its view.
-func RenderReferenceViews(schema *ast.Schema, registry *permission.Registry) (string, error) {
+func RenderReferenceViews(
+	schema *ast.Schema,
+	registry *permissioncatalog.Registry,
+) (string, error) {
 	kinds, err := KindTypes(schema, registry)
 	if err != nil {
 		return "", err

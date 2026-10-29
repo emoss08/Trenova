@@ -3,8 +3,9 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,12 +17,16 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 	t.Parallel()
 
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	req := &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is S1?",
-		Context: agentdefinition.RuntimeContext{
-			Page: &agentdefinition.PageContext{Path: "/shipments/shp_1", EntityType: "shipment", EntityID: "shp_1"},
+		Context: agentturn.RuntimeContext{
+			Page: &agentturn.PageContext{
+				Path:       "/shipments/shp_1",
+				EntityType: "shipment",
+				EntityID:   "shp_1",
+			},
 		},
 	}
 
@@ -32,6 +37,6 @@ func TestTurn_CarriesTheSharedPartOfItsPromptThroughItsState(t *testing.T) {
 	require.Less(t, state.SystemStable, len(state.System))
 	assert.Equal(t, state.SystemStable, turn.completionRequest().SystemStable)
 
-	restored := rt.RestoreTurn(req, state)
+	restored := rt.RestoreTurn(req, &state)
 	assert.Equal(t, state.SystemStable, restored.completionRequest().SystemStable)
 }

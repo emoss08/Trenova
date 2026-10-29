@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatestudioservice"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -24,15 +25,15 @@ const describeSystem = "You are the formula assistant in Trenova's Formula Studi
 
 func (s *Service) DescribeInputs(
 	ctx context.Context,
-	req *agentports.DescribeFormulaInputsRequest,
+	req *formulastudioports.DescribeFormulaInputsRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DescribeFormulaInputsResponse, error) {
+) (*formulastudioports.DescribeFormulaInputsResponse, error) {
 	definition, err := s.assistant(ctx, req.TenantInfo, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	tested, err := s.engine.TestSource(ctx, &formulatemplateservice.TestSourceRequest{
+	tested, err := s.studio.TestSource(ctx, &formulatemplatestudioservice.TestSourceRequest{
 		TenantInfo: req.TenantInfo,
 		Source:     req.Draft.Source,
 	})
@@ -51,7 +52,7 @@ func (s *Service) DescribeInputs(
 		names = append(names, input.Name)
 	}
 
-	resp := &agentports.DescribeFormulaInputsResponse{Descriptions: map[string]string{}}
+	resp := &formulastudioports.DescribeFormulaInputsResponse{Descriptions: map[string]string{}}
 	if len(names) == 0 {
 		return resp, nil
 	}
@@ -62,7 +63,7 @@ func (s *Service) DescribeInputs(
 		definition: definition,
 		feature:    aiusage.FeatureFormulaGenerate,
 		system:     describeSystem,
-		sections: append(draftSections(&req.Draft, tested.Inputs), agentports.ContextSection{
+		sections: append(draftSections(&req.Draft, tested.Inputs), llmports.ContextSection{
 			Title:   "Inputs to describe",
 			Content: strings.Join(names, "\n"),
 		}),

@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerledgerportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
 	"github.com/stretchr/testify/assert"
@@ -28,8 +28,10 @@ func setupHandler(
 	t.Helper()
 
 	logger := zap.NewNop()
-	cfg := &config.Config{App: config.AppConfig{Debug: true}}
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
+	cfg := &config.Config{App: appconfig.Config{Debug: true}}
+	errorHandler := helpers.NewErrorHandler(
+		helpers.ErrorHandlerParams{Logger: logger, AppConfig: &cfg.App},
+	)
 	pm := middleware.NewPermissionMiddleware(
 		middleware.PermissionMiddlewareParams{
 			PermissionEngine: &mocks.AllowAllPermissionEngine{},

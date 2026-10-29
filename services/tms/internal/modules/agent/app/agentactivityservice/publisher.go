@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -26,7 +28,7 @@ type Params struct {
 	fx.In
 
 	Logger   *zap.Logger
-	Realtime agentports.RealtimeService `optional:"true"`
+	Realtime realtimeports.RealtimeService `optional:"true"`
 }
 
 // Publisher announces agent record changes to connected clients. Without a
@@ -34,10 +36,10 @@ type Params struct {
 // still records its work.
 type Publisher struct {
 	l        *zap.Logger
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 }
 
-func New(p Params) agentports.AgentActivityPublisher {
+func New(p Params) agentactivityports.AgentActivityPublisher {
 	return &Publisher{
 		l:        p.Logger.Named("service.agentactivity"),
 		realtime: p.Realtime,
@@ -100,7 +102,7 @@ func (p *Publisher) ProposalChanged(
 
 func (p *Publisher) PlanChanged(
 	ctx context.Context,
-	plan *agent.AgentPlan,
+	plan *agentplan.AgentPlan,
 	actor kernelports.AuditActor,
 	action string,
 ) {

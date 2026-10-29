@@ -77,3 +77,10 @@ func parseExaSettings(values map[string]string, multiErr *errortypes.MultiError)
 		}, multiErr),
 	}
 }
+
+const (
+	DefaultMaxActiveWebWatches = 10
+	MinMaxActiveWebWatches     = 1
+	MaxMaxActiveWebWatches     = 100
+	ConfigKeyMaxActiveWatches  = "maxActiveWatches"
+)

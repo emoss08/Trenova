@@ -1,6 +1,10 @@
 package aiproviderhandler
 
-import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+)
 
 // KindDescriptor describes a wire protocol to the configuration UI.
 type KindDescriptor struct {
@@ -73,11 +77,11 @@ type Preset struct {
 	// Domain is the vendor's web domain, which is how the UI resolves a brand
 	// logo without shipping one per vendor.
 	Domain              string                         `json:"domain,omitempty"`
-	Tasks               []aiprovider.Task              `json:"tasks,omitempty"`
+	Tasks               []aitask.Task                  `json:"tasks,omitempty"`
 	EmbeddingDimensions int                            `json:"embeddingDimensions,omitempty"`
 	EmbeddingInputStyle aiprovider.EmbeddingInputStyle `json:"embeddingInputStyle,omitempty"`
 	// Platform is where an Anthropic Messages preset reaches Claude.
-	Platform aiprovider.Platform `json:"platform,omitempty"`
+	Platform aiplatform.Platform `json:"platform,omitempty"`
 }
 
 // PlatformSetting names a platform setting the editor asks for.
@@ -96,7 +100,7 @@ const (
 // PlatformAuthDescriptor is one way a platform signs in: whether a secret is
 // stored for it, and which settings it adds.
 type PlatformAuthDescriptor struct {
-	Auth               aiprovider.PlatformAuth `json:"auth"`
+	Auth               aiplatform.PlatformAuth `json:"auth"`
 	RequiresCredential bool                    `json:"requiresCredential"`
 	Settings           []PlatformSetting       `json:"settings"`
 }
@@ -106,14 +110,14 @@ type PlatformAuthDescriptor struct {
 // it lists its models. Labels are the interface's own, so they are translated
 // there.
 type PlatformDescriptor struct {
-	Platform    aiprovider.Platform      `json:"platform"`
+	Platform    aiplatform.Platform      `json:"platform"`
 	Settings    []PlatformSetting        `json:"settings"`
 	Auths       []PlatformAuthDescriptor `json:"auths"`
 	ListsModels bool                     `json:"listsModels"`
 }
 
 func platformDescriptors() []PlatformDescriptor {
-	platforms := aiprovider.AllPlatforms()
+	platforms := aiplatform.AllPlatforms()
 	out := make([]PlatformDescriptor, 0, len(platforms))
 	for _, platform := range platforms {
 		auths := platform.Auths()
@@ -126,7 +130,7 @@ func platformDescriptors() []PlatformDescriptor {
 		for _, auth := range auths {
 			descriptor.Auths = append(descriptor.Auths, PlatformAuthDescriptor{
 				Auth:               auth,
-				RequiresCredential: auth != aiprovider.PlatformAuthServer,
+				RequiresCredential: auth != aiplatform.PlatformAuthServer,
 				Settings:           authSettings(auth),
 			})
 		}
@@ -136,36 +140,36 @@ func platformDescriptors() []PlatformDescriptor {
 	return out
 }
 
-func platformSettings(platform aiprovider.Platform) []PlatformSetting {
+func platformSettings(platform aiplatform.Platform) []PlatformSetting {
 	switch platform {
-	case aiprovider.PlatformBedrock:
+	case aiplatform.PlatformBedrock:
 		return []PlatformSetting{PlatformSettingRegion}
-	case aiprovider.PlatformClaudeAWS:
+	case aiplatform.PlatformClaudeAWS:
 		return []PlatformSetting{PlatformSettingRegion, PlatformSettingWorkspaceID}
-	case aiprovider.PlatformVertexAI:
+	case aiplatform.PlatformVertexAI:
 		return []PlatformSetting{PlatformSettingProjectID, PlatformSettingRegion}
-	case aiprovider.PlatformClaudeGoogleCloud:
+	case aiplatform.PlatformClaudeGoogleCloud:
 		return []PlatformSetting{
 			PlatformSettingProjectID, PlatformSettingRegion, PlatformSettingWorkspaceID,
 		}
-	case aiprovider.PlatformFoundry:
+	case aiplatform.PlatformFoundry:
 		return []PlatformSetting{PlatformSettingResource}
-	case aiprovider.PlatformDirect:
+	case aiplatform.PlatformDirect:
 		return []PlatformSetting{}
 	default:
 		return []PlatformSetting{}
 	}
 }
 
-func authSettings(auth aiprovider.PlatformAuth) []PlatformSetting {
+func authSettings(auth aiplatform.PlatformAuth) []PlatformSetting {
 	switch auth {
-	case aiprovider.PlatformAuthAccessKey:
+	case aiplatform.PlatformAuthAccessKey:
 		return []PlatformSetting{PlatformSettingAccessKeyID}
-	case aiprovider.PlatformAuthEntraID:
+	case aiplatform.PlatformAuthEntraID:
 		return []PlatformSetting{PlatformSettingTenantID, PlatformSettingClientID}
-	case aiprovider.PlatformAuthAPIKey,
-		aiprovider.PlatformAuthServiceAccount,
-		aiprovider.PlatformAuthServer:
+	case aiplatform.PlatformAuthAPIKey,
+		aiplatform.PlatformAuthServiceAccount,
+		aiplatform.PlatformAuthServer:
 		return []PlatformSetting{}
 	default:
 		return []PlatformSetting{}
@@ -193,7 +197,7 @@ func Presets() []Preset {
 			Domain:               awsDomain,
 			Label:                "Claude on Amazon Bedrock",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Platform:             aiprovider.PlatformBedrock,
+			Platform:             aiplatform.PlatformBedrock,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         "anthropic.claude-opus-5-5",
@@ -203,7 +207,7 @@ func Presets() []Preset {
 			Domain:               googleCloudDomain,
 			Label:                "Claude on Google Vertex AI",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Platform:             aiprovider.PlatformVertexAI,
+			Platform:             aiplatform.PlatformVertexAI,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         exampleClaudeModel,
@@ -213,7 +217,7 @@ func Presets() []Preset {
 			Domain:               awsDomain,
 			Label:                "Claude Platform on AWS",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Platform:             aiprovider.PlatformClaudeAWS,
+			Platform:             aiplatform.PlatformClaudeAWS,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         exampleClaudeModel,
@@ -223,7 +227,7 @@ func Presets() []Preset {
 			Domain:               googleCloudDomain,
 			Label:                "Claude Platform on Google Cloud",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Platform:             aiprovider.PlatformClaudeGoogleCloud,
+			Platform:             aiplatform.PlatformClaudeGoogleCloud,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         exampleClaudeModel,
@@ -233,7 +237,7 @@ func Presets() []Preset {
 			Domain:               "azure.microsoft.com",
 			Label:                "Claude on Microsoft Foundry",
 			Kind:                 aiprovider.KindAnthropicMessages,
-			Platform:             aiprovider.PlatformFoundry,
+			Platform:             aiplatform.PlatformFoundry,
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         exampleClaudeModel,
@@ -259,7 +263,7 @@ func Presets() []Preset {
 			RequiresAPIKey:       true,
 			ExampleModel:         "text-embedding-3-small",
 			Notes:                "Semantic retrieval through OpenAI's embeddings endpoint.",
-			Tasks:                []aiprovider.Task{aiprovider.TaskEmbedding},
+			Tasks:                []aitask.Task{aitask.TaskEmbedding},
 			EmbeddingDimensions:  1536,
 			EmbeddingInputStyle:  aiprovider.EmbeddingInputStyleNone,
 		},
@@ -274,7 +278,7 @@ func Presets() []Preset {
 			ExampleModel:         "voyage-3.5",
 			Notes: "Retrieval-tuned embeddings. Documents and queries are sent with " +
 				"Voyage's input_type so each is embedded for its side of a search.",
-			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+			Tasks:               []aitask.Task{aitask.TaskEmbedding},
 			EmbeddingDimensions: 1024,
 			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
 		},
@@ -289,7 +293,7 @@ func Presets() []Preset {
 			ExampleModel:         "gemini-embedding-001",
 			Notes: "Gemini's OpenAI-compatible endpoint. The model's native size is " +
 				"reduced to the dimension chosen here.",
-			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+			Tasks:               []aitask.Task{aitask.TaskEmbedding},
 			EmbeddingDimensions: 1536,
 			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 		},
@@ -408,29 +412,29 @@ func Presets() []Preset {
 
 // TaskDescriptor describes a routable unit of work to the UI.
 type TaskDescriptor struct {
-	Task           aiprovider.Task `json:"task"`
-	Label          string          `json:"label"`
-	Description    string          `json:"description"`
-	RequiresTrust  bool            `json:"requiresTrust"`
-	VolumeGuidance string          `json:"volumeGuidance"`
+	Task           aitask.Task `json:"task"`
+	Label          string      `json:"label"`
+	Description    string      `json:"description"`
+	RequiresTrust  bool        `json:"requiresTrust"`
+	VolumeGuidance string      `json:"volumeGuidance"`
 }
 
 func taskDescriptors() []TaskDescriptor {
 	return []TaskDescriptor{
 		{
-			Task:           aiprovider.TaskDocumentClassification,
+			Task:           aitask.TaskDocumentClassification,
 			Label:          "Document classification",
 			Description:    "Decide what an uploaded document is.",
 			VolumeGuidance: "High volume, low complexity — a small local model handles this well.",
 		},
 		{
-			Task:           aiprovider.TaskDocumentExtraction,
+			Task:           aitask.TaskDocumentExtraction,
 			Label:          "Document extraction",
 			Description:    "Pull structured fields out of a document.",
 			VolumeGuidance: "High volume; needs reliable structured output.",
 		},
 		{
-			Task:          aiprovider.TaskBillingDiagnosis,
+			Task:          aitask.TaskBillingDiagnosis,
 			Label:         "Billing diagnosis",
 			Description:   "Diagnose a blocked billing item and propose resolutions.",
 			RequiresTrust: true,
@@ -438,41 +442,41 @@ func taskDescriptors() []TaskDescriptor {
 				"requires a provider marked trusted.",
 		},
 		{
-			Task:           aiprovider.TaskFormulaAssistant,
+			Task:           aitask.TaskFormulaAssistant,
 			Label:          "Formula assistant",
 			Description:    "Generate and explain rating formulas.",
 			VolumeGuidance: "Interactive; favours a capable model.",
 		},
 		{
-			Task:        aiprovider.TaskScopeClassification,
+			Task:        aitask.TaskScopeClassification,
 			Label:       "Scope classification",
 			Description: "Decide whether a chat message is about this organization's freight at all.",
 			VolumeGuidance: "Runs on every assistant turn and needs only a yes/no — the " +
 				"cheapest thing to route to a small local model.",
 		},
 		{
-			Task:        aiprovider.TaskAssistantChat,
+			Task:        aitask.TaskAssistantChat,
 			Label:       "Assistant chat",
 			Description: "Answer questions and drive the tool loop in the assistant.",
 			VolumeGuidance: "Interactive and multi-step; needs reliable tool calling and " +
 				"favours a capable model.",
 		},
 		{
-			Task:        aiprovider.TaskOperationalInsights,
+			Task:        aitask.TaskOperationalInsights,
 			Label:       "Operational insights",
 			Description: "Write the explanation on a finding whose numbers were already computed.",
 			VolumeGuidance: "A batch every few hours. It never produces a number or a " +
 				"severity, so it is safe to route to whatever is cheapest.",
 		},
 		{
-			Task:        aiprovider.TaskDailyBriefing,
+			Task:        aitask.TaskDailyBriefing,
 			Label:       "Daily briefing",
 			Description: "Write the morning page from figures that were already gathered.",
 			VolumeGuidance: "A handful of calls once a day. Like insights it writes only " +
 				"wording, so the cheapest model that writes clean English will do.",
 		},
 		{
-			Task:        aiprovider.TaskQueryCompose,
+			Task:        aitask.TaskQueryCompose,
 			Label:       "Table questions",
 			Description: "Turn a sentence into a table's filters and sort.",
 			VolumeGuidance: "One short call each time somebody asks a table a question. " +
@@ -482,7 +486,7 @@ func taskDescriptors() []TaskDescriptor {
 				"wrong answer.",
 		},
 		{
-			Task:        aiprovider.TaskChapterTitling,
+			Task:        aitask.TaskChapterTitling,
 			Label:       "Desk chapters",
 			Description: "Decide whether a Desk question starts a new chapter and name it in a few words.",
 			VolumeGuidance: "One short call per question asked at the Desk, with no reasoning. " +
@@ -490,7 +494,7 @@ func taskDescriptors() []TaskDescriptor {
 				"cheapest fast model will do. Without one it uses the Desk's own model.",
 		},
 		{
-			Task:        aiprovider.TaskInboundClassification,
+			Task:        aitask.TaskInboundClassification,
 			Label:       "Inbound mail",
 			Description: "Decide what an email that arrived on a monitored address is.",
 			VolumeGuidance: "One call per message, so it follows how much mail is " +
@@ -498,7 +502,7 @@ func taskDescriptors() []TaskDescriptor {
 				"afterwards, so the cheapest model that reads English reliably will do.",
 		},
 		{
-			Task:        aiprovider.TaskAccountingMapping,
+			Task:        aitask.TaskAccountingMapping,
 			Label:       "Accounting mapping",
 			Description: "Choose which accounting-system record matches a Trenova record when the name rules are unsure.",
 			VolumeGuidance: "Runs only for records the deterministic matcher could not settle, at most " +
@@ -506,7 +510,7 @@ func taskDescriptors() []TaskDescriptor {
 				"small, inexpensive model is enough.",
 		},
 		{
-			Task:        aiprovider.TaskRemittanceExtraction,
+			Task:        aitask.TaskRemittanceExtraction,
 			Label:       "Factor remittances",
 			Description: "Read the lines of a factor's PDF funding or reserve report.",
 			VolumeGuidance: "One call per PDF remittance, usually a few a week per factor. " +
@@ -515,7 +519,7 @@ func taskDescriptors() []TaskDescriptor {
 				"PDF remittances are refused and the factor's CSV or spreadsheet is used.",
 		},
 		{
-			Task:  aiprovider.TaskEvaluationJudge,
+			Task:  aitask.TaskEvaluationJudge,
 			Label: "Evaluation judge",
 			Description: "Score a sample of agents' answers to their evaluation cases " +
 				"against each case's rubric.",
@@ -525,7 +529,7 @@ func taskDescriptors() []TaskDescriptor {
 				"closely is worth more here than a cheap one.",
 		},
 		{
-			Task:  aiprovider.TaskEmbedding,
+			Task:  aitask.TaskEmbedding,
 			Label: "Embedding",
 			Description: "Turn memories, documents and mail into vectors so agents can " +
 				"find them by meaning rather than by exact words.",
@@ -534,7 +538,7 @@ func taskDescriptors() []TaskDescriptor {
 				"chat model, and a fixed dimension; changing the model re-indexes everything.",
 		},
 		{
-			Task:           aiprovider.TaskGeneral,
+			Task:           aitask.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",
 			VolumeGuidance: "Fallback pool.",

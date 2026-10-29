@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -45,7 +46,7 @@ var (
 // cardAccess is what one reader may be shown on the page's cards.
 type cardAccess struct {
 	linked permissionports.LinkedFields
-	groups permission.FieldGroupSet
+	groups protectedfield.GroupSet
 }
 
 func (p *Provider) accessFor(
@@ -99,7 +100,7 @@ func (a *cardAccess) shows(ctx context.Context, value linkedValue) bool {
 }
 
 func (a *cardAccess) showsMargins() bool {
-	return a.groups.Has(permission.FieldGroupMargins)
+	return a.groups.Has(protectedfield.Margins)
 }
 
 func (a *cardAccess) gate(ctx context.Context, data map[string]any) {

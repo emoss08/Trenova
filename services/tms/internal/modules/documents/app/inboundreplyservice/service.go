@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -22,8 +24,8 @@ type TrackerParams struct {
 
 	Logger     *zap.Logger
 	Messages   inboundmessageports.InboundMessageRepository
-	Replies    inboundmessageports.InboundReplyRepository
-	Work       inboundmessageports.TriageWorkRepository
+	Replies    inboundreplyports.InboundReplyRepository
+	Work       triageworkports.TriageWorkRepository
 	Activities inboundmessageports.TriageActivityRecorder
 	Notifier   inboundmessageports.TriageMessageNotifier
 }
@@ -32,21 +34,21 @@ type Params struct {
 	fx.In
 	TrackerParams
 
-	Templates     inboundmessageports.TriageReplyTemplateRepository
+	Templates     inboundreplyports.TriageReplyTemplateRepository
 	Organizations tenantports.OrganizationRepository
 	Nova          *triagenova.Caller
 	Documents     documentports.DocumentMailAttachments
-	Email         emailports.EmailService                           `optional:"true"`
-	Peeks         inboundmessageports.TriageShipmentPeeker          `optional:"true"`
-	Stops         inboundmessageports.TriageStopTimesReader         `optional:"true"`
-	Evidence      inboundmessageports.TriageDetentionEvidenceSource `optional:"true"`
+	Email         emailports.EmailService                       `optional:"true"`
+	Peeks         triageworkports.TriageShipmentPeeker          `optional:"true"`
+	Stops         triageworkports.TriageStopTimesReader         `optional:"true"`
+	Evidence      triageworkports.TriageDetentionEvidenceSource `optional:"true"`
 }
 
 type tracker struct {
 	l          *zap.Logger
 	messages   inboundmessageports.InboundMessageRepository
-	replies    inboundmessageports.InboundReplyRepository
-	work       inboundmessageports.TriageWorkRepository
+	replies    inboundreplyports.InboundReplyRepository
+	work       triageworkports.TriageWorkRepository
 	activities inboundmessageports.TriageActivityRecorder
 	notifier   inboundmessageports.TriageMessageNotifier
 	now        func() int64
@@ -55,14 +57,14 @@ type tracker struct {
 type Service struct {
 	*tracker
 
-	templates     inboundmessageports.TriageReplyTemplateRepository
+	templates     inboundreplyports.TriageReplyTemplateRepository
 	organizations tenantports.OrganizationRepository
 	nova          triagenova.Completer
 	email         emailports.EmailService
-	peeks         inboundmessageports.TriageShipmentPeeker
-	stops         inboundmessageports.TriageStopTimesReader
+	peeks         triageworkports.TriageShipmentPeeker
+	stops         triageworkports.TriageStopTimesReader
 	documents     documentports.DocumentMailAttachments
-	evidence      inboundmessageports.TriageDetentionEvidenceSource
+	evidence      triageworkports.TriageDetentionEvidenceSource
 }
 
 func newTracker(p *TrackerParams) *tracker {

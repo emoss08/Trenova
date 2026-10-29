@@ -18,13 +18,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -38,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -84,13 +88,19 @@ type shadowReader interface {
 type proposalStore interface {
 	ListPendingForReminder(
 		ctx context.Context,
-		req agentports.ListPendingProposalsForReminderRequest,
+		req agentproposalports.ListPendingProposalsForReminderRequest,
 	) ([]*agent.AgentProposal, error)
-	MarkReminded(ctx context.Context, req agentports.MarkProposalsRemindedRequest) (int, error)
+	MarkReminded(
+		ctx context.Context,
+		req agentproposalports.MarkProposalsRemindedRequest,
+	) (int, error)
 }
 
 type runReader interface {
-	GetByID(ctx context.Context, req agentports.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+	GetByID(
+		ctx context.Context,
+		req agentruntimeports.GetAgentRunByIDRequest,
+	) (*agent.AgentRun, error)
 }
 
 type definitionReader interface {
@@ -104,10 +114,10 @@ type Params struct {
 	fx.In
 
 	Logger      *zap.Logger
-	Config      *config.Config
+	AppConfig   *appconfig.Config
 	Roles       permissionports.RoleRepository
-	Proposals   agentports.AgentProposalRepository
-	Runs        agentports.AgentRunRepository
+	Proposals   agentproposalports.AgentProposalRepository
+	Runs        agentruntimeports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Orgs        tenantports.OrganizationRepository
 	Shadow      *agentshadow.Resolver
@@ -135,7 +145,8 @@ type Service struct {
 	inliner       documenttemplateports.AssetInliner
 }
 
-func New(p Params) agentports.AgentProposalNotifier {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentproposalports.AgentProposalNotifier {
 	svc := &Service{
 		l:           p.Logger.Named("service.agentproposalnotifier"),
 		roles:       p.Roles,
@@ -146,8 +157,8 @@ func New(p Params) agentports.AgentProposalNotifier {
 		shadow:      p.Shadow,
 		inliner:     p.Inliner,
 	}
-	if p.Config != nil {
-		svc.webBaseURL = p.Config.App.GetWebBaseURL()
+	if p.AppConfig != nil {
+		svc.webBaseURL = p.AppConfig.GetWebBaseURL()
 	}
 	if p.Notifications != nil {
 		svc.notifications = p.Notifications
@@ -168,7 +179,7 @@ func New(p Params) agentports.AgentProposalNotifier {
 // and a notice that leads to nothing to decide is worse than none.
 func (s *Service) NotifyPending(
 	ctx context.Context,
-	notice agentports.PendingProposalsNotice,
+	notice agentproposalports.PendingProposalsNotice,
 ) error {
 	if notice.Run == nil || notice.Definition == nil || notice.Run.Trigger == agent.RunTriggerChat {
 		return nil
@@ -228,11 +239,11 @@ func (s *Service) NotifyPending(
 // reminder rather than one every sweep.
 func (s *Service) RemindPending(
 	ctx context.Context,
-	req agentports.RemindPendingProposalsRequest,
+	req agentproposalports.RemindPendingProposalsRequest,
 ) (int, error) {
 	proposals, err := s.proposals.ListPendingForReminder(
 		ctx,
-		agentports.ListPendingProposalsForReminderRequest{
+		agentproposalports.ListPendingProposalsForReminderRequest{
 			Before: req.Now - int64(req.OlderThan.Seconds()),
 			Now:    req.Now,
 			Limit:  req.Limit,
@@ -274,7 +285,7 @@ type proposalGroup struct {
 }
 
 func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int64) error {
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         group.runID,
 		TenantInfo: &group.tenant,
 	})
@@ -299,7 +310,7 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 
 	// Marked first: a proposal in shadow is hidden, so there is nothing to
 	// remind anyone of, and it must not be picked up again by the next sweep.
-	if _, err = s.proposals.MarkReminded(ctx, agentports.MarkProposalsRemindedRequest{
+	if _, err = s.proposals.MarkReminded(ctx, agentproposalports.MarkProposalsRemindedRequest{
 		IDs: ids(group.proposals),
 		At:  now,
 	}); err != nil {
@@ -444,7 +455,7 @@ func (s *Service) mail(
 	}
 
 	runID := group.runID.String()
-	data := &documenttemplate.AgentProposalReminderContext{
+	data := &portaltemplate.AgentProposalReminderContext{
 		RecipientFirstName: stringutils.FirstName(decider.Name),
 		AgentName:          agentNameOf(group.definition),
 		PendingCount:       len(group.proposals),
@@ -495,7 +506,7 @@ func (s *Service) mail(
 func (s *Service) brand(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentProposalReminderContext,
+	out *portaltemplate.AgentProposalReminderContext,
 ) {
 	if s.orgs == nil {
 		return
@@ -587,11 +598,13 @@ func idStrings(proposals []*agent.AgentProposal) []string {
 	return out
 }
 
-func reminderLines(proposals []*agent.AgentProposal) []documenttemplate.ProposalReminderLine {
-	lines := make([]documenttemplate.ProposalReminderLine, 0, len(proposals))
+func reminderLines(proposals []*agent.AgentProposal) []portaltemplate.ProposalReminderLine {
+	lines := make([]portaltemplate.ProposalReminderLine, 0, len(proposals))
 	for _, proposal := range proposals {
-		lines = append(lines, documenttemplate.ProposalReminderLine{
-			Tool:      stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
+		lines = append(lines, portaltemplate.ProposalReminderLine{
+			Tool: textcase.HumanizeSnakeCase(
+				agenttoolports.ReadingOrder(proposal.ToolName),
+			),
 			Rationale: proposal.Rationale,
 		})
 	}
@@ -612,7 +625,7 @@ func describeTools(proposals []*agent.AgentProposal) string {
 		if len(names) < maxListedTools {
 			names = append(
 				names,
-				stringutils.HumanizeSnakeCase(agentports.ReadingOrder(proposal.ToolName)),
+				textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(proposal.ToolName)),
 			)
 		}
 	}

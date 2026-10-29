@@ -3,15 +3,15 @@
 package performancereviewresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	driverportalrecordsservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
 )
 
 type Deps struct {
-	*base.Core
-	PerformanceReviewService *performancereviewservice.Service
-	DriverPortalService      *driverportalservice.Service
+	*resolvercore.Core
+	PerformanceReviewService   *performancereviewservice.Service
+	DriverPortalRecordsService *driverportalrecordsservice.Service
 }
 
 type MutationResolver struct{ *Deps }

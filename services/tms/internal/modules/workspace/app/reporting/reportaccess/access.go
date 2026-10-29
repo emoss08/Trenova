@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -65,7 +67,7 @@ type Use struct {
 	Kind        permission.Resource
 	Sensitivity permission.FieldSensitivity
 	Reference   bool
-	Group       permission.FieldGroup
+	Group       protectedfield.Group
 	HoldsGroup  bool
 }
 
@@ -103,7 +105,7 @@ const (
 type Params struct {
 	Catalog  *analytics.Catalog
 	Engine   permissionports.PermissionEngine
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 	Views    permissionports.ReferenceViews
 	Fields   permissionports.FieldAccess
 }
@@ -111,7 +113,7 @@ type Params struct {
 type Resolver struct {
 	catalog  *analytics.Catalog
 	engine   permissionports.PermissionEngine
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	views    permissionports.ReferenceViews
 	fields   permissionports.FieldAccess
 	kinds    map[*analytics.Entity]kind
@@ -123,7 +125,7 @@ func New(p Params) (*Resolver, error) {
 		return nil, errNoCatalog
 	}
 	if p.Registry == nil {
-		p.Registry = permission.NewRegistry()
+		p.Registry = permissioncatalog.NewRegistry()
 	}
 	r := &Resolver{
 		catalog:  p.Catalog,
@@ -239,7 +241,7 @@ func (r *Resolver) For(
 	for _, name := range names {
 		access.details[permission.Resource(name)] = batch[name]
 	}
-	access.groups = sync.OnceValue(func() permission.FieldGroupSet {
+	access.groups = sync.OnceValue(func() protectedfield.GroupSet {
 		if r.fields == nil {
 			return 0
 		}
@@ -266,7 +268,7 @@ type Access struct {
 	tenant   pagination.TenantInfo
 	actor    *permissionports.RequestActor
 	linked   permissionports.LinkedFields
-	groups   func() permission.FieldGroupSet
+	groups   func() protectedfield.GroupSet
 	export   bool
 
 	mu      sync.Mutex
@@ -500,9 +502,9 @@ func (a *Access) decide(
 	}
 }
 
-func (r *Resolver) Protection(f *analytics.Field) (permission.FieldGroup, bool) {
+func (r *Resolver) Protection(f *analytics.Field) (protectedfield.Group, bool) {
 	key := APIKey(f.Entity.Table.Columns[f.Column].Name)
-	return permission.ProtectedGroupAt(r.kinds[f.Entity].resource, r.steps(f.Entity, key), nil)
+	return protectedfield.GroupAt(r.kinds[f.Entity].resource, r.steps(f.Entity, key), nil)
 }
 
 func (r *Resolver) steps(e *analytics.Entity, key string) []string {

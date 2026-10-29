@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/carrierintel/intelkit"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/shared/fmcsa"
 	"github.com/emoss08/trenova/shared/jsonflex"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -291,7 +291,7 @@ func normalizeBasics(src []fmcsa.Basic) []carrierintel.BasicMeasure {
 		return nil
 	}
 	basics := make([]carrierintel.BasicMeasure, 0, len(src))
-	seen := make(map[worker.CSABasic]struct{}, len(src))
+	seen := make(map[fleetsafety.CSABasic]struct{}, len(src))
 	for idx := range src {
 		item := &src[idx]
 		basic, ok := csaBasic(item)
@@ -318,7 +318,7 @@ func normalizeBasics(src []fmcsa.Basic) []carrierintel.BasicMeasure {
 	return basics
 }
 
-func csaBasic(item *fmcsa.Basic) (worker.CSABasic, bool) {
+func csaBasic(item *fmcsa.Basic) (fleetsafety.CSABasic, bool) {
 	for _, label := range []string{
 		intelkit.Text(item.ShortDescription),
 		intelkit.Text(item.CodeMCMIS),
@@ -331,26 +331,26 @@ func csaBasic(item *fmcsa.Basic) (worker.CSABasic, bool) {
 	return "", false
 }
 
-func csaBasicFromLabel(label string) (worker.CSABasic, bool) {
+func csaBasicFromLabel(label string) (fleetsafety.CSABasic, bool) {
 	key := stringutils.NormalizeIdentifier(label)
 	switch {
 	case key == "":
 		return "", false
 	case strings.Contains(key, "UNSAFE"):
-		return worker.BasicUnsafeDriving, true
+		return fleetsafety.BasicUnsafeDriving, true
 	case strings.HasPrefix(key, "HOS"), strings.Contains(key, "HOURSOFSERVICE"):
-		return worker.BasicHOSCompliance, true
+		return fleetsafety.BasicHOSCompliance, true
 	case strings.Contains(key, "FITNESS"):
-		return worker.BasicDriverFitness, true
+		return fleetsafety.BasicDriverFitness, true
 	case strings.Contains(key, "DRUG"), strings.Contains(key, "SUBST"),
 		strings.Contains(key, "ALCOHOL"):
-		return worker.BasicControlledSubstances, true
+		return fleetsafety.BasicControlledSubstances, true
 	case strings.Contains(key, "MAINT"):
-		return worker.BasicVehicleMaintenance, true
+		return fleetsafety.BasicVehicleMaintenance, true
 	case strings.HasPrefix(key, "HM"), strings.Contains(key, "HAZ"):
-		return worker.BasicHazmatCompliance, true
+		return fleetsafety.BasicHazmatCompliance, true
 	case strings.Contains(key, "CRASH"):
-		return worker.BasicCrashIndicator, true
+		return fleetsafety.BasicCrashIndicator, true
 	default:
 		return "", false
 	}

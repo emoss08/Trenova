@@ -11,7 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -70,26 +72,26 @@ func (h *planHarness) run(t *testing.T, definitionID pulid.ID) *agent.AgentRun {
 	return run
 }
 
-func (h *planHarness) plan(t *testing.T, run *agent.AgentRun) *agent.AgentPlan {
+func (h *planHarness) plan(t *testing.T, run *agent.AgentRun) *agentplan.AgentPlan {
 	t.Helper()
 
-	plan := &agent.AgentPlan{
+	plan := &agentplan.AgentPlan{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		RunID:          run.ID,
 		Title:          "Move the loads",
-		Status:         agent.PlanStatusPending,
+		Status:         agentplan.PlanStatusPending,
 		StepCount:      2,
 	}
-	require.NoError(t, agentdb.AgentPlans.Create(h.ctx, h.admin, plan))
+	require.NoError(t, agentplandb.AgentPlans.Create(h.ctx, h.admin, plan))
 
 	return plan
 }
 
-func (h *planHarness) read(t *testing.T, id pulid.ID) *agent.AgentPlan {
+func (h *planHarness) read(t *testing.T, id pulid.ID) *agentplan.AgentPlan {
 	t.Helper()
 
-	plan, err := agentdb.AgentPlans.Get(h.ctx, h.admin, id)
+	plan, err := agentplandb.AgentPlans.Get(h.ctx, h.admin, id)
 	require.NoError(t, err)
 
 	return plan
@@ -99,15 +101,15 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	approving, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	approving, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
-		Status:     agent.PlanStatusApproving,
+		Status:     agentplan.PlanStatusApproving,
 		CommitsAt:  5,
-		Approval:   agentports.PlanApproval{ReasonCode: "looks right", PreviewDigest: "abc"},
+		Approval:   agentplanports.PlanApproval{ReasonCode: "looks right", PreviewDigest: "abc"},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusApproving, approving.Status)
+	assert.Equal(t, agentplan.PlanStatusApproving, approving.Status)
 	require.NotNil(t, approving.CommitsAt)
 	assert.Equal(t, int64(5), *approving.CommitsAt)
 	assert.Equal(t, "looks right", approving.ApprovalReasonCode)
@@ -116,15 +118,15 @@ func TestUpdateStatus_KeepsTheApprovalWithTheWindowAndClearsItOnReopen(t *testin
 	assert.Nil(t, approving.UndoneAt)
 	assert.Greater(t, approving.Version, plan.Version)
 
-	reopened, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	reopened, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
-		Status:     agent.PlanStatusPending,
+		Status:     agentplan.PlanStatusPending,
 		Reopen:     true,
 	})
 	require.NoError(t, err)
 	stored := h.read(t, reopened.ID)
-	assert.Equal(t, agent.PlanStatusPending, stored.Status)
+	assert.Equal(t, agentplan.PlanStatusPending, stored.Status)
 	assert.Nil(t, stored.CommitsAt)
 	assert.Empty(t, stored.ApprovalReasonCode)
 	assert.Empty(t, stored.ApprovalPreviewDigest)
@@ -136,16 +138,16 @@ func TestUpdateStatus_ADecisionWithoutAWindowKeepsItsNoteAndDigest(t *testing.T)
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	rejected, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	rejected, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              plan.ID,
 		TenantInfo:      h.tenant,
-		Status:          agent.PlanStatusRejected,
+		Status:          agentplan.PlanStatusRejected,
 		DecidedByUserID: h.tenant.UserID,
 		DecidedAt:       9,
-		Approval:        agentports.PlanApproval{Note: "Not today"},
+		Approval:        agentplanports.PlanApproval{Note: "Not today"},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusRejected, rejected.Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, rejected.Status)
 	require.NotNil(t, rejected.DecidedByUserID)
 	assert.Equal(t, h.tenant.UserID, *rejected.DecidedByUserID)
 	require.NotNil(t, rejected.DecidedAt)
@@ -159,14 +161,14 @@ func TestUpdateStatus_AStaleFromStatusIsNotFound(t *testing.T) {
 	h := newPlanHarness(t)
 	plan := h.plan(t, h.run(t, ""))
 
-	_, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:         plan.ID,
 		TenantInfo: h.tenant,
-		Status:     agent.PlanStatusApproved,
-		FromStatus: agent.PlanStatusApproving,
+		Status:     agentplan.PlanStatusApproved,
+		FromStatus: agentplan.PlanStatusApproving,
 	})
 	require.Error(t, err)
-	assert.Equal(t, agent.PlanStatusPending, h.read(t, plan.ID).Status)
+	assert.Equal(t, agentplan.PlanStatusPending, h.read(t, plan.ID).Status)
 }
 
 func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *testing.T) {
@@ -181,23 +183,26 @@ func TestExpirePendingByDefinitionExpiresOnlyThePendingPlansOfTheAgentsRuns(t *t
 
 	pending := h.plan(t, h.run(t, definition.ID))
 	decided := h.plan(t, h.run(t, definition.ID))
-	_, err := h.repo.UpdateStatus(h.ctx, agentports.UpdateAgentPlanStatusRequest{
+	_, err := h.repo.UpdateStatus(h.ctx, &agentplanports.UpdateAgentPlanStatusRequest{
 		ID:              decided.ID,
 		TenantInfo:      h.tenant,
-		Status:          agent.PlanStatusRejected,
+		Status:          agentplan.PlanStatusRejected,
 		DecidedByUserID: h.tenant.UserID,
 		DecidedAt:       9,
 	})
 	require.NoError(t, err)
 	unrelated := h.plan(t, h.run(t, ""))
 
-	expired, err := h.repo.ExpirePendingByDefinition(h.ctx, agentports.ExpireAgentPlansByDefinitionRequest{
-		AgentDefinitionID: definition.ID,
-		TenantInfo:        h.tenant,
-	})
+	expired, err := h.repo.ExpirePendingByDefinition(
+		h.ctx,
+		agentplanports.ExpireAgentPlansByDefinitionRequest{
+			AgentDefinitionID: definition.ID,
+			TenantInfo:        h.tenant,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, expired)
-	assert.Equal(t, agent.PlanStatusExpired, h.read(t, pending.ID).Status)
-	assert.Equal(t, agent.PlanStatusRejected, h.read(t, decided.ID).Status)
-	assert.Equal(t, agent.PlanStatusPending, h.read(t, unrelated.ID).Status)
+	assert.Equal(t, agentplan.PlanStatusExpired, h.read(t, pending.ID).Status)
+	assert.Equal(t, agentplan.PlanStatusRejected, h.read(t, decided.ID).Status)
+	assert.Equal(t, agentplan.PlanStatusPending, h.read(t, unrelated.ID).Status)
 }

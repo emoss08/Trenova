@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,7 +26,7 @@ type ResolvePeriodRequest struct {
 	OrganizationID pulid.ID
 	BusinessUnitID pulid.ID
 	Date           int64
-	Policy         tenant.ClosedPeriodPostingPolicy
+	Policy         accountingcontrol.ClosedPeriodPostingPolicy
 	Subject        string
 	Field          string
 }
@@ -82,7 +82,7 @@ func nextOpenPeriod(
 	req *ResolvePeriodRequest,
 	closed *fiscalperiod.FiscalPeriod,
 ) (*ResolvedPeriod, error) {
-	if req.Policy != tenant.ClosedPeriodPostingPolicyPostToNextOpen {
+	if req.Policy != accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen {
 		return nil, errortypes.NewBusinessError(
 			"The {0} falls in a closed fiscal period; reopen the period first",
 			req.subject(ctx),

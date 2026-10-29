@@ -7,13 +7,14 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	invoicedomain "github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	carriersettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	driversettlementdomain "github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -26,7 +27,7 @@ import (
 )
 
 type listCapturingShipmentService struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentReader
 
 	requests []*shipmentports.ListShipmentsRequest
 }
@@ -55,13 +56,13 @@ func shipmentListContext(t *testing.T) context.Context {
 	})
 }
 
-func newShipmentListResolver(service shipmentports.ShipmentService) *QueryResolver {
+func newShipmentListResolver(service shipmentserviceports.ShipmentReader) *QueryResolver {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
 		permission.ResourceShipment.String() + "|" + string(permission.OpRead): true,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &base.Core{PermissionEngine: engine},
-		ShipmentService: service,
+		Core:           &resolvercore.Core{PermissionEngine: engine},
+		ShipmentReader: service,
 	}}
 }
 
@@ -202,7 +203,7 @@ func TestShipments_RejectsAMalformedCarrierID(t *testing.T) {
 }
 
 type invoicesByIDService struct {
-	invoiceports.InvoiceService
+	invoiceports.InvoiceQueryService
 
 	invoices []*invoicedomain.Invoice
 	requests []invoiceports.GetInvoicesByIDsRequest
@@ -217,8 +218,8 @@ func (s *invoicesByIDService) GetByIDs(
 }
 
 func newInvoiceShipmentsResolver(
-	service shipmentports.ShipmentService,
-	invoices invoiceports.InvoiceService,
+	service shipmentserviceports.ShipmentReader,
+	invoices invoiceports.InvoiceQueryService,
 	mayReadInvoices bool,
 ) *QueryResolver {
 	engine := &resolvertest.GrantingPermissionEngine{Granted: map[string]bool{
@@ -226,9 +227,9 @@ func newInvoiceShipmentsResolver(
 		permission.ResourceInvoice.String() + "|" + string(permission.OpRead):  mayReadInvoices,
 	}}
 	return &QueryResolver{&Deps{
-		Core:            &base.Core{PermissionEngine: engine},
-		ShipmentService: service,
-		InvoiceService:  invoices,
+		Core:                &resolvercore.Core{PermissionEngine: engine},
+		ShipmentReader:      service,
+		InvoiceQueryService: invoices,
 	}}
 }
 
@@ -328,7 +329,7 @@ func (s *carrierSettlementLinesRepo) GetByID(
 }
 
 func newSettlementShipmentsResolver(
-	service shipmentports.ShipmentService,
+	service shipmentserviceports.ShipmentReader,
 	grants map[permission.Resource]bool,
 	deps Deps,
 ) *QueryResolver {
@@ -338,10 +339,10 @@ func newSettlementShipmentsResolver(
 	for resource, allowed := range grants {
 		granted[resource.String()+"|"+string(permission.OpRead)] = allowed
 	}
-	deps.Core = &base.Core{
+	deps.Core = &resolvercore.Core{
 		PermissionEngine: &resolvertest.GrantingPermissionEngine{Granted: granted},
 	}
-	deps.ShipmentService = service
+	deps.ShipmentReader = service
 	return &QueryResolver{&deps}
 }
 
@@ -493,7 +494,7 @@ func TestShipments_SeveralScopesListOnlyTheLoadsTheyShare(t *testing.T) {
 			permission.ResourceInvoice:          true,
 			permission.ResourceDriverSettlement: true,
 		},
-		Deps{InvoiceService: invoices, DriverSettlementRepo: repo},
+		Deps{InvoiceQueryService: invoices, DriverSettlementRepo: repo},
 	).Shipments(
 		shipmentListContext(t),
 		gqlmodel.ShipmentsInput{

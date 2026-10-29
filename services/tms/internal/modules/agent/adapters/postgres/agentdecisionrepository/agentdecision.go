@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -30,7 +30,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentDecisionRepository {
+func New(p Params) agentdecisionports.AgentDecisionRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentdecision-repository"),
@@ -39,10 +39,10 @@ func New(p Params) agentports.AgentDecisionRepository {
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentDecisionByIDRequest,
-) (*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
-		entity, err := agentdb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
+	req agentdecisionports.GetAgentDecisionByIDRequest,
+) (*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
+		entity, err := agentdecisiondb.AgentDecisions.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
 			r.l.Error(
 				"failed to get agent decision",
@@ -58,10 +58,10 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *agent.AgentDecision,
-) (*agent.AgentDecision, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentDecision, error) {
-		if err := agentdb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *agentdecision.AgentDecision,
+) (*agentdecision.AgentDecision, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentdecision.AgentDecision, error) {
+		if err := agentdecisiondb.AgentDecisions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent decision", zap.Error(err))
 			return nil, decisionErrors.Map(err, entity.ID.String())
 		}
@@ -72,14 +72,14 @@ func (r *repository) Create(
 
 func (r *repository) ListByProposals(
 	ctx context.Context,
-	req agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+	req agentdecisionports.ListAgentDecisionsByProposalsRequest,
+) ([]*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		if len(req.ProposalIDs) == 0 {
-			return []*agent.AgentDecision{}, nil
+			return []*agentdecision.AgentDecision{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		rows, err := d.Where(d.ProposalID.In(req.ProposalIDs...), d.UndoneAt.IsNull()).
 			Order(d.CreatedAt.Desc()).
 			All(ctx, r.db.Keel(ctx))
@@ -95,14 +95,14 @@ func (r *repository) ListByProposals(
 
 func (r *repository) ListByCommitWorkflow(
 	ctx context.Context,
-	req agentports.ListAgentDecisionsByCommitWorkflowRequest,
-) ([]*agent.AgentDecision, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentDecision, error) {
+	req agentdecisionports.ListAgentDecisionsByCommitWorkflowRequest,
+) ([]*agentdecision.AgentDecision, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentdecision.AgentDecision, error) {
 		if req.WorkflowID == "" {
-			return []*agent.AgentDecision{}, nil
+			return []*agentdecision.AgentDecision{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		rows, err := d.Where(d.CommitWorkflowID.Eq(req.WorkflowID)).
 			Order(d.CreatedAt.Asc(), d.ID.Asc()).
 			All(ctx, r.db.Keel(ctx))
@@ -118,14 +118,14 @@ func (r *repository) ListByCommitWorkflow(
 
 func (r *repository) MarkCommitted(
 	ctx context.Context,
-	req agentports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, false)
 }
 
 func (r *repository) MarkUndone(
 	ctx context.Context,
-	req agentports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 ) ([]pulid.ID, error) {
 	return r.settle(ctx, req, true)
 }
@@ -134,7 +134,7 @@ func (r *repository) MarkUndone(
 // a commit and an undo racing each other each take all of a batch or none.
 func (r *repository) settle(
 	ctx context.Context,
-	req agentports.SettleAgentDecisionsRequest,
+	req *agentdecisionports.SettleAgentDecisionsRequest,
 	undo bool,
 ) ([]pulid.ID, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
@@ -142,7 +142,7 @@ func (r *repository) settle(
 			return []pulid.ID{}, nil
 		}
 
-		d := agentdb.AgentDecisions
+		d := agentdecisiondb.AgentDecisions
 		sets := []keel.Assignment{d.UpdatedAt.To(req.At), d.Version.ToExpr(d.Version)}
 		switch {
 		case !undo:

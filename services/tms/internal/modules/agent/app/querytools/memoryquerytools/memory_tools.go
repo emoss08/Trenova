@@ -1,0 +1,296 @@
+package memoryquerytools
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+// memoryRow is a memory in the words the model needs: what it says, what it
+// is about, and which kind it is so the model knows whether to follow it.
+type memoryRow struct {
+	ID         string                 `json:"id"`
+	Kind       string                 `json:"kind"`
+	Content    string                 `json:"content"`
+	About      string                 `json:"about,omitempty"`
+	Tool       string                 `json:"tool,omitempty"`
+	RecordedBy string                 `json:"recordedBy"`
+	RecordedOn querytool.OptionalDate `json:"recordedOn"`
+	ExpiresOn  querytool.OptionalDate `json:"expiresOn"`
+	Match      string                 `json:"match,omitempty"`
+
+	FromOutsideContent bool `json:"fromOutsideContent,omitempty"`
+}
+
+type recallMemoryTool struct {
+	memories agentmemoryports.AgentMemoryService
+}
+
+func NewRecallMemoryTool(
+	memories agentmemoryports.AgentMemoryService,
+) agenttoolports.AgentQueryTool {
+	return &recallMemoryTool{memories: memories}
+}
+
+func (t *recallMemoryTool) Name() string { return "agent_list_memories" }
+
+func (t *recallMemoryTool) SearchTerms() []string {
+	return []string{"what we know", "noted before", "past instructions", "recall"}
+}
+
+func (t *recallMemoryTool) Description() string {
+	return "Read what this organization has recorded for its agents: standing " +
+		"instructions, facts agents were told, and corrections people made to " +
+		"earlier proposals. Search by text, or narrow to one customer, location, " +
+		"driver or carrier with subjectType and subjectId, or to one tool. Call this " +
+		"before acting on a customer or a driver you have not been told about in this " +
+		"conversation. To save something, call agent_create_memory directly; it handles a repeat."
+}
+
+func (t *recallMemoryTool) ParamSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			querytool.ParamQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Words to look for in the memory, the name of what it is " +
+					"about, or its tool. Every word need not appear; the closest come first.",
+			},
+			"id": map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: one memory's id, to read the whole of a memory " +
+					"your instructions show cut short.",
+			},
+			"kind": agenttoolschema.Enum(
+				"Optional: Instruction for standing rules to follow, Fact "+
+					"for things agents were told, Correction for fixes people made to "+
+					"earlier proposals, or Procedure for the steps that worked for a task.",
+				memoryKinds,
+			),
+			"subjectType": agenttoolschema.Enum(
+				"Optional: the kind of record subjectId names. Give both or neither.",
+				memoryFilterSubjectTypes,
+			),
+			"subjectId": agenttoolschema.KindID(
+				"Optional: the record's id, from customer_list, "+
+					"location_list, worker_list or carrier_list to match subjectType, "+
+					"or the page you are on. Give it with subjectType.",
+				recordkind.Kind(permission.ResourceCustomer),
+				recordkind.Kind(permission.ResourceLocation),
+				recordkind.Kind(permission.ResourceWorker),
+				recordkind.Kind(permission.ResourceCarrier),
+			),
+			"toolName": map[string]any{
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Only memories about one tool, such as corrections to dispatch_assign_move.",
+			},
+			querytool.ParamLimit: querytool.LimitSchema(
+				agentmemory.DefaultMemoryRecallLimit,
+				agentmemory.MaxMemoryRecallLimit,
+			),
+		},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func (t *recallMemoryTool) Policy() agenttoolports.ToolPolicy {
+	return querytool.ReadPolicy(t.Name(), &querytool.ReadSpec{
+		Resource: permission.ResourceAssistant,
+		Reads:    agenttooltrust.ExternalReadMarked,
+		Source:   agent.TaintSourceMemory,
+		Rationale: "Reads memories earlier runs saved, which carry the taint of the run that " +
+			"wrote them. It returns only what the reader's own prompt already reads, so it " +
+			"is used under the assistant like the Desk's memory page.",
+	})
+}
+
+func (t *recallMemoryTool) Query(
+	ctx context.Context,
+	params *agenttoolports.QueryToolParams,
+) (any, error) {
+	if err := querytool.GuardQuery(params); err != nil {
+		return nil, err
+	}
+
+	limit := querytool.ReadLimit(
+		params.Params,
+		agentmemory.DefaultMemoryRecallLimit,
+		agentmemory.MaxMemoryRecallLimit,
+	)
+
+	req := agentmemoryports.RecallAgentMemoriesRequest{
+		TenantInfo:        querytool.TenantOf(params),
+		AgentDefinitionID: params.AgentDefinitionID,
+		ReaderUserID:      params.Actor.PersonUserID(),
+		Query:             querytool.OptionalString(params.Params, "query"),
+		Kind:              agentmemory.MemoryKind(querytool.OptionalString(params.Params, "kind")),
+		ToolName:          querytool.OptionalString(params.Params, "toolName"),
+		Limit:             limit,
+	}
+	if req.Kind != "" && !req.Kind.IsValid() {
+		return nil, fmt.Errorf("kind %q is not one of %s",
+			req.Kind, strings.Join(memoryKinds.Names(), ", "))
+	}
+	rawMemoryID := querytool.OptionalString(params.Params, "id")
+	if rawMemoryID != "" {
+		memoryID, err := pulid.Parse(rawMemoryID)
+		if err != nil {
+			return nil, fmt.Errorf("id %q is not a memory id", rawMemoryID)
+		}
+		req.IDs = []pulid.ID{memoryID}
+	}
+
+	subject, err := readMemorySubject(params.Params)
+	if err != nil {
+		return nil, err
+	}
+	if subject.kind != "" {
+		req.SubjectType = subject.kind
+		req.SubjectID = subject.id
+	}
+
+	criteria := filtercatalog.NewCriteria("memories").At(querytool.ClockFor(params))
+	criteria.Text(req.Query)
+	criteria.Field("id", rawMemoryID)
+	criteria.Field("kind", string(req.Kind))
+	if subject.kind != "" {
+		criteria.Field("about", strings.ToLower(string(subject.kind))+" "+subject.raw)
+	}
+	criteria.Field("tool", req.ToolName)
+
+	memories, err := t.memories.Recall(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, tainted, ids := recalledRows(memories)
+
+	// A memory read back is a memory used, as much as one a prompt carried;
+	// counting only the prompt's left the ones agents look up reading as
+	// never used. A count that fails costs the count, not the answer.
+	if len(ids) > 0 {
+		_ = t.memories.RecordUse(ctx, agentmemoryports.RecordMemoryUseRequest{
+			TenantInfo: req.TenantInfo,
+			IDs:        ids,
+		})
+	}
+
+	return &recallOutcome{
+		SearchOutcome: querytool.SearchResult(criteria, rows, len(rows)),
+		tainted:       tainted,
+		recalled:      ids,
+	}, nil
+}
+
+type memorySubject struct {
+	kind agentmemory.MemorySubjectType
+	raw  string
+	id   pulid.ID
+}
+
+// readMemorySubject reads the record a recall is about. A type with no id
+// names no record, so it narrows nothing: a model that fills every field
+// sends one, and refusing it kept the search from ever running. An id with no
+// type cannot be looked up.
+func readMemorySubject(args map[string]any) (memorySubject, error) {
+	subject := memorySubject{
+		kind: agentmemory.MemorySubjectType(querytool.OptionalString(args, "subjectType")),
+		raw:  querytool.OptionalString(args, "subjectId"),
+	}
+	if subject.raw == "" {
+		subject.kind = ""
+		return subject, nil
+	}
+	if subject.kind == "" {
+		return subject, errors.New(
+			"subjectId needs subjectType: Customer, Location, Worker or Carrier",
+		)
+	}
+	if !subject.kind.IsValid() {
+		return subject, fmt.Errorf(
+			"subjectType %q is not Customer, Location, Worker or Carrier",
+			subject.kind,
+		)
+	}
+	id, err := pulid.Parse(subject.raw)
+	if err != nil {
+		return subject, fmt.Errorf("subjectId %q is not a record id", subject.raw)
+	}
+	subject.id = id
+
+	return subject, nil
+}
+
+func recalledRows(
+	memories []agentmemoryports.RecalledMemory,
+) (rows []memoryRow, tainted []agentrecord.RecordRef, ids []pulid.ID) {
+	rows = make([]memoryRow, 0, len(memories))
+	tainted = make([]agentrecord.RecordRef, 0, len(memories))
+	ids = make([]pulid.ID, 0, len(memories))
+	for _, recalled := range memories {
+		memory := recalled.Memory
+		tainted = append(tainted, memory.TaintedRecords()...)
+		ids = append(ids, memory.ID)
+		rows = append(rows, memoryRow{
+			ID:         memory.ID.String(),
+			Kind:       string(memory.Kind),
+			Content:    memory.Content,
+			About:      memory.About(),
+			Tool:       memory.ToolName,
+			RecordedBy: recordedBy(memory.Source),
+			RecordedOn: querytool.RecordedDate(memory.CreatedAt),
+			ExpiresOn:  querytool.ExpectedDate(querytool.PointerSeconds(memory.ExpiresAt), "never"),
+			Match:      string(recalled.Match),
+
+			FromOutsideContent: memory.DrawnFromOutside(),
+		})
+	}
+
+	return rows, tainted, ids
+}
+
+// recallOutcome is a recall's answer, which names the memories in it that
+// were written by a run that had read outside content, and every memory it
+// read back. Only the runtime reads those; the model reads the rows.
+type recallOutcome struct {
+	querytool.SearchOutcome
+
+	tainted  []agentrecord.RecordRef
+	recalled []pulid.ID
+}
+
+func (o *recallOutcome) TaintedRecords() []agentrecord.RecordRef { return o.tainted }
+
+func (o *recallOutcome) RecalledMemoryIDs() []pulid.ID { return o.recalled }
+
+func recordedBy(source agentmemory.MemorySource) string {
+	switch source {
+	case agentmemory.MemorySourceUser:
+		return "a person"
+	case agentmemory.MemorySourceAgent:
+		return "an agent"
+	case agentmemory.MemorySourceDecision:
+		return "a decision on a proposal"
+	case agentmemory.MemorySourceFeedback:
+		return "people's ratings of an agent's work"
+	case agentmemory.MemorySourceReflection:
+		return "an agent looking back over its own work"
+	default:
+		return string(source)
+	}
+}

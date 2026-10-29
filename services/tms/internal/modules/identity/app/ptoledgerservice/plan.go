@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 )
@@ -29,7 +29,7 @@ func validateAdjust(req *AdjustRequest) error {
 }
 
 type AdjustPlan struct {
-	Entry         *worker.WorkerPTOLedgerEntry
+	Entry         *pto.WorkerPTOLedgerEntry
 	BalanceBefore decimal.Decimal
 	BalanceAfter  decimal.Decimal
 }
@@ -39,7 +39,7 @@ func (s *Service) PlanAdjust(ctx context.Context, req *AdjustRequest) (*AdjustPl
 		return nil, err
 	}
 
-	balances, err := s.ledgerRepo.ListBalances(ctx, &workerports.ListPTOBalancesRequest{
+	balances, err := s.ledgerRepo.ListBalances(ctx, &ptoledgerports.ListPTOBalancesRequest{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 	})
@@ -58,17 +58,17 @@ func (s *Service) PlanAdjust(ctx context.Context, req *AdjustRequest) (*AdjustPl
 		effectiveAt = time.Now().Unix()
 	}
 	after := before.Add(req.AmountDays)
-	entry := &worker.WorkerPTOLedgerEntry{
+	entry := &pto.WorkerPTOLedgerEntry{
 		OrganizationID:   req.TenantInfo.OrgID,
 		BusinessUnitID:   req.TenantInfo.BuID,
 		WorkerID:         req.WorkerID,
 		PTOType:          req.PTOType,
-		EntryType:        worker.PTOLedgerEntryAdjustment,
+		EntryType:        pto.PTOLedgerEntryAdjustment,
 		AmountDays:       req.AmountDays,
 		BalanceAfterDays: after,
 		EffectiveAt:      effectiveAt,
 		Note:             req.Note,
-		ActorType:        worker.PTOLedgerActorUser,
+		ActorType:        pto.PTOLedgerActorUser,
 		CreatedByID:      req.UserID,
 	}
 	multiErr := errortypes.NewMultiError()

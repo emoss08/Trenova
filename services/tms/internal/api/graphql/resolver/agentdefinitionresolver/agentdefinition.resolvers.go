@@ -10,19 +10,28 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-func (r *AgentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
+func (r *AgentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error) {
 	return definitionTemplate(obj), nil
 }
 
@@ -66,8 +75,12 @@ func (r *AgentDefinitionResolver) Delegates(ctx context.Context, obj *agentdefin
 	return agentDefinitionDelegates(ctx, obj)
 }
 
-func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error) {
+func (r *AgentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*rbac.Role, error) {
 	return r.AgentDefinitionAccessRoles(ctx, obj)
+}
+
+func (r *AgentDefinitionResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error) {
+	return sliceutils.Pointers(agentstarter.Starters(obj)), nil
 }
 
 func (r *AgentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
@@ -101,13 +114,13 @@ func (r *MutationResolver) SetAgentAccess(ctx context.Context, agentID string, i
 	if err != nil {
 		return nil, err
 	}
-	roleIDs, err := base.ParseIDs(input.RoleIds)
+	roleIDs, err := gqlid.ParseIDs(input.RoleIds)
 	if err != nil {
 		return nil, err
 	}
 
 	access, err := r.AgentAccessService.SetAgentAccess(ctx, &agentdefinitionports.SetAgentAccessRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    definitionID,
 		Mode:       input.AccessMode,
 		RoleIDs:    roleIDs,
@@ -119,7 +132,7 @@ func (r *MutationResolver) SetAgentAccess(ctx context.Context, agentID string, i
 	return access.Agent, nil
 }
 
-func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error) {
+func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*rbac.Role, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRole, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -129,13 +142,13 @@ func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string
 	if err != nil {
 		return nil, err
 	}
-	agentIDs, err := base.ParseIDs(agentIds)
+	agentIDs, err := gqlid.ParseIDs(agentIds)
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.AgentAccessService.SetRoleAgents(ctx, &agentdefinitionports.SetRoleAgentsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RoleID:     id,
 		AgentIDs:   agentIDs,
 	}, actorutil.FromAuthContext(authCtx))
@@ -146,8 +159,12 @@ func (r *MutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string
 	return result.Role, nil
 }
 
-func (r *MyAgentResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
+func (r *MyAgentResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error) {
 	return definitionTemplate(obj), nil
+}
+
+func (r *MyAgentResolver) Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error) {
+	return sliceutils.Pointers(agentstarter.Starters(obj)), nil
 }
 
 func (r *MyAgentResolver) Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error) {
@@ -160,7 +177,7 @@ func (r *QueryResolver) AgentDefinitions(ctx context.Context, input gqlmodel.Dat
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +210,7 @@ func (r *QueryResolver) AgentDefinition(ctx context.Context, id string) (*agentd
 
 	return r.AgentDefinitionService.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
 		ID:         definitionID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 	})
 }
 
@@ -223,13 +240,13 @@ func (r *QueryResolver) MyAgents(ctx context.Context, input gqlmodel.MyAgentsInp
 		return emptyMyAgentConnection(ctx), nil
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
 		After:        input.After,
 		Query:        input.Search,
 		FieldFilters: filters,
 		Sort:         []*gqlmodel.SortFieldInput{{Field: "name", Direction: "asc"}},
-	}, base.TenantInfo(authCtx))
+	}, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +284,7 @@ func (r *QueryResolver) SuggestedAgentAudience(ctx context.Context, agentID stri
 	}
 
 	suggestion, err := r.AgentAccessService.SuggestAudience(ctx, &agentdefinitionports.SuggestAgentAudienceRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    definitionID,
 	})
 	if err != nil {
@@ -286,7 +303,7 @@ func (r *QueryResolver) AgentAccessPreview(ctx context.Context, input gqlmodel.A
 		return nil, err
 	}
 
-	req, err := accessPreviewRequest(base.TenantInfo(authCtx), &input)
+	req, err := accessPreviewRequest(resolvercore.TenantInfo(authCtx), &input)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +316,7 @@ func (r *QueryResolver) AgentAccessPreview(ctx context.Context, input gqlmodel.A
 	return accessPreviewToModel(suggestion), nil
 }
 
-func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error) {
+func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -309,12 +326,12 @@ func (r *MutationResolver) UpdateAgentCapabilities(ctx context.Context, agentID 
 	if err != nil {
 		return nil, err
 	}
-	req.TenantInfo = base.TenantInfo(authCtx)
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
 
 	return r.AgentCapabilityService.Update(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error) {
+func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (*agentcapabilityports.AgentCapabilities, error) {
 	// Anyone who may use the assistant may ask; the service then refuses an
 	// agent the reader may not use.
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
@@ -327,13 +344,13 @@ func (r *QueryResolver) AgentCapabilities(ctx context.Context, agentID string) (
 		return nil, err
 	}
 
-	return r.AgentCapabilityService.Get(ctx, &agentports.GetAgentCapabilitiesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.AgentCapabilityService.Get(ctx, &agentcapabilityports.GetAgentCapabilitiesRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    id,
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error) {
+func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentversion.DefinitionVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -345,7 +362,7 @@ func (r *QueryResolver) AgentDefinitionVersions(ctx context.Context, agentID str
 	}
 
 	req := &agentdefinitionports.ListAgentDefinitionVersionsRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 	}
 	if limit != nil {
@@ -367,7 +384,7 @@ func (r *QueryResolver) AgentDefinitionVersionDraft(ctx context.Context, agentID
 	}
 
 	return r.AgentDefinitionService.RestoreVersion(ctx, &agentdefinitionports.GetAgentDefinitionVersionRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		Version:           int64(version),
 	})
@@ -385,7 +402,7 @@ func (r *QueryResolver) AgentShadowReport(ctx context.Context, agentID string, d
 	}
 
 	req := &agentshadowports.AgentShadowReportRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    definitionID,
 	}
 	if days != nil {
@@ -410,7 +427,7 @@ func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel
 	}
 
 	findings, err := r.AgentDefinitionService.LintInstructions(ctx, &agentdefinitionports.LintAgentInstructionsRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		Instructions:      input.Instructions,
 		ToolNames:         input.ToolNames,
 		DisabledToolNames: input.DisabledToolNames,
@@ -426,7 +443,7 @@ func (r *QueryResolver) AgentInstructionLint(ctx context.Context, input gqlmodel
 	return out, nil
 }
 
-func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error) {
+func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -438,7 +455,7 @@ func (r *MutationResolver) KeepAgentTestPrompt(ctx context.Context, agentID stri
 	}
 
 	return r.AgentTestPromptService.Keep(ctx, &agentdefinitionports.KeepAgentTestPromptRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		Prompt:            prompt,
 		CreatedByID:       authCtx.UserID,
@@ -461,7 +478,7 @@ func (r *MutationResolver) DeleteAgentTestPrompt(ctx context.Context, agentID st
 	}
 
 	if err = r.AgentTestPromptService.Delete(ctx, &agentdefinitionports.DeleteAgentTestPromptRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 		ID:                promptID,
 	}); err != nil {
@@ -470,7 +487,7 @@ func (r *MutationResolver) DeleteAgentTestPrompt(ctx context.Context, agentID st
 	return true, nil
 }
 
-func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error) {
+func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -482,12 +499,12 @@ func (r *QueryResolver) AgentTestPrompts(ctx context.Context, agentID string) ([
 	}
 
 	return r.AgentTestPromptService.List(ctx, &agentdefinitionports.ListAgentTestPromptsRequest{
-		TenantInfo:        base.TenantInfo(authCtx),
+		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
 	})
 }
 
-func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error) {
+func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentdraftports.AgentDraft) ([]string, error) {
 	kinds := make([]string, 0, len(obj.EventKinds))
 	for _, kind := range obj.EventKinds {
 		kinds = append(kinds, string(kind))
@@ -496,7 +513,7 @@ func (r *AgentDraftResolver) EventKinds(ctx context.Context, obj *agentports.Age
 	return kinds, nil
 }
 
-func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error) {
+func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentdraftports.AgentDraft) (map[string]any, error) {
 	tiers := make(map[string]any, len(obj.ToolTiers))
 	for tool, tier := range obj.ToolTiers {
 		tiers[tool] = string(tier)
@@ -505,19 +522,19 @@ func (r *AgentDraftResolver) ToolTiers(ctx context.Context, obj *agentports.Agen
 	return tiers, nil
 }
 
-func (r *MutationResolver) DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error) {
+func (r *MutationResolver) DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentDefinition, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.AgentDraftingService.DraftFromDescription(ctx, &agentports.DraftAgentRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+	return r.AgentDraftingService.DraftFromDescription(ctx, &agentdraftports.DraftAgentRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		Description: description,
 	})
 }
 
-func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error) {
+func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return nil, err
@@ -530,8 +547,8 @@ func (r *MutationResolver) TightenAgentInstructions(ctx context.Context, instruc
 		)
 	}
 
-	return r.AgentDraftingService.TightenInstructions(ctx, &agentports.TightenAgentInstructionsRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+	return r.AgentDraftingService.TightenInstructions(ctx, &agentdraftports.TightenAgentInstructionsRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		Instructions: instructions,
 	})
 }
@@ -542,7 +559,7 @@ func (r *QueryResolver) AgentDraftingAvailable(ctx context.Context) (bool, error
 		return false, err
 	}
 
-	return r.AgentDraftingService.Available(ctx, base.TenantInfo(authCtx))
+	return r.AgentDraftingService.Available(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error) {
@@ -584,7 +601,7 @@ func (r *MutationResolver) SetAgentUnattendedRole(ctx context.Context, agentID s
 	}
 
 	return r.AgentAccessService.SetUnattendedRole(ctx, &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		AgentID:    definitionID,
 		RoleID:     role,
 	}, actorutil.FromAuthContext(authCtx))

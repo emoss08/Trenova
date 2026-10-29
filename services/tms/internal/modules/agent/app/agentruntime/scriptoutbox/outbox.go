@@ -8,7 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 )
@@ -28,7 +29,7 @@ var (
 // previewed for it, held until the script ends and its batch is filed.
 type Intent struct {
 	Seq    int
-	Action agentports.PendingAction
+	Action agentruntimeports.PendingAction
 }
 
 // Call is one write a script asked for, with the record its tool says it
@@ -36,7 +37,7 @@ type Intent struct {
 type Call struct {
 	Tool      string
 	Arguments map[string]any
-	Target    *agentports.ToolTarget
+	Target    *agenttoolports.ToolTarget
 }
 
 // Admission says what to do with a call. A call identical to one the script
@@ -50,7 +51,7 @@ type Admission struct {
 
 // Redecider decides an intent again once the script has ended, with the
 // taint of everything the script read, wherever in the script it read it.
-type Redecider func(action *agentports.PendingAction) agenttoolpolicy.Decision
+type Redecider func(action *agentruntimeports.PendingAction) agenttoolpolicy.Decision
 
 // Settlement is how the script ended, as the broker saw it.
 type Settlement struct {
@@ -96,8 +97,8 @@ func NewOutbox(scriptStepKey string, changeLimit int) *Outbox {
 // Expand is the single-record calls one write of a script is made of: a
 // call naming several records of a batch tool is that tool's call for each
 // record alone, so every record is its own step with its own preview.
-func Expand(tool agentports.AgentTool, args map[string]any) ([]map[string]any, error) {
-	if splitter, ok := tool.(agentports.ToolRecordSplitter); ok {
+func Expand(tool agenttoolports.AgentTool, args map[string]any) ([]map[string]any, error) {
+	if splitter, ok := tool.(agenttoolports.ToolRecordSplitter); ok {
 		return splitter.SplitRecords(args)
 	}
 
@@ -170,7 +171,7 @@ func (o *Outbox) limit() int {
 // Hold keeps a call dispatch decided and previewed, and returns the number
 // the script refers to it by. A call that ran, or would run, is refused: an
 // intent waits for a person whatever its tool would do in a turn.
-func (o *Outbox) Hold(admission Admission, action *agentports.PendingAction) (int, error) {
+func (o *Outbox) Hold(admission Admission, action *agentruntimeports.PendingAction) (int, error) {
 	if admission.Folded > 0 {
 		return admission.Folded, nil
 	}
@@ -222,7 +223,7 @@ func (o *Outbox) Len() int {
 // that did not finish or whose batch was refused, else every intent in the
 // order prepared, decided again with the script's whole taint and never
 // above waiting for a person.
-func (o *Outbox) Settle(settlement Settlement) ([]agentports.PendingAction, error) {
+func (o *Outbox) Settle(settlement Settlement) ([]agentruntimeports.PendingAction, error) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 
@@ -237,7 +238,7 @@ func (o *Outbox) Settle(settlement Settlement) ([]agentports.PendingAction, erro
 		return nil, nil
 	}
 
-	actions := make([]agentports.PendingAction, 0, len(o.intents))
+	actions := make([]agentruntimeports.PendingAction, 0, len(o.intents))
 	for idx := range o.intents {
 		action := o.intents[idx].Action
 		settle(&action, settlement)
@@ -247,7 +248,7 @@ func (o *Outbox) Settle(settlement Settlement) ([]agentports.PendingAction, erro
 	return actions, nil
 }
 
-func settle(action *agentports.PendingAction, settlement Settlement) {
+func settle(action *agentruntimeports.PendingAction, settlement Settlement) {
 	if settlement.Redecide != nil {
 		decision := settlement.Redecide(action)
 		if action.Tier.Above(decision.Tier) {
@@ -272,7 +273,7 @@ func settle(action *agentports.PendingAction, settlement Settlement) {
 	action.MoneyCurrency = ""
 }
 
-func hold(action *agentports.PendingAction, key string) {
+func hold(action *agentruntimeports.PendingAction, key string) {
 	if !slices.Contains(action.HeldBy, key) {
 		action.HeldBy = append(action.HeldBy, key)
 	}

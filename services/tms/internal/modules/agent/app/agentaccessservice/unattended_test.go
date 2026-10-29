@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -45,7 +46,7 @@ func (p *heldPermissions) GetEffectivePermissions(
 func unattendedFixture(
 	t *testing.T,
 	held map[string]permissionports.EffectiveResourcePermission,
-	roleGrants []*permission.ResourcePermission,
+	roleGrants []*rbac.ResourcePermission,
 ) (*fixture, *unattendedRoleSets) {
 	t.Helper()
 
@@ -62,7 +63,7 @@ func unattendedFixture(
 	roles, ok := f.service.roles.(*permissionportsmock.MockRoleRepository)
 	require.True(t, ok)
 	roles.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{f.roleA.ID}).
-		Return([]*permission.Role{{
+		Return([]*rbac.Role{{
 			ID:             f.roleA.ID,
 			MaxSensitivity: permission.SensitivityInternal,
 			Permissions:    roleGrants,
@@ -82,24 +83,32 @@ func TestSetUnattendedRole_GivesTheAgentARoleThePersonCouldGrant(t *testing.T) {
 				DataScope:  permission.DataScopeOrganization,
 			},
 		},
-		[]*permission.ResourcePermission{{
+		[]*rbac.ResourcePermission{{
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpRead},
 			DataScope:  permission.DataScopeOrganization,
 		}},
 	)
 
-	agent, err := f.service.SetUnattendedRole(t.Context(), &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		RoleID:     f.roleA.ID,
-	}, f.actor)
+	agent, err := f.service.SetUnattendedRole(
+		t.Context(),
+		&agentdefinitionports.SetAgentUnattendedRoleRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			RoleID:     f.roleA.ID,
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, f.roleA.ID, agent.UnattendedRoleID)
 	require.Len(t, sets.sets, 1)
 	assert.Equal(t, f.roleA.ID, sets.sets[0].RoleID)
-	assert.NotEmpty(t, f.notifier.Organizations(), "the agent's cached permissions must not outlive the change")
+	assert.NotEmpty(
+		t,
+		f.notifier.Organizations(),
+		"the agent's cached permissions must not outlive the change",
+	)
 	require.Len(t, f.audit.logged, 1)
 	assert.True(t, f.audit.logged[0].Critical)
 }
@@ -114,18 +123,22 @@ func TestSetUnattendedRole_RefusesARoleBeyondThePerson(t *testing.T) {
 				DataScope:  permission.DataScopeOrganization,
 			},
 		},
-		[]*permission.ResourcePermission{{
+		[]*rbac.ResourcePermission{{
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpCreate},
 			DataScope:  permission.DataScopeOrganization,
 		}},
 	)
 
-	_, err := f.service.SetUnattendedRole(t.Context(), &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		RoleID:     f.roleA.ID,
-	}, f.actor)
+	_, err := f.service.SetUnattendedRole(
+		t.Context(),
+		&agentdefinitionports.SetAgentUnattendedRoleRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			RoleID:     f.roleA.ID,
+		},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
@@ -138,11 +151,15 @@ func TestSetUnattendedRole_RefusesARoleOfAnotherOrganization(t *testing.T) {
 
 	f, sets := unattendedFixture(t, nil, nil)
 
-	_, err := f.service.SetUnattendedRole(t.Context(), &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		RoleID:     pulid.MustNew("rol_"),
-	}, f.actor)
+	_, err := f.service.SetUnattendedRole(
+		t.Context(),
+		&agentdefinitionports.SetAgentUnattendedRoleRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			RoleID:     pulid.MustNew("rol_"),
+		},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Empty(t, sets.sets)
@@ -154,11 +171,15 @@ func TestSetUnattendedRole_NeedsPermissionToUpdateRoles(t *testing.T) {
 	f, sets := unattendedFixture(t, nil, nil)
 	f.permissions.denied["role:update"] = true
 
-	_, err := f.service.SetUnattendedRole(t.Context(), &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-		RoleID:     f.roleA.ID,
-	}, f.actor)
+	_, err := f.service.SetUnattendedRole(
+		t.Context(),
+		&agentdefinitionports.SetAgentUnattendedRoleRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+			RoleID:     f.roleA.ID,
+		},
+		f.actor,
+	)
 
 	require.Error(t, err)
 	assert.Empty(t, sets.sets)
@@ -170,10 +191,14 @@ func TestSetUnattendedRole_ClearsTheRole(t *testing.T) {
 	f, sets := unattendedFixture(t, nil, nil)
 	f.definitions.byID[f.agent.ID].UnattendedRoleID = f.roleA.ID
 
-	agent, err := f.service.SetUnattendedRole(t.Context(), &agentdefinitionports.SetAgentUnattendedRoleRequest{
-		TenantInfo: f.tenant,
-		AgentID:    f.agent.ID,
-	}, f.actor)
+	agent, err := f.service.SetUnattendedRole(
+		t.Context(),
+		&agentdefinitionports.SetAgentUnattendedRoleRequest{
+			TenantInfo: f.tenant,
+			AgentID:    f.agent.ID,
+		},
+		f.actor,
+	)
 
 	require.NoError(t, err)
 	assert.True(t, agent.UnattendedRoleID.IsNil())

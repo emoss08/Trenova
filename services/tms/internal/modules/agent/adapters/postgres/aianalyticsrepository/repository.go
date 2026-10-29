@@ -17,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -118,7 +118,7 @@ func (r *repository) HasActivity(
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		runs := agentdb.AgentRuns
-		turns := conversationdb.AssistantTurns
+		turns := conversationturndb.AssistantTurns
 		usage := aiusagedb.AIUsageRecords
 		var ran, talked, used bool
 		err := keel.Batch(ctx, r.db.Keel(ctx),
@@ -731,7 +731,7 @@ func (r *repository) TaskCells(
 		func(row *taskCellScan) aianalyticsports.TaskCellRow {
 			return aianalyticsports.TaskCellRow{
 				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
-				Task:          aiprovider.Task(row.Task),
+				Task:          aitask.Task(row.Task),
 				Runs:          row.Runs,
 				Completed:     row.Completed,
 			}

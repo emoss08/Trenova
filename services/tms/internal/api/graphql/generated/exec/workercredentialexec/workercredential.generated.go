@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -85,7 +86,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercredentialservice.ExpiryForecastItem)
 					return obj.Credential, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:     "health",
@@ -95,7 +96,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*workercredentialservice.ExpiryForecastItem)
 					return obj.Health, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialHealth),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialHealth),
 			},
 			{
 				Name:     "daysUntilExpiry",
@@ -120,7 +121,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerCredentialType(ctx, fc.Args["input"].(gqlmodel.WorkerCredentialTypeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:       "updateWorkerCredentialType",
@@ -133,7 +134,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerCredentialType(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerCredentialTypeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:       "archiveWorkerCredentialType",
@@ -146,7 +147,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveWorkerCredentialType(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:       "restoreWorkerCredentialType",
@@ -159,7 +160,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").RestoreWorkerCredentialType(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:       "createWorkerCredential",
@@ -172,7 +173,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerCredential(ctx, fc.Args["input"].(gqlmodel.WorkerCredentialInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:       "updateWorkerCredential",
@@ -185,7 +186,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerCredential(ctx, fc.Args["input"].(gqlmodel.UpdateWorkerCredentialInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:       "verifyWorkerCredential",
@@ -198,7 +199,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").VerifyWorkerCredential(ctx, fc.Args["id"].(string), fc.Args["version"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:       "archiveWorkerCredential",
@@ -211,7 +212,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ArchiveWorkerCredential(ctx, fc.Args["input"].(gqlmodel.ArchiveWorkerCredentialInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:       "attachWorkerCredentialDocument",
@@ -224,7 +225,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").AttachWorkerCredentialDocument(ctx, fc.Args["input"].(gqlmodel.AttachWorkerCredentialDocumentInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
@@ -254,7 +255,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentialType(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:       "activeWorkerCredentialTypes",
@@ -266,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ActiveWorkerCredentialTypes(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialTypeᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialTypeᚄ),
 			},
 			{
 				Name:       "workerCredentials",
@@ -280,7 +281,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentials(ctx, fc.Args["workerIds"].([]string), fc.Args["includeArchived"].(*bool), fc.Args["expiringWithinDays"].(*int), fc.Args["includeExpired"].(*bool), fc.Args["credentialTypeCode"].(*string), fc.Args["requiredOnly"].(*bool), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialᚄ),
 			},
 			{
 				Name:       "workerCredential",
@@ -294,7 +295,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredential(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:       "workerCredentialSummary",
@@ -308,7 +309,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerCredentialSummary(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialSummary),
 			},
 			{
 				Name:       "credentialExpiryForecast",
@@ -331,7 +332,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -341,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -351,7 +352,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -361,7 +362,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -371,7 +372,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.CredentialTypeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -381,26 +382,26 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialType",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.CredentialType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:     "status",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialStatus),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialStatus),
 			},
 			{
 				Name:     "number",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Number, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -409,7 +410,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "issuingAuthority",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.IssuingAuthority, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -418,7 +419,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "issuedAt",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.IssuedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -427,7 +428,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "expiresAt",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -438,7 +439,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return gqlexec.Resolver[resolverWorkerCredential](ec, "WorkerCredential").DocumentID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -448,7 +449,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialDocument",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Document, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋdocumentsᚋdomainᚋdocumentᚐDocument),
@@ -457,7 +458,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "notes",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Notes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -468,7 +469,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return gqlexec.Resolver[resolverWorkerCredential](ec, "WorkerCredential").VerifiedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -478,7 +479,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.VerifiedBy, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -487,7 +488,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "verifiedAt",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.VerifiedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -498,7 +499,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return gqlexec.Resolver[resolverWorkerCredential](ec, "WorkerCredential").ArchivedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -507,7 +508,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "archivedAt",
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.ArchivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -516,7 +517,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "archiveReason",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.ArchiveReason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -528,10 +529,10 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return gqlexec.Resolver[resolverWorkerCredential](ec, "WorkerCredential").Health(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialHealth),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialHealth),
 			},
 			{
 				Name:       "daysUntilExpiry",
@@ -539,7 +540,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return gqlexec.Resolver[resolverWorkerCredential](ec, "WorkerCredential").DaysUntilExpiry(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -549,7 +550,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -559,7 +560,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -569,7 +570,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -579,7 +580,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredential)
+					obj := o.(*workercredential.WorkerCredential)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -653,7 +654,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -663,7 +664,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.ComplianceStatus, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNComplianceStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐComplianceStatus),
@@ -673,7 +674,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.RequiredCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -683,7 +684,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.ValidCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -693,7 +694,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.ExpiringCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -703,7 +704,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.ExpiredCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -713,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.MissingCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -724,10 +725,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialSummaryItem",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialSummary)
+					obj := o.(*workercredential.WorkerCredentialSummary)
 					return obj.Items, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialSummaryItemᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialSummaryItemᚄ),
 			},
 		}},
 		{Object: "WorkerCredentialSummaryItem", Fields: []*gqlexec.Field{
@@ -737,36 +738,36 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerCredentialType",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.CredentialSummaryItem)
+					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.CredentialType, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:      "credential",
 				HasChild:  true,
 				ChildType: "WorkerCredential",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.CredentialSummaryItem)
+					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.Credential, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential),
+				Marshal: gqlexec.Marshal(marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential),
 			},
 			{
 				Name:     "health",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.CredentialSummaryItem)
+					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.Health, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialHealth),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialHealth),
 			},
 			{
 				Name:     "daysUntilExpiry",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.CredentialSummaryItem)
+					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.DaysUntilExpiry, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint64),
@@ -776,7 +777,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.CredentialSummaryItem)
+					obj := o.(*workercredential.CredentialSummaryItem)
 					return obj.Required, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -788,7 +789,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -798,7 +799,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -808,7 +809,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -818,7 +819,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -828,7 +829,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -837,7 +838,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "description",
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -847,16 +848,16 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Category, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory),
 			},
 			{
 				Name:     "status",
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
@@ -866,7 +867,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.IsRequired, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -875,7 +876,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "requiredForDriverTypes",
 				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiredForDriverTypes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalODriverType2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐDriverTypeᚄ),
@@ -885,7 +886,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RenewalWindowDays, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -894,7 +895,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "validityMonths",
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.ValidityMonths, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint32),
@@ -904,7 +905,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiresNumber, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -914,7 +915,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.RequiresDocument, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -925,7 +926,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return gqlexec.Resolver[resolverWorkerCredentialType](ec, "WorkerCredentialType").ProfileField(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
@@ -935,7 +936,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.IsSystem, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -945,7 +946,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.SortOrder, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int32),
@@ -956,7 +957,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return gqlexec.Resolver[resolverWorkerCredentialType](ec, "WorkerCredentialType").ActiveCredentialCount(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
@@ -966,7 +967,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -976,7 +977,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -986,7 +987,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerCredentialType)
+					obj := o.(*workercredential.WorkerCredentialType)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1045,7 +1046,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WorkerCredentialTypeEdge)
 					return obj.Node, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType),
+				Marshal: gqlexec.Marshal(marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType),
 			},
 			{
 				Name:     "cursor",
@@ -1076,38 +1077,38 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	CreateWorkerCredentialType(ctx context.Context, input gqlmodel.WorkerCredentialTypeInput) (*worker.WorkerCredentialType, error)
-	UpdateWorkerCredentialType(ctx context.Context, id string, input gqlmodel.WorkerCredentialTypeInput) (*worker.WorkerCredentialType, error)
-	ArchiveWorkerCredentialType(ctx context.Context, id string, version *int) (*worker.WorkerCredentialType, error)
-	RestoreWorkerCredentialType(ctx context.Context, id string, version *int) (*worker.WorkerCredentialType, error)
-	CreateWorkerCredential(ctx context.Context, input gqlmodel.WorkerCredentialInput) (*worker.WorkerCredential, error)
-	UpdateWorkerCredential(ctx context.Context, input gqlmodel.UpdateWorkerCredentialInput) (*worker.WorkerCredential, error)
-	VerifyWorkerCredential(ctx context.Context, id string, version *int) (*worker.WorkerCredential, error)
-	ArchiveWorkerCredential(ctx context.Context, input gqlmodel.ArchiveWorkerCredentialInput) (*worker.WorkerCredential, error)
-	AttachWorkerCredentialDocument(ctx context.Context, input gqlmodel.AttachWorkerCredentialDocumentInput) (*worker.WorkerCredential, error)
+	CreateWorkerCredentialType(ctx context.Context, input gqlmodel.WorkerCredentialTypeInput) (*workercredential.WorkerCredentialType, error)
+	UpdateWorkerCredentialType(ctx context.Context, id string, input gqlmodel.WorkerCredentialTypeInput) (*workercredential.WorkerCredentialType, error)
+	ArchiveWorkerCredentialType(ctx context.Context, id string, version *int) (*workercredential.WorkerCredentialType, error)
+	RestoreWorkerCredentialType(ctx context.Context, id string, version *int) (*workercredential.WorkerCredentialType, error)
+	CreateWorkerCredential(ctx context.Context, input gqlmodel.WorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	UpdateWorkerCredential(ctx context.Context, input gqlmodel.UpdateWorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	VerifyWorkerCredential(ctx context.Context, id string, version *int) (*workercredential.WorkerCredential, error)
+	ArchiveWorkerCredential(ctx context.Context, input gqlmodel.ArchiveWorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	AttachWorkerCredentialDocument(ctx context.Context, input gqlmodel.AttachWorkerCredentialDocumentInput) (*workercredential.WorkerCredential, error)
 }
 
 type resolverQuery interface {
 	WorkerCredentialTypes(ctx context.Context, input gqlmodel.WorkerCredentialTypesInput) (*gqlmodel.WorkerCredentialTypeConnection, error)
-	WorkerCredentialType(ctx context.Context, id string) (*worker.WorkerCredentialType, error)
-	ActiveWorkerCredentialTypes(ctx context.Context) ([]*worker.WorkerCredentialType, error)
-	WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
-	WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error)
-	WorkerCredentialSummary(ctx context.Context, workerID string) (*worker.WorkerCredentialSummary, error)
+	WorkerCredentialType(ctx context.Context, id string) (*workercredential.WorkerCredentialType, error)
+	ActiveWorkerCredentialTypes(ctx context.Context) ([]*workercredential.WorkerCredentialType, error)
+	WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*workercredential.WorkerCredential, error)
+	WorkerCredential(ctx context.Context, id string) (*workercredential.WorkerCredential, error)
+	WorkerCredentialSummary(ctx context.Context, workerID string) (*workercredential.WorkerCredentialSummary, error)
 	CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error)
 }
 
 type resolverWorkerCredential interface {
-	DocumentID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	VerifiedByID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	ArchivedByID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	Health(ctx context.Context, obj *worker.WorkerCredential) (worker.CredentialHealth, error)
-	DaysUntilExpiry(ctx context.Context, obj *worker.WorkerCredential) (*int, error)
+	DocumentID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	VerifiedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	ArchivedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	Health(ctx context.Context, obj *workercredential.WorkerCredential) (workercredential.CredentialHealth, error)
+	DaysUntilExpiry(ctx context.Context, obj *workercredential.WorkerCredential) (*int, error)
 }
 
 type resolverWorkerCredentialType interface {
-	ProfileField(ctx context.Context, obj *worker.WorkerCredentialType) (*string, error)
-	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (*int, error)
+	ProfileField(ctx context.Context, obj *workercredential.WorkerCredentialType) (*string, error)
+	ActiveCredentialCount(ctx context.Context, obj *workercredential.WorkerCredentialType) (*int, error)
 }
 
 var (
@@ -1702,7 +1703,7 @@ func unmarshalInputWorkerCredentialTypeInput(ctx context.Context, ec *gqlexec.Ex
 			it.Description = data
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
-			data, err := unmarshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory(ctx, ec, v)
+			data, err := unmarshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1847,7 +1848,7 @@ func unmarshalInputWorkerCredentialTypesInput(ctx context.Context, ec *gqlexec.E
 			it.Status = data
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
-			data, err := unmarshalOWorkerCredentialCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory(ctx, ec, v)
+			data, err := unmarshalOWorkerCredentialCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1931,9 +1932,9 @@ func unmarshalNUpdateWorkerCredentialInput2githubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, v any) (worker.CredentialCategory, error) {
+func unmarshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, v any) (workercredential.CredentialCategory, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.CredentialCategory(tmp)
+	res := workercredential.CredentialCategory(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2036,12 +2037,12 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOWorkerCredentialCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, v any) (*worker.CredentialCategory, error) {
+func unmarshalOWorkerCredentialCategory2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, v any) (*workercredential.CredentialCategory, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.CredentialCategory(tmp)
+	res := workercredential.CredentialCategory(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2149,15 +2150,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerCredential) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerCredential]{
-		Elem:        marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential,
+func marshalNWorkerCredential2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercredential.WorkerCredential) graphql.Marshaler {
+	return gqlexec.List[*workercredential.WorkerCredential]{
+		Elem:        marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredential) graphql.Marshaler {
+func marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredential) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2165,7 +2166,7 @@ func marshalNWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return ec.MarshalType(ctx, sel, "WorkerCredential", v)
 }
 
-func marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.CredentialCategory) graphql.Marshaler {
+func marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialCategory(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercredential.CredentialCategory) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2173,7 +2174,7 @@ func marshalNWorkerCredentialCategory2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return res
 }
 
-func marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialHealth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.CredentialHealth) graphql.Marshaler {
+func marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialHealth(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercredential.CredentialHealth) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2181,7 +2182,7 @@ func marshalNWorkerCredentialHealth2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNWorkerCredentialStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.CredentialStatus) graphql.Marshaler {
+func marshalNWorkerCredentialStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workercredential.CredentialStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -2189,7 +2190,7 @@ func marshalNWorkerCredentialStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialSummary) graphql.Marshaler {
+func marshalNWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialSummary(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredentialSummary) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2197,15 +2198,15 @@ func marshalNWorkerCredentialSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinter
 	return ec.MarshalType(ctx, sel, "WorkerCredentialSummary", v)
 }
 
-func marshalNWorkerCredentialSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialSummaryItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.CredentialSummaryItem) graphql.Marshaler {
-	return gqlexec.List[*worker.CredentialSummaryItem]{
-		Elem:        marshalNWorkerCredentialSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialSummaryItem,
+func marshalNWorkerCredentialSummaryItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialSummaryItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercredential.CredentialSummaryItem) graphql.Marshaler {
+	return gqlexec.List[*workercredential.CredentialSummaryItem]{
+		Elem:        marshalNWorkerCredentialSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialSummaryItem,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerCredentialSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐCredentialSummaryItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.CredentialSummaryItem) graphql.Marshaler {
+func marshalNWorkerCredentialSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐCredentialSummaryItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.CredentialSummaryItem) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2213,15 +2214,15 @@ func marshalNWorkerCredentialSummaryItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerCredentialSummaryItem", v)
 }
 
-func marshalNWorkerCredentialType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerCredentialType) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerCredentialType]{
-		Elem:        marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType,
+func marshalNWorkerCredentialType2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialTypeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workercredential.WorkerCredentialType) graphql.Marshaler {
+	return gqlexec.List[*workercredential.WorkerCredentialType]{
+		Elem:        marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialType) graphql.Marshaler {
+func marshalNWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredentialType) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2332,7 +2333,7 @@ func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredential) graphql.Marshaler {
+func marshalOWorkerCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredential(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredential) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -2346,7 +2347,7 @@ func marshalOWorkerCredentialDocument2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return ec.MarshalType(ctx, sel, "WorkerCredentialDocument", v)
 }
 
-func marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerCredentialType) graphql.Marshaler {
+func marshalOWorkerCredentialType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkercredentialᚐWorkerCredentialType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workercredential.WorkerCredentialType) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

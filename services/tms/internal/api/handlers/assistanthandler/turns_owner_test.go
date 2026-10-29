@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,16 +18,16 @@ import (
 )
 
 type strangerThreads struct {
-	agentports.AssistantService
+	assistantports.AssistantService
 
-	asked agentports.GetThreadRequest
+	asked conversationports.GetThreadRequest
 }
 
 func (s *strangerThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	s.asked = req
+	s.asked = *req
 
 	return nil, errortypes.NewNotFoundError("Thread not found")
 }

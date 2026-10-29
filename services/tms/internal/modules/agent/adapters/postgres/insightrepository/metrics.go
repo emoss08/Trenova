@@ -11,10 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential/workercredentialdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -72,8 +74,8 @@ func customerOnTimeQuery(
 			keel.Count().Filter(keel.And(prior, onTime)),
 		).
 		Where(
-			stp.Status.Eq(shipment.StopStatusCompleted),
-			stp.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+			stp.Status.Eq(shipmentvocab.StopStatusCompleted),
+			stp.Type.In(shipmentvocab.StopTypeDelivery, shipmentvocab.StopTypeSplitDelivery),
 			stp.ActualArrival.IsNotNull(),
 			stp.ActualArrival.Gt(0),
 			stp.ScheduledWindowStart.Gt(0),
@@ -129,7 +131,7 @@ func unbilledShipmentsQuery(
 			sp.ActualDeliveryDate.Gt(0),
 			sp.ActualDeliveryDate.Lt(req.DeliveredBefore),
 			sp.BilledAt.IsNull(),
-			sp.Status.In(shipment.BillingTransferCandidateStatuses()...),
+			sp.Status.In(shipmentvocab.BillingTransferCandidateStatuses()...),
 		)
 }
 
@@ -237,7 +239,7 @@ func customerEmptyMilesQuery(
 			keel.CastText(keel.Sum(totalMiles).OverWindow(keel.Window{})),
 		).
 		Where(
-			smv.Status.Eq(shipment.MoveStatusCompleted),
+			smv.Status.Eq(shipmentvocab.MoveStatusCompleted),
 			smv.Distance.IsNotNull(),
 			smv.Distance.Gt(0),
 			sp.ActualDeliveryDate.Gte(req.WindowStart),
@@ -273,9 +275,9 @@ func (r *metricsRepository) CustomerEmptyMiles(
 
 func expiringCredentialsQuery(
 	req insightports.ExpiringCredentialsRequest,
-) *keel.Query[*worker.WorkerCredential] {
-	wcred := workerdb.WorkerCredentials
-	wct := workerdb.WorkerCredentialTypes
+) *keel.Query[*workercredential.WorkerCredential] {
+	wcred := workercredentialdb.WorkerCredentials
+	wct := workercredentialdb.WorkerCredentialTypes
 	wrk := workerdb.Workers
 
 	return wcred.Join(wct, wct.ID.EqCol(wcred.CredentialTypeID)).

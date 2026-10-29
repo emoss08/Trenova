@@ -1,14 +1,17 @@
 package scopepolicytest
 
-import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+)
 
 type Policy struct {
-	Registry          *permission.Registry
+	Registry          *permissioncatalog.Registry
 	DatabaseEnforcing bool
 }
 
 func Enforcing() *Policy {
-	return &Policy{Registry: permission.NewRegistry(), DatabaseEnforcing: true}
+	return &Policy{Registry: permissioncatalog.NewRegistry(), DatabaseEnforcing: true}
 }
 
 func (p *Policy) Enforced(resource string, scope permission.DataScope) bool {

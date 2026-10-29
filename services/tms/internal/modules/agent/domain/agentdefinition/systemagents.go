@@ -3,7 +3,7 @@ package agentdefinition
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 )
 
 const (
@@ -13,12 +13,12 @@ const (
 
 type pageAgent struct {
 	key      string
-	template Template
+	template agenttemplate.Template
 }
 
 var pageAgents = [...]pageAgent{
-	{key: SystemKeyImportAssistant, template: TemplateImportAssistant},
-	{key: SystemKeyFormulaAssistant, template: TemplateFormulaAssistant},
+	{key: SystemKeyImportAssistant, template: agenttemplate.TemplateImportAssistant},
+	{key: SystemKeyFormulaAssistant, template: agenttemplate.TemplateFormulaAssistant},
 }
 
 func PageAgentKeys() []string {
@@ -34,7 +34,7 @@ func IsPageAgentKey(key string) bool {
 	return slices.Contains(PageAgentKeys(), key)
 }
 
-func PageAgentTemplate(key string) (Template, bool) {
+func PageAgentTemplate(key string) (agenttemplate.Template, bool) {
 	for _, agent := range pageAgents {
 		if agent.key == key {
 			return agent.template, true
@@ -46,33 +46,4 @@ func PageAgentTemplate(key string) (Template, bool) {
 
 func (d *Definition) IsPageAgent() bool {
 	return IsPageAgentKey(d.SystemKey)
-}
-
-func NewPageAgent(key string, tenant pagination.TenantInfo, name string) (*Definition, bool) {
-	template, ok := PageAgentTemplate(key)
-	if !ok {
-		return nil, false
-	}
-
-	definition := &Definition{
-		OrganizationID:    tenant.OrgID,
-		BusinessUnitID:    tenant.BuID,
-		Name:              name,
-		Description:       template.Description(),
-		Template:          template,
-		Icon:              templateIcons[template],
-		Instructions:      template.StarterInstructions(),
-		ToolNames:         template.StarterTools(),
-		AutonomyCeiling:   template.StarterCeiling(),
-		DataAccessCeiling: template.StarterDataAccess(),
-		TriggerMode:       TriggerChat,
-		OutputMode:        OutputConversational,
-		SystemKey:         key,
-		AccessMode:        AccessEveryone,
-		ContextProviders:  AllContextProviders(),
-		Enabled:           true,
-	}
-	definition.ApplyDefaults()
-
-	return definition, true
 }

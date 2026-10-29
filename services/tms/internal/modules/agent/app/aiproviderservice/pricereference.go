@@ -8,10 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modelcatalog"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -39,9 +40,9 @@ var datedSuffix = regexp.MustCompile(`-(\d{8}|\d{4}-\d{2}-\d{2})$`)
 type ModelPriceReferenceParams struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
-	Cache  agentports.ModelPriceCacheRepository `optional:"true"`
+	Logger   *zap.Logger
+	AIConfig *aiconfig.Config
+	Cache    llmports.ModelPriceCacheRepository `optional:"true"`
 }
 
 // openRouterPrices estimates a model's price from OpenRouter's public catalog.
@@ -50,8 +51,8 @@ type ModelPriceReferenceParams struct {
 // OpenRouter, with one read in flight however many lists ask at once.
 type openRouterPrices struct {
 	l      *zap.Logger
-	cfg    *config.AIConfig
-	cache  agentports.ModelPriceCacheRepository
+	cfg    *aiconfig.Config
+	cache  llmports.ModelPriceCacheRepository
 	client *http.Client
 	group  singleflight.Group
 
@@ -60,10 +61,10 @@ type openRouterPrices struct {
 	expires time.Time
 }
 
-func NewModelPriceReference(p ModelPriceReferenceParams) agentports.ModelPriceReference {
+func NewModelPriceReference(p ModelPriceReferenceParams) aiproviderports.ModelPriceReference {
 	return &openRouterPrices{
 		l:      p.Logger.Named("service.aiprovider.price-reference"),
-		cfg:    p.Config.GetAIConfig(),
+		cfg:    p.AIConfig,
 		cache:  p.Cache,
 		client: &http.Client{Timeout: priceCatalogTimeout},
 	}
@@ -73,7 +74,7 @@ func (r *openRouterPrices) Prices(
 	ctx context.Context,
 	kind aiprovider.Kind,
 	modelIDs []string,
-) map[string]agentports.ReferencePrice {
+) map[string]aiproviderports.ReferencePrice {
 	if !r.cfg.ModelPriceReferenceEnabled() || len(modelIDs) == 0 {
 		return nil
 	}
@@ -83,7 +84,7 @@ func (r *openRouterPrices) Prices(
 		return nil
 	}
 
-	prices := make(map[string]agentports.ReferencePrice, len(modelIDs))
+	prices := make(map[string]aiproviderports.ReferencePrice, len(modelIDs))
 	for _, id := range modelIDs {
 		if price, ok := index.lookup(kind, id); ok {
 			prices[id] = price
@@ -120,17 +121,17 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 		return index
 	}
 
-	models, err := modeladapter.ListReferencePrices(ctx, r.client, openRouterCatalogURL)
+	models, err := modelcatalog.ListReferencePrices(ctx, r.client, openRouterCatalogURL)
 	if err != nil {
 		r.l.Warn("could not read the model price reference", zap.Error(err))
 		r.remember(nil, priceCatalogRetryGap)
 		return nil
 	}
 
-	prices := make(map[string]agentports.CachedModelPrice, len(models))
+	prices := make(map[string]llmports.CachedModelPrice, len(models))
 	for idx := range models {
 		model := &models[idx]
-		price := agentports.CachedModelPrice{Input: model.InputCostPerMillion.String()}
+		price := llmports.CachedModelPrice{Input: model.InputCostPerMillion.String()}
 		if model.OutputCostPerMillion != nil {
 			price.Output = model.OutputCostPerMillion.String()
 		}
@@ -154,7 +155,7 @@ func (r *openRouterPrices) load(ctx context.Context) *priceIndex {
 	return index
 }
 
-func (r *openRouterPrices) readShared(ctx context.Context) map[string]agentports.CachedModelPrice {
+func (r *openRouterPrices) readShared(ctx context.Context) map[string]llmports.CachedModelPrice {
 	if r.cache == nil {
 		return nil
 	}
@@ -178,14 +179,14 @@ func (r *openRouterPrices) remember(index *priceIndex, ttl time.Duration) {
 // priceIndex finds a catalog price for a model ID as a provider lists it, which
 // rarely matches the catalog's spelling exactly.
 type priceIndex struct {
-	byID   map[string]agentports.ReferencePrice
-	byName map[string][]agentports.ReferencePrice
+	byID   map[string]aiproviderports.ReferencePrice
+	byName map[string][]aiproviderports.ReferencePrice
 }
 
-func newPriceIndex(prices map[string]agentports.CachedModelPrice) *priceIndex {
+func newPriceIndex(prices map[string]llmports.CachedModelPrice) *priceIndex {
 	index := &priceIndex{
-		byID:   make(map[string]agentports.ReferencePrice, len(prices)),
-		byName: make(map[string][]agentports.ReferencePrice, len(prices)),
+		byID:   make(map[string]aiproviderports.ReferencePrice, len(prices)),
+		byName: make(map[string][]aiproviderports.ReferencePrice, len(prices)),
 	}
 
 	for id, cached := range prices {
@@ -196,7 +197,7 @@ func newPriceIndex(prices map[string]agentports.CachedModelPrice) *priceIndex {
 		if err != nil || !input.IsPositive() {
 			continue
 		}
-		price := agentports.ReferencePrice{
+		price := aiproviderports.ReferencePrice{
 			InputCostPerMillion:      input,
 			OutputCostPerMillion:     positivePrice(cached.Output),
 			CacheReadCostPerMillion:  positivePrice(cached.CacheRead),
@@ -224,7 +225,7 @@ func positivePrice(value string) *decimal.Decimal {
 func (x *priceIndex) lookup(
 	kind aiprovider.Kind,
 	modelID string,
-) (agentports.ReferencePrice, bool) {
+) (aiproviderports.ReferencePrice, bool) {
 	key := normalizeModelID(modelID)
 	undated := datedSuffix.ReplaceAllString(key, "")
 	vendor := catalogVendor(kind)
@@ -240,7 +241,7 @@ func (x *priceIndex) lookup(
 		return matches[0], true
 	}
 
-	return agentports.ReferencePrice{}, false
+	return aiproviderports.ReferencePrice{}, false
 }
 
 // catalogVendor is the prefix the catalog files a provider's own models under.

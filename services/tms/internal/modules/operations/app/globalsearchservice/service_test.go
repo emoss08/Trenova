@@ -5,13 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/types/search"
@@ -48,7 +47,7 @@ func TestSearchReturnsEmptyForBlankQuery(t *testing.T) {
 	repo := customerportsmock.NewMockSearchRepository(t)
 	svc := &Service{
 		logger:      zaptest.NewLogger(t),
-		config:      &config.SearchConfig{},
+		config:      &searchconfig.Config{},
 		searchRepo:  repo,
 		permissions: permissionportsmock.NewMockPermissionEngine(t),
 		visibility:  everyRecordVisible{},
@@ -85,10 +84,10 @@ func TestSearchFiltersByRequestedEntityTypesAndTenant(t *testing.T) {
 
 	svc := &Service{
 		logger: zaptest.NewLogger(t),
-		config: &config.SearchConfig{
+		config: &searchconfig.Config{
 			Enabled: true,
-			Meilisearch: config.MeilisearchConfig{
-				Indexes: config.MeilisearchIndexConfig{
+			Meilisearch: searchconfig.MeilisearchConfig{
+				Indexes: searchconfig.MeilisearchIndexConfig{
 					Shipments: "shipments",
 					Customers: "customers",
 					Workers:   "workers",
@@ -145,10 +144,10 @@ func TestSearchClampsRequestedLimit(t *testing.T) {
 
 	svc := &Service{
 		logger: zaptest.NewLogger(t),
-		config: &config.SearchConfig{
+		config: &searchconfig.Config{
 			Enabled: true,
-			Meilisearch: config.MeilisearchConfig{
-				Indexes: config.MeilisearchIndexConfig{
+			Meilisearch: searchconfig.MeilisearchConfig{
+				Indexes: searchconfig.MeilisearchIndexConfig{
 					Workers: "workers",
 				},
 			},
@@ -203,10 +202,10 @@ func TestSearchContinuesWhenOneIndexFails(t *testing.T) {
 
 	svc := &Service{
 		logger: zaptest.NewLogger(t),
-		config: &config.SearchConfig{
+		config: &searchconfig.Config{
 			Enabled: true,
-			Meilisearch: config.MeilisearchConfig{
-				Indexes: config.MeilisearchIndexConfig{
+			Meilisearch: searchconfig.MeilisearchConfig{
+				Indexes: searchconfig.MeilisearchIndexConfig{
 					Customers: "customers",
 					Workers:   "workers",
 				},

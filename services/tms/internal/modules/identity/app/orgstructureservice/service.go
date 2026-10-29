@@ -10,11 +10,11 @@ package orgstructureservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -36,16 +36,16 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.OrgStructureRepository
+	Repo         orgstructureports.OrgStructureRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.OrgStructureRepository
+	repo         orgstructureports.OrgStructureRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -60,7 +60,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.OrgStructureRepository
+	Repo         orgstructureports.OrgStructureRepository
 	AuditService auditports.AuditService
 }
 
@@ -140,9 +140,9 @@ func (s *Service) publish(
 // Headcount is the roster counted three ways. They run together because the
 // page shows them together and they touch the same two tables.
 type Headcount struct {
-	ByFleet      []workerports.HeadcountRow
-	ByPosition   []workerports.HeadcountRow
-	ByDepartment []workerports.HeadcountRow
+	ByFleet      []orgstructureports.HeadcountRow
+	ByPosition   []orgstructureports.HeadcountRow
+	ByDepartment []orgstructureports.HeadcountRow
 	ActiveTotal  int
 	DriverTotal  int
 	Terminated   int
@@ -197,9 +197,9 @@ func (s *Service) Headcount(
 // title only users hold is absent from the worker rows, so it is added; a
 // title both hold gets its staff count beside its workers.
 func mergeStaffIntoPositions(
-	rows []workerports.HeadcountRow,
-	staff []workerports.StaffCountRow,
-) []workerports.HeadcountRow {
+	rows []orgstructureports.HeadcountRow,
+	staff []orgstructureports.StaffCountRow,
+) []orgstructureports.HeadcountRow {
 	index := make(map[string]int, len(rows))
 	for i, row := range rows {
 		index[row.Key] = i
@@ -210,7 +210,7 @@ func mergeStaffIntoPositions(
 			rows[i].Staff += count.Staff
 			continue
 		}
-		rows = append(rows, workerports.HeadcountRow{
+		rows = append(rows, orgstructureports.HeadcountRow{
 			Key:   key,
 			Label: count.Title,
 			Code:  count.Code,
@@ -221,9 +221,9 @@ func mergeStaffIntoPositions(
 }
 
 func mergeStaffIntoDepartments(
-	rows []workerports.HeadcountRow,
-	staff []workerports.StaffCountRow,
-) []workerports.HeadcountRow {
+	rows []orgstructureports.HeadcountRow,
+	staff []orgstructureports.StaffCountRow,
+) []orgstructureports.HeadcountRow {
 	index := make(map[string]int, len(rows))
 	for i, row := range rows {
 		index[row.Key] = i
@@ -233,7 +233,7 @@ func mergeStaffIntoDepartments(
 			rows[i].Staff += count.Staff
 			continue
 		}
-		rows = append(rows, workerports.HeadcountRow{
+		rows = append(rows, orgstructureports.HeadcountRow{
 			Key:   count.Department,
 			Label: count.Department,
 			Staff: count.Staff,
@@ -246,7 +246,7 @@ func mergeStaffIntoDepartments(
 // ListPositions reads the job catalog.
 func (s *Service) ListPositions(
 	ctx context.Context,
-	req *workerports.ListJobPositionsRequest,
+	req *orgstructureports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return s.repo.ListPositions(ctx, req)
 }
@@ -256,10 +256,21 @@ func (s *Service) GetPosition(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) (*worker.JobPosition, error) {
-	return s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
+	return s.repo.GetPositionByID(ctx, &orgstructureports.GetJobPositionByIDRequest{
 		ID:               id,
 		TenantInfo:       tenantInfo,
 		IncludeReportsTo: true,
+	})
+}
+
+func (s *Service) GetPositionsByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*worker.JobPosition, error) {
+	return s.repo.GetPositionsByIDs(ctx, &orgstructureports.GetJobPositionsByIDsRequest{
+		TenantInfo:  tenantInfo,
+		PositionIDs: ids,
 	})
 }
 
@@ -303,7 +314,7 @@ func (s *Service) UpdatePosition(
 ) (*worker.JobPosition, error) {
 	tenantInfo := positionTenant(entity)
 
-	original, err := s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
+	original, err := s.repo.GetPositionByID(ctx, &orgstructureports.GetJobPositionByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantInfo,
 	})
@@ -398,7 +409,7 @@ func (s *Service) checkReportingLine(
 		}
 		seen[next] = true
 
-		parent, err := s.repo.GetPositionByID(ctx, &workerports.GetJobPositionByIDRequest{
+		parent, err := s.repo.GetPositionByID(ctx, &orgstructureports.GetJobPositionByIDRequest{
 			ID:         next,
 			TenantInfo: tenantInfo,
 		})

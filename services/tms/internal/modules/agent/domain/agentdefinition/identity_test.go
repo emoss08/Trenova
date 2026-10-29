@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -13,9 +15,9 @@ import (
 func TestKnownIconsAndAccents(t *testing.T) {
 	t.Parallel()
 
-	icons := agentdefinition.KnownIcons()
+	icons := agentmark.KnownIcons()
 	require.NotEmpty(t, icons)
-	require.Contains(t, icons, agentdefinition.IconBot)
+	require.Contains(t, icons, agentmark.IconBot)
 
 	seen := make(map[string]struct{}, len(icons))
 	for _, icon := range icons {
@@ -23,32 +25,32 @@ func TestKnownIconsAndAccents(t *testing.T) {
 		seen[icon] = struct{}{}
 	}
 
-	accents := agentdefinition.KnownAccents()
+	accents := agentmark.KnownAccents()
 	require.Len(t, accents, 8, "eight accents keep the picker one row")
-	require.Contains(t, accents, agentdefinition.AccentIndigo)
+	require.Contains(t, accents, agentmark.AccentIndigo)
 }
 
 func TestResolvedIcon_FallsBackToTheTemplate(t *testing.T) {
 	t.Parallel()
 
-	chosen := &agentdefinition.Definition{Icon: agentdefinition.IconShield}
-	require.Equal(t, agentdefinition.IconShield, chosen.ResolvedIcon())
+	chosen := &agentdefinition.Definition{Icon: agentmark.IconShield}
+	require.Equal(t, agentmark.IconShield, chosen.ResolvedIcon())
 
-	fromTemplate := &agentdefinition.Definition{Template: agentdefinition.TemplateBillingException}
-	require.Equal(t, agentdefinition.IconReceipt, fromTemplate.ResolvedIcon())
+	fromTemplate := &agentdefinition.Definition{Template: agenttemplate.TemplateBillingException}
+	require.Equal(t, agentmark.IconReceipt, fromTemplate.ResolvedIcon())
 
 	bare := &agentdefinition.Definition{}
-	require.Equal(t, agentdefinition.IconBot, bare.ResolvedIcon())
+	require.Equal(t, agentmark.IconBot, bare.ResolvedIcon())
 }
 
 func TestChosenIcon_IsEmptyForAnAgentWithNoIconOfItsOwn(t *testing.T) {
 	t.Parallel()
 
-	chosen := &agentdefinition.Definition{Icon: agentdefinition.IconShield}
-	require.Equal(t, agentdefinition.IconShield, chosen.ChosenIcon())
+	chosen := &agentdefinition.Definition{Icon: agentmark.IconShield}
+	require.Equal(t, agentmark.IconShield, chosen.ChosenIcon())
 
-	fromTemplate := &agentdefinition.Definition{Template: agentdefinition.TemplateBillingException}
-	require.Equal(t, agentdefinition.IconReceipt, fromTemplate.ChosenIcon())
+	fromTemplate := &agentdefinition.Definition{Template: agenttemplate.TemplateBillingException}
+	require.Equal(t, agentmark.IconReceipt, fromTemplate.ChosenIcon())
 
 	unknown := &agentdefinition.Definition{Icon: "not-an-icon"}
 	require.Empty(t, unknown.ChosenIcon())
@@ -60,17 +62,17 @@ func TestChosenIcon_IsEmptyForAnAgentWithNoIconOfItsOwn(t *testing.T) {
 func TestResolvedAccent_IsStableAndSpread(t *testing.T) {
 	t.Parallel()
 
-	chosen := &agentdefinition.Definition{Accent: agentdefinition.AccentAmber}
-	require.Equal(t, agentdefinition.AccentAmber, chosen.ResolvedAccent())
+	chosen := &agentdefinition.Definition{Accent: agentmark.AccentAmber}
+	require.Equal(t, agentmark.AccentAmber, chosen.ResolvedAccent())
 
 	id := pulid.MustNew("agdef_")
 	first := (&agentdefinition.Definition{ID: id}).ResolvedAccent()
 	second := (&agentdefinition.Definition{ID: id}).ResolvedAccent()
 	require.Equal(t, first, second, "the same agent must always look the same")
-	require.Contains(t, agentdefinition.KnownAccents(), first)
+	require.Contains(t, agentmark.KnownAccents(), first)
 
 	byName := (&agentdefinition.Definition{Name: "Dispatch desk"}).ResolvedAccent()
-	require.Contains(t, agentdefinition.KnownAccents(), byName,
+	require.Contains(t, agentmark.KnownAccents(), byName,
 		"an agent that has not been saved yet still needs an accent")
 
 	counts := make(map[string]int, 8)
@@ -100,8 +102,8 @@ func TestValidate_AcceptsAKnownIdentityAndAnEmptyOne(t *testing.T) {
 	t.Parallel()
 
 	chosen := identityDefinition()
-	chosen.Icon = agentdefinition.IconTruck
-	chosen.Accent = agentdefinition.AccentTeal
+	chosen.Icon = agentmark.IconTruck
+	chosen.Accent = agentmark.AccentTeal
 
 	multiErr := errortypes.NewMultiError()
 	chosen.Validate(multiErr)

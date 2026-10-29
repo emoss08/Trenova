@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func threadPageRequest() *agentports.ListThreadsRequest {
-	return &agentports.ListThreadsRequest{
+func threadPageRequest() *conversationports.ListThreadsRequest {
+	return &conversationports.ListThreadsRequest{
 		UserID: pulid.MustNew("usr_"),
 	}
 }
@@ -248,7 +248,7 @@ func TestThreadPageQueryLeavesAnOpenEndedShelfUnbounded(t *testing.T) {
 func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
 	t.Parallel()
 
-	req := &agentports.CountThreadShelvesRequest{
+	req := &conversationports.CountThreadShelvesRequest{
 		UserID: pulid.MustNew("usr_"),
 		Edges:  []int64{3_000, 2_000, 1_000},
 	}

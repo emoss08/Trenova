@@ -4,7 +4,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelmonitorservice"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -157,7 +158,7 @@ func CarrierIntelReconcileWorkflow(
 			return listPage(wctx, after)
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
-			var reconcile carrierintelservice.ReconcileResult
+			var reconcile carrierintelenrollmentservice.ReconcileResult
 			if err := workflow.ExecuteActivity(
 				workflow.WithActivityOptions(wctx, sweepActivityOptions),
 				a.ReconcileTenantActivity,
@@ -189,7 +190,7 @@ func CarrierIntelDigestWorkflow(
 			return listPage(wctx, after)
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
-			var digest carrierintelservice.DigestResult
+			var digest carrierintelmonitorservice.DigestResult
 			if err := workflow.ExecuteActivity(
 				workflow.WithActivityOptions(wctx, shortActivityOptions),
 				a.DigestTenantActivity,
@@ -212,7 +213,7 @@ func CarrierIntelMaintenanceWorkflow(
 	}
 	var a *Activities
 	if input.After == nil {
-		var maintenance carrierintelservice.MaintenanceResult
+		var maintenance carrierintelmonitorservice.MaintenanceResult
 		if err := workflow.ExecuteActivity(
 			workflow.WithActivityOptions(ctx, sweepActivityOptions),
 			a.GlobalMaintenanceActivity,

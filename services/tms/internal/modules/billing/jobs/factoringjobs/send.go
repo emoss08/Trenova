@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/activity"
@@ -65,7 +65,7 @@ type FailPayload struct {
 func FactoringSubmissionSendWorkflow(
 	ctx workflow.Context,
 	payload *factoringcontract.SendPayload,
-) (*factoringports.DeliverSubmissionResult, error) {
+) (*factoringsubmissionports.DeliverSubmissionResult, error) {
 	var a *Activities
 
 	prepareCtx := workflow.WithActivityOptions(ctx, prepareSendOptions)
@@ -75,7 +75,7 @@ func FactoringSubmissionSendWorkflow(
 	}
 
 	deliverCtx := workflow.WithActivityOptions(ctx, deliverOptions)
-	var result factoringports.DeliverSubmissionResult
+	var result factoringsubmissionports.DeliverSubmissionResult
 	if err := workflow.ExecuteActivity(deliverCtx, a.DeliverFactoringSubmissionActivity, payload).
 		Get(deliverCtx, &result); err != nil {
 		return nil, fail(ctx, payload, err, sendMaxAttempts)
@@ -125,21 +125,23 @@ func (a *Activities) PrepareFactoringSubmissionActivity(
 	tenant := payload.TenantInfo()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 	heartbeat(ctx, tenant)
-	return refusal(a.submissions.PrepareDocuments(ctx, &factoringports.DeliverSubmissionRequest{
-		TenantInfo:   tenant,
-		SubmissionID: payload.SubmissionID,
-		Group:        payload.Group,
-	}))
+	return refusal(
+		a.submissions.PrepareDocuments(ctx, &factoringsubmissionports.DeliverSubmissionRequest{
+			TenantInfo:   tenant,
+			SubmissionID: payload.SubmissionID,
+			Group:        payload.Group,
+		}),
+	)
 }
 
 func (a *Activities) DeliverFactoringSubmissionActivity(
 	ctx context.Context,
 	payload *factoringcontract.SendPayload,
-) (*factoringports.DeliverSubmissionResult, error) {
+) (*factoringsubmissionports.DeliverSubmissionResult, error) {
 	tenant := payload.TenantInfo()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 	heartbeat(ctx, tenant)
-	result, err := a.submissions.Deliver(ctx, &factoringports.DeliverSubmissionRequest{
+	result, err := a.submissions.Deliver(ctx, &factoringsubmissionports.DeliverSubmissionRequest{
 		TenantInfo:   tenant,
 		SubmissionID: payload.SubmissionID,
 		Group:        payload.Group,
@@ -157,7 +159,7 @@ func (a *Activities) MarkFactoringSubmissionFailedActivity(
 ) error {
 	tenant := payload.Send.TenantInfo()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
-	return a.submissions.MarkFailed(ctx, &factoringports.FailSubmissionRequest{
+	return a.submissions.MarkFailed(ctx, &factoringsubmissionports.FailSubmissionRequest{
 		TenantInfo:   tenant,
 		SubmissionID: payload.Send.SubmissionID,
 		Group:        payload.Send.Group,

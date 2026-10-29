@@ -5,9 +5,9 @@
 package documenttemplateportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -316,23 +316,23 @@ func (_c *MockDocumentTemplateResolver_PreviewVersion_Call) RunAndReturn(
 }
 
 // RecordGeneratedDocument provides a mock function for the type MockDocumentTemplateResolver
-func (_mock *MockDocumentTemplateResolver) RecordGeneratedDocument(context1 context.Context, recordGeneratedDocumentRequest *documenttemplateports.RecordGeneratedDocumentRequest) (*documenttemplate.GeneratedDocument, error) {
+func (_mock *MockDocumentTemplateResolver) RecordGeneratedDocument(context1 context.Context, recordGeneratedDocumentRequest *documenttemplateports.RecordGeneratedDocumentRequest) (*generateddocument.GeneratedDocument, error) {
 	ret := _mock.Called(context1, recordGeneratedDocumentRequest)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RecordGeneratedDocument")
 	}
 
-	var r0 *documenttemplate.GeneratedDocument
+	var r0 *generateddocument.GeneratedDocument
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.RecordGeneratedDocumentRequest) (*documenttemplate.GeneratedDocument, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.RecordGeneratedDocumentRequest) (*generateddocument.GeneratedDocument, error)); ok {
 		return returnFunc(context1, recordGeneratedDocumentRequest)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.RecordGeneratedDocumentRequest) *documenttemplate.GeneratedDocument); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documenttemplateports.RecordGeneratedDocumentRequest) *generateddocument.GeneratedDocument); ok {
 		r0 = returnFunc(context1, recordGeneratedDocumentRequest)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documenttemplate.GeneratedDocument)
+			r0 = ret.Get(0).(*generateddocument.GeneratedDocument)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *documenttemplateports.RecordGeneratedDocumentRequest) error); ok {
@@ -372,13 +372,13 @@ func (_c *MockDocumentTemplateResolver_RecordGeneratedDocument_Call) Run(
 	return _c
 }
 
-func (_c *MockDocumentTemplateResolver_RecordGeneratedDocument_Call) Return(generatedDocument *documenttemplate.GeneratedDocument, err error) *MockDocumentTemplateResolver_RecordGeneratedDocument_Call {
+func (_c *MockDocumentTemplateResolver_RecordGeneratedDocument_Call) Return(generatedDocument *generateddocument.GeneratedDocument, err error) *MockDocumentTemplateResolver_RecordGeneratedDocument_Call {
 	_c.Call.Return(generatedDocument, err)
 	return _c
 }
 
 func (_c *MockDocumentTemplateResolver_RecordGeneratedDocument_Call) RunAndReturn(
-	run func(context1 context.Context, recordGeneratedDocumentRequest *documenttemplateports.RecordGeneratedDocumentRequest) (*documenttemplate.GeneratedDocument, error),
+	run func(context1 context.Context, recordGeneratedDocumentRequest *documenttemplateports.RecordGeneratedDocumentRequest) (*generateddocument.GeneratedDocument, error),
 ) *MockDocumentTemplateResolver_RecordGeneratedDocument_Call {
 	_c.Call.Return(run)
 	return _c

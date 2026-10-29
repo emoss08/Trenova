@@ -4,13 +4,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentextractionservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentcontentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentsearchprojectionportsmock"
@@ -29,9 +31,9 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")
@@ -90,7 +92,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			EnableDocumentIntelligence: true,
 		}, nil)
 
@@ -115,15 +117,18 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		Return(nil, nil)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: documentControlRepo,
-		DocumentRepo:        documentRepo,
-		ContentRepo:         contentRepo,
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		SearchProjection:    searchProjection,
-		WorkflowStarter:     workflowStarter,
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      documentControlRepo,
+		DocumentRepo:             documentRepo,
+		ContentRepo:              contentRepo,
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		SearchProjection: searchProjection,
+		WorkflowStarter:  workflowStarter,
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)
@@ -134,9 +139,9 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")
@@ -147,7 +152,7 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	documentControlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
 	documentControlRepo.EXPECT().
 		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&tenant.DocumentControl{
+		Return(&documentcontrol.DocumentControl{
 			EnableDocumentIntelligence: false,
 		}, nil)
 
@@ -155,14 +160,17 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	workflowStarter.EXPECT().Enabled().Return(true)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: documentControlRepo,
-		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     workflowStarter,
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      documentControlRepo,
+		DocumentRepo:             documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: workflowStarter,
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
@@ -178,20 +186,23 @@ func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
-		DocumentRepo:        documentportsmock.NewMockDocumentRepository(t),
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      tenantportsmock.NewMockDocumentControlRepository(t),
+		DocumentRepo:             documentportsmock.NewMockDocumentRepository(t),
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
@@ -207,9 +218,9 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	t.Parallel()
 
 	cfg := &config.Config{
-		AI: config.AIConfig{},
+		AI: aiconfig.Config{},
 	}
-	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	metricRegistry, err := metrics.NewRegistry(&monitoringconfig.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	orgID := pulid.MustNew("org_")
@@ -230,14 +241,17 @@ func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
 	}, nil)
 
 	service := documentextractionservice.New(documentextractionservice.Params{
-		Logger:              zap.NewNop(),
-		Config:              cfg,
-		Metrics:             metricRegistry,
-		DocumentControlRepo: tenantportsmock.NewMockDocumentControlRepository(t),
-		DocumentRepo:        documentRepo,
-		ContentRepo:         documentcontentportsmock.NewMockDocumentContentRepository(t),
-		DraftRepo:           documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t),
-		WorkflowStarter:     kernelportsmock.NewMockWorkflowStarter(t),
+		Logger:                   zap.NewNop(),
+		DocumentConversionConfig: &cfg.DocumentConversion,
+		SearchConfig:             &cfg.Search,
+		Metrics:                  metricRegistry,
+		DocumentControlRepo:      tenantportsmock.NewMockDocumentControlRepository(t),
+		DocumentRepo:             documentRepo,
+		ContentRepo:              documentcontentportsmock.NewMockDocumentContentRepository(t),
+		DraftRepo: documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(
+			t,
+		),
+		WorkflowStarter: kernelportsmock.NewMockWorkflowStarter(t),
 	})
 
 	err = service.Reextract(t.Context(), documentID, tenantInfo)

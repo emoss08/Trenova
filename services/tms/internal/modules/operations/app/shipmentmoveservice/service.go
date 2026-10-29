@@ -3,9 +3,9 @@ package shipmentmoveservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmentcontinuityports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -14,12 +14,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,10 +39,10 @@ type Params struct {
 
 	Logger          *zap.Logger
 	DB              kernelports.Transactor
-	Repo            shipmentports.ShipmentMoveRepository
-	AssignmentRepo  shipmentports.AssignmentRepository
+	Repo            shipmentmoveports.ShipmentMoveRepository
+	AssignmentRepo  assignmentports.AssignmentRepository
 	ShipmentRepo    shipmentports.ShipmentRepository
-	HoldRepo        shipmentports.ShipmentHoldRepository
+	HoldRepo        shipmentholdports.ShipmentHoldRepository
 	ControlRepo     tenantports.ShipmentControlRepository
 	ContinuityRepo  equipmentcontinuityports.EquipmentContinuityRepository
 	Coordinator     *shipmentstate.Coordinator
@@ -46,17 +52,17 @@ type Params struct {
 	ServiceFailures servicefailureports.ServiceFailureEvaluator `optional:"true"`
 	Notifications   *notificationservice.Service                `optional:"true"`
 	DashControlRepo tenantports.DashControlRepository           `optional:"true"`
-	MoveObservers   []shipmentports.MoveStatusObserver          `                group:"move_status_observers"`
-	Publisher       agentports.AgentEventPublisher              `optional:"true"`
+	MoveObservers   []shipmentserviceports.MoveStatusObserver   `                group:"move_status_observers"`
+	Publisher       agenteventports.AgentEventPublisher         `optional:"true"`
 }
 
 type service struct {
 	l               *zap.Logger
 	db              kernelports.Transactor
-	repo            shipmentports.ShipmentMoveRepository
-	assignmentRepo  shipmentports.AssignmentRepository
+	repo            shipmentmoveports.ShipmentMoveRepository
+	assignmentRepo  assignmentports.AssignmentRepository
 	shipmentRepo    shipmentports.ShipmentRepository
-	holdRepo        shipmentports.ShipmentHoldRepository
+	holdRepo        shipmentholdports.ShipmentHoldRepository
 	controlRepo     tenantports.ShipmentControlRepository
 	continuityRepo  equipmentcontinuityports.EquipmentContinuityRepository
 	coordinator     *shipmentstate.Coordinator
@@ -66,12 +72,12 @@ type service struct {
 	serviceFailures servicefailureports.ServiceFailureEvaluator
 	notifications   *notificationservice.Service
 	dashControlRepo tenantports.DashControlRepository
-	moveObservers   []shipmentports.MoveStatusObserver
-	publisher       agentports.AgentEventPublisher
+	moveObservers   []shipmentserviceports.MoveStatusObserver
+	publisher       agenteventports.AgentEventPublisher
 }
 
 //nolint:gocritic // service constructor
-func New(p Params) shipmentports.ShipmentMoveService {
+func New(p Params) shipmentmoveports.ShipmentMoveService {
 	return &service{
 		l:               p.Logger.Named("service.shipment-move"),
 		db:              p.DB,
@@ -97,7 +103,7 @@ func (s *service) notifyMoveObservers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	previous shipment.MoveStatus,
+	previous shipmentvocab.MoveStatus,
 ) {
 	if move == nil || previous == move.Status {
 		return
@@ -146,14 +152,14 @@ func actorForMoveTenant(tenantInfo pagination.TenantInfo) kernelports.AuditActor
 
 func (s *service) UpdateStatus(
 	ctx context.Context,
-	req *shipmentports.UpdateMoveStatusRequest,
+	req *shipmentmoveports.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
 	var updatedMove *shipment.ShipmentMove
-	var previousStatus shipment.MoveStatus
+	var previousStatus shipmentvocab.MoveStatus
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, err := s.planMoveStatus(txCtx, &moveStatusRequest{
 			tenantInfo: req.TenantInfo,
@@ -204,7 +210,7 @@ func (s *service) UpdateStatus(
 
 func (s *service) BulkUpdateStatus(
 	ctx context.Context,
-	req *shipmentports.BulkUpdateMoveStatusRequest,
+	req *shipmentmoveports.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
@@ -280,7 +286,7 @@ func (s *service) notifyBulkMoveObservers(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moves []*shipment.ShipmentMove,
-	previousStatuses map[pulid.ID]shipment.MoveStatus,
+	previousStatuses map[pulid.ID]shipmentvocab.MoveStatus,
 ) {
 	for _, m := range moves {
 		if m == nil {
@@ -314,7 +320,7 @@ func (s *service) emitBulkMoveStatusEvents(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moves []*shipment.ShipmentMove,
-	previousStatuses map[pulid.ID]shipment.MoveStatus,
+	previousStatuses map[pulid.ID]shipmentvocab.MoveStatus,
 ) {
 	tenantRef := tenantRefForMoveTenant(tenantInfo)
 	actor := actorForMoveTenant(tenantInfo)
@@ -334,15 +340,15 @@ func (s *service) emitBulkMoveStatusEvents(
 
 func (s *service) SplitMove(
 	ctx context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.SplitMoveResponse, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.SplitMoveResponse, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
-	var response *shipmentports.SplitMoveResponse
+	var response *shipmentmoveports.SplitMoveResponse
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		lockedMove, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+		lockedMove, err := s.repo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: false,
@@ -352,7 +358,7 @@ func (s *service) SplitMove(
 			return err
 		}
 
-		move, err := s.repo.GetByID(txCtx, &shipmentports.GetMoveByIDRequest{
+		move, err := s.repo.GetByID(txCtx, &shipmentmoveports.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
 			TenantInfo:        req.TenantInfo,
 			ExpandMoveDetails: true,
@@ -381,13 +387,13 @@ func (s *service) SplitMove(
 
 func (s *service) PreviewSplitMove(
 	ctx context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.MoveSplitPlan, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.MoveSplitPlan, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
 
-	move, err := s.repo.GetByID(ctx, &shipmentports.GetMoveByIDRequest{
+	move, err := s.repo.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
 		MoveID:            req.MoveID,
 		TenantInfo:        req.TenantInfo,
 		ExpandMoveDetails: true,
@@ -400,27 +406,31 @@ func (s *service) PreviewSplitMove(
 		return nil, err
 	}
 
-	return &shipmentports.MoveSplitPlan{
+	return &shipmentmoveports.MoveSplitPlan{
 		Move:  move,
-		Split: shipment.PlanMoveSplit(move, req.Spec()),
+		Split: movesplit.PlanMoveSplit(move, req.Spec()),
 	}, nil
 }
 
-func validateSplitRequest(req *shipmentports.SplitMoveRequest, move *shipment.ShipmentMove) error {
+func validateSplitRequest(
+	req *shipmentmoveports.SplitMoveRequest,
+	move *shipment.ShipmentMove,
+) error {
 	if len(move.Stops) != 2 {
 		return errortypes.NewBusinessError("Only simple two-stop moves can be split").
 			WithParam("moveId", move.ID.String())
 	}
 
-	if move.Status != shipment.MoveStatusNew && move.Status != shipment.MoveStatusAssigned {
+	if move.Status != shipmentvocab.MoveStatusNew &&
+		move.Status != shipmentvocab.MoveStatusAssigned {
 		return errortypes.NewBusinessError("Only new or assigned moves can be split").
 			WithParam("moveId", move.ID.String())
 	}
 
 	originStop := move.Stops[0]
 	deliveryStop := move.Stops[1]
-	if originStop.Type != shipment.StopTypePickup ||
-		deliveryStop.Type != shipment.StopTypeDelivery {
+	if originStop.Type != shipmentvocab.StopTypePickup ||
+		deliveryStop.Type != shipmentvocab.StopTypeDelivery {
 		return errortypes.NewBusinessError("Only pickup-to-delivery moves can be split").
 			WithParam("moveId", move.ID.String())
 	}
@@ -511,7 +521,7 @@ func (s *service) deriveShipmentState(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.ShipmentControl, error) {
+) (*shipmentcontrol.ShipmentControl, error) {
 	control, err := s.controlRepo.Get(
 		ctx,
 		tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo},
@@ -532,16 +542,19 @@ func (s *service) ensureNoDeliveryHold(
 	ctx context.Context,
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 ) error {
-	if status != shipment.MoveStatusCompleted {
+	if status != shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 
-	hasHold, err := s.holdRepo.HasActiveDeliveryHold(ctx, &shipmentports.ActiveShipmentHoldRequest{
-		ShipmentID: shipmentID,
-		TenantInfo: tenantInfo,
-	})
+	hasHold, err := s.holdRepo.HasActiveDeliveryHold(
+		ctx,
+		&shipmentholdports.ActiveShipmentHoldRequest{
+			ShipmentID: shipmentID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -570,11 +583,11 @@ func (s *service) ensureEquipmentAvailableForProgressBulk(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 	seenTractors map[pulid.ID]pulid.ID,
 	seenTrailers map[pulid.ID]pulid.ID,
 ) error {
-	if status != shipment.MoveStatusInTransit {
+	if status != shipmentvocab.MoveStatusInTransit {
 		return nil
 	}
 
@@ -623,9 +636,9 @@ func (s *service) advanceEquipmentContinuityForMove(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	move *shipment.ShipmentMove,
-	status shipment.MoveStatus,
+	status shipmentvocab.MoveStatus,
 ) error {
-	if status != shipment.MoveStatusCompleted {
+	if status != shipmentvocab.MoveStatusCompleted {
 		return nil
 	}
 

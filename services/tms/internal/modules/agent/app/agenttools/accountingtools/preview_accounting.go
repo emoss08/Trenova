@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingkit"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -18,7 +21,7 @@ import (
 var accountingCheckVolatileFields = []string{"lastCheckedAt", "lastSuccessAt"}
 
 var accountingCheckFields = []string{
-	common.FieldStatus,
+	changepreview.FieldStatus,
 	"lastCheckedAt",
 	"lastSuccessAt",
 	"consecutiveFailures",
@@ -27,38 +30,40 @@ var accountingCheckFields = []string{
 }
 
 var mappingFields = []string{
-	common.FieldState,
+	changepreview.FieldState,
 	"externalName",
 	"source",
-	common.FieldReason,
+	changepreview.FieldReason,
 	"confirmedAt",
 }
 
 var mappingLabels = map[string]string{"externalName": "Mapped to"}
 
-func accountingConnectionRecord(conn *accountingsync.AccountingConnection) toolpreview.Record {
+func accountingConnectionRecord(
+	conn *accountingconnection.AccountingConnection,
+) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       conn.ID,
 		Label: fmt.Sprintf(
 			"%s for %s",
-			accountingsync.ProviderName(conn.IntegrationType),
+			accountingprovider.ProviderName(conn.IntegrationType),
 			conn.ExternalCompanyName,
 		),
-		Version: common.PreviewVersion(conn.Version),
+		Version: changepreview.PreviewVersion(conn.Version),
 	}
 }
 
-func mappingRecord(row *accountingsync.AccountingMapping) toolpreview.Record {
+func MappingRecord(row *accountingmapping.AccountingMapping) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       row.ID,
 		Label:    row.TargetLabel,
-		Version:  common.PreviewVersion(row.Version),
+		Version:  changepreview.PreviewVersion(row.Version),
 	}
 }
 
-func mappingOptions() []toolpreview.Option {
+func MappingOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(mappingFields...),
 		toolpreview.Labels(mappingLabels),
@@ -68,12 +73,12 @@ func mappingOptions() []toolpreview.Option {
 
 func (t *CheckAccountingConnectionTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	conn, err := t.connection(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	conn, err := t.connection(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would check the accounting connection now."),
 				err,
 			), nil
@@ -86,7 +91,7 @@ func (t *CheckAccountingConnectionTool) Preview(
 	change, err := toolpreview.Update(
 		accountingConnectionRecord(conn),
 		conn,
-		func(checked *accountingsync.AccountingConnection) error {
+		func(checked *accountingconnection.AccountingConnection) error {
 			checked.RecordSuccess(now)
 
 			return nil
@@ -102,7 +107,7 @@ func (t *CheckAccountingConnectionTool) Preview(
 		"Would check %s for %s now and record whether it answers. It is %s at the moment; "+
 			"shown is what is recorded when it answers, and a failure is recorded instead "+
 			"when it does not.",
-		accountingsync.ProviderName(conn.IntegrationType),
+		accountingprovider.ProviderName(conn.IntegrationType),
 		conn.ExternalCompanyName,
 		conn.Status,
 	), change)
@@ -113,12 +118,12 @@ func (t *CheckAccountingConnectionTool) Preview(
 
 func (t *SetAccountingMappingTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	req, row, ref, err := t.request(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	req, row, ref, err := t.request(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would set an accounting mapping."),
 				err,
 			), nil
@@ -133,30 +138,30 @@ func (t *SetAccountingMappingTool) Preview(
 		ref.Label(),
 	)
 	if row.ExternalID != ref.ExternalID {
-		if _, err = t.mappings.GuardHistory(
+		if _, err = t.history.GuardHistory(
 			ctx,
 			req.TenantInfo,
 			row,
 			req.AcknowledgeHistory,
 		); err != nil {
-			if common.IsRefusal(err) {
-				return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+			if changepreview.IsRefusal(err) {
+				return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 			}
 
 			return nil, err
 		}
 	}
 
-	choice := accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix())
+	choice := accountingmappingkit.MappingChoice(req, ref, timeutils.NowUnix())
 	change, err := toolpreview.Update(
-		mappingRecord(row),
+		MappingRecord(row),
 		row,
-		func(mapped *accountingsync.AccountingMapping) error {
+		func(mapped *accountingmapping.AccountingMapping) error {
 			mapped.Confirm(choice)
 
 			return nil
 		},
-		mappingOptions()...,
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -167,12 +172,12 @@ func (t *SetAccountingMappingTool) Preview(
 
 func (t *ClearAccountingMappingTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	row, err := t.mapping(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	row, err := t.mapping(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would clear an accounting mapping."),
 				err,
 			), nil
@@ -184,22 +189,27 @@ func (t *ClearAccountingMappingTool) Preview(
 	summary := fmt.Sprintf(
 		"Would unmatch %s from %s, and never propose %s for it again.",
 		row.TargetLabel,
-		mappedLabel(row),
-		mappedLabel(row),
+		MappedLabel(row),
+		MappedLabel(row),
 	)
-	if _, err = t.mappings.GuardHistory(ctx, common.TenantFrom(params), row, false); err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(toolpreview.Build(summary), err), nil
+	if _, err = t.history.GuardHistory(
+		ctx,
+		toolparams.TenantFrom(params),
+		row,
+		false,
+	); err != nil {
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
 		}
 
 		return nil, err
 	}
 
-	plan, err := common.PlanUpdate(
-		mappingRecord(row),
+	plan, err := changepreview.PlanUpdate(
+		MappingRecord(row),
 		row,
-		func(cleared *accountingsync.AccountingMapping) error { return cleared.Clear() },
-		mappingOptions()...,
+		func(cleared *accountingmapping.AccountingMapping) error { return cleared.Clear() },
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -215,12 +225,12 @@ type accountingRecordDraft struct {
 
 func (t *CreateAccountingReferenceRecordTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	row, err := t.mapping(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	row, err := t.mapping(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would create a record in the accounting system."),
 				err,
 			), nil
@@ -229,12 +239,12 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	system, err := accountingSystemFrom(params.Params)
+	system, err := SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	name := t.requestedName(&params, row)
+	name := t.requestedName(params, row)
 	created, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		Label:    name,
@@ -243,24 +253,24 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	choice := accountingmappingservice.CreatedReferenceChoice(
-		&accountingmappingservice.CreatedReference{
+	choice := accountingmappingkit.CreatedReferenceChoice(
+		&accountingmappingkit.CreatedReference{
 			ExternalName:    name,
-			RequestedSource: accountingsync.MappingSourceAgent,
+			RequestedSource: accountingmapping.MappingSourceAgent,
 			IntegrationType: system,
 			ActorID:         params.Actor.UserID,
 			At:              timeutils.NowUnix(),
 		},
 	)
 	mapped, err := toolpreview.Update(
-		mappingRecord(row),
+		MappingRecord(row),
 		row,
-		func(confirmed *accountingsync.AccountingMapping) error {
+		func(confirmed *accountingmapping.AccountingMapping) error {
 			confirmed.Confirm(choice)
 
 			return nil
 		},
-		mappingOptions()...,
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -271,7 +281,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 			"the name to its own rules; it cannot be deleted from Trenova afterwards.",
 		strings.ToLower(string(row.ProviderKind)),
 		name,
-		accountingsync.ProviderName(system),
+		accountingprovider.ProviderName(system),
 		row.TargetLabel,
 	), created, mapped)
 	preview.Partial = true
@@ -280,10 +290,10 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 }
 
 func (t *CreateAccountingReferenceRecordTool) requestedName(
-	params *agentports.ToolExecuteParams,
-	row *accountingsync.AccountingMapping,
+	params *agenttoolports.ToolExecuteParams,
+	row *accountingmapping.AccountingMapping,
 ) string {
-	if name := strings.TrimSpace(common.OptionalString(params.Params, "name")); name != "" {
+	if name := strings.TrimSpace(toolparams.OptionalString(params.Params, "name")); name != "" {
 		return name
 	}
 
@@ -292,12 +302,12 @@ func (t *CreateAccountingReferenceRecordTool) requestedName(
 
 func (t *RefreshAccountingReferenceDataTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	_, summary, err := t.setup(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	_, summary, err := t.setup(ctx, params)
 	if err != nil {
-		if common.IsRefusal(err) {
-			return common.WarnWouldFail(
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(
 				toolpreview.Build("Would refresh the accounting system's records."),
 				err,
 			), nil
@@ -313,11 +323,11 @@ func (t *RefreshAccountingReferenceDataTool) Preview(
 			"mappings and the books are left alone.",
 		summary.ProviderName,
 		summary.Connection.ExternalCompanyName,
-	), &agent.RecordChange{
+	), &agentpreview.RecordChange{
 		Resource:  record.Resource,
 		EntityID:  record.ID,
 		Label:     record.Label,
-		Operation: agent.PreviewOperationRun,
+		Operation: agentpreview.PreviewOperationRun,
 		Version:   record.Version,
 	})
 	preview.Partial = true

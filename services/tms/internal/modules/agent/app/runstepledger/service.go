@@ -5,15 +5,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
-
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,19 +35,19 @@ type Params struct {
 	fx.In
 
 	Logger  *zap.Logger
-	Repo    agentports.AgentRunStepRepository
+	Repo    agentruntimeports.AgentRunStepRepository
 	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
 	l       *zap.Logger
-	repo    agentports.AgentRunStepRepository
-	metrics *metrics.Assistant
+	repo    agentruntimeports.AgentRunStepRepository
+	metrics *aimetrics.Assistant
 }
 
-var _ agentports.RunStepLedger = (*Service)(nil)
+var _ agentruntimeports.RunStepLedger = (*Service)(nil)
 
-func New(p Params) agentports.RunStepLedger {
+func New(p Params) agentruntimeports.RunStepLedger {
 	service := &Service{
 		l:    p.Logger.Named("service.runstepledger"),
 		repo: p.Repo,
@@ -68,50 +70,62 @@ func New(p Params) agentports.RunStepLedger {
 func (s *Service) Claim(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step agentports.RunStep,
-) (agentports.StepVerdict, error) {
-	held, err := s.repo.Claim(ctx, toEntity(tenant, step, agentports.RunStepStarted))
+	step *agentruntimeports.RunStep,
+) (agentruntimeports.StepVerdict, error) {
+	held, err := s.repo.Claim(
+		ctx,
+		toEntity(tenant, step, agentruntimeports.RunStepStarted, map[string]any{}),
+	)
 	if err == nil {
-		return agentports.StepVerdict{State: agentports.StepFresh}, nil
+		return agentruntimeports.StepVerdict{State: agentruntimeports.StepFresh}, nil
 	}
-	if !errors.Is(err, agentports.ErrRunStepClaimed) {
-		return agentports.StepVerdict{}, fmt.Errorf("claim run step: %w", err)
+	if !errors.Is(err, agentruntimeports.ErrRunStepClaimed) {
+		return agentruntimeports.StepVerdict{}, fmt.Errorf("claim run step: %w", err)
 	}
 
 	// The key is taken and the holder could not be read. Unknown is the only
 	// safe answer: something ran, and this attempt cannot say what it did.
 	if held == nil {
-		s.countReplayed(step, agentports.StepUnknown)
+		s.countReplayed(step, agentruntimeports.StepUnknown)
 
-		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
+		return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}, nil
 	}
 
-	switch agentports.RunStepStatus(held.Status) {
-	case agentports.RunStepCompleted:
-		s.countReplayed(step, agentports.StepCompleted)
+	switch agentruntimeports.RunStepStatus(held.Status) {
+	case agentruntimeports.RunStepCompleted:
+		s.countReplayed(step, agentruntimeports.StepCompleted)
 
-		return agentports.StepVerdict{
-			State:   agentports.StepCompleted,
+		return agentruntimeports.StepVerdict{
+			State:   agentruntimeports.StepCompleted,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
-	case agentports.RunStepFailed:
-		s.countReplayed(step, agentports.StepFailed)
+	case agentruntimeports.RunStepFailed:
+		s.countReplayed(step, agentruntimeports.StepFailed)
 
-		return agentports.StepVerdict{
-			State:   agentports.StepFailed,
+		return agentruntimeports.StepVerdict{
+			State:   agentruntimeports.StepFailed,
 			Outcome: decodeOutcome(s.l, held),
 		}, nil
+	case agentruntimeports.RunStepStarted:
+		return s.unfinished(step, held), nil
 	default:
-		s.l.Warn("an earlier attempt began this step and never finished it",
-			zap.String("owner", held.OwnerID.String()),
-			zap.String("tool", held.ToolName),
-			zap.Int("claimedOnAttempt", held.Attempt),
-		)
-
-		s.countReplayed(step, agentports.StepUnknown)
-
-		return agentports.StepVerdict{State: agentports.StepUnknown}, nil
+		return s.unfinished(step, held), nil
 	}
+}
+
+func (s *Service) unfinished(
+	step *agentruntimeports.RunStep,
+	held *agentrunstep.AgentRunStep,
+) agentruntimeports.StepVerdict {
+	s.l.Warn("an earlier attempt began this step and never finished it",
+		zap.String("owner", held.OwnerID.String()),
+		zap.String("tool", held.ToolName),
+		zap.Int("claimedOnAttempt", held.Attempt),
+	)
+
+	s.countReplayed(step, agentruntimeports.StepUnknown)
+
+	return agentruntimeports.StepVerdict{State: agentruntimeports.StepUnknown}
 }
 
 // countReplayed files an operation a later attempt declined to repeat.
@@ -119,27 +133,61 @@ func (s *Service) Claim(
 // This is the reliability figure worth having: each one is a write that a
 // retry would otherwise have made twice, so the count is a direct measure of
 // what the ledger is preventing rather than a proxy for it.
-func (s *Service) countReplayed(step agentports.RunStep, state agentports.StepState) {
+func (s *Service) countReplayed(
+	step *agentruntimeports.RunStep,
+	state agentruntimeports.StepState,
+) {
 	s.metrics.RecordStepReplayed(string(step.OwnerKind), string(state))
 }
 
 func (s *Service) Settle(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	step agentports.RunStep,
+	step *agentruntimeports.RunStep,
 ) error {
-	step.Outcome = withCause(step.Kind, step.Outcome)
-	if len(step.Outcome.Content) > maxStoredOutcomeChars {
-		s.l.Debug("a step's answer was too large to keep",
-			zap.String("tool", step.ToolName),
-			zap.Int("chars", len(step.Outcome.Content)),
-		)
-		step.Outcome.Content = ""
+	return s.repo.Settle(ctx, &agentruntimeports.SettleAgentRunStepRequest{
+		TenantInfo: tenant,
+		OwnerID:    step.OwnerID,
+		StepKey:    step.Key,
+		Status:     string(step.Status),
+		Outcome:    s.storedOutcome(step),
+	})
+}
+
+func (s *Service) Record(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	step *agentruntimeports.RunStep,
+) error {
+	row := toEntity(tenant, step, step.Status, s.storedOutcome(step))
+	if step.Status != agentruntimeports.RunStepStarted {
+		settledAt := timeutils.NowUnixMilli()
+		row.SettledAtMs = &settledAt
 	}
 
-	encoded, err := encodeOutcome(step.Outcome)
+	return s.repo.Record(ctx, row)
+}
+
+func (s *Service) storedOutcome(step *agentruntimeports.RunStep) map[string]any {
+	outcome := withCause(step.Kind, &step.Outcome)
+	if len(outcome.Content) > maxStoredOutcomeChars {
+		s.l.Debug("a step's answer was too large to keep",
+			zap.String("tool", step.ToolName),
+			zap.Int("chars", len(outcome.Content)),
+		)
+		outcome.Content = ""
+	}
+	if outcome.Reply != nil && !replyFits(outcome.Reply) {
+		s.l.Debug("a model reply was too large to keep; a replay asks the model again",
+			zap.String("owner", step.OwnerID.String()),
+			zap.String("key", step.Key),
+		)
+		outcome.Reply = nil
+	}
+
+	encoded, err := encodeOutcome(&outcome)
 	if err != nil {
-		// A settled step whose outcome cannot be encoded would come back as
+		// A finished step whose outcome cannot be encoded would come back as
 		// Unknown on the next attempt, which is wrong — it finished, and we
 		// know how. Record the status without the body rather than leave it
 		// Started.
@@ -147,33 +195,19 @@ func (s *Service) Settle(
 			zap.String("tool", step.ToolName),
 			zap.Error(err),
 		)
-		encoded = map[string]any{}
+
+		return map[string]any{}
 	}
 
-	return s.repo.Settle(ctx, agentports.SettleAgentRunStepRequest{
-		TenantInfo: tenant,
-		OwnerID:    step.OwnerID,
-		StepKey:    step.Key,
-		Status:     string(step.Status),
-		Outcome:    encoded,
-	})
-}
-
-func (s *Service) Record(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-	step agentports.RunStep,
-) error {
-	step.Outcome = withCause(step.Kind, step.Outcome)
-	return s.repo.Record(ctx, toEntity(tenant, step, step.Status))
+	return encoded
 }
 
 func (s *Service) Loaded(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	owner agentports.RunStepOwner,
-) ([]agentports.RunStep, error) {
-	rows, err := s.repo.List(ctx, agentports.ListAgentRunStepsRequest{
+	owner agentruntimeports.RunStepOwner,
+) ([]agentruntimeports.RunStep, error) {
+	rows, err := s.repo.List(ctx, &agentruntimeports.ListAgentRunStepsRequest{
 		TenantInfo: tenant,
 		OwnerKind:  string(owner.Kind),
 		OwnerID:    owner.ID,
@@ -182,35 +216,70 @@ func (s *Service) Loaded(
 		return nil, err
 	}
 
-	steps := make([]agentports.RunStep, 0, len(rows))
+	steps := make([]agentruntimeports.RunStep, 0, len(rows))
 	for _, row := range rows {
-		steps = append(steps, agentports.RunStep{
-			OwnerKind:         kernelports.RunStepOwnerKind(row.OwnerKind),
-			OwnerID:           row.OwnerID,
-			Attempt:           row.Attempt,
-			Kind:              agentports.RunStepKind(row.Kind),
-			Status:            agentports.RunStepStatus(row.Status),
-			Key:               row.StepKey,
-			ToolName:          row.ToolName,
-			CallID:            row.CallID,
-			Args:              row.Arguments,
-			Outcome:           decodeOutcome(s.l, row),
-			TraceID:           row.TraceID,
-			SpanID:            row.SpanID,
-			DefinitionID:      row.AgentDefinitionID,
-			DefinitionVersion: intutils.ClonePointer(row.AgentDefinitionVersion),
-			DelegateCallID:    row.DelegateCallID,
-		})
+		steps = append(steps, toStep(s.l, row))
 	}
 
 	return steps, nil
 }
 
+func (s *Service) Find(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	owner agentruntimeports.RunStepOwner,
+	key string,
+) (agentruntimeports.RunStep, bool, error) {
+	row, err := s.repo.Get(ctx, &agentruntimeports.GetAgentRunStepRequest{
+		TenantInfo: tenant,
+		OwnerID:    owner.ID,
+		StepKey:    key,
+	})
+	if errortypes.IsNotFoundError(err) {
+		return agentruntimeports.RunStep{}, false, nil
+	}
+	if err != nil {
+		return agentruntimeports.RunStep{}, false, fmt.Errorf("find run step: %w", err)
+	}
+	if row == nil || row.OwnerKind != string(owner.Kind) {
+		return agentruntimeports.RunStep{}, false, nil
+	}
+
+	return toStep(s.l, row), true, nil
+}
+
+func toStep(logger *zap.Logger, row *agentrunstep.AgentRunStep) agentruntimeports.RunStep {
+	return agentruntimeports.RunStep{
+		OwnerKind:         kernelports.RunStepOwnerKind(row.OwnerKind),
+		OwnerID:           row.OwnerID,
+		Attempt:           row.Attempt,
+		Kind:              agentruntimeports.RunStepKind(row.Kind),
+		Status:            agentruntimeports.RunStepStatus(row.Status),
+		Key:               row.StepKey,
+		ToolName:          row.ToolName,
+		CallID:            row.CallID,
+		Args:              row.Arguments,
+		Outcome:           decodeOutcome(logger, row),
+		TraceID:           row.TraceID,
+		SpanID:            row.SpanID,
+		DefinitionID:      row.AgentDefinitionID,
+		DefinitionVersion: intutils.ClonePointer(row.AgentDefinitionVersion),
+		DelegateCallID:    row.DelegateCallID,
+	}
+}
+
+func replyFits(reply *agentruntimeports.RunStepReply) bool {
+	encoded, err := sonic.Marshal(reply)
+
+	return err == nil && len(encoded) <= maxStoredOutcomeChars
+}
+
 func toEntity(
 	tenant pagination.TenantInfo,
-	step agentports.RunStep,
-	status agentports.RunStepStatus,
-) *agent.AgentRunStep {
+	step *agentruntimeports.RunStep,
+	status agentruntimeports.RunStepStatus,
+	outcome map[string]any,
+) *agentrunstep.AgentRunStep {
 	args := step.Args
 	if args == nil {
 		args = map[string]any{}
@@ -221,7 +290,7 @@ func toEntity(
 		attempt = 1
 	}
 
-	return &agent.AgentRunStep{
+	return &agentrunstep.AgentRunStep{
 		OrganizationID:         tenant.OrgID,
 		BusinessUnitID:         tenant.BuID,
 		OwnerKind:              string(step.OwnerKind),
@@ -233,7 +302,7 @@ func toEntity(
 		ToolName:               step.ToolName,
 		CallID:                 step.CallID,
 		Arguments:              args,
-		Outcome:                map[string]any{},
+		Outcome:                outcome,
 		TraceID:                step.TraceID,
 		SpanID:                 step.SpanID,
 		AgentDefinitionID:      step.DefinitionID,
@@ -246,22 +315,23 @@ func toEntity(
 // It goes in as a map rather than raw bytes so an operator reading the table
 // can see what a tool answered without decoding anything.
 func withCause(
-	kind agentports.RunStepKind,
-	outcome agentports.RunStepOutcome,
-) agentports.RunStepOutcome {
-	if kind != agentports.RunStepTool || !outcome.Failed || outcome.Cause != "" {
-		return outcome
+	kind agentruntimeports.RunStepKind,
+	outcome *agentruntimeports.RunStepOutcome,
+) agentruntimeports.RunStepOutcome {
+	caused := *outcome
+	if kind != agentruntimeports.RunStepTool || !caused.Failed || caused.Cause != "" {
+		return caused
 	}
-	outcome.Cause = aianalytics.ClassifyToolFailure(
-		outcome.Verdict,
-		outcome.Reason,
-		outcome.Content,
+	caused.Cause = aianalytics.ClassifyToolFailure(
+		caused.Verdict,
+		caused.Reason,
+		caused.Content,
 	)
 
-	return outcome
+	return caused
 }
 
-func encodeOutcome(outcome agentports.RunStepOutcome) (map[string]any, error) {
+func encodeOutcome(outcome *agentruntimeports.RunStepOutcome) (map[string]any, error) {
 	encoded, err := sonic.Marshal(outcome)
 	if err != nil {
 		return nil, fmt.Errorf("encode outcome: %w", err)
@@ -275,14 +345,17 @@ func encodeOutcome(outcome agentports.RunStepOutcome) (map[string]any, error) {
 	return decoded, nil
 }
 
-func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) agentports.RunStepOutcome {
+func decodeOutcome(
+	logger *zap.Logger,
+	row *agentrunstep.AgentRunStep,
+) agentruntimeports.RunStepOutcome {
 	if len(row.Outcome) == 0 {
-		return agentports.RunStepOutcome{}
+		return agentruntimeports.RunStepOutcome{}
 	}
 
 	encoded, err := sonic.Marshal(row.Outcome)
 	if err == nil {
-		var outcome agentports.RunStepOutcome
+		var outcome agentruntimeports.RunStepOutcome
 		if err = sonic.Unmarshal(encoded, &outcome); err == nil {
 			return outcome
 		}
@@ -297,5 +370,5 @@ func decodeOutcome(logger *zap.Logger, row *agent.AgentRunStep) agentports.RunSt
 		zap.Error(err),
 	)
 
-	return agentports.RunStepOutcome{}
+	return agentruntimeports.RunStepOutcome{}
 }

@@ -8,9 +8,10 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -43,8 +44,8 @@ type roleReader interface {
 	GetUserRoleAssignments(
 		ctx context.Context,
 		userID, orgID pulid.ID,
-	) ([]*permission.UserRoleAssignment, error)
-	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)
+	) ([]*rbac.UserRoleAssignment, error)
+	GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error)
 }
 
 func rolesOrNil(roles permissionports.RoleRepository) roleReader {
@@ -60,7 +61,7 @@ func (s *Service) heldRoles(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	if s.roles == nil || userID.IsNil() {
 		return nil, nil
 	}
@@ -70,14 +71,14 @@ func (s *Service) heldRoles(
 		return nil, err
 	}
 
-	roles := make([]*permission.Role, 0, len(assignments))
+	roles := make([]*rbac.Role, 0, len(assignments))
 	for _, assignment := range assignments {
 		if assignment == nil || assignment.IsExpired() || assignment.Role == nil {
 			continue
 		}
 		roles = append(roles, assignment.Role)
 	}
-	slices.SortFunc(roles, func(a, b *permission.Role) int {
+	slices.SortFunc(roles, func(a, b *rbac.Role) int {
 		return strings.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 	})
 
@@ -88,8 +89,8 @@ func (s *Service) Reader(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) (agent.MemoryReader, error) {
-	reader := agent.MemoryReader{UserID: userID}
+) (agentmemory.MemoryReader, error) {
+	reader := agentmemory.MemoryReader{UserID: userID}
 	if s.roles == nil || userID.IsNil() {
 		return reader, nil
 	}
@@ -128,7 +129,7 @@ func (s *Service) promptReader(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) agent.MemoryReader {
+) agentmemory.MemoryReader {
 	reader, err := s.Reader(ctx, tenant, userID)
 	if err != nil {
 		s.l.Warn(
@@ -145,12 +146,12 @@ func (s *Service) SavingMode(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	userID pulid.ID,
-) (agent.MemorySavingMode, error) {
+) (agentmemory.MemorySavingMode, error) {
 	if userID.IsNil() {
-		return agent.MemorySavingAutomatic, nil
+		return agentmemory.MemorySavingAutomatic, nil
 	}
 
-	preference, err := s.repo.GetPreference(ctx, agentports.GetAgentMemoryPreferenceRequest{
+	preference, err := s.repo.GetPreference(ctx, agentmemoryports.GetAgentMemoryPreferenceRequest{
 		TenantInfo: tenant,
 		UserID:     userID,
 	})
@@ -158,24 +159,24 @@ func (s *Service) SavingMode(
 		return "", err
 	}
 	if preference.AsksFirst() {
-		return agent.MemorySavingAskFirst, nil
+		return agentmemory.MemorySavingAskFirst, nil
 	}
 
-	return agent.MemorySavingAutomatic, nil
+	return agentmemory.MemorySavingAutomatic, nil
 }
 
 // deskPerson is the person on the Desk with who they read memories as.
 type deskPerson struct {
-	*agentports.DeskMemoryActor
+	*agentmemoryports.DeskMemoryActor
 
 	tenant pagination.TenantInfo
 	userID pulid.ID
-	reader agent.MemoryReader
+	reader agentmemory.MemoryReader
 }
 
 func (s *Service) person(
 	ctx context.Context,
-	actor *agentports.DeskMemoryActor,
+	actor *agentmemoryports.DeskMemoryActor,
 ) (*deskPerson, error) {
 	if actor == nil || !actor.Actor.IsUser() || actor.Actor.UserID.IsNil() {
 		return nil, errortypes.NewAuthorizationError("Only a person keeps memories on the Desk")
@@ -198,9 +199,9 @@ func (s *Service) person(
 // sees reports whether the memory is one the person keeps: theirs, their
 // roles' or the organization's. A suggestion is seen only by the person whose
 // conversation it was offered in, or who offered it themselves.
-func (p *deskPerson) sees(memory *agent.Memory) bool {
-	if memory.Scope == agent.MemoryScopeAgent {
-		return memory.Source == agent.MemorySourceReflection && p.offeredTo(memory)
+func (p *deskPerson) sees(memory *agentmemory.Memory) bool {
+	if memory.Scope == agentmemory.MemoryScopeAgent {
+		return memory.Source == agentmemory.MemorySourceReflection && p.offeredTo(memory)
 	}
 	if memory.Status.IsSuggestion() {
 		return p.offeredTo(memory)
@@ -209,7 +210,7 @@ func (p *deskPerson) sees(memory *agent.Memory) bool {
 	return p.reader.Reads(memory)
 }
 
-func (p *deskPerson) offeredTo(memory *agent.Memory) bool {
+func (p *deskPerson) offeredTo(memory *agentmemory.Memory) bool {
 	return memory.CreatedByUserID != nil && *memory.CreatedByUserID == p.userID
 }
 
@@ -219,13 +220,13 @@ func (p *deskPerson) holds(roleID pulid.ID) bool {
 
 // mayChange reports whether the person may change, pause or forget a memory
 // they see.
-func (p *deskPerson) mayChange(memory *agent.Memory) bool {
+func (p *deskPerson) mayChange(memory *agentmemory.Memory) bool {
 	switch memory.Scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		return memory.OwnerUserID != nil && *memory.OwnerUserID == p.userID
-	case agent.MemoryScopeRole:
+	case agentmemory.MemoryScopeRole:
 		return memory.RoleID != nil && p.holds(*memory.RoleID) && p.MayManageShared
-	case agent.MemoryScopeOrganization, agent.MemoryScopeAgent:
+	case agentmemory.MemoryScopeOrganization, agentmemory.MemoryScopeAgent:
 		return p.MayManageShared
 	default:
 		return false
@@ -246,11 +247,11 @@ func errOfferInstead() error {
 // mayKeepFor reports whether the person may put a memory in front of the
 // scope's readers, and whether it is kept at once or offered: a role's or the
 // organization's is offered unless the person manages shared memory.
-func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) (bool, error) {
+func (p *deskPerson) mayKeepFor(scope agentmemory.MemoryScope, roleID pulid.ID) (bool, error) {
 	switch scope {
-	case agent.MemoryScopeUser:
+	case agentmemory.MemoryScopeUser:
 		return false, nil
-	case agent.MemoryScopeRole:
+	case agentmemory.MemoryScopeRole:
 		if !p.holds(roleID) {
 			return false, errortypes.NewValidationError(
 				"roleId", errortypes.ErrInvalid, "You can only keep a memory for a role you hold",
@@ -258,9 +259,9 @@ func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) (bool,
 		}
 
 		return !p.MayManageShared, nil
-	case agent.MemoryScopeOrganization:
+	case agentmemory.MemoryScopeOrganization:
 		return !p.MayManageShared, nil
-	case agent.MemoryScopeAgent:
+	case agentmemory.MemoryScopeAgent:
 		if !p.MayManageShared {
 			return false, errSharedMemoryManaged()
 		}
@@ -275,8 +276,8 @@ func (p *deskPerson) mayKeepFor(scope agent.MemoryScope, roleID pulid.ID) (bool,
 	}
 }
 
-func (p *deskPerson) desk(row *agentports.DeskMemoryRow) *agentports.DeskMemory {
-	return &agentports.DeskMemory{
+func (p *deskPerson) desk(row *agentmemoryports.DeskMemoryRow) *agentmemoryports.DeskMemory {
+	return &agentmemoryports.DeskMemory{
 		Memory:      row.Memory,
 		SourceTitle: row.SourceTitle,
 		RoleName:    row.RoleName,
@@ -293,10 +294,10 @@ func checkDeskContent(content string) (string, error) {
 			"Say what to remember",
 		)
 	}
-	if utf8.RuneCountInString(content) > agent.MaxMemoryContentChars {
+	if utf8.RuneCountInString(content) > agentmemory.MaxMemoryContentChars {
 		return "", errortypes.NewValidationError(
 			"content", errortypes.ErrInvalid,
-			"A memory is at most {0} characters", agent.MaxMemoryContentChars,
+			"A memory is at most {0} characters", agentmemory.MaxMemoryContentChars,
 		)
 	}
 
@@ -305,14 +306,17 @@ func checkDeskContent(content string) (string, error) {
 
 func (s *Service) ListDesk(
 	ctx context.Context,
-	req *agentports.ListDeskMemoriesRequest,
-) (*agentports.DeskMemoryPage, error) {
+	req *agentmemoryports.ListDeskMemoriesRequest,
+) (*agentmemoryports.DeskMemoryPage, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
 	}
 	switch req.Scope {
-	case "", agent.MemoryScopeUser, agent.MemoryScopeRole, agent.MemoryScopeOrganization:
+	case "",
+		agentmemory.MemoryScopeUser,
+		agentmemory.MemoryScopeRole,
+		agentmemory.MemoryScopeOrganization:
 	default:
 		return nil, errortypes.NewValidationError(
 			"scope",
@@ -330,14 +334,14 @@ func (s *Service) ListDesk(
 		limit = deskPageDefault
 	}
 
-	filter := agentports.DeskMemoryFilter{
+	filter := agentmemoryports.DeskMemoryFilter{
 		TenantInfo: person.tenant,
 		Reader:     person.reader,
 		Scope:      req.Scope,
 		RoleID:     req.RoleID,
 		Query:      req.Query,
 	}
-	rows, err := s.repo.ListDesk(ctx, agentports.ListDeskMemoriesQuery{
+	rows, err := s.repo.ListDesk(ctx, &agentmemoryports.ListDeskMemoriesQuery{
 		Filter: filter,
 		After:  after,
 		Limit:  limit + 1,
@@ -346,8 +350,8 @@ func (s *Service) ListDesk(
 		return nil, err
 	}
 
-	page := &agentports.DeskMemoryPage{
-		Items: make([]*agentports.DeskMemory, 0, min(len(rows), limit)),
+	page := &agentmemoryports.DeskMemoryPage{
+		Items: make([]*agentmemoryports.DeskMemory, 0, min(len(rows), limit)),
 	}
 	if len(rows) > limit {
 		rows = rows[:limit]
@@ -365,13 +369,13 @@ func (s *Service) ListDesk(
 	// chips say how many each would show.
 	filter.Scope = ""
 	filter.RoleID = pulid.Nil
-	counts, err := s.repo.CountDesk(ctx, filter)
+	counts, err := s.repo.CountDesk(ctx, &filter)
 	if err != nil {
 		return nil, err
 	}
 	for _, count := range counts {
 		page.All += count.Count
-		page.Counts = append(page.Counts, agentports.DeskMemoryCount{
+		page.Counts = append(page.Counts, agentmemoryports.DeskMemoryCount{
 			Scope:  count.Scope,
 			RoleID: count.RoleID,
 			Count:  count.Count,
@@ -383,9 +387,9 @@ func (s *Service) ListDesk(
 
 func (s *Service) DeskByIDs(
 	ctx context.Context,
-	actor *agentports.DeskMemoryActor,
+	actor *agentmemoryports.DeskMemoryActor,
 	ids []pulid.ID,
-) ([]*agentports.DeskMemory, error) {
+) ([]*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, actor)
 	if err != nil {
 		return nil, err
@@ -398,8 +402,8 @@ func (s *Service) deskByIDs(
 	ctx context.Context,
 	person *deskPerson,
 	ids []pulid.ID,
-) ([]*agentports.DeskMemory, error) {
-	rows, err := s.repo.GetDesk(ctx, agentports.GetDeskMemoriesRequest{
+) ([]*agentmemoryports.DeskMemory, error) {
+	rows, err := s.repo.GetDesk(ctx, agentmemoryports.GetDeskMemoriesRequest{
 		TenantInfo: person.tenant,
 		IDs:        ids,
 	})
@@ -407,7 +411,7 @@ func (s *Service) deskByIDs(
 		return nil, err
 	}
 
-	byID := make(map[pulid.ID]*agentports.DeskMemoryRow, len(rows))
+	byID := make(map[pulid.ID]*agentmemoryports.DeskMemoryRow, len(rows))
 	for _, row := range rows {
 		if person.sees(row.Memory) {
 			byID[row.Memory.ID] = row
@@ -415,7 +419,7 @@ func (s *Service) deskByIDs(
 	}
 
 	// In the order asked for, which is the order the conversation used them.
-	out := make([]*agentports.DeskMemory, 0, len(byID))
+	out := make([]*agentmemoryports.DeskMemory, 0, len(byID))
 	for _, id := range ids {
 		if row, ok := byID[id]; ok {
 			out = append(out, person.desk(row))
@@ -432,7 +436,7 @@ func (s *Service) deskByIDs(
 func (s *Service) deskLinks(
 	ctx context.Context,
 	person *deskPerson,
-	items []*agentports.DeskMemory,
+	items []*agentmemoryports.DeskMemory,
 ) error {
 	if len(items) == 0 {
 		return nil
@@ -447,21 +451,21 @@ func (s *Service) deskLinks(
 		}
 	}
 
-	replaced, err := s.repo.ListByIDs(ctx, agentports.ListAgentMemoriesByIDsRequest{
+	replaced, err := s.repo.ListByIDs(ctx, agentmemoryports.ListAgentMemoriesByIDsRequest{
 		TenantInfo: person.tenant,
 		IDs:        replacedIDs,
 	})
 	if err != nil {
 		return err
 	}
-	replacedByID := make(map[pulid.ID]*agent.Memory, len(replaced))
+	replacedByID := make(map[pulid.ID]*agentmemory.Memory, len(replaced))
 	for _, memory := range replaced {
 		replacedByID[memory.ID] = memory
 	}
 
 	replacements, err := s.repo.ListReplacements(
 		ctx,
-		agentports.ListAgentMemoryReplacementsRequest{
+		agentmemoryports.ListAgentMemoryReplacementsRequest{
 			TenantInfo:  person.tenant,
 			ReplacedIDs: ids,
 		},
@@ -469,7 +473,7 @@ func (s *Service) deskLinks(
 	if err != nil {
 		return err
 	}
-	newest := agent.NewestReplacements(replacements)
+	newest := agentmemory.NewestReplacements(replacements)
 
 	for _, item := range items {
 		if item.Memory.Replaces() {
@@ -481,12 +485,12 @@ func (s *Service) deskLinks(
 	return nil
 }
 
-func (p *deskPerson) link(memory *agent.Memory) *agentports.DeskMemoryLink {
+func (p *deskPerson) link(memory *agentmemory.Memory) *agentmemoryports.DeskMemoryLink {
 	if memory == nil || !p.sees(memory) {
 		return nil
 	}
 
-	return &agentports.DeskMemoryLink{
+	return &agentmemoryports.DeskMemoryLink{
 		ID:      memory.ID,
 		Content: memory.Content,
 		Status:  memory.Status,
@@ -497,7 +501,7 @@ func (s *Service) deskOne(
 	ctx context.Context,
 	person *deskPerson,
 	id pulid.ID,
-) (*agentports.DeskMemory, error) {
+) (*agentmemoryports.DeskMemory, error) {
 	found, err := s.deskByIDs(ctx, person, []pulid.ID{id})
 	if err != nil {
 		return nil, err
@@ -511,8 +515,8 @@ func (s *Service) deskOne(
 
 func (s *Service) DeskSettings(
 	ctx context.Context,
-	actor *agentports.DeskMemoryActor,
-) (*agentports.DeskMemorySettings, error) {
+	actor *agentmemoryports.DeskMemoryActor,
+) (*agentmemoryports.DeskMemorySettings, error) {
 	person, err := s.person(ctx, actor)
 	if err != nil {
 		return nil, err
@@ -524,7 +528,7 @@ func (s *Service) DeskSettings(
 func (s *Service) deskSettings(
 	ctx context.Context,
 	person *deskPerson,
-) (*agentports.DeskMemorySettings, error) {
+) (*agentmemoryports.DeskMemorySettings, error) {
 	mode, err := s.SavingMode(ctx, person.tenant, person.userID)
 	if err != nil {
 		return nil, err
@@ -536,14 +540,14 @@ func (s *Service) deskSettings(
 
 	// Anyone may write a memory for a team they are on or the organization:
 	// one who does not manage shared memory offers it rather than keeps it.
-	settings := &agentports.DeskMemorySettings{
+	settings := &agentmemoryports.DeskMemorySettings{
 		SavingMode:               mode,
-		Roles:                    make([]agentports.DeskMemoryRole, 0, len(held)),
+		Roles:                    make([]agentmemoryports.DeskMemoryRole, 0, len(held)),
 		CanShareWithOrganization: true,
 		ManagesShared:            person.MayManageShared,
 	}
 	for _, role := range held {
-		settings.Roles = append(settings.Roles, agentports.DeskMemoryRole{
+		settings.Roles = append(settings.Roles, agentmemoryports.DeskMemoryRole{
 			ID:       role.ID,
 			Name:     role.Name,
 			Writable: true,
@@ -555,15 +559,15 @@ func (s *Service) deskSettings(
 
 func (s *Service) SetSavingMode(
 	ctx context.Context,
-	actor *agentports.DeskMemoryActor,
-	mode agent.MemorySavingMode,
-) (*agentports.DeskMemorySettings, error) {
+	actor *agentmemoryports.DeskMemoryActor,
+	mode agentmemory.MemorySavingMode,
+) (*agentmemoryports.DeskMemorySettings, error) {
 	person, err := s.person(ctx, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &agent.MemoryPreference{
+	entity := &agentmemory.MemoryPreference{
 		OrganizationID: person.tenant.OrgID,
 		BusinessUnitID: person.tenant.BuID,
 		UserID:         person.userID,
@@ -583,8 +587,8 @@ func (s *Service) SetSavingMode(
 
 func (s *Service) CreateDesk(
 	ctx context.Context,
-	req *agentports.CreateDeskMemoryRequest,
-) (*agentports.DeskMemory, error) {
+	req *agentmemoryports.CreateDeskMemoryRequest,
+) (*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
@@ -601,9 +605,9 @@ func (s *Service) CreateDesk(
 	// What a person writes down for their agents is a rule to follow, not a
 	// fact to weigh. One for a team or the organization from a person who does
 	// not manage shared memory is offered for an administrator to approve.
-	created, err := s.remember(ctx, &agentports.RememberRequest{
+	created, err := s.remember(ctx, &agentmemoryports.RememberRequest{
 		TenantInfo:  person.tenant,
-		Kind:        agent.MemoryKindInstruction,
+		Kind:        agentmemory.MemoryKindInstruction,
 		Content:     content,
 		Scope:       req.Scope,
 		OwnerUserID: person.userID,
@@ -619,8 +623,8 @@ func (s *Service) CreateDesk(
 
 func (s *Service) ReviseDesk(
 	ctx context.Context,
-	req *agentports.ReviseDeskMemoryRequest,
-) (*agentports.DeskMemory, error) {
+	req *agentmemoryports.ReviseDeskMemoryRequest,
+) (*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
@@ -641,7 +645,7 @@ func (s *Service) ReviseDesk(
 		roleID = *current.RoleID
 	}
 	if req.Scope != "" && (req.Scope != current.Scope || req.RoleID != roleID) {
-		if req.Scope == agent.MemoryScopeAgent {
+		if req.Scope == agentmemory.MemoryScopeAgent {
 			return nil, errortypes.NewValidationError(
 				"scope",
 				errortypes.ErrInvalid,
@@ -661,12 +665,12 @@ func (s *Service) ReviseDesk(
 	if current.OwnerUserID != nil {
 		owner = *current.OwnerUserID
 	}
-	if scope == agent.MemoryScopeUser && current.Scope != agent.MemoryScopeUser {
+	if scope == agentmemory.MemoryScopeUser && current.Scope != agentmemory.MemoryScopeUser {
 		owner = person.userID
 	}
 
 	previous := jsonutils.MustToJSON(current)
-	revised, err := s.repo.Revise(ctx, agentports.ReviseAgentMemoryRequest{
+	revised, err := s.repo.Revise(ctx, &agentmemoryports.ReviseAgentMemoryRequest{
 		ID:          current.ID,
 		TenantInfo:  person.tenant,
 		Content:     content,
@@ -697,8 +701,8 @@ func (s *Service) changeable(
 	ctx context.Context,
 	person *deskPerson,
 	id pulid.ID,
-) (*agent.Memory, error) {
-	current, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+) (*agentmemory.Memory, error) {
+	current, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         id,
 		TenantInfo: person.tenant,
 	})
@@ -722,14 +726,16 @@ func (s *Service) changeable(
 
 func (s *Service) SetDeskStatus(
 	ctx context.Context,
-	req *agentports.SetDeskMemoryStatusRequest,
-) (*agentports.DeskMemory, error) {
+	req *agentmemoryports.SetDeskMemoryStatusRequest,
+) (*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
 	}
 	switch req.Status {
-	case agent.MemoryStatusActive, agent.MemoryStatusPaused, agent.MemoryStatusRetired:
+	case agentmemory.MemoryStatusActive,
+		agentmemory.MemoryStatusPaused,
+		agentmemory.MemoryStatusRetired:
 	default:
 		return nil, errortypes.NewValidationError(
 			"status", errortypes.ErrInvalid, "A memory is resumed, paused or forgotten",
@@ -739,7 +745,7 @@ func (s *Service) SetDeskStatus(
 		return nil, err
 	}
 
-	if _, err = s.setStatus(ctx, &agentports.SetAgentMemoryStatusRequest{
+	if _, err = s.setStatus(ctx, &agentmemoryports.SetAgentMemoryStatusRequest{
 		ID:         req.ID,
 		TenantInfo: person.tenant,
 		Status:     req.Status,
@@ -758,8 +764,8 @@ func (s *Service) offered(
 	person *deskPerson,
 	id pulid.ID,
 	reconsider bool,
-) (*agent.Memory, error) {
-	current, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+) (*agentmemory.Memory, error) {
+	current, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         id,
 		TenantInfo: person.tenant,
 	})
@@ -769,8 +775,8 @@ func (s *Service) offered(
 	if !person.offeredTo(current) {
 		return nil, errortypes.NewNotFoundError("Memory not found")
 	}
-	waiting := current.Status == agent.MemoryStatusSuggested ||
-		(reconsider && current.Status == agent.MemoryStatusDismissed)
+	waiting := current.Status == agentmemory.MemoryStatusSuggested ||
+		(reconsider && current.Status == agentmemory.MemoryStatusDismissed)
 	if !waiting {
 		return nil, errortypes.NewBusinessError("This memory has already been saved or dismissed")
 	}
@@ -780,8 +786,8 @@ func (s *Service) offered(
 
 func (s *Service) ConfirmDesk(
 	ctx context.Context,
-	req *agentports.ConfirmDeskMemoryRequest,
-) (*agentports.DeskMemory, error) {
+	req *agentmemoryports.ConfirmDeskMemoryRequest,
+) (*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
@@ -803,7 +809,7 @@ func (s *Service) ConfirmDesk(
 	if scope == "" {
 		scope = current.Scope
 	}
-	if scope == agent.MemoryScopeAgent && current.Scope != agent.MemoryScopeAgent {
+	if scope == agentmemory.MemoryScopeAgent && current.Scope != agentmemory.MemoryScopeAgent {
 		return nil, errortypes.NewValidationError(
 			"scope",
 			errortypes.ErrInvalid,
@@ -821,20 +827,23 @@ func (s *Service) ConfirmDesk(
 		return nil, err
 	}
 
-	confirmed, err := s.repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
-		ID:           current.ID,
-		TenantInfo:   person.tenant,
-		Status:       agent.MemoryStatusActive,
-		Reconsidered: current.Status == agent.MemoryStatusDismissed,
-		Kind:         current.Kind,
-		Content:      content,
-		Scope:        scope,
-		OwnerUserID:  person.userID,
-		RoleID:       req.RoleID,
-		ByUserID:     person.userID,
-		At:           timeutils.NowUnix(),
-		Version:      req.Version,
-	})
+	confirmed, err := s.repo.ResolveSuggestion(
+		ctx,
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			ID:           current.ID,
+			TenantInfo:   person.tenant,
+			Status:       agentmemory.MemoryStatusActive,
+			Reconsidered: current.Status == agentmemory.MemoryStatusDismissed,
+			Kind:         current.Kind,
+			Content:      content,
+			Scope:        scope,
+			OwnerUserID:  person.userID,
+			RoleID:       req.RoleID,
+			ByUserID:     person.userID,
+			At:           timeutils.NowUnix(),
+			Version:      req.Version,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -851,12 +860,16 @@ func (s *Service) ConfirmDesk(
 	return s.deskOne(ctx, person, confirmed.ID)
 }
 
-func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *agent.Memory) error {
+func (s *Service) mayReplace(
+	ctx context.Context,
+	person *deskPerson,
+	offered *agentmemory.Memory,
+) error {
 	if !offered.Replaces() {
 		return nil
 	}
 
-	replaced, err := s.repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	replaced, err := s.repo.GetByID(ctx, agentmemoryports.GetAgentMemoryByIDRequest{
 		ID:         *offered.SupersedesID,
 		TenantInfo: person.tenant,
 	})
@@ -870,7 +883,7 @@ func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *a
 	if !Replaceable(replaced.Status) {
 		return nil
 	}
-	shared := replaced.Scope == agent.MemoryScopeAgent && person.MayManageShared
+	shared := replaced.Scope == agentmemory.MemoryScopeAgent && person.MayManageShared
 	if !shared && (!person.sees(replaced) || !person.mayChange(replaced)) {
 		return errSharedMemoryManaged()
 	}
@@ -880,8 +893,8 @@ func (s *Service) mayReplace(ctx context.Context, person *deskPerson, offered *a
 
 func (s *Service) DismissDesk(
 	ctx context.Context,
-	req agentports.DeskMemoryRef,
-) (*agentports.DeskMemory, error) {
+	req agentmemoryports.DeskMemoryRef,
+) (*agentmemoryports.DeskMemory, error) {
 	person, err := s.person(ctx, req.Actor)
 	if err != nil {
 		return nil, err
@@ -891,14 +904,17 @@ func (s *Service) DismissDesk(
 		return nil, err
 	}
 
-	dismissed, err := s.repo.ResolveSuggestion(ctx, agentports.ResolveAgentMemorySuggestionRequest{
-		ID:         current.ID,
-		TenantInfo: person.tenant,
-		Status:     agent.MemoryStatusDismissed,
-		ByUserID:   person.userID,
-		At:         timeutils.NowUnix(),
-		Version:    current.Version,
-	})
+	dismissed, err := s.repo.ResolveSuggestion(
+		ctx,
+		&agentmemoryports.ResolveAgentMemorySuggestionRequest{
+			ID:         current.ID,
+			TenantInfo: person.tenant,
+			Status:     agentmemory.MemoryStatusDismissed,
+			ByUserID:   person.userID,
+			At:         timeutils.NowUnix(),
+			Version:    current.Version,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -915,7 +931,7 @@ func encodeDeskCursor(createdAt int64, id pulid.ID) string {
 	)
 }
 
-func decodeDeskCursor(raw string) (*agentports.DeskMemoryCursor, error) {
+func decodeDeskCursor(raw string) (*agentmemoryports.DeskMemoryCursor, error) {
 	if raw == "" {
 		return nil, nil
 	}
@@ -942,5 +958,5 @@ func decodeDeskCursor(raw string) (*agentports.DeskMemoryCursor, error) {
 		return nil, invalid
 	}
 
-	return &agentports.DeskMemoryCursor{CreatedAt: createdAt, ID: id}, nil
+	return &agentmemoryports.DeskMemoryCursor{CreatedAt: createdAt, ID: id}, nil
 }

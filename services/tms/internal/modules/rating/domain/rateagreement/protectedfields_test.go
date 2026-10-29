@@ -3,7 +3,7 @@ package rateagreement
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -35,7 +35,7 @@ func TestAgreementTakesMarginsFromAWriterWithTheGroup(t *testing.T) {
 	stored := &RateAgreement{MarginFloorPercent: percent("12.5")}
 	incoming := &RateAgreement{}
 
-	incoming.KeepFields(stored, permission.AllFieldGroups())
+	incoming.KeepFields(stored, protectedfield.AllGroups())
 
 	assert.False(t, incoming.MarginFloorPercent.Valid)
 }

@@ -3,10 +3,9 @@ package deskcase
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/shared/pulid"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // ChecklistKind names what a checklist says the record is ready for.
@@ -245,7 +244,7 @@ type RateCon struct {
 
 // ShipmentFacts is what the ready-to-bill checklist reads.
 type ShipmentFacts struct {
-	Status      shipment.Status
+	Status      shipmentvocab.Status
 	DeliveredAt *int64
 	// PODCode is the document type code a proof of delivery is filed
 	// under; PODOnFile is whether an accepted one is attached even when
@@ -275,17 +274,19 @@ const (
 	codeMissingBOL = "missing_bol"
 )
 
-func delivered(status shipment.Status) bool {
+func delivered(status shipmentvocab.Status) bool {
 	switch status {
-	case shipment.StatusCompleted, shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+	case shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusInvoiced:
 		return true
-	case shipment.StatusNew,
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
-		shipment.StatusCanceled:
+	case shipmentvocab.StatusNew,
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
+		shipmentvocab.StatusCanceled:
 		return false
 	default:
 		return false
@@ -310,7 +311,7 @@ func ReadyToBill(f *ShipmentFacts) *Checklist {
 	}
 
 	ready := StepMarkReady
-	if f.InBillingQueue || f.Status == shipment.StatusReadyToInvoice {
+	if f.InBillingQueue || f.Status == shipmentvocab.StatusReadyToInvoice {
 		ready = StepSendInvoice
 	}
 

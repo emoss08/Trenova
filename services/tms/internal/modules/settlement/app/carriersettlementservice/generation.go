@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
@@ -31,7 +31,10 @@ type GenerateBatchRequest struct {
 // PeriodBounds aliases the shared settlement period type.
 type PeriodBounds = settlementshared.PeriodBounds
 
-func ResolveCurrentPeriod(control *tenant.CarrierSettlementControl, now int64) PeriodBounds {
+func ResolveCurrentPeriod(
+	control *carriersettlementcontrol.CarrierSettlementControl,
+	now int64,
+) PeriodBounds {
 	return settlementshared.ResolvePeriod(
 		control.PayPeriodFrequency,
 		control.PeriodEndDayOfWeek,
@@ -45,7 +48,10 @@ func (s *Service) GenerateBatch(
 	req *GenerateBatchRequest,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
-	if err := requireActor(actor, "Carrier settlement batch generation"); err != nil {
+	if err := settlementshared.RequireActor(
+		actor,
+		"Carrier settlement batch generation",
+	); err != nil {
 		return nil, err
 	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
@@ -180,7 +186,7 @@ func (s *Service) GenerateForCarrier(
 	req *GenerateForCarrierRequest,
 	actor *permissionports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
-	if err := requireActor(actor, "Carrier settlement generation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Carrier settlement generation"); err != nil {
 		return nil, err
 	}
 	exists, err := s.settlementRepo.ExistsForCarrierPeriod(

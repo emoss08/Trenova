@@ -1,8 +1,9 @@
 package documentextractionjobs
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentaiextractionjobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -10,7 +11,7 @@ import (
 
 var (
 	Workflows           = convertWorkflows(RegisterExtractionWorkflows())
-	DrainingWorkflows   = convertWorkflows(RegisterWorkflows())
+	DrainingWorkflows   = convertWorkflows(documentaiextractionjobs.RegisterWorkflows())
 	drainingQueueSuffix = "-draining"
 )
 
@@ -29,15 +30,15 @@ func convertWorkflows(wfs []temporaltype.WorkflowDefinition) []registry.Workflow
 type RegistryParams struct {
 	fx.In
 
-	Activities *Activities
-	Config     *config.Config
-	Logger     *zap.Logger
+	Activities   *Activities
+	AIActivities *documentaiextractionjobs.Activities
+	AIConfig     *aiconfig.Config
+	Logger       *zap.Logger
 }
 
-func QueueWorkerConfig(cfg *config.Config) registry.WorkerConfig {
+func QueueWorkerConfig(cfg *aiconfig.Config) registry.WorkerConfig {
 	workerConfig := registry.DefaultWorkerConfig()
-	workerConfig.MaxConcurrentActivityExecutionSize = cfg.GetAIConfig().
-		GetMaxConcurrentActivities()
+	workerConfig.MaxConcurrentActivityExecutionSize = cfg.GetMaxConcurrentActivities()
 	workerConfig.MaxConcurrentWorkflowTaskExecutionSize = max(
 		2, workerConfig.MaxConcurrentActivityExecutionSize,
 	)
@@ -48,33 +49,36 @@ func QueueWorkerConfig(cfg *config.Config) registry.WorkerConfig {
 }
 
 func NewRegistry(p RegistryParams) registry.WorkerRegistry {
-	return registry.NewDomainRegistry(
-		&registry.DomainConfig{
+	return registry.NewComposedRegistry(registry.ComposedParams{
+		Config: &registry.DomainConfig{
 			Name:         "document-extraction-worker",
 			TaskQueue:    temporaltype.DocumentExtractionTaskQueue,
-			WorkerConfig: QueueWorkerConfig(p.Config),
+			WorkerConfig: QueueWorkerConfig(p.AIConfig),
 		},
-		p.Activities,
-		Workflows,
-		p.Logger,
-	)
+		Activities: []any{p.Activities, p.AIActivities},
+		Workflows:  Workflows,
+		Logger:     p.Logger,
+	})
 }
 
 func NewDrainingRegistry(p RegistryParams) registry.WorkerRegistry {
-	return DrainingRegistry(
-		"document-intelligence-worker",
-		p.Activities,
-		DrainingWorkflows,
-		p.Config,
-		p.Logger,
-	)
+	return registry.NewComposedRegistry(registry.ComposedParams{
+		Config: &registry.DomainConfig{
+			Name:         "document-intelligence-worker" + drainingQueueSuffix,
+			TaskQueue:    temporaltype.DocumentIntelligenceTaskQueue,
+			WorkerConfig: QueueWorkerConfig(p.AIConfig),
+		},
+		Activities: []any{p.Activities, p.AIActivities},
+		Workflows:  DrainingWorkflows,
+		Logger:     p.Logger,
+	})
 }
 
 func DrainingRegistry(
 	name string,
 	activities any,
 	workflows []registry.WorkflowDefinition,
-	cfg *config.Config,
+	cfg *aiconfig.Config,
 	logger *zap.Logger,
 ) registry.WorkerRegistry {
 	return registry.NewDomainRegistry(

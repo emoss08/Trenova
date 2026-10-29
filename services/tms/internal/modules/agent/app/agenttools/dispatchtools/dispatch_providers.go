@@ -2,54 +2,59 @@ package dispatchtools
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/carriertools"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ratetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/rateconfirmationtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/tendertools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderbounce"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tendercancel"
+	"github.com/emoss08/trenova/internal/modules/operations/app/tenderresponse"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateconfirmationservice"
 )
 
 func ProvideAssignMoveToCarrierTool(
 	carriers *carrierassignmentservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carriertools.NewAssignMoveToCarrierTool(carriers)
 }
 
 func ProvideCancelCarrierAssignmentTool(
 	carriers *carrierassignmentservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carriertools.NewCancelCarrierAssignmentTool(carriers)
 }
 
-func ProvideCancelTenderTool(tenders *tenderservice.Service) agentports.AgentTool {
+func ProvideCancelTenderTool(tenders *tendercancel.Service) agenttoolports.AgentTool {
 	return tendertools.NewCancelTenderTool(tenders)
 }
 
-func ProvideRecordTenderResponseTool(tenders *tenderservice.Service) agentports.AgentTool {
-	return tendertools.NewRecordTenderResponseTool(tenders)
+func ProvideRecordTenderResponseTool(
+	responses *tenderresponse.Service,
+	bounces *tenderbounce.Service,
+) agenttoolports.AgentTool {
+	return tendertools.NewRecordTenderResponseTool(responses, bounces)
 }
 
 func ProvideGenerateRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) agentports.AgentTool {
-	return ratetools.NewGenerateRateConfirmationTool(rateCons)
+) agenttoolports.AgentTool {
+	return rateconfirmationtools.NewGenerateRateConfirmationTool(rateCons)
 }
 
 func ProvideSendRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) agentports.AgentTool {
-	return ratetools.NewSendRateConfirmationTool(rateCons)
+) agenttoolports.AgentTool {
+	return rateconfirmationtools.NewSendRateConfirmationTool(rateCons)
 }
 
 func ProvideVoidRateConfirmationTool(
 	rateCons *rateconfirmationservice.Service,
-) agentports.AgentTool {
-	return ratetools.NewVoidRateConfirmationTool(rateCons)
+) agenttoolports.AgentTool {
+	return rateconfirmationtools.NewVoidRateConfirmationTool(rateCons)
 }
 
 func ProvideRecordRateConfirmationConfirmedTool(
 	rateCons *rateconfirmationservice.Service,
-) agentports.AgentTool {
-	return ratetools.NewRecordRateConfirmationConfirmedTool(rateCons)
+) agenttoolports.AgentTool {
+	return rateconfirmationtools.NewRecordRateConfirmationConfirmedTool(rateCons)
 }

@@ -147,6 +147,28 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req fiscalyearports.GetFiscalYearsByIDsRequest,
+) ([]*fiscalyear.FiscalYear, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fiscalyear.FiscalYear, error) {
+		if len(req.FiscalYearIDs) == 0 {
+			return []*fiscalyear.FiscalYear{}, nil
+		}
+
+		fy := fiscalyeardb.FiscalYears
+		entities, err := fy.Where(fy.ID.In(req.FiscalYearIDs...)).
+			Limit(len(req.FiscalYearIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get fiscal years", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetByIDForUpdate(
 	ctx context.Context,
 	req fiscalyearports.GetFiscalYearByIDRequest,

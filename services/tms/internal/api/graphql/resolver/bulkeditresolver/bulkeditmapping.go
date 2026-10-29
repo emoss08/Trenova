@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/bulkedit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/bulkeditports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -31,10 +32,10 @@ func selectionFromInput(
 		return bulkedit.Selection{}, nil
 	}
 
-	connection, err := base.DataTableConnectionFromGraphQL(
+	connection, err := gqlconnection.DataTableConnectionFromGraphQL(
 		ctx,
 		input.Filter,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 	)
 	if err != nil {
 		return bulkedit.Selection{}, err

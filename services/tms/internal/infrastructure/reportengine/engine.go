@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/cache"
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	trenovaredis "github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -33,19 +33,19 @@ var (
 type Params struct {
 	fx.In
 
-	LC      fx.Lifecycle
-	DB      *postgres.ReportingConnection
-	Catalog *analytics.Catalog
-	Redis   *redis.Client `optional:"true"`
-	Config  *config.Config
-	Logger  *zap.Logger
+	LC              fx.Lifecycle
+	DB              *postgres.ReportingConnection
+	Catalog         *analytics.Catalog
+	Redis           *redis.Client `optional:"true"`
+	ReportingConfig *reportingconfig.Config
+	Logger          *zap.Logger
 }
 
 type Engine struct {
 	catalog *analytics.Catalog
 	db      *postgres.ReportingConnection
 	redis   *redis.Client
-	cfg     *config.ReportingConfig
+	cfg     *reportingconfig.Config
 	l       *zap.Logger
 
 	mu          sync.RWMutex
@@ -58,7 +58,7 @@ func New(p Params) *Engine {
 		catalog: p.Catalog,
 		db:      p.DB,
 		redis:   p.Redis,
-		cfg:     p.Config.GetReportingConfig(),
+		cfg:     p.ReportingConfig,
 		l:       p.Logger.Named("reporting.engine"),
 	}
 	p.LC.Append(fx.Hook{OnStart: e.start})
@@ -134,7 +134,7 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	return opts
 }
 
-func DefinitionLimits(cfg *config.ReportingConfig) ir.Limits {
+func DefinitionLimits(cfg *reportingconfig.Config) ir.Limits {
 	return ir.Limits{
 		MaxDimensions:   cfg.GetMaxDimensions(),
 		MaxLimit:        cfg.GetMaxDefinitionLimit(),
@@ -143,7 +143,7 @@ func DefinitionLimits(cfg *config.ReportingConfig) ir.Limits {
 	}
 }
 
-func ComplexityLimits(cfg *config.ReportingConfig) analytics.ComplexityLimits {
+func ComplexityLimits(cfg *reportingconfig.Config) analytics.ComplexityLimits {
 	return analytics.ComplexityLimits{
 		MaxJoins:  cfg.GetMaxToOneJoins(),
 		MaxToMany: cfg.GetMaxToManySubqueries(),

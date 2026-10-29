@@ -4,15 +4,17 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsbinding"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/nsdocsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func billDoc() *accountingsyncports.AccountingPurchaseDocument {
-	return &accountingsyncports.AccountingPurchaseDocument{
+func billDoc() *accountingconnectorports.AccountingPurchaseDocument {
+	return &accountingconnectorports.AccountingPurchaseDocument{
 		Auth:             testAuth(),
 		RequestID:        testRequestID,
 		Kind:             accountingsync.SyncObjectCarrierBill,
@@ -22,7 +24,7 @@ func billDoc() *accountingsyncports.AccountingPurchaseDocument {
 		DueDate:          "2026-11-01",
 		CurrencyCode:     "USD",
 		PrivateNote:      "Carrier settlement CS-12",
-		Lines: []accountingsyncports.AccountingPurchaseLine{
+		Lines: []accountingconnectorports.AccountingPurchaseLine{
 			{
 				Description:       "Load 4411",
 				AccountExternalID: testExpense,
@@ -36,8 +38,8 @@ func TestCreateVendorBillUsesExpenseLinesAndTheBillNumber(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordVendorBill, testRequestID)) {
-			return upserted(recordVendorBill, testBill)
+		if call.is(http.MethodPut, eidPath(nsdocsync.RecordVendorBill, testRequestID)) {
+			return upserted(nsdocsync.RecordVendorBill, testBill)
 		}
 		return reply{}
 	}}
@@ -45,14 +47,14 @@ func TestCreateVendorBillUsesExpenseLinesAndTheBillNumber(t *testing.T) {
 	result, err := conn.CreatePurchaseDocument(t.Context(), billDoc())
 	require.NoError(t, err)
 	assert.Equal(t, testBill, result.ExternalID)
-	assert.Equal(t, recordVendorBill, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(t, nsdocsync.RecordVendorBill, result.Refs[accountingsync.ExternalRefDocumentType])
 	assert.Equal(t, "false", result.Refs[accountingsync.ExternalRefCreditDocument])
 	assert.Equal(t,
 		"https://1234567-sb1.app.netsuite.com/app/accounting/transactions/transaction.nl?id=1501",
 		result.Refs[accountingsync.ExternalRefURL],
 	)
 
-	put, ok := fake.find(http.MethodPut, eidPath(recordVendorBill, testRequestID))
+	put, ok := fake.find(http.MethodPut, eidPath(nsdocsync.RecordVendorBill, testRequestID))
 	require.True(t, ok)
 	assert.Equal(t, testVendor, refID(t, put.Body, "entity"))
 	assert.Equal(t, testSubsidiary, refID(t, put.Body, "subsidiary"))
@@ -70,8 +72,8 @@ func TestCreateVendorCreditAndRefuseUnmappedLines(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordVendorCredit, testRequestID)) {
-			return upserted(recordVendorCredit, testVendorCredit)
+		if call.is(http.MethodPut, eidPath(nsdocsync.RecordVendorCredit, testRequestID)) {
+			return upserted(nsdocsync.RecordVendorCredit, testVendorCredit)
 		}
 		return reply{}
 	}}
@@ -80,9 +82,13 @@ func TestCreateVendorCreditAndRefuseUnmappedLines(t *testing.T) {
 	doc.VendorCredit = true
 	result, err := conn.CreatePurchaseDocument(t.Context(), doc)
 	require.NoError(t, err)
-	assert.Equal(t, recordVendorCredit, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.RecordVendorCredit,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	assert.Equal(t, "true", result.Refs[accountingsync.ExternalRefCreditDocument])
-	put, _ := fake.find(http.MethodPut, eidPath(recordVendorCredit, testRequestID))
+	put, _ := fake.find(http.MethodPut, eidPath(nsdocsync.RecordVendorCredit, testRequestID))
 	assert.NotContains(t, put.Body, "dueDate")
 
 	doc = billDoc()
@@ -92,7 +98,7 @@ func TestCreateVendorCreditAndRefuseUnmappedLines(t *testing.T) {
 	doc = billDoc()
 	doc.Kind = accountingsync.SyncObjectInvoice
 	_, err = conn.CreatePurchaseDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 }
 
 func TestUpdatePurchaseDocumentReplacesTheExpenseLines(t *testing.T) {
@@ -105,13 +111,13 @@ func TestUpdatePurchaseDocumentReplacesTheExpenseLines(t *testing.T) {
 	result, err := conn.UpdatePurchaseDocument(t.Context(), doc)
 	require.NoError(t, err)
 	assert.Equal(t, testBill, result.ExternalID)
-	patch, ok := fake.find(http.MethodPatch, recordPath(recordVendorBill, testBill))
+	patch, ok := fake.find(http.MethodPatch, recordPath(nsdocsync.RecordVendorBill, testBill))
 	require.True(t, ok)
 	assert.Equal(t, "expense", patch.Query.Get("replace"))
 
 	doc.ExternalID = ""
 	_, err = conn.UpdatePurchaseDocument(t.Context(), doc)
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, nsbinding.ErrExternalID)
 }
 
 func billStateResponder(
@@ -141,7 +147,7 @@ func billStateResponder(
 	}
 }
 
-func billRef(refs map[string]string) *accountingsyncports.AccountingDocumentRef {
+func billRef(refs map[string]string) *accountingconnectorports.AccountingDocumentRef {
 	ref := voidRef(accountingsync.SyncObjectCarrierBill, testBill)
 	for key, value := range refs {
 		ref.Refs[key] = value
@@ -158,7 +164,7 @@ func TestVoidBillInAnOpenPeriodDeletesIt(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{"DELETE " + recordPath(recordVendorBill, testBill)},
+		[]string{"DELETE " + recordPath(nsdocsync.RecordVendorBill, testBill)},
 		methods(fake.writes()),
 	)
 }
@@ -169,10 +175,10 @@ func TestVoidBillInAnAPLockedPeriodWritesAVendorCreditAppliedToIt(t *testing.T) 
 	fake := &fakeNS{
 		respond: billStateResponder(t, map[string]any{"aplocked": "T"}, func(call nsCall) reply {
 			switch {
-			case call.is(http.MethodGet, recordPath(recordVendorBill, testBill)):
+			case call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorBill, testBill)):
 				return fixtureReply(t, http.StatusOK, "vendor_bill.json")
-			case call.is(http.MethodPut, eidPath(recordVendorCredit, testVoidRequest)):
-				return upserted(recordVendorCredit, "1610")
+			case call.is(http.MethodPut, eidPath(nsdocsync.RecordVendorCredit, testVoidRequest)):
+				return upserted(nsdocsync.RecordVendorCredit, "1610")
 			}
 			return reply{}
 		}),
@@ -180,13 +186,13 @@ func TestVoidBillInAnAPLockedPeriodWritesAVendorCreditAppliedToIt(t *testing.T) 
 	conn := testConnector(t, fake)
 	result, err := conn.VoidPurchaseDocument(t.Context(), billRef(nil))
 	require.NoError(t, err)
-	assert.Equal(t, "1610", result.Refs[refCorrective])
+	assert.Equal(t, "1610", result.Refs[nsdocsync.RefCorrective])
 	assert.Equal(
 		t,
-		[]string{"PUT " + eidPath(recordVendorCredit, testVoidRequest)},
+		[]string{"PUT " + eidPath(nsdocsync.RecordVendorCredit, testVoidRequest)},
 		methods(fake.writes()),
 	)
-	put, _ := fake.find(http.MethodPut, eidPath(recordVendorCredit, testVoidRequest))
+	put, _ := fake.find(http.MethodPut, eidPath(nsdocsync.RecordVendorCredit, testVoidRequest))
 	assert.Equal(t, testVendor, refID(t, put.Body, "entity"))
 	expense := items(t, put.Body, "expense")
 	require.Len(t, expense, 1)
@@ -203,7 +209,7 @@ func TestVoidBillInAnAPLockedPeriodWritesAVendorCreditAppliedToIt(t *testing.T) 
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{"DELETE " + recordPath(recordVendorBill, testBill)},
+		[]string{"DELETE " + recordPath(nsdocsync.RecordVendorBill, testBill)},
 		methods(arLocked.writes()),
 		"an A/R lock does not block a bill",
 	)
@@ -226,7 +232,7 @@ func TestVoidVendorCreditUnappliesThenDeletes(t *testing.T) {
 
 	fake := &fakeNS{
 		respond: billStateResponder(t, map[string]any{"type": "VendCred"}, func(call nsCall) reply {
-			if call.is(http.MethodGet, recordPath(recordVendorCredit, testBill)) {
+			if call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorCredit, testBill)) {
 				return reply{status: http.StatusOK, body: `{"id":"1501","apply":{"items":[]}}`}
 			}
 			return reply{}
@@ -239,14 +245,14 @@ func TestVoidVendorCreditUnappliesThenDeletes(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{"DELETE " + recordPath(recordVendorCredit, testBill)},
+		[]string{"DELETE " + recordPath(nsdocsync.RecordVendorCredit, testBill)},
 		methods(fake.writes()),
 	)
 
 	_, err = conn.VoidPurchaseDocument(t.Context(), billRef(map[string]string{
 		accountingsync.ExternalRefCreditDocument: "maybe",
 	}))
-	require.ErrorIs(t, err, errPurchaseDocumentType)
+	require.ErrorIs(t, err, nsbinding.ErrPurchaseDocumentType)
 }
 
 func TestVoidVendorCreditInAnAPLockedPeriodWritesAnOffsettingBill(t *testing.T) {
@@ -258,10 +264,10 @@ func TestVoidVendorCreditInAnAPLockedPeriodWritesAnOffsettingBill(t *testing.T) 
 			map[string]any{"type": "VendCred", "aplocked": "T"},
 			func(call nsCall) reply {
 				switch {
-				case call.is(http.MethodGet, recordPath(recordVendorCredit, testBill)):
+				case call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorCredit, testBill)):
 					return fixtureReply(t, http.StatusOK, "vendor_credit.json")
-				case call.is(http.MethodPut, eidPath(recordVendorBill, testVoidRequest)):
-					return upserted(recordVendorBill, "1510")
+				case call.is(http.MethodPut, eidPath(nsdocsync.RecordVendorBill, testVoidRequest)):
+					return upserted(nsdocsync.RecordVendorBill, "1510")
 				}
 				return reply{}
 			},
@@ -272,16 +278,16 @@ func TestVoidVendorCreditInAnAPLockedPeriodWritesAnOffsettingBill(t *testing.T) 
 		accountingsync.ExternalRefCreditDocument: "true",
 	}))
 	require.NoError(t, err)
-	assert.Equal(t, "1510", result.Refs[refCorrective])
+	assert.Equal(t, "1510", result.Refs[nsdocsync.RefCorrective])
 	assert.Equal(
 		t,
-		[]string{"PUT " + eidPath(recordVendorBill, testVoidRequest)},
+		[]string{"PUT " + eidPath(nsdocsync.RecordVendorBill, testVoidRequest)},
 		methods(fake.writes()),
 	)
 	find, ok := fake.query("t.externalid = ?")
 	require.True(t, ok)
-	assert.Equal(t, []any{typeVendorBill, testVoidRequest}, find.Params)
-	put, _ := fake.find(http.MethodPut, eidPath(recordVendorBill, testVoidRequest))
+	assert.Equal(t, []any{nsdocsync.TypeVendorBill, testVoidRequest}, find.Params)
+	put, _ := fake.find(http.MethodPut, eidPath(nsdocsync.RecordVendorBill, testVoidRequest))
 	assert.Equal(t, testVendor, refID(t, put.Body, "entity"))
 	assert.Equal(t, "111", refID(t, put.Body, "account"))
 	assert.Equal(t, "Reverses VC-12", put.Body["memo"])
@@ -293,23 +299,8 @@ func TestVoidVendorCreditInAnAPLockedPeriodWritesAnOffsettingBill(t *testing.T) 
 	assert.NotContains(t, put.Body, "item")
 }
 
-func TestPurchaseIsCreditReadsEitherRef(t *testing.T) {
-	t.Parallel()
-
-	credit, err := purchaseIsCredit(
-		map[string]string{accountingsync.ExternalRefDocumentType: recordVendorCredit},
-	)
-	require.NoError(t, err)
-	assert.True(t, credit)
-	credit, err = purchaseIsCredit(nil)
-	require.NoError(t, err)
-	assert.False(t, credit)
-	_, err = purchaseIsCredit(map[string]string{accountingsync.ExternalRefDocumentType: "journal"})
-	require.ErrorIs(t, err, errPurchaseDocumentType)
-}
-
-func billPaymentDoc() *accountingsyncports.AccountingBillPaymentDocument {
-	return &accountingsyncports.AccountingBillPaymentDocument{
+func billPaymentDoc() *accountingconnectorports.AccountingBillPaymentDocument {
+	return &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth:                  testAuth(),
 		RequestID:             testRequestID,
 		Kind:                  accountingsync.SyncObjectCarrierBillPay,
@@ -328,8 +319,8 @@ func TestCreateBillPaymentAppliesItToTheBill(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodPut, eidPath(recordVendorPayment, testRequestID)) {
-			return upserted(recordVendorPayment, testBillPayment)
+		if call.is(http.MethodPut, eidPath(nsdocsync.RecordVendorPayment, testRequestID)) {
+			return upserted(nsdocsync.RecordVendorPayment, testBillPayment)
 		}
 		return reply{}
 	}}
@@ -337,9 +328,13 @@ func TestCreateBillPaymentAppliesItToTheBill(t *testing.T) {
 	result, err := conn.CreateBillPayment(t.Context(), billPaymentDoc())
 	require.NoError(t, err)
 	assert.Equal(t, testBillPayment, result.ExternalID)
-	assert.Equal(t, docTypeVendorPayment, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		nsdocsync.DocTypeVendorPayment,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
-	put, _ := fake.find(http.MethodPut, eidPath(recordVendorPayment, testRequestID))
+	put, _ := fake.find(http.MethodPut, eidPath(nsdocsync.RecordVendorPayment, testRequestID))
 	assert.Equal(t, testVendor, refID(t, put.Body, "entity"))
 	assert.Equal(t, testBank, refID(t, put.Body, "account"))
 	assert.Equal(t, "CHK-1009", put.Body["tranId"])
@@ -355,18 +350,18 @@ func TestCreateBillPaymentAppliesItToTheBill(t *testing.T) {
 	doc = billPaymentDoc()
 	doc.Amount = decimal.Zero
 	_, err = conn.CreateBillPayment(t.Context(), doc)
-	require.ErrorIs(t, err, errAmountInvalid)
+	require.ErrorIs(t, err, nsbinding.ErrAmountInvalid)
 	doc = billPaymentDoc()
 	doc.Kind = accountingsync.SyncObjectCarrierBill
 	_, err = conn.CreateBillPayment(t.Context(), doc)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 }
 
 func TestUpdateBillPaymentPatchesIt(t *testing.T) {
 	t.Parallel()
 
 	fake := &fakeNS{respond: func(call nsCall) reply {
-		if call.is(http.MethodGet, recordPath(recordVendorPayment, testBillPayment)) &&
+		if call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorPayment, testBillPayment)) &&
 			call.Query.Get("expandSubResources") == "true" {
 			return fixtureReply(t, http.StatusOK, "vendor_payment.json")
 		}
@@ -381,17 +376,20 @@ func TestUpdateBillPaymentPatchesIt(t *testing.T) {
 	assert.Equal(t, testBillPayment, result.ExternalID)
 	assert.Equal(
 		t,
-		[]string{"PATCH " + recordPath(recordVendorPayment, testBillPayment)},
+		[]string{"PATCH " + recordPath(nsdocsync.RecordVendorPayment, testBillPayment)},
 		methods(fake.writes()),
 	)
-	patch, _ := fake.find(http.MethodPatch, recordPath(recordVendorPayment, testBillPayment))
+	patch, _ := fake.find(
+		http.MethodPatch,
+		recordPath(nsdocsync.RecordVendorPayment, testBillPayment),
+	)
 	apply := items(t, patch.Body, "apply")
 	require.Len(t, apply, 1)
 	assert.InDelta(t, 800.0, apply[0]["amount"], 0)
 
 	doc.ExternalID = ""
 	_, err = conn.UpdateBillPayment(t.Context(), doc)
-	require.ErrorIs(t, err, errExternalID)
+	require.ErrorIs(t, err, nsbinding.ErrExternalID)
 }
 
 func TestVoidBillPaymentUnappliesThenDeletesOrAsksForAReversal(t *testing.T) {
@@ -399,7 +397,7 @@ func TestVoidBillPaymentUnappliesThenDeletesOrAsksForAReversal(t *testing.T) {
 
 	open := &fakeNS{
 		respond: billStateResponder(t, map[string]any{"type": "VendPymt"}, func(call nsCall) reply {
-			if call.is(http.MethodGet, recordPath(recordVendorPayment, testBillPayment)) {
+			if call.is(http.MethodGet, recordPath(nsdocsync.RecordVendorPayment, testBillPayment)) {
 				return fixtureReply(t, http.StatusOK, "vendor_payment.json")
 			}
 			return reply{}
@@ -410,8 +408,8 @@ func TestVoidBillPaymentUnappliesThenDeletesOrAsksForAReversal(t *testing.T) {
 	_, err := conn.VoidPurchaseDocument(t.Context(), ref)
 	require.NoError(t, err)
 	assert.Equal(t, []string{
-		"PATCH " + recordPath(recordVendorPayment, testBillPayment),
-		"DELETE " + recordPath(recordVendorPayment, testBillPayment),
+		"PATCH " + recordPath(nsdocsync.RecordVendorPayment, testBillPayment),
+		"DELETE " + recordPath(nsdocsync.RecordVendorPayment, testBillPayment),
 	}, methods(open.writes()))
 
 	locked := &fakeNS{respond: billStateResponder(t, map[string]any{"aplocked": "T"}, nil)}
@@ -419,10 +417,10 @@ func TestVoidBillPaymentUnappliesThenDeletesOrAsksForAReversal(t *testing.T) {
 	_, err = conn.VoidPurchaseDocument(t.Context(), ref)
 	syncErr := syncErrorOf(t, err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, syncErr.Category)
-	assert.Equal(t, reversePayment, syncErr.Resolution)
+	assert.Equal(t, nsdocsync.ReversePayment, syncErr.Resolution)
 	assert.Empty(t, locked.writes())
 
 	ref.Kind = accountingsync.SyncObjectInvoice
 	_, err = conn.VoidPurchaseDocument(t.Context(), ref)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, nsbinding.ErrDocumentKind)
 }

@@ -1,7 +1,6 @@
 package agentextension
 
 import (
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -17,10 +16,6 @@ const (
 	DefaultDailyRequestLimit = 200
 	MinDailyRequestLimit     = 1
 	MaxDailyRequestLimit     = 10000
-)
-
-var hostnamePattern = regexp.MustCompile(
-	`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$`,
 )
 
 type SettingsValidator func(values map[string]string, multiErr *errortypes.MultiError)

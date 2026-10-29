@@ -3,8 +3,9 @@ package shipmentstate
 import (
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 )
 
 const DefaultDelayThresholdMinutes int16 = 30
@@ -22,7 +23,7 @@ func ResolveDelayThresholdMinutes(delayThresholdMinutes int16) int16 {
 // shipment control: delay automation is disabled when the control is missing
 // or the AutoDelayShipments flag is off; otherwise the configured threshold
 // (or the default) applies.
-func ResolveControlDelayThreshold(control *tenant.ShipmentControl) int16 {
+func ResolveControlDelayThreshold(control *shipmentcontrol.ShipmentControl) int16 {
 	if control == nil || !control.AutoDelayShipments {
 		return DisabledDelayThresholdMinutes
 	}
@@ -33,39 +34,39 @@ func ResolveControlDelayThreshold(control *tenant.ShipmentControl) int16 {
 	return ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }
 
-func DelayedExcludedShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusDelayed,
-		shipment.StatusCanceled,
-		shipment.StatusReadyToInvoice,
-		shipment.StatusCompleted,
-		shipment.StatusInvoiced,
+func DelayedExcludedShipmentStatuses() []shipmentvocab.Status {
+	return []shipmentvocab.Status{
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusCanceled,
+		shipmentvocab.StatusReadyToInvoice,
+		shipmentvocab.StatusCompleted,
+		shipmentvocab.StatusInvoiced,
 	}
 }
 
-func DelayedExcludedMoveStatuses() []shipment.MoveStatus {
-	return []shipment.MoveStatus{
-		shipment.MoveStatusCompleted,
-		shipment.MoveStatusCanceled,
+func DelayedExcludedMoveStatuses() []shipmentvocab.MoveStatus {
+	return []shipmentvocab.MoveStatus{
+		shipmentvocab.MoveStatusCompleted,
+		shipmentvocab.MoveStatusCanceled,
 	}
 }
 
-func DelayedExcludedStopStatuses() []shipment.StopStatus {
-	return []shipment.StopStatus{
-		shipment.StopStatusCompleted,
-		shipment.StopStatusCanceled,
+func DelayedExcludedStopStatuses() []shipmentvocab.StopStatus {
+	return []shipmentvocab.StopStatus{
+		shipmentvocab.StopStatusCompleted,
+		shipmentvocab.StopStatusCanceled,
 	}
 }
 
-func IsDelayedEligibleShipmentStatus(status shipment.Status) bool {
+func IsDelayedEligibleShipmentStatus(status shipmentvocab.Status) bool {
 	return !slices.Contains(DelayedExcludedShipmentStatuses(), status)
 }
 
-func IsDelayedEligibleMoveStatus(status shipment.MoveStatus) bool {
+func IsDelayedEligibleMoveStatus(status shipmentvocab.MoveStatus) bool {
 	return !slices.Contains(DelayedExcludedMoveStatuses(), status)
 }
 
-func IsDelayedEligibleStopStatus(status shipment.StopStatus) bool {
+func IsDelayedEligibleStopStatus(status shipmentvocab.StopStatus) bool {
 	return !slices.Contains(DelayedExcludedStopStatuses(), status)
 }
 

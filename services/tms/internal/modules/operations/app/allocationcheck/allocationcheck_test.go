@@ -3,11 +3,11 @@ package allocationcheck
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -36,17 +36,17 @@ func TestValidate_ChecksTheSplitOnAChargeAddedInTheSameSave(t *testing.T) {
 		}},
 		ChargeAllocations: []*shipment.ChargeAllocation{
 			{
-				ChargeKind:            shipment.ChargeAllocationKindAccessorial,
+				ChargeKind:            shipmentvocab.ChargeAllocationKindAccessorial,
 				AdditionalChargeIndex: &idx,
 				BillToCustomerID:      payerA,
-				Method:                shipment.ChargeAllocationMethodPercent,
+				Method:                shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:               decimal.NewNullDecimal(decimal.NewFromInt(60)),
 			},
 			{
-				ChargeKind:            shipment.ChargeAllocationKindAccessorial,
+				ChargeKind:            shipmentvocab.ChargeAllocationKindAccessorial,
 				AdditionalChargeIndex: &idx,
 				BillToCustomerID:      payerB,
-				Method:                shipment.ChargeAllocationMethodPercent,
+				Method:                shipmentvocab.ChargeAllocationMethodPercent,
 				Percent:               decimal.NewNullDecimal(decimal.NewFromInt(30)),
 				Sequence:              1,
 			},

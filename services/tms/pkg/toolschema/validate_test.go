@@ -3,25 +3,10 @@ package toolschema
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/toolschematest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func fieldErrors(t *testing.T, err error) map[string]string {
-	t.Helper()
-
-	require.Error(t, err)
-	multiErr, ok := err.(*errortypes.MultiError)
-	require.True(t, ok, "expected field-level errors, got %T: %v", err, err)
-
-	out := make(map[string]string, len(multiErr.Errors))
-	for _, entry := range multiErr.Errors {
-		out[entry.Field] = entry.Message
-	}
-
-	return out
-}
 
 func TestValidate_AcceptsArgumentsThatFit(t *testing.T) {
 	t.Parallel()
@@ -37,7 +22,7 @@ func TestValidate_AcceptsArgumentsThatFit(t *testing.T) {
 func TestValidate_FilesEachProblemUnderItsField(t *testing.T) {
 	t.Parallel()
 
-	errs := fieldErrors(t, Validate(notifyDriverSchema(), map[string]any{
+	errs := toolschematest.FieldErrors(t, Validate(notifyDriverSchema(), map[string]any{
 		"workerId":   "wrk_1",
 		"title":      "x",
 		"priority":   "urgent",
@@ -143,17 +128,20 @@ func TestValidator_FilesNestedProblemsUnderTheirPaths(t *testing.T) {
 		"additionalProperties": false,
 	}
 
-	errs := fieldErrors(t, NewValidator().ValidateFor("shipment_create", schema, map[string]any{
-		"shipment": map[string]any{
-			"moves": []any{map[string]any{
-				"type": "Linehaul",
-				"stops": []any{map[string]any{
-					"type":     "Pickup",
-					"sequence": "first",
+	errs := toolschematest.FieldErrors(
+		t,
+		NewValidator().ValidateFor("shipment_create", schema, map[string]any{
+			"shipment": map[string]any{
+				"moves": []any{map[string]any{
+					"type": "Linehaul",
+					"stops": []any{map[string]any{
+						"type":     "Pickup",
+						"sequence": "first",
+					}},
 				}},
-			}},
-		},
-	}))
+			},
+		}),
+	)
 
 	assert.Equal(t, "This tool does not take this value", errs["shipment.moves[0].type"])
 	assert.Equal(t, "This value is required", errs["shipment.moves[0].stops[0].locationId"])

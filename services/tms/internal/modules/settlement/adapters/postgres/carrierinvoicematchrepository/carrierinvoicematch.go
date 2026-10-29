@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
@@ -103,7 +103,7 @@ func (r *repository) GetLiveByCarrierInvoiceNumber(
 	req *carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		key := edi.InvoiceNumberKey(req.InvoiceNumber)
+		key := edicarrierinvoice.InvoiceNumberKey(req.InvoiceNumber)
 		if key == "" {
 			return nil, nil
 		}

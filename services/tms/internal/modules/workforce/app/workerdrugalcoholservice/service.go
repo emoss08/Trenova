@@ -12,10 +12,12 @@ package workerdrugalcoholservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -40,18 +42,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerDrugAlcoholRepository
+	Repo         workerdotports.WorkerDrugAlcoholRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerDrugAlcoholRepository
+	repo         workerdotports.WorkerDrugAlcoholRepository
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -67,7 +69,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerDrugAlcoholRepository
+	Repo         workerdotports.WorkerDrugAlcoholRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
@@ -153,29 +155,29 @@ func (s *Service) Standing(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (worker.DrugAlcoholStanding, error) {
-	tests, err := s.repo.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
+) (workerdot.DrugAlcoholStanding, error) {
+	tests, err := s.repo.ListTests(ctx, &workerdotports.ListWorkerDOTTestsRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	violation, err := s.repo.GetOpenViolation(ctx, tenantInfo, workerID)
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	queries, err := s.repo.ListQueries(ctx, &workerports.ListClearinghouseQueriesRequest{
+	queries, err := s.repo.ListQueries(ctx, &workerdotports.ListClearinghouseQueriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	return worker.EvaluateDrugAlcoholStanding(worker.DrugAlcoholInput{
+	return workerdot.EvaluateDrugAlcoholStanding(workerdot.DrugAlcoholInput{
 		Tests:         tests,
 		OpenViolation: violation,
 		Queries:       queries,
@@ -189,23 +191,23 @@ func (s *Service) RefreshRollup(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (worker.DrugAlcoholStanding, error) {
+) (workerdot.DrugAlcoholStanding, error) {
 	standing, err := s.Standing(ctx, tenantInfo, workerID)
 	if err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
-	if err = s.repo.UpdateProfileRollup(ctx, &workerports.UpdateDrugAlcoholRollupRequest{
+	if err = s.repo.UpdateProfileRollup(ctx, &workerdotports.UpdateDrugAlcoholRollupRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
-		Rollup: workerports.DrugAlcoholRollup{
+		Rollup: workerdotports.DrugAlcoholRollup{
 			Status:                    standing.Status,
 			ReturnToDuty:              standing.ReturnToDuty,
 			LastClearinghouseQueryAt:  standing.LastClearinghouseQueryAt,
 			NextClearinghouseQueryDue: standing.NextClearinghouseQueryDue,
 		},
 	}); err != nil {
-		return worker.DrugAlcoholStanding{}, err
+		return workerdot.DrugAlcoholStanding{}, err
 	}
 
 	return standing, nil
@@ -226,14 +228,14 @@ func (s *Service) refreshRollupQuietly(
 	}
 }
 
-func testTenant(entity *worker.WorkerDOTTest) pagination.TenantInfo {
+func testTenant(entity *workerdot.WorkerDOTTest) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func violationTenant(entity *worker.WorkerDOTViolation) pagination.TenantInfo {
+func violationTenant(entity *workerdot.WorkerDOTViolation) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }
 
-func queryTenant(entity *worker.WorkerClearinghouseQuery) pagination.TenantInfo {
+func queryTenant(entity *dotclearinghouse.WorkerClearinghouseQuery) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

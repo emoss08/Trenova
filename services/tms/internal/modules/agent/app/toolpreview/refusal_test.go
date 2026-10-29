@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -64,7 +64,7 @@ func TestWouldFail_CarriesEachProblemOfAValidationRefusal(t *testing.T) {
 
 	warning := WouldFail(fmt.Errorf("create shipment: %w", duplicateBOL()))
 
-	assert.Equal(t, agent.PreviewWarningWouldFail, warning.Code)
+	assert.Equal(t, agentpreview.PreviewWarningWouldFail, warning.Code)
 	assert.Equal(t,
 		"This would be refused as it stands: create shipment: validation failed:\n"+
 			"- bol: BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009\n"+
@@ -74,12 +74,12 @@ func TestWouldFail_CarriesEachProblemOfAValidationRefusal(t *testing.T) {
 	)
 	require.Len(t, warning.Args, 1, "the refusal is an argument, so two refusals stay apart")
 	require.Len(t, warning.Reasons, 2)
-	assert.Equal(t, agent.PreviewReason{
+	assert.Equal(t, agentpreview.PreviewReason{
 		Field:   "bol",
 		Label:   "BOL",
 		Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
 	}, warning.Reasons[0])
-	assert.Equal(t, agent.PreviewReason{
+	assert.Equal(t, agentpreview.PreviewReason{
 		Field:   "moves.stops[1].locationId",
 		Label:   "Location ID",
 		Message: "Location is required",
@@ -92,7 +92,7 @@ func TestWouldFail_ABusinessRefusalIsOneReasonWithoutAField(t *testing.T) {
 	warning := WouldFail(errortypes.NewBusinessError("The invoice is already posted"))
 
 	require.Len(t, warning.Reasons, 1)
-	assert.Equal(t, agent.PreviewReason{Message: "The invoice is already posted"},
+	assert.Equal(t, agentpreview.PreviewReason{Message: "The invoice is already posted"},
 		warning.Reasons[0])
 }
 
@@ -100,12 +100,13 @@ func TestRefused_IsTheRefusalAPreviewWarnsOfWithoutItsPrefix(t *testing.T) {
 	t.Parallel()
 
 	assert.NoError(t, Refused(nil))
-	assert.NoError(t, Refused(&agent.ToolPreview{
-		Warnings: []agent.PreviewWarning{{Code: agent.PreviewWarningDependsOnStep}},
+	assert.NoError(t, Refused(&agentpreview.ToolPreview{
+		Warnings: []agentpreview.PreviewWarning{{Code: agentpreview.PreviewWarningDependsOnStep}},
 	}))
 
-	preview := &agent.ToolPreview{}
-	preview.AddWarning(WouldFail(errortypes.NewBusinessError("The invoice is already posted")))
+	preview := &agentpreview.ToolPreview{}
+	warning := WouldFail(errortypes.NewBusinessError("The invoice is already posted"))
+	preview.AddWarning(&warning)
 	err := Refused(preview)
 	require.Error(t, err)
 	assert.Equal(t, "The invoice is already posted", err.Error())
@@ -123,7 +124,7 @@ func TestLocateReasons_NamesTheParameterThatCarriesEachField(t *testing.T) {
 	multiErr.Add("sourceDocumentId", errortypes.ErrInvalid, "Not an id")
 	multiErr.Add("ratingMethod", errortypes.ErrInvalid, "Not a parameter at all")
 
-	warnings := []agent.PreviewWarning{WouldFail(multiErr)}
+	warnings := []agentpreview.PreviewWarning{WouldFail(multiErr)}
 	LocateReasons(warnings, shipmentSchema())
 
 	reasons := warnings[0].Reasons
@@ -138,14 +139,14 @@ func TestLocateReasons_NamesTheParameterThatCarriesEachField(t *testing.T) {
 func TestLocateReasons_LeavesAParameterTheToolNamedAlone(t *testing.T) {
 	t.Parallel()
 
-	warnings := []agent.PreviewWarning{{
-		Code: agent.PreviewWarningWouldFail,
-		Reasons: []agent.PreviewReason{
+	warnings := []agentpreview.PreviewWarning{{
+		Code: agentpreview.PreviewWarningWouldFail,
+		Reasons: []agentpreview.PreviewReason{
 			{Field: "bol", Message: "Taken", Param: "reference"},
 		},
 	}, {
-		Code:    agent.PreviewWarningTargetChanged,
-		Reasons: []agent.PreviewReason{{Field: "bol", Message: "not a refusal"}},
+		Code:    agentpreview.PreviewWarningTargetChanged,
+		Reasons: []agentpreview.PreviewReason{{Field: "bol", Message: "not a refusal"}},
 	}}
 	LocateReasons(warnings, shipmentSchema())
 

@@ -9,11 +9,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -25,18 +28,18 @@ func (r *MutationResolver) StartBillingTransferRun(ctx context.Context, input gq
 	}
 
 	req := &billingtransferservice.StartRunRequest{
-		TenantInfo:                  base.TenantInfo(authCtx),
+		TenantInfo:                  resolvercore.TenantInfo(authCtx),
 		Scope:                       input.Scope,
 		ShipmentStatus:              billingTransferShipmentStatus(input.Status),
 		BillType:                    billingTransferBillType(input.BillType),
-		MarkCompletedReadyToInvoice: base.BoolValue(input.MarkCompletedReadyToInvoice),
+		MarkCompletedReadyToInvoice: gqlscalar.BoolValue(input.MarkCompletedReadyToInvoice),
 	}
 	if input.Query != nil {
 		req.SearchQuery = *input.Query
 	}
 
 	if input.Scope == billingtransfer.RunScopeSelected {
-		shipmentIDs, parseErr := base.ParseIDs(input.ShipmentIds)
+		shipmentIDs, parseErr := gqlid.ParseIDs(input.ShipmentIds)
 		if parseErr != nil {
 			return nil, parseErr
 		}
@@ -69,7 +72,7 @@ func (r *MutationResolver) CancelBillingTransferRun(ctx context.Context, id stri
 	}
 
 	run, err := r.BillingTransferService.Cancel(ctx, &billingtransferservice.RunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RunID:      runID,
 	})
 	if err != nil {
@@ -91,7 +94,7 @@ func (r *MutationResolver) RetryBillingTransferRun(ctx context.Context, id strin
 	}
 
 	run, err := r.BillingTransferService.Retry(ctx, &billingtransferservice.RunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RunID:      runID,
 	})
 	if err != nil {
@@ -113,7 +116,7 @@ func (r *QueryResolver) BillingTransferRun(ctx context.Context, id string) (*gql
 	}
 
 	run, err := r.BillingTransferService.GetRun(ctx, &billingtransferservice.RunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RunID:      runID,
 	})
 	if err != nil {
@@ -129,7 +132,7 @@ func (r *QueryResolver) MyActiveBillingTransferRun(ctx context.Context) (*gqlmod
 		return nil, err
 	}
 
-	run, err := r.BillingTransferService.GetActiveRun(ctx, base.TenantInfo(authCtx))
+	run, err := r.BillingTransferService.GetActiveRun(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +151,7 @@ func (r *QueryResolver) BillingTransferRunItems(ctx context.Context, runID strin
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +159,7 @@ func (r *QueryResolver) BillingTransferRunItems(ctx context.Context, runID strin
 	// Reading a run's items is reading that run, so the run itself is the thing
 	// authorized: this rejects another tenant's id before any item is touched.
 	if _, err = r.BillingTransferService.GetRun(ctx, &billingtransferservice.RunRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RunID:      parsedRunID,
 	}); err != nil {
 		return nil, err

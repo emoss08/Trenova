@@ -5,16 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
-	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/testutil/edihandlertest"
+	"github.com/emoss08/trenova/internal/testutil/ediservicetest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/edimessageportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,23 +25,23 @@ const inspectedInterchange = "ISA*00*          *00*          *ZZ*SIMPARTNER     
 
 func setupInboundFileHandler(
 	t *testing.T,
-	files *ediportsmock.MockEDIInboundFileRepository,
+	files *edimessageportsmock.MockEDIInboundFileRepository,
 ) *edihandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
-	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: &config.Config{App: config.AppConfig{Debug: true}},
-	})
+	edis := ediservicetest.New(ediservicetest.Deps{Logger: logger})
+	mw := edihandlertest.NewMiddleware(logger)
+
 	return edihandler.New(edihandler.Params{
-		Service:        ediservice.New(ediservice.Params{Logger: logger}),
-		InboundService: ediinboundservice.New(ediinboundservice.Params{Logger: logger, InboundFileRepo: files}),
-		ErrorHandler:   errorHandler,
-		PermissionMiddleware: middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
-			PermissionEngine: &mocks.AllowAllPermissionEngine{},
-			ErrorHandler:     errorHandler,
-		}),
+		Delivery: edis.Delivery,
+		Outbound: edis.Outbound,
+		Messages: edis.Messages,
+		InboundService: ediinboundservice.New(
+			ediinboundservice.Params{Logger: logger, InboundFileRepo: files},
+		),
+		ErrorHandler:         mw.ErrorHandler,
+		PermissionMiddleware: mw.PermissionMiddleware,
 	})
 }
 
@@ -52,15 +49,15 @@ func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
 	t.Parallel()
 
 	fileID := pulid.MustNew("ediinf_")
-	files := ediportsmock.NewMockEDIInboundFileRepository(t)
+	files := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	files.EXPECT().
-		GetInboundFileByID(mock.Anything, mock.MatchedBy(func(req ediports.GetEDIInboundFileByIDRequest) bool {
+		GetInboundFileByID(mock.Anything, mock.MatchedBy(func(req edimessageports.GetEDIInboundFileByIDRequest) bool {
 			return req.ID == fileID && !req.IncludeMessages
 		})).
-		Return(&edi.EDIInboundFile{ID: fileID, RawContent: inspectedInterchange}, nil).
+		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawContent: inspectedInterchange}, nil).
 		Once()
 
-	ctx := runEDIRequest(
+	ctx := edihandlertest.Run(
 		t,
 		setupInboundFileHandler(t, files),
 		http.MethodGet,
@@ -80,7 +77,12 @@ func TestEDIHandler_InspectInboundFileLaysOutTheFileItHolds(t *testing.T) {
 	var wire map[string]any
 	require.NoError(t, ctx.ResponseJSON(&wire))
 	for _, heavy := range []string{"rawX12", "formatted", "segments"} {
-		assert.NotContains(t, wire, heavy, "the file is already on the card; only its overview is sent")
+		assert.NotContains(
+			t,
+			wire,
+			heavy,
+			"the file is already on the card; only its overview is sent",
+		)
 	}
 }
 
@@ -89,13 +91,13 @@ func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {
 
 	fileID := pulid.MustNew("ediinf_")
 	purgedAt := int64(1_760_000_000)
-	files := ediportsmock.NewMockEDIInboundFileRepository(t)
+	files := edimessageportsmock.NewMockEDIInboundFileRepository(t)
 	files.EXPECT().
 		GetInboundFileByID(mock.Anything, mock.Anything).
-		Return(&edi.EDIInboundFile{ID: fileID, RawPurgedAt: &purgedAt}, nil).
+		Return(&ediinboundfile.EDIInboundFile{ID: fileID, RawPurgedAt: &purgedAt}, nil).
 		Once()
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
 		setupInboundFileHandler(t, files),
 		http.MethodGet,
@@ -109,9 +111,9 @@ func TestEDIHandler_InspectInboundFileRefusesAPurgedFile(t *testing.T) {
 func TestEDIHandler_InspectInboundFileRefusesAnIDThatIsNotOne(t *testing.T) {
 	t.Parallel()
 
-	runEDIRequest(
+	edihandlertest.Run(
 		t,
-		setupInboundFileHandler(t, ediportsmock.NewMockEDIInboundFileRepository(t)),
+		setupInboundFileHandler(t, edimessageportsmock.NewMockEDIInboundFileRepository(t)),
 		http.MethodGet,
 		"/api/v1/edi/inbound-files/not-an-id/inspect/",
 		nil,

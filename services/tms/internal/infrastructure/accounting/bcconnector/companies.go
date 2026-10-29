@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 )
 
 const (
@@ -25,24 +28,21 @@ var (
 	errNoCompany = errors.New(
 		"business central offered no company this sign-in can open",
 	)
-	errNoAccess = errors.New(
-		"the signed-in user must be able to open Business Central to connect it",
-	)
 )
 
 func (c *Connector) Companies(
 	ctx context.Context,
-	grant *accountingsyncports.AccountingTokenGrant,
+	grant *accountingconnectorports.AccountingTokenGrant,
 	_ string,
-) ([]accountingsyncports.AccountingCompany, error) {
+) ([]accountingconnectorports.AccountingCompany, error) {
 	if grant == nil {
-		return nil, businesscentral.ErrAccessTokenRequired
+		return nil, businesscentralerrors.ErrAccessTokenRequired
 	}
 	tenant, err := businesscentral.TenantIDFromAccessToken(grant.AccessToken)
 	if err != nil {
 		return nil, err
 	}
-	discovery, err := businesscentral.NewDiscoveryClient(grant.AccessToken, c.options()...)
+	discovery, err := businesscentral.NewDiscoveryClient(grant.AccessToken, c.Options()...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (c *Connector) Companies(
 		return nil, err
 	}
 
-	companies := make([]accountingsyncports.AccountingCompany, 0, len(environments))
+	companies := make([]accountingconnectorports.AccountingCompany, 0, len(environments))
 	for idx := range environments {
 		env := &environments[idx]
 		if !businesscentral.ValidEnvironmentName(env.Name) {
@@ -62,8 +62,8 @@ func (c *Connector) Companies(
 		case listErr == nil:
 			companies = appendCompanies(companies, tenant, env, listed)
 		case probing:
-			return nil, fmt.Errorf("%w: %w", errNoAccess, listErr)
-		case refusesAccess(listErr), businesscentral.IsNotFound(listErr):
+			return nil, fmt.Errorf("%w: %w", bcsession.ErrNoAccess, listErr)
+		case refusesAccess(listErr), businesscentralerrors.IsNotFound(listErr):
 			continue
 		default:
 			return nil, listErr
@@ -93,15 +93,15 @@ func listEnvironments(
 }
 
 func refusesAccess(err error) bool {
-	return businesscentral.IsAuth(err) || businesscentral.IsForbidden(err)
+	return businesscentralerrors.IsAuth(err) || businesscentralerrors.IsForbidden(err)
 }
 
 func appendCompanies(
-	companies []accountingsyncports.AccountingCompany,
+	companies []accountingconnectorports.AccountingCompany,
 	tenant string,
 	env *businesscentral.Environment,
 	listed []businesscentral.Company,
-) []accountingsyncports.AccountingCompany {
+) []accountingconnectorports.AccountingCompany {
 	for idx := range listed {
 		company := &listed[idx]
 		ref, err := businesscentral.NewCompanyRef(tenant, env.Name, company.ID)
@@ -112,7 +112,7 @@ func appendCompanies(
 		if id == "" {
 			continue
 		}
-		companies = append(companies, accountingsyncports.AccountingCompany{
+		companies = append(companies, accountingconnectorports.AccountingCompany{
 			ID:   id,
 			Name: companyLabel(company, env),
 		})
@@ -143,8 +143,8 @@ type companyBooks struct {
 func (c *Connector) CompanyFacts(
 	ctx context.Context,
 	realmID, accessToken string,
-) (*accountingsync.CompanyFacts, error) {
-	client, err := c.client(accountingsyncports.AccountingDocumentAuth{
+) (*accountingconnection.CompanyFacts, error) {
+	client, err := c.Client(accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     realmID,
 		AccessToken: accessToken,
 	})
@@ -182,7 +182,7 @@ func (c *Connector) readBooks(
 	if books.name, err = c.companyName(ctx, client.Ref(), accessToken); err != nil {
 		return nil, err
 	}
-	c.setups.store(client.Ref().String(), books.setup)
+	c.setups.Store(client.Ref().String(), books.setup)
 	return &books, nil
 }
 
@@ -191,7 +191,7 @@ func (c *Connector) companyName(
 	ref businesscentral.CompanyRef,
 	accessToken string,
 ) (string, error) {
-	discovery, err := businesscentral.NewDiscoveryClient(accessToken, c.options()...)
+	discovery, err := businesscentral.NewDiscoveryClient(accessToken, c.Options()...)
 	if err != nil {
 		return "", err
 	}
@@ -200,14 +200,14 @@ func (c *Connector) companyName(
 		return "", err
 	}
 	for idx := range companies {
-		if sameID(companies[idx].ID, ref.CompanyID) {
+		if bcdocsync.SameID(companies[idx].ID, ref.CompanyID) {
 			return strings.TrimSpace(companies[idx].Name), nil
 		}
 	}
 	return "", nil
 }
 
-func (b *companyBooks) facts() *accountingsync.CompanyFacts {
+func (b *companyBooks) facts() *accountingconnection.CompanyFacts {
 	home := b.setup.LocalCurrencyCode
 	if home == "" {
 		home = b.info.CurrencyCode
@@ -217,7 +217,7 @@ func (b *companyBooks) facts() *accountingsync.CompanyFacts {
 		name = strings.TrimSpace(b.info.DisplayName)
 	}
 	periods := sortedPeriods(b.periods)
-	return &accountingsync.CompanyFacts{
+	return &accountingconnection.CompanyFacts{
 		CompanyName:          name,
 		LegalName:            b.info.DisplayName,
 		Country:              b.info.CountryRegionCode,

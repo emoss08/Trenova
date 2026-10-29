@@ -3,12 +3,12 @@ package recurringshipmentservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,8 +31,8 @@ type Params struct {
 	Repo         recurringshipmentports.RecurringShipmentRepository
 	Validator    *Validator
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
-	Invalidator  shipmentports.ShipmentInvalidator
+	Realtime     realtimeports.RealtimeService `optional:"true"`
+	Invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 type Service struct {
@@ -40,8 +40,8 @@ type Service struct {
 	repo         recurringshipmentports.RecurringShipmentRepository
 	validator    *Validator
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
-	invalidator  shipmentports.ShipmentInvalidator
+	realtime     realtimeports.RealtimeService
+	invalidator  shipmentinvalidationports.ShipmentInvalidator
 }
 
 func New(p Params) *Service {
@@ -277,16 +277,20 @@ func (s *Service) Generate(
 			log.Error("failed to log audit action", zap.Error(err))
 		}
 
-		shipmentports.InvalidateShipments(ctx, s.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: result.Shipment.OrganizationID,
-			BusinessUnitID: result.Shipment.BusinessUnitID,
-			ActorUserID:    req.RequestedBy,
-			ActorType:      permissionports.PrincipalTypeUser,
-			ActorID:        req.RequestedBy,
-			Action:         "created",
-			RecordID:       result.Shipment.ID,
-			Entity:         result.Shipment,
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			s.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: result.Shipment.OrganizationID,
+				BusinessUnitID: result.Shipment.BusinessUnitID,
+				ActorUserID:    req.RequestedBy,
+				ActorType:      permissionports.PrincipalTypeUser,
+				ActorID:        req.RequestedBy,
+				Action:         "created",
+				RecordID:       result.Shipment.ID,
+				Entity:         result.Shipment,
+			},
+		)
 	}
 
 	if result.Series != nil {

@@ -7,10 +7,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -36,8 +40,8 @@ type Params struct {
 	AuditService         auditports.AuditService
 	Generator            seqgen.Generator
 	OrderDerivation      orderports.OrderDerivationService
-	ShipmentService      shipmentports.ShipmentService
-	ChargeAllocationRepo shipmentports.ChargeAllocationRepository
+	ShipmentService      shipmentserviceports.ShipmentLifecycleService
+	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	CustomerRepo         customerports.CustomerRepository
 }
 
@@ -49,8 +53,8 @@ type Service struct {
 	auditService         auditports.AuditService
 	generator            seqgen.Generator
 	orderDerivation      orderports.OrderDerivationService
-	shipmentService      shipmentports.ShipmentService
-	chargeAllocationRepo shipmentports.ChargeAllocationRepository
+	shipmentService      shipmentserviceports.ShipmentLifecycleService
+	chargeAllocationRepo chargeallocationports.ChargeAllocationRepository
 	customerRepo         customerports.CustomerRepository
 }
 
@@ -301,7 +305,8 @@ func (s *Service) validateAttachRefs(
 				"Every shipment attached to an order must belong to the order's customer",
 			)
 		}
-		if ref.Status == shipment.StatusCanceled || ref.Status == shipment.StatusInvoiced {
+		if ref.Status == shipmentvocab.StatusCanceled ||
+			ref.Status == shipmentvocab.StatusInvoiced {
 			return nil, nil, errortypes.NewValidationError(
 				"shipmentIds",
 				errortypes.ErrInvalid,
@@ -481,7 +486,7 @@ func detachableLeg(ord *order.Order, shipmentID pulid.ID) (*shipment.Shipment, e
 			"Shipment is not a leg of this order",
 		)
 	}
-	if leg.Status == shipment.StatusInvoiced {
+	if leg.Status == shipmentvocab.StatusInvoiced {
 		return nil, errortypes.NewValidationError(
 			"shipmentId",
 			errortypes.ErrInvalid,
@@ -897,7 +902,7 @@ func (s *Service) validateChargeAllocations(
 		if allocation == nil {
 			continue
 		}
-		allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
+		allocation.ChargeKind = shipmentvocab.ChargeAllocationKindOrderCharge
 		if charge.ID.IsNotNil() {
 			chargeID := charge.ID
 			allocation.OrderChargeID = &chargeID
@@ -961,7 +966,7 @@ func (s *Service) validateChargeAllocations(
 		}
 	}
 
-	multiErr := shipment.ValidateAllocations(&shipment.ValidateAllocationsParams{
+	multiErr := chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
 		TenantOrgID: tenantInfo.OrgID,
 		TenantBuID:  tenantInfo.BuID,
 		Allocations: allocations,
@@ -973,9 +978,9 @@ func (s *Service) validateChargeAllocations(
 		return multiErr
 	}
 
-	if _, err := shipment.ResolveOrderChargeShares(
+	if _, err := chargeallocation.ResolveOrderChargeShares(
 		ctx,
-		[]shipment.OrderChargeRef{
+		[]chargeallocation.OrderChargeRef{
 			{ID: chargeID, Description: charge.Description, Amount: charge.Amount},
 		},
 		allocations,
@@ -1018,7 +1023,7 @@ func (s *Service) syncChargeAllocations(
 
 	return s.chargeAllocationRepo.SyncForOrderCharge(
 		ctx,
-		&shipmentports.SyncOrderChargeAllocationsRequest{
+		&chargeallocationports.SyncOrderChargeAllocationsRequest{
 			TenantInfo:    tenantInfo,
 			OrderID:       charge.OrderID,
 			OrderChargeID: charge.ID,

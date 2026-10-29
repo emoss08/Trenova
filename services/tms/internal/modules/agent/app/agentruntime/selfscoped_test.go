@@ -4,9 +4,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,9 +24,9 @@ type selfScopedAction struct {
 	*agenttest.StubActionTool
 }
 
-func (a selfScopedAction) Policy() agentports.ToolPolicy {
+func (a selfScopedAction) Policy() agenttoolports.ToolPolicy {
 	policy := a.StubActionTool.Policy()
-	policy.Scope = agent.ToolScopeSelf
+	policy.Scope = agenttooltrust.ToolScopeSelf
 	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
 
 	return policy
@@ -33,7 +38,7 @@ func selfScopedRuntime(
 	permissions := &agenttest.StubPermissions{Denied: map[string]bool{
 		string(permission.ResourceHomeLayoutPreset) + ":" + string(permission.OpUpdate): true,
 	}}
-	action := &stubActionRegistry{Tools: []agentports.AgentTool{
+	action := &stubActionRegistry{Tools: []agenttoolports.AgentTool{
 		selfScopedAction{actionTool("home_add_widget", agent.TierPropose, nil)},
 	}}
 	action.Tools[0].(selfScopedAction).Resource = permission.ResourceHomeLayoutPreset
@@ -50,18 +55,18 @@ sent as the owner is replaced by who is actually in the conversation.
 func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("home_add_widget", map[string]any{
-			"key":                          "kpi",
-			agentports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("home_add_widget", map[string]any{
+			"key":                              "kpi",
+			agenttoolports.SelfScopeOwnerParam: pulid.MustNew("usr_").String(),
 		}),
-		textTurn("Proposed."),
+		runtimetest.TextTurn("Proposed."),
 	}}
 	service, permissions := selfScopedRuntime(completion)
-	actor := testActor()
+	actor := runtimetest.Actor()
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("home_add_widget"),
 		Actor:      actor,
 		Input:      "put on-time on my dashboard",
 	})
@@ -70,7 +75,7 @@ func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 	assert.Contains(t, requestTools(completion.Requests[0]), "home_add_widget")
 	require.Len(t, result.Actions, 1)
 	assert.Equal(t, actor.UserID.String(),
-		result.Actions[0].Arguments[agentports.SelfScopeOwnerParam],
+		result.Actions[0].Arguments[agenttoolports.SelfScopeOwnerParam],
 		"the owner is the person in the conversation, whatever the model wrote")
 	for _, request := range permissions.Requests {
 		assert.NotEqual(t, string(permission.ResourceHomeLayoutPreset), request.Resource)
@@ -81,15 +86,15 @@ func TestRun_OffersASelfScopedToolToThePersonWithoutAGrant(t *testing.T) {
 func TestRun_WithholdsASelfScopedToolFromARunNobodyIsWatching(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("home_add_widget", map[string]any{"key": "kpi"}),
-		textTurn("done"),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("home_add_widget", map[string]any{"key": "kpi"}),
+		runtimetest.TextTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
 
-	result, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
-		Actor:      testActor(),
+	result, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("home_add_widget"),
+		Actor:      runtimetest.Actor(),
 		Input:      "tidy the home page",
 		Unattended: true,
 	})
@@ -103,15 +108,15 @@ func TestRun_WithholdsASelfScopedToolFromARunNobodyIsWatching(t *testing.T) {
 func TestRun_WithholdsASelfScopedToolFromAnAgentPrincipal(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		textTurn("done"),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.TextTurn("done"),
 	}}
 	service, _ := selfScopedRuntime(completion)
-	actor := testActor()
+	actor := runtimetest.Actor()
 	actor.PrincipalType = permissionports.PrincipalTypeAgent
 
-	_, err := service.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("home_add_widget"),
+	_, err := service.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("home_add_widget"),
 		Actor:      actor,
 		Input:      "tidy the home page",
 	})
@@ -136,7 +141,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 	t.Parallel()
 
 	service, names := wideRuntime(t)
-	query := service.queryTools.(*stubQueryRegistry)
+	query := paramsOf(service).QueryTools.(*stubQueryRegistry)
 	query.Tools = append(
 		query.Tools,
 		searchableQuery{
@@ -149,19 +154,22 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 			"List the report dashboards under Reports, with their tiles.",
 		),
 	)
-	service.catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
-		QueryTools:  query,
-		ActionTools: service.actionTools,
+	rewire(service, func(p *Params) {
+		p.Catalog = agenttoolcatalog.NewFromRegistries(agenttoolcatalog.Params{
+			QueryTools:  query,
+			ActionTools: service.actionTools,
+		})
 	})
 
-	set := service.newToolSet(t.Context(), toolSetRequest{
-		definition: testDefinition(append(names, "home_get_layout", "report_list_dashboards")...),
-		actor:      testActor(),
-		input:      "Tell me what I have on my dashboard currently",
+	set := service.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+		Definition: runtimetest.Definition(
+			append(names, "home_get_layout", "report_list_dashboards")...),
+		Actor: runtimetest.Actor(),
+		Input: "Tell me what I have on my dashboard currently",
 	})
 
-	require.True(t, set.disclosed)
-	sent := specNames(set.specs)
+	require.True(t, set.Disclosed)
+	sent := specNames(set.Specs)
 	assert.Contains(t, sent, "home_get_layout")
 	assert.Contains(t, sent, "report_list_dashboards")
 }

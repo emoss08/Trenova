@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -170,7 +170,7 @@ func TestValidateUpdate_RequiresDisallowedExchangeRateOverridesForSingleCurrency
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.ExchangeRateOverridePolicy = tenant.ExchangeRateOverrideRequireApproval
+	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -183,10 +183,10 @@ func TestValidateUpdate_RejectsDuplicateAutoPostEvents(t *testing.T) {
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventInvoicePosted,
-		tenant.JournalSourceEventInvoicePosted,
-		tenant.JournalSourceEventVendorBillPosted,
+	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventInvoicePosted,
+		accountingcontrol.JournalSourceEventInvoicePosted,
+		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -200,8 +200,8 @@ func TestValidateUpdate_RejectsIncompatibleAccountingBasisCombination(t *testing
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.AccountingBasis = tenant.AccountingBasisCash
-	entity.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnInvoicePost
+	entity.AccountingBasis = accountingcontrol.AccountingBasisCash
+	entity.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnInvoicePost
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -233,8 +233,8 @@ func TestValidateUpdate_ChecksEveryGLAccountReferenceInTheEntityTenant(t *testin
 	entity := validAccountingControl()
 	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
 	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
-	entity.CurrencyMode = tenant.CurrencyModeMultiCurrency
-	entity.ExchangeRateOverridePolicy = tenant.ExchangeRateOverrideRequireApproval
+	entity.CurrencyMode = accountingcontrol.CurrencyModeMultiCurrency
+	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
@@ -252,7 +252,7 @@ func TestValidateUpdate_RejectsZeroReconciliationToleranceWhenEnabled(t *testing
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.ReconciliationMode = tenant.ReconciliationModeWarnOnly
+	entity.ReconciliationMode = accountingcontrol.ReconciliationModeWarnOnly
 	entity.ReconciliationToleranceAmount = decimal.Zero
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -266,9 +266,9 @@ func TestValidateUpdate_RequiresCreditAndDebitMemoEventsForInvoicePostingRecogni
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventInvoicePosted,
-		tenant.JournalSourceEventVendorBillPosted,
+	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventInvoicePosted,
+		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -282,11 +282,11 @@ func TestValidateUpdate_RejectsInvoiceEventsForCashReceiptRecognition(t *testing
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
-	entity.AutoPostSourceEvents = []tenant.JournalSourceEventType{
-		tenant.JournalSourceEventCustomerPaymentPosted,
-		tenant.JournalSourceEventInvoicePosted,
-		tenant.JournalSourceEventVendorBillPosted,
+	entity.RevenueRecognitionPolicy = accountingcontrol.RevenueRecognitionOnCashReceipt
+	entity.AutoPostSourceEvents = []accountingcontrol.JournalSourceEventType{
+		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+		accountingcontrol.JournalSourceEventInvoicePosted,
+		accountingcontrol.JournalSourceEventVendorBillPosted,
 	}
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -300,7 +300,7 @@ func TestValidateUpdate_RejectsScheduledCloseWithApproval(t *testing.T) {
 
 	v := NewTestValidator()
 	entity := validAccountingControl()
-	entity.PeriodCloseMode = tenant.PeriodCloseModeSystemScheduled
+	entity.PeriodCloseMode = accountingcontrol.PeriodCloseModeSystemScheduled
 	entity.RequirePeriodCloseApproval = true
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -317,7 +317,7 @@ func TestValidateUpdate_RequiresCashAccountForCustomerPaymentPosting(t *testing.
 	entity.DefaultCashAccountID = pulid.Nil
 	entity.AutoPostSourceEvents = append(
 		entity.AutoPostSourceEvents,
-		tenant.JournalSourceEventCustomerPaymentPosted,
+		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
 	)
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -334,7 +334,7 @@ func TestValidateUpdate_RequiresUnappliedCashAccountForCustomerPaymentPosting(t 
 	entity.DefaultUnappliedCashAccountID = pulid.Nil
 	entity.AutoPostSourceEvents = append(
 		entity.AutoPostSourceEvents,
-		tenant.JournalSourceEventCustomerPaymentPosted,
+		accountingcontrol.JournalSourceEventCustomerPaymentPosted,
 	)
 
 	multiErr := v.ValidateUpdate(t.Context(), entity)
@@ -355,10 +355,10 @@ func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field strin
 	t.Fatalf("expected validation error for field %q, got %#v", field, multiErr.Errors)
 }
 
-func validMultiCurrencyAccountingControl() *tenant.AccountingControl {
+func validMultiCurrencyAccountingControl() *accountingcontrol.AccountingControl {
 	entity := validAccountingControl()
-	entity.CurrencyMode = tenant.CurrencyModeMultiCurrency
-	entity.ExchangeRateOverridePolicy = tenant.ExchangeRateOverrideRequireApproval
+	entity.CurrencyMode = accountingcontrol.CurrencyModeMultiCurrency
+	entity.ExchangeRateOverridePolicy = accountingcontrol.ExchangeRateOverrideRequireApproval
 	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
 	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
 	return entity

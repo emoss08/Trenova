@@ -6,8 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentinstructions"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -71,8 +74,8 @@ type draftContextInput struct {
 	description string
 }
 
-func draftContext(in *draftContextInput) agentports.DelimitedContext {
-	return agentports.DelimitedContext{Sections: []agentports.ContextSection{
+func draftContext(in *draftContextInput) llmports.DelimitedContext {
+	return llmports.DelimitedContext{Sections: []llmports.ContextSection{
 		{Title: "tools", Trusted: true, Content: describeTools(in.catalog)},
 		{Title: "events", Trusted: true, Content: describeEvents()},
 		{Title: "identity", Trusted: true, Content: describeIdentity()},
@@ -81,17 +84,17 @@ func draftContext(in *draftContextInput) agentports.DelimitedContext {
 	}}
 }
 
-func tightenContext(instructions string) agentports.DelimitedContext {
-	sections := make([]agentports.ContextSection, 0, 2)
-	if variables := agentdefinition.InstructionVariables(instructions); len(variables) > 0 {
-		sections = append(sections, agentports.ContextSection{
+func tightenContext(instructions string) llmports.DelimitedContext {
+	sections := make([]llmports.ContextSection, 0, 2)
+	if variables := agentinstructions.InstructionVariables(instructions); len(variables) > 0 {
+		sections = append(sections, llmports.ContextSection{
 			Title:   "placeholders",
 			Trusted: true,
 			Content: "Keep each of these exactly: " + strings.Join(variables, " "),
 		})
 	}
 
-	return agentports.DelimitedContext{Sections: append(sections, agentports.ContextSection{
+	return llmports.DelimitedContext{Sections: append(sections, llmports.ContextSection{
 		Title:   "instructions",
 		Content: instructions,
 	})}
@@ -125,7 +128,7 @@ func describeTools(catalog []agentdefinitionports.ToolCatalogEntry) string {
 }
 
 func describeEvents() string {
-	events := agent.KnownEvents()
+	events := agenttrigger.KnownEvents()
 	var b strings.Builder
 	for idx := range events {
 		event := &events[idx]
@@ -136,8 +139,8 @@ func describeEvents() string {
 }
 
 func describeIdentity() string {
-	return "icons: " + strings.Join(agentdefinition.KnownIcons(), ", ") +
-		"\naccents: " + strings.Join(agentdefinition.KnownAccents(), ", ")
+	return "icons: " + strings.Join(agentmark.KnownIcons(), ", ") +
+		"\naccents: " + strings.Join(agentmark.KnownAccents(), ", ")
 }
 
 func maxTierOf(entry *agentdefinitionports.ToolCatalogEntry) agent.AutonomyTier {
@@ -157,7 +160,7 @@ func tierNames() []string {
 }
 
 func eventNames() []string {
-	events := agent.KnownEvents()
+	events := agenttrigger.KnownEvents()
 	names := make([]string, 0, len(events))
 	for idx := range events {
 		names = append(names, string(events[idx].Kind))
@@ -178,8 +181,8 @@ func draftSchema() map[string]any {
 	properties := map[string]any{
 		"name":         stringField("Two to four words naming the job."),
 		"description":  stringField("One sentence saying what the agent does."),
-		"icon":         enumField(agentdefinition.KnownIcons()),
-		"accent":       enumField(agentdefinition.KnownAccents()),
+		"icon":         enumField(agentmark.KnownIcons()),
+		"accent":       enumField(agentmark.KnownAccents()),
 		"instructions": stringField("What the agent does and how, addressed to the agent."),
 		"guardrails": map[string]any{
 			"type":     "array",

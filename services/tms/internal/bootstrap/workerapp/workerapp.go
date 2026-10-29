@@ -3,27 +3,25 @@ package workerapp
 import (
 	"context"
 
-	partiesworker "github.com/emoss08/trenova/internal/modules/parties/jobs"
-
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
-
 	"github.com/emoss08/trenova/internal/bootstrap/edition"
 	apimodule "github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/schemaversion"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	accountingworker "github.com/emoss08/trenova/internal/modules/accounting/jobs"
 	agentworker "github.com/emoss08/trenova/internal/modules/agent/jobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs"
 	billingworker "github.com/emoss08/trenova/internal/modules/billing/jobs"
 	documentsworker "github.com/emoss08/trenova/internal/modules/documents/jobs"
 	ediworker "github.com/emoss08/trenova/internal/modules/edi/jobs"
 	identityworker "github.com/emoss08/trenova/internal/modules/identity/jobs"
 	operationsworker "github.com/emoss08/trenova/internal/modules/operations/jobs"
+	partiesworker "github.com/emoss08/trenova/internal/modules/parties/jobs"
 	placesworker "github.com/emoss08/trenova/internal/modules/places/jobs"
 	ratingworker "github.com/emoss08/trenova/internal/modules/rating/jobs"
 	referenceworker "github.com/emoss08/trenova/internal/modules/reference/jobs"
@@ -84,8 +82,8 @@ func UnscheduledOptions() fx.Option {
 type RunParams struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	AppConfig *appconfig.Config
+	Logger    *zap.Logger
 }
 
 func Run(base fx.Option, queues []string) {
@@ -101,8 +99,8 @@ func logLifecycle(lc fx.Lifecycle, params RunParams) {
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			params.Logger.Info("Starting worker service",
-				zap.String("environment", params.Config.App.Env),
-				zap.String("version", params.Config.App.Version),
+				zap.String("environment", params.AppConfig.Env),
+				zap.String("version", params.AppConfig.Version),
 			)
 
 			params.Logger.Info("Temporal workers initialized and running")

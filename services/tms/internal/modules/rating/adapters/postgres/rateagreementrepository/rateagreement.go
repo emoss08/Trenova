@@ -150,6 +150,28 @@ func (r *repository) GetByID(
 	})
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *rateagreementports.GetRateAgreementsByIDsRequest,
+) ([]*rateagreement.RateAgreement, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*rateagreement.RateAgreement, error) {
+		if len(req.RateAgreementIDs) == 0 {
+			return []*rateagreement.RateAgreement{}, nil
+		}
+
+		ra := rateagreementdb.RateAgreements
+		entities, err := ra.Where(ra.ID.In(req.RateAgreementIDs...)).
+			Limit(len(req.RateAgreementIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get rate agreements", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func rulesQuery(
 	req *rateagreementports.ListRateAgreementRulesRequest,
 ) *keel.Query[*rateagreement.RateAgreementRule] {

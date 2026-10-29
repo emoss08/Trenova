@@ -9,6 +9,9 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmark"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -53,11 +56,11 @@ type Definition struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Name         string   `json:"name"         keel:"name"`
-	Description  string   `json:"description"  keel:"description,nullzero"`
-	Template     Template `json:"template"     keel:"template,nullzero"`
-	Instructions string   `json:"instructions" keel:"instructions,nullzero"`
-	Guardrails   []string `json:"guardrails"   keel:"guardrails,nullzero"`
+	Name         string                 `json:"name"         keel:"name"`
+	Description  string                 `json:"description"  keel:"description,nullzero"`
+	Template     agenttemplate.Template `json:"template"     keel:"template,nullzero"`
+	Instructions string                 `json:"instructions" keel:"instructions,nullzero"`
+	Guardrails   []string               `json:"guardrails"   keel:"guardrails,nullzero"`
 
 	ToolNames       []string                      `json:"toolNames"       keel:"tool_names,nullzero"`
 	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       keel:"tool_tiers,jsonb,nullzero"`
@@ -75,15 +78,15 @@ type Definition struct {
 	ShadowMode             bool      `json:"shadowMode"             keel:"shadow_mode"`
 	DecisionTimeoutSeconds int       `json:"decisionTimeoutSeconds" keel:"decision_timeout_seconds"`
 
-	TriggerMode       TriggerMode       `json:"triggerMode"       keel:"trigger_mode"`
-	CronExpression    string            `json:"cronExpression"    keel:"cron_expression,nullzero"`
-	CronTimezone      string            `json:"cronTimezone"      keel:"cron_timezone,nullzero"`
-	EventKinds        []agent.EventKind `json:"eventKinds"        keel:"event_kinds,nullzero"`
-	IntervalSeconds   int               `json:"intervalSeconds"   keel:"interval_seconds,nullzero"`
-	EndsAt            *int64            `json:"endsAt"            keel:"ends_at"`
-	MaxConcurrentRuns int               `json:"maxConcurrentRuns" keel:"max_concurrent_runs"`
-	RunTimeoutSeconds int               `json:"runTimeoutSeconds" keel:"run_timeout_seconds"`
-	MaxToolCalls      int               `json:"maxToolCalls"      keel:"max_tool_calls"`
+	TriggerMode       TriggerMode              `json:"triggerMode"       keel:"trigger_mode"`
+	CronExpression    string                   `json:"cronExpression"    keel:"cron_expression,nullzero"`
+	CronTimezone      string                   `json:"cronTimezone"      keel:"cron_timezone,nullzero"`
+	EventKinds        []agenttrigger.EventKind `json:"eventKinds"        keel:"event_kinds,nullzero"`
+	IntervalSeconds   int                      `json:"intervalSeconds"   keel:"interval_seconds,nullzero"`
+	EndsAt            *int64                   `json:"endsAt"            keel:"ends_at"`
+	MaxConcurrentRuns int                      `json:"maxConcurrentRuns" keel:"max_concurrent_runs"`
+	RunTimeoutSeconds int                      `json:"runTimeoutSeconds" keel:"run_timeout_seconds"`
+	MaxToolCalls      int                      `json:"maxToolCalls"      keel:"max_tool_calls"`
 
 	// MonthlyBudgetUSD caps what the agent's runs may cost in a calendar
 	// month; nil is no cap. DailyRunLimit caps how many runs it may start in
@@ -358,8 +361,11 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 				Error("Description cannot be longer than 500 characters"),
 		),
 		validation.Field(&d.Template,
-			validation.When(d.Template != "",
-				domainvalidation.ValidEnum[Template]("Template is not one this system offers"),
+			validation.When(
+				d.Template != "",
+				domainvalidation.ValidEnum[agenttemplate.Template](
+					"Template is not one this system offers",
+				),
 			),
 		),
 		validation.Field(&d.Instructions,
@@ -410,7 +416,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.Icon,
 			validation.By(func(any) error {
-				if d.Icon != "" && !IsKnownIcon(d.Icon) {
+				if d.Icon != "" && !agentmark.IsKnownIcon(d.Icon) {
 					return errIconUnknown
 				}
 
@@ -419,7 +425,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&d.Accent,
 			validation.By(func(any) error {
-				if d.Accent != "" && !IsKnownAccent(d.Accent) {
+				if d.Accent != "" && !agentmark.IsKnownAccent(d.Accent) {
 					return errAccentUnknown
 				}
 

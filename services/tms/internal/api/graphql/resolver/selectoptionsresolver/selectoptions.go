@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +43,7 @@ func selectOptionsRequestFromInput(
 	input gqlmodel.SelectOptionsInput,
 	authCtx *authctx.AuthContext,
 	entry SelectOptionRegistryEntry,
-) (*SelectOptionsRequest, error) {
+) (*selectoption.Request, error) {
 	ids, err := entry.IDs(input.Ids)
 	if err != nil {
 		return nil, err
@@ -57,8 +59,8 @@ func selectOptionsRequestFromInput(
 		offset = pagination.ClampOffset(*input.Offset)
 	}
 
-	tenant := base.TenantInfo(authCtx)
-	return &SelectOptionsRequest{
+	tenant := resolvercore.TenantInfo(authCtx)
+	return &selectoption.Request{
 		TenantInfo: tenant,
 		IDs:        ids,
 		Filters:    selectOptionFilters(input.Filters),
@@ -68,7 +70,7 @@ func selectOptionsRequestFromInput(
 				Limit:  first,
 				Offset: offset,
 			},
-			Query: base.StringValue(input.Query),
+			Query: gqlscalar.StringValue(input.Query),
 		},
 	}, nil
 }

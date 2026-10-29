@@ -20,10 +20,10 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -51,7 +51,7 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    agentports.StructuredCompleter
+	Completion    llmports.StructuredCompleter
 	Permissions   permissionports.PermissionEngine
 	Catalog       *filtercatalog.Catalog
 	Organizations tenantports.OrganizationRepository
@@ -59,7 +59,7 @@ type ServiceParams struct {
 
 type Service struct {
 	logger        *zap.Logger
-	completion    agentports.StructuredCompleter
+	completion    llmports.StructuredCompleter
 	permissions   permissionports.PermissionEngine
 	catalog       *filtercatalog.Catalog
 	organizations tenantports.OrganizationRepository
@@ -141,9 +141,9 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 
 	completion, err := s.completion.CompleteStructured(
 		ctx,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   req.TenantInfo,
-			Task:         aiprovider.TaskQueryCompose,
+			Task:         aitask.TaskQueryCompose,
 			System:       systemPrompt,
 			Context:      buildContext(resource, prompt, req.Current),
 			OutputSchema: outputSchema(resource),

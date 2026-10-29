@@ -54,6 +54,18 @@ var messageFields = map[string]struct{}{
 	"UnavailableReason":        {},
 }
 
+var nonMessageTypes = map[string]struct{}{
+	"masterdatakit.CreateSpec":                {},
+	"masterdatakit.UpdateSpec":                {},
+	"masterdatakit.StatusSpec":                {},
+	"listtool.Spec":                           {},
+	"readspec.Get":                            {},
+	"readspec.List":                           {},
+	"ediconnectionfield.Spec":                 {},
+	"agentaccess.PageSubject":                 {},
+	"carrierintelservice.NotificationRequest": {},
+}
+
 var labelMethods = map[string]struct{}{
 	"Label":       {},
 	"DisplayName": {},
@@ -64,6 +76,7 @@ var noMessage = map[string]struct{}{
 	"NewMultiErrorWithLimit":            {},
 	"NewError":                          {},
 	"NewRequestTimeoutError":            {},
+	"NewTransportError":                 {},
 	"NewEditConflictError":              {},
 	"NewRequestTooLargeError":           {},
 	"NewResolveError":                   {},
@@ -152,6 +165,13 @@ type extractor struct {
 	dynamic  []site
 }
 
+type fileScope struct {
+	pkg       string
+	elided    map[*ast.CompositeLit]string
+	nonFields map[*ast.KeyValueExpr]struct{}
+	labelMaps map[string]*ast.CompositeLit
+}
+
 func (e *extractor) walkDir(root string) error {
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -160,6 +180,9 @@ func (e *extractor) walkDir(root string) error {
 		if d.IsDir() {
 			switch d.Name() {
 			case "node_modules", "testdata", ".git", "vendor", "mocks", "seeds", "deskbench":
+				return filepath.SkipDir
+			}
+			if isTestSupportDir(d.Name()) {
 				return filepath.SkipDir
 			}
 			return nil
@@ -223,6 +246,12 @@ func (e *extractor) parseFile(path string) error {
 
 	discarded := discardedCalls(file)
 	inI18n := file.Name.Name == "i18n"
+	scope := &fileScope{
+		pkg:       file.Name.Name,
+		elided:    map[*ast.CompositeLit]string{},
+		nonFields: map[*ast.KeyValueExpr]struct{}{},
+		labelMaps: stringMaps(file),
+	}
 
 	rel, err := filepath.Rel(e.repoRoot, path)
 	if err != nil {
@@ -231,16 +260,19 @@ func (e *extractor) parseFile(path string) error {
 
 	ast.Inspect(file, func(n ast.Node) bool {
 		if fn, isFn := n.(*ast.FuncDecl); isFn {
-			e.recordLabelMethod(fn, rel)
+			e.recordLabelMethod(fn, scope, rel)
 			return true
 		}
 
 		if kv, isKV := n.(*ast.KeyValueExpr); isKV {
-			e.recordStructField(kv, rel)
+			if _, skip := scope.nonFields[kv]; !skip {
+				e.recordStructField(kv, rel)
+			}
 			return true
 		}
 
 		if lit, isLit := n.(*ast.CompositeLit); isLit {
+			scope.markNonMessageFields(lit)
 			e.recordRulesMessage(lit, rel)
 			return true
 		}
@@ -334,7 +366,62 @@ func discardedCalls(file *ast.File) map[*ast.CallExpr]bool {
 	return discarded
 }
 
-func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
+func isTestSupportDir(name string) bool {
+	return strings.HasSuffix(name, "test")
+}
+
+func (s *fileScope) markNonMessageFields(lit *ast.CompositeLit) {
+	litType := s.elided[lit]
+	if lit.Type != nil {
+		litType = s.typeKey(lit.Type)
+	}
+	if _, skip := nonMessageTypes[litType]; skip {
+		for _, elt := range lit.Elts {
+			if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+				s.nonFields[kv] = struct{}{}
+			}
+		}
+	}
+
+	var element ast.Expr
+	switch t := lit.Type.(type) {
+	case *ast.ArrayType:
+		element = t.Elt
+	case *ast.MapType:
+		element = t.Value
+	default:
+		return
+	}
+	elementType := s.typeKey(element)
+	for _, elt := range lit.Elts {
+		if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+			elt = kv.Value
+		}
+		if child, isLit := elt.(*ast.CompositeLit); isLit && child.Type == nil {
+			s.elided[child] = elementType
+		}
+	}
+}
+
+func (s *fileScope) typeKey(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.Ident:
+		return s.pkg + "." + t.Name
+	case *ast.SelectorExpr:
+		if pkg, isIdent := t.X.(*ast.Ident); isIdent {
+			return pkg.Name + "." + t.Sel.Name
+		}
+	case *ast.StarExpr:
+		return s.typeKey(t.X)
+	case *ast.IndexExpr:
+		return s.typeKey(t.X)
+	case *ast.IndexListExpr:
+		return s.typeKey(t.X)
+	}
+	return ""
+}
+
+func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, scope *fileScope, rel string) {
 	if fn.Recv == nil || fn.Body == nil || fn.Name == nil {
 		return
 	}
@@ -348,25 +435,74 @@ func (e *extractor) recordLabelMethod(fn *ast.FuncDecl, rel string) {
 		return
 	}
 
+	callee := "label:" + fn.Name.Name
+	read := map[string]struct{}{}
 	ast.Inspect(fn.Body, func(n ast.Node) bool {
-		ret, ok := n.(*ast.ReturnStmt)
-		if !ok || len(ret.Results) != 1 {
-			return true
+		switch node := n.(type) {
+		case *ast.ReturnStmt:
+			if len(node.Results) == 1 {
+				e.recordLiteral(node.Results[0], node.Pos(), rel, callee)
+			}
+		case *ast.IndexExpr:
+			name, isIdent := node.X.(*ast.Ident)
+			if !isIdent {
+				return true
+			}
+			lit, isMap := scope.labelMaps[name.Name]
+			if _, seen := read[name.Name]; !isMap || seen {
+				return true
+			}
+			read[name.Name] = struct{}{}
+			for _, elt := range lit.Elts {
+				if kv, isKV := elt.(*ast.KeyValueExpr); isKV {
+					e.recordLiteral(kv.Value, kv.Pos(), rel, callee)
+				}
+			}
 		}
-
-		msg, ok := stringLiteral(ret.Results[0])
-		if !ok || strings.TrimSpace(msg) == "" {
-			return true
-		}
-
-		e.entries = append(e.entries, entry{
-			Message: msg,
-			File:    filepath.ToSlash(rel),
-			Line:    e.fset.Position(ret.Pos()).Line,
-			Callee:  "label:" + fn.Name.Name,
-		})
 		return true
 	})
+}
+
+func (e *extractor) recordLiteral(expr ast.Expr, pos token.Pos, rel, callee string) {
+	msg, ok := stringLiteral(expr)
+	if !ok || strings.TrimSpace(msg) == "" {
+		return
+	}
+
+	e.entries = append(e.entries, entry{
+		Message: msg,
+		File:    filepath.ToSlash(rel),
+		Line:    e.fset.Position(pos).Line,
+		Callee:  callee,
+	})
+}
+
+func stringMaps(file *ast.File) map[string]*ast.CompositeLit {
+	maps := map[string]*ast.CompositeLit{}
+	for _, decl := range file.Decls {
+		gen, isGen := decl.(*ast.GenDecl)
+		if !isGen || gen.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range gen.Specs {
+			value, isValue := spec.(*ast.ValueSpec)
+			if !isValue || len(value.Names) != 1 || len(value.Values) != 1 {
+				continue
+			}
+			lit, isLit := value.Values[0].(*ast.CompositeLit)
+			if !isLit {
+				continue
+			}
+			mapType, isMap := lit.Type.(*ast.MapType)
+			if !isMap {
+				continue
+			}
+			if elem, isIdent := mapType.Value.(*ast.Ident); isIdent && elem.Name == "string" {
+				maps[value.Names[0].Name] = lit
+			}
+		}
+	}
+	return maps
 }
 
 func (e *extractor) recordStructField(kv *ast.KeyValueExpr, rel string) {

@@ -31,7 +31,7 @@ no-check-call-sweep (15 min) ─▶ ListOverdue per monitoring tenant ─▶ Rec
 | Public routes | `internal/api/handlers/carriertrackingpublichandler` |
 | Link email | document template kind `carriertracking.link.email` |
 | Dead link purge | `operations/jobs/checkcalljobs` (schedule `carrier-tracking-link-retention`) |
-| Watchtower source, observer | `agent/app/watchtowersources/checkcall.go`, `DescribeNoCheckCall` in `describe.go` |
+| Watchtower source, observer | `agent/app/watchtowershipment/checkcall.go`, `DescribeNoCheckCall` in `shipment_describe.go` |
 | Sweep | `NoCheckCallSweepWorkflow` in `agent/jobs/watchtowerjobs` (schedule `no-check-call-sweep`) |
 | GraphQL | `checkcall.graphqls`, resolvers in `resolver/checkcallresolver` |
 | Agent tools | `dispatch_record_check_call`, `dispatch_share_tracking_link` and `dispatch_revoke_tracking_link` in `agent/app/agenttools/movetools`, held by the load monitor |
@@ -81,7 +81,7 @@ move and creates a new one; only one is live at a time.
 
 - The token comes from `shared/tokenutils`; only its SHA-256 is stored, so the link is shown
   once, in the issue response, and cannot be read back.
-- The URL is `Config.PublicLinkBaseURL()` (`tendering.publicBaseUrl`, else `app.webBaseUrl`) +
+- The URL is `tenderingconfig.Config.PublicLinkBaseURL(app)` (`tendering.publicBaseUrl`, else `app.webBaseUrl`) +
   `/carrier-tracking/<token>`. Without a public base URL the link is refused rather than built
   against an internal host.
 - With an email address the link is sent with the `carriertracking.link.email` template under

@@ -4,7 +4,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -92,17 +92,17 @@ func (e *StopETA) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func TrackedShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusPartiallyAssigned,
-		shipment.StatusAssigned,
-		shipment.StatusInTransit,
-		shipment.StatusDelayed,
-		shipment.StatusPartiallyCompleted,
+func TrackedShipmentStatuses() []shipmentvocab.Status {
+	return []shipmentvocab.Status{
+		shipmentvocab.StatusPartiallyAssigned,
+		shipmentvocab.StatusAssigned,
+		shipmentvocab.StatusInTransit,
+		shipmentvocab.StatusDelayed,
+		shipmentvocab.StatusPartiallyCompleted,
 	}
 }
 
-func TrackedShipment(status shipment.Status) bool {
+func TrackedShipment(status shipmentvocab.Status) bool {
 	return slices.Contains(TrackedShipmentStatuses(), status)
 }
 

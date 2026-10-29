@@ -2,7 +2,7 @@ package sidebarpreferenceresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference"
@@ -11,7 +11,7 @@ import (
 
 func sidebarPreferenceRequest(authCtx *authctx.AuthContext) sidebarpreferenceservice.Request {
 	return sidebarpreferenceservice.Request{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		Principal: kernelports.PrincipalInfo{
 			Type:     kernelports.PrincipalType(authCtx.PrincipalType),
 			ID:       authCtx.PrincipalID,

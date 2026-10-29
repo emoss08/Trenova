@@ -2,9 +2,12 @@ package shipmentboardresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentmapping"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -12,22 +15,22 @@ func scopeRequestFromGraphQL(
 	input *gqlmodel.ShipmentBoardScopeInput,
 	tenantInfo pagination.TenantInfo,
 	margins bool,
-) *shipmentports.ShipmentBoardScopeRequest {
-	return &shipmentports.ShipmentBoardScopeRequest{
-		Filter: base.QueryOptionsFromGraphQL(&base.GqlListOptions{
+) *shipmentboardports.ShipmentBoardScopeRequest {
+	return &shipmentboardports.ShipmentBoardScopeRequest{
+		Filter: gqlconnection.QueryOptionsFromGraphQL(&gqlconnection.GqlListOptions{
 			TenantInfo:   tenantInfo,
-			Query:        base.StringValue(input.Query),
+			Query:        gqlscalar.StringValue(input.Query),
 			FieldFilters: input.FieldFilters,
 			FilterGroups: input.FilterGroups,
 		}),
-		QuickFilters: base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+		QuickFilters: shipmentmapping.QuickFilterSpecsFromGraphQL(input.QuickFilters),
 		Timezone:     input.Timezone,
 		Margins:      margins,
 	}
 }
 
 func capabilitiesToModel(
-	caps *shipmentports.ShipmentBoardCapabilities,
+	caps *shipmentboardports.ShipmentBoardCapabilities,
 ) *gqlmodel.ShipmentBoardCapabilities {
 	return &gqlmodel.ShipmentBoardCapabilities{
 		Ai:            caps.AI,
@@ -38,7 +41,7 @@ func capabilitiesToModel(
 }
 
 func stageSummariesToModel(
-	rows []*shipmentports.ShipmentStageSummary,
+	rows []*shipmentboardports.ShipmentStageSummary,
 ) []*gqlmodel.ShipmentStageSummary {
 	out := make([]*gqlmodel.ShipmentStageSummary, 0, len(rows))
 	for _, row := range rows {
@@ -46,27 +49,29 @@ func stageSummariesToModel(
 			Stage:   row.Stage,
 			Rank:    row.Rank,
 			Count:   row.Count,
-			Revenue: base.DecimalString(row.Revenue),
+			Revenue: gqldecimal.DecimalString(row.Revenue),
 		})
 	}
 	return out
 }
 
-func boardGroupsToModel(rows []*shipmentports.ShipmentBoardGroup) []*gqlmodel.ShipmentBoardGroup {
+func boardGroupsToModel(
+	rows []*shipmentboardports.ShipmentBoardGroup,
+) []*gqlmodel.ShipmentBoardGroup {
 	out := make([]*gqlmodel.ShipmentBoardGroup, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, &gqlmodel.ShipmentBoardGroup{
 			Key:     row.Key,
 			Label:   row.Label,
 			Count:   row.Count,
-			Revenue: base.DecimalString(row.Revenue),
+			Revenue: gqldecimal.DecimalString(row.Revenue),
 		})
 	}
 	return out
 }
 
 func quickFilterCountsToModel(
-	rows []*shipmentports.ShipmentQuickFilterCount,
+	rows []*shipmentboardports.ShipmentQuickFilterCount,
 ) []*gqlmodel.ShipmentQuickFilterCount {
 	out := make([]*gqlmodel.ShipmentQuickFilterCount, 0, len(rows))
 	for _, row := range rows {

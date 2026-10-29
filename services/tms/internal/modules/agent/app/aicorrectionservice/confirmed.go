@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -90,7 +91,7 @@ func confirmedStopFrom(stop *shipment.Stop, role string, sequence int) aicorrect
 	snapshot := aicorrection.StopSnapshot{
 		Role:                 role,
 		Sequence:             sequence,
-		AppointmentRequired:  stop.ScheduleType == shipment.StopScheduleTypeAppointment,
+		AppointmentRequired:  stop.ScheduleType == shipmentvocab.StopScheduleTypeAppointment,
 		ScheduledWindowStart: stop.ScheduledWindowStart,
 		ScheduledWindowEnd:   stop.ScheduledWindowEnd,
 	}
@@ -119,8 +120,8 @@ func confirmedStopFrom(stop *shipment.Stop, role string, sequence int) aicorrect
 	return snapshot
 }
 
-func stopRole(stopType shipment.StopType) string {
-	if slices.Contains(shipment.DeliveryStopTypes(), stopType) {
+func stopRole(stopType shipmentvocab.StopType) string {
+	if slices.Contains(shipmentvocab.DeliveryStopTypes(), stopType) {
 		return aicorrection.RoleDelivery
 	}
 

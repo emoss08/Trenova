@@ -7,7 +7,9 @@ and announce what happened. The reference is
 ## Shape
 
 - fx `Params` struct (`fx.In`) holding ports only: repositories, validators, `AuditService`,
-  `kernelports.WorkflowStarter`, other services' ports. `New(p) *Service`, wired in the module's
+  `kernelports.WorkflowStarter`, other services' ports, and the config sections it reads
+  (`StorageConfig *storageconfig.Config`), never the whole `*config.Config`
+  ([Configuration](README.md#configuration)). `New(p) *Service`, wired in the module's
   `module.go`.
 - Depend on the narrowest port that does the job. A service that needs one method of a wide
   interface gets a narrower port declared next to its consumer.
@@ -24,9 +26,9 @@ and announce what happened. The reference is
 
 ## Validation
 
-- Each entity has a validator built with `validationframework.NewTenantedValidatorBuilder[T]()`
+- Each entity has a validator built with `tenantedvalidation.NewBuilder[T]()`
   (`commodityservice/validator.go`): uniqueness and reference checks, then the entity's own
-  `Validate`. Hold it as `validationframework.TenantedEntityValidator[T]`, never the concrete
+  `Validate`. Hold it as `tenantedvalidation.EntityValidator[T]`, never the concrete
   generic type ([go.md](go.md#generics-and-build-time)).
 - Validation returns `*errortypes.MultiError` with field paths (`user.address.street`,
   `items[0].name`) so the client puts each message on its field.

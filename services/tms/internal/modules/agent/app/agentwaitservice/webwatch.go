@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -58,7 +58,7 @@ func (s *Service) RegisterWebWatchWait(
 
 func (s *Service) armWebWatch(
 	ctx context.Context,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 	owner *waitOwner,
 ) error {
 	_, err := s.Register(ctx, &agentwaitports.RegisterWaitRequest{
@@ -76,7 +76,7 @@ func (s *Service) armWebWatch(
 	return err
 }
 
-func webWatchDescription(watch *agentextension.WebWatch) string {
+func webWatchDescription(watch *extensionwebwatch.WebWatch) string {
 	return "the web watch for " + stringutils.TruncateRunes(watch.Purpose, webWatchPurposeRunes) +
 		" to find something new"
 }
@@ -107,8 +107,8 @@ func (s *Service) openOnWatch(
 func (s *Service) NotifyWebWatch(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	watch *agentextension.WebWatch,
-	findings []*agentextension.WebWatchFinding,
+	watch *extensionwebwatch.WebWatch,
+	findings []*extensionwebwatch.WebWatchFinding,
 ) error {
 	if watch == nil || len(findings) == 0 {
 		return nil
@@ -181,7 +181,7 @@ func ownerOfWait(wait *agentwait.Wait) *waitOwner {
 func (s *Service) EndWebWatchWaits(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 ) {
 	if watch == nil {
 		return
@@ -194,9 +194,9 @@ func (s *Service) EndWebWatchWaits(
 	}
 
 	for _, wait := range open {
-		if watch.Status == agentextension.WebWatchStatusFailed {
+		if watch.Status == extensionwebwatch.WebWatchStatusFailed {
 			s.meet(ctx, wait, "The web watch stopped before its time: "+
-				stringutils.Ellipsize(watch.Failure, agentextension.MaxWebWatchFailureRunes)+
+				stringutils.Ellipsize(watch.Failure, extensionwebwatch.MaxWebWatchFailureRunes)+
 				" Web watch "+watch.ID.String()+".")
 			continue
 		}
@@ -211,8 +211,8 @@ func (s *Service) EndWebWatchWaits(
 // vendor's words quoted as text written outside the organization. It keeps
 // within what a wait's outcome holds, newest findings first.
 func webWatchOutcome(
-	watch *agentextension.WebWatch,
-	findings []*agentextension.WebWatchFinding,
+	watch *extensionwebwatch.WebWatch,
+	findings []*extensionwebwatch.WebWatchFinding,
 ) string {
 	var b strings.Builder
 	b.WriteString("The web watch found something new (")

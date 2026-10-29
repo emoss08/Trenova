@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -31,29 +31,29 @@ type MockCarrierSettlementControlRepository struct {
 	mock.Mock
 }
 
-func (_mock *MockCarrierSettlementControlRepository) GetOrCreate(ctx context.Context, tenantInfo pagination.TenantInfo) (*tenant.CarrierSettlementControl, error) {
+func (_mock *MockCarrierSettlementControlRepository) GetOrCreate(ctx context.Context, tenantInfo pagination.TenantInfo) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	ret := _mock.Called(ctx, tenantInfo)
-	var r0 *tenant.CarrierSettlementControl
+	var r0 *carriersettlementcontrol.CarrierSettlementControl
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*tenant.CarrierSettlementControl)
+		r0 = ret.Get(0).(*carriersettlementcontrol.CarrierSettlementControl)
 	}
 	return r0, ret.Error(1)
 }
 
-func (_mock *MockCarrierSettlementControlRepository) ListAutoGenerate(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
+func (_mock *MockCarrierSettlementControlRepository) ListAutoGenerate(ctx context.Context) ([]*carriersettlementcontrol.CarrierSettlementControl, error) {
 	ret := _mock.Called(ctx)
-	var r0 []*tenant.CarrierSettlementControl
+	var r0 []*carriersettlementcontrol.CarrierSettlementControl
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).([]*tenant.CarrierSettlementControl)
+		r0 = ret.Get(0).([]*carriersettlementcontrol.CarrierSettlementControl)
 	}
 	return r0, ret.Error(1)
 }
 
-func (_mock *MockCarrierSettlementControlRepository) Update(ctx context.Context, entity *tenant.CarrierSettlementControl) (*tenant.CarrierSettlementControl, error) {
+func (_mock *MockCarrierSettlementControlRepository) Update(ctx context.Context, entity *carriersettlementcontrol.CarrierSettlementControl) (*carriersettlementcontrol.CarrierSettlementControl, error) {
 	ret := _mock.Called(ctx, entity)
-	var r0 *tenant.CarrierSettlementControl
+	var r0 *carriersettlementcontrol.CarrierSettlementControl
 	if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*tenant.CarrierSettlementControl)
+		r0 = ret.Get(0).(*carriersettlementcontrol.CarrierSettlementControl)
 	}
 	return r0, ret.Error(1)
 }

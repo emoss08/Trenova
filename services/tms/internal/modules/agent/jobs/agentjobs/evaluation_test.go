@@ -1,22 +1,29 @@
 package agentjobs
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,14 +36,14 @@ import (
 )
 
 type evalStore struct {
-	agentports.AgentEvaluationRepository
-	stored *agent.Evaluation
+	agentevaluationports.AgentEvaluationRepository
+	stored *agentevaluation.Evaluation
 }
 
 func (s *evalStore) GetByID(
 	context.Context,
-	agentports.GetAgentEvaluationByIDRequest,
-) (*agent.Evaluation, error) {
+	agentevaluationports.GetAgentEvaluationByIDRequest,
+) (*agentevaluation.Evaluation, error) {
 	copied := *s.stored
 
 	return &copied, nil
@@ -44,8 +51,8 @@ func (s *evalStore) GetByID(
 
 func (s *evalStore) Update(
 	_ context.Context,
-	entity *agent.Evaluation,
-) (*agent.Evaluation, error) {
+	entity *agentevaluation.Evaluation,
+) (*agentevaluation.Evaluation, error) {
 	entity.Version++
 	copied := *entity
 	s.stored = &copied
@@ -66,50 +73,50 @@ func (s *definitionStore) GetByID(
 }
 
 type runStore struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (s *runStore) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return s.run, nil
 }
 
 type proposalStore struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 	proposals []*agent.AgentProposal
 }
 
 func (s *proposalStore) ListByRun(
 	context.Context,
-	agentports.ListAgentProposalsByRunRequest,
+	agentproposalports.ListAgentProposalsByRunRequest,
 ) ([]*agent.AgentProposal, error) {
 	return s.proposals, nil
 }
 
 type decisionStore struct {
-	agentports.AgentDecisionRepository
-	decisions []*agent.AgentDecision
+	agentdecisionports.AgentDecisionRepository
+	decisions []*agentdecision.AgentDecision
 }
 
 func (s *decisionStore) ListByProposals(
 	context.Context,
-	agentports.ListAgentDecisionsByProposalsRequest,
-) ([]*agent.AgentDecision, error) {
+	agentdecisionports.ListAgentDecisionsByProposalsRequest,
+) ([]*agentdecision.AgentDecision, error) {
 	return s.decisions, nil
 }
 
 type conversationStore struct {
-	agentports.ConversationRepository
+	conversationports.ConversationRepository
 	thread   *conversation.Thread
 	messages []conversation.Message
 }
 
 func (s *conversationStore) GetThreadOwned(
 	context.Context,
-	agentports.GetThreadOwnedRequest,
+	conversationports.GetThreadOwnedRequest,
 ) (*conversation.Thread, error) {
 	if s.thread == nil {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -120,7 +127,7 @@ func (s *conversationStore) GetThreadOwned(
 
 func (s *conversationStore) ListMessages(
 	context.Context,
-	agentports.ListMessagesRequest,
+	*conversationports.ListMessagesRequest,
 ) ([]conversation.Message, error) {
 	return s.messages, nil
 }
@@ -142,16 +149,16 @@ func (s *caseStore) GetByID(
 }
 
 type recordingContexts struct {
-	requests []*agentports.RuntimeContextRequest
+	requests []*agentruntimeports.RuntimeContextRequest
 }
 
 func (c *recordingContexts) Build(
 	_ context.Context,
-	req *agentports.RuntimeContextRequest,
-) (agentdefinition.RuntimeContext, error) {
+	req *agentruntimeports.RuntimeContextRequest,
+) (agentturn.RuntimeContext, error) {
 	c.requests = append(c.requests, req)
 
-	return agentdefinition.RuntimeContext{Timezone: "America/Chicago"}, nil
+	return agentturn.RuntimeContext{Timezone: "America/Chicago"}, nil
 }
 
 type replayWorld struct {
@@ -203,13 +210,13 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		ToolParams: map[string]any{"shipmentId": "shp_1", "rate": float64(1200)},
 		Status:     agent.ProposalStatusExecuted,
 	}
-	evaluation := &agent.Evaluation{
-		ID:                pulid.MustNew(agent.EvaluationIDPrefix),
+	evaluation := &agentevaluation.Evaluation{
+		ID:                pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		AgentDefinitionID: definition.ID,
 		SourceRunID:       run.ID,
-		Status:            agent.EvaluationStatusPending,
+		Status:            agentevaluation.EvaluationStatusPending,
 		Trigger:           agent.RunTriggerChat,
 		SubjectType:       agent.SubjectAssistantThread,
 		SubjectID:         thread.ID,
@@ -234,9 +241,9 @@ func newReplayWorld(t *testing.T) *replayWorld {
 		Evaluations:  evaluations,
 		EvalCases:    cases,
 		Users:        users,
-		Decisions: &decisionStore{decisions: []*agent.AgentDecision{{
+		Decisions: &decisionStore{decisions: []*agentdecision.AgentDecision{{
 			ProposalID:    &proposal.ID,
-			Decision:      agent.DecisionModified,
+			Decision:      agentdecision.DecisionModified,
 			Modifications: map[string]any{"rate": float64(1350)},
 		}}},
 		Conversations: conversations,
@@ -295,7 +302,7 @@ func TestOpenReplay_AChatRunReplaysAsThePersonWhoAsked(t *testing.T) {
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.UsagePurpose)
 	assert.Equal(t, aiusageports.AIUsagePurposeEvaluation, opened.request.AttributedPurpose())
 	assert.True(t, opened.request.Definition.SimulationMode)
-	assert.Equal(t, agent.EvaluationStatusRunning, w.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusRunning, w.evaluations.stored.Status)
 	require.NotNil(t, w.evaluations.stored.Fingerprint)
 	assert.Equal(t, int64(7), w.evaluations.stored.Fingerprint.DefinitionVersion)
 }
@@ -314,7 +321,7 @@ func TestOpenReplay_JudgesAgainstWhatThePersonApproved(t *testing.T) {
 	assert.Equal(t, float64(1350), original.CorrectedParams["rate"])
 
 	_, err = w.activities.storeReplay(t.Context(), w.evaluations.stored, opened.originals,
-		&agentports.RunResult{Actions: []agentports.PendingAction{{
+		&agentruntimeports.RunResult{Actions: []agentruntimeports.PendingAction{{
 			ToolName:  "update_rate",
 			Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 		}}})
@@ -334,7 +341,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err := inactive.activities.openReplay(t.Context(), inactive.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, inactive.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, inactive.evaluations.stored.Status)
 	assert.Contains(t,
 		inactive.evaluations.stored.ErrorMessage,
 		"no longer has an active account",
@@ -349,7 +356,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err = removed.activities.openReplay(t.Context(), removed.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, removed.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, removed.evaluations.stored.Status)
 	assert.Contains(t, removed.evaluations.stored.ErrorMessage, "no longer belongs")
 
 	deleted := newReplayWorld(t)
@@ -357,7 +364,7 @@ func TestOpenReplay_SkipsWhenThePersonIsGone(t *testing.T) {
 	opened, err = deleted.activities.openReplay(t.Context(), deleted.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, deleted.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, deleted.evaluations.stored.Status)
 }
 
 func caseEvaluation(w *replayWorld, evalCase *agentquality.EvalCase) {
@@ -426,7 +433,7 @@ func TestOpenReplay_ADeletedCaseIsSkipped(t *testing.T) {
 	opened, err := w.activities.openReplay(t.Context(), w.payload)
 	require.NoError(t, err)
 	assert.Nil(t, opened)
-	assert.Equal(t, agent.EvaluationStatusSkipped, w.evaluations.stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusSkipped, w.evaluations.stored.Status)
 }
 
 func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
@@ -438,7 +445,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 
 	originals := expectedOriginals(evalCase)
 	_, err := w.activities.storeReplay(t.Context(), w.evaluations.stored, originals,
-		&agentports.RunResult{
+		&agentruntimeports.RunResult{
 			Reply: "I proposed the new rate.",
 			Messages: []conversation.Message{
 				{
@@ -455,7 +462,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 					ToolCalls: []conversation.ToolCallRecord{{ID: "call_9", Name: "outside_tool"}},
 				},
 			},
-			Actions: []agentports.PendingAction{{
+			Actions: []agentruntimeports.PendingAction{{
 				ToolName:  "update_rate",
 				Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
 			}},
@@ -463,7 +470,7 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 	require.NoError(t, err)
 
 	stored := w.evaluations.stored
-	assert.Equal(t, agent.EvaluationStatusCompleted, stored.Status)
+	assert.Equal(t, agentevaluation.EvaluationStatusCompleted, stored.Status)
 	require.NotNil(t, stored.Checks)
 	require.NotNil(t, stored.CaseScore)
 	assert.False(t, stored.Checks.HardFailure, "a delegate's tools are not this agent's")
@@ -477,15 +484,15 @@ func TestStoreReplay_ScoresACaseReplay(t *testing.T) {
 func TestObserveReplay_ReadsRefusals(t *testing.T) {
 	t.Parallel()
 
-	altered := observeReplay(&agentports.RunResult{OutputAltered: true})
+	altered := observeReplay(&agentruntimeports.RunResult{OutputAltered: true})
 	assert.False(t, altered.refused, "a reply the guard took code out of was still given")
 
-	flagged := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
+	flagged := observeReplay(&agentruntimeports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleAssistant, Refused: true},
 	}})
 	assert.True(t, flagged.refused)
 
-	answered := observeReplay(&agentports.RunResult{Messages: []conversation.Message{
+	answered := observeReplay(&agentruntimeports.RunResult{Messages: []conversation.Message{
 		{Role: conversation.RoleTool, Content: `{"rate": 1350}`},
 	}})
 	assert.False(t, answered.refused)
@@ -495,7 +502,7 @@ func TestObserveReplay_ReadsRefusals(t *testing.T) {
 func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 	t.Parallel()
 
-	observed := observeReplay(&agentports.RunResult{
+	observed := observeReplay(&agentruntimeports.RunResult{
 		Messages: []conversation.Message{{
 			Role: conversation.RoleAssistant,
 			ToolCalls: []conversation.ToolCallRecord{
@@ -504,7 +511,7 @@ func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 				{ID: "call_3", Name: "update_rate"},
 			},
 		}},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{ToolName: "send_customer_email", ToolCallID: "call_2", Tier: agent.TierAutoExecute},
 			{ToolName: "update_rate", ToolCallID: "call_3", Tier: agent.TierActWithApproval},
 		},

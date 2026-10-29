@@ -7,7 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/auditconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/configtest"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/serverconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/temporalconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -107,17 +120,17 @@ func TestDetermineEnvironment(t *testing.T) {
 
 func newValidConfig() *Config {
 	return &Config{
-		App: AppConfig{
+		App: appconfig.Config{
 			Name:    "trenova",
 			Env:     "development",
 			Version: "1.0.0",
 		},
-		Server: ServerConfig{
+		Server: serverconfig.Config{
 			Host: "0.0.0.0",
 			Port: 8080,
 			Mode: "release",
 		},
-		Database: DatabaseConfig{
+		Database: databaseconfig.Config{
 			Host:         "localhost",
 			Port:         5432,
 			Name:         "trenova",
@@ -126,8 +139,8 @@ func newValidConfig() *Config {
 			SSLMode:      "disable",
 			MaxOpenConns: 100,
 		},
-		Security: SecurityConfig{
-			Session: SessionConfig{
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				Secret:      "a-very-long-secret-that-is-at-least-32-chars",
 				Name:        "trv-session-id",
 				MaxAge:      12 * time.Hour,
@@ -136,61 +149,61 @@ func newValidConfig() *Config {
 				SameSite:    "lax",
 				Path:        "/",
 			},
-			CSRF: CSRFConfig{
+			CSRF: securityconfig.CSRFConfig{
 				TokenName:  "csrf_token",
 				HeaderName: "X-CSRF-Token",
-				BrowserGuard: CSRFBrowserGuardConfig{
+				BrowserGuard: securityconfig.CSRFBrowserGuardConfig{
 					Mode: "report",
 				},
 			},
-			Encryption: EncryptionConfig{
+			Encryption: securityconfig.EncryptionConfig{
 				Key: "a-very-long-encryption-key-that-is-at-least-32-chars",
 			},
 		},
-		Logging: LoggingConfig{
+		Logging: loggingconfig.Config{
 			Level:  "info",
 			Format: "json",
 			Output: "stdout",
 		},
-		Monitoring: MonitoringConfig{
-			Metrics: MetricsConfig{
+		Monitoring: monitoringconfig.Config{
+			Metrics: monitoringconfig.MetricsConfig{
 				Enabled: true,
 				Port:    9090,
 				Path:    "/metrics",
 			},
-			Tracing: TracingConfig{
+			Tracing: monitoringconfig.TracingConfig{
 				Enabled:     true,
 				Provider:    "otlp",
 				Endpoint:    "localhost:4317",
 				ServiceName: "trenova-tms",
 			},
-			Health: HealthConfig{
+			Health: monitoringconfig.HealthConfig{
 				Path: "/health",
 			},
 		},
-		Cache: CacheConfig{
+		Cache: cacheconfig.Config{
 			Host: "localhost",
 			Port: 6379,
 		},
-		Temporal: TemporalConfig{
+		Temporal: temporalconfig.Config{
 			HostPort: "localhost:7233",
-			Security: TemporalSecurityConfig{
+			Security: temporalconfig.SecurityConfig{
 				EnableEncryption: true,
 				EncryptionKeyID:  "test-key-id",
 			},
 		},
-		Audit: AuditConfig{
+		Audit: auditconfig.Config{
 			BatchSize:          500,
 			MaxEntriesPerFlush: 5000,
 			DLQMaxRetries:      5,
 		},
-		Storage: StorageConfig{
+		Storage: storageconfig.Config{
 			Endpoint:  "http://localhost:9000",
 			AccessKey: "minioadmin",
 			SecretKey: "minioadmin",
 			Bucket:    "trenova",
 		},
-		System: SystemConfig{
+		System: systemconfig.Config{
 			SystemUserPassword: "test-system-password",
 		},
 	}
@@ -238,7 +251,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrRequestTimeoutExceedsWriteTimeout)
+		assert.ErrorIs(t, err, serverconfig.ErrRequestTimeoutExceedsWriteTimeout)
 	})
 
 	t.Run("CORS enabled but no allowed origins", func(t *testing.T) {
@@ -260,7 +273,7 @@ func TestValidateConfig(t *testing.T) {
 	t.Run("production rejects wildcard credentialed CORS", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLoader(WithEnvironment(EnvProduction))
+		l := NewLoader(WithEnvironment(appconfig.EnvProduction))
 		cfg := newValidConfig()
 		cfg.Server.CORS.Enabled = true
 		cfg.Server.CORS.Credentials = true
@@ -271,7 +284,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrCredentialedWildcardCORS)
+		assert.ErrorIs(t, err, serverconfig.ErrCredentialedWildcardCORS)
 	})
 
 	t.Run("idle timeout longer than the session lifetime fails validation", func(t *testing.T) {
@@ -285,7 +298,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrSessionIdleTimeoutExceedsMaxAge)
+		assert.ErrorIs(t, err, securityconfig.ErrSessionIdleTimeoutExceedsMaxAge)
 	})
 
 	t.Run("idle warning as long as the idle timeout fails validation", func(t *testing.T) {
@@ -299,7 +312,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrSessionIdleWarningOutOfRange)
+		assert.ErrorIs(t, err, securityconfig.ErrSessionIdleWarningOutOfRange)
 	})
 
 	t.Run("idle timeout without a warning fails validation", func(t *testing.T) {
@@ -312,7 +325,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrSessionIdleWarningOutOfRange)
+		assert.ErrorIs(t, err, securityconfig.ErrSessionIdleWarningOutOfRange)
 	})
 
 	t.Run("idle timeout below five minutes fails validation", func(t *testing.T) {
@@ -355,18 +368,18 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrInvalidHostPrefixCookie)
+		assert.ErrorIs(t, err, securityconfig.ErrInvalidHostPrefixCookie)
 	})
 
 	t.Run("production rejects insecure session cookie settings", func(t *testing.T) {
-		l := NewLoader(WithEnvironment(EnvProduction))
+		l := NewLoader(WithEnvironment(appconfig.EnvProduction))
 		cfg := newValidConfig()
 		cfg.Database.SSLMode = "require"
 
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrProductionSessionCookieRequired)
+		assert.ErrorIs(t, err, securityconfig.ErrProductionSessionCookieRequired)
 	})
 
 	t.Run("logging output file but no file config", func(t *testing.T) {
@@ -380,7 +393,7 @@ func TestValidateConfig(t *testing.T) {
 		err := l.validateConfig(cfg)
 
 		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrLoggingOutputIsFileButFileConfigIsMissing)
+		assert.ErrorIs(t, err, loggingconfig.ErrOutputIsFileButFileConfigIsMissing)
 	})
 }
 
@@ -625,7 +638,7 @@ func TestSetDefaults(t *testing.T) {
 		assert.True(t, l.viper.GetBool("database.cache.enabled"))
 		assert.Equal(
 			t,
-			DefaultDatabaseCacheLocalBytes,
+			databaseconfig.DefaultCacheLocalBytes,
 			l.viper.GetInt64("database.cache.localBytes"),
 		)
 		assert.False(t, l.viper.GetBool("database.cache.shared.enabled"))
@@ -691,8 +704,8 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, true, l.viper.GetBool("security.rateLimit.enabled"))
-		assert.Equal(t, 60, l.viper.GetInt("security.rateLimit.requestsPerMinute"))
-		assert.Equal(t, 10, l.viper.GetInt("security.rateLimit.burstSize"))
+		assert.Equal(t, "redis", l.viper.GetString("security.rateLimit.store"))
+		assert.Equal(t, "local", l.viper.GetString("security.rateLimit.failureMode"))
 		assert.Equal(t, "1m", l.viper.GetString("security.rateLimit.cleanupInterval"))
 	})
 
@@ -1020,7 +1033,7 @@ func TestLoad(t *testing.T) {
 		assert.Equal(t, "localhost", cfg.Cache.Host)
 		assert.Equal(t, 6379, cfg.Cache.Port)
 		assert.Equal(t, "localhost:7233", cfg.Temporal.HostPort)
-		assert.Equal(t, StorageProviderMinio, cfg.Storage.Provider)
+		assert.Equal(t, storageconfig.ProviderMinio, cfg.Storage.Provider)
 		require.NotNil(t, cfg.Storage.AutoCreateBucket)
 		assert.True(t, *cfg.Storage.AutoCreateBucket)
 	})
@@ -1098,8 +1111,7 @@ security:
     tokenName: "csrf_token"
     headerName: "X-CSRF-Token"
   rateLimit:
-    requestsPerMinute: 60
-    burstSize: 10
+    enabled: true
   encryption:
     key: "short"
 logging:
@@ -1205,6 +1217,24 @@ storage:
 	})
 }
 
+func TestTestConfigFileLoads(t *testing.T) {
+	configDir := t.TempDir()
+	copyTrackedConfig(t, "config.test.yaml", filepath.Join(configDir, "config.test.yaml"))
+
+	l := NewLoader(WithConfigPath(configDir), WithEnvironment(appconfig.EnvTest))
+
+	cfg, err := l.Load()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Equal(t, appconfig.EnvTest, cfg.App.Env)
+	assert.Equal(t, "trenova", cfg.App.Name)
+	assert.Equal(t, "test-system-password", cfg.System.SystemUserPassword)
+	assert.False(t, cfg.Temporal.Security.EnableEncryption)
+	assert.Empty(t, cfg.Temporal.Security.EncryptionKeyID)
+	assert.Equal(t, 500, cfg.Audit.GetBatchSize())
+}
+
 func TestProductionConfigFileLoads(t *testing.T) {
 	// The point of this test is that config.prod.example.yaml, staged where an
 	// operator puts it, applies its security hardening on top of a base file.
@@ -1224,18 +1254,18 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	// cannot substitute for them: it only resolves keys it already knows about.
 	stageProductionBase(t, filepath.Join(configDir, "config.yaml"))
 
-	l := NewLoader(WithConfigPath(configDir), WithEnvironment(EnvProduction))
+	l := NewLoader(WithConfigPath(configDir), WithEnvironment(appconfig.EnvProduction))
 
 	cfg, err := l.Load()
 
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
-	assert.Equal(t, EnvProduction, cfg.App.Env)
+	assert.Equal(t, appconfig.EnvProduction, cfg.App.Env)
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
 	assert.True(t, cfg.Database.Cache.Enabled)
-	assert.Equal(t, DefaultDatabaseCacheLocalBytes, cfg.Database.Cache.GetLocalBytes())
+	assert.Equal(t, databaseconfig.DefaultCacheLocalBytes, cfg.Database.Cache.GetLocalBytes())
 	assert.False(
 		t,
 		cfg.Database.Cache.SharedEnabled(),
@@ -1246,7 +1276,7 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	assert.True(t, cfg.Reporting.ResultCache.Enabled)
 	assert.Equal(
 		t,
-		DefaultReportResultCacheLocalBytes,
+		reportingconfig.DefaultResultCacheLocalBytes,
 		cfg.Reporting.ResultCache.GetLocalBytes(),
 	)
 	assert.False(
@@ -1271,23 +1301,9 @@ func stageProductionBase(t *testing.T, path string) {
 	require.NoError(t, yaml.Unmarshal(contents, &staged))
 
 	mergeInto(staged, map[string]any{
-		"app": map[string]any{"name": "trenova"},
-		"temporal": map[string]any{
-			"hostPort": "temporal:7233",
-			"security": map[string]any{"encryptionKeyId": "primary"},
-		},
-		"storage": map[string]any{
-			"accessKey": "storage-access-key",
-			"secretKey": "storage-secret-key",
-		},
-		"system": map[string]any{"systemUserPassword": "system-user-password"},
+		"temporal": map[string]any{"hostPort": "temporal:7233"},
 		"security": map[string]any{
 			"mfa": map[string]any{"recoveryCodePepper": stagedRecoveryCodePepper},
-		},
-		"audit": map[string]any{
-			"batchSize":          100,
-			"maxEntriesPerFlush": 1000,
-			"dlqMaxRetries":      3,
 		},
 	})
 
@@ -1337,45 +1353,12 @@ func TestLoad_PlatformEnvAliases(t *testing.T) {
 	cfg, err := l.Load()
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
-	assert.Equal(t, PlatformModeDevelopment, cfg.Platform.GetMode())
+	assert.Equal(t, platformconfig.ModeDevelopment, cfg.Platform.GetMode())
 	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
 }
 
 func validConfigYAML() string {
 	return configtest.ValidYAML()
-}
-
-func TestValidateTrustedProxies(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		proxies []string
-		wantErr bool
-	}{
-		{name: "defaults are valid", proxies: DefaultTrustedProxies},
-		{name: "empty trusts nothing", proxies: []string{}},
-		{name: "bare addresses", proxies: []string{"192.0.2.10", "2001:db8::1"}},
-		{name: "rejects a hostname", proxies: []string{"proxy.internal"}, wantErr: true},
-		{name: "rejects a malformed cidr", proxies: []string{"10.0.0.0/64"}, wantErr: true},
-		{name: "rejects a blank entry", proxies: []string{"  "}, wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := validateTrustedProxies(&Config{
-				Server: ServerConfig{TrustedProxies: tt.proxies},
-			})
-
-			if tt.wantErr {
-				require.ErrorIs(t, err, ErrInvalidTrustedProxy)
-				return
-			}
-			require.NoError(t, err)
-		})
-	}
 }
 
 func TestSetDefaults_TrustedProxies(t *testing.T) {
@@ -1385,7 +1368,11 @@ func TestSetDefaults_TrustedProxies(t *testing.T) {
 	require.NoError(t, l.determineEnvironment())
 	l.configureViper()
 
-	assert.Equal(t, DefaultTrustedProxies, l.viper.GetStringSlice("server.trustedProxies"))
+	assert.Equal(
+		t,
+		serverconfig.DefaultTrustedProxies,
+		l.viper.GetStringSlice("server.trustedProxies"),
+	)
 	assert.Empty(t, l.viper.GetString("server.trustedPlatform"))
 }
 
@@ -1409,12 +1396,12 @@ func TestProductionRequiresARecoveryCodePepper(t *testing.T) {
 
 			_, err := NewLoader(
 				WithConfigPath(configDir),
-				WithEnvironment(EnvProduction),
+				WithEnvironment(appconfig.EnvProduction),
 			).Load()
 
 			require.Error(t, err)
 			if len(pepper) >= 32 || pepper == "" {
-				require.ErrorIs(t, err, ErrProductionRecoveryCodePepperRequired)
+				require.ErrorIs(t, err, securityconfig.ErrProductionRecoveryCodePepperRequired)
 			} else {
 				assert.Contains(t, strings.ToLower(err.Error()), "recoverycodepepper")
 			}
@@ -1439,21 +1426,4 @@ func setStagedRecoveryCodePepper(t *testing.T, path, pepper string) {
 	merged, err := yaml.Marshal(staged)
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(path, merged, 0o600))
-}
-
-func TestRecoveryCodePepperKeyIsStableAndKeyedByThePepper(t *testing.T) {
-	t.Parallel()
-
-	configured := &SecurityConfig{MFA: MFASecurityConfig{RecoveryCodePepper: stagedRecoveryCodePepper}}
-	first, err := configured.RecoveryCodePepperKey()
-	require.NoError(t, err)
-	second, err := configured.RecoveryCodePepperKey()
-	require.NoError(t, err)
-	assert.Equal(t, first, second)
-	assert.Len(t, first, 32)
-
-	fromSession := &SecurityConfig{Session: SessionConfig{Secret: "a-very-long-secret-that-is-at-least-32-characters-long"}}
-	derived, err := fromSession.RecoveryCodePepperKey()
-	require.NoError(t, err)
-	assert.NotEqual(t, first, derived)
 }

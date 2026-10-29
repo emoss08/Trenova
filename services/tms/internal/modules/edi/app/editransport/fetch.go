@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/sftp"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -19,14 +19,14 @@ const (
 
 func (t *SFTPTransport) FetchInboundFiles(
 	ctx context.Context,
-	req *ediports.EDIInboundFetchRequest,
-) ([]*ediports.EDIInboundRemoteFile, error) {
+	req *editransportports.EDIInboundFetchRequest,
+) ([]*editransportports.EDIInboundRemoteFile, error) {
 	return fetchInboundOverSFTP(ctx, t.network, req)
 }
 
 func (t *SFTPTransport) ArchiveInboundFile(
 	ctx context.Context,
-	req *ediports.EDIInboundFetchRequest,
+	req *editransportports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
 	return archiveInboundOverSFTP(ctx, t.network, req, remotePath)
@@ -34,14 +34,14 @@ func (t *SFTPTransport) ArchiveInboundFile(
 
 func (t *VANTransport) FetchInboundFiles(
 	ctx context.Context,
-	req *ediports.EDIInboundFetchRequest,
-) ([]*ediports.EDIInboundRemoteFile, error) {
+	req *editransportports.EDIInboundFetchRequest,
+) ([]*editransportports.EDIInboundRemoteFile, error) {
 	return fetchInboundOverSFTP(ctx, t.network, req)
 }
 
 func (t *VANTransport) ArchiveInboundFile(
 	ctx context.Context,
-	req *ediports.EDIInboundFetchRequest,
+	req *editransportports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
 	return archiveInboundOverSFTP(ctx, t.network, req, remotePath)
@@ -50,8 +50,8 @@ func (t *VANTransport) ArchiveInboundFile(
 func fetchInboundOverSFTP(
 	ctx context.Context,
 	network sftpNetwork,
-	req *ediports.EDIInboundFetchRequest,
-) ([]*ediports.EDIInboundRemoteFile, error) {
+	req *editransportports.EDIInboundFetchRequest,
+) ([]*editransportports.EDIInboundRemoteFile, error) {
 	cfg, inboundDirectory, err := network.inboundEndpointConfig(req)
 	if err != nil {
 		return nil, err
@@ -66,13 +66,13 @@ func fetchInboundOverSFTP(
 	if err != nil {
 		return nil, err
 	}
-	files := make([]*ediports.EDIInboundRemoteFile, 0, len(entries))
+	files := make([]*editransportports.EDIInboundRemoteFile, 0, len(entries))
 	for _, entry := range entries {
 		contents, readErr := client.ReadFile(entry.Path)
 		if readErr != nil {
 			return nil, fmt.Errorf("read inbound file %s: %w", entry.Path, readErr)
 		}
-		files = append(files, &ediports.EDIInboundRemoteFile{
+		files = append(files, &editransportports.EDIInboundRemoteFile{
 			Path:     entry.Path,
 			Name:     entry.Name,
 			Contents: contents,
@@ -85,7 +85,7 @@ func fetchInboundOverSFTP(
 func archiveInboundOverSFTP(
 	ctx context.Context,
 	network sftpNetwork,
-	req *ediports.EDIInboundFetchRequest,
+	req *editransportports.EDIInboundFetchRequest,
 	remotePath string,
 ) error {
 	cfg, inboundDirectory, err := network.inboundEndpointConfig(req)
@@ -106,7 +106,7 @@ func archiveInboundOverSFTP(
 }
 
 func (n sftpNetwork) inboundEndpointConfig(
-	req *ediports.EDIInboundFetchRequest,
+	req *editransportports.EDIInboundFetchRequest,
 ) (*endpointConfig, string, error) {
 	if req == nil || req.Profile == nil {
 		return nil, "", errors.New("EDI communication profile is required for inbound polling")

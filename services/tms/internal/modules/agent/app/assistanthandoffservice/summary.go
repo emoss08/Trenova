@@ -6,13 +6,13 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -42,11 +42,11 @@ func (s *Service) summarize(
 		return fallback
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	result, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo: tenant,
-		Task:       aiprovider.TaskAssistantChat,
+		Task:       aitask.TaskAssistantChat,
 		System:     summarySystem,
-		Context: agentports.DelimitedContext{Sections: []agentports.ContextSection{{
+		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{{
 			Title:   "Conversation with " + source.Name,
 			Content: transcript,
 		}}},
@@ -71,7 +71,7 @@ func (s *Service) summarize(
 		},
 	})
 	if err != nil {
-		if !errors.Is(err, agentports.ErrNoProviderConfigured) {
+		if !errors.Is(err, llmports.ErrNoProviderConfigured) {
 			s.l.Warn("hand-off summary failed; carrying the last exchanges", zap.Error(err))
 		}
 		return fallback
@@ -101,7 +101,7 @@ func Transcript(history []conversation.Message, budget int) string {
 		if msg.Refused || msg.Role == conversation.RoleTool {
 			continue
 		}
-		text := strings.TrimSpace(agentruntime.StripArtifactLinks(msg.Content))
+		text := strings.TrimSpace(replycheck.StripArtifactLinks(msg.Content))
 		if text == "" {
 			continue
 		}

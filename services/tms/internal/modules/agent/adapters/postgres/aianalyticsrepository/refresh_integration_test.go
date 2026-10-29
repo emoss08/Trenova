@@ -10,13 +10,22 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -76,34 +85,34 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		AgentType: agent.TypeGeneral, SubjectType: agent.SubjectShipment,
 		SubjectID: pulid.MustNew("shp_"), Status: agent.RunStatusCompleted,
 		PromptVersion: "v1", InputContextHash: "hash", StartedAt: now - 20,
-		Fingerprint: &agent.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "claude-sonnet-5", StoppedAtLimit: true},
 	}
 	thread := &conversation.Thread{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID, AgentDefinitionID: pulid.MustNew("agd_"),
 		Title: "Analytics fixture",
 	}
-	turn := &conversation.AssistantTurn{
+	turn := &conversationturn.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID,
-		Origin: conversation.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
+		Origin: conversationturn.AssistantTurnOriginPerson, Status: conversation.AssistantTurnStatusStopped,
 		StartedAt:   now - 15,
-		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
-	compaction := &conversation.AssistantTurn{
+	compaction := &conversationturn.AssistantTurn{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 		UserID: tenant.UserID,
-		Origin: conversation.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
-		Fingerprint: &agent.Fingerprint{Model: "gpt-5.1-mini"},
+		Origin: conversationturn.AssistantTurnOriginCompaction, Status: conversation.AssistantTurnStatusCompleted,
+		Fingerprint: &agentfingerprint.Fingerprint{Model: "gpt-5.1-mini"},
 	}
 	insert(ctx, t, db, conversationdb.Threads.Handle, thread)
 	turn.ThreadID, compaction.ThreadID = thread.ID, thread.ID
 	insert(ctx, t, db, agentdb.AgentRuns.Handle, run, stopped)
-	insert(ctx, t, db, conversationdb.AssistantTurns.Handle, turn, compaction)
-	insert(ctx, t, db, agentdb.AgentExceptions.Handle, &agent.AgentException{
+	insert(ctx, t, db, conversationturndb.AssistantTurns.Handle, turn, compaction)
+	insert(ctx, t, db, agentexceptiondb.AgentExceptions.Handle, &agentexception.AgentException{
 		OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, RunID: stopped.ID,
-		Category: agent.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
-		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agent.EvidenceRef{},
+		Category: agentexception.CategoryUnableToDiagnose, SubjectType: agent.SubjectShipment,
+		SubjectID: stopped.SubjectID, AttemptSummary: "could not", Evidence: []agentevidence.EvidenceRef{},
 	})
 
 	cost := decimal.RequireFromString("0.0123")
@@ -112,7 +121,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: vllm,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "meta-llama/Llama-3.3-70B-Instruct",
-			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
+			Task: aitask.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
 			Succeeded: false, ErrorClass: "provider_error", ErrorMessage: "401 Unauthorized",
 			LatencyMs: 300, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 25,
@@ -120,7 +129,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "llama-3.3-70b-versatile",
-			Task: aiprovider.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
+			Task: aitask.TaskBillingDiagnosis, Surface: aiusage.SurfaceBackground,
 			Succeeded: true, LatencyMs: 2100, CostUSD: &cost, FirstTokenMs: &firstToken,
 			Failover: true, TraceID: "aaaabbbbccccddddeeeeffff00001111",
 			OwnerKind: agent.RunOwnerAgentRun, OwnerID: run.ID, CreatedAt: now - 20,
@@ -128,27 +137,27 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "qwen2.5:14b",
-			Task: aiprovider.TaskDocumentClassification, Surface: aiusage.SurfaceStructured,
+			Task: aitask.TaskDocumentClassification, Surface: aiusage.SurfaceStructured,
 			Succeeded: true, LatencyMs: 400, CreatedAt: now - 5,
 		},
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, ProviderID: groq,
 			ProviderKind: aiprovider.KindOpenAIChat, Model: "nomic-embed-text",
-			Task: aiprovider.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
+			Task: aitask.TaskEmbedding, Surface: aiusage.SurfaceIndexing,
 			Succeeded: true, LatencyMs: 40, CreatedAt: now - 5,
 		},
 	}
 	insert(ctx, t, db, aiusagedb.AIUsageRecords.Handle, usage...)
 	backdateUsage(ctx, t, db, usage...)
-	insert(ctx, t, db, agentdb.AgentRunSteps.Handle,
-		&agent.AgentRunStep{
+	insert(ctx, t, db, agentrunstepdb.AgentRunSteps.Handle,
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,
 			), OwnerID: run.ID, Kind: "Tool", Status: "Completed",
 			StepKey: "k1", ToolName: "lookup_rate", Outcome: map[string]any{"verdict": "ran"},
 		},
-		&agent.AgentRunStep{
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,
@@ -159,7 +168,7 @@ func TestRefreshWorksOutUnitsToolsAndProviderHoursFromTheSourceRecords(t *testin
 				"content": `"driver_id" must be a string`,
 			},
 		},
-		&agent.AgentRunStep{
+		&agentrunstep.AgentRunStep{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			OwnerKind: string(
 				agent.RunOwnerAgentRun,
@@ -317,7 +326,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindAnthropicMessages,
-			Model: "claude-haiku-5-5", Task: aiprovider.TaskDocumentClassification,
+			Model: "claude-haiku-5-5", Task: aitask.TaskDocumentClassification,
 			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
 			InputTokens: 120, CacheReadTokens: 900, CacheWriteTokens: 60, OutputTokens: 40,
 			CreatedAt: now - 5,
@@ -325,7 +334,7 @@ func TestRefreshCountsUncachedInputByTheCallsOwnProtocolWhenTheProviderIsGone(t 
 		{
 			OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID,
 			ProviderID: pulid.MustNew("aiprv_"), ProviderKind: aiprovider.KindOpenAIResponses,
-			Model: "gpt-6-luna", Task: aiprovider.TaskDocumentClassification,
+			Model: "gpt-6-luna", Task: aitask.TaskDocumentClassification,
 			Surface: aiusage.SurfaceStructured, Succeeded: true, LatencyMs: 300,
 			InputTokens: 1000, CacheReadTokens: 800, OutputTokens: 40,
 			CreatedAt: now - 5,

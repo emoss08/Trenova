@@ -3,12 +3,12 @@
 package deskboardresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	boardcardservice "github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	BoardCards *boardcardservice.Service
 }
 

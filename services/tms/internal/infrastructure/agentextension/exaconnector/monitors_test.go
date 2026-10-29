@@ -14,6 +14,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/exa"
@@ -42,7 +43,7 @@ func watchRequest() *agentextensionports.WebWatchCreateRequest {
 		Query:          "FMCSA hours of service rule change",
 		IncludeDomains: []string{"fmcsa.dot.gov", "federalregister.gov"},
 		ExcludeDomains: []string{"spam.example.com"},
-		Cadence:        agentextension.WebWatchCadenceDaily,
+		Cadence:        extensionwebwatch.WebWatchCadenceDaily,
 		WebhookURL:     "https://hooks.trenova.example/agent-extensions/web-watches/aww_1",
 		Metadata:       map[string]string{"watchId": "aww_1", "organizationId": "org_1"},
 	}
@@ -84,7 +85,7 @@ func TestCreateWatchSendsTheWatchAsAMonitor(t *testing.T) {
 		"name": "HOS rule watch",
 		"search": map[string]any{
 			"query":          "FMCSA hours of service rule change",
-			"numResults":     float64(agentextension.WebWatchResultsPerRun),
+			"numResults":     float64(extensionwebwatch.WebWatchResultsPerRun),
 			"includeDomains": []any{"fmcsa.dot.gov", "federalregister.gov"},
 			"excludeDomains": []any{"spam.example.com"},
 			"contents": map[string]any{
@@ -106,10 +107,10 @@ func TestCreateWatchSendsTheWatchAsAMonitor(t *testing.T) {
 func TestCreateWatchMapsEachCadenceToAnExaPeriod(t *testing.T) {
 	t.Parallel()
 
-	for cadence, period := range map[agentextension.WebWatchCadence]string{
-		agentextension.WebWatchCadenceSixHours: "6h",
-		agentextension.WebWatchCadenceDaily:    "1d",
-		agentextension.WebWatchCadenceWeekly:   "7d",
+	for cadence, period := range map[extensionwebwatch.WebWatchCadence]string{
+		extensionwebwatch.WebWatchCadenceSixHours: "6h",
+		extensionwebwatch.WebWatchCadenceDaily:    "1d",
+		extensionwebwatch.WebWatchCadenceWeekly:   "7d",
 	} {
 		t.Run(string(cadence), func(t *testing.T) {
 			t.Parallel()
@@ -169,7 +170,7 @@ func TestCreateWatchRefusesAnUnknownCadenceWithoutCalling(t *testing.T) {
 	})
 
 	req := watchRequest()
-	req.Cadence = agentextension.WebWatchCadence("Hourly")
+	req.Cadence = extensionwebwatch.WebWatchCadence("Hourly")
 	created, err := connector.CreateWatch(t.Context(), req)
 	require.ErrorIs(t, err, exa.ErrInvalidRequest)
 	assert.Nil(t, created)
@@ -375,7 +376,7 @@ func TestWatchRunsMapsEveryRunStatus(t *testing.T) {
 		assert.Empty(t, run.Summary, want.id)
 		assert.Empty(t, run.Results, want.id)
 	}
-	assert.True(t, agentextension.ExaMonitorRunCostUSD.Equal(runs[2].CostUSD))
+	assert.True(t, extensionwebwatch.ExaMonitorRunCostUSD.Equal(runs[2].CostUSD))
 }
 
 func TestWatchRunsReadsACompletedRunInFull(t *testing.T) {
@@ -433,7 +434,7 @@ func TestWatchRunsReadsACompletedRunInFull(t *testing.T) {
 	assert.Equal(t, "run_2", completed.ID)
 	assert.Equal(t, agentextensionports.WebWatchRunCompleted, completed.Phase)
 	assert.Equal(t, "FMCSA proposed a split duty period pilot.", completed.Summary)
-	assert.Equal(t, []agentextension.WebWatchResult{
+	assert.Equal(t, []extensionwebwatch.WebWatchResult{
 		{
 			Title:         "Split duty period pilot",
 			URL:           "https://www.fmcsa.dot.gov/hos-pilot",

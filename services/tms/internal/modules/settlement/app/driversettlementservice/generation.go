@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementrecurring"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -34,7 +35,7 @@ type GenerateBatchRequest struct {
 // PeriodBounds aliases the shared settlement period type.
 type PeriodBounds = settlementshared.PeriodBounds
 
-func ResolveCurrentPeriod(control *tenant.SettlementControl, now int64) PeriodBounds {
+func ResolveCurrentPeriod(control *settlementcontrol.SettlementControl, now int64) PeriodBounds {
 	return settlementshared.ResolvePeriod(
 		control.PayPeriodFrequency,
 		control.PeriodEndDayOfWeek,
@@ -48,7 +49,7 @@ func (s *Service) GenerateBatch(
 	req *GenerateBatchRequest,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.SettlementBatch, error) {
-	if err := requireActor(actor, "Settlement batch generation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement batch generation"); err != nil {
 		return nil, err
 	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
@@ -212,7 +213,7 @@ func (s *Service) GenerateForWorker(
 	req *GenerateForWorkerRequest,
 	actor *permissionports.RequestActor,
 ) (*driversettlement.Settlement, error) {
-	if err := requireActor(actor, "Settlement generation"); err != nil {
+	if err := settlementshared.RequireActor(actor, "Settlement generation"); err != nil {
 		return nil, err
 	}
 	exists, err := s.periodAlreadySettled(ctx, req)
@@ -269,7 +270,7 @@ func (s *Service) GenerateForWorker(
 		return nil, nil //nolint:nilnil // nil settlement means the worker had no accrued pay
 	}
 
-	s.logSettlementAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
+	s.LogSettlementAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
 		"Settlement generated for period")
 
 	if control.AutoApproveClean && !created.HasExceptions {
@@ -316,7 +317,7 @@ func (s *Service) PreviewForWorker(
 func (s *Service) buildSettlement(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 ) (*driversettlement.Settlement, []*driversettlement.PayEvent, error) {
 	events, err := s.payEventRepo.ListAccruedForWorker(
 		ctx,
@@ -386,7 +387,11 @@ func (s *Service) buildSettlement(
 	settlement.TotalMiles = totalMiles.Round(2)
 
 	if !req.SkipRecurring {
-		lines, err = s.appendRecurringCycleLines(ctx, req, control, settlement, profile, lines)
+		lines, err = s.recurring.AppendLines(ctx, &driversettlementrecurring.CycleRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   req.WorkerID,
+			PeriodEnd:  req.PeriodEnd,
+		}, control, settlement, profile, lines)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -411,75 +416,6 @@ func (s *Service) buildSettlement(
 	}
 
 	return settlement, events, nil
-}
-
-// appendRecurringCycleLines adds everything tied to the pay-period cycle —
-// recurring earnings, guaranteed minimum, carry-forward, recurring deductions,
-// and advance recovery. Instant payouts skip all of it.
-func (s *Service) appendRecurringCycleLines(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
-	settlement *driversettlement.Settlement,
-	profile *driverpay.PayProfile,
-	lines []*driversettlement.SettlementLine,
-) ([]*driversettlement.SettlementLine, error) {
-	lines, guaranteeExcluded, err := s.appendEarningLines(ctx, req, settlement, lines)
-	if err != nil {
-		return nil, err
-	}
-
-	var grossSoFar int64
-	for _, line := range lines {
-		if line.Category == driversettlement.LineCategoryEarning {
-			grossSoFar += line.AmountMinor
-		}
-	}
-	guaranteeBase := grossSoFar - guaranteeExcluded
-
-	if profile != nil && profile.GuaranteedPeriodMinimumMinor > 0 &&
-		guaranteeBase < profile.GuaranteedPeriodMinimumMinor {
-		topUp := profile.GuaranteedPeriodMinimumMinor - guaranteeBase
-		lines = append(lines, &driversettlement.SettlementLine{
-			Category:    driversettlement.LineCategoryGuaranteeTopUp,
-			Description: "Guaranteed minimum pay top-up",
-			AmountMinor: topUp,
-		})
-		settlement.AddException(
-			driversettlement.ExceptionCodeGuaranteeApplied,
-			driversettlement.ExceptionSeverityWarning,
-			fmt.Sprintf("Guaranteed minimum applied: %s top-up",
-				money.FormatMinor(topUp, settlement.CurrencyCode)),
-		)
-	}
-
-	carryIn := s.resolveCarryForward(ctx, req)
-	if carryIn < 0 {
-		lines = append(lines, &driversettlement.SettlementLine{
-			Category:    driversettlement.LineCategoryCarryForward,
-			Description: "Negative balance carried forward from prior settlement",
-			AmountMinor: carryIn,
-		})
-	}
-
-	deductionLines, capped, err := s.buildDeductionLines(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	lines = append(lines, deductionLines...)
-	if capped {
-		settlement.AddException(
-			driversettlement.ExceptionCodeDeductionCapped,
-			driversettlement.ExceptionSeverityWarning,
-			"One or more deductions reached their cap this period",
-		)
-	}
-
-	advanceLines, err := s.buildAdvanceLines(ctx, req, control, grossSoFar, lines)
-	if err != nil {
-		return nil, err
-	}
-	return append(lines, advanceLines...), nil
 }
 
 func buildEventEarningLines(
@@ -512,254 +448,10 @@ func buildEventEarningLines(
 	return lines, totalMiles, len(shipments)
 }
 
-func (s *Service) resolveCarryForward(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-) int64 {
-	latest, err := s.settlementRepo.GetLatestForWorker(
-		ctx,
-		driversettlementports.GetLatestSettlementForWorkerRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-		},
-	)
-	if err != nil || latest == nil {
-		return 0
-	}
-	return latest.CarryForwardOutMinor
-}
-
-func (s *Service) appendEarningLines(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-	settlement *driversettlement.Settlement,
-	lines []*driversettlement.SettlementLine,
-) ([]*driversettlement.SettlementLine, int64, error) {
-	earningLines, capped, guaranteeExcluded, err := s.buildEarningLines(ctx, req)
-	if err != nil {
-		return nil, 0, err
-	}
-	if capped {
-		settlement.AddException(
-			driversettlement.ExceptionCodeEarningCapped,
-			driversettlement.ExceptionSeverityWarning,
-			"One or more recurring earnings reached their cap this period",
-		)
-	}
-	return append(lines, earningLines...), guaranteeExcluded, nil
-}
-
-func (s *Service) buildEarningLines(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-) (lines []*driversettlement.SettlementLine, capped bool, guaranteeExcluded int64, err error) {
-	earnings, err := s.earningRepo.ListActiveForWorker(
-		ctx,
-		driverpayports.ListActiveEarningsForWorkerRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-			AsOf:       req.PeriodEnd,
-		},
-	)
-	if err != nil {
-		return nil, false, 0, err
-	}
-
-	lines = make([]*driversettlement.SettlementLine, 0, len(earnings))
-	for _, earning := range earnings {
-		if earning.Frequency == driverpay.EarningFrequencyMonthly &&
-			!s.monthlyRecurrenceApplies(ctx, req) {
-			continue
-		}
-		amount := earning.NextAmountMinor()
-		if amount <= 0 {
-			continue
-		}
-		if remaining := earning.RemainingCapMinor(); remaining != nil &&
-			amount == *remaining {
-			capped = true
-		}
-
-		category := driversettlement.LineCategoryEarning
-		if earning.PayCode != nil && earning.PayCode.LineIsReimbursement() {
-			category = driversettlement.LineCategoryReimbursement
-		}
-		if category == driversettlement.LineCategoryEarning &&
-			earning.PayCode != nil && !earning.PayCode.CountsTowardGuarantee {
-			guaranteeExcluded += amount
-		}
-
-		earningID := earning.ID
-		payCodeID := earning.PayCodeID
-		lines = append(lines, &driversettlement.SettlementLine{
-			Category:           category,
-			Description:        earning.Description,
-			AmountMinor:        amount,
-			RecurringEarningID: &earningID,
-			PayCodeID:          &payCodeID,
-		})
-	}
-	return lines, capped, guaranteeExcluded, nil
-}
-
-func (s *Service) buildDeductionLines(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-) ([]*driversettlement.SettlementLine, bool, error) {
-	deductions, err := s.deductionRepo.ListActiveForWorker(
-		ctx,
-		driverpayports.ListActiveDeductionsForWorkerRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-			AsOf:       req.PeriodEnd,
-		},
-	)
-	if err != nil {
-		return nil, false, err
-	}
-
-	lines := make([]*driversettlement.SettlementLine, 0, len(deductions))
-	var capped bool
-	for _, deduction := range deductions {
-		if deduction.Frequency == driverpay.DeductionFrequencyMonthly &&
-			!s.monthlyRecurrenceApplies(ctx, req) {
-			continue
-		}
-		amount := deduction.NextAmountMinor()
-		if amount <= 0 {
-			continue
-		}
-		if remaining := deduction.RemainingCapMinor(); remaining != nil &&
-			amount == *remaining {
-			capped = true
-		}
-
-		category := driversettlement.LineCategoryDeduction
-		var escrowAccountID *pulid.ID
-		if deduction.IsEscrowContribution() {
-			category = driversettlement.LineCategoryEscrowContribution
-			escrowAccountID = deduction.EscrowAccountID
-			if account, escErr := s.escrowRepo.GetActiveForWorker(
-				ctx,
-				driverpayports.GetActiveEscrowAccountForWorkerRequest{
-					TenantInfo: req.TenantInfo,
-					WorkerID:   req.WorkerID,
-				},
-			); escErr == nil && account.TargetAmountMinor > 0 {
-				remainingToTarget := account.TargetAmountMinor - account.BalanceMinor
-				if remainingToTarget <= 0 {
-					continue
-				}
-				amount = min(amount, remainingToTarget)
-			}
-		}
-
-		deductionID := deduction.ID
-		payCodeID := deduction.PayCodeID
-		lines = append(lines, &driversettlement.SettlementLine{
-			Category:             category,
-			Description:          deduction.Description,
-			AmountMinor:          -amount,
-			RecurringDeductionID: &deductionID,
-			EscrowAccountID:      escrowAccountID,
-			PayCodeID:            &payCodeID,
-		})
-	}
-	return lines, capped, nil
-}
-
-func (s *Service) monthlyRecurrenceApplies(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-) bool {
-	latest, err := s.settlementRepo.GetLatestForWorker(
-		ctx,
-		driversettlementports.GetLatestSettlementForWorkerRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-		},
-	)
-	if err != nil || latest == nil {
-		return true
-	}
-	currentMonth := time.Unix(req.PeriodEnd, 0).UTC().Month()
-	currentYear := time.Unix(req.PeriodEnd, 0).UTC().Year()
-	latestMonth := time.Unix(latest.PeriodEnd, 0).UTC().Month()
-	latestYear := time.Unix(latest.PeriodEnd, 0).UTC().Year()
-	return currentMonth != latestMonth || currentYear != latestYear
-}
-
-func (s *Service) buildAdvanceLines(
-	ctx context.Context,
-	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
-	gross int64,
-	existingLines []*driversettlement.SettlementLine,
-) ([]*driversettlement.SettlementLine, error) {
-	advances, err := s.advanceRepo.ListOutstandingForWorker(
-		ctx,
-		driverpayports.ListOutstandingAdvancesForWorkerRequest{
-			TenantInfo: req.TenantInfo,
-			WorkerID:   req.WorkerID,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	if len(advances) == 0 {
-		return nil, nil
-	}
-
-	availableNet := gross
-	for _, line := range existingLines {
-		switch line.Category {
-		case driversettlement.LineCategoryDeduction,
-			driversettlement.LineCategoryEscrowContribution,
-			driversettlement.LineCategoryCarryForward:
-			availableNet += line.AmountMinor
-		case driversettlement.LineCategoryGuaranteeTopUp,
-			driversettlement.LineCategoryReimbursement,
-			driversettlement.LineCategoryAdjustment:
-			availableNet += line.AmountMinor
-		case driversettlement.LineCategoryEarning,
-			driversettlement.LineCategoryAdvanceRecovery:
-		}
-	}
-
-	lines := make([]*driversettlement.SettlementLine, 0, len(advances))
-	for _, advance := range advances {
-		outstanding := advance.OutstandingMinor()
-		if outstanding <= 0 {
-			continue
-		}
-		recovery := outstanding
-		if !control.AllowNegativeNet {
-			if availableNet <= 0 {
-				break
-			}
-			recovery = min(recovery, availableNet)
-		}
-		availableNet -= recovery
-
-		advanceID := advance.ID
-		description := "Advance recovery"
-		if advance.Reference != "" {
-			description += " (" + advance.Reference + ")"
-		}
-		lines = append(lines, &driversettlement.SettlementLine{
-			Category:    driversettlement.LineCategoryAdvanceRecovery,
-			Description: description,
-			AmountMinor: -recovery,
-			AdvanceID:   &advanceID,
-		})
-	}
-	return lines, nil
-}
-
 func (s *Service) flagVarianceException(
 	ctx context.Context,
 	req *GenerateForWorkerRequest,
-	control *tenant.SettlementControl,
+	control *settlementcontrol.SettlementControl,
 	settlement *driversettlement.Settlement,
 ) error {
 	if control.VarianceThresholdPct.IsZero() {

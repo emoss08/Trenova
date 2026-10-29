@@ -1,99 +1,34 @@
 package formulatemplateservice
 
 import (
-	"context"
-	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/requestmeta"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/formulatemplatetest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-type auditLog struct {
-	mu      sync.Mutex
-	entries []*audit.Entry
-}
-
-func (l *auditLog) last(t *testing.T) *audit.Entry {
-	t.Helper()
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	require.NotEmpty(t, l.entries)
-	return l.entries[len(l.entries)-1]
-}
-
-func captureAudit(deps *testDeps) *auditLog {
-	log := &auditLog{}
-	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) {
-			params := args.Get(0).(*auditports.LogActionParams)
-			entry := &audit.Entry{
-				ResourceID: params.ResourceID,
-				Operation:  params.Operation,
-			}
-			if opts, ok := args.Get(1).([]auditports.LogOption); ok {
-				for _, opt := range opts {
-					_ = opt(entry)
-				}
-			}
-			log.mu.Lock()
-			log.entries = append(log.entries, entry)
-			log.mu.Unlock()
-		}).
-		Return(nil)
-	return log
-}
-
-func requestContext(t *testing.T) context.Context {
-	t.Helper()
-	return requestmeta.With(t.Context(), requestmeta.New("req-42", "10.0.0.7", "studio"))
-}
-
-func TestAudit_ApprovalIsCriticalAndCarriesTheRequest(t *testing.T) {
-	t.Parallel()
-	deps := setupTest(t)
-	primeReviews(deps, nil)
-	logged := captureAudit(deps)
-	template := approvableTemplate(deps)
-
-	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
-	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
-	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
-		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
-
-	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-	_, err := deps.svc.Approve(requestContext(t), &ApprovalActionRequest{
-		TenantInfo: newTenantInfo(),
-		EntityID:   template.ID,
-	})
-	require.NoError(t, err)
-
-	entry := logged.last(t)
-	assert.True(t, entry.Critical)
-	assert.Equal(t, "req-42", entry.Metadata["requestId"])
-	assert.Equal(t, "10.0.0.7", entry.IPAddress)
-}
-
 func TestAudit_ANonMaterialEditIsNotCriticalButCarriesTheRequest(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
-	logged := captureAudit(deps)
+	logged := formulatemplatetest.CaptureAudit(deps.auditSvc)
 
-	original := newTestTemplate()
+	original := formulatemplatetest.NewTemplate()
 	edited := *original
 	edited.Description = "clearer words"
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(&edited, nil)
 
-	_, err := deps.svc.Update(requestContext(t), &edited, newTenantInfo().UserID)
+	_, err := deps.svc.Update(
+		formulatemplatetest.RequestContext(t),
+		&edited,
+		formulatemplatetest.NewTenantInfo().UserID,
+	)
 	require.NoError(t, err)
 
-	entry := logged.last(t)
+	entry := logged.Last(t)
 	assert.False(t, entry.Critical)
 	assert.Equal(t, "req-42", entry.Metadata["requestId"])
 }
@@ -101,18 +36,22 @@ func TestAudit_ANonMaterialEditIsNotCriticalButCarriesTheRequest(t *testing.T) {
 func TestAudit_AMaterialEditIsCritical(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
-	logged := captureAudit(deps)
+	logged := formulatemplatetest.CaptureAudit(deps.auditSvc)
 
-	original := newTestTemplate()
+	original := formulatemplatetest.NewTemplate()
 	edited := *original
-	edited.Source = perMileRetypedSource
+	edited.Source = formulatemplatetest.PerMileRetypedSource
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(&edited, nil)
 	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
 		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
 	deps.versionRepo.On("ClearScheduled", mock.Anything, mock.Anything).Return(int64(0), nil)
 
-	_, err := deps.svc.Update(requestContext(t), &edited, newTenantInfo().UserID)
+	_, err := deps.svc.Update(
+		formulatemplatetest.RequestContext(t),
+		&edited,
+		formulatemplatetest.NewTenantInfo().UserID,
+	)
 	require.NoError(t, err)
-	assert.True(t, logged.last(t).Critical)
+	assert.True(t, logged.Last(t).Critical)
 }

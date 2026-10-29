@@ -15,21 +15,21 @@ to it by the typecheck, a generator, or a test.
 
 | Fact | Owner | Reaches the other side by |
 |---|---|---|
-| Which kinds exist, their id prefixes, nouns and guarding resource | `permission/recordid.go` (one kind per resource) and `permission/recordkind.go` (the rest) | `generate-record-kinds.mjs` → `@trenova/shared/types/generated/record-kinds` (`RecordKind`, `RecordKindIDPrefix`) |
+| Which kinds exist, their id prefixes, nouns and guarding resource | `recordkind/recordid.go` (one kind per resource) and `recordkind/recordkind.go` (the rest) | `generate-record-kinds.mjs` → `@trenova/shared/types/generated/record-kinds` (`RecordKind`, `RecordKindIDPrefix`) |
 | Where a record opens | `client/apps/web/src/config/record-links.ts` | product guide → `services/tms/pkg/productguide/catalog_gen.json` |
 | Which kinds the Desk draws as a card | `client/apps/web/src/routes/desk/_components/artifacts/cards/registry.tsx` | product guide (`deskCard` on the record link) |
 | The kind of record each agent subject is | `agent/subjectrecord.go` (`subjectRecordKinds`) | `AgentSubjectRecordKind` |
-| The kinds the @ search offers and their tabs | `assistantservice/mentions.go` (`mentionKinds`) | `MentionKindTab`, `MentionKindsAskedFor` |
+| The kinds the @ search offers and their tabs | `assistantservice/assistantthreads/mentions.go` (`mentionKinds`) | `MentionKindTab`, `MentionKindsAskedFor` |
 
 Read from those, never copied:
 
-- **Page context and mentions.** `agent.IsKnownPageEntityType` accepts any kind
+- **Page context and mentions.** `agentpagecontext.IsKnownPageEntityType` accepts any kind
   the permission registry knows except `assistant_thread`.
 - **Subjects.** Their prefixes and nouns are read from the permission
-  registry, and their articles from `stringutils.WithArticle`.
+  registry, and their articles from `inflect.WithArticle`.
 - **Memory.** It recognises a record id by the registry's prefix table.
 - **Mention search.** It checks the kind's own resource
-  (`RecordKind.Resource()`).
+  (`recordkind.Kind.Resource()`).
 - **Desk tables.** `opensRecords` asks the catalog whether the table's kind
   has a Desk card.
 - **Client.** `agentSubjectPath`, the composer's mention tabs, glyphs and
@@ -39,7 +39,7 @@ Read from those, never copied:
 
 1. Declare it on the server. A resource whose records are one kind gets a
    prefix in `recordIDPrefixes` (`recordid.go`). Any other kind gets a
-   `Kind…` constant and a `recordKinds` entry (`recordkind.go`). Then add the
+   `recordkind.Kind` constant and a `recordKinds` entry (`recordkind.go`). Then add the
    entity that mints it to the minting test in `recordid_test.go`.
 2. Run `pnpm --filter @trenova/graphql codegen`, which runs
    `generate-record-kinds.mjs`.
@@ -72,5 +72,5 @@ feature's table:
 - **Stale generated files:** `codegen:check` and `guide:check` fail in CI.
 
 A new table of kinds belongs to one of the owners above. Key it by
-`RecordKind` (client) or `permission.RecordKind` (server), and add it to
+`RecordKind` (client) or `recordkind.Kind` (server), and add it to
 `recordkinds_test.go`, rather than writing another list of strings.

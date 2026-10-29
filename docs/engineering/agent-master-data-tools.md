@@ -16,7 +16,7 @@ page explains them.
 Every write calls the service its page calls — `carrierservice`, `customerservice`,
 `commodityservice`, `hazardousmaterialservice`, `locationservice`, `tractorservice`,
 `trailerservice`, `documentservice`, `insightservice`, `tablechangealertservice`,
-`watchtowerservice`, `captureservice` — and never writes around it. Each service exposes the
+`watchtowerservice`, `capturefiling` — and never writes around it. Each service exposes the
 plan its write runs on, and the write is the plan followed by a save:
 
 | Service | Plans |
@@ -29,7 +29,7 @@ plan its write runs on, and the write is the plan followed by a save:
 | `insightservice` | `PlanRestore` |
 | `tablechangealertservice` | `PlanUpdateSubscription`, `PlanSetSubscriptionStatus`, `PlanDeleteSubscription` |
 | `watchtowerservice` | `PlanDismiss` |
-| `captureservice` | `PlanFileItem`, `PlanDiscardItem`, `PlanDiscardBatch` |
+| `capturefiling` | `PlanFileItem`, `PlanDiscardItem`, `PlanDiscardBatch` |
 
 A tool's preview renders that plan and its `Validate` runs the same plan, so a proposal shows
 what the write decides and is refused for the reasons the write would refuse it. A create or
@@ -46,7 +46,8 @@ codes are resolved to the state on file, dates are `YYYY-MM-DD`, and every enum 
 source beside its domain type (`carrier.status`, `carrier.type`, `carrier.paymentMethod`,
 `carrier.taxIdType`, `customer.statusUpdatePreference`, `commodity.freightClass`,
 `hazardousMaterial.class`, `hazardousMaterial.packingGroup`, `tableChangeAlert.status`,
-`capture.targetType`). The shared field kit is `agenttools/masterdatatools/masterdata_kit.go`, and
+`capture.targetType`). The shared field kit is `agenttools/masterdatakit`; the tools that use it are in `partytools`
+(carriers, customers, capacity postings), `commoditytools`, `equipmenttools` and `locationtools`, and
 `statuschange.Plan` is the bulk status plan every status service uses.
 
 A master record read from a document or a message someone outside sent is proposed, whatever
@@ -193,7 +194,7 @@ nothing to bring them back, so it is always proposed.
 | Master data steward | chat, at a Propose ceiling, Internal data access | `carrier_create`, `carrier_update`, `carrier_set_status`, `customer_create`, `customer_update`, `customer_set_status`, `masterdata_create_commodity`, `masterdata_update_commodity`, `masterdata_set_commodity_status`, `masterdata_create_hazardous_material`, `masterdata_update_hazardous_material`, `masterdata_set_hazardous_material_status`, `location_create`, `location_update`, `location_set_status`, `equipment_create_tractor`, `equipment_update_tractor`, `equipment_set_tractor_status`, `equipment_set_tractor_location`, `equipment_create_trailer`, `equipment_update_trailer`, `equipment_set_trailer_status`, `equipment_set_trailer_location`, `equipment_list_manufacturers`, `document_delete`, `document_restore_version`, `report_list_table_change_alerts`, `report_create_table_change_alert`, `report_update_table_change_alert`, `report_set_table_change_alert_status`, `report_delete_table_change_alert`, `exception_list_watchtower_items`, `exception_dismiss_watchtower_item`, `inbox_list_capture_batches`, `inbox_file_capture_item`, `inbox_discard_capture_item`, `inbox_discard_capture_batch`, and the list and get tools each needs |
 | Customer assistant | chat, at a Propose ceiling | `customer_create`, `customer_update`, `customer_set_status`, `location_list`, `location_update`, `location_set_status`, `masterdata_list_commodities`, `masterdata_create_commodity`, `masterdata_update_commodity` |
 | Insight analyst | on each new insight, at a Propose ceiling | `insight_restore` |
-| Carrier risk desk | on each new carrier finding, at a Propose ceiling | `carrier_list_intelligence_events`, `carrier_get_intelligence_event`, `carrier_acknowledge_intelligence_event`, `carrier_resolve_intelligence_event` |
+| Carrier risk desk | on each new carrier finding, at a Propose ceiling | `carrier_list_intelligence_events`, `carrier_get_intelligence_event`, `carrier_acknowledge_intelligence_event`, `carrier_resolve_intelligence_event`, `carrier_set_status` |
 | Compliance assistant | chat, Ask first | `carrier_list_intelligence_events`, beside its carrier vetting and monitoring tools |
 | Any agent holding `shipment_create` | as the agent runs | `customer_create`, `location_create`, `masterdata_create_commodity`, as `shipment_create`'s companions, unless switched off for the agent |
 
@@ -206,11 +207,17 @@ noise and can bring one back. All three run at a Propose ceiling, so every write
 waits for a person and needs no new permission ceiling entry; `equipment_set_trailer_location`, and a carrier
 change that sets payment or remit-to, still run only from that person's approval.
 
+The carrier risk desk and the shipment intake desk run with nobody in the conversation, so
+their writes are checked against the agent permission ceiling
+(`agentceiling/agent.go`), not a person's grants. It holds update on carrier for
+`carrier_set_status` and create on commodity for `masterdata_create_commodity`; both desks
+propose those calls, so each still runs only from a person's approval.
+
 The compliance assistant was at its 56-tool limit, so it gave up `report_preview` (the report
 analyst's; it still runs saved and built-in reports with `report_run`) to hold
 `carrier_list_intelligence_events`.
 
-No write on this page is left without a holder. The carrier risk desk still only says whether a
+No write on this page is left without a holder. The carrier risk desk proposes whether a
 carrier can be tendered and leaves the decision to stop using one to a person, and capture
 filing stays a proposal the person whose paperwork it is approves. An organization can still
 add any of these tools to an agent it builds in AI control.

@@ -7,24 +7,24 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-type CredentialChange = kernelports.RecordChange[worker.WorkerCredential]
+type CredentialChange = kernelports.RecordChange[workercredential.WorkerCredential]
 
 type CreatePlan struct {
-	Credential *worker.WorkerCredential
-	Superseded *worker.WorkerCredential
+	Credential *workercredential.WorkerCredential
+	Superseded *workercredential.WorkerCredential
 }
 
 func (s *Service) prepareCreate(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
-) (*worker.WorkerCredentialType, error) {
+	entity *workercredential.WorkerCredential,
+) (*workercredential.WorkerCredentialType, error) {
 	credentialType, err := s.prepare(ctx, entity)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 	}
 	entity.CredentialType = credentialType
 
-	held, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerCredentialsRequest{
+	held, err := s.repo.ListForWorker(ctx, &workercredentialports.ListWorkerCredentialsRequest{
 		TenantInfo: credentialTenant(&entity),
 		WorkerIDs:  []pulid.ID{entity.WorkerID},
 	})
@@ -70,10 +70,10 @@ func (s *Service) PlanCreate(ctx context.Context, req *CreateRequest) (*CreatePl
 
 func (s *Service) planUpdate(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	actor *permissionports.RequestActor,
-) (*CredentialChange, *worker.WorkerCredentialType, error) {
-	original, err := s.repo.GetByID(ctx, &workerports.GetWorkerCredentialByIDRequest{
+) (*CredentialChange, *workercredential.WorkerCredentialType, error) {
+	original, err := s.repo.GetByID(ctx, &workercredentialports.GetWorkerCredentialByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: credentialTenant(entity),
 	})
@@ -116,7 +116,7 @@ func (s *Service) planUpdate(
 
 func (s *Service) PlanUpdate(
 	ctx context.Context,
-	entity *worker.WorkerCredential,
+	entity *workercredential.WorkerCredential,
 	actor *permissionports.RequestActor,
 ) (*CredentialChange, error) {
 	planned := *entity
@@ -136,7 +136,7 @@ func (s *Service) PlanArchive(ctx context.Context, req *StatusRequest) (*Credent
 	updated := *original
 	if original.IsActive() {
 		now := timeutils.NowUnix()
-		updated.Status = worker.CredentialStatusArchived
+		updated.Status = workercredential.CredentialStatusArchived
 		updated.ArchivedAt = &now
 		updated.ArchivedByID = req.UserID
 		updated.ArchiveReason = strings.TrimSpace(req.Reason)

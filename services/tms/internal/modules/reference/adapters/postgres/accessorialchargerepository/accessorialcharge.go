@@ -158,6 +158,33 @@ func (r *repository) GetByID(
 	)
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req accessorialchargeports.GetAccessorialChargesByIDsRequest,
+) ([]*accessorialcharge.AccessorialCharge, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*accessorialcharge.AccessorialCharge, error) {
+			if len(req.AccessorialChargeIDs) == 0 {
+				return []*accessorialcharge.AccessorialCharge{}, nil
+			}
+
+			ac := accessorialchargedb.AccessorialCharges
+			entities, err := ac.Where(ac.ID.In(req.AccessorialChargeIDs...)).
+				Limit(len(req.AccessorialChargeIDs)).
+				Cache(resultcache.Reference()...).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get accessorial charges", zap.Error(err))
+				return nil, err
+			}
+
+			return entities, nil
+		},
+	)
+}
+
 func (r *repository) ListCatalog(
 	ctx context.Context,
 	_ pagination.TenantInfo,

@@ -2,7 +2,7 @@ package resolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
 )
 
 type Params struct {
@@ -13,11 +13,11 @@ type Params struct {
 // Services holds every dependency a resolver package may ask for. The
 // generator hands each package only the fields its code names.
 type Services struct {
-	*base.Core
+	*resolvercore.Core
 	Fleet  []*model.Truck
 	Roster []*model.Driver
 }
 
 func newServices(p *Params) *Services {
-	return &Services{Core: &base.Core{}, Fleet: p.Trucks, Roster: p.Drivers}
+	return &Services{Core: &resolvercore.Core{}, Fleet: p.Trucks, Roster: p.Drivers}
 }

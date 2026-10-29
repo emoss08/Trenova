@@ -16,11 +16,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -32,7 +36,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -65,11 +69,11 @@ type Params struct {
 	// DB holds a tier change and the ledger's record of it in one
 	// transaction, so neither lands without the other.
 	DB           kernelports.Transactor
-	Trust        agentports.AgentToolTrustRepository
+	Trust        agenttoolports.AgentToolTrustRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Controls     tenantports.AgentControlRepository
-	Runs         agentports.AgentRunRepository
-	Tools        agentports.AgentToolRegistry
+	Runs         agentruntimeports.AgentRunRepository
+	Tools        agenttoolports.AgentToolRegistry
 	AuditService auditports.AuditService
 	// Notifications is optional so the ledger still counts where nothing can
 	// be told about a change; the audit line is the durable record either way.
@@ -79,16 +83,17 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	db            kernelports.Transactor
-	trust         agentports.AgentToolTrustRepository
+	trust         agenttoolports.AgentToolTrustRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
-	runs          agentports.AgentRunRepository
-	tools         agentports.AgentToolRegistry
+	runs          agentruntimeports.AgentRunRepository
+	tools         agenttoolports.AgentToolRegistry
 	audit         actionLogger
 	notifications notifier
 }
 
-func New(p Params) agentports.AgentTrustService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agenttrustports.AgentTrustService {
 	svc := &Service{
 		l:           p.Logger.Named("service.agenttrust"),
 		db:          p.DB,
@@ -113,13 +118,13 @@ func New(p Params) agentports.AgentTrustService {
 func (s *Service) RecordDecision(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) error {
 	if proposal == nil || decision == nil {
 		return nil
 	}
 
-	outcome := agent.OutcomeOfDecision(decision.Decision, decision.Modifications)
+	outcome := agenttooltrust.OutcomeOfDecision(decision.Decision, decision.Modifications)
 
 	return s.record(ctx, proposal, outcome, decision.DecidedByUserID)
 }
@@ -132,20 +137,20 @@ func (s *Service) RecordExecutionFailure(ctx context.Context, proposal *agent.Ag
 		return nil
 	}
 
-	return s.record(ctx, proposal, agent.TrustOutcomeExecutionFailed, pulid.Nil)
+	return s.record(ctx, proposal, agenttooltrust.TrustOutcomeExecutionFailed, pulid.Nil)
 }
 
 func (s *Service) ListForDefinition(
 	ctx context.Context,
-	req agentports.ListToolTrustRequest,
-) ([]*agent.ToolTrust, error) {
+	req agenttoolports.ListToolTrustRequest,
+) ([]*agenttooltrust.ToolTrust, error) {
 	return s.trust.ListByDefinition(ctx, req)
 }
 
 func (s *Service) record(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	outcome agent.TrustOutcome,
+	outcome agenttooltrust.TrustOutcome,
 	decidedBy pulid.ID,
 ) error {
 	tenantInfo := pagination.TenantInfo{
@@ -153,7 +158,7 @@ func (s *Service) record(
 		BuID:  proposal.BusinessUnitID,
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenantInfo,
 	})
@@ -166,7 +171,7 @@ func (s *Service) record(
 	}
 
 	now := timeutils.NowUnix()
-	row, err := s.trust.Record(ctx, agentports.RecordToolTrustRequest{
+	row, err := s.trust.Record(ctx, &agenttoolports.RecordToolTrustRequest{
 		TenantInfo:        tenantInfo,
 		AgentDefinitionID: run.AgentDefinitionID,
 		ToolName:          proposal.ToolName,
@@ -226,7 +231,7 @@ func (s *Service) record(
 type tierChange struct {
 	tenant     pagination.TenantInfo
 	definition *agentdefinition.Definition
-	row        *agent.ToolTrust
+	row        *agenttooltrust.ToolTrust
 	current    agent.AutonomyTier
 	decidedBy  pulid.ID
 	at         int64
@@ -235,7 +240,7 @@ type tierChange struct {
 func (s *Service) promote(
 	ctx context.Context,
 	change tierChange,
-	control *tenant.AgentControl,
+	control *agentcontrol.AgentControl,
 ) error {
 	next, ok := change.current.Next()
 	if !ok || !change.definition.WithinCeiling(next) ||
@@ -266,7 +271,7 @@ func (s *Service) promote(
 		title: fmt.Sprintf(
 			"%s now runs %s at \"%s\"",
 			change.definition.Name,
-			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
+			textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(change.row.ToolName)),
 			next.Label(),
 		),
 		message: fmt.Sprintf(
@@ -305,7 +310,7 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 			"%s lost \"%s\" on %s",
 			change.definition.Name,
 			change.current.Label(),
-			stringutils.HumanizeSnakeCase(agentports.ReadingOrder(change.row.ToolName)),
+			textcase.HumanizeSnakeCase(agenttoolports.ReadingOrder(change.row.ToolName)),
 		),
 		message: fmt.Sprintf(
 			"The tier was earned from a streak of approvals, and a rejection or a failed run ended the streak. "+
@@ -333,7 +338,7 @@ func (s *Service) moveTier(
 	to agent.AutonomyTier,
 	promoted bool,
 ) (bool, error) {
-	mark := agentports.MarkToolTierChangeRequest{
+	mark := &agenttoolports.MarkToolTierChangeRequest{
 		ID:         change.row.ID,
 		TenantInfo: change.tenant,
 		Version:    change.row.Version,
@@ -404,16 +409,16 @@ func (s *Service) promotable(toolName string) agent.AutonomyTier {
 		return agent.TierAutoExecute
 	}
 
-	return agenttoolpolicy.Promotable(policy)
+	return agenttoolpolicy.Promotable(&policy)
 }
 
-func (s *Service) policyOf(toolName string) (agentports.ToolPolicy, bool) {
+func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {
 	if s.tools == nil {
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 	tool, ok := s.tools.Get(toolName)
 	if !ok {
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 
 	return tool.Policy(), true

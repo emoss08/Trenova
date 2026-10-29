@@ -1,15 +1,16 @@
 package carrierassignmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -23,22 +24,22 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		initial    shipment.MoveCoverageType
+		initial    shipmentvocab.MoveCoverageType
 		assignment *shipment.CarrierAssignment
-		want       shipment.MoveCoverageType
+		want       shipmentvocab.MoveCoverageType
 	}{
 		{
 			name:    "assigning a carrier marks the move carrier covered",
-			initial: shipment.MoveCoverageTypeUnassigned,
+			initial: shipmentvocab.MoveCoverageTypeUnassigned,
 			assignment: &shipment.CarrierAssignment{
-				Status: shipment.CarrierAssignmentStatusPending,
+				Status: shipmentvocab.CarrierAssignmentStatusPending,
 			},
-			want: shipment.MoveCoverageTypeCarrier,
+			want: shipmentvocab.MoveCoverageTypeCarrier,
 		},
 		{
 			name:    "canceling a carrier returns the move to uncovered, not driver covered",
-			initial: shipment.MoveCoverageTypeCarrier,
-			want:    shipment.MoveCoverageTypeUnassigned,
+			initial: shipmentvocab.MoveCoverageTypeCarrier,
+			want:    shipmentvocab.MoveCoverageTypeUnassigned,
 		},
 	}
 
@@ -69,7 +70,7 @@ func TestApplyCoverageChangeStampsCoverageExplicitly(t *testing.T) {
 			controlRepo := tenantportsmock.NewMockShipmentControlRepository(t)
 			controlRepo.EXPECT().
 				Get(mock.Anything, tenantports.GetShipmentControlRequest{TenantInfo: tenantInfo}).
-				Return(&tenant.ShipmentControl{}, nil).
+				Return(&shipmentcontrol.ShipmentControl{}, nil).
 				Once()
 
 			svc := &Service{
@@ -105,14 +106,14 @@ func coverageShipment(
 		CustomerID:        pulid.MustNew("cust_"),
 		BOL:               "BOL-1",
 		FormulaTemplateID: pulid.MustNew("ft_"),
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		Moves: []*shipment.ShipmentMove{
 			{
 				ID:             moveID,
 				ShipmentID:     shipmentID,
 				OrganizationID: tenantInfo.OrgID,
 				BusinessUnitID: tenantInfo.BuID,
-				Status:         shipment.MoveStatusNew,
+				Status:         shipmentvocab.MoveStatusNew,
 				Loaded:         true,
 				Stops: []*shipment.Stop{
 					{
@@ -121,10 +122,10 @@ func coverageShipment(
 						OrganizationID:       tenantInfo.OrgID,
 						BusinessUnitID:       tenantInfo.BuID,
 						Sequence:             0,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypePickup,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypePickup,
 						LocationID:           pulid.MustNew("loc_"),
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						ScheduledWindowStart: 1,
 						ScheduledWindowEnd:   new(int64(2)),
 					},
@@ -134,10 +135,10 @@ func coverageShipment(
 						OrganizationID:       tenantInfo.OrgID,
 						BusinessUnitID:       tenantInfo.BuID,
 						Sequence:             1,
-						Status:               shipment.StopStatusNew,
-						Type:                 shipment.StopTypeDelivery,
+						Status:               shipmentvocab.StopStatusNew,
+						Type:                 shipmentvocab.StopTypeDelivery,
 						LocationID:           pulid.MustNew("loc_"),
-						ScheduleType:         shipment.StopScheduleTypeOpen,
+						ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 						ScheduledWindowStart: 3,
 						ScheduledWindowEnd:   new(int64(4)),
 					},

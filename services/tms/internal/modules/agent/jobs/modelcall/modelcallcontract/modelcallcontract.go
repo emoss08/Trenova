@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.temporal.io/sdk/temporal"
 )
@@ -24,7 +24,7 @@ type ModelFailure struct {
 	Refusal       *refusal     `json:"refusal,omitempty"`
 	Plan          *PlanRefusal `json:"plan,omitempty"`
 	// Providers are the providers asked, when every one of them failed.
-	Providers []agentports.ChatProviderFailure `json:"providers,omitempty"`
+	Providers []llmports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 type PlanRefusal struct {
@@ -80,14 +80,14 @@ type refusal struct {
 
 func ModelFailureOf(err error) ModelFailure {
 	detail := ModelFailure{
-		Resting:       errors.Is(err, agentports.ErrProvidersResting),
+		Resting:       errors.Is(err, llmports.ErrProvidersResting),
 		TimedOut:      errors.Is(err, context.DeadlineExceeded),
-		NoProvider:    errors.Is(err, agentports.ErrNoProviderConfigured),
-		SchemaInvalid: errors.Is(err, agentports.ErrModelSchemaValidation),
+		NoProvider:    errors.Is(err, llmports.ErrNoProviderConfigured),
+		SchemaInvalid: errors.Is(err, llmports.ErrModelSchemaValidation),
 		Plan:          planRefusalOf(err),
 	}
 
-	var failure agentports.ProviderFailure
+	var failure llmports.ProviderFailure
 	if errors.As(err, &failure) {
 		detail.Status = failure.ProviderStatus()
 		detail.Retryable = failure.ProviderRetryable()
@@ -102,7 +102,7 @@ func ModelFailureOf(err error) ModelFailure {
 		detail.Refusal = &refusal{Message: business.Message, Args: args, Details: business.Details}
 	}
 
-	var exhausted *agentports.ChatProvidersFailedError
+	var exhausted *llmports.ChatProvidersFailedError
 	if errors.As(err, &exhausted) {
 		detail.Providers = exhausted.Failures
 	}
@@ -131,7 +131,7 @@ type Failure struct {
 	Refusal *refusal     `json:"refusal,omitempty"`
 	Plan    *PlanRefusal `json:"plan,omitempty"`
 	// Providers are the providers asked, when every one of them failed.
-	Providers []agentports.ChatProviderFailure `json:"providers,omitempty"`
+	Providers []llmports.ChatProviderFailure `json:"providers,omitempty"`
 }
 
 // FailureOf reads why a run ended from the error workflow code was handed.
@@ -179,7 +179,7 @@ func (f *Failure) Err() error {
 	// Every model the reply was asked of failed: the error says which, so the
 	// saved reply can list them the way the reader saw them.
 	if f != nil && len(f.Providers) > 0 && err != nil {
-		return &agentports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
+		return &llmports.ChatProvidersFailedError{Failures: f.Providers, Err: err}
 	}
 
 	return err
@@ -196,13 +196,13 @@ func (f *Failure) err() error {
 	case f.Refusal != nil:
 		return f.Refusal.err()
 	case f.NoProvider:
-		return fmt.Errorf("%s: %w", f.Message, agentports.ErrNoProviderConfigured)
+		return fmt.Errorf("%s: %w", f.Message, llmports.ErrNoProviderConfigured)
 	case f.SchemaInvalid:
-		return fmt.Errorf("%s: %w", f.Message, agentports.ErrModelSchemaValidation)
+		return fmt.Errorf("%s: %w", f.Message, llmports.ErrModelSchemaValidation)
 	case f.Status != 0:
 		return providerFailureError{f}
 	case f.Resting:
-		return fmt.Errorf("%s: %w", f.Message, agentports.ErrProvidersResting)
+		return fmt.Errorf("%s: %w", f.Message, llmports.ErrProvidersResting)
 	case f.TimedOut:
 		return fmt.Errorf("%s: %w", f.Message, context.DeadlineExceeded)
 	default:

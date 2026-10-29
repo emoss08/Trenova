@@ -3,12 +3,12 @@
 package fleetsafetyresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	workersafetyservice "github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	WorkerSafetyService *workersafetyservice.Service
 }
 

@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,8 +18,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newEscrowEntity() *driverpay.EscrowAccount {
-	return &driverpay.EscrowAccount{
+func newEscrowEntity() *payescrow.EscrowAccount {
+	return &payescrow.EscrowAccount{
 		BusinessUnitID:    pulid.MustNew("bu_"),
 		OrganizationID:    pulid.MustNew("org_"),
 		WorkerID:          pulid.MustNew("wrk_"),
@@ -29,10 +29,10 @@ func newEscrowEntity() *driverpay.EscrowAccount {
 	}
 }
 
-func activeEscrowAccount(balance int64) *driverpay.EscrowAccount {
+func activeEscrowAccount(balance int64) *payescrow.EscrowAccount {
 	account := newEscrowEntity()
 	account.ID = pulid.MustNew("escr_")
-	account.Status = driverpay.EscrowAccountStatusActive
+	account.Status = payescrow.EscrowAccountStatusActive
 	account.BalanceMinor = balance
 	return account
 }
@@ -52,33 +52,33 @@ func TestOpenEscrowAccount_DefaultsInterestRateFromSettlementControl(t *testing.
 	t.Parallel()
 	svc, audit := newTestService()
 
-	var created *driverpay.EscrowAccount
+	var created *payescrow.EscrowAccount
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*payescrow.EscrowAccount, error) {
 			return nil, errors.New("not found")
 		},
-		create: func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+		create: func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 			entity.ID = pulid.MustNew("escr_")
 			created = entity
 			return entity, nil
 		},
 	}
 	svc.settlementControl = &fakeSettlementControlRepo{
-		getOrCreate: func(context.Context, pagination.TenantInfo) (*tenant.SettlementControl, error) {
-			return &tenant.SettlementControl{
+		getOrCreate: func(context.Context, pagination.TenantInfo) (*settlementcontrol.SettlementControl, error) {
+			return &settlementcontrol.SettlementControl{
 				DefaultEscrowInterestRate: decimal.NewFromFloat(3.25),
 			}, nil
 		},
 	}
 
 	entity := newEscrowEntity()
-	entity.Status = driverpay.EscrowAccountStatusClosed
+	entity.Status = payescrow.EscrowAccountStatusClosed
 	entity.BalanceMinor = 999
 
 	result, err := svc.OpenEscrowAccount(t.Context(), entity, testActor())
 	require.NoError(t, err)
 	require.NotNil(t, created)
-	assert.Equal(t, driverpay.EscrowAccountStatusActive, result.Status)
+	assert.Equal(t, payescrow.EscrowAccountStatusActive, result.Status)
 	assert.EqualValues(t, 0, result.BalanceMinor)
 	assert.Equal(t, "3.25", result.AnnualInterestRate.String())
 	assert.Len(t, audit.logged, 1)
@@ -89,7 +89,7 @@ func TestOpenEscrowAccount_RejectsDuplicateActiveAccount(t *testing.T) {
 	svc, audit := newTestService()
 
 	svc.escrowRepo = &fakeEscrowRepo{
-		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*driverpay.EscrowAccount, error) {
+		getActiveForWorker: func(context.Context, driverpayports.GetActiveEscrowAccountForWorkerRequest) (*payescrow.EscrowAccount, error) {
 			return activeEscrowAccount(0), nil
 		},
 	}
@@ -132,9 +132,9 @@ func TestAdjustEscrowAccount_RejectsInactiveAccount(t *testing.T) {
 	svc, _ := newTestService()
 
 	account := activeEscrowAccount(10_000)
-	account.Status = driverpay.EscrowAccountStatusClosed
+	account.Status = payescrow.EscrowAccountStatusClosed
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -154,7 +154,7 @@ func TestAdjustEscrowAccount_RejectsNegativeResultingBalance(t *testing.T) {
 
 	account := activeEscrowAccount(5_000)
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -174,15 +174,15 @@ func TestAdjustEscrowAccount_AppliesTransactionAndUpdatesBalance(t *testing.T) {
 
 	account := activeEscrowAccount(5_000)
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
-	var appended *driverpay.EscrowTransaction
-	repo.update = func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+	var appended *payescrow.EscrowTransaction
+	repo.update = func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 		return entity, nil
 	}
-	repo.appendTransaction = func(_ context.Context, entity *driverpay.EscrowTransaction) (*driverpay.EscrowTransaction, error) {
+	repo.appendTransaction = func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
 		appended = entity
 		return entity, nil
 	}
@@ -196,7 +196,7 @@ func TestAdjustEscrowAccount_AppliesTransactionAndUpdatesBalance(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, appended)
 
-	assert.Equal(t, driverpay.EscrowTransactionTypeAdjustment, appended.Type)
+	assert.Equal(t, payescrow.EscrowTransactionTypeAdjustment, appended.Type)
 	assert.EqualValues(t, -2_000, appended.AmountMinor)
 	assert.EqualValues(t, 3_000, appended.BalanceAfterMinor)
 	assert.Equal(t, account.ID, appended.EscrowAccountID)
@@ -210,9 +210,9 @@ func TestCloseEscrowAccount_RejectsAlreadyClosedAccount(t *testing.T) {
 	svc, _ := newTestService()
 
 	account := activeEscrowAccount(0)
-	account.Status = driverpay.EscrowAccountStatusClosed
+	account.Status = payescrow.EscrowAccountStatusClosed
 	svc.escrowRepo = &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
@@ -233,15 +233,15 @@ func TestCloseEscrowAccount_RefundsRemainingBalance(t *testing.T) {
 
 	account := activeEscrowAccount(75_000)
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
-	var appended *driverpay.EscrowTransaction
-	repo.update = func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+	var appended *payescrow.EscrowTransaction
+	repo.update = func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 		return entity, nil
 	}
-	repo.appendTransaction = func(_ context.Context, entity *driverpay.EscrowTransaction) (*driverpay.EscrowTransaction, error) {
+	repo.appendTransaction = func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
 		appended = entity
 		return entity, nil
 	}
@@ -256,10 +256,10 @@ func TestCloseEscrowAccount_RefundsRemainingBalance(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, appended)
 
-	assert.Equal(t, driverpay.EscrowTransactionTypeRefund, appended.Type)
+	assert.Equal(t, payescrow.EscrowTransactionTypeRefund, appended.Type)
 	assert.EqualValues(t, -75_000, appended.AmountMinor)
 	assert.EqualValues(t, 0, appended.BalanceAfterMinor)
-	assert.Equal(t, driverpay.EscrowAccountStatusClosed, updated.Status)
+	assert.Equal(t, payescrow.EscrowAccountStatusClosed, updated.Status)
 	require.NotNil(t, updated.ClosedDate)
 	assert.EqualValues(t, 0, updated.BalanceMinor)
 	assert.Len(t, audit.logged, 1)
@@ -272,14 +272,14 @@ func TestCloseEscrowAccount_ZeroBalanceSkipsRefund(t *testing.T) {
 	account := activeEscrowAccount(0)
 	appendCalls := 0
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
-	repo.update = func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+	repo.update = func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 		return entity, nil
 	}
-	repo.appendTransaction = func(_ context.Context, entity *driverpay.EscrowTransaction) (*driverpay.EscrowTransaction, error) {
+	repo.appendTransaction = func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
 		appendCalls++
 		return entity, nil
 	}
@@ -293,7 +293,7 @@ func TestCloseEscrowAccount_ZeroBalanceSkipsRefund(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 0, appendCalls)
-	assert.Equal(t, driverpay.EscrowAccountStatusClosed, updated.Status)
+	assert.Equal(t, payescrow.EscrowAccountStatusClosed, updated.Status)
 }
 
 func TestAccrueEscrowInterest_SkipsIneligibleAccounts(t *testing.T) {
@@ -301,19 +301,19 @@ func TestAccrueEscrowInterest_SkipsIneligibleAccounts(t *testing.T) {
 
 	cases := []struct {
 		name   string
-		mutate func(a *driverpay.EscrowAccount)
+		mutate func(a *payescrow.EscrowAccount)
 	}{
 		{
 			name:   "closed account",
-			mutate: func(a *driverpay.EscrowAccount) { a.Status = driverpay.EscrowAccountStatusClosed },
+			mutate: func(a *payescrow.EscrowAccount) { a.Status = payescrow.EscrowAccountStatusClosed },
 		},
 		{
 			name:   "zero balance",
-			mutate: func(a *driverpay.EscrowAccount) { a.BalanceMinor = 0 },
+			mutate: func(a *payescrow.EscrowAccount) { a.BalanceMinor = 0 },
 		},
 		{
 			name:   "zero rate",
-			mutate: func(a *driverpay.EscrowAccount) { a.AnnualInterestRate = decimal.Zero },
+			mutate: func(a *payescrow.EscrowAccount) { a.AnnualInterestRate = decimal.Zero },
 		},
 	}
 
@@ -327,7 +327,7 @@ func TestAccrueEscrowInterest_SkipsIneligibleAccounts(t *testing.T) {
 			tc.mutate(account)
 
 			svc.escrowRepo = &fakeEscrowRepo{
-				getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+				getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 					return account, nil
 				},
 			}
@@ -353,15 +353,15 @@ func TestAccrueEscrowInterest_AccruesOneYearOfInterest(t *testing.T) {
 	account.LastInterestAccrualDate = &oneYearAgo
 
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
-	var appended *driverpay.EscrowTransaction
-	repo.update = func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+	var appended *payescrow.EscrowTransaction
+	repo.update = func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 		return entity, nil
 	}
-	repo.appendTransaction = func(_ context.Context, entity *driverpay.EscrowTransaction) (*driverpay.EscrowTransaction, error) {
+	repo.appendTransaction = func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
 		appended = entity
 		return entity, nil
 	}
@@ -371,7 +371,7 @@ func TestAccrueEscrowInterest_AccruesOneYearOfInterest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, appended)
 
-	assert.Equal(t, driverpay.EscrowTransactionTypeInterestAccrual, appended.Type)
+	assert.Equal(t, payescrow.EscrowTransactionTypeInterestAccrual, appended.Type)
 	assert.EqualValues(t, 50_000, appended.AmountMinor)
 	assert.EqualValues(t, 1_050_000, updated.BalanceMinor)
 	require.NotNil(t, updated.LastInterestAccrualDate)
@@ -389,14 +389,14 @@ func TestAccrueEscrowInterest_TinyElapsedOnlyAdvancesAccrualDate(t *testing.T) {
 
 	appendCalls := 0
 	repo := &fakeEscrowRepo{
-		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*driverpay.EscrowAccount, error) {
+		getByID: func(context.Context, driverpayports.GetEscrowAccountByIDRequest) (*payescrow.EscrowAccount, error) {
 			return account, nil
 		},
 	}
-	repo.update = func(_ context.Context, entity *driverpay.EscrowAccount) (*driverpay.EscrowAccount, error) {
+	repo.update = func(_ context.Context, entity *payescrow.EscrowAccount) (*payescrow.EscrowAccount, error) {
 		return entity, nil
 	}
-	repo.appendTransaction = func(_ context.Context, entity *driverpay.EscrowTransaction) (*driverpay.EscrowTransaction, error) {
+	repo.appendTransaction = func(_ context.Context, entity *payescrow.EscrowTransaction) (*payescrow.EscrowTransaction, error) {
 		appendCalls++
 		return entity, nil
 	}

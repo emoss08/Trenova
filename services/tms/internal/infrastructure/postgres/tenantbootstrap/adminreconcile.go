@@ -6,8 +6,12 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -18,22 +22,22 @@ type AdminReconcileResult struct {
 }
 
 type adminGrantPlan struct {
-	add    []*permission.ResourcePermission
-	extend []*permission.ResourcePermission
+	add    []*rbac.ResourcePermission
+	extend []*rbac.ResourcePermission
 }
 
 func ReconcileAdminRole(
 	ctx context.Context,
 	db *keel.DB,
-	scope Scope,
-	registry *permission.Registry,
+	scope tenantscope.Scope,
+	registry *permissioncatalog.Registry,
 ) (AdminReconcileResult, error) {
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
-	r := permissiondb.Roles
-	roles, err := scoped(ctx, r.Pick(r.ID).Where(
+	r := rbacdb.Roles
+	roles, err := tenantscope.Scoped(ctx, r.Pick(r.ID).Where(
 		r.OrganizationID.Eq(scope.OrganizationID),
 		r.BusinessUnitID.Eq(scope.BusinessUnitID),
 		r.IsSystem.IsTrue(),
@@ -53,18 +57,18 @@ func ReconcileAdminRole(
 		roleIDs = append(roleIDs, role.ID)
 	}
 
-	rp := permissiondb.ResourcePermissions
+	rp := rbacdb.ResourcePermissions
 	existing, err := rp.Where(rp.RoleID.In(roleIDs...)).All(ctx, db)
 	if err != nil {
 		return result, fmt.Errorf("list administrator grants: %w", err)
 	}
 
-	byRole := make(map[pulid.ID][]*permission.ResourcePermission, len(roleIDs))
+	byRole := make(map[pulid.ID][]*rbac.ResourcePermission, len(roleIDs))
 	for _, held := range existing {
 		byRole[held.RoleID] = append(byRole[held.RoleID], held)
 	}
 
-	now := scope.now()
+	now := scope.NowUnix()
 	for _, roleID := range roleIDs {
 		plan := planAdminGrants(registry, roleID, byRole[roleID], now)
 		if err = rp.CreateMany(ctx, db, plan.add); err != nil {
@@ -83,18 +87,18 @@ func ReconcileAdminRole(
 }
 
 func planAdminGrants(
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	roleID pulid.ID,
-	held []*permission.ResourcePermission,
+	held []*rbac.ResourcePermission,
 	now int64,
 ) adminGrantPlan {
-	byResource := make(map[string]*permission.ResourcePermission, len(held))
+	byResource := make(map[string]*rbac.ResourcePermission, len(held))
 	for _, rp := range held {
 		byResource[rp.Resource] = rp
 	}
 
 	definitions := registry.All()
-	slices.SortFunc(definitions, func(a, b *permission.ResourceDefinition) int {
+	slices.SortFunc(definitions, func(a, b *permissionspec.ResourceDefinition) int {
 		if a.Resource < b.Resource {
 			return -1
 		}
@@ -113,7 +117,7 @@ func planAdminGrants(
 
 		rp, ok := byResource[def.Resource]
 		if !ok {
-			plan.add = append(plan.add, &permission.ResourcePermission{
+			plan.add = append(plan.add, &rbac.ResourcePermission{
 				ID:         pulid.MustNew("rp_"),
 				RoleID:     roleID,
 				Resource:   def.Resource,

@@ -3,8 +3,8 @@ package deskmemoryresolver
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,27 +15,27 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 
 	old := pulid.MustNew("amem_")
 	newer := pulid.MustNew("amem_")
-	model := deskMemoryToModel(&agentports.DeskMemory{
-		Memory: &agent.Memory{
+	model := deskMemoryToModel(&agentmemoryports.DeskMemory{
+		Memory: &agentmemory.Memory{
 			ID:      pulid.MustNew("amem_"),
-			Kind:    agent.MemoryKindProcedure,
-			Source:  agent.MemorySourceReflection,
-			Status:  agent.MemoryStatusActive,
+			Kind:    agentmemory.MemoryKindProcedure,
+			Source:  agentmemory.MemorySourceReflection,
+			Status:  agentmemory.MemoryStatusActive,
 			Content: "Copy dispatch and billing on rate confirmations.",
-			Evidence: &agent.MemoryEvidence{
+			Evidence: &agentmemory.MemoryEvidence{
 				Reason: "The person asked for billing as well.",
 				Quotes: []string{"Billing needs these too"},
 			},
 		},
-		Replaces: &agentports.DeskMemoryLink{
+		Replaces: &agentmemoryports.DeskMemoryLink{
 			ID:      old,
 			Content: "Copy dispatch on rate confirmations.",
-			Status:  agent.MemoryStatusRetired,
+			Status:  agentmemory.MemoryStatusRetired,
 		},
-		ReplacedBy: &agentports.DeskMemoryLink{
+		ReplacedBy: &agentmemoryports.DeskMemoryLink{
 			ID:      newer,
 			Content: "Copy dispatch, billing and the rep.",
-			Status:  agent.MemoryStatusActive,
+			Status:  agentmemory.MemoryStatusActive,
 		},
 	})
 
@@ -43,7 +43,7 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 	assert.Equal(t, []string{"Billing needs these too"}, model.Quotes)
 	require.NotNil(t, model.Replaces)
 	assert.Equal(t, old.String(), model.Replaces.ID)
-	assert.Equal(t, agent.MemoryStatusRetired, model.Replaces.Status)
+	assert.Equal(t, agentmemory.MemoryStatusRetired, model.Replaces.Status)
 	require.NotNil(t, model.ReplacedBy)
 	assert.Equal(t, newer.String(), model.ReplacedBy.ID)
 }
@@ -51,10 +51,10 @@ func TestDeskMemoryToModel_CarriesWhyAndWhatItReplaced(t *testing.T) {
 func TestDeskMemoryToModel_AMemoryAPersonWroteHasNoWhy(t *testing.T) {
 	t.Parallel()
 
-	model := deskMemoryToModel(&agentports.DeskMemory{
-		Memory: &agent.Memory{
+	model := deskMemoryToModel(&agentmemoryports.DeskMemory{
+		Memory: &agentmemory.Memory{
 			ID:      pulid.MustNew("amem_"),
-			Source:  agent.MemorySourceUser,
+			Source:  agentmemory.MemorySourceUser,
 			Content: "Group AR by facility.",
 		},
 	})

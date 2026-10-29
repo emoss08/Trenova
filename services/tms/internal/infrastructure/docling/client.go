@@ -18,7 +18,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/cenkalti/backoff/v5"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/documentconversionconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -47,8 +47,8 @@ var errRejected = errors.New("document converter rejected the request")
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	DocumentConversionConfig *documentconversionconfig.Config
+	Logger                   *zap.Logger
 }
 
 type Client struct {
@@ -56,7 +56,7 @@ type Client struct {
 	sem     *semaphore.Weighted
 	l       *zap.Logger
 	baseURL string
-	cfg     *config.DocumentConversionConfig
+	cfg     *documentconversionconfig.Config
 
 	resultLimit int64
 
@@ -67,7 +67,7 @@ type Client struct {
 var _ kernelports.DocumentConverter = (*Client)(nil)
 
 func New(p Params) *Client {
-	cfg := p.Config.GetDocumentConversionConfig()
+	cfg := p.DocumentConversionConfig
 	maxConcurrent := cfg.GetMaxConcurrent()
 
 	return &Client{

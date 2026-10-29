@@ -13,9 +13,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerealtime"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -38,8 +37,8 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -59,7 +58,7 @@ type Params struct {
 	WorkflowStarter    kernelports.WorkflowStarter
 	Storage            kernelports.Client
 	Plans              platformplanports.PlanService `optional:"true"`
-	Realtime           agentports.RealtimeService    `optional:"true"`
+	Realtime           realtimeports.RealtimeService `optional:"true"`
 }
 
 // ObserverParams are the observers told when a message changes. They are
@@ -86,7 +85,7 @@ type Service struct {
 	workflowStarter    kernelports.WorkflowStarter
 	storage            kernelports.Client
 	plans              platformplanports.PlanService
-	realtime           agentports.RealtimeService
+	realtime           realtimeports.RealtimeService
 	observers          atomic.Pointer[[]emailports.EmailMessageObserver]
 	observersMu        sync.Mutex
 }
@@ -168,6 +167,13 @@ func (s *Service) GetProfile(
 	req emailports.GetEmailEntityRequest,
 ) (*email.Profile, error) {
 	return s.repo.GetProfile(ctx, req)
+}
+
+func (s *Service) GetProfilesByIDs(
+	ctx context.Context,
+	req emailports.GetEmailProfilesByIDsRequest,
+) ([]*email.Profile, error) {
+	return s.repo.GetProfilesByIDs(ctx, req)
 }
 
 func (s *Service) CreateProfile(
@@ -361,9 +367,9 @@ func (s *Service) Send(
 		FromEmail:      fromEmail,
 		FromName:       profile.SenderName,
 		ReplyToEmail:   profile.ReplyToEmail,
-		ToRecipients:   stringutils.NormalizeEmailAddresses(req.To),
-		CCRecipients:   stringutils.NormalizeEmailAddresses(req.CC),
-		BCCRecipients:  stringutils.NormalizeEmailAddresses(req.BCC),
+		ToRecipients:   mailtext.NormalizeEmailAddresses(req.To),
+		CCRecipients:   mailtext.NormalizeEmailAddresses(req.CC),
+		BCCRecipients:  mailtext.NormalizeEmailAddresses(req.BCC),
 		Subject:        strings.TrimSpace(req.Subject),
 		BodyTextSize:   int64(len(req.Text)),
 		BodyHTMLSize:   int64(len(req.HTML)),
@@ -561,7 +567,7 @@ func (s *Service) SendPersisted(
 		Config: cfg.Config,
 		Message: SendProviderMessage{
 			IdempotencyKey: msg.IdempotencyKey,
-			From:           stringutils.FormatEmailAddress(msg.FromName, msg.FromEmail),
+			From:           mailtext.FormatEmailAddress(msg.FromName, msg.FromEmail),
 			ReplyTo:        msg.ReplyToEmail,
 			To:             msg.ToRecipients,
 			CC:             msg.CCRecipients,
@@ -942,7 +948,7 @@ func (s *Service) bouncedRecipients(
 	if err != nil {
 		return nil, err
 	}
-	return stringutils.NormalizeEmailList(recipients), nil
+	return mailtext.NormalizeEmailList(recipients), nil
 }
 
 func unbouncedRecipients(msg *email.Message, bounced []string) []string {
@@ -953,7 +959,7 @@ func unbouncedRecipients(msg *email.Message, bounced []string) []string {
 	for _, address := range bounced {
 		seen[address] = struct{}{}
 	}
-	all := stringutils.NormalizeEmailList(
+	all := mailtext.NormalizeEmailList(
 		slices.Concat(msg.ToRecipients, msg.CCRecipients, msg.BCCRecipients),
 	)
 	remaining := make([]string, 0, len(all))
@@ -1195,9 +1201,9 @@ func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
 		realtimeinvalidation.PublishAfterCommit(ctx, s.realtime, s.l, realtimeinvalidation.ChangeOf(
 			permission.ResourceInvoice.String(),
 			entity,
-			invoice.RealtimeActionSendUpdated,
+			invoicerealtime.RealtimeActionSendUpdated,
 			permissionports.SystemAuditActor(),
-			invoice.NewRealtimeSnapshot(entity),
+			invoicerealtime.NewRealtimeSnapshot(entity),
 		))
 	}
 }

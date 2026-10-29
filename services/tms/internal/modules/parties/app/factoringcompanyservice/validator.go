@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -23,17 +25,16 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*factoringcompany.FactoringCompany]
+	validator tenantedvalidation.EntityValidator[*factoringcompany.FactoringCompany]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(
+	checker := keelcheck.NewChecker(
 		p.DB,
 		factoringcompanydb.FactoringCompaniesSchema(),
 	)
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*factoringcompany.FactoringCompany]().
+		validator: tenantedvalidation.NewBuilder[*factoringcompany.FactoringCompany]().
 			WithModelName("FactoringCompany").
 			WithUniquenessChecker(checker).
 			WithUniqueField(

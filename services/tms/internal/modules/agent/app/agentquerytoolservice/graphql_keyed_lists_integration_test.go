@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/performancereviewrepository"
@@ -31,8 +31,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workersafetyports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -102,39 +117,47 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{}, allArgs: includeClosed, defaultOpen: true,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status, completedAt := worker.ChecklistStatusOpen, (*int64)(nil)
+				status, completedAt := workerchecklist.ChecklistStatusOpen, (*int64)(nil)
 				if closed {
-					status, completedAt = worker.ChecklistStatusCompleted, &now
+					status, completedAt = workerchecklist.ChecklistStatusCompleted, &now
 				}
-				row, err := services.checklists.Create(ctx, &worker.WorkerChecklist{
+				row, err := services.checklists.Create(ctx, &workerchecklist.WorkerChecklist{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					Name: "Checklist " + label, Kind: worker.ChecklistKindOnboarding,
+					Name: "Checklist " + label, Kind: workerchecklist.ChecklistKindOnboarding,
 					Status: status, StartedAt: now, CompletedAt: completedAt,
-					Items: []*worker.WorkerChecklistItem{{
-						Label: "Sign the handbook", Kind: worker.ChecklistItemTask,
-						Required: true, Owner: worker.ChecklistOwnerHR,
-						Status: worker.ChecklistItemPending, Note: "ask " + label,
+					Items: []*workerchecklist.WorkerChecklistItem{{
+						Label: "Sign the handbook", Kind: workerchecklist.ChecklistItemTask,
+						Required: true, Owner: workerchecklist.ChecklistOwnerHR,
+						Status: workerchecklist.ChecklistItemPending, Note: "ask " + label,
 					}},
 				})
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.checklistService.ListForWorker(ctx, tenant, workerID, includeClosed)
+				rows, err := services.checklistService.ListForWorker(
+					ctx,
+					tenant,
+					workerID,
+					includeClosed,
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				manual, err := services.checklists.CreateTemplate(ctx, &worker.WorkerChecklistTemplate{
-					BusinessUnitID: bu, OrganizationID: org, Code: "M" + label, Name: "Manual " + label,
-					Kind: worker.ChecklistKindCustom, Trigger: worker.ChecklistTriggerManual,
-					Status: domaintypes.StatusActive,
-				})
+				manual, err := services.checklists.CreateTemplate(
+					ctx,
+					&workerchecklist.WorkerChecklistTemplate{
+						BusinessUnitID: bu, OrganizationID: org, Code: "M" + label, Name: "Manual " + label,
+						Kind: workerchecklist.ChecklistKindCustom, Trigger: workerchecklist.ChecklistTriggerManual,
+						Status: domaintypes.StatusActive,
+					},
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				if _, err = services.checklists.CreateTemplate(ctx, &worker.WorkerChecklistTemplate{
+				if _, err = services.checklists.CreateTemplate(ctx, &workerchecklist.WorkerChecklistTemplate{
 					BusinessUnitID: bu, OrganizationID: org, Code: "R" + label, Name: "Retired " + label,
-					Kind: worker.ChecklistKindCustom, Trigger: worker.ChecklistTriggerManual,
+					Kind: workerchecklist.ChecklistKindCustom, Trigger: workerchecklist.ChecklistTriggerManual,
 					Status: domaintypes.StatusInactive,
 				}); err != nil {
 					return pulid.Nil, err
@@ -147,19 +170,19 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{}, allArgs: includeClosed, defaultOpen: true,
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				course, err := services.training.CreateCourse(ctx, &worker.TrainingCourse{
+				course, err := services.training.CreateCourse(ctx, &workertraining.TrainingCourse{
 					BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.StatusActive,
-					Code: "C" + label, Name: "Course " + label, Category: worker.TrainingCategorySafety,
-					Delivery: worker.TrainingDeliveryOnline, DurationMinutes: 30,
+					Code: "C" + label, Name: "Course " + label, Category: workertraining.TrainingCategorySafety,
+					Delivery: workertraining.TrainingDeliveryOnline, DurationMinutes: 30,
 				})
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := worker.TrainingStatusAssigned
+				status := workertraining.TrainingStatusAssigned
 				if closed {
-					status = worker.TrainingStatusWaived
+					status = workertraining.TrainingStatusWaived
 				}
-				row, err := services.training.Create(ctx, &worker.WorkerTrainingRecord{
+				row, err := services.training.Create(ctx, &workertraining.WorkerTrainingRecord{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 					CourseID: course.ID, Status: status, AssignedAt: now,
 					WaivedReason: waivedReason(closed),
@@ -167,7 +190,12 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.trainingService.ListForWorker(ctx, tenant, workerID, includeClosed)
+				rows, err := services.trainingService.ListForWorker(
+					ctx,
+					tenant,
+					workerID,
+					includeClosed,
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -175,13 +203,16 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			tool: "worker_list_performance_reviews", key: "templates",
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, _ bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				template, err := services.reviews.CreateTemplate(ctx, reviewTemplate(tenant, "W"+label, domaintypes.StatusActive))
+				template, err := services.reviews.CreateTemplate(
+					ctx,
+					reviewTemplate(tenant, "W"+label, domaintypes.StatusActive),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				row, err := services.reviews.CreateReview(ctx, &worker.PerformanceReview{
+				row, err := services.reviews.CreateReview(ctx, &workerreview.PerformanceReview{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					TemplateID: template.ID, Status: worker.ReviewStatusDraft,
+					TemplateID: template.ID, Status: workerreview.ReviewStatusDraft,
 					Title: "Review " + label, PeriodStart: now - 86400*90, PeriodEnd: now,
 					Summary: "Steady " + label,
 				})
@@ -192,7 +223,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
-				active, err := services.reviews.CreateTemplate(ctx, reviewTemplate(tenant, "A"+label, domaintypes.StatusActive))
+				active, err := services.reviews.CreateTemplate(
+					ctx,
+					reviewTemplate(tenant, "A"+label, domaintypes.StatusActive),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
@@ -208,23 +242,26 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status := worker.InjuryCaseOpen
+				status := workerinjury.InjuryCaseOpen
 				if closed {
-					status = worker.InjuryCaseClosed
+					status = workerinjury.InjuryCaseClosed
 				}
 				caseNumber++
-				row, err := services.injuries.CreateInjury(ctx, &worker.WorkerInjury{
+				row, err := services.injuries.CreateInjury(ctx, &workerinjury.WorkerInjury{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 					CaseNumber: caseNumber, CaseYear: 2026, Status: status,
-					Classification: worker.CaseOtherRecordable, OccurredAt: now,
+					Classification: workerinjury.CaseOtherRecordable, OccurredAt: now,
 					Description: "Strained back lifting a tarp " + label, BodyPart: "Lower back",
 				})
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.injuryService.ListInjuries(ctx, &workerports.ListWorkerInjuriesRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.injuryService.ListInjuries(
+					ctx,
+					&workersafetyports.ListWorkerInjuriesRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -233,22 +270,25 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status := worker.DOTTestStatusScheduled
+				status := workerdot.DOTTestStatusScheduled
 				if closed {
-					status = worker.DOTTestStatusCancelled
+					status = workerdot.DOTTestStatusCancelled
 				}
-				row, err := services.tests.CreateTest(ctx, &worker.WorkerDOTTest{
+				row, err := services.tests.CreateTest(ctx, &workerdot.WorkerDOTTest{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					TestType: worker.DOTTestRandom, Substance: worker.DOTSubstanceDrug,
-					Status: status, Result: worker.DOTResultPending, IsDOT: true,
+					TestType: workerdot.DOTTestRandom, Substance: workerdot.DOTSubstanceDrug,
+					Status: status, Result: workerdot.DOTResultPending, IsDOT: true,
 					Reason: "Selected in the random draw " + label,
 				})
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.testService.ListTests(ctx, &workerports.ListWorkerDOTTestsRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.testService.ListTests(
+					ctx,
+					&workerdotports.ListWorkerDOTTestsRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -257,22 +297,25 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status, closedAt := worker.LeaveCaseApproved, (*int64)(nil)
+				status, closedAt := workerleave.LeaveCaseApproved, (*int64)(nil)
 				if closed {
-					status, closedAt = worker.LeaveCaseClosed, &now
+					status, closedAt = workerleave.LeaveCaseClosed, &now
 				}
-				row, err := services.leave.CreateCase(ctx, &worker.WorkerLeaveCase{
+				row, err := services.leave.CreateCase(ctx, &workerleave.WorkerLeaveCase{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
 					LeaveType: worker.LeaveTypeMedical, Status: status,
-					Frequency: worker.LeaveContinuous, Reason: "Knee surgery " + label,
+					Frequency: workerleave.LeaveContinuous, Reason: "Knee surgery " + label,
 					RequestedAt: now, StartsAt: now, DecidedAt: &now, ClosedAt: closedAt,
 				})
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.leaveService.ListCases(ctx, &workerports.ListLeaveCasesRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.leaveService.ListCases(
+					ctx,
+					&workerleaveports.ListLeaveCasesRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 		},
@@ -282,22 +325,25 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs:   map[string]any{"outstandingOnly": true}, allArgs: map[string]any{},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status, received := worker.VerificationRequested, (*int64)(nil)
+				status, received := employment.VerificationRequested, (*int64)(nil)
 				if closed {
-					status, received = worker.VerificationReceived, &now
+					status, received = employment.VerificationReceived, &now
 				}
-				row, err := services.dqf.CreateVerification(ctx, &worker.WorkerEmploymentVerification{
-					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					EmployerName: "Prior Freight " + label, WasDOTRegulated: true, Status: status,
-					Method: worker.VerificationByEmail, Findings: "No accidents reported " + label,
-					RequestedAt: &now, ResponseReceivedAt: received,
-					ContactPhone: "555-0100",
-				})
+				row, err := services.dqf.CreateVerification(
+					ctx,
+					&employment.WorkerEmploymentVerification{
+						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+						EmployerName: "Prior Freight " + label, WasDOTRegulated: true, Status: status,
+						Method: employment.VerificationByEmail, Findings: "No accidents reported " + label,
+						RequestedAt: &now, ResponseReceivedAt: received,
+						ContactPhone: "555-0100",
+					},
+				)
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
 				rows, err := services.dqfService.ListVerifications(ctx,
-					&workerports.ListEmploymentVerificationsRequest{
+					&workerdqfports.ListEmploymentVerificationsRequest{
 						TenantInfo: tenant, WorkerID: workerID, OutstandingOnly: !includeClosed,
 					})
 				return idsOf(rows, err)
@@ -310,39 +356,45 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			openArgs: map[string]any{"openOnly": true}, allArgs: map[string]any{"openOnly": false},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				status, closedAt := worker.SafetyEventStatusOpen, (*int64)(nil)
+				status, closedAt := workersafety.SafetyEventStatusOpen, (*int64)(nil)
 				if closed {
-					status, closedAt = worker.SafetyEventStatusClosed, &now
+					status, closedAt = workersafety.SafetyEventStatusClosed, &now
 				}
-				event, err := services.safety.CreateEvent(ctx, &worker.WorkerSafetyEvent{
+				event, err := services.safety.CreateEvent(ctx, &workersafety.WorkerSafetyEvent{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					Kind: worker.SafetyEventInspection, Severity: worker.SafetySeverityMinor,
+					Kind: workersafety.SafetyEventInspection, Severity: workersafety.SafetySeverityMinor,
 					Status: status, OccurredAt: now, Points: 2, ClosedAt: closedAt,
 					Description: "Level 2 at the Gary scale " + label,
 				})
 				if err != nil {
 					return pulid.Nil, err
 				}
-				_, err = services.safety.CreateViolation(ctx, &worker.WorkerSafetyViolation{
+				_, err = services.safety.CreateViolation(ctx, &fleetsafety.WorkerSafetyViolation{
 					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					SafetyEventID: event.ID, Basic: worker.BasicVehicleMaintenance,
+					SafetyEventID: event.ID, Basic: fleetsafety.BasicVehicleMaintenance,
 					Code: "393.9", Description: "Inoperable lamp " + label, SeverityWeight: 2,
 				})
 				return created(event, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeClosed bool) ([]string, error) {
-				rows, err := services.safetyService.ListEvents(ctx, &workerports.ListWorkerSafetyEventsRequest{
-					TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
-				})
+				rows, err := services.safetyService.ListEvents(
+					ctx,
+					&workersafetyports.ListWorkerSafetyEventsRequest{
+						TenantInfo: tenant, WorkerID: workerID, OpenOnly: !includeClosed,
+					},
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				row, err := services.safety.CreateRecognition(ctx, &worker.WorkerRecognition{
-					BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-					Kind: worker.RecognitionKindTenure, Title: "Ten years " + label,
-					OccurredAt: now, VisibleToWorker: true,
-				})
+				row, err := services.safety.CreateRecognition(
+					ctx,
+					&workerdiscipline.WorkerRecognition{
+						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+						Kind: workerdiscipline.RecognitionKindTenure, Title: "Ten years " + label,
+						OccurredAt: now, VisibleToWorker: true,
+					},
+				)
 				return created(row, err)
 			},
 		},
@@ -357,34 +409,46 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 			},
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, workerID pulid.ID, label string, closed bool) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "K"+label))
+				kind, err := services.credentials.CreateType(
+					ctx,
+					credentialType(bu, org, "K"+label),
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
 				issued, expires := now-86400*300, now+86400*10
-				status, archivedAt := worker.CredentialStatusActive, (*int64)(nil)
+				status, archivedAt := workercredential.CredentialStatusActive, (*int64)(nil)
 				if closed {
-					status, archivedAt = worker.CredentialStatusArchived, &now
+					status, archivedAt = workercredential.CredentialStatusArchived, &now
 				}
-				row, err := services.credentials.Create(ctx, &workerports.CreateWorkerCredentialRequest{
-					Entity: &worker.WorkerCredential{
-						BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
-						CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
-						IssuingAuthority: "IL", IssuedAt: &issued, ExpiresAt: &expires,
-						ArchivedAt: archivedAt, Notes: "Renewal booked " + label,
+				row, err := services.credentials.Create(
+					ctx,
+					&workercredentialports.CreateWorkerCredentialRequest{
+						Entity: &workercredential.WorkerCredential{
+							BusinessUnitID: bu, OrganizationID: org, WorkerID: workerID,
+							CredentialTypeID: kind.ID, Status: status, Number: "D-" + label,
+							IssuingAuthority: "IL", IssuedAt: &issued, ExpiresAt: &expires,
+							ArchivedAt: archivedAt, Notes: "Renewal booked " + label,
+						},
 					},
-				})
+				)
 				return created(row, err)
 			},
 			before: func(ctx context.Context, tenant pagination.TenantInfo, workerID pulid.ID, includeArchived bool) ([]string, error) {
-				rows, err := services.credentialService.List(ctx, &workercredentialservice.ListRequest{
-					TenantInfo: tenant, WorkerIDs: []pulid.ID{workerID}, IncludeArchived: includeArchived,
-				})
+				rows, err := services.credentialService.List(
+					ctx,
+					&workercredentialservice.ListRequest{
+						TenantInfo: tenant, WorkerIDs: []pulid.ID{workerID}, IncludeArchived: includeArchived,
+					},
+				)
 				return idsOf(rows, err)
 			},
 			templates: func(ctx context.Context, tenant *agentreadtest.Tenant, _ pulid.ID, label string) (pulid.ID, error) {
 				bu, org := tenantOf(tenant)
-				kind, err := services.credentials.CreateType(ctx, credentialType(bu, org, "T"+label))
+				kind, err := services.credentials.CreateType(
+					ctx,
+					credentialType(bu, org, "T"+label),
+				)
 				return created(kind, err)
 			},
 			activeTemplates: func(ctx context.Context, tenant pagination.TenantInfo) (int, error) {
@@ -396,10 +460,10 @@ func keyedListCases(services *agentreadServices) []keyedCase {
 }
 
 // credentialType is an active, required kind of credential a worker holds.
-func credentialType(bu, org pulid.ID, code string) *worker.WorkerCredentialType {
-	return &worker.WorkerCredentialType{
+func credentialType(bu, org pulid.ID, code string) *workercredential.WorkerCredentialType {
+	return &workercredential.WorkerCredentialType{
 		BusinessUnitID: bu, OrganizationID: org, Code: code, Name: "Credential " + code,
-		Category: worker.CredentialCategoryOther, Status: domaintypes.StatusActive,
+		Category: workercredential.CredentialCategoryOther, Status: domaintypes.StatusActive,
 		IsRequired: true, RenewalWindowDays: 30,
 	}
 }
@@ -412,11 +476,15 @@ func waivedReason(closed bool) string {
 	return ""
 }
 
-func reviewTemplate(tenant *agentreadtest.Tenant, code string, status domaintypes.Status) *worker.PerformanceReviewTemplate {
-	return &worker.PerformanceReviewTemplate{
+func reviewTemplate(
+	tenant *agentreadtest.Tenant,
+	code string,
+	status domaintypes.Status,
+) *workerreview.PerformanceReviewTemplate {
+	return &workerreview.PerformanceReviewTemplate{
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Code: code, Name: "Template " + code, Status: status,
-		Items: []worker.ReviewItem{{Key: "safety", Label: "Safety", Weight: 1}},
+		Items: []workerreview.ReviewItem{{Key: "safety", Label: "Safety", Weight: 1}},
 	}
 }
 
@@ -449,38 +517,62 @@ type agentreadServices struct {
 	dqf               dqfRepo
 	leaveService      *workerleaveservice.Service
 	dqfService        *workerdqfservice.Service
-	safety            workerports.WorkerSafetyRepository
+	safety            workersafetyports.WorkerSafetyRepository
 	safetyService     *workersafetyservice.Service
-	credentials       workerports.WorkerCredentialRepository
+	credentials       workercredentialports.WorkerCredentialRepository
 	credentialService *workercredentialservice.Service
 }
 
 type (
 	workerChecklistRepo = interface {
-		Create(context.Context, *worker.WorkerChecklist) (*worker.WorkerChecklist, error)
-		CreateTemplate(context.Context, *worker.WorkerChecklistTemplate) (*worker.WorkerChecklistTemplate, error)
+		Create(
+			context.Context,
+			*workerchecklist.WorkerChecklist,
+		) (*workerchecklist.WorkerChecklist, error)
+		CreateTemplate(
+			context.Context,
+			*workerchecklist.WorkerChecklistTemplate,
+		) (*workerchecklist.WorkerChecklistTemplate, error)
 	}
 	workerTrainingRepo = interface {
-		Create(context.Context, *worker.WorkerTrainingRecord) (*worker.WorkerTrainingRecord, error)
-		CreateCourse(context.Context, *worker.TrainingCourse) (*worker.TrainingCourse, error)
+		Create(
+			context.Context,
+			*workertraining.WorkerTrainingRecord,
+		) (*workertraining.WorkerTrainingRecord, error)
+		CreateCourse(
+			context.Context,
+			*workertraining.TrainingCourse,
+		) (*workertraining.TrainingCourse, error)
 	}
 	injuryRepo = interface {
-		CreateInjury(context.Context, *worker.WorkerInjury) (*worker.WorkerInjury, error)
+		CreateInjury(
+			context.Context,
+			*workerinjury.WorkerInjury,
+		) (*workerinjury.WorkerInjury, error)
 	}
 	dotTestRepo = interface {
-		CreateTest(context.Context, *worker.WorkerDOTTest) (*worker.WorkerDOTTest, error)
+		CreateTest(context.Context, *workerdot.WorkerDOTTest) (*workerdot.WorkerDOTTest, error)
 	}
 	leaveRepo = interface {
-		CreateCase(context.Context, *worker.WorkerLeaveCase) (*worker.WorkerLeaveCase, error)
+		CreateCase(
+			context.Context,
+			*workerleave.WorkerLeaveCase,
+		) (*workerleave.WorkerLeaveCase, error)
 	}
 	dqfRepo = interface {
 		CreateVerification(
-			context.Context, *worker.WorkerEmploymentVerification,
-		) (*worker.WorkerEmploymentVerification, error)
+			context.Context, *employment.WorkerEmploymentVerification,
+		) (*employment.WorkerEmploymentVerification, error)
 	}
 	reviewRepo = interface {
-		CreateReview(context.Context, *worker.PerformanceReview) (*worker.PerformanceReview, error)
-		CreateTemplate(context.Context, *worker.PerformanceReviewTemplate) (*worker.PerformanceReviewTemplate, error)
+		CreateReview(
+			context.Context,
+			*workerreview.PerformanceReview,
+		) (*workerreview.PerformanceReview, error)
+		CreateTemplate(
+			context.Context,
+			*workerreview.PerformanceReviewTemplate,
+		) (*workerreview.PerformanceReviewTemplate, error)
 	}
 )
 
@@ -531,7 +623,9 @@ func writeKeyedRows(
 	return out
 }
 
-func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
@@ -539,16 +633,24 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	logger := zap.NewNop()
 	_, resolvers := convertedListCases(conn, admin)
 	workers := workerrepository.New(workerrepository.Params{DB: conn, Logger: logger})
-	checklists := workerchecklistrepository.New(workerchecklistrepository.Params{DB: conn, Logger: logger})
-	training := workertrainingrepository.New(workertrainingrepository.Params{DB: conn, Logger: logger})
-	reviews := performancereviewrepository.New(performancereviewrepository.Params{DB: conn, Logger: logger})
+	checklists := workerchecklistrepository.New(
+		workerchecklistrepository.Params{DB: conn, Logger: logger},
+	)
+	training := workertrainingrepository.New(
+		workertrainingrepository.Params{DB: conn, Logger: logger},
+	)
+	reviews := performancereviewrepository.New(
+		performancereviewrepository.Params{DB: conn, Logger: logger},
+	)
 	services := &agentreadServices{
 		checklists: checklists, training: training, reviews: reviews,
 		checklistService: workerchecklistservice.New(workerchecklistservice.Params{
 			Logger: logger, Repo: checklists, WorkerRepo: workers,
 			CredentialRepo: workercredentialrepository.New(
 				workercredentialrepository.Params{DB: conn, Logger: logger}),
-			DocumentRepo: documentrepository.New(documentrepository.Params{DB: conn, Logger: logger}),
+			DocumentRepo: documentrepository.New(
+				documentrepository.Params{DB: conn, Logger: logger},
+			),
 		}),
 		trainingService: resolvers.WorkerTrainingService,
 		reviewService: performancereviewservice.New(performancereviewservice.Params{
@@ -556,7 +658,9 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 		}),
 	}
 	injuries := workerinjuryrepository.New(workerinjuryrepository.Params{DB: conn, Logger: logger})
-	tests := workerdrugalcoholrepository.New(workerdrugalcoholrepository.Params{DB: conn, Logger: logger})
+	tests := workerdrugalcoholrepository.New(
+		workerdrugalcoholrepository.Params{DB: conn, Logger: logger},
+	)
 	services.injuries, services.tests = injuries, tests
 	services.injuryService = workerinjuryservice.New(workerinjuryservice.Params{
 		Logger: logger, Repo: injuries, WorkerRepo: workers,
@@ -579,7 +683,9 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerDQFService = services.dqfService
 	resolvers.WorkerInjuryService = services.injuryService
 	resolvers.WorkerDrugAlcoholService = services.testService
-	services.safety = workersafetyrepository.New(workersafetyrepository.Params{DB: conn, Logger: logger})
+	services.safety = workersafetyrepository.New(
+		workersafetyrepository.Params{DB: conn, Logger: logger},
+	)
 	services.safetyService = workersafetyservice.New(workersafetyservice.Params{
 		Logger: logger, Repo: services.safety, WorkerRepo: workers,
 	})
@@ -592,8 +698,14 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 	resolvers.WorkerCredentialService = services.credentialService
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: resolvers},
+	)
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	theirs := agentreadtest.SeedTenant(t, admin, "B")
 
@@ -608,18 +720,26 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 				return callTool(t, ours.ctx, converted, actor, args)
 			}
 
-			t.Run("what a call reads by default, as the repository tool read it", func(t *testing.T) {
-				page := call(c.withWorker(ours.workerID, nil))
-				want := ours.all
-				if c.defaultOpen {
-					want = ours.open
-				}
-				before, beforeErr := c.before(ours.ctx, ours.info, ours.workerID, !c.defaultOpen)
-				require.NoError(t, beforeErr)
-				assert.ElementsMatch(t, want, itemIDs(page))
-				assert.ElementsMatch(t, before, itemIDs(page))
-				assert.NotContains(t, page, "hasMore", "an unpaged list never pages")
-			})
+			t.Run(
+				"what a call reads by default, as the repository tool read it",
+				func(t *testing.T) {
+					page := call(c.withWorker(ours.workerID, nil))
+					want := ours.all
+					if c.defaultOpen {
+						want = ours.open
+					}
+					before, beforeErr := c.before(
+						ours.ctx,
+						ours.info,
+						ours.workerID,
+						!c.defaultOpen,
+					)
+					require.NoError(t, beforeErr)
+					assert.ElementsMatch(t, want, itemIDs(page))
+					assert.ElementsMatch(t, before, itemIDs(page))
+					assert.NotContains(t, page, "hasMore", "an unpaged list never pages")
+				},
+			)
 
 			if c.openArgs != nil {
 				t.Run("the open records, and every record", func(t *testing.T) {
@@ -643,44 +763,63 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			})
 
 			if c.orgWide {
-				t.Run("no worker reads every worker's, and nothing of another tenant", func(t *testing.T) {
-					page := call(c.withWorker(pulid.Nil, c.allArgs))
-					assert.ElementsMatch(t, ours.all, itemIDs(page))
-					if c.keyed {
-						assert.NotContains(t, page, c.key, "a read keyed by the worker needs one")
-					}
-				})
+				t.Run(
+					"no worker reads every worker's, and nothing of another tenant",
+					func(t *testing.T) {
+						page := call(c.withWorker(pulid.Nil, c.allArgs))
+						assert.ElementsMatch(t, ours.all, itemIDs(page))
+						if c.keyed {
+							assert.NotContains(
+								t,
+								page,
+								c.key,
+								"a read keyed by the worker needs one",
+							)
+						}
+					},
+				)
 
 			}
 
 			if c.templates != nil {
-				t.Run("what is read alongside is ours alone, and only what it should be", func(t *testing.T) {
-					page := call(c.withWorker(ours.workerID, nil))
-					listed := page[c.key].([]any)
-					ids := make([]string, 0, len(listed))
-					for _, row := range listed {
-						ids = append(ids, row.(map[string]any)["id"].(string))
-					}
-					assert.Contains(t, ids, ours.template.String())
-					assert.NotContains(t, ids, other.template.String())
-					want := 1 + keyedTemplatesFor(c.tool)
-					if c.activeTemplates != nil {
-						var countErr error
-						want, countErr = c.activeTemplates(ours.ctx, ours.info)
-						require.NoError(t, countErr)
-					}
-					assert.Len(t, ids, want, "only the active ones")
-				})
+				t.Run(
+					"what is read alongside is ours alone, and only what it should be",
+					func(t *testing.T) {
+						page := call(c.withWorker(ours.workerID, nil))
+						listed := page[c.key].([]any)
+						ids := make([]string, 0, len(listed))
+						for _, row := range listed {
+							ids = append(ids, row.(map[string]any)["id"].(string))
+						}
+						assert.Contains(t, ids, ours.template.String())
+						assert.NotContains(t, ids, other.template.String())
+						want := 1 + keyedTemplatesFor(c.tool)
+						if c.activeTemplates != nil {
+							var countErr error
+							want, countErr = c.activeTemplates(ours.ctx, ours.info)
+							require.NoError(t, countErr)
+						}
+						assert.Len(t, ids, want, "only the active ones")
+					},
+				)
 			}
 
 			if c.openByDefaultUnscoped {
-				t.Run("no worker reads only the open records by default, and nothing of another tenant", func(t *testing.T) {
-					page := call(map[string]any{})
-					assert.ElementsMatch(t, ours.open, itemIDs(page))
-					if c.key != "" && !c.keyed {
-						assert.NotContains(t, page, c.key, "what is read beside one worker's needs one")
-					}
-				})
+				t.Run(
+					"no worker reads only the open records by default, and nothing of another tenant",
+					func(t *testing.T) {
+						page := call(map[string]any{})
+						assert.ElementsMatch(t, ours.open, itemIDs(page))
+						if c.key != "" && !c.keyed {
+							assert.NotContains(
+								t,
+								page,
+								c.key,
+								"what is read beside one worker's needs one",
+							)
+						}
+					},
+				)
 			}
 
 			if c.tool == "worker_list_credentials" {
@@ -712,54 +851,64 @@ func TestConvertedLists_KeyedListsReadWhatTheRepositoryToolsReadUnderRowLevelSec
 			}
 
 			if len(c.internal) > 0 {
-				t.Run("what is Internal reaches an agent at the default data access", func(t *testing.T) {
-					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
-						OrganizationID:    actor.OrganizationID,
-						BusinessUnitID:    actor.BusinessUnitID,
-						Actor:             actor,
-						Timezone:          "America/Chicago",
-						Params:            c.withWorker(ours.workerID, c.allArgs),
-						RunID:             pulid.MustNew("ar_"),
-						DataAccessCeiling: permission.SensitivityInternal,
-					})
-					require.NoError(t, queryErr)
-					items, _ := asMap(t, data)["items"].([]any)
-					require.Len(t, items, len(ours.all))
-					for _, item := range items {
-						for _, field := range c.internal {
-							assert.Contains(t, item.(map[string]any), field)
+				t.Run(
+					"what is Internal reaches an agent at the default data access",
+					func(t *testing.T) {
+						data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
+							OrganizationID:    actor.OrganizationID,
+							BusinessUnitID:    actor.BusinessUnitID,
+							Actor:             actor,
+							Timezone:          "America/Chicago",
+							Params:            c.withWorker(ours.workerID, c.allArgs),
+							RunID:             pulid.MustNew("ar_"),
+							DataAccessCeiling: permission.SensitivityInternal,
+						})
+						require.NoError(t, queryErr)
+						items, _ := asMap(t, data)["items"].([]any)
+						require.Len(t, items, len(ours.all))
+						for _, item := range items {
+							for _, field := range c.internal {
+								assert.Contains(t, item.(map[string]any), field)
+							}
 						}
-					}
-				})
+					},
+				)
 			}
 
 			if len(c.restricted) > 0 {
-				t.Run("what stays Restricted never reaches an agent at Internal", func(t *testing.T) {
-					data, queryErr := converted.Query(ours.ctx, &agentports.QueryToolParams{
-						OrganizationID:    actor.OrganizationID,
-						BusinessUnitID:    actor.BusinessUnitID,
-						Actor:             actor,
-						Timezone:          "America/Chicago",
-						Params:            c.withWorker(ours.workerID, c.allArgs),
-						RunID:             pulid.MustNew("ar_"),
-						DataAccessCeiling: permission.SensitivityInternal,
-					})
-					require.NoError(t, queryErr)
-					page := asMap(t, data)
-					withheld, _ := page["withheldByAccess"].([]any)
-					items, _ := page["items"].([]any)
-					require.Len(t, items, len(ours.all))
-					for _, field := range c.restricted {
-						assert.Contains(t, withheld, field)
-						for _, item := range items {
-							assert.NotContains(t, item.(map[string]any), field)
+				t.Run(
+					"what stays Restricted never reaches an agent at Internal",
+					func(t *testing.T) {
+						data, queryErr := converted.Query(ours.ctx, &agenttoolports.QueryToolParams{
+							OrganizationID:    actor.OrganizationID,
+							BusinessUnitID:    actor.BusinessUnitID,
+							Actor:             actor,
+							Timezone:          "America/Chicago",
+							Params:            c.withWorker(ours.workerID, c.allArgs),
+							RunID:             pulid.MustNew("ar_"),
+							DataAccessCeiling: permission.SensitivityInternal,
+						})
+						require.NoError(t, queryErr)
+						page := asMap(t, data)
+						withheld, _ := page["withheldByAccess"].([]any)
+						items, _ := page["items"].([]any)
+						require.Len(t, items, len(ours.all))
+						for _, field := range c.restricted {
+							assert.Contains(t, withheld, field)
+							for _, item := range items {
+								assert.NotContains(t, item.(map[string]any), field)
+							}
 						}
-					}
-				})
+					},
+				)
 			}
 
 			t.Run("a field the role cannot see stays withheld", func(t *testing.T) {
-				hidden, hiddenErr := agentquerytoolservice.ConvertedListTool(c.tool, public, &publicRole{})
+				hidden, hiddenErr := agentquerytoolservice.ConvertedListTool(
+					c.tool,
+					public,
+					&publicRole{},
+				)
 				require.NoError(t, hiddenErr)
 				page := callTool(t, ours.ctx, hidden, actor, c.withWorker(ours.workerID, c.allArgs))
 				withheld, _ := page["withheldByAccess"].([]any)

@@ -8,9 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentrunrepository"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent/agentruneventdb"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,7 +31,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentRunEventRepository {
+func New(p Params) agentruntimeports.AgentRunEventRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agentrunevent-repository"),
@@ -44,14 +45,18 @@ func New(p Params) agentports.AgentRunEventRepository {
 // absorbing it would leave a trajectory that reads plausibly and is wrong.
 func (r *repository) Append(
 	ctx context.Context,
-	req agentports.AppendAgentRunEventsRequest,
+	req agentruntimeports.AppendAgentRunEventsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(req.Events) == 0 {
 			return nil
 		}
 
-		if err := agentdb.AgentRunEvents.CreateMany(ctx, r.db.Keel(ctx), req.Events); err != nil {
+		if err := agentruneventdb.AgentRunEvents.CreateMany(
+			ctx,
+			r.db.Keel(ctx),
+			req.Events,
+		); err != nil {
 			r.l.Error("failed to append agent run events",
 				zap.Int("events", len(req.Events)),
 				zap.Error(err),
@@ -76,7 +81,7 @@ func (r *repository) NextSequence(
 	ownerID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		e := agentdb.AgentRunEvents
+		e := agentruneventdb.AgentRunEvents
 		highest, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), e.
 			Pick(keel.Int64Of(e.Sequence.Max()).Coalesce(0)).
 			Where(e.OwnerKind.Eq(ownerKind), e.OwnerID.Eq(ownerID)))
@@ -93,8 +98,10 @@ func (r *repository) NextSequence(
 	})
 }
 
-func listQuery(req *agentports.ListAgentRunEventsRequest) *keel.Query[*agent.AgentRunEvent] {
-	e := agentdb.AgentRunEvents
+func listQuery(
+	req *agentruntimeports.ListAgentRunEventsRequest,
+) *keel.Query[*agentrunevent.AgentRunEvent] {
+	e := agentruneventdb.AgentRunEvents
 
 	return e.Where(
 		e.OwnerKind.Eq(req.OwnerKind),
@@ -106,13 +113,13 @@ func listQuery(req *agentports.ListAgentRunEventsRequest) *keel.Query[*agent.Age
 
 func (r *repository) List(
 	ctx context.Context,
-	req agentports.ListAgentRunEventsRequest,
-) ([]*agent.AgentRunEvent, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
-		q := listQuery(&req)
+	req *agentruntimeports.ListAgentRunEventsRequest,
+) ([]*agentrunevent.AgentRunEvent, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentrunevent.AgentRunEvent, error) {
+		q := listQuery(req)
 
 		var (
-			events []*agent.AgentRunEvent
+			events []*agentrunevent.AgentRunEvent
 			err    error
 		)
 		if req.Limit > 0 {
@@ -135,13 +142,13 @@ func (r *repository) List(
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentRunEventConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+	req *agentruntimeports.ListAgentRunEventConnectionRequest,
+) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-			e := agentdb.AgentRunEvents
+		func(ctx context.Context) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
+			e := agentruneventdb.AgentRunEvents
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
@@ -149,7 +156,7 @@ func (r *repository) ListConnection(
 					keel.When(req.OwnerKind != "", e.OwnerKind.Eq(req.OwnerKind)),
 					ofReadableRuns(req.Reader),
 				),
-				&listquery.Request[agent.AgentRunEvent]{
+				&listquery.Request[agentrunevent.AgentRunEvent]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.Columns,
@@ -168,16 +175,16 @@ func (r *repository) ListConnection(
 
 // ofReadableRuns keeps, for a person, the events of the runs they may read;
 // an event an assistant turn owns is the turn's, and stays.
-func ofReadableRuns(reader agentports.RunReader) keel.Pred {
+func ofReadableRuns(reader agentruntimeports.RunReader) keel.Pred {
 	if !reader.ForPerson() {
 		return nil
 	}
 
-	e := agentdb.AgentRunEvents
+	e := agentruneventdb.AgentRunEvents
 	run := agentdb.AgentRuns.As("event_run")
 
 	return keel.Or(
-		e.OwnerKind.Ne(string(agentports.RunStepOwnerAgentRun)),
+		e.OwnerKind.Ne(string(agentruntimeports.RunStepOwnerAgentRun)),
 		keel.Exists(run.Where(
 			run.ID.EqCol(e.OwnerID),
 			agentrunrepository.ReadableBy(run, reader),
@@ -188,11 +195,11 @@ func ofReadableRuns(reader agentports.RunReader) keel.Pred {
 // Prune drops a batch of old events of the tenant on the context.
 func (r *repository) Prune(
 	ctx context.Context,
-	req agentports.PruneAgentRunEventsRequest,
+	req agentruntimeports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		e := agentdb.AgentRunEvents
-		doomed := agentdb.AgentRunEvents.As("doomed")
+		e := agentruneventdb.AgentRunEvents
+		doomed := agentruneventdb.AgentRunEvents.As("doomed")
 		n, err := e.Where(e.ID.InQuery(doomed.
 			Pick(doomed.ID).
 			Where(doomed.CreatedAt.Lt(req.Before)).

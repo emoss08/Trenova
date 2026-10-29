@@ -8,6 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/record"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -42,7 +43,7 @@ func fullShipment() *shipment.Shipment {
 	return &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "PRO-1",
-		Status:    shipment.StatusInTransit,
+		Status:    shipmentvocab.StatusInTransit,
 		Weight:    new(int64(12000)),
 		Pieces:    new(int64(10)),
 		Moves: []*shipment.ShipmentMove{{
@@ -50,8 +51,8 @@ func fullShipment() *shipment.Shipment {
 			Distance: new(812.0),
 			Stops: []*shipment.Stop{
 				{
-					Type:            shipment.StopTypePickup,
-					Status:          shipment.StopStatusCompleted,
+					Type:            shipmentvocab.StopTypePickup,
+					Status:          shipmentvocab.StopStatusCompleted,
 					ActualArrival:   &arrived,
 					ActualDeparture: &departed,
 					Location: &location.Location{
@@ -62,8 +63,8 @@ func fullShipment() *shipment.Shipment {
 					},
 				},
 				{
-					Type:   shipment.StopTypeDelivery,
-					Status: shipment.StopStatusNew,
+					Type:   shipmentvocab.StopTypeDelivery,
+					Status: shipmentvocab.StopStatusNew,
 					Location: &location.Location{
 						City:       "Chicago",
 						PostalCode: "60601",
@@ -78,7 +79,10 @@ func fullShipment() *shipment.Shipment {
 			LengthFeet: new(4.0),
 			WidthFeet:  new(4.0),
 			HeightFeet: new(5.0),
-			Commodity:  &commodity.Commodity{Name: "Paint", FreightClass: commodity.FreightClass("Class70")},
+			Commodity: &commodity.Commodity{
+				Name:         "Paint",
+				FreightClass: commodity.FreightClass("Class70"),
+			},
 		}},
 	}
 }
@@ -181,7 +185,11 @@ func TestBuildDecodesInTheModule(t *testing.T) {
 		Origin:       record.PlaceOf(entity.ShipperStop()),
 		Destination:  record.PlaceOf(entity.DeliveryStop()),
 		DistanceUnit: record.DistanceMiles,
-		Rating:       record.Rating{At: time.Unix(1_772_000_000, 0).UTC(), Mode: record.ModeSell, Currency: "USD"},
+		Rating: record.Rating{
+			At:       time.Unix(1_772_000_000, 0).UTC(),
+			Mode:     record.ModeSell,
+			Currency: "USD",
+		},
 	})
 	require.NoError(t, err)
 

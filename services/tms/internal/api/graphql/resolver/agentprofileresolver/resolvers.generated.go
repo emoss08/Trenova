@@ -3,12 +3,12 @@
 package agentprofileresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	agentprofileports "github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AgentProfileService agentprofileports.Service
 }
 

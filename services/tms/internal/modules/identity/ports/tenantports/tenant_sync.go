@@ -3,6 +3,7 @@ package tenantports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/provisioning"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -23,6 +24,6 @@ type TenantSyncRepository interface {
 type TenantProvisioningRepository interface {
 	UpsertProvisioningSnapshot(
 		ctx context.Context,
-		req *tenant.ProvisioningRequest,
-	) (*tenant.ProvisioningResult, error)
+		req *provisioning.ProvisioningRequest,
+	) (*provisioning.ProvisioningResult, error)
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -113,8 +114,8 @@ func (rc *RateContext) Weekday() int {
 }
 
 // MatchFacts projects the context onto the values a rule is checked against.
-func (rc *RateContext) MatchFacts() *rateagreement.MatchFacts {
-	return &rateagreement.MatchFacts{
+func (rc *RateContext) MatchFacts() *rateagreementmatch.MatchFacts {
+	return &rateagreementmatch.MatchFacts{
 		RatingDate:          rc.AsOf,
 		Weekday:             rc.Weekday(),
 		ServiceTypeID:       rc.ServiceTypeID,

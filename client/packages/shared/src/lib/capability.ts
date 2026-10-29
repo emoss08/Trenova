@@ -104,7 +104,7 @@ export function isFieldRequired(
  * Whether a persisted move may be removed.
  *
  * Mirrors `moveRemovalRuleFor` in
- * `services/tms/internal/modules/operations/app/shipmentservice/capability_policy.go`:
+ * `services/tms/internal/modules/operations/app/shipmentvalidator/capability_policy.go`:
  * the profile's `dispatch.moveRemoval` rule decides whenever it is present, and
  * the organization's `allowMoveRemovals` flag is a fallback for profiles that
  * carry no such rule.

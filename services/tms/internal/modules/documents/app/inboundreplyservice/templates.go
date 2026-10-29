@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -81,7 +81,7 @@ func (s *Service) UpdateTemplate(
 	ctx context.Context,
 	req *UpdateTemplateRequest,
 ) (*triage.ReplyTemplate, error) {
-	entity, err := s.templates.GetByID(ctx, inboundmessageports.GetTriageReplyTemplateRequest{
+	entity, err := s.templates.GetByID(ctx, inboundreplyports.GetTriageReplyTemplateRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -109,14 +109,14 @@ func (s *Service) DeleteTemplate(
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
 ) error {
-	return s.templates.Delete(ctx, inboundmessageports.GetTriageReplyTemplateRequest{
+	return s.templates.Delete(ctx, inboundreplyports.GetTriageReplyTemplateRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
 }
 
 func (s *Service) RenderTemplate(ctx context.Context, req *RenderTemplateRequest) (string, error) {
-	template, err := s.templates.GetByID(ctx, inboundmessageports.GetTriageReplyTemplateRequest{
+	template, err := s.templates.GetByID(ctx, inboundreplyports.GetTriageReplyTemplateRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})

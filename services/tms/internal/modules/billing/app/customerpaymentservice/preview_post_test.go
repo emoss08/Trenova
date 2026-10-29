@@ -2,11 +2,6 @@ package customerpaymentservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -15,9 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -58,10 +58,10 @@ func TestPreviewPostAndApply_IsWhatPostAndApplyRecords(t *testing.T) {
 	accountingRepo := tenantportsmock.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
-		Return(&tenant.AccountingControl{
-			AccountingBasis:               tenant.AccountingBasisAccrual,
-			RevenueRecognitionPolicy:      tenant.RevenueRecognitionOnInvoicePost,
-			JournalPostingMode:            tenant.JournalPostingModeAutomatic,
+		Return(&accountingcontrol.AccountingControl{
+			AccountingBasis:               accountingcontrol.AccountingBasisAccrual,
+			RevenueRecognitionPolicy:      accountingcontrol.RevenueRecognitionOnInvoicePost,
+			JournalPostingMode:            accountingcontrol.JournalPostingModeAutomatic,
 			DefaultCashAccountID:          pulid.MustNew("gla_"),
 			DefaultUnappliedCashAccountID: pulid.MustNew("gla_"),
 			DefaultARAccountID:            pulid.MustNew("gla_"),

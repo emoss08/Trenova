@@ -3,7 +3,7 @@ package watchtower
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -59,7 +59,7 @@ type Deadline struct {
 }
 
 type RecordRef struct {
-	Kind  permission.RecordKind
+	Kind  recordkind.Kind
 	Label string
 }
 

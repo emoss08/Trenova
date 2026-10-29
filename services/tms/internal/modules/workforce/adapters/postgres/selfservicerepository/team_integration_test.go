@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange/profilechangedb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/selfserviceports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -27,16 +28,16 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	ctx = data.Ctx(ctx)
 
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		err := workerdb.WorkerProfileChangeRequests.Create(
+		err := profilechangedb.WorkerProfileChangeRequests.Create(
 			ctx,
 			db,
-			&worker.WorkerProfileChangeRequest{
+			&profilechange.WorkerProfileChangeRequest{
 				ID:             pulid.MustNew("wpcr_"),
 				OrganizationID: data.Organization.ID,
 				BusinessUnitID: data.BusinessUnit.ID,
 				WorkerID:       wrk.ID,
-				Status:         worker.ProfileChangePending,
-				Changes:        []worker.FieldChange{},
+				Status:         profilechange.ProfileChangePending,
+				Changes:        []profilechange.FieldChange{},
 				SubmittedAt:    1_700_000_000,
 			},
 		)
@@ -44,14 +45,17 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	}
 
 	workers := func(managerIDs []pulid.ID) []pulid.ID {
-		requests, err := repo.ListChangeRequests(ctx, &workerports.ListProfileChangeRequestsRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  data.Organization.ID,
-				BuID:   data.BusinessUnit.ID,
-				UserID: team.Manager.ID,
+		requests, err := repo.ListChangeRequests(
+			ctx,
+			&selfserviceports.ListProfileChangeRequestsRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID:  data.Organization.ID,
+					BuID:   data.BusinessUnit.ID,
+					UserID: team.Manager.ID,
+				},
+				ManagerIDs: managerIDs,
 			},
-			ManagerIDs: managerIDs,
-		})
+		)
 		require.NoError(t, err)
 		out := make([]pulid.ID, 0, len(requests))
 		for _, request := range requests {

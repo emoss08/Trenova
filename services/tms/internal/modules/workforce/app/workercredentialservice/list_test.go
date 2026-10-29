@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -12,10 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (h *harness) hold(typ *worker.WorkerCredentialType, expiry int64) *worker.WorkerCredential {
+func (h *harness) hold(
+	typ *workercredential.WorkerCredentialType,
+	expiry int64,
+) *workercredential.WorkerCredential {
 	credential := h.credential(typ, expiry)
 	credential.ID = pulid.MustNew("wcr_")
-	credential.Status = worker.CredentialStatusActive
+	credential.Status = workercredential.CredentialStatusActive
 	h.repo.credentials[credential.ID] = credential
 
 	return credential

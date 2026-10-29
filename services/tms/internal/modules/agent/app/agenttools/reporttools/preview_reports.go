@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel/analytics/ir"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
@@ -18,12 +20,12 @@ import (
 )
 
 var reportViewLabels = map[string]string{
-	common.FieldSource:        "Reports on",
-	"columns":                 "Columns",
-	"filters":                 "Filter conditions",
-	"charts":                  "Charts",
-	"rowLimit":                "Row limit",
-	common.FieldDefaultFormat: "Download format",
+	changepreview.FieldSource:        "Reports on",
+	"columns":                        "Columns",
+	"filters":                        "Filter conditions",
+	"charts":                         "Charts",
+	"rowLimit":                       "Row limit",
+	changepreview.FieldDefaultFormat: "Download format",
 }
 
 type reportDefinitionView struct {
@@ -118,7 +120,7 @@ func reportRecord(entity *report.ReportDefinition) toolpreview.Record {
 		Resource: permission.ResourceReport,
 		ID:       entity.ID,
 		Label:    entity.Name,
-		Version:  common.PreviewVersion(entity.Version),
+		Version:  changepreview.PreviewVersion(entity.Version),
 	}
 }
 
@@ -132,8 +134,8 @@ func reportAudience(visibility report.Visibility) string {
 
 func (t *CreateReportTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	save, err := t.prepare(params)
 	if err != nil {
 		return nil, err
@@ -160,20 +162,20 @@ func (t *CreateReportTool) Preview(
 func warnUnsaveableReport(
 	ctx context.Context,
 	reports reportDefinitionWriter,
-	preview *agent.ToolPreview,
+	preview *agentpreview.ToolPreview,
 	save *reporting.SaveDefinitionRequest,
-) (*agent.ToolPreview, error) {
+) (*agentpreview.ToolPreview, error) {
 	if save.Definition == nil {
 		return preview, nil
 	}
 
-	return common.WarnRefusal(preview, reports.ValidateDefinition(ctx, save))
+	return changepreview.WarnRefusal(preview, reports.ValidateDefinition(ctx, save))
 }
 
 func (t *UpdateReportTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
 	save, existing, err := t.prepare(ctx, params)
 	if err != nil {
 		return nil, err
@@ -201,9 +203,9 @@ func (t *UpdateReportTool) Preview(
 }
 
 func (t *ForkReportTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*reporting.ForkCannedRequest, *canned.Entry, error) {
-	key, err := common.RequireString(params.Params, "reportKey")
+	key, err := toolparams.RequireString(params.Params, "reportKey")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -218,21 +220,21 @@ func (t *ForkReportTool) request(
 	}
 
 	return &reporting.ForkCannedRequest{
-		Request:   reportingRequestFrom(*params),
+		Request:   reportingRequestFrom(params),
 		CannedKey: key,
-		Name:      strings.TrimSpace(common.OptionalString(params.Params, paramReportName)),
+		Name:      strings.TrimSpace(toolparams.OptionalString(params.Params, paramReportName)),
 	}, entry, nil
 }
 
 func (t *ForkReportTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	request, entry, err := t.request(&params)
+	request, entry, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}

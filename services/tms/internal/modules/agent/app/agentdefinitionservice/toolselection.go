@@ -9,8 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -23,8 +25,8 @@ func (e extensionState) offers(name string) bool {
 type toolSelection struct {
 	definition *agentdefinition.Definition
 	previous   *agentdefinition.Definition
-	actions    agentports.AgentToolRegistry
-	queries    agentports.AgentQueryToolRegistry
+	actions    agenttoolports.AgentToolRegistry
+	queries    agenttoolports.AgentQueryToolRegistry
 	extensions extensionState
 }
 
@@ -66,7 +68,7 @@ func validateToolSelection(selection toolSelection, multiErr *errortypes.MultiEr
 			continue
 		}
 		policy := tool.Policy()
-		if limit := agenttoolpolicy.Promotable(policy); tier.Above(limit) {
+		if limit := agenttoolpolicy.Promotable(&policy); tier.Above(limit) {
 			multiErr.Add(
 				fmt.Sprintf("toolTiers.%s", name),
 				errortypes.ErrInvalid,
@@ -81,8 +83,8 @@ func (s toolSelection) previouslyHeld(name string) bool {
 }
 
 func buildToolCatalog(
-	actions agentports.AgentToolRegistry,
-	queries agentports.AgentQueryToolRegistry,
+	actions agenttoolports.AgentToolRegistry,
+	queries agenttoolports.AgentQueryToolRegistry,
 	extensions extensionState,
 ) []agentdefinitionports.ToolCatalogEntry {
 	queryTools := queries.All()
@@ -122,7 +124,7 @@ type catalogTool interface {
 	Name() string
 	Description() string
 	ParamSchema() map[string]any
-	Policy() agentports.ToolPolicy
+	Policy() agenttoolports.ToolPolicy
 }
 
 func (e extensionState) entry(
@@ -156,12 +158,12 @@ func catalogEntry(
 		Operation:   policy.Operation,
 		Reversible:  policy.Reversible,
 		Core:        agentdefinition.IsCoreTool(tool.Name()),
-		Effect:      agentports.EffectOf(tool),
+		Effect:      agenttoolports.EffectOf(tool),
 	}
 	entry.Prerequisites = prerequisitesOf(tool)
 	if kind == agentdefinitionports.ToolCatalogKindAction {
 		entry.DefaultAutonomyTier = policy.DefaultTier
-		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(policy)
+		entry.MaxAutonomyTier = agenttoolpolicy.Promotable(&policy)
 	}
 
 	return entry
@@ -171,7 +173,7 @@ func catalogEntry(
 // that can name prerequisites and names none returns nil, which the client,
 // reading a list, refused.
 func prerequisitesOf(tool any) []string {
-	if dependent, ok := tool.(agentports.PrerequisiteTool); ok {
+	if dependent, ok := tool.(agenttoolports.PrerequisiteTool); ok {
 		if prerequisites := dependent.Prerequisites(); prerequisites != nil {
 			return prerequisites
 		}
@@ -181,11 +183,11 @@ func prerequisitesOf(tool any) []string {
 }
 
 func registeredStarterTools(
-	template agentdefinition.Template,
-	actions agentports.AgentToolRegistry,
-	queries agentports.AgentQueryToolRegistry,
+	template agenttemplate.Template,
+	actions agenttoolports.AgentToolRegistry,
+	queries agenttoolports.AgentQueryToolRegistry,
 ) []string {
-	starters := template.StarterTools()
+	starters := agentpreset.StarterTools(template)
 	tools := make([]string, 0, len(starters))
 	for _, name := range starters {
 		if _, ok := queries.Get(name); ok {

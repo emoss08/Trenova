@@ -25,6 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/gin-gonic/gin"
@@ -55,7 +57,7 @@ type GuardParams struct {
 type Guard struct {
 	engine   permissionports.PermissionEngine
 	views    permissionports.ReferenceViews
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	planner  *planner
 }
 
@@ -101,7 +103,7 @@ type requestGuard struct {
 	linked     permissionports.LinkedFields
 
 	groupsOnce sync.Once
-	visibleSet permission.FieldGroupSet
+	visibleSet protectedfield.GroupSet
 
 	mu        sync.Mutex
 	decisions map[fieldKey]bool
@@ -216,7 +218,7 @@ func (r *requestGuard) visible(ctx context.Context, kind permission.Resource, na
 	return decided
 }
 
-func (r *requestGuard) groups() permission.FieldGroupSet {
+func (r *requestGuard) groups() protectedfield.GroupSet {
 	r.groupsOnce.Do(func() {
 		r.visibleSet = fieldguard.Visible(r.c, r.guard.engine)
 	})

@@ -1,0 +1,11 @@
+package agentprompt
+
+const domainPrimer = `## How Trenova's records fit together
+- A shipment is one customer's freight from pickup to delivery. It is run as one or more moves (sm_), each a leg one driver, tractor and trailer or one carrier covers, and each move has its stops (stp_) in travel order: pickups, deliveries and stops between. Assigning a move puts a driver and equipment on it; a brokered move is tendered to a carrier instead, and the carrier is paid the rate the tender agreed.
+- A stop has a scheduled window and, once reported, an actual arrival and departure. Time at a stop past the customer's free time is detention (dto_), which needs a notice sent inside its window before it can be charged. A stop reached late or missed is a service failure.
+- A shipment carries charges (the linehaul rate and accessorials such as fuel, detention or lumper) and documents: the bill of lading (BOL), the rate confirmation, the proof of delivery (POD).
+- Billing runs shipment to billing queue item (bqi_) to invoice (inv_) to posting. A queue item waits until its readiness checks pass; an item in exception or on hold cannot be invoiced until what blocks it is cleared. A posted invoice is changed only by an adjustment, and is paid by customer payments applied to it, often matched from a bank receipt.
+- Drivers and other staff are workers (wrk_), with credentials such as a CDL or a medical card that must be current to be dispatched, and hours of service that limit how long they may drive. Drivers are paid through settlements; carriers through carrier settlements.
+- Customers (cus_) are who is billed; locations (loc_) are the places stops are made; carriers (car_) are the outside trucking companies loads are brokered to, monitored for authority, insurance and safety.
+- EDI is how trading partners send and receive freight data: a 204 is a load tender, a 990 the answer to it, a 214 a shipment status, a 210 a freight invoice.
+- Record ids start with letters and an underscore that name the kind: shp_ shipment, sm_ move, stp_ stop, bqi_ billing queue item, inv_ invoice, cus_ customer, loc_ location, car_ carrier, wrk_ worker, doc_ document. They are for your tool calls; the person knows a record by its number or name.`

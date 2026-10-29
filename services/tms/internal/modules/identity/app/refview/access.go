@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 )
 
@@ -163,11 +164,14 @@ func (a AgentAccess) Ceiling(
 // how an administrator previews a screen as a role, and it never reads a
 // record.
 type RoleAccess struct {
-	registry *permission.Registry
-	grants   permission.RoleGrants
+	registry *permissioncatalog.Registry
+	grants   permissioncatalog.RoleGrants
 }
 
-func NewRoleAccess(registry *permission.Registry, grants permission.RoleGrants) RoleAccess {
+func NewRoleAccess(
+	registry *permissioncatalog.Registry,
+	grants permissioncatalog.RoleGrants,
+) RoleAccess {
 	if registry == nil {
 		registry = fieldsensitivity.DefaultRegistry()
 	}

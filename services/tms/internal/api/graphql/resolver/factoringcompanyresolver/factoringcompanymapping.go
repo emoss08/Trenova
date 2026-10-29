@@ -3,16 +3,15 @@ package factoringcompanyresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func factoringCompanyColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -30,7 +29,7 @@ func factoringCompanyColumns(ctx context.Context, nodePathPrefix string) []strin
 func factoringCompanyConnectionToModel(
 	result *pagination.CursorListResult[*factoringcompany.FactoringCompany],
 ) (*gqlmodel.FactoringCompanyConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *factoringcompany.FactoringCompany, cursor string) *gqlmodel.FactoringCompanyEdge {
 			return &gqlmodel.FactoringCompanyEdge{

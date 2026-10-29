@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -25,7 +25,7 @@ func tuneUpModel(view *aituneupports.AITuneUpView) *gqlmodel.AITuneUp {
 		Version:       int(tuneUp.Version),
 	}
 	if out.Evidence.Tasks == nil {
-		out.Evidence.Tasks = []aiprovider.Task{}
+		out.Evidence.Tasks = []aitask.Task{}
 	}
 	if tuneUp.ToolName != "" {
 		toolName := tuneUp.ToolName

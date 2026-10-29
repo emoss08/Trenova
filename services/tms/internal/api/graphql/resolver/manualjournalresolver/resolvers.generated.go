@@ -3,13 +3,13 @@
 package manualjournalresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	ManualJournalService *manualjournalservice.Service
 	JournalCards         *journalcardservice.Service
 }

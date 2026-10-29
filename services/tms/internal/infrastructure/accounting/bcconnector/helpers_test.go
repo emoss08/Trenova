@@ -14,9 +14,13 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
+	"github.com/emoss08/trenova/internal/infrastructure/config/accountingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
 	"github.com/emoss08/trenova/shared/restx"
 	"github.com/stretchr/testify/assert"
@@ -170,23 +174,21 @@ func readFixture(t *testing.T, name string) string {
 	return string(data)
 }
 
-func newProvider(t *testing.T, cfg config.BusinessCentralConfig) *Provider {
+func newProvider(t *testing.T, cfg accountingconfig.BusinessCentralConfig) *Provider {
 	t.Helper()
 	provider, err := New(Params{
-		Config: &config.Config{
-			App:        config.AppConfig{WebBaseURL: "https://app.example.com"},
-			Accounting: config.AccountingConfig{BusinessCentral: cfg},
-		},
-		Logger: zap.NewNop(),
+		AccountingConfig: &accountingconfig.Config{BusinessCentral: cfg},
+		AppConfig:        &appconfig.Config{WebBaseURL: "https://app.example.com"},
+		Logger:           zap.NewNop(),
 	})
 	require.NoError(t, err)
 	return provider
 }
 
-func tenantApp() *accountingsyncports.AccountingApp {
-	return &accountingsyncports.AccountingApp{
-		Source:       accountingsync.AppSourceTenant,
-		Environment:  accountingsync.AppEnvironmentProduction,
+func tenantApp() *accountingconnectorports.AccountingApp {
+	return &accountingconnectorports.AccountingApp{
+		Source:       accountingconnection.AppSourceTenant,
+		Environment:  accountingprovider.AppEnvironmentProduction,
 		ClientID:     "tenant-id",
 		ClientSecret: "tenant-secret",
 	}
@@ -197,7 +199,7 @@ func testConnector(t *testing.T, fake *fakeBC) *Connector {
 	server := httptest.NewServer(fake.handler(t))
 	t.Cleanup(server.Close)
 
-	provider := newProvider(t, config.BusinessCentralConfig{})
+	provider := newProvider(t, accountingconfig.BusinessCentralConfig{})
 	provider.oauthOpts = []businesscentral.Option{
 		businesscentral.WithLoginURL(server.URL),
 		businesscentral.WithHTTPClient(server.Client()),
@@ -205,12 +207,17 @@ func testConnector(t *testing.T, fake *fakeBC) *Connector {
 	provider.now = func() time.Time { return testNow }
 	conn, err := provider.bind(tenantApp())
 	require.NoError(t, err)
-	conn.httpClient = &http.Client{Transport: provider.gate.transport(server.Client().Transport)}
-	conn.apiOpts = []businesscentral.Option{
-		businesscentral.WithBaseURL(server.URL),
-		businesscentral.WithWebURL(testWebURL),
-		businesscentral.WithRetry(restx.RetryConfig{}),
-	}
+	*conn.Session = *bcsession.NewSession(bcsession.SessionParams{
+		APIOpts: []businesscentral.Option{
+			businesscentral.WithBaseURL(server.URL),
+			businesscentral.WithWebURL(testWebURL),
+			businesscentral.WithRetry(restx.RetryConfig{}),
+		},
+		HTTPClient: &http.Client{Transport: provider.gate.transport(server.Client().Transport)},
+		Locks:      provider.locks,
+		Setups:     provider.setups,
+		Now:        provider.now,
+	})
 	return conn
 }
 
@@ -222,8 +229,8 @@ func testRef() businesscentral.CompanyRef {
 	}
 }
 
-func testAuth() accountingsyncports.AccountingDocumentAuth {
-	return accountingsyncports.AccountingDocumentAuth{
+func testAuth() accountingconnectorports.AccountingDocumentAuth {
+	return accountingconnectorports.AccountingDocumentAuth{
 		RealmID:     testRef().String(),
 		AccessToken: "access-token",
 		CompanyName: "CRONUS USA, Inc.",

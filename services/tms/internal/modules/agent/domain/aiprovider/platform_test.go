@@ -3,7 +3,9 @@ package aiprovider_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiplatform"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +20,10 @@ const serviceAccountJSON = `{
   "token_uri": "https://oauth2.googleapis.com/token"
 }`
 
-func platformProvider(platform aiprovider.Platform, settings aiprovider.PlatformSettings) *aiprovider.Provider {
+func platformProvider(
+	platform aiplatform.Platform,
+	settings aiplatform.PlatformSettings,
+) *aiprovider.Provider {
 	p := validProvider()
 	p.Platform = platform
 	p.PlatformSettings = &settings
@@ -44,58 +49,58 @@ func TestPlatform_EachPlatformIsReachedAtItsOwnAddress(t *testing.T) {
 
 	for _, tc := range []struct {
 		name     string
-		platform aiprovider.Platform
-		settings aiprovider.PlatformSettings
+		platform aiplatform.Platform
+		settings aiplatform.PlatformSettings
 		baseURL  string
 		want     string
 	}{
 		{
 			name:     "bedrock",
-			platform: aiprovider.PlatformBedrock,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE"},
+			platform: aiplatform.PlatformBedrock,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE"},
 			want:     "https://bedrock-mantle.us-east-1.api.aws/anthropic",
 		},
 		{
 			name:     "bedrock private endpoint",
-			platform: aiprovider.PlatformBedrock,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "eu-west-1"},
+			platform: aiplatform.PlatformBedrock,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "eu-west-1"},
 			baseURL:  "https://vpce-0abc.bedrock-mantle.eu-west-1.vpce.amazonaws.com/anthropic/",
 			want:     "https://vpce-0abc.bedrock-mantle.eu-west-1.vpce.amazonaws.com/anthropic",
 		},
 		{
 			name:     "claude platform on aws",
-			platform: aiprovider.PlatformClaudeAWS,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC"},
+			platform: aiplatform.PlatformClaudeAWS,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "us-west-2", WorkspaceID: "wrkspc_01ABC"},
 			want:     "https://aws-external-anthropic.us-west-2.api.aws",
 		},
 		{
 			name:     "vertex regional",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops"},
 			want:     "https://us-east5-aiplatform.googleapis.com",
 		},
 		{
 			name:     "vertex global",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, Region: "global", ProjectID: "freight-ops"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, Region: "global", ProjectID: "freight-ops"},
 			want:     "https://aiplatform.googleapis.com",
 		},
 		{
 			name:     "vertex multi-region",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, Region: "eu", ProjectID: "freight-ops"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, Region: "eu", ProjectID: "freight-ops"},
 			want:     "https://aiplatform.eu.rep.googleapis.com",
 		},
 		{
 			name:     "claude platform on google cloud",
-			platform: aiprovider.PlatformClaudeGoogleCloud,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "wrkspc_01ABC"},
+			platform: aiplatform.PlatformClaudeGoogleCloud,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "wrkspc_01ABC"},
 			want:     "https://claude.googleapis.com/v1alpha/projects/freight-ops/locations/global/workspaces/wrkspc_01ABC/invoke",
 		},
 		{
 			name:     "foundry",
-			platform: aiprovider.PlatformFoundry,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Resource: "trenova-ai"},
+			platform: aiplatform.PlatformFoundry,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Resource: "trenova-ai"},
 			want:     "https://trenova-ai.services.ai.azure.com/anthropic",
 		},
 	} {
@@ -121,50 +126,50 @@ func TestPlatform_RefusesSettingsThatWouldChangeTheAddress(t *testing.T) {
 
 	for _, tc := range []struct {
 		name     string
-		platform aiprovider.Platform
-		settings aiprovider.PlatformSettings
+		platform aiplatform.Platform
+		settings aiplatform.PlatformSettings
 		field    string
 	}{
 		{
 			name:     "region with a host",
-			platform: aiprovider.PlatformBedrock,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1.evil.example"},
+			platform: aiplatform.PlatformBedrock,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1.evil.example"},
 			field:    "platformSettings.region",
 		},
 		{
 			name:     "region with a path",
-			platform: aiprovider.PlatformClaudeAWS,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1/x", WorkspaceID: "w"},
+			platform: aiplatform.PlatformClaudeAWS,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1/x", WorkspaceID: "w"},
 			field:    "platformSettings.region",
 		},
 		{
 			name:     "vertex region with an at sign",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, Region: "evil.example@us-east5", ProjectID: "freight-ops"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, Region: "evil.example@us-east5", ProjectID: "freight-ops"},
 			field:    "platformSettings.region",
 		},
 		{
 			name:     "project with a slash",
-			platform: aiprovider.PlatformClaudeGoogleCloud,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, ProjectID: "a/../../b", WorkspaceID: "w"},
+			platform: aiplatform.PlatformClaudeGoogleCloud,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, ProjectID: "a/../../b", WorkspaceID: "w"},
 			field:    "platformSettings.projectId",
 		},
 		{
 			name:     "workspace with a query",
-			platform: aiprovider.PlatformClaudeGoogleCloud,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "w?x=1"},
+			platform: aiplatform.PlatformClaudeGoogleCloud,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, ProjectID: "freight-ops", WorkspaceID: "w?x=1"},
 			field:    "platformSettings.workspaceId",
 		},
 		{
 			name:     "foundry resource with a dot",
-			platform: aiprovider.PlatformFoundry,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Resource: "evil.example"},
+			platform: aiplatform.PlatformFoundry,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Resource: "evil.example"},
 			field:    "platformSettings.resource",
 		},
 		{
 			name:     "entra tenant with a path",
-			platform: aiprovider.PlatformFoundry,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthEntraID, Resource: "r", TenantID: "evil.example/x", ClientID: "11111111-2222-3333-4444-555555555555"},
+			platform: aiplatform.PlatformFoundry,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthEntraID, Resource: "r", TenantID: "evil.example/x", ClientID: "11111111-2222-3333-4444-555555555555"},
 			field:    "platformSettings.tenantId",
 		},
 	} {
@@ -184,50 +189,50 @@ func TestPlatform_EachPlatformNamesWhatItNeeds(t *testing.T) {
 
 	for _, tc := range []struct {
 		name     string
-		platform aiprovider.Platform
-		settings aiprovider.PlatformSettings
+		platform aiplatform.Platform
+		settings aiplatform.PlatformSettings
 		fields   []string
 	}{
 		{
 			name:     "bedrock without a region or access key id",
-			platform: aiprovider.PlatformBedrock,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAccessKey},
+			platform: aiplatform.PlatformBedrock,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAccessKey},
 			fields:   []string{"platformSettings.region", "platformSettings.accessKeyId"},
 		},
 		{
 			name:     "claude on aws without a workspace",
-			platform: aiprovider.PlatformClaudeAWS,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1"},
+			platform: aiplatform.PlatformClaudeAWS,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1"},
 			fields:   []string{"platformSettings.workspaceId"},
 		},
 		{
 			name:     "vertex without a project",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthServiceAccount, Region: "us-east5"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthServiceAccount, Region: "us-east5"},
 			fields:   []string{"platformSettings.projectId"},
 		},
 		{
 			name:     "foundry without a resource or address",
-			platform: aiprovider.PlatformFoundry,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey},
+			platform: aiplatform.PlatformFoundry,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey},
 			fields:   []string{"platformSettings.resource"},
 		},
 		{
 			name:     "entra id without its identity",
-			platform: aiprovider.PlatformFoundry,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthEntraID, Resource: "r"},
+			platform: aiplatform.PlatformFoundry,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthEntraID, Resource: "r"},
 			fields:   []string{"platformSettings.tenantId", "platformSettings.clientId"},
 		},
 		{
 			name:     "a sign-in the platform does not take",
-			platform: aiprovider.PlatformVertexAI,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east5", ProjectID: "freight-ops"},
+			platform: aiplatform.PlatformVertexAI,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east5", ProjectID: "freight-ops"},
 			fields:   []string{"platformSettings.auth"},
 		},
 		{
 			name:     "a setting another platform takes",
-			platform: aiprovider.PlatformBedrock,
-			settings: aiprovider.PlatformSettings{Auth: aiprovider.PlatformAuthAPIKey, Region: "us-east-1", ProjectID: "freight-ops", WorkspaceID: "w"},
+			platform: aiplatform.PlatformBedrock,
+			settings: aiplatform.PlatformSettings{Auth: aiplatform.PlatformAuthAPIKey, Region: "us-east-1", ProjectID: "freight-ops", WorkspaceID: "w"},
 			fields:   []string{"platformSettings.projectId", "platformSettings.workspaceId"},
 		},
 	} {
@@ -248,21 +253,26 @@ func TestPlatform_OnlyAnthropicMessagesProvidersTakeOne(t *testing.T) {
 	p := validProvider()
 	p.Kind = aiprovider.KindOpenAIChat
 	p.BaseURL = "https://api.example.com/v1"
-	p.Platform = aiprovider.PlatformBedrock
+	p.Platform = aiplatform.PlatformBedrock
 
 	assert.True(t, fieldErrors(t, p)["platform"])
-	assert.Equal(t, aiprovider.PlatformDirect, p.ResolvedPlatform(), "another kind is always called directly")
+	assert.Equal(
+		t,
+		aiplatform.PlatformDirect,
+		p.ResolvedPlatform(),
+		"another kind is always called directly",
+	)
 
-	p.Platform = aiprovider.PlatformDirect
-	p.PlatformSettings = &aiprovider.PlatformSettings{Region: "us-east-1"}
+	p.Platform = aiplatform.PlatformDirect
+	p.PlatformSettings = &aiplatform.PlatformSettings{Region: "us-east-1"}
 	assert.True(t, fieldErrors(t, p)["platformSettings"])
 }
 
 func TestPlatform_ServerCredentialsStoreNoKey(t *testing.T) {
 	t.Parallel()
 
-	p := platformProvider(aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServer, Region: "us-east-1",
+	p := platformProvider(aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServer, Region: "us-east-1",
 	})
 	p.APIKey = ""
 
@@ -271,7 +281,7 @@ func TestPlatform_ServerCredentialsStoreNoKey(t *testing.T) {
 	assert.True(t, p.UsesServerCredentials())
 	assert.True(t, credentialErrors(p, "anything")["apiKey"])
 
-	p.PlatformSettings.Auth = aiprovider.PlatformAuthAccessKey
+	p.PlatformSettings.Auth = aiplatform.PlatformAuthAccessKey
 	p.PlatformSettings.AccessKeyID = "AKIAIOSFODNN7EXAMPLE"
 	assert.True(t, fieldErrors(t, p)["apiKey"], "an access key sign-in needs its secret")
 }
@@ -285,8 +295,8 @@ account key that mints its tokens at Google is taken.
 func TestPlatform_TakesOnlyAServiceAccountKeyThatTalksToGoogle(t *testing.T) {
 	t.Parallel()
 
-	p := platformProvider(aiprovider.PlatformVertexAI, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
+	p := platformProvider(aiplatform.PlatformVertexAI, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
 	})
 
 	assert.Empty(t, credentialErrors(p, serviceAccountJSON))
@@ -305,14 +315,14 @@ func TestPlatform_TakesOnlyAServiceAccountKeyThatTalksToGoogle(t *testing.T) {
 func TestPlatform_ChecksTheShapeOfEachSecret(t *testing.T) {
 	t.Parallel()
 
-	accessKey := platformProvider(aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE",
+	accessKey := platformProvider(aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE",
 	})
 	assert.Empty(t, credentialErrors(accessKey, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"))
 	assert.True(t, credentialErrors(accessKey, "has spaces in it and more")["apiKey"])
 
-	apiKey := platformProvider(aiprovider.PlatformFoundry, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthAPIKey, Resource: "r",
+	apiKey := platformProvider(aiplatform.PlatformFoundry, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthAPIKey, Resource: "r",
 	})
 	assert.Empty(t, credentialErrors(apiKey, "abc123"))
 	assert.True(t, credentialErrors(apiKey, "abc\r\nX-Injected: 1")["apiKey"])
@@ -327,34 +337,34 @@ func TestPlatform_SameCredentialTargetFollowsWhereTheKeyGoes(t *testing.T) {
 	t.Parallel()
 
 	base := func() *aiprovider.Provider {
-		return platformProvider(aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
-			Auth: aiprovider.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE",
+		return platformProvider(aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
+			Auth: aiplatform.PlatformAuthAccessKey, Region: "us-east-1", AccessKeyID: "AKIAIOSFODNN7EXAMPLE",
 		})
 	}
 
-	assert.True(t, aiprovider.SameCredentialTarget(base(), base()))
+	assert.True(t, aiproviderchange.SameCredentialTarget(base(), base()))
 
 	moved := base()
 	moved.PlatformSettings.Region = "eu-west-1"
-	assert.False(t, aiprovider.SameCredentialTarget(base(), moved))
+	assert.False(t, aiproviderchange.SameCredentialTarget(base(), moved))
 
 	otherKey := base()
 	otherKey.PlatformSettings.AccessKeyID = "AKIAI44QH8DHBEXAMPLE"
-	assert.False(t, aiprovider.SameCredentialTarget(base(), otherKey))
+	assert.False(t, aiproviderchange.SameCredentialTarget(base(), otherKey))
 
 	direct := validProvider()
-	assert.False(t, aiprovider.SameCredentialTarget(base(), direct))
+	assert.False(t, aiproviderchange.SameCredentialTarget(base(), direct))
 
 	sameDirect := validProvider()
 	sameDirect.BaseURL = "https://api.anthropic.com/"
-	assert.True(t, aiprovider.SameCredentialTarget(validProvider(), sameDirect))
+	assert.True(t, aiproviderchange.SameCredentialTarget(validProvider(), sameDirect))
 }
 
 func TestPlatform_FingerprintsAServiceAccountKeyByItsKeyID(t *testing.T) {
 	t.Parallel()
 
-	p := platformProvider(aiprovider.PlatformVertexAI, aiprovider.PlatformSettings{
-		Auth: aiprovider.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
+	p := platformProvider(aiplatform.PlatformVertexAI, aiplatform.PlatformSettings{
+		Auth: aiplatform.PlatformAuthServiceAccount, Region: "us-east5", ProjectID: "freight-ops",
 	})
 	assert.Equal(t,
 		"0123456789abcdef0123456789abcdef01234567",
@@ -367,29 +377,38 @@ func TestPlatform_FingerprintsAServiceAccountKeyByItsKeyID(t *testing.T) {
 func TestPlatform_NormalizesWhatIsStored(t *testing.T) {
 	t.Parallel()
 
-	p := platformProvider(aiprovider.PlatformBedrock, aiprovider.PlatformSettings{
+	p := platformProvider(aiplatform.PlatformBedrock, aiplatform.PlatformSettings{
 		Region: " US-EAST-1 ", AccessKeyID: " akiaiosfodnn7example ",
 	})
 	require.Empty(t, fieldErrors(t, p))
 	assert.Equal(t, "us-east-1", p.PlatformSettings.Region)
 	assert.Equal(t, "AKIAIOSFODNN7EXAMPLE", p.PlatformSettings.AccessKeyID)
-	assert.Equal(t, aiprovider.PlatformAuthAccessKey, p.PlatformSettings.Auth, "the platform's default sign-in")
+	assert.Equal(
+		t,
+		aiplatform.PlatformAuthAccessKey,
+		p.PlatformSettings.Auth,
+		"the platform's default sign-in",
+	)
 
 	direct := validProvider()
-	direct.PlatformSettings = &aiprovider.PlatformSettings{Region: "us-east-1"}
-	assert.True(t, fieldErrors(t, direct)["platformSettings"], "a provider called directly takes no platform settings")
+	direct.PlatformSettings = &aiplatform.PlatformSettings{Region: "us-east-1"}
+	assert.True(
+		t,
+		fieldErrors(t, direct)["platformSettings"],
+		"a provider called directly takes no platform settings",
+	)
 }
 
 func TestPlatform_VendorIsWhoServesTheCall(t *testing.T) {
 	t.Parallel()
 
-	for platform, vendor := range map[aiprovider.Platform]string{
-		aiprovider.PlatformDirect:            "anthropic",
-		aiprovider.PlatformBedrock:           "bedrock",
-		aiprovider.PlatformVertexAI:          "vertex",
-		aiprovider.PlatformClaudeAWS:         "anthropic",
-		aiprovider.PlatformClaudeGoogleCloud: "anthropic",
-		aiprovider.PlatformFoundry:           "foundry",
+	for platform, vendor := range map[aiplatform.Platform]string{
+		aiplatform.PlatformDirect:            "anthropic",
+		aiplatform.PlatformBedrock:           "bedrock",
+		aiplatform.PlatformVertexAI:          "vertex",
+		aiplatform.PlatformClaudeAWS:         "anthropic",
+		aiplatform.PlatformClaudeGoogleCloud: "anthropic",
+		aiplatform.PlatformFoundry:           "foundry",
 	} {
 		p := validProvider()
 		p.Platform = platform

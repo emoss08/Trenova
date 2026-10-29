@@ -1,4 +1,5 @@
 app:
+  name: trenova
   env: test
   debug: true
   version: 0.0.1
@@ -13,6 +14,7 @@ database:
   name: trenova_test
   user: postgres
   password: postgres
+  sslMode: disable
   maxOpenConns: 10
   statementTimeout: 10s
   lockTimeout: 5s
@@ -38,8 +40,13 @@ cache:
 storage:
   provider: minio
   endpoint: localhost:9001
+  accessKey: minioadmin
+  secretKey: minioadmin
   bucket: trenova-test
   autoCreateBucket: true
+
+system:
+  systemUserPassword: test-system-password
 
 temporal:
   namespace: test

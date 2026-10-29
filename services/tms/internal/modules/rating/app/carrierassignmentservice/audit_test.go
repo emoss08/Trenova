@@ -3,11 +3,11 @@ package carrierassignmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/carrierassignmentportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -44,10 +44,10 @@ func TestConfirmAssignmentLogsMoveAudit(t *testing.T) {
 		BusinessUnitID: tenantInfo.BuID,
 		ShipmentMoveID: pulid.MustNew("smv_"),
 		CarrierID:      pulid.MustNew("car_"),
-		Status:         shipment.CarrierAssignmentStatusPending,
+		Status:         shipmentvocab.CarrierAssignmentStatusPending,
 	}
 
-	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	repo := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 	repo.On("Update", mock.Anything, entity).Return(entity, nil).Once()
 
@@ -55,7 +55,7 @@ func TestConfirmAssignmentLogsMoveAudit(t *testing.T) {
 	svc := &Service{l: zap.NewNop(), repo: repo, auditService: audit}
 
 	require.NoError(t, svc.ConfirmAssignment(t.Context(), tenantInfo, entity.ID))
-	assert.Equal(t, shipment.CarrierAssignmentStatusConfirmed, entity.Status)
+	assert.Equal(t, shipmentvocab.CarrierAssignmentStatusConfirmed, entity.Status)
 
 	require.Len(t, audit.entries, 1)
 	entry := audit.entries[0]
@@ -79,10 +79,10 @@ func TestConfirmAssignmentAlreadyConfirmedLogsNoAudit(t *testing.T) {
 	}
 	entity := &shipment.CarrierAssignment{
 		ID:     pulid.MustNew("cas_"),
-		Status: shipment.CarrierAssignmentStatusConfirmed,
+		Status: shipmentvocab.CarrierAssignmentStatusConfirmed,
 	}
 
-	repo := shipmentportsmock.NewMockCarrierAssignmentRepository(t)
+	repo := carrierassignmentportsmock.NewMockCarrierAssignmentRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(entity, nil).Once()
 
 	audit := &recordingAuditService{}

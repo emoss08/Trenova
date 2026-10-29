@@ -3,7 +3,7 @@ package capturehandler
 import (
 	"net/http"
 
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 )
@@ -31,17 +31,17 @@ func (h *Handler) pageContent(c *gin.Context) {
 		return
 	}
 
-	kind := captureservice.PageContentKind(
-		c.DefaultQuery("kind", string(captureservice.PageContentPDF)),
+	kind := capturefiling.PageContentKind(
+		c.DefaultQuery("kind", string(capturefiling.PageContentPDF)),
 	)
-	if kind != captureservice.PageContentPDF && kind != captureservice.PageContentThumbnail {
+	if kind != capturefiling.PageContentPDF && kind != capturefiling.PageContentThumbnail {
 		h.eh.HandleError(c, errortypes.NewValidationError("kind", errortypes.ErrInvalid,
 			"kind must be pdf or thumbnail"))
 
 		return
 	}
 
-	content, err := h.service.PageContent(c.Request.Context(), &captureservice.PageContentRequest{
+	content, err := h.filing.PageContent(c.Request.Context(), &capturefiling.PageContentRequest{
 		TenantInfo:  userTenant(c),
 		PageID:      pageID,
 		Kind:        kind,

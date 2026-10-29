@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
@@ -44,7 +44,7 @@ func TestRecoveryCodesAreStoredAsKeyedDigests(t *testing.T) {
 	h := newHarness(t)
 	_, codes := h.enroll(t)
 
-	key, err := (&config.SecurityConfig{}).RecoveryCodePepperKey()
+	key, err := (&securityconfig.Config{}).RecoveryCodePepperKey()
 	require.NoError(t, err)
 
 	require.Len(t, h.repo.codes, len(codes))
@@ -71,21 +71,25 @@ func TestRecoveryCodeDigestsDependOnThePepper(t *testing.T) {
 	t.Parallel()
 
 	first, err := newService(&Params{
-		Config: &config.Config{Security: config.SecurityConfig{
-			MFA: config.MFASecurityConfig{RecoveryCodePepper: "0123456789abcdef0123456789abcdef01"},
-		}},
+		SecurityConfig: &securityconfig.Config{
+			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "0123456789abcdef0123456789abcdef01"},
+		},
 		Logger: newHarness(t).svc.l,
 	})
 	require.NoError(t, err)
 	second, err := newService(&Params{
-		Config: &config.Config{Security: config.SecurityConfig{
-			MFA: config.MFASecurityConfig{RecoveryCodePepper: "fedcba9876543210fedcba9876543210fe"},
-		}},
+		SecurityConfig: &securityconfig.Config{
+			MFA: securityconfig.MFAConfig{RecoveryCodePepper: "fedcba9876543210fedcba9876543210fe"},
+		},
 		Logger: newHarness(t).svc.l,
 	})
 	require.NoError(t, err)
 
-	assert.NotEqual(t, first.hashRecoveryCode("abcde-fghjk"), second.hashRecoveryCode("abcde-fghjk"))
+	assert.NotEqual(
+		t,
+		first.hashRecoveryCode("abcde-fghjk"),
+		second.hashRecoveryCode("abcde-fghjk"),
+	)
 	assert.Equal(t, first.hashRecoveryCode("abcde-fghjk"), first.hashRecoveryCode("abcde-fghjk"))
 }
 
@@ -97,8 +101,16 @@ func TestLegacyRecoveryCodesKeepWorkingUntilReplaced(t *testing.T) {
 	legacy := []string{"abcde-fghjk", "mnpqr-stuvw"}
 	h.repo.mu.Lock()
 	h.repo.codes = []*iam.MFARecoveryCode{
-		{UserID: h.user.ID, CodeHash: tokenutils.Hash("abcdefghjk"), HashVersion: iam.RecoveryCodeHashSHA256},
-		{UserID: h.user.ID, CodeHash: tokenutils.Hash("mnpqrstuvw"), HashVersion: iam.RecoveryCodeHashSHA256},
+		{
+			UserID:      h.user.ID,
+			CodeHash:    tokenutils.Hash("abcdefghjk"),
+			HashVersion: iam.RecoveryCodeHashSHA256,
+		},
+		{
+			UserID:      h.user.ID,
+			CodeHash:    tokenutils.Hash("mnpqrstuvw"),
+			HashVersion: iam.RecoveryCodeHashSHA256,
+		},
 	}
 	h.repo.mu.Unlock()
 
@@ -113,10 +125,13 @@ func TestLegacyRecoveryCodesKeepWorkingUntilReplaced(t *testing.T) {
 	require.NoError(t, err)
 
 	h.clock = h.clock.Add(time.Minute)
-	_, err = h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
-		TenantInfo: h.tenant,
-		Code:       h.codeAt(t, secret, 0),
-	})
+	_, err = h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
 	require.NoError(t, err)
 
 	status, err = h.svc.Status(t.Context(), h.tenant, 2)
@@ -148,10 +163,13 @@ func TestRegenerateRecoveryCodesRefusesWhileThrottled(t *testing.T) {
 	}, nil).Once()
 
 	h.clock = h.clock.Add(time.Minute)
-	_, err := h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
-		TenantInfo: h.tenant,
-		Code:       h.codeAt(t, secret, 0),
-	})
+	_, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
 
 	require.True(t, errortypes.IsRateLimitError(err))
 	assert.Equal(t, before, h.repo.codes)
@@ -178,10 +196,13 @@ func TestRegenerateRecoveryCodesCountsEveryWrongCode(t *testing.T) {
 		TrippedScope:    sessionports.LoginThrottleScopeAccount,
 	}, nil).Once()
 
-	_, err := h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
-		TenantInfo: h.tenant,
-		Code:       "000000",
-	})
+	_, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       "000000",
+		},
+	)
 
 	require.ErrorIs(t, err, errInvalidCode)
 	throttle.AssertNotCalled(t, "Succeed", mock.Anything, mock.Anything)
@@ -209,10 +230,13 @@ func TestRegenerateRecoveryCodesClearsTheCounterOnSuccess(t *testing.T) {
 	throttle.EXPECT().Succeed(mock.Anything, key).Return(nil).Once()
 
 	h.clock = h.clock.Add(time.Minute)
-	resp, err := h.svc.RegenerateRecoveryCodes(t.Context(), &sessionports.RegenerateRecoveryCodesRequest{
-		TenantInfo: h.tenant,
-		Code:       h.codeAt(t, secret, 0),
-	})
+	resp, err := h.svc.RegenerateRecoveryCodes(
+		t.Context(),
+		&sessionports.RegenerateRecoveryCodesRequest{
+			TenantInfo: h.tenant,
+			Code:       h.codeAt(t, secret, 0),
+		},
+	)
 
 	require.NoError(t, err)
 	assert.Len(t, resp.RecoveryCodes, totputils.RecoveryCodeCount)

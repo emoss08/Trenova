@@ -11,8 +11,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
@@ -47,11 +50,11 @@ func (r *AIAuditEventResolver) Agent(ctx context.Context, obj *aiaudit.AIAuditEv
 		return nil, nil
 	}
 
-	if !loaders.Available(ctx) {
+	if !loadercore.Available(ctx) {
 		return nil, nil
 	}
 
-	definition, err := loaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
+	definition, err := agentloaders.AgentDefinitionByID(ctx, obj.AgentDefinitionID.String())
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, nil
@@ -96,7 +99,7 @@ func (r *AIAuditEventResolver) CostUsd(ctx context.Context, obj *aiaudit.AIAudit
 // Arguments are withheld per path at the reader's own ceiling on the tool's
 // resource, asked once per resource for the whole request.
 func (r *AIAuditEventResolver) Arguments(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
-	return r.AiAuditService.ReaderArguments(ctx, obj, loaders.FieldCeilings(ctx)), nil
+	return r.AiAuditService.ReaderArguments(ctx, obj, agentloaders.FieldCeilings(ctx)), nil
 }
 
 func (r *AIAuditEventResolver) ArgumentSensitivity(ctx context.Context, obj *aiaudit.AIAuditEvent) (map[string]any, error) {
@@ -118,8 +121,8 @@ func (r *AIAuditEventResolver) AuditEntries(ctx context.Context, obj *aiaudit.AI
 		return []*audit.Entry{}, nil
 	}
 
-	entries, err := loaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
-	if errors.Is(err, loaders.ErrNotAttached) {
+	entries, err := agentloaders.AuditEntriesByAIAuditEventID(ctx, obj.ID.String())
+	if errors.Is(err, loadercore.ErrNotAttached) {
 		return []*audit.Entry{}, nil
 	}
 	if err != nil {
@@ -180,10 +183,10 @@ func (r *MutationResolver) RequestAIAuditExport(ctx context.Context, input gqlmo
 		From:   int64(input.From),
 		To:     int64(input.To),
 		Filter: &aiaudit.ExportFilter{
-			Query:        base.StringValue(input.Query),
-			FieldFilters: base.FieldFiltersFromGraphQL(input.FieldFilters),
-			FilterGroups: base.FilterGroupsFromGraphQL(input.FilterGroups),
-			Sort:         base.SortFieldsFromGraphQL(input.Sort),
+			Query:        gqlscalar.StringValue(input.Query),
+			FieldFilters: gqlconnection.FieldFiltersFromGraphQL(input.FieldFilters),
+			FilterGroups: gqlconnection.FilterGroupsFromGraphQL(input.FilterGroups),
+			Sort:         gqlconnection.SortFieldsFromGraphQL(input.Sort),
 		},
 	})
 }
@@ -227,7 +230,7 @@ func (r *QueryResolver) AiAuditEvents(ctx context.Context, input gqlmodel.DataTa
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +259,7 @@ func (r *QueryResolver) AiAuditEvent(ctx context.Context, id string) (*aiaudit.A
 	}
 
 	return r.AiAuditService.GetEvent(ctx, aiauditports.GetAIAuditEventRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         eventID,
 	})
 }
@@ -267,7 +270,7 @@ func (r *QueryResolver) AiAuditChainStatus(ctx context.Context) (*aiauditports.A
 		return nil, err
 	}
 
-	return r.AiAuditService.ChainStatus(ctx, base.TenantInfo(authCtx))
+	return r.AiAuditService.ChainStatus(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) AiAuditExports(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIAuditExportConnection, error) {
@@ -276,7 +279,7 @@ func (r *QueryResolver) AiAuditExports(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +307,7 @@ func (r *QueryResolver) AiAuditExport(ctx context.Context, id string) (*aiaudit.
 	}
 
 	return r.AiAuditService.GetExport(ctx, aiauditports.GetAIAuditExportRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         exportID,
 	})
 }

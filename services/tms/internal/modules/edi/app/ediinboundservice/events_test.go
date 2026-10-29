@@ -4,20 +4,23 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
-	r.events = append(r.events, event)
+func (r *recordingPublisher) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.events = append(r.events, *event)
 }
 
 func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
@@ -26,19 +29,19 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 	cases := []struct {
 		name       string
 		rawContent string
-		wantStatus edi.InboundFileStatus
+		wantStatus ediinboundfile.InboundFileStatus
 		wantEvents int
 	}{
 		{
 			name:       "a file that cannot be parsed wakes intake",
 			rawContent: "this is not x12",
-			wantStatus: edi.InboundFileStatusQuarantined,
+			wantStatus: ediinboundfile.InboundFileStatusQuarantined,
 			wantEvents: 1,
 		},
 		{
 			name:       "an empty file is quarantined and wakes intake",
 			rawContent: "",
-			wantStatus: edi.InboundFileStatusQuarantined,
+			wantStatus: ediinboundfile.InboundFileStatusQuarantined,
 			wantEvents: 1,
 		},
 	}
@@ -64,7 +67,7 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 			require.Equal(t, tc.wantStatus, file.Status)
 			require.Len(t, publisher.events, tc.wantEvents)
 			for _, event := range publisher.events {
-				require.Equal(t, agent.EventEDIFileQuarantined, event.Kind)
+				require.Equal(t, agenttrigger.EventEDIFileQuarantined, event.Kind)
 				require.Equal(t, fixture.file.ID, event.SubjectID)
 				require.Equal(t, fixture.tenantInfo(), event.TenantInfo)
 			}
@@ -87,7 +90,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 
 	fixture.expectFileLoadAndUpdates(t)
 	fixture.expectPartnerLoad()
-	fixture.expectInboundDocumentType(edi.TransactionSet204)
+	fixture.expectInboundDocumentType(edidocument.TransactionSet204)
 	fixture.expectMessageCreate()
 	fixture.expectFlows()
 
@@ -96,7 +99,7 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 	fixture.transferRepo.EXPECT().
 		CreateTransfer(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, transfer *edi.EDITransfer) (*edi.EDITransfer, error) {
+		RunAndReturn(func(_ context.Context, transfer *editransfer.EDITransfer) (*editransfer.EDITransfer, error) {
 			transfer.ID = pulid.MustNew("edilt_")
 			return transfer, nil
 		}).
@@ -108,9 +111,9 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, edi.InboundFileStatusPartiallyProcessed, file.Status)
+	require.Equal(t, ediinboundfile.InboundFileStatusPartiallyProcessed, file.Status)
 	require.Len(t, publisher.events, 1)
-	require.Equal(t, agent.EventEDITenderReceived, publisher.events[0].Kind)
+	require.Equal(t, agenttrigger.EventEDITenderReceived, publisher.events[0].Kind)
 	require.Equal(t, fixture.file.ID, publisher.events[0].SubjectID)
 	require.Equal(t, fixture.tenantInfo(), publisher.events[0].TenantInfo)
 }

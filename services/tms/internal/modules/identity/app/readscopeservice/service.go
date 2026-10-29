@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,7 +21,7 @@ type TeamDirectory interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		userID pulid.ID,
-		scope worker.ApprovalScope,
+		scope approvaldelegation.ApprovalScope,
 		asOf int64,
 	) ([]pulid.ID, map[pulid.ID]pulid.ID, error)
 }
@@ -28,18 +29,18 @@ type TeamDirectory interface {
 type Params struct {
 	fx.In
 
-	Config   *config.Config
-	DB       kernelports.Detacher
-	Engine   permissionports.PermissionEngine
-	Teams    TeamDirectory
-	Registry *permission.Registry
+	DatabaseConfig *databaseconfig.Config
+	DB             kernelports.Detacher
+	Engine         permissionports.PermissionEngine
+	Teams          TeamDirectory
+	Registry       *permissioncatalog.Registry
 }
 
 type Service struct {
 	db                kernelports.Detacher
 	engine            permissionports.PermissionEngine
 	teams             TeamDirectory
-	registry          *permission.Registry
+	registry          *permissioncatalog.Registry
 	kinds             []string
 	databaseEnforcing bool
 }
@@ -51,16 +52,16 @@ func New(p Params) *Service {
 		teams:             p.Teams,
 		registry:          p.Registry,
 		kinds:             p.Registry.DatabaseScopedResources(),
-		databaseEnforcing: databaseEnforcesScopes(p.Config),
+		databaseEnforcing: databaseEnforcesScopes(p.DatabaseConfig),
 	}
 }
 
-func databaseEnforcesScopes(cfg *config.Config) bool {
+func databaseEnforcesScopes(cfg *databaseconfig.Config) bool {
 	if cfg == nil {
 		return false
 	}
-	switch cfg.Database.RLS.Mode {
-	case config.RLSModeObserve, config.RLSModeEnforce:
+	switch cfg.RLS.Mode {
+	case databaseconfig.RLSModeObserve, databaseconfig.RLSModeEnforce:
 		return true
 	default:
 		return false
@@ -178,7 +179,7 @@ func (s *Service) team(
 			UserID: principal.UserID,
 		},
 		principal.UserID,
-		worker.ApprovalScopeAll,
+		approvaldelegation.ApprovalScopeAll,
 		0,
 	)
 	if err != nil {

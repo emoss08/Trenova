@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,14 +19,14 @@ type targetedSchemaTool struct {
 	schemaTool
 }
 
-func (t *targetedSchemaTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *targetedSchemaTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	raw, _ := params["workerId"].(string)
 	id, err := pulid.Parse(raw)
 	if err != nil {
-		return agentports.ToolTarget{}, false
+		return agenttoolports.ToolTarget{}, false
 	}
 
-	return agentports.ToolTarget{Resource: permission.ResourceWorker, ID: id}, true
+	return agenttoolports.ToolTarget{Resource: permission.ResourceWorker, ID: id}, true
 }
 
 func retargetFixture() (*targetedSchemaTool, *Service, pulid.ID) {
@@ -108,7 +108,7 @@ func TestProposalFields_MakesTheTargetReadOnly(t *testing.T) {
 
 	tool, _, driver := retargetFixture()
 
-	fields := agentports.ProposalFields(tool, map[string]any{
+	fields := agenttoolports.ProposalFields(tool, map[string]any{
 		"workerId": driver.String(),
 		"message":  "Call in",
 	})
@@ -155,5 +155,5 @@ func TestRun_HonoursTheVersionAnEarlierStepLeft(t *testing.T) {
 		Actor:                 testActor(again.OrganizationID, again.BusinessUnitID),
 		ExpectedTargetVersion: &stale,
 	})
-	require.ErrorIs(t, err, agent.ErrTargetChanged)
+	require.ErrorIs(t, err, agentplan.ErrTargetChanged)
 }

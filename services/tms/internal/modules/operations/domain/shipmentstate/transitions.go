@@ -1,88 +1,90 @@
 package shipmentstate
 
-import "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+import (
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+)
 
-var shipmentStatusTransitions = map[shipment.Status]map[shipment.Status]struct{}{
-	shipment.StatusNew: {
-		shipment.StatusPartiallyAssigned:  {},
-		shipment.StatusAssigned:           {},
-		shipment.StatusInTransit:          {},
-		shipment.StatusPartiallyCompleted: {},
-		shipment.StatusCompleted:          {},
-		shipment.StatusCanceled:           {},
+var shipmentStatusTransitions = map[shipmentvocab.Status]map[shipmentvocab.Status]struct{}{
+	shipmentvocab.StatusNew: {
+		shipmentvocab.StatusPartiallyAssigned:  {},
+		shipmentvocab.StatusAssigned:           {},
+		shipmentvocab.StatusInTransit:          {},
+		shipmentvocab.StatusPartiallyCompleted: {},
+		shipmentvocab.StatusCompleted:          {},
+		shipmentvocab.StatusCanceled:           {},
 	},
-	shipment.StatusPartiallyAssigned: {
-		shipment.StatusAssigned:  {},
-		shipment.StatusInTransit: {},
-		shipment.StatusCanceled:  {},
+	shipmentvocab.StatusPartiallyAssigned: {
+		shipmentvocab.StatusAssigned:  {},
+		shipmentvocab.StatusInTransit: {},
+		shipmentvocab.StatusCanceled:  {},
 	},
-	shipment.StatusAssigned: {
-		shipment.StatusInTransit: {},
-		shipment.StatusCompleted: {},
-		shipment.StatusCanceled:  {},
+	shipmentvocab.StatusAssigned: {
+		shipmentvocab.StatusInTransit: {},
+		shipmentvocab.StatusCompleted: {},
+		shipmentvocab.StatusCanceled:  {},
 	},
-	shipment.StatusInTransit: {
-		shipment.StatusDelayed:            {},
-		shipment.StatusPartiallyCompleted: {},
-		shipment.StatusCompleted:          {},
-		shipment.StatusCanceled:           {},
+	shipmentvocab.StatusInTransit: {
+		shipmentvocab.StatusDelayed:            {},
+		shipmentvocab.StatusPartiallyCompleted: {},
+		shipmentvocab.StatusCompleted:          {},
+		shipmentvocab.StatusCanceled:           {},
 	},
-	shipment.StatusDelayed: {
-		shipment.StatusInTransit:          {},
-		shipment.StatusPartiallyCompleted: {},
-		shipment.StatusCompleted:          {},
-		shipment.StatusCanceled:           {},
+	shipmentvocab.StatusDelayed: {
+		shipmentvocab.StatusInTransit:          {},
+		shipmentvocab.StatusPartiallyCompleted: {},
+		shipmentvocab.StatusCompleted:          {},
+		shipmentvocab.StatusCanceled:           {},
 	},
-	shipment.StatusPartiallyCompleted: {
-		shipment.StatusCompleted: {},
-		shipment.StatusCanceled:  {},
+	shipmentvocab.StatusPartiallyCompleted: {
+		shipmentvocab.StatusCompleted: {},
+		shipmentvocab.StatusCanceled:  {},
 	},
-	shipment.StatusReadyToInvoice: {
-		shipment.StatusInvoiced: {},
-		shipment.StatusCanceled: {},
+	shipmentvocab.StatusReadyToInvoice: {
+		shipmentvocab.StatusInvoiced: {},
+		shipmentvocab.StatusCanceled: {},
 	},
-	shipment.StatusCompleted: {
-		shipment.StatusReadyToInvoice: {},
+	shipmentvocab.StatusCompleted: {
+		shipmentvocab.StatusReadyToInvoice: {},
 	},
-	shipment.StatusInvoiced: {},
-	shipment.StatusCanceled: {},
+	shipmentvocab.StatusInvoiced: {},
+	shipmentvocab.StatusCanceled: {},
 }
 
-var moveStatusTransitions = map[shipment.MoveStatus]map[shipment.MoveStatus]struct{}{
-	shipment.MoveStatusNew: {
-		shipment.MoveStatusAssigned:  {},
-		shipment.MoveStatusInTransit: {},
-		shipment.MoveStatusCompleted: {},
-		shipment.MoveStatusCanceled:  {},
+var moveStatusTransitions = map[shipmentvocab.MoveStatus]map[shipmentvocab.MoveStatus]struct{}{
+	shipmentvocab.MoveStatusNew: {
+		shipmentvocab.MoveStatusAssigned:  {},
+		shipmentvocab.MoveStatusInTransit: {},
+		shipmentvocab.MoveStatusCompleted: {},
+		shipmentvocab.MoveStatusCanceled:  {},
 	},
-	shipment.MoveStatusAssigned: {
-		shipment.MoveStatusInTransit: {},
-		shipment.MoveStatusCompleted: {},
-		shipment.MoveStatusCanceled:  {},
+	shipmentvocab.MoveStatusAssigned: {
+		shipmentvocab.MoveStatusInTransit: {},
+		shipmentvocab.MoveStatusCompleted: {},
+		shipmentvocab.MoveStatusCanceled:  {},
 	},
-	shipment.MoveStatusInTransit: {
-		shipment.MoveStatusCompleted: {},
-		shipment.MoveStatusCanceled:  {},
+	shipmentvocab.MoveStatusInTransit: {
+		shipmentvocab.MoveStatusCompleted: {},
+		shipmentvocab.MoveStatusCanceled:  {},
 	},
-	shipment.MoveStatusCompleted: {},
-	shipment.MoveStatusCanceled:  {},
+	shipmentvocab.MoveStatusCompleted: {},
+	shipmentvocab.MoveStatusCanceled:  {},
 }
 
-var stopStatusTransitions = map[shipment.StopStatus]map[shipment.StopStatus]struct{}{
-	shipment.StopStatusNew: {
-		shipment.StopStatusInTransit: {},
-		shipment.StopStatusCompleted: {},
-		shipment.StopStatusCanceled:  {},
+var stopStatusTransitions = map[shipmentvocab.StopStatus]map[shipmentvocab.StopStatus]struct{}{
+	shipmentvocab.StopStatusNew: {
+		shipmentvocab.StopStatusInTransit: {},
+		shipmentvocab.StopStatusCompleted: {},
+		shipmentvocab.StopStatusCanceled:  {},
 	},
-	shipment.StopStatusInTransit: {
-		shipment.StopStatusCompleted: {},
-		shipment.StopStatusCanceled:  {},
+	shipmentvocab.StopStatusInTransit: {
+		shipmentvocab.StopStatusCompleted: {},
+		shipmentvocab.StopStatusCanceled:  {},
 	},
-	shipment.StopStatusCompleted: {},
-	shipment.StopStatusCanceled:  {},
+	shipmentvocab.StopStatusCompleted: {},
+	shipmentvocab.StopStatusCanceled:  {},
 }
 
-func isAllowedShipmentStatusTransition(from, to shipment.Status) bool {
+func isAllowedShipmentStatusTransition(from, to shipmentvocab.Status) bool {
 	if from == to || from == "" || to == "" {
 		return true
 	}
@@ -96,11 +98,11 @@ func isAllowedShipmentStatusTransition(from, to shipment.Status) bool {
 	return allowed
 }
 
-func CanTransitionShipmentStatus(from, to shipment.Status) bool {
+func CanTransitionShipmentStatus(from, to shipmentvocab.Status) bool {
 	return isAllowedShipmentStatusTransition(from, to)
 }
 
-func isAllowedMoveStatusTransition(from, to shipment.MoveStatus) bool {
+func isAllowedMoveStatusTransition(from, to shipmentvocab.MoveStatus) bool {
 	if from == to || from == "" || to == "" {
 		return true
 	}
@@ -114,11 +116,11 @@ func isAllowedMoveStatusTransition(from, to shipment.MoveStatus) bool {
 	return allowed
 }
 
-func CanTransitionMoveStatus(from, to shipment.MoveStatus) bool {
+func CanTransitionMoveStatus(from, to shipmentvocab.MoveStatus) bool {
 	return isAllowedMoveStatusTransition(from, to)
 }
 
-func isAllowedStopStatusTransition(from, to shipment.StopStatus) bool {
+func isAllowedStopStatusTransition(from, to shipmentvocab.StopStatus) bool {
 	if from == to || from == "" || to == "" {
 		return true
 	}

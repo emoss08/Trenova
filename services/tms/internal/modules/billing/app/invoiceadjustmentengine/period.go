@@ -1,0 +1,142 @@
+package invoiceadjustmentengine
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+func (s *Engine) resolveAccountingDate(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+) int64 {
+	originalDate := entity.InvoiceDate
+	if control.AdjustmentAccountingDatePolicy == invoiceadjustmentcontrol.AdjustmentAccountingDateAlwaysNextOpen {
+		nextOpen := s.resolveNextOpenPeriodDate(
+			ctx,
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+			originalDate,
+		)
+		if nextOpen > 0 {
+			return nextOpen
+		}
+
+		return timeutils.NowUnix()
+	}
+
+	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+		Date:  originalDate,
+	})
+	if err == nil && period != nil && period.Status == fiscalperiod.StatusOpen {
+		return originalDate
+	}
+
+	switch control.ClosedPeriodAdjustmentPolicy {
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyDisallow:
+		appendPreviewError(
+			preview,
+			"accountingDate",
+			"Closed-period adjustments are disallowed by policy",
+		)
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyRequireReopen:
+		appendPreviewError(
+			preview,
+			"accountingDate",
+			"The accounting period must be reopened before this adjustment can be posted",
+		)
+	case invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval:
+		preview.RequiresApproval = true
+		preview.Warnings = append(
+			preview.Warnings,
+			"Adjustment will post in the next open period and requires approval",
+		)
+	}
+
+	nextOpen := s.resolveNextOpenPeriodDate(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		originalDate,
+	)
+	if nextOpen > 0 {
+		return nextOpen
+	}
+
+	return timeutils.NowUnix()
+}
+
+func (s *Engine) resolveNextOpenPeriodDate(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	fallback int64,
+) int64 {
+	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
+		OrgID: orgID,
+		BuID:  buID,
+		Date:  timeutils.NowUnix(),
+	})
+	if err == nil && period != nil && period.Status == fiscalperiod.StatusOpen {
+		return intutils.Max(period.StartDate, fallback)
+	}
+	return timeutils.NowUnix()
+}
+
+func (s *Engine) validateSettlementPolicy(
+	entity *invoice.Invoice,
+	control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	preview *invoiceadjustmentports.InvoiceAdjustmentPreview,
+) {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
+	switch entity.SettlementStatus {
+	case invoice.SettlementStatusPaid:
+		//nolint:exhaustive // only actionable enum states require explicit handling here
+		switch control.PaidInvoiceAdjustmentPolicy {
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
+			appendPreviewError(preview, "invoiceId", "Paid invoices cannot be adjusted by policy")
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
+			preview.RequiresApproval = true
+		}
+	case invoice.SettlementStatusPartiallyPaid:
+		//nolint:exhaustive // only actionable enum states require explicit handling here
+		switch control.PartiallyPaidInvoiceAdjustmentPolicy {
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
+			appendPreviewError(
+				preview,
+				"invoiceId",
+				"Partially paid invoices cannot be adjusted by policy",
+			)
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
+			preview.RequiresApproval = true
+		}
+	}
+
+	if entity.DisputeStatus == invoice.DisputeStatusDisputed {
+		//nolint:exhaustive // only actionable enum states require explicit handling here
+		switch control.DisputedInvoiceAdjustmentPolicy {
+		case invoiceadjustmentcontrol.AdjustmentEligibilityDisallow:
+			appendPreviewError(
+				preview,
+				"invoiceId",
+				"Disputed invoices cannot be adjusted by policy",
+			)
+		case invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithApproval:
+			preview.RequiresApproval = true
+		}
+	}
+
+	if entity.SettlementStatus != invoice.SettlementStatusUnpaid {
+		preview.RequiresReconciliationException = true
+	}
+}

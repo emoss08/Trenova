@@ -5,10 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -18,11 +20,11 @@ import (
 const sweepNow = int64(1_767_225_600)
 
 type recordingPublisher struct {
-	events []agentports.AgentEvent
+	events []agenteventports.AgentEvent
 }
 
-func (r *recordingPublisher) Publish(_ context.Context, event agentports.AgentEvent) {
-	r.events = append(r.events, event)
+func (r *recordingPublisher) Publish(_ context.Context, event *agenteventports.AgentEvent) {
+	r.events = append(r.events, *event)
 }
 
 type recordingProjector struct {
@@ -41,10 +43,14 @@ func (r *recordingProjector) Resolve(
 ) {
 }
 
-func credentialOf(workerID pulid.ID, name string, daysLeft int64) *worker.WorkerCredential {
+func credentialOf(
+	workerID pulid.ID,
+	name string,
+	daysLeft int64,
+) *workercredential.WorkerCredential {
 	expires := sweepNow + daysLeft*secondsPerDay
 
-	return &worker.WorkerCredential{
+	return &workercredential.WorkerCredential{
 		ID:        pulid.MustNew("wcred_"),
 		WorkerID:  workerID,
 		ExpiresAt: &expires,
@@ -53,7 +59,7 @@ func credentialOf(workerID pulid.ID, name string, daysLeft int64) *worker.Worker
 			FirstName: "Dana",
 			LastName:  "Reyes",
 		},
-		CredentialType: &worker.WorkerCredentialType{Name: name},
+		CredentialType: &workercredential.WorkerCredentialType{Name: name},
 	}
 }
 
@@ -80,12 +86,16 @@ func TestRaiseDueDrivers_OncePerDriverHoweverManyPapers(t *testing.T) {
 	workerID := pulid.MustNew("wrk_")
 
 	state := sweptState()
-	for _, cred := range []*worker.WorkerCredential{
+	for _, cred := range []*workercredential.WorkerCredential{
 		credentialOf(workerID, "CDL", 30),
 		credentialOf(workerID, "Medical card", 14),
 		credentialOf(workerID, "Hazmat endorsement", 7),
 	} {
-		state.recordDueDriver(cred, tenantInfo, worker.DaysUntil(*cred.ExpiresAt, sweepNow))
+		state.recordDueDriver(
+			cred,
+			tenantInfo,
+			workercredential.DaysUntil(*cred.ExpiresAt, sweepNow),
+		)
 	}
 
 	publisher := &recordingPublisher{}
@@ -99,7 +109,7 @@ func TestRaiseDueDrivers_OncePerDriverHoweverManyPapers(t *testing.T) {
 	activities.raiseDueDrivers(t.Context(), state)
 
 	require.Len(t, publisher.events, 1)
-	require.Equal(t, agent.EventWorkerCredentialExpiring, publisher.events[0].Kind)
+	require.Equal(t, agenttrigger.EventWorkerCredentialExpiring, publisher.events[0].Kind)
 	require.Equal(t, workerID, publisher.events[0].SubjectID)
 	require.Equal(t, tenantInfo, publisher.events[0].TenantInfo)
 	require.Equal(t, 1, state.result.DriversRaised)

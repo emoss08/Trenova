@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel/analytics/cache"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,19 +55,19 @@ func TestTieredStoreKeepsAValueTooLargeForThisProcessInTheSharedTier(t *testing.
 func TestResultStoreKeepsReportRowsInProcessUnlessTheSharedTierIsOn(t *testing.T) {
 	t.Parallel()
 
-	off := &Engine{cfg: &config.ReportingConfig{}}
+	off := &Engine{cfg: &reportingconfig.Config{}}
 	assert.Nil(t, off.resultStore(), "a disabled result cache gives the runs no store")
 
-	local := &Engine{cfg: &config.ReportingConfig{
-		ResultCache: config.ReportResultCacheConfig{Enabled: true},
+	local := &Engine{cfg: &reportingconfig.Config{
+		ResultCache: reportingconfig.ResultCacheConfig{Enabled: true},
 	}}
 	_, inProcess := local.resultStore().(*cache.Memory)
 	assert.True(t, inProcess, "the default keeps report rows in this process only")
 
-	sharedWithoutRedis := &Engine{cfg: &config.ReportingConfig{
-		ResultCache: config.ReportResultCacheConfig{
+	sharedWithoutRedis := &Engine{cfg: &reportingconfig.Config{
+		ResultCache: reportingconfig.ResultCacheConfig{
 			Enabled: true,
-			Shared:  config.ReportSharedResultCacheConfig{Enabled: true},
+			Shared:  reportingconfig.SharedResultCacheConfig{Enabled: true},
 		},
 	}}
 	_, inProcess = sharedWithoutRedis.resultStore().(*cache.Memory)

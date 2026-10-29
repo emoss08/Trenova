@@ -9,12 +9,12 @@ import (
 
 	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/keel/analytics/ir"
-
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/documentmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportnotify"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
@@ -55,7 +56,6 @@ type ActivitiesParams struct {
 
 	RunRepo             reportports.ReportRunRepository
 	DefinitionRepo      reportports.ReportDefinitionRepository
-	CatalogVersions     reportports.ReportCatalogVersionRepository
 	ScheduleRepo        reportports.ReportScheduleRepository
 	WorkflowStarter     kernelports.WorkflowStarter
 	OrganizationRepo    tenantports.OrganizationRepository
@@ -67,18 +67,17 @@ type ActivitiesParams struct {
 	NotificationService *notificationservice.Service
 	EmailService        emailports.EmailService `optional:"true"`
 	Templates           documenttemplateports.DocumentTemplateResolver
-	RealtimeService     agentports.RealtimeService `optional:"true"`
+	RealtimeService     realtimeports.RealtimeService `optional:"true"`
 	ReadScopes          permissionports.ReadScopes
 	AuditService        auditports.AuditService
 	Metrics             *metrics.Registry `optional:"true"`
-	Config              *config.Config
+	ReportingConfig     *reportingconfig.Config
 	Logger              *zap.Logger
 }
 
 type Activities struct {
 	runRepo      reportports.ReportRunRepository
 	defRepo      reportports.ReportDefinitionRepository
-	versions     reportports.ReportCatalogVersionRepository
 	scheduleRepo reportports.ReportScheduleRepository
 	workflows    kernelports.WorkflowStarter
 	orgRepo      tenantports.OrganizationRepository
@@ -90,12 +89,12 @@ type Activities struct {
 	notification *notificationservice.Service
 	email        emailports.EmailService
 	templates    documenttemplateports.DocumentTemplateResolver
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 	readScopes   permissionports.ReadScopes
 	audit        auditports.AuditService
-	metrics      *metrics.Report
+	metrics      *documentmetrics.Report
 	canned       cannedLibrary
-	cfg          *config.ReportingConfig
+	cfg          *reportingconfig.Config
 	l            *zap.Logger
 }
 
@@ -104,7 +103,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		runRepo:      p.RunRepo,
 		defRepo:      p.DefinitionRepo,
-		versions:     p.CatalogVersions,
 		scheduleRepo: p.ScheduleRepo,
 		workflows:    p.WorkflowStarter,
 		orgRepo:      p.OrganizationRepo,
@@ -121,12 +119,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 		audit:        p.AuditService,
 		metrics:      reportMetrics(p.Metrics),
 		canned:       p.Reporting,
-		cfg:          p.Config.GetReportingConfig(),
+		cfg:          p.ReportingConfig,
 		l:            p.Logger.Named("reportjobs"),
 	}
 }
 
-func reportMetrics(registry *metrics.Registry) *metrics.Report {
+func reportMetrics(registry *metrics.Registry) *documentmetrics.Report {
 	if registry == nil {
 		return nil
 	}
@@ -652,12 +650,12 @@ func (a *Activities) emitAudit(run *report.ReportRun) {
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		CurrentState: map[string]any{
-			dataKeyStatus:    string(run.Status),
-			dataKeyFormat:    string(run.Format),
-			dataKeyRowCount:  run.RowCount,
-			"byteSize":       run.ByteSize,
-			dataKeyTruncated: run.Truncated,
-			"trigger":        string(run.Trigger),
+			reportnotify.DataKeyStatus:    string(run.Status),
+			reportnotify.DataKeyFormat:    string(run.Format),
+			reportnotify.DataKeyRowCount:  run.RowCount,
+			"byteSize":                    run.ByteSize,
+			reportnotify.DataKeyTruncated: run.Truncated,
+			"trigger":                     string(run.Trigger),
 		},
 	}); err != nil {
 		a.l.Warn("failed to audit report run completion",
@@ -689,7 +687,7 @@ func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun
 		BuID:   run.BusinessUnitID,
 		UserID: run.RequestedByID,
 	}
-	wording, ok := a.renderNotification(
+	wording, ok := a.notices().Render(
 		ctx, tenantInfo, kind, run.ID, runNotificationContext(run, name),
 	)
 	if !ok {
@@ -697,19 +695,19 @@ func (a *Activities) emitNotification(ctx context.Context, run *report.ReportRun
 	}
 
 	data := map[string]any{
-		dataKeyRunID:      run.ID.String(),
-		dataKeyStatus:     string(run.Status),
-		dataKeyFormat:     string(run.Format),
-		dataKeyRowCount:   run.RowCount,
-		dataKeyTruncated:  run.Truncated,
-		dataKeyReportName: name,
-		dataKeyByteSize:   run.ByteSize,
+		reportnotify.DataKeyRunID:      run.ID.String(),
+		reportnotify.DataKeyStatus:     string(run.Status),
+		reportnotify.DataKeyFormat:     string(run.Format),
+		reportnotify.DataKeyRowCount:   run.RowCount,
+		reportnotify.DataKeyTruncated:  run.Truncated,
+		reportnotify.DataKeyReportName: name,
+		reportnotify.DataKeyByteSize:   run.ByteSize,
 	}
 	if run.ArtifactExpiresAt > 0 {
-		data[dataKeyArtifactExpiresAt] = run.ArtifactExpiresAt
+		data[reportnotify.DataKeyArtifactExpiresAt] = run.ArtifactExpiresAt
 	}
 	if !run.ScheduleID.IsNil() {
-		data[dataKeyScheduleID] = run.ScheduleID.String()
+		data[reportnotify.DataKeyScheduleID] = run.ScheduleID.String()
 	}
 
 	if _, err := a.notification.Create(ctx, &notification.Notification{
@@ -735,7 +733,7 @@ func (a *Activities) emitInvalidation(ctx context.Context, run *report.ReportRun
 	}
 	if err := a.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: run.OrganizationID,
 			BusinessUnitID: run.BusinessUnitID,
 			Resource:       "report-run",

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -68,12 +68,12 @@ func Wanted(target *agentqualityports.QualityScheduleTarget) bool {
 	return target.Control == nil || target.Control.Enabled
 }
 
-func sweepControl(target *agentqualityports.QualityScheduleTarget) *agentquality.Control {
+func sweepControl(target *agentqualityports.QualityScheduleTarget) *agentqualitycontrol.Control {
 	if target.Control != nil {
 		return target.Control
 	}
 
-	return agentquality.DefaultControl(target.OrganizationID, target.BusinessUnitID)
+	return agentqualitycontrol.DefaultControl(target.OrganizationID, target.BusinessUnitID)
 }
 
 func SweepScheduleOptions(target *agentqualityports.QualityScheduleTarget) client.ScheduleOptions {
@@ -81,7 +81,7 @@ func SweepScheduleOptions(target *agentqualityports.QualityScheduleTarget) clien
 	timezone := control.EffectiveTimezone(target.OrganizationTimezone)
 
 	return client.ScheduleOptions{
-		ID: agentquality.SweepScheduleID(target.OrganizationID),
+		ID: agentqualitycontrol.SweepScheduleID(target.OrganizationID),
 		Spec: client.ScheduleSpec{
 			CronExpressions: []string{"0 " + strconv.Itoa(control.RunHourLocal) + " * * *"},
 			TimeZoneName:    timezone,
@@ -124,7 +124,7 @@ func (s *QualitySchedules) sync(
 	ctx context.Context,
 	target *agentqualityports.QualityScheduleTarget,
 ) error {
-	id := agentquality.SweepScheduleID(target.OrganizationID)
+	id := agentqualitycontrol.SweepScheduleID(target.OrganizationID)
 	if !Wanted(target) {
 		return s.remove(ctx, id)
 	}
@@ -198,7 +198,7 @@ func (s *QualitySchedules) Reconcile(ctx context.Context) (*ReconcileResult, err
 
 		for _, target := range page {
 			if Wanted(target) {
-				wanted[agentquality.SweepScheduleID(target.OrganizationID)] = struct{}{}
+				wanted[agentqualitycontrol.SweepScheduleID(target.OrganizationID)] = struct{}{}
 			}
 			if err = s.sync(ctx, target); err != nil {
 				result.Failed++
@@ -227,7 +227,7 @@ func (s *QualitySchedules) Reconcile(ctx context.Context) (*ReconcileResult, err
 		if nextErr != nil {
 			return result, fmt.Errorf("iterate schedules: %w", nextErr)
 		}
-		if !strings.HasPrefix(entry.ID, agentquality.SweepScheduleIDPrefix()) {
+		if !strings.HasPrefix(entry.ID, agentqualitycontrol.SweepScheduleIDPrefix()) {
 			continue
 		}
 		if _, keep := wanted[entry.ID]; keep {
@@ -252,7 +252,7 @@ func (s *QualitySchedules) StartSuiteRun(
 	ctx context.Context,
 	start *agentqualityports.AgentSuiteRunStart,
 ) (string, error) {
-	workflowID := agentquality.SuiteRunWorkflowID(start.SuiteRunID)
+	workflowID := agentqualitycontrol.SuiteRunWorkflowID(start.SuiteRunID)
 	if _, err := s.client.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
 		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),

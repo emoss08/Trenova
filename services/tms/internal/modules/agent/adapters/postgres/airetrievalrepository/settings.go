@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -157,7 +157,7 @@ func updateSettings(
 
 func (r *repository) SetPaused(
 	ctx context.Context,
-	req *agentports.SetAIRetrievalPausedRequest,
+	req *retrievalports.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*airetrieval.Settings, error) {
 		if req == nil {
@@ -215,7 +215,7 @@ func (r *repository) SetPaused(
 
 func applyPause(
 	settings *airetrieval.Settings,
-	req *agentports.SetAIRetrievalPausedRequest,
+	req *retrievalports.SetAIRetrievalPausedRequest,
 	now int64,
 ) {
 	if !req.Paused {
@@ -251,12 +251,12 @@ func writePause(
 
 func (r *repository) SwapModel(
 	ctx context.Context,
-	req agentports.SwapAIRetrievalModelRequest,
-) (*agentports.SwapAIRetrievalModelResult, error) {
+	req retrievalports.SwapAIRetrievalModelRequest,
+) (*retrievalports.SwapAIRetrievalModelResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*agentports.SwapAIRetrievalModelResult, error) {
+		func(ctx context.Context) (*retrievalports.SwapAIRetrievalModelResult, error) {
 			if err := validateTenant(req.TenantInfo); err != nil {
 				return nil, err
 			}
@@ -264,7 +264,7 @@ func (r *repository) SwapModel(
 				return nil, err
 			}
 
-			var result *agentports.SwapAIRetrievalModelResult
+			var result *retrievalports.SwapAIRetrievalModelResult
 			err := r.db.Transact(
 				ctx,
 				kernelports.TxOptions{},
@@ -304,7 +304,7 @@ func (r *repository) SwapModel(
 						)
 					}
 
-					result = &agentports.SwapAIRetrievalModelResult{
+					result = &retrievalports.SwapAIRetrievalModelResult{
 						Settings:        current,
 						RetiredModelKey: retired,
 					}
@@ -323,13 +323,13 @@ func (r *repository) SwapModel(
 
 func (r *repository) PurgeModel(
 	ctx context.Context,
-	req agentports.PurgeAIRetrievalModelRequest,
-) (agentports.PurgeAIRetrievalModelResult, error) {
+	req retrievalports.PurgeAIRetrievalModelRequest,
+) (retrievalports.PurgeAIRetrievalModelResult, error) {
 	return dbtx.Write(
 		ctx,
 		r.db,
-		func(ctx context.Context) (agentports.PurgeAIRetrievalModelResult, error) {
-			var result agentports.PurgeAIRetrievalModelResult
+		func(ctx context.Context) (retrievalports.PurgeAIRetrievalModelResult, error) {
+			var result retrievalports.PurgeAIRetrievalModelResult
 
 			if err := validateTenant(req.TenantInfo); err != nil {
 				return result, err
@@ -380,7 +380,7 @@ func (r *repository) PurgeModel(
 				},
 			)
 			if err != nil {
-				return agentports.PurgeAIRetrievalModelResult{}, err
+				return retrievalports.PurgeAIRetrievalModelResult{}, err
 			}
 
 			return result, nil
@@ -391,7 +391,7 @@ func (r *repository) PurgeModel(
 func purgeIndexEntries(
 	ctx context.Context,
 	db *keel.DB,
-	req agentports.PurgeAIRetrievalModelRequest,
+	req retrievalports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
 	e := airetrievaldb.IndexEntries
@@ -418,7 +418,7 @@ func purgeIndexEntries(
 func purgeEmbeddings(
 	ctx context.Context,
 	db *keel.DB,
-	req agentports.PurgeAIRetrievalModelRequest,
+	req retrievalports.PurgeAIRetrievalModelRequest,
 	batch int,
 ) (int, error) {
 	e := airetrievaldb.Embeddings
@@ -450,7 +450,7 @@ type indexedTenantRow struct {
 
 func (r *repository) ListIndexedTenants(
 	ctx context.Context,
-	req agentports.ListIndexedRetrievalTenantsRequest,
+	req retrievalports.ListIndexedRetrievalTenantsRequest,
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that index sources for retrieval")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {

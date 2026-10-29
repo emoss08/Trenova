@@ -4,13 +4,15 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -140,7 +142,7 @@ func TestPlanReportsWhyItCannotIndex(t *testing.T) {
 		t.Parallel()
 
 		svc := newTestService(activeSettings())
-		svc.embeddings.err = agentports.ErrNoProviderConfigured
+		svc.embeddings.err = llmports.ErrNoProviderConfigured
 		plan, err := svc.Plan(t.Context(), testTenant)
 		require.NoError(t, err)
 		assert.Equal(t, airetrieval.UnavailableReasonNoProvider, plan.Reason)
@@ -214,20 +216,20 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:     pulid.MustNew("amem_"),
-		Kind:   agent.MemoryKindFact,
-		Status: agent.MemoryStatusActive,
+		Kind:   agentmemory.MemoryKindFact,
+		Status: agentmemory.MemoryStatusActive,
 	}
 	memory.Content = "Acme closes at 3 PM on Fridays."
-	unchanged := &agent.Memory{
+	unchanged := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Globex allows two hours of free time.",
 	}
-	svc.sources.memories = []*agent.Memory{memory, unchanged}
-	svc.repo.hashes[unchanged.ID] = []agentports.EmbeddingChunkHash{
+	svc.sources.memories = []*agentmemory.Memory{memory, unchanged}
+	svc.repo.hashes[unchanged.ID] = []retrievalports.EmbeddingChunkHash{
 		{ChunkIndex: 0, ContentHash: ChunkMemory(unchanged)[0].Hash},
 	}
 	svc.repo.claim = []*airetrieval.IndexEntry{
@@ -235,7 +237,7 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 		entry(airetrieval.SourceTypeMemory, unchanged.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -267,10 +269,10 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	retired := &agent.Memory{
+	retired := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusRetired,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusRetired,
 		Content: "Old fact.",
 	}
 	workerDoc := documentSource("Medical examiner's certificate for J. Doe.")
@@ -281,8 +283,8 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 	unknownOwner.Document.ResourceType = "mystery_record"
 	unread := documentSource()
 
-	svc.sources.memories = []*agent.Memory{retired}
-	svc.sources.documents = []*agentports.RetrievalDocumentSource{
+	svc.sources.memories = []*agentmemory.Memory{retired}
+	svc.sources.documents = []*retrievalports.RetrievalDocumentSource{
 		workerDoc, oldVersion, unknownOwner, unread,
 	}
 	missing := pulid.MustNew("imsg_")
@@ -295,7 +297,7 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 		entry(airetrieval.SourceTypeInboundMessage, missing),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -331,14 +333,14 @@ func TestIndexBatchIndexesAShipmentDocumentAndMail(t *testing.T) {
 		Subject:     "Where is load 4471?",
 		TextBody:    "Please send an ETA.\n> quoted",
 	}
-	svc.sources.documents = []*agentports.RetrievalDocumentSource{doc}
+	svc.sources.documents = []*retrievalports.RetrievalDocumentSource{doc}
 	svc.sources.messages = []*inboundmessage.InboundMessage{message}
 	svc.repo.claim = []*airetrieval.IndexEntry{
 		entry(airetrieval.SourceTypeDocument, doc.Document.ID),
 		entry(airetrieval.SourceTypeInboundMessage, message.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -353,17 +355,17 @@ func TestIndexBatchRecordsAnEmbeddingFailureForARetry(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errors.New("provider timed out")
 
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -379,18 +381,18 @@ func TestIndexBatchFailsAConfigurationErrorForGood(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errortypes.NewBusinessError("the provider returned 512 dimensions").
 		WithInternal(aiusageports.ErrEmbeddingDimensionMismatch)
 
-	_, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -404,16 +406,16 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 
 	svc := newTestService(activeSettings())
 	svc.usage.spent = decimal.RequireFromString("9.995")
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		ID:      pulid.MustNew("amem_"),
-		Kind:    agent.MemoryKindFact,
-		Status:  agent.MemoryStatusActive,
+		Kind:    agentmemory.MemoryKindFact,
+		Status:  agentmemory.MemoryStatusActive,
 		Content: "Acme closes at 3 PM.",
 	}
-	svc.sources.memories = []*agent.Memory{memory}
+	svc.sources.memories = []*agentmemory.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -423,7 +425,7 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 	require.Len(t, svc.repo.paused, 1)
 	assert.Equal(t, airetrieval.PauseReasonBudget, svc.repo.paused[0].Reason)
 
-	next, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	next, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -439,7 +441,7 @@ func TestIndexBatchClaimsOnlyEnabledSources(t *testing.T) {
 	settings.DocumentsEnabled = false
 	svc := newTestService(settings)
 
-	_, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -455,7 +457,7 @@ func TestIndexBatchIgnoresARetiredModelKey(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	result, err := svc.IndexBatch(t.Context(), &agentports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &retrievalports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   "old.example.com/embed@1536",
 	})
@@ -479,7 +481,7 @@ func TestCompleteModelChangeWaitsForTheWholeCorpus(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Swapped, "a source not yet indexed under the new model holds the swap")
 
-	svc.repo.counts = []agentports.IndexEntryCount{
+	svc.repo.counts = []retrievalports.IndexEntryCount{
 		{
 			SourceType: airetrieval.SourceTypeMemory,
 			Status:     airetrieval.IndexStatusPending,
@@ -490,7 +492,7 @@ func TestCompleteModelChangeWaitsForTheWholeCorpus(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Swapped, "pending entries hold the swap")
 
-	svc.repo.counts = []agentports.IndexEntryCount{
+	svc.repo.counts = []retrievalports.IndexEntryCount{
 		{
 			SourceType: airetrieval.SourceTypeMemory,
 			Status:     airetrieval.IndexStatusIndexed,
@@ -512,7 +514,7 @@ func TestPurgeRetiredModelRunsBatchesUntilDone(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	svc.repo.purges = []agentports.PurgeAIRetrievalModelResult{
+	svc.repo.purges = []retrievalports.PurgeAIRetrievalModelResult{
 		{Embeddings: 1000, IndexEntries: 400},
 		{Embeddings: 250},
 	}
@@ -583,7 +585,7 @@ func TestSweepMarksStaleSourcesAndCountsWaitingOnes(t *testing.T) {
 	svc := newTestService(activeSettings())
 	stale := []pulid.ID{pulid.MustNew("doc_"), pulid.MustNew("doc_")}
 	svc.repo.stale[string(airetrieval.SourceTypeDocument)+"|"+activeKey] = stale
-	svc.repo.counts = []agentports.IndexEntryCount{
+	svc.repo.counts = []retrievalports.IndexEntryCount{
 		{Status: airetrieval.IndexStatusPending, Count: 4},
 		{Status: airetrieval.IndexStatusIndexed, Count: 9},
 	}
@@ -602,7 +604,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	svc := newTestService(activeSettings())
 	svc.sources.ids = []pulid.ID{pulid.MustNew("doc_"), pulid.MustNew("doc_")}
 
-	page, err := svc.ReindexPage(t.Context(), &agentports.RetrievalReindexPageRequest{
+	page, err := svc.ReindexPage(t.Context(), &retrievalports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		Limit:      2,
@@ -613,7 +615,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	assert.Equal(t, svc.sources.ids[1], page.Next)
 	assert.Len(t, svc.signals.signals, 1)
 
-	page, err = svc.ReindexPage(t.Context(), &agentports.RetrievalReindexPageRequest{
+	page, err = svc.ReindexPage(t.Context(), &retrievalports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		AfterID:    page.Next,
@@ -635,7 +637,7 @@ func TestRetryAtBacksOffAndGivesUp(t *testing.T) {
 func TestDocumentTextEmbeddable(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	assert.True(t, DocumentTextEmbeddable(registry, document.OwnerResource("shipment")))
 	assert.True(t, DocumentTextEmbeddable(registry, document.OwnerResource("Customer")))
 	assert.False(t, DocumentTextEmbeddable(registry, document.OwnerResource("worker")))

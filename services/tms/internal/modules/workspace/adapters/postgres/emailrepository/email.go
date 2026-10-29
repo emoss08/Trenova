@@ -14,8 +14,8 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -151,6 +151,28 @@ func (r *repository) GetProfile(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) GetProfilesByIDs(
+	ctx context.Context,
+	req emailports.GetEmailProfilesByIDsRequest,
+) ([]*email.Profile, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*email.Profile, error) {
+		if len(req.ProfileIDs) == 0 {
+			return []*email.Profile{}, nil
+		}
+
+		p := emaildb.Profiles
+		entities, err := p.Where(p.ID.In(req.ProfileIDs...)).
+			Limit(len(req.ProfileIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get email profiles", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
 	})
 }
 
@@ -559,7 +581,7 @@ func (r *repository) CreateSuppression(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*email.Suppression, error) {
 		s := emaildb.Suppressions
 		db := r.db.Keel(ctx)
-		entity.EmailAddress = stringutils.NormalizeEmailAddress(entity.EmailAddress)
+		entity.EmailAddress = mailtext.NormalizeEmailAddress(entity.EmailAddress)
 		inserted, err := s.Upsert(
 			ctx,
 			db,
@@ -605,7 +627,7 @@ func (r *repository) HasSuppression(
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		s := emaildb.Suppressions
-		return s.Where(s.EmailAddress.Eq(stringutils.NormalizeEmailAddress(emailAddress))).
+		return s.Where(s.EmailAddress.Eq(mailtext.NormalizeEmailAddress(emailAddress))).
 			Exists(ctx, r.db.Keel(ctx))
 	})
 }

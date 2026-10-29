@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,8 +21,8 @@ const trialBalanceReport = `{
   ]}
 }`
 
-func dailyJournal() *accountingsyncports.AccountingJournalDocument {
-	return &accountingsyncports.AccountingJournalDocument{
+func dailyJournal() *accountingconnectorports.AccountingJournalDocument {
+	return &accountingconnectorports.AccountingJournalDocument{
 		Auth:         auth(),
 		RequestID:    docRequestID,
 		Kind:         accountingsync.SyncObjectJournalSummary,
@@ -30,27 +30,27 @@ func dailyJournal() *accountingsyncports.AccountingJournalDocument {
 		TxnDate:      "2026-09-27",
 		CurrencyCode: "USD",
 		PrivateNote:  "Trenova daily summary",
-		Lines: []accountingsyncports.AccountingJournalLine{
+		Lines: []accountingconnectorports.AccountingJournalLine{
 			{
-				Posting:           accountingsyncports.AccountingJournalDebit,
+				Posting:           accountingconnectorports.AccountingJournalDebit,
 				AccountExternalID: "84",
 				Amount:            decimal.NewFromInt(1500),
 				Description:       "Accounts receivable",
-				PartyKind:         accountingsyncports.AccountingJournalCustomer,
+				PartyKind:         accountingconnectorports.AccountingJournalCustomer,
 				PartyExternalID:   " 58 ",
 			},
 			{
-				Posting:           accountingsyncports.AccountingJournalCredit,
+				Posting:           accountingconnectorports.AccountingJournalCredit,
 				AccountExternalID: "79",
 				Amount:            decimal.NewFromInt(1200),
 				Description:       "Freight revenue",
 			},
 			{
-				Posting:           accountingsyncports.AccountingJournalCredit,
+				Posting:           accountingconnectorports.AccountingJournalCredit,
 				AccountExternalID: "33",
 				Amount:            decimal.NewFromInt(300),
 				Description:       "Accounts payable",
-				PartyKind:         accountingsyncports.AccountingJournalVendor,
+				PartyKind:         accountingconnectorports.AccountingJournalVendor,
 				PartyExternalID:   "91",
 			},
 		},
@@ -103,10 +103,18 @@ func TestCreateJournalEntryPostsEachLineWithItsParty(t *testing.T) {
 	}
 	assert.Equal(t, "Debit", details[0]["PostingType"])
 	assert.Equal(t, map[string]any{"value": "84"}, details[0]["AccountRef"])
-	assert.Equal(t, map[string]any{"Type": "Customer", "EntityRef": map[string]any{"value": "58"}}, details[0]["Entity"])
+	assert.Equal(
+		t,
+		map[string]any{"Type": "Customer", "EntityRef": map[string]any{"value": "58"}},
+		details[0]["Entity"],
+	)
 	assert.Equal(t, "Credit", details[1]["PostingType"])
 	assert.NotContains(t, details[1], "Entity")
-	assert.Equal(t, map[string]any{"Type": "Vendor", "EntityRef": map[string]any{"value": "91"}}, details[2]["Entity"])
+	assert.Equal(
+		t,
+		map[string]any{"Type": "Vendor", "EntityRef": map[string]any{"value": "91"}},
+		details[2]["Entity"],
+	)
 }
 
 func TestUpdateJournalEntryRewritesTheSameEntry(t *testing.T) {
@@ -152,12 +160,12 @@ func TestJournalEntryRefusals(t *testing.T) {
 	require.ErrorIs(t, err, errExternalIDRequired)
 
 	badPosting := dailyJournal()
-	badPosting.Lines[1].Posting = accountingsyncports.AccountingJournalPosting("Both")
+	badPosting.Lines[1].Posting = accountingconnectorports.AccountingJournalPosting("Both")
 	_, err = conn.CreateJournalEntry(t.Context(), badPosting)
 	require.ErrorIs(t, err, errJournalPosting)
 
 	badParty := dailyJournal()
-	badParty.Lines[0].PartyKind = accountingsyncports.AccountingJournalPartyKind("Employee")
+	badParty.Lines[0].PartyKind = accountingconnectorports.AccountingJournalPartyKind("Employee")
 	_, err = conn.CreateJournalEntry(t.Context(), badParty)
 	require.ErrorIs(t, err, errJournalParty)
 
@@ -174,11 +182,14 @@ func TestReadTrialBalanceReadsEveryAccountRow(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	rows, err := conn.ReadTrialBalance(t.Context(), &accountingsyncports.ReadTrialBalanceRequest{
-		Auth:      auth(),
-		StartDate: "2026-04-01",
-		EndDate:   "2026-09-27",
-	})
+	rows, err := conn.ReadTrialBalance(
+		t.Context(),
+		&accountingconnectorports.ReadTrialBalanceRequest{
+			Auth:      auth(),
+			StartDate: "2026-04-01",
+			EndDate:   "2026-09-27",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "/reports/TrialBalance", query["path"])
 	require.Len(t, rows, 2)
@@ -200,12 +211,15 @@ func TestDeleteJournalEntryRetiresTheProviderEntry(t *testing.T) {
 	}}
 	conn := documentConnector(t, fake)
 
-	result, err := conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       auth(),
-		RequestID:  docRequestID,
-		Kind:       accountingsync.SyncObjectJournalSummary,
-		ExternalID: " 212 ",
-	})
+	result, err := conn.DeleteJournalEntry(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       auth(),
+			RequestID:  docRequestID,
+			Kind:       accountingsync.SyncObjectJournalSummary,
+			ExternalID: " 212 ",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "212", result.ExternalID)
 
@@ -215,11 +229,11 @@ func TestDeleteJournalEntryRetiresTheProviderEntry(t *testing.T) {
 	assert.Equal(t, "delete", writes[0].Operation)
 	assert.Equal(t, "5", writes[0].Body["SyncToken"])
 
-	_, err = conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.DeleteJournalEntry(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectInvoice, ExternalID: "1",
 	})
 	require.ErrorIs(t, err, errDocumentKind)
-	_, err = conn.DeleteJournalEntry(t.Context(), &accountingsyncports.AccountingDocumentRef{
+	_, err = conn.DeleteJournalEntry(t.Context(), &accountingconnectorports.AccountingDocumentRef{
 		Auth: auth(), RequestID: docRequestID, Kind: accountingsync.SyncObjectJournalEntry,
 	})
 	require.ErrorIs(t, err, errExternalIDRequired)

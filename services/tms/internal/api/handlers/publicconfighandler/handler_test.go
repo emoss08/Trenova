@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/publicconfighandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +27,10 @@ const selfHostedBody = `{"platformMode":"self_hosted","signupEnabled":false,` +
 
 type contributorFunc func(ctx context.Context, cfg *kernelports.PublicConfig) error
 
-func (f contributorFunc) ContributePublicConfig(ctx context.Context, cfg *kernelports.PublicConfig) error {
+func (f contributorFunc) ContributePublicConfig(
+	ctx context.Context,
+	cfg *kernelports.PublicConfig,
+) error {
 	return f(ctx, cfg)
 }
 
@@ -38,10 +43,11 @@ func serve(
 	gin.SetMode(gin.TestMode)
 
 	handler := publicconfighandler.New(publicconfighandler.Params{
-		Config: cfg,
+		PlatformConfig: &cfg.Platform,
+		SecurityConfig: &cfg.Security,
 		ErrorHandler: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-			Logger: zap.NewNop(),
-			Config: cfg,
+			Logger:    zap.NewNop(),
+			AppConfig: &cfg.App,
 		}),
 		Contributors: contributors,
 	})
@@ -58,13 +64,13 @@ func serve(
 func TestSelfHostedShape(t *testing.T) {
 	t.Parallel()
 
-	for _, mode := range []config.PlatformMode{
+	for _, mode := range []platformconfig.Mode{
 		"",
-		config.PlatformModeSelfHosted,
-		config.PlatformModeCommunity,
-		config.PlatformModeEnterprise,
+		platformconfig.ModeSelfHosted,
+		platformconfig.ModeCommunity,
+		platformconfig.ModeEnterprise,
 	} {
-		w := serve(t, &config.Config{Platform: config.PlatformConfig{Mode: mode}})
+		w := serve(t, &config.Config{Platform: platformconfig.Config{Mode: mode}})
 
 		require.Equal(t, http.StatusOK, w.Code)
 		assert.JSONEq(t, selfHostedBody, w.Body.String())
@@ -75,7 +81,10 @@ func TestSelfHostedShape(t *testing.T) {
 func TestDevelopmentModeIsReported(t *testing.T) {
 	t.Parallel()
 
-	w := serve(t, &config.Config{Platform: config.PlatformConfig{Mode: config.PlatformModeDevelopment}})
+	w := serve(
+		t,
+		&config.Config{Platform: platformconfig.Config{Mode: platformconfig.ModeDevelopment}},
+	)
 
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"platformMode":"development"`)
@@ -96,7 +105,12 @@ func TestContributorsShapeTheResponse(t *testing.T) {
 		return nil
 	})
 
-	w := serve(t, &config.Config{Platform: config.PlatformConfig{Mode: config.PlatformModeCloud}}, signup, plan)
+	w := serve(
+		t,
+		&config.Config{Platform: platformconfig.Config{Mode: platformconfig.ModeCloud}},
+		signup,
+		plan,
+	)
 
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.JSONEq(t, `{"platformMode":"cloud","signupEnabled":true,"turnstileSiteKey":"site-key",`+
@@ -137,12 +151,16 @@ func TestAContributorErrorIsReported(t *testing.T) {
 func TestAsContributorJoinsTheGroup(t *testing.T) {
 	t.Parallel()
 
-	contributor := contributorFunc(func(context.Context, *kernelports.PublicConfig) error { return nil })
+	contributor := contributorFunc(
+		func(context.Context, *kernelports.PublicConfig) error { return nil },
+	)
 
 	var got []kernelports.PublicConfigContributor
 	app := fx.New(
 		fx.NopLogger,
-		fx.Provide(publicconfighandler.AsContributor(func() contributorFunc { return contributor })),
+		fx.Provide(
+			publicconfighandler.AsContributor(func() contributorFunc { return contributor }),
+		),
 		fx.Invoke(fx.Annotate(
 			func(contributors []kernelports.PublicConfigContributor) { got = contributors },
 			fx.ParamTags(`group:"`+publicconfighandler.ContributorsGroup+`"`),
@@ -156,8 +174,8 @@ func TestSessionIdlePolicyIsPublished(t *testing.T) {
 	t.Parallel()
 
 	w := serve(t, &config.Config{
-		Security: config.SecurityConfig{
-			Session: config.SessionConfig{
+		Security: securityconfig.Config{
+			Session: securityconfig.SessionConfig{
 				MaxAge:      12 * time.Hour,
 				IdleTimeout: 30 * time.Minute,
 				IdleWarning: 2 * time.Minute,

@@ -6,7 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -26,7 +26,7 @@ func hazmatSegregationRuleColumns(ctx context.Context, nodePathPrefix string) []
 func hazmatSegregationRuleConnectionToModel(
 	result *pagination.CursorListResult[*hazmatsegregationrule.HazmatSegregationRule],
 ) (*gqlmodel.HazmatSegregationRuleConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *hazmatsegregationrule.HazmatSegregationRule, cursor string) *gqlmodel.HazmatSegregationRuleEdge {
 			return &gqlmodel.HazmatSegregationRuleEdge{

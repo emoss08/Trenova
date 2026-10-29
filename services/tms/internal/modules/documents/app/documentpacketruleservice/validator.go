@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule/documentpacketruledb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -18,16 +19,15 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*documentpacketrule.DocumentPacketRule]
+	validator tenantedvalidation.EntityValidator[*documentpacketrule.DocumentPacketRule]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*documentpacketrule.DocumentPacketRule]().
+		validator: tenantedvalidation.NewBuilder[*documentpacketrule.DocumentPacketRule]().
 			WithModelName("Document Packet Rule").
 			WithReferenceChecker(
-				validationframework.NewKeelChecker(
+				keelcheck.NewChecker(
 					p.DB,
 					documentpacketruledb.DocumentPacketRulesSchema(),
 				),

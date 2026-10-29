@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/quickfilter"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,7 +50,7 @@ func TestDeterministicWording(t *testing.T) {
 		joined(segments),
 	)
 	require.NotNil(t, segments[0].Filter)
-	assert.Equal(t, shipment.QuickFilterDeliveringToday, *segments[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterDeliveringToday, *segments[0].Filter)
 
 	single := Deterministic(Facts{
 		Facts:         shipmentbrief.Facts{DeliveringToday: 1, Late: 1, Uncovered: 1},
@@ -85,17 +86,17 @@ func TestDeterministicWording(t *testing.T) {
 		"4 loads are moving on schedule. 1 load still needs a driver, 2 loads are accruing detention and 6 loads are ready to bill.",
 		joined(followUps),
 	)
-	linkedTo := make([]shipment.QuickFilter, 0, len(followUps))
+	linkedTo := make([]quickfilter.QuickFilter, 0, len(followUps))
 	for _, segment := range followUps {
 		if segment.Filter != nil {
 			linkedTo = append(linkedTo, *segment.Filter)
 		}
 	}
-	assert.Equal(t, []shipment.QuickFilter{
-		shipment.QuickFilterMoving,
-		shipment.QuickFilterUncovered,
-		shipment.QuickFilterDetention,
-		shipment.QuickFilterReadyToBill,
+	assert.Equal(t, []quickfilter.QuickFilter{
+		quickfilter.QuickFilterMoving,
+		quickfilter.QuickFilterUncovered,
+		quickfilter.QuickFilterDetention,
+		quickfilter.QuickFilterReadyToBill,
 	}, linkedTo)
 }
 
@@ -104,8 +105,8 @@ func TestAcceptNarration(t *testing.T) {
 
 	facts := &Facts{Facts: shipmentbrief.Facts{DeliveringToday: 140, Late: 32, Uncovered: 3}}
 	allowed := facts.Filters()
-	late := shipment.QuickFilterLate
-	moving := shipment.QuickFilterMoving
+	late := quickfilter.QuickFilterLate
+	moving := quickfilter.QuickFilterMoving
 
 	good := []shipmentbriefports.ShipmentBriefingSegment{
 		{Text: "32 late loads", Filter: &late},
@@ -121,7 +122,9 @@ func TestAcceptNarration(t *testing.T) {
 	_, ok = AcceptNarration(invented, facts, allowed)
 	assert.False(t, ok)
 
-	wrongFilter := []shipmentbriefports.ShipmentBriefingSegment{{Text: "Loads are moving", Filter: &moving}}
+	wrongFilter := []shipmentbriefports.ShipmentBriefingSegment{
+		{Text: "Loads are moving", Filter: &moving},
+	}
 	_, ok = AcceptNarration(wrongFilter, facts, allowed)
 	assert.False(t, ok)
 
@@ -129,7 +132,9 @@ func TestAcceptNarration(t *testing.T) {
 	assert.False(t, ok)
 
 	_, ok = AcceptNarration(
-		[]shipmentbriefports.ShipmentBriefingSegment{{Text: strings.Repeat("a", maxNarrationChars+1)}},
+		[]shipmentbriefports.ShipmentBriefingSegment{
+			{Text: strings.Repeat("a", maxNarrationChars+1)},
+		},
 		facts,
 		allowed,
 	)
@@ -157,15 +162,15 @@ func (*stubBasis) Prepare(
 }
 
 type stubBoard struct {
-	shipmentports.ShipmentBoardRepository
-	counts map[shipment.QuickFilter]int
+	shipmentboardports.ShipmentBoardRepository
+	counts map[quickfilter.QuickFilter]int
 }
 
 func (b *stubBoard) QuickFilterTotals(
 	_ context.Context,
-	req *shipmentports.CountShipmentQuickFiltersRequest,
-) ([]shipmentports.ShipmentQuickFilterTotal, error) {
-	out := make([]shipmentports.ShipmentQuickFilterTotal, len(req.Filters))
+	req *shipmentboardports.CountShipmentQuickFiltersRequest,
+) ([]shipmentboardports.ShipmentQuickFilterTotal, error) {
+	out := make([]shipmentboardports.ShipmentQuickFilterTotal, len(req.Filters))
 	for i, spec := range req.Filters {
 		out[i].Count = b.counts[spec.Filter]
 	}
@@ -177,8 +182,8 @@ type stubReasons struct{}
 func (stubReasons) LeadingLateReason(
 	context.Context,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentLateReason, error) {
-	return &shipmentports.ShipmentLateReason{Label: "Weather", Count: 1}, nil
+) (*shipmentboardports.ShipmentLateReason, error) {
+	return &shipmentboardports.ShipmentLateReason{Label: "Weather", Count: 1}, nil
 }
 
 type stubOrgs struct {
@@ -262,7 +267,7 @@ func (m *memoryBriefs) DeleteBefore(
 }
 
 type stubCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	text  string
 	err   error
 	calls *int
@@ -270,8 +275,8 @@ type stubCompletion struct {
 
 func (s stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	if s.calls != nil {
 		*s.calls++
 	}
@@ -281,7 +286,7 @@ func (s stubCompletion) CompleteStructured(
 	if req.SchemaName != schemaName {
 		return nil, errors.New("no wording in this test")
 	}
-	return &agentports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
+	return &llmports.StructuredCompletionResult{Text: s.text, ModelIdentifier: "test-model"}, nil
 }
 
 type fixture struct {
@@ -292,16 +297,16 @@ type fixture struct {
 	candidates *stubCandidates
 }
 
-func defaultCounts() map[shipment.QuickFilter]int {
-	return map[shipment.QuickFilter]int{
-		shipment.QuickFilterDeliveringToday: 30,
-		shipment.QuickFilterMoving:          12,
-		shipment.QuickFilterLate:            0,
-		shipment.QuickFilterUncovered:       4,
+func defaultCounts() map[quickfilter.QuickFilter]int {
+	return map[quickfilter.QuickFilter]int{
+		quickfilter.QuickFilterDeliveringToday: 30,
+		quickfilter.QuickFilterMoving:          12,
+		quickfilter.QuickFilterLate:            0,
+		quickfilter.QuickFilterUncovered:       4,
 	}
 }
 
-func newFixture(completion agentports.CompletionService) *fixture {
+func newFixture(completion llmports.CompletionService) *fixture {
 	f := &fixture{
 		board:      &stubBoard{counts: defaultCounts()},
 		basis:      &stubBasis{},
@@ -322,7 +327,7 @@ func newFixture(completion agentports.CompletionService) *fixture {
 	return f
 }
 
-func newService(completion agentports.CompletionService) *Service {
+func newService(completion llmports.CompletionService) *Service {
 	return newFixture(completion).service
 }
 
@@ -333,7 +338,7 @@ func testTenant() pagination.TenantInfo {
 func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	_, err := f.service.Facts(t.Context(), testTenant(), "America/Chicago")
 	require.NoError(t, err)
 
@@ -348,7 +353,7 @@ func TestFactsResolveTheBasisEveryFactFilterNeeds(t *testing.T) {
 func TestBriefingFallsBackWithoutAModel(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	svc := newService(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	briefing, err := svc.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.False(t, briefing.Narrated)
@@ -375,7 +380,7 @@ func TestBriefingUsesGuardedNarration(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, briefing.Narrated)
 	require.Len(t, briefing.Segments, 2)
-	assert.Equal(t, shipment.QuickFilterUncovered, *briefing.Segments[0].Filter)
+	assert.Equal(t, quickfilter.QuickFilterUncovered, *briefing.Segments[0].Filter)
 	assert.Nil(t, briefing.Segments[1].Filter)
 
 	lying := newService(stubCompletion{
@@ -407,7 +412,7 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 	assert.Equal(t, 1, first.Generation)
 	modelCalls := calls
 
-	f.board.counts[shipment.QuickFilterMoving] = 99
+	f.board.counts[quickfilter.QuickFilterMoving] = 99
 	second, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Equal(t, modelCalls, calls, "reading the day's brief asks the model nothing")
@@ -418,18 +423,18 @@ func TestBriefingIsWrittenOnceAndThenRead(t *testing.T) {
 func TestBriefingIsRewrittenWhenTheBoardIsCleared(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 1)
 
-	f.board.counts[shipment.QuickFilterLate] = 1
-	f.board.counts[shipment.QuickFilterUncovered] = 0
+	f.board.counts[quickfilter.QuickFilterLate] = 1
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
 	_, err = f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Len(t, f.briefs.rows, 1, "a board with an issue still open keeps its brief")
 
-	f.board.counts[shipment.QuickFilterLate] = 0
+	f.board.counts[quickfilter.QuickFilterLate] = 0
 	cleared, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 2)
@@ -445,9 +450,11 @@ func TestBriefingIsRewrittenWhenTheBoardIsCleared(t *testing.T) {
 func TestBriefingCountsOpenSuggestionsAsIssues(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
-	f.board.counts[shipment.QuickFilterUncovered] = 0
-	f.candidates.items = []*shipmentsuggestionports.ShipmentSuggestion{{Key: "a", Title: "Approve detention"}}
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
+	f.candidates.items = []*shipmentsuggestionports.ShipmentSuggestion{
+		{Key: "a", Title: "Approve detention"},
+	}
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	require.Len(t, f.briefs.rows, 1)
@@ -463,12 +470,12 @@ func TestBriefingCountsOpenSuggestionsAsIssues(t *testing.T) {
 func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	_, err := f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	f.briefs.rows[0].Generation = maxGenerationsPerDay
 
-	f.board.counts[shipment.QuickFilterUncovered] = 0
+	f.board.counts[quickfilter.QuickFilterUncovered] = 0
 	_, err = f.service.Briefing(t.Context(), testTenant(), "UTC")
 	require.NoError(t, err)
 	assert.Len(t, f.briefs.rows, 1)
@@ -477,7 +484,7 @@ func TestBriefingStopsRewritingAfterTheDaysLimit(t *testing.T) {
 func TestWriteBriefForTheMorning(t *testing.T) {
 	t.Parallel()
 
-	f := newFixture(stubCompletion{err: agentports.ErrNoProviderConfigured})
+	f := newFixture(stubCompletion{err: llmports.ErrNoProviderConfigured})
 	req := &shipmentbriefports.WriteShipmentBriefRequest{
 		TenantInfo: testTenant(),
 		Trigger:    shipmentbrief.TriggerScheduled,
@@ -524,18 +531,18 @@ func TestWriteBriefStoresSuggestionWording(t *testing.T) {
 }
 
 type wordingCompletion struct {
-	agentports.CompletionService
+	llmports.CompletionService
 	text string
 }
 
 func (w wordingCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	if req.SchemaName != wordingSchemaName {
-		return nil, agentports.ErrNoProviderConfigured
+		return nil, llmports.ErrNoProviderConfigured
 	}
-	return &agentports.StructuredCompletionResult{Text: w.text}, nil
+	return &llmports.StructuredCompletionResult{Text: w.text}, nil
 }
 
 func TestAcceptedWordingKeepsOnlyRewordingsThatInventNothing(t *testing.T) {
@@ -550,14 +557,17 @@ func TestAcceptedWordingKeepsOnlyRewordingsThatInventNothing(t *testing.T) {
 		Impact: []string{"$3590"},
 	}
 
-	wording := acceptedWording([]*shipmentsuggestionports.ShipmentSuggestion{honest, invented}, []narratedItem{
-		{
-			Key:    "a",
-			Title:  "Put Gwen on the San Antonio run",
-			Reason: "She is 5 miles out and the $3590 load closes at 13:30.",
+	wording := acceptedWording(
+		[]*shipmentsuggestionports.ShipmentSuggestion{honest, invented},
+		[]narratedItem{
+			{
+				Key:    "a",
+				Title:  "Put Gwen on the San Antonio run",
+				Reason: "She is 5 miles out and the $3590 load closes at 13:30.",
+			},
+			{Key: "b", Title: "Tender this one", Reason: "It pays $4200 and closes at 13:30."},
 		},
-		{Key: "b", Title: "Tender this one", Reason: "It pays $4200 and closes at 13:30."},
-	})
+	)
 
 	require.Len(t, wording, 1)
 	assert.Equal(t, "Put Gwen on the San Antonio run", wording["a"].Title)
@@ -568,7 +578,7 @@ func TestOutputSchemaAsksForSegmentsLinkedToAllowedFilters(t *testing.T) {
 	t.Parallel()
 
 	schema := outputSchema(
-		[]shipment.QuickFilter{shipment.QuickFilterLate, shipment.QuickFilterMoving},
+		[]quickfilter.QuickFilter{quickfilter.QuickFilterLate, quickfilter.QuickFilterMoving},
 	)
 
 	assert.Equal(t, map[string]any{

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -29,73 +29,81 @@ func orEmpty(e keel.Expr) keel.StringExpr { return keel.StringOf(e).Coalesce("")
 func (r *repository) StaffByPosition(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]workerports.StaffCountRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.StaffCountRow, error) {
-		m := tenantdb.OrganizationMemberships
-		u := m.User()
-		jp := workerdb.JobPositions
-		rows, err := keel.Into[workerports.StaffCountRow](ctx, r.db.Keel(ctx), m.
-			Join(jp, jp.ID.EqCol(m.PositionID)).
-			Where(u.Status.Eq(domaintypes.StatusActive)).
-			Group(m.PositionID, jp.Title, jp.Code, jp.Department).
-			Pick(m.PositionID, jp.Title, jp.Code, keel.CastText(jp.Department), keel.Count()))
-		if err != nil {
-			r.l.Error("failed to count staff by position", zap.Error(err))
-			return nil, fmt.Errorf("count staff by position: %w", err)
-		}
-		return rows, nil
-	})
+) ([]orgstructureports.StaffCountRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.StaffCountRow, error) {
+			m := tenantdb.OrganizationMemberships
+			u := m.User()
+			jp := workerdb.JobPositions
+			rows, err := keel.Into[orgstructureports.StaffCountRow](ctx, r.db.Keel(ctx), m.
+				Join(jp, jp.ID.EqCol(m.PositionID)).
+				Where(u.Status.Eq(domaintypes.StatusActive)).
+				Group(m.PositionID, jp.Title, jp.Code, jp.Department).
+				Pick(m.PositionID, jp.Title, jp.Code, keel.CastText(jp.Department), keel.Count()))
+			if err != nil {
+				r.l.Error("failed to count staff by position", zap.Error(err))
+				return nil, fmt.Errorf("count staff by position: %w", err)
+			}
+			return rows, nil
+		},
+	)
 }
 
 func (r *repository) ListPositionHolders(
 	ctx context.Context,
 	_ pagination.TenantInfo,
 	positionID pulid.ID,
-) ([]workerports.PositionHolderRow, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.PositionHolderRow, error) {
-		db := r.db.Keel(ctx)
-		w := workerdb.Workers
-		fc := w.FleetCode()
-		workers, err := keel.Into[workerports.PositionHolderRow](ctx, db, w.
-			Where(w.PositionID.Eq(positionID)).
-			Pick(
-				keel.Text(string(workerports.PositionHolderWorker)),
-				w.ID,
-				w.FirstName.Cat(keel.Text(" "), w.LastName),
-				keel.CastText(w.Status),
-				orEmpty(fc.Code),
-			).
-			Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()),
-		)
-		if err != nil {
-			r.l.Error("failed to list workers in position", zap.Error(err))
-			return nil, fmt.Errorf("list workers in position: %w", err)
-		}
+) ([]orgstructureports.PositionHolderRow, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]orgstructureports.PositionHolderRow, error) {
+			db := r.db.Keel(ctx)
+			w := workerdb.Workers
+			fc := w.FleetCode()
+			workers, err := keel.Into[orgstructureports.PositionHolderRow](ctx, db, w.
+				Where(w.PositionID.Eq(positionID)).
+				Pick(
+					keel.Text(string(orgstructureports.PositionHolderWorker)),
+					w.ID,
+					w.FirstName.Cat(keel.Text(" "), w.LastName),
+					keel.CastText(w.Status),
+					orEmpty(fc.Code),
+				).
+				Order(keel.Desc(w.Status.Eq(domaintypes.StatusActive)), w.LastName.Asc(), w.FirstName.Asc()),
+			)
+			if err != nil {
+				r.l.Error("failed to list workers in position", zap.Error(err))
+				return nil, fmt.Errorf("list workers in position: %w", err)
+			}
 
-		m := tenantdb.OrganizationMemberships
-		u := m.User()
-		users, err := keel.Into[workerports.PositionHolderRow](ctx, db, m.
-			Where(m.PositionID.Eq(positionID), u.ID.IsNotNull()).
-			Pick(
-				keel.Text(string(workerports.PositionHolderUser)),
-				u.ID,
-				u.Name,
-				keel.CastText(u.Status),
-				u.EmailAddress,
-			).
-			Order(keel.Desc(u.Status.Eq(domaintypes.StatusActive)), u.Name.Asc()))
-		if err != nil {
-			r.l.Error("failed to list users in position", zap.Error(err))
-			return nil, fmt.Errorf("list users in position: %w", err)
-		}
+			m := tenantdb.OrganizationMemberships
+			u := m.User()
+			users, err := keel.Into[orgstructureports.PositionHolderRow](ctx, db, m.
+				Where(m.PositionID.Eq(positionID), u.ID.IsNotNull()).
+				Pick(
+					keel.Text(string(orgstructureports.PositionHolderUser)),
+					u.ID,
+					u.Name,
+					keel.CastText(u.Status),
+					u.EmailAddress,
+				).
+				Order(keel.Desc(u.Status.Eq(domaintypes.StatusActive)), u.Name.Asc()))
+			if err != nil {
+				r.l.Error("failed to list users in position", zap.Error(err))
+				return nil, fmt.Errorf("list users in position: %w", err)
+			}
 
-		return append(workers, users...), nil
-	})
+			return append(workers, users...), nil
+		},
+	)
 }
 
 func (r *repository) SetWorkerPosition(
 	ctx context.Context,
-	req *workerports.SetWorkerPositionRequest,
+	req *orgstructureports.SetWorkerPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		w := workerdb.Workers
@@ -114,7 +122,7 @@ func (r *repository) SetWorkerPosition(
 
 func (r *repository) SetUserPosition(
 	ctx context.Context,
-	req *workerports.SetUserPositionRequest,
+	req *orgstructureports.SetUserPositionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		m := tenantdb.OrganizationMemberships

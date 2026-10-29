@@ -11,7 +11,7 @@ import (
 
 	"github.com/emoss08/keel/analytics/format"
 	"github.com/emoss08/keel/analytics/table"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/reportingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
@@ -25,8 +25,8 @@ var _ reportports.ReportRenderer = (*PDFRenderer)(nil)
 type PDFParams struct {
 	fx.In
 
-	Config   *config.Config
-	Renderer documenttemplateports.PDFRenderer
+	ReportingConfig *reportingconfig.Config
+	Renderer        documenttemplateports.PDFRenderer
 }
 
 type PDFRenderer struct {
@@ -36,7 +36,7 @@ type PDFRenderer struct {
 
 func NewPDF(p PDFParams) *PDFRenderer {
 	return &PDFRenderer{
-		maxRows:  p.Config.GetReportingConfig().GetPDFMaxRows(),
+		maxRows:  p.ReportingConfig.GetPDFMaxRows(),
 		renderer: p.Renderer,
 	}
 }

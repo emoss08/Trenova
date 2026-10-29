@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -25,7 +25,7 @@ const (
 // AutomaticRunRequest is one organization's turn in the automatic transfer
 // sweep.
 type AutomaticRunRequest struct {
-	Control      *tenant.BillingControl
+	Control      *billingcontrol.BillingControl
 	SystemUserID pulid.ID
 	Now          int64
 }
@@ -45,7 +45,7 @@ func (s *Service) StartAutomatic(
 ) (*billingtransfer.BillingTransferRun, error) {
 	control := req.Control
 	if control == nil ||
-		control.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady ||
+		control.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady ||
 		s.shipments == nil {
 		return nil, nil //nolint:nilnil // automatic transfer is off for this organization
 	}
@@ -78,7 +78,7 @@ func (s *Service) StartAutomatic(
 	limit := AutomaticBatchSize(control)
 	shipmentIDs, err := s.shipments.ListAutoTransferCandidateIDs(
 		ctx,
-		&shipmentports.ListAutoTransferCandidateIDsRequest{
+		&shipmentbillingports.ListAutoTransferCandidateIDsRequest{
 			TenantInfo: tenantInfo,
 			Limit:      limit,
 			ScanLimit:  min(limit*automaticScanFactor, maxAutomaticScan),
@@ -105,9 +105,9 @@ func (s *Service) StartAutomatic(
 // AutomaticBatchSize is how many shipments one automatic transfer may take: the
 // transfer batch size, and no more invoice drafts than the auto-invoice batch
 // size allows where transferring creates them.
-func AutomaticBatchSize(control *tenant.BillingControl) int {
+func AutomaticBatchSize(control *billingcontrol.BillingControl) int {
 	limit := control.BillingQueueTransferBatchSize
-	if control.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeAutomaticWhenTransferred &&
+	if control.InvoiceDraftCreationMode == billingcontrol.InvoiceDraftCreationModeAutomaticWhenTransferred &&
 		control.AutoInvoiceBatchSize > 0 {
 		limit = min(limit, control.AutoInvoiceBatchSize)
 	}
@@ -118,7 +118,7 @@ func AutomaticBatchSize(control *tenant.BillingControl) int {
 func (s *Service) automaticRunDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	schedule tenant.TransferSchedule,
+	schedule billingcontrol.TransferSchedule,
 	now int64,
 ) (bool, error) {
 	interval := automaticInterval(schedule)
@@ -140,15 +140,15 @@ func (s *Service) automaticRunDue(
 	return now-last >= interval, nil
 }
 
-func automaticInterval(schedule tenant.TransferSchedule) int64 {
+func automaticInterval(schedule billingcontrol.TransferSchedule) int64 {
 	switch schedule {
-	case tenant.TransferScheduleHourly:
+	case billingcontrol.TransferScheduleHourly:
 		return int64(time.Hour.Seconds())
-	case tenant.TransferScheduleDaily:
+	case billingcontrol.TransferScheduleDaily:
 		return int64((24 * time.Hour).Seconds())
-	case tenant.TransferScheduleWeekly:
+	case billingcontrol.TransferScheduleWeekly:
 		return int64((7 * 24 * time.Hour).Seconds())
-	case tenant.TransferScheduleContinuous:
+	case billingcontrol.TransferScheduleContinuous:
 		return 0
 	default:
 		return 0

@@ -191,7 +191,13 @@ describe("DecisionFlow when the server refuses an approval", () => {
     press("a");
 
     await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
-    expect(await screen.findByText("Decided today")).toBeInTheDocument();
+    // The queue's rows are windowed and jsdom lays nothing out, so the read-back
+    // shows in the cleared queue's count of what was decided today.
+    expect(
+      await screen.findByText(
+        "1 thing was decided today. Agents will ask here before they change anything else.",
+      ),
+    ).toBeInTheDocument();
     expect(info).toHaveBeenCalledTimes(1);
     expect(error).not.toHaveBeenCalled();
   });

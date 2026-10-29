@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelusage"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -74,43 +75,47 @@ func (s *Service) monthToDateSpend(
 	return cost, nil
 }
 
-type budgetCheck struct {
-	tenant    pagination.TenantInfo
-	control   *carrierintel.CarrierIntelControl
-	bound     *boundProvider
-	endpoint  carrierintel.Endpoint
-	dotNumber string
-	units     int
+type BudgetCheck struct {
+	Tenant    pagination.TenantInfo
+	Control   *carrierintelcontrol.CarrierIntelControl
+	Bound     *BoundProvider
+	Endpoint  carrierintelusage.Endpoint
+	DOTNumber string
+	Units     int
 }
 
-func (s *Service) marginalCost(ctx context.Context, check *budgetCheck) (decimal.Decimal, error) {
-	price := check.bound.prices.Price(check.endpoint)
-	if price.Model == carrierintel.BillingModelFree || !price.UnitCost.IsPositive() {
+func (s *Service) marginalCost(ctx context.Context, check *BudgetCheck) (decimal.Decimal, error) {
+	price := check.Bound.prices.Price(check.Endpoint)
+	if price.Model == carrierintelusage.BillingModelFree || !price.UnitCost.IsPositive() {
 		return decimal.Zero, nil
 	}
-	units := max(check.units, 1)
-	if price.Model == carrierintel.BillingModelPerDOTMonth {
-		dedupe := carrierintel.BillingDedupeKey(check.endpoint, price, check.dotNumber, s.now())
-		if dedupe != "" {
-			exists, err := s.usageRepo.ExistsDedupeKey(
-				ctx,
-				check.tenant,
-				check.bound.provider,
-				dedupe,
-			)
-			if err != nil {
-				return decimal.Zero, err
-			}
-			if exists {
-				return decimal.Zero, nil
-			}
+	units := max(check.Units, 1)
+	if price.Model == carrierintelusage.BillingModelPerDOTMonth {
+		billed, err := s.alreadyBilledThisMonth(ctx, check, price)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		if billed {
+			return decimal.Zero, nil
 		}
 	}
 	return price.UnitCost.Mul(decimalFromInt(units)), nil
 }
 
-func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
-	control := check.control
+func (s *Service) alreadyBilledThisMonth(
+	ctx context.Context,
+	check *BudgetCheck,
+	price carrierintelusage.EndpointPrice,
+) (bool, error) {
+	dedupe := carrierintelusage.BillingDedupeKey(check.Endpoint, price, check.DOTNumber, s.now())
+	if dedupe == "" {
+		return false, nil
+	}
+	return s.usageRepo.ExistsDedupeKey(ctx, check.Tenant, check.Bound.provider, dedupe)
+}
+
+func (s *Service) GuardBudget(ctx context.Context, check *BudgetCheck) error {
+	control := check.Control
 	if control.MonthlySpendCap == nil && control.DailyFullProfileCap == nil {
 		return nil
 	}
@@ -123,13 +128,14 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 		return nil
 	}
 
-	if control.DailyFullProfileCap != nil && check.endpoint == carrierintel.EndpointProfileFull {
+	if control.DailyFullProfileCap != nil &&
+		check.Endpoint == carrierintelusage.EndpointProfileFull {
 		count, countErr := s.usageRepo.CountBillableSince(
 			ctx,
 			&carrierintelports.CountBillableUsageRequest{
-				TenantInfo: check.tenant,
-				Provider:   check.bound.provider,
-				Endpoint:   check.endpoint,
+				TenantInfo: check.Tenant,
+				Provider:   check.Bound.provider,
+				Endpoint:   check.Endpoint,
 				Since:      timeutils.DayStartUTC(s.now()),
 			},
 		)
@@ -148,7 +154,7 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 		return nil
 	}
 
-	mtd, err := s.monthToDateSpend(ctx, check.tenant)
+	mtd, err := s.monthToDateSpend(ctx, check.Tenant)
 	if err != nil {
 		return err
 	}
@@ -156,7 +162,7 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 	limit := *control.MonthlySpendCap
 
 	if projected.GreaterThan(limit) {
-		s.notifySpend(ctx, check.tenant, mtd, limit, true)
+		s.notifySpend(ctx, check.Tenant, mtd, limit, true)
 		return fmt.Errorf("%w: %w", ErrSpendCapReached, errortypes.NewBusinessError(
 			"The monthly carrier intelligence spend cap of ${0} has been reached",
 			limit.StringFixed(2),
@@ -166,7 +172,7 @@ func (s *Service) guardBudget(ctx context.Context, check *budgetCheck) error {
 	softLimit := limit.Mul(decimal.NewFromInt(int64(control.SoftCapPercent))).
 		Div(decimal.NewFromInt(100))
 	if projected.GreaterThanOrEqual(softLimit) {
-		s.notifySpend(ctx, check.tenant, projected, limit, false)
+		s.notifySpend(ctx, check.Tenant, projected, limit, false)
 	}
 	return nil
 }
@@ -194,25 +200,25 @@ func (s *Service) notifySpend(
 		)
 	}
 
-	s.sendNotification(ctx, &notificationRequest{
-		tenant:      tenantInfo,
-		eventType:   eventType,
-		correlation: fmt.Sprintf("%s-%s", eventType, timeutils.MonthKeyUTC(s.now())),
-		priority:    priority,
-		title:       title,
-		message:     message,
-		link:        monitoringLink + "?tab=usage",
+	s.SendNotification(ctx, &NotificationRequest{
+		Tenant:      tenantInfo,
+		EventType:   eventType,
+		Correlation: fmt.Sprintf("%s-%s", eventType, timeutils.MonthKeyUTC(s.now())),
+		Priority:    priority,
+		Title:       title,
+		Message:     message,
+		Link:        MonitoringLink + "?tab=usage",
 	})
 }
 
-func isSpendCapError(err error) bool {
+func IsSpendCapError(err error) bool {
 	return errors.Is(err, ErrSpendCapReached)
 }
 
-func logBudgetDenied(l *zap.Logger, check *budgetCheck, err error) {
+func logBudgetDenied(l *zap.Logger, check *BudgetCheck, err error) {
 	l.Info("carrier intelligence call denied by budget",
-		zap.String("provider", check.bound.provider.String()),
-		zap.String("endpoint", check.endpoint.String()),
+		zap.String("provider", check.Bound.provider.String()),
+		zap.String("endpoint", check.Endpoint.String()),
 		zap.Error(err),
 	)
 }

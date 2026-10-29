@@ -4,11 +4,11 @@ package fleetresolver
 
 import (
 	model "github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/model"
-	base "github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/gqlexec/internal/e2e/resolver/resolvercore"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	Fleet  []*model.Truck
 	Roster []*model.Driver
 }

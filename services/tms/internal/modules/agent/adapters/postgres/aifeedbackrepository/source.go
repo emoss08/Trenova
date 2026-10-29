@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn/conversationturndb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
@@ -151,9 +153,9 @@ func chronological(rows []*conversation.Message) []conversation.Message {
 func (r *sourceRepository) turn(
 	ctx context.Context,
 	message *conversation.Message,
-) (*conversation.AssistantTurn, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.AssistantTurn, error) {
-		t := conversationdb.AssistantTurns
+) (*conversationturn.AssistantTurn, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversationturn.AssistantTurn, error) {
+		t := conversationturndb.AssistantTurns
 		turn, err := t.Where(t.ThreadID.Eq(message.ThreadID), t.CreatedAt.Lte(message.CreatedAt)).
 			Order(t.CreatedAt.Desc()).
 			First(ctx, r.db.Keel(ctx))

@@ -7,9 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync/edisyncdb"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +32,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) ediports.EDIShipmentLinkRepository {
+func New(p Params) editenderports.EDIShipmentLinkRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-shipment-link-repository"),
@@ -41,18 +41,18 @@ func New(p Params) ediports.EDIShipmentLinkRepository {
 
 func (r *repository) ListShipmentLinks(
 	ctx context.Context,
-	req *ediports.ListEDIShipmentLinksRequest,
-) (*pagination.ListResult[*edi.ShipmentLink], error) {
+	req *editenderports.ListEDIShipmentLinksRequest,
+) (*pagination.ListResult[*edisync.ShipmentLink], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*edi.ShipmentLink], error) {
-			sl := edidb.ShipmentLinks
+		func(ctx context.Context) (*pagination.ListResult[*edisync.ShipmentLink], error) {
+			sl := edisyncdb.ShipmentLinks
 			return listquery.List(
 				ctx,
 				r.db.Keel(ctx),
 				sl.Where(involvesOrganization(req.Filter.TenantInfo.OrgID)),
-				&listquery.Request[edi.ShipmentLink]{
+				&listquery.Request[edisync.ShipmentLink]{
 					Filter: req.Filter,
 					Then:   []keel.Order{sl.CreatedAt.Desc()},
 				},
@@ -63,10 +63,10 @@ func (r *repository) ListShipmentLinks(
 
 func (r *repository) GetShipmentLinkByID(
 	ctx context.Context,
-	req ediports.GetEDIShipmentLinkByIDRequest,
-) (*edi.ShipmentLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
-		sl := edidb.ShipmentLinks
+	req editenderports.GetEDIShipmentLinkByIDRequest,
+) (*edisync.ShipmentLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edisync.ShipmentLink, error) {
+		sl := edisyncdb.ShipmentLinks
 		q := sl.Where(sl.ID.Eq(req.ID), involvesOrganization(req.TenantInfo.OrgID))
 		entity, err := ediscope.Tenant(ctx, q, req.TenantInfo).One(ctx, r.db.Keel(ctx))
 		if err != nil {
@@ -79,10 +79,10 @@ func (r *repository) GetShipmentLinkByID(
 
 func (r *repository) GetShipmentLinksByShipmentID(
 	ctx context.Context,
-	req ediports.GetEDIShipmentLinksByShipmentIDRequest,
-) ([]*edi.ShipmentLink, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.ShipmentLink, error) {
-		sl := edidb.ShipmentLinks
+	req editenderports.GetEDIShipmentLinksByShipmentIDRequest,
+) ([]*edisync.ShipmentLink, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edisync.ShipmentLink, error) {
+		sl := edisyncdb.ShipmentLinks
 		org := req.TenantInfo.OrgID
 		return sl.Where(keel.Or(
 			keel.And(sl.SourceOrganizationID.Eq(org), sl.SourceShipmentID.Eq(req.ShipmentID)),
@@ -93,10 +93,10 @@ func (r *repository) GetShipmentLinksByShipmentID(
 
 func (r *repository) CreateShipmentLink(
 	ctx context.Context,
-	entity *edi.ShipmentLink,
-) (*edi.ShipmentLink, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.ShipmentLink, error) {
-		if err := edidb.ShipmentLinks.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *edisync.ShipmentLink,
+) (*edisync.ShipmentLink, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edisync.ShipmentLink, error) {
+		if err := edisyncdb.ShipmentLinks.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, shipmentLinkErrors.Map(err, entity.ID.String())
 		}
 
@@ -105,6 +105,6 @@ func (r *repository) CreateShipmentLink(
 }
 
 func involvesOrganization(orgID pulid.ID) keel.Pred {
-	sl := edidb.ShipmentLinks
+	sl := edisyncdb.ShipmentLinks
 	return keel.Or(sl.SourceOrganizationID.Eq(orgID), sl.TargetOrganizationID.Eq(orgID))
 }

@@ -6,12 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
+	"github.com/emoss08/trenova/shared/businesscentralwebhook"
 )
 
-var _ accountingsyncports.AccountingWebhookSubscriber = (*Connector)(nil)
+var _ accountingconnectorports.AccountingWebhookSubscriber = (*Connector)(nil)
 
 const subscriptionRenewWindow = 24 * time.Hour
 
@@ -40,12 +42,12 @@ func (c *Connector) SubscriptionRenewWindow() time.Duration {
 func subscriptionInput(
 	client *businesscentral.Client,
 	resource, notificationURL, clientState string,
-) (*businesscentral.SubscriptionInput, error) {
-	path := businesscentral.SubscriptionResource(client.Ref(), strings.TrimSpace(resource))
+) (*businesscentralwebhook.SubscriptionInput, error) {
+	path := businesscentralwebhook.SubscriptionResource(client.Ref(), strings.TrimSpace(resource))
 	if path == "" {
 		return nil, errUnknownResource
 	}
-	return &businesscentral.SubscriptionInput{
+	return &businesscentralwebhook.SubscriptionInput{
 		NotificationURL: notificationURL,
 		Resource:        path,
 		ClientState:     clientState,
@@ -54,9 +56,9 @@ func subscriptionInput(
 
 func (c *Connector) Subscribe(
 	ctx context.Context,
-	req *accountingsyncports.AccountingSubscribeRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
-	client, err := c.client(req.Auth)
+	req *accountingconnectorports.AccountingSubscribeRequest,
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func (c *Connector) Subscribe(
 	if err != nil {
 		return nil, err
 	}
-	created, err := client.CreateSubscription(ctx, input)
+	created, err := businesscentralwebhook.CreateSubscription(ctx, client, input)
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +75,9 @@ func (c *Connector) Subscribe(
 
 func (c *Connector) RenewSubscription(
 	ctx context.Context,
-	req *accountingsyncports.AccountingRenewSubscriptionRequest,
-) (*accountingsync.WebhookSubscriptionGrant, error) {
-	client, err := c.client(req.Auth)
+	req *accountingconnectorports.AccountingRenewSubscriptionRequest,
+) (*accountingconnection.WebhookSubscriptionGrant, error) {
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +85,13 @@ func (c *Connector) RenewSubscription(
 	if err != nil {
 		return nil, err
 	}
-	renewed, err := client.RenewSubscription(ctx, req.ExternalID, req.ETag, input)
+	renewed, err := businesscentralwebhook.RenewSubscription(
+		ctx,
+		client,
+		req.ExternalID,
+		req.ETag,
+		input,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -92,28 +100,33 @@ func (c *Connector) RenewSubscription(
 
 func (c *Connector) Unsubscribe(
 	ctx context.Context,
-	req *accountingsyncports.AccountingUnsubscribeRequest,
+	req *accountingconnectorports.AccountingUnsubscribeRequest,
 ) error {
-	client, err := c.client(req.Auth)
+	client, err := c.Client(req.Auth)
 	if err != nil {
 		return err
 	}
-	if err = client.DeleteSubscription(ctx, req.ExternalID, req.ETag); err != nil &&
-		!businesscentral.IsNotFound(err) {
+	if err = businesscentralwebhook.DeleteSubscription(
+		ctx,
+		client,
+		req.ExternalID,
+		req.ETag,
+	); err != nil &&
+		!businesscentralerrors.IsNotFound(err) {
 		return err
 	}
 	return nil
 }
 
 func (c *Connector) IsSubscriptionGone(err error) bool {
-	return businesscentral.IsNotFound(err)
+	return businesscentralerrors.IsNotFound(err)
 }
 
 func (c *Connector) grantOf(
-	sub *businesscentral.Subscription,
+	sub *businesscentralwebhook.Subscription,
 	notificationURL string,
-) *accountingsync.WebhookSubscriptionGrant {
-	grant := &accountingsync.WebhookSubscriptionGrant{
+) *accountingconnection.WebhookSubscriptionGrant {
+	grant := &accountingconnection.WebhookSubscriptionGrant{
 		ExternalID:      sub.ID,
 		NotificationURL: sub.NotificationURL,
 		ETag:            sub.ETag,
@@ -123,7 +136,7 @@ func (c *Connector) grantOf(
 		grant.NotificationURL = notificationURL
 	}
 	if grant.ExpiresAt.IsZero() {
-		grant.ExpiresAt = c.now().Add(businesscentral.SubscriptionLifetime)
+		grant.ExpiresAt = c.Clock().Add(businesscentral.SubscriptionLifetime)
 	}
 	return grant
 }

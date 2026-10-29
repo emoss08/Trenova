@@ -3,25 +3,25 @@ package rbactest
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type Repository struct {
-	AuthorizedRoles       []*permission.Role
+	AuthorizedRoles       []*rbac.Role
 	AuthorizedRolesErr    error
 	StaticViolations      []permissionports.ConstraintViolation
 	StaticErr             error
 	DynamicViolations     []permissionports.ConstraintViolation
 	DynamicErr            error
-	RoleHierarchyEdges    []*permission.RoleHierarchyEdge
+	RoleHierarchyEdges    []*rbac.RoleHierarchyEdge
 	RoleHierarchyEdgesErr error
 	RoleClosure           []pulid.ID
 	RoleClosureErr        error
-	RoleConstraints       []*permission.RoleConstraint
+	RoleConstraints       []*rbac.RoleConstraint
 	RoleConstraintsErr    error
-	RoleConstraint        *permission.RoleConstraint
+	RoleConstraint        *rbac.RoleConstraint
 	RoleConstraintErr     error
 	SaveConstraintErr     error
 	DeleteConstraintErr   error
@@ -36,12 +36,12 @@ type Repository struct {
 func (r *Repository) ListRoleHierarchyEdges(
 	context.Context,
 	pulid.ID,
-) ([]*permission.RoleHierarchyEdge, error) {
+) ([]*rbac.RoleHierarchyEdge, error) {
 	if r.RoleHierarchyEdgesErr != nil {
 		return nil, r.RoleHierarchyEdgesErr
 	}
 	if r.RoleHierarchyEdges == nil {
-		return []*permission.RoleHierarchyEdge{}, nil
+		return []*rbac.RoleHierarchyEdge{}, nil
 	}
 	return r.RoleHierarchyEdges, nil
 }
@@ -74,12 +74,12 @@ func (r *Repository) GetAuthorizedRoles(
 	context.Context,
 	pulid.ID,
 	pulid.ID,
-) ([]*permission.Role, error) {
+) ([]*rbac.Role, error) {
 	if r.AuthorizedRolesErr != nil {
 		return nil, r.AuthorizedRolesErr
 	}
 	if r.AuthorizedRoles == nil {
-		return []*permission.Role{}, nil
+		return []*rbac.Role{}, nil
 	}
 	return r.AuthorizedRoles, nil
 }
@@ -100,12 +100,12 @@ func (r *Repository) CountRolePermissions(
 func (r *Repository) ListRoleConstraints(
 	context.Context,
 	permissionports.ListRoleConstraintsRequest,
-) ([]*permission.RoleConstraint, error) {
+) ([]*rbac.RoleConstraint, error) {
 	if r.RoleConstraintsErr != nil {
 		return nil, r.RoleConstraintsErr
 	}
 	if r.RoleConstraints == nil {
-		return []*permission.RoleConstraint{}, nil
+		return []*rbac.RoleConstraint{}, nil
 	}
 	return r.RoleConstraints, nil
 }
@@ -114,12 +114,12 @@ func (r *Repository) GetRoleConstraint(
 	context.Context,
 	pulid.ID,
 	pulid.ID,
-) (*permission.RoleConstraint, error) {
+) (*rbac.RoleConstraint, error) {
 	if r.RoleConstraintErr != nil {
 		return nil, r.RoleConstraintErr
 	}
 	if r.RoleConstraint == nil {
-		return &permission.RoleConstraint{}, nil
+		return &rbac.RoleConstraint{}, nil
 	}
 	return r.RoleConstraint, nil
 }

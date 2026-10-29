@@ -20,16 +20,18 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
 
 | Piece | Where |
 |---|---|
-| Registry: every resource, its operations and field sensitivities | `internal/modules/identity/domain/permission/resources_*.go` |
+| Registry: every resource, its operations and field sensitivities | `permissioncatalog.Registry`, filled from one package per area (`internal/modules/identity/domain/<area>perms`, such as `billingperms`), each built from the `permissionspec` definition types |
 | Engine (one port, used by REST, GraphQL, services and agent tools) | `internal/modules/identity/app/permission/engine.go` |
 | Delegation check ("cannot grant what you do not hold") | `permissionports.EffectivePermissions.DelegationViolation` |
 | Change notifier (cache epoch + realtime) | `internal/modules/identity/app/permissionchange` |
 | Administrator role reconcile | `internal/infrastructure/postgres/tenantbootstrap/adminreconcile.go` |
-| Declared-permission lints (REST, GraphQL, web client, route registry, agent tools) | `internal/api/permissionlint`, `internal/api/graphql/authzlint`, `permission/routeregistry_test.go`, `agenttoolpolicy/validate.go` |
+| Declared-permission lints (REST, GraphQL, web client, route registry, agent tools) | `internal/api/permissionlint`, `internal/api/graphql/authzlint`, `permissioncatalog/routerequirements_test.go`, `agenttoolpolicy/validate.go` |
 
 ## Adding a resource or an operation
 
-1. Declare it in the registry (`resources_*.go`). A check that names an operation the
+1. Declare it in the registry, in the `Resources()` of its area's `<area>perms`
+   package (a new area is a new package, collected in `permissioncatalog`'s
+   `registerAll`). A check that names an operation the
    registry does not declare can never pass, because no role can be granted it, so
    every place that names a permission is held to `Registry.Declares`:
    - REST handlers, GraphQL resolvers and middleware
@@ -90,7 +92,7 @@ Data most readers of the parent have no business seeing (medical, leave, discipl
 compensation) is a resource with no parent, granted on its own through the bundles for the
 jobs that need it. Worker read reaches none of these, a record of one that a worker carries
 is a linked record gated by its own read, and the Read-only template excepts each
-(`ownGrantKinds` in `bundles_catalog.go`):
+(`ownGrantKinds` in `permissioncatalog/jobtemplates.go`):
 
 | Kind | Granted by | Templates |
 |---|---|---|
@@ -146,7 +148,8 @@ view's name and filters never reach someone who cannot open the table it is abou
 ## Bundles and job templates
 
 A role is composed from **capability bundles** rather than from 180 resources one at a
-time. A bundle (`permission/bundles_catalog.go`) is a named set of grants for one job to be
+time. A bundle (one of the `<area>bundles` packages, such as `dispatchbundles`, collected in
+`permissioncatalog/bundles.go`; job templates are in `permissioncatalog/jobtemplates.go`) is a named set of grants for one job to be
 done, such as "Dispatch board" or "Post invoices", and a **job template** (Dispatcher,
 Billing clerk, Accountant, Driver manager, Read-only and others) is a list of bundles with
 a field sensitivity ceiling. `GET /permissions/bundles` returns both, each grant with the
@@ -195,7 +198,7 @@ definition's `Scopes`:
 | `shipment`, `order` | own: records whose `owner_id` is the person | database |
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
-| `capture_batch`, `report` | own | application (`captureservice`, `reportaccess`; see [reporting](reporting.md#access)) |
+| `capture_batch`, `report` | own | application (`capturefiling`, `reportaccess`; see [reporting](reporting.md#access)) |
 | `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
 
 **Application enforcement.** A team is the workers a person manages directly
@@ -208,7 +211,7 @@ never from the request. A list across workers asks `RequireListTeamScope` or
 the request's `ManagerIDs`; the repository filters with `workerteam.Where`
 (`workforce/adapters/postgres/workerteam`), so every list applies one definition of a team.
 A list never relies on the client asking for `teamOnly`. Leave counts delegations for time
-off (`worker.ApprovalScopeTimeOff`); the others count delegations of everything.
+off (`approvaldelegation.ApprovalScopeTimeOff`); the others count delegations of everything.
 
 **Database enforcement.** Each authenticated request (`ReadScopeMiddleware`) and each
 agent tool call (`agentflow.runTool`) carries a `pkg/readscope` holder. At its first
@@ -420,7 +423,7 @@ reads as root records, and the linked fields it selects. Three reads are built o
 | `pageAccessPreview(input:)` | `role` read | a saved or draft role's access to a screen, with the roles it inherits |
 | `pageAccessScreens`, `roleResourceGuides(input:)` | `role` read | the screens to preview; the role editor's sentence for each resource and the screens its grant affects |
 
-A preview unites the role's grants as the engine does (`permission.GrantsOf`: implied operations,
+A preview unites the role's grants as the engine does (`permissioncatalog.GrantsOf`: implied operations,
 a parent resource's grant reaching its children, the widest ceiling) and decides each field through
 `refview.RoleAccess`, so it shows what the field guard will do. It is the role's grants alone:
 organization access policies (ABAC), data scopes and row-level security narrow what a person
@@ -457,7 +460,7 @@ through the guarded paths.
 The audit trail withholds the same fields when an entry is read, not when it is written, so a
 reader who holds the group (an administrator reviewing a change) still sees the whole diff.
 An audit entry stores its record as JSON, so the fields are declared as JSON paths in
-`permission.ProtectedPaths` (`protectedpaths.go`): a path matches at any depth unless it is
+`protectedfield.Paths` (`protectedpaths.go`): a path matches at any depth unless it is
 rooted at a resource (`WorkerCredential.number`, `RateQuote.costAmount`), `[]` steps into a
 list, and a `When` condition limits it to the object holding it (only the driver pay step of a
 calculation trace). `audit.Entry.WithholdFields` applies them to `previousState`,
@@ -502,7 +505,7 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Shipment profitability (`shipmentProfitability`, `Shipment.profitabilityEstimate`) | the whole payload: revenue, cost, profit, margin, break-even | `@protected` on the field that returns it; the client does not ask |
 | Fleet cost summary | `avgMarginPercent`, `unprofitableCount`, `totalRevenue` | `@protected` |
 | Shipment analytics (`/analytics?page=shipment`, Home KPIs) | `avgMarginPct`, `unprofitableCount` | `shipmentprovider/access.go`, and `@protected` on the GraphQL card |
-| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `shipment.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
+| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `quickfilter.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
 | Board brief | no thin-margin fact: the brief is shared by every board reader | `shipmentbriefingservice` counts no margin set |
 | Capacity matches | `marginPercent`, `quote` (beside the load's revenue) | `@protected` |
 | Tender offers | `counterMarginPercent` (`counterMargin` on REST); counter events and notifications state no figure | `@protected`, `tender.TenderOffer.WithholdFields`, `tender.EvaluateCounter` |
@@ -510,15 +513,15 @@ its carrier assignment's pay) is not gated: each figure is the working number of
 | Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
 | Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
 | Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
-| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `permission.ProtectedPaths`, applied by `reportaccess.Resolver.Protection` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `protectedfield.Paths`, applied by `reportaccess.Resolver.Protection` |
 | Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
-| Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
+| Audit trail | every field above in an entry's previous and current state and its changes | `protectedfield.Paths`, `audit.Entry.WithholdFields` at read time |
 
 An agent is held to its person's group and to its own data access. A protected field of a
 record is Confidential and never reaches an agent; a computed figure (a capacity match's
 margin, a tool's margin) is shown only where the agent's ceiling on `protected_margins`
 reaches Restricted (`fieldsensitivity.AgentVisibleGroups`, used by the GraphQL guard through
-`base.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
+`resolvercore.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
 
 Two names match margin and are not margins: a document template's page margins, and the GL
 income statement's `grossProfitMinor`, a statement line gated by the general ledger's own
@@ -531,7 +534,7 @@ In a conversation an agent acts as the person: every tool call is checked agains
 person's grants. When an agent runs on its own (a schedule, an event, a loop) its principal
 is `PrincipalTypeAgent` with the agent definition's id, and a check passes only where:
 
-1. the fixed agent ceiling allows it (`permission.IsAgentAllowed`), which no organization
+1. the fixed agent ceiling allows it (`agentceiling.Allows`), which no organization
    can widen;
 2. the role the organization chose for the agent, if any, grants it, through the role's
    parents too (`agent_definitions.unattended_role_id`, read through

@@ -3,9 +3,10 @@ package reporttools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 )
@@ -14,8 +15,10 @@ import (
 // definition, which opens on the report explorer.
 const reportRecordEntity = "report"
 
-func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.CallPolicy {
-	shared := agentports.CallPolicy{
+func classifyReportVisibility(
+	params *agenttoolports.ToolExecuteParams,
+) agenttoolports.CallPolicy {
+	shared := agenttoolports.CallPolicy{
 		Egress:  agent.EgressInternal,
 		MaxTier: agent.TierActWithApproval,
 	}
@@ -34,7 +37,7 @@ func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.Ca
 		return shared
 	}
 
-	return agentports.CallPolicy{Egress: agent.EgressPersonal}
+	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 // ExecuteWithResult saves the report and names it by the id report_get,
@@ -42,8 +45,8 @@ func classifyReportVisibility(params agentports.ToolExecuteParams) agentports.Ca
 // can use it next.
 func (t *CreateReportTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams,
-) (*agent.ToolExecutionResult, error) {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
 	save, err := t.prepare(params)
 	if err != nil {
 		return nil, err
@@ -55,8 +58,8 @@ func (t *CreateReportTool) ExecuteWithResult(
 	}
 
 	if created == nil {
-		return &agent.ToolExecutionResult{
-			Action: common.ResultCreated,
+		return &agentrecord.ToolExecutionResult{
+			Action: changepreview.ResultCreated,
 			Kind:   reportRecordEntity,
 		}, nil
 	}
@@ -66,12 +69,12 @@ func (t *CreateReportTool) ExecuteWithResult(
 
 // reportResult names a report definition a tool created, by the id the
 // report tools take and as the record it opens as.
-func reportResult(id, name string) *agent.ToolExecutionResult {
-	return &agent.ToolExecutionResult{
-		Action: common.ResultCreated,
+func reportResult(id, name string) *agentrecord.ToolExecutionResult {
+	return &agentrecord.ToolExecutionResult{
+		Action: changepreview.ResultCreated,
 		Kind:   reportRecordEntity,
 		Name:   name,
 		IDs:    map[string]string{"definitionId": id},
-		Record: &agent.RecordRef{EntityType: reportRecordEntity, ID: id},
+		Record: &agentrecord.RecordRef{EntityType: reportRecordEntity, ID: id},
 	}
 }

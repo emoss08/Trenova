@@ -23,6 +23,11 @@ type GetDistanceProfileByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetDistanceProfilesByIDsRequest struct {
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	DistanceProfileIDs []pulid.ID            `json:"distanceProfileIds"`
+}
+
 type DeleteDistanceProfileRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -45,6 +50,10 @@ type DistanceProfileRepository interface {
 		ctx context.Context,
 		req GetDistanceProfileByIDRequest,
 	) (*distanceprofile.DistanceProfile, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetDistanceProfilesByIDsRequest,
+	) ([]*distanceprofile.DistanceProfile, error)
 	GetDefault(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

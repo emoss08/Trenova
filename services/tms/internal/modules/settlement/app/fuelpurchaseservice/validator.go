@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
@@ -30,12 +32,12 @@ type CardFinder interface {
 }
 
 type Validator struct {
-	cards validationframework.TenantedEntityValidator[*fuelpurchase.FuelCard]
+	cards tenantedvalidation.EntityValidator[*fuelpurchase.FuelCard]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
 	return newValidator(
-		validationframework.NewKeelChecker(p.DB, fuelpurchasedb.FuelCardsSchema()),
+		keelcheck.NewChecker(p.DB, fuelpurchasedb.FuelCardsSchema()),
 		p.Repo,
 	)
 }
@@ -51,8 +53,7 @@ func newValidator(
 	references validationframework.ReferenceChecker,
 	cards CardFinder,
 ) *Validator {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*fuelpurchase.FuelCard]().
+	builder := tenantedvalidation.NewBuilder[*fuelpurchase.FuelCard]().
 		WithModelName("FuelCard").
 		WithOptionalReferenceCheck(
 			"assignedWorkerId",

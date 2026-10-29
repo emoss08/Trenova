@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -17,12 +17,12 @@ import (
 
 func settlementBoundsWith(
 	t *testing.T,
-	tool agentports.AgentTool,
+	tool agenttoolports.AgentTool,
 	args map[string]any,
-) agentports.MoneyBound {
+) agenttoolports.MoneyBound {
 	t.Helper()
 
-	policy, ok := agentports.PolicyOf(tool)
+	policy, ok := agenttoolports.PolicyOf(tool)
 	require.True(t, ok)
 	require.True(t, policy.Bounded(), "%s proves its bounds", policy.Name)
 
@@ -63,7 +63,7 @@ func TestAddDriverSettlementAdjustmentBounds(t *testing.T) {
 				assert.Equal(t, "USD", bound.Currency, "the settlement's currency is what moves")
 				return
 			}
-			assert.Equal(t, agent.HeldByMoneyRecordState, bound.Held)
+			assert.Equal(t, agenttooltrust.HeldByMoneyRecordState, bound.Held)
 		})
 	}
 }
@@ -85,7 +85,11 @@ func TestRemoveSettlementAdjustmentBounds(t *testing.T) {
 					AmountMinor:  12_500,
 					AddedByAgent: true,
 				},
-				{ID: personLine, Category: driversettlement.LineCategoryAdjustment, AmountMinor: 500},
+				{
+					ID:          personLine,
+					Category:    driversettlement.LineCategoryAdjustment,
+					AmountMinor: 500,
+				},
 				{ID: earning, Category: driversettlement.LineCategoryEarning, AmountMinor: 90_000},
 			},
 		}
@@ -98,11 +102,36 @@ func TestRemoveSettlementAdjustmentBounds(t *testing.T) {
 		within bool
 		held   string
 	}{
-		{name: "a line an agent added", status: driversettlement.StatusDraft, line: agentLine, within: true},
-		{name: "a line a person added", status: driversettlement.StatusDraft, line: personLine, held: agent.HeldByMoneyAgentLine},
-		{name: "a computed line", status: driversettlement.StatusDraft, line: earning, held: agent.HeldByMoneyUnproven},
-		{name: "a line not on the settlement", status: driversettlement.StatusDraft, line: pulid.MustNew("dstll_"), held: agent.HeldByMoneyUnproven},
-		{name: "an approved settlement", status: driversettlement.StatusApproved, line: agentLine, held: agent.HeldByMoneyRecordState},
+		{
+			name:   "a line an agent added",
+			status: driversettlement.StatusDraft,
+			line:   agentLine,
+			within: true,
+		},
+		{
+			name:   "a line a person added",
+			status: driversettlement.StatusDraft,
+			line:   personLine,
+			held:   agenttooltrust.HeldByMoneyAgentLine,
+		},
+		{
+			name:   "a computed line",
+			status: driversettlement.StatusDraft,
+			line:   earning,
+			held:   agenttooltrust.HeldByMoneyUnproven,
+		},
+		{
+			name:   "a line not on the settlement",
+			status: driversettlement.StatusDraft,
+			line:   pulid.MustNew("dstll_"),
+			held:   agenttooltrust.HeldByMoneyUnproven,
+		},
+		{
+			name:   "an approved settlement",
+			status: driversettlement.StatusApproved,
+			line:   agentLine,
+			held:   agenttooltrust.HeldByMoneyRecordState,
+		},
 	}
 
 	for _, tc := range cases {
@@ -167,7 +196,10 @@ func TestRemoveCarrierSettlementAdjustmentBounds(t *testing.T) {
 func TestSettlementAdjustmentRefusedByItsPlanIsUnproven(t *testing.T) {
 	t.Parallel()
 
-	entity := &driversettlement.Settlement{ID: pulid.MustNew("dstl_"), Status: driversettlement.StatusDraft}
+	entity := &driversettlement.Settlement{
+		ID:     pulid.MustNew("dstl_"),
+		Status: driversettlement.StatusDraft,
+	}
 	book := &fakeSettlementBook[driversettlement.Settlement]{
 		plan: func(*settlementshared.ActionRequest) *settlementshared.ActionPlan[*driversettlement.Settlement] {
 			return &settlementshared.ActionPlan[*driversettlement.Settlement]{
@@ -186,13 +218,16 @@ func TestSettlementAdjustmentRefusedByItsPlanIsUnproven(t *testing.T) {
 	})
 	assert.Equal(t, entity.ID, book.planned.SettlementID)
 	assert.False(t, bound.Within)
-	assert.Equal(t, agent.HeldByMoneyUnproven, bound.Held)
+	assert.Equal(t, agenttooltrust.HeldByMoneyUnproven, bound.Held)
 }
 
 func TestAddedAdjustmentsAreMarkedAsAnAgents(t *testing.T) {
 	t.Parallel()
 
-	entity := &driversettlement.Settlement{ID: pulid.MustNew("dstl_"), Status: driversettlement.StatusDraft}
+	entity := &driversettlement.Settlement{
+		ID:     pulid.MustNew("dstl_"),
+		Status: driversettlement.StatusDraft,
+	}
 	book := &fakeSettlementBook[driversettlement.Settlement]{plan: driverPlanner(entity, nil)}
 	tool := settlementTool(t, provideAddDriverSettlementAdjustmentTool, book)
 

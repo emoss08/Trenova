@@ -11,7 +11,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingpb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -32,13 +32,13 @@ const priorityKey = "x-trenova-priority"
 type Params struct {
 	fx.In
 
-	Config    *config.Config
-	Logger    *zap.Logger
-	Lifecycle fx.Lifecycle
+	ImagingConfig *imagingconfig.Config
+	Logger        *zap.Logger
+	Lifecycle     fx.Lifecycle
 }
 
 type Client struct {
-	cfg       *config.ImagingConfig
+	cfg       *imagingconfig.Config
 	endpoints *endpointSet
 	logger    *zap.Logger
 }
@@ -46,7 +46,7 @@ type Client struct {
 var _ kernelports.Imaging = (*Client)(nil)
 
 func New(p Params) (kernelports.Imaging, error) {
-	client, err := Dial(&p.Config.Imaging, p.Logger)
+	client, err := Dial(p.ImagingConfig, p.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func New(p Params) (kernelports.Imaging, error) {
 	return client, nil
 }
 
-func Dial(cfg *config.ImagingConfig, logger *zap.Logger) (*Client, error) {
+func Dial(cfg *imagingconfig.Config, logger *zap.Logger) (*Client, error) {
 	if logger == nil {
 		logger = zap.NewNop()
 	}
@@ -98,7 +98,7 @@ func (c *Client) Close() error {
 	return c.endpoints.close()
 }
 
-func transportCredentials(cfg *config.ImagingConfig) (credentials.TransportCredentials, error) {
+func transportCredentials(cfg *imagingconfig.Config) (credentials.TransportCredentials, error) {
 	if !cfg.TLS.Enabled {
 		return insecure.NewCredentials(), nil
 	}

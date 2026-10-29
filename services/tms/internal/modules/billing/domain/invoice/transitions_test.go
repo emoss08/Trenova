@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -74,9 +75,9 @@ func TestVoidDispositionIsValid(t *testing.T) {
 }
 
 func TestDisputeResolutionRequiresAdjustment(t *testing.T) {
-	assert.True(t, invoice.DisputeResolutionCreditIssued.RequiresAdjustment())
-	assert.True(t, invoice.DisputeResolutionWrittenOff.RequiresAdjustment())
-	assert.False(t, invoice.DisputeResolutionInvoiceUpheld.RequiresAdjustment())
-	assert.False(t, invoice.DisputeResolutionRebilled.RequiresAdjustment())
-	assert.False(t, invoice.DisputeResolutionCustomerWithdrew.RequiresAdjustment())
+	assert.True(t, invoicedispute.DisputeResolutionCreditIssued.RequiresAdjustment())
+	assert.True(t, invoicedispute.DisputeResolutionWrittenOff.RequiresAdjustment())
+	assert.False(t, invoicedispute.DisputeResolutionInvoiceUpheld.RequiresAdjustment())
+	assert.False(t, invoicedispute.DisputeResolutionRebilled.RequiresAdjustment())
+	assert.False(t, invoicedispute.DisputeResolutionCustomerWithdrew.RequiresAdjustment())
 }

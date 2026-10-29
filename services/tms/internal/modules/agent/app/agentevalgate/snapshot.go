@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 type CatalogSnapshot struct {
@@ -48,7 +48,7 @@ type PolicySnapshot struct {
 
 func (k *Kit) Snapshot() CatalogSnapshot {
 	descriptors := make(
-		map[string]agentports.AgentToolDescriptor,
+		map[string]agenttoolports.AgentToolDescriptor,
 		len(k.Queries.All())+len(k.Actions.All()),
 	)
 	for _, descriptor := range k.Queries.Descriptors() {
@@ -58,7 +58,7 @@ func (k *Kit) Snapshot() CatalogSnapshot {
 		descriptors[descriptor.Name] = descriptor
 	}
 
-	policies := make([]agentports.ToolPolicy, 0, len(descriptors)+len(k.Runtime))
+	policies := make([]agenttoolports.ToolPolicy, 0, len(descriptors)+len(k.Runtime))
 	for _, tool := range k.Queries.All() {
 		policies = append(policies, tool.Policy())
 	}
@@ -85,7 +85,7 @@ func (k *Kit) Snapshot() CatalogSnapshot {
 	return CatalogSnapshot{Tools: tools}
 }
 
-func snapshotPolicy(policy *agentports.ToolPolicy) PolicySnapshot {
+func snapshotPolicy(policy *agenttoolports.ToolPolicy) PolicySnapshot {
 	egress := make([]string, 0, len(policy.Egress))
 	for _, class := range policy.Egress {
 		egress = append(egress, class.String())
@@ -114,7 +114,7 @@ func snapshotPolicy(policy *agentports.ToolPolicy) PolicySnapshot {
 		Scope:               policy.Scope.String(),
 		DefaultTier:         string(policy.DefaultTier),
 		MaxTier:             string(policy.MaxTier),
-		PromotableTo:        string(agenttoolpolicy.Promotable(*policy)),
+		PromotableTo:        string(agenttoolpolicy.Promotable(policy)),
 		Egress:              egress,
 		ClassifiesEachCall:  policy.Classify != nil,
 		Condition:           condition,

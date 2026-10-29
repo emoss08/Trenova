@@ -3,10 +3,13 @@ package edijobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundpoll"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferservice"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -15,30 +18,39 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	EDIService        *ediservice.Service
+	TransferService   *editransferservice.Service
+	DeliveryService   *edidelivery.Service
+	OutboundService   *edioutbound.Service
 	Replayer          *edilading.Replayer
 	InboundService    *ediinboundservice.Service
+	PollService       *ediinboundpoll.Service
 	DataRetentionRepo tenantports.DataRetentionRepository
-	InboundFileRepo   ediports.EDIInboundFileRepository
-	MessageRepo       ediports.EDIMessageRepository
+	InboundFileRepo   edimessageports.EDIInboundFileRepository
+	MessageRepo       edimessageports.EDIMessageRepository
 	Logger            *zap.Logger
 }
 
 type Activities struct {
-	ediService        *ediservice.Service
+	transferService   *editransferservice.Service
+	deliveryService   *edidelivery.Service
+	outboundService   *edioutbound.Service
 	replayer          *edilading.Replayer
 	inboundService    *ediinboundservice.Service
+	pollService       *ediinboundpoll.Service
 	dataRetentionRepo tenantports.DataRetentionRepository
-	inboundFileRepo   ediports.EDIInboundFileRepository
-	messageRepo       ediports.EDIMessageRepository
+	inboundFileRepo   edimessageports.EDIInboundFileRepository
+	messageRepo       edimessageports.EDIMessageRepository
 	logger            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		ediService:        p.EDIService,
+		transferService:   p.TransferService,
+		deliveryService:   p.DeliveryService,
+		outboundService:   p.OutboundService,
 		replayer:          p.Replayer,
 		inboundService:    p.InboundService,
+		pollService:       p.PollService,
 		dataRetentionRepo: p.DataRetentionRepo,
 		inboundFileRepo:   p.InboundFileRepo,
 		messageRepo:       p.MessageRepo,
@@ -50,7 +62,7 @@ func (a *Activities) ApproveLoadTenderTransferActivity(
 	ctx context.Context,
 	payload *ApproveLoadTenderTransferWorkflowPayload,
 ) (*ApproveLoadTenderTransferWorkflowResult, error) {
-	result, err := a.ediService.ProcessLoadTenderApproval(ctx, payload)
+	result, err := a.transferService.ProcessLoadTenderApproval(ctx, payload)
 	if err != nil {
 		a.logger.Error("EDI load tender approval activity failed", zap.Error(err))
 		return nil, err
@@ -68,7 +80,7 @@ func (a *Activities) DeliverEDIMessageActivity(
 	ctx context.Context,
 	payload *DeliverEDIMessageWorkflowPayload,
 ) (*DeliverEDIMessageWorkflowResult, error) {
-	result, err := a.ediService.DeliverMessage(ctx, payload)
+	result, err := a.deliveryService.DeliverMessage(ctx, payload)
 	if err != nil {
 		a.logger.Error("EDI message delivery activity failed", zap.Error(err))
 		return nil, err
@@ -86,7 +98,7 @@ func (a *Activities) MarkEDIMessageDeadLetteredActivity(
 	ctx context.Context,
 	payload *MarkEDIMessageDeadLetteredPayload,
 ) error {
-	if err := a.ediService.MarkMessageDeadLettered(ctx, payload); err != nil {
+	if err := a.deliveryService.MarkMessageDeadLettered(ctx, payload); err != nil {
 		a.logger.Error("EDI message dead-letter activity failed", zap.Error(err))
 		return err
 	}

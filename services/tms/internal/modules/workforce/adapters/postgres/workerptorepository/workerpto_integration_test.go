@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -101,7 +100,7 @@ func TestUpdateStatusApprovesRequestedAndBumpsVersion(t *testing.T) {
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	updated, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	updated, err := f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:              pto.ID,
 		TenantInfo:      f.tenant,
 		Status:          worker.PTOStatusApproved,
@@ -121,7 +120,7 @@ func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	rejected, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	rejected, err := f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         pto.ID,
 		TenantInfo: f.tenant,
 		Status:     worker.PTOStatusRejected,
@@ -132,7 +131,7 @@ func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 	assert.Equal(t, "No coverage", rejected.RejectionReason)
 	assert.Equal(t, f.data.User.ID, rejected.RejectorID)
 
-	_, err = f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	_, err = f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         pto.ID,
 		TenantInfo: f.tenant,
 		Status:     worker.PTOStatusApproved,
@@ -144,7 +143,7 @@ func TestUpdateStatusRefusesTerminalSource(t *testing.T) {
 	require.ErrorAs(t, err, &validationErr)
 	assert.Equal(t, "status", validationErr.Field)
 
-	fetched, err := f.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	fetched, err := f.repo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         pto.ID,
 		TenantInfo: f.tenant,
 	})
@@ -159,7 +158,7 @@ func TestUpdateStatusRefusesStaleVersion(t *testing.T) {
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	_, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	_, err := f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:              pto.ID,
 		TenantInfo:      f.tenant,
 		Status:          worker.PTOStatusApproved,
@@ -179,7 +178,7 @@ func TestUpdateStatusCancelsApprovedWithReason(t *testing.T) {
 	now := timeutils.NowUnix()
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
-	approved, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	approved, err := f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         pto.ID,
 		TenantInfo: f.tenant,
 		Status:     worker.PTOStatusApproved,
@@ -187,7 +186,7 @@ func TestUpdateStatusCancelsApprovedWithReason(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	cancelled, err := f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	cancelled, err := f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:              pto.ID,
 		TenantInfo:      f.tenant,
 		Status:          worker.PTOStatusCancelled,
@@ -209,7 +208,7 @@ func TestUpdateStatusIsTenantScoped(t *testing.T) {
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
 	other := seedtest.SeedAdditionalTenant(t, f.seed, f.db, "PT")
-	_, err := f.repo.UpdateStatus(other.Ctx(ctx), &workerports.UpdatePTOStatusRequest{
+	_, err := f.repo.UpdateStatus(other.Ctx(ctx), &workerptoports.UpdatePTOStatusRequest{
 		ID:         pto.ID,
 		TenantInfo: other.Info(),
 		Status:     worker.PTOStatusApproved,
@@ -226,7 +225,7 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	first := f.newPTO(t, now+86400*10, now+86400*14)
 	second := f.newPTO(t, now+86400*30, now+86400*32)
 
-	overlaps, err := f.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
+	overlaps, err := f.repo.HasOverlap(ctx, &workerptoports.PTOOverlapRequest{
 		TenantInfo: f.tenant,
 		WorkerID:   f.worker.ID,
 		StartDate:  now + 86400*13,
@@ -235,7 +234,7 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, overlaps, "range touching an open request overlaps")
 
-	overlaps, err = f.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
+	overlaps, err = f.repo.HasOverlap(ctx, &workerptoports.PTOOverlapRequest{
 		TenantInfo: f.tenant,
 		WorkerID:   f.worker.ID,
 		StartDate:  now + 86400*15,
@@ -244,7 +243,7 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, overlaps, "adjacent range does not overlap")
 
-	overlaps, err = f.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
+	overlaps, err = f.repo.HasOverlap(ctx, &workerptoports.PTOOverlapRequest{
 		TenantInfo: f.tenant,
 		WorkerID:   f.worker.ID,
 		StartDate:  first.StartDate,
@@ -254,7 +253,7 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, overlaps, "a request never overlaps itself")
 
-	_, err = f.repo.UpdateStatus(ctx, &workerports.UpdatePTOStatusRequest{
+	_, err = f.repo.UpdateStatus(ctx, &workerptoports.UpdatePTOStatusRequest{
 		ID:         first.ID,
 		TenantInfo: f.tenant,
 		Status:     worker.PTOStatusRejected,
@@ -263,7 +262,7 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	overlaps, err = f.repo.HasOverlap(ctx, &workerports.PTOOverlapRequest{
+	overlaps, err = f.repo.HasOverlap(ctx, &workerptoports.PTOOverlapRequest{
 		TenantInfo: f.tenant,
 		WorkerID:   f.worker.ID,
 		StartDate:  first.StartDate,
@@ -272,14 +271,14 @@ func TestHasOverlapAndGetByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, overlaps, "rejected requests do not block new ones")
 
-	entities, err := f.repo.GetByIDs(ctx, &workerports.GetPTOsByIDsRequest{
+	entities, err := f.repo.GetByIDs(ctx, &workerptoports.GetPTOsByIDsRequest{
 		IDs:        []pulid.ID{first.ID, second.ID, pulid.MustNew("wrkpto_")},
 		TenantInfo: f.tenant,
 	})
 	require.NoError(t, err)
 	assert.Len(t, entities, 2)
 
-	entities, err = f.repo.GetByIDs(ctx, &workerports.GetPTOsByIDsRequest{
+	entities, err = f.repo.GetByIDs(ctx, &workerptoports.GetPTOsByIDsRequest{
 		IDs:        nil,
 		TenantInfo: f.tenant,
 	})
@@ -294,7 +293,7 @@ func TestRepositoryParticipatesInOuterTransaction(t *testing.T) {
 	pto := f.newPTO(t, now+86400, now+86400*3)
 
 	err := f.repo.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
-		if _, txErr := f.repo.UpdateStatus(txCtx, &workerports.UpdatePTOStatusRequest{
+		if _, txErr := f.repo.UpdateStatus(txCtx, &workerptoports.UpdatePTOStatusRequest{
 			ID:         pto.ID,
 			TenantInfo: f.tenant,
 			Status:     worker.PTOStatusApproved,
@@ -306,7 +305,7 @@ func TestRepositoryParticipatesInOuterTransaction(t *testing.T) {
 	})
 	require.ErrorIs(t, err, errRollbackSentinel)
 
-	fetched, err := f.repo.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	fetched, err := f.repo.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         pto.ID,
 		TenantInfo: f.tenant,
 	})
@@ -330,7 +329,7 @@ func TestListOverlappingIncludesLeaveThatBeganBeforeTheWindow(t *testing.T) {
 
 	list := func(overlapping bool) []pulid.ID {
 		t.Helper()
-		result, err := f.repo.List(ctx, &workerports.ListPTORequest{
+		result, err := f.repo.List(ctx, &workerptoports.ListPTORequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: f.tenant,
 				Pagination: pagination.Info{Limit: 10},

@@ -3,10 +3,14 @@ package agentruntime
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -48,7 +52,7 @@ func countedRuntime(
 ) (*Service, *prometheus.Registry) {
 	registry := prometheus.NewRegistry()
 	rt := newRuntime(completion, query, &stubActionRegistry{}, nil)
-	rt.metrics = metrics.NewAssistant(registry, zap.NewNop(), true)
+	rt.metrics = aimetrics.NewAssistant(registry, zap.NewNop(), true)
 
 	return rt, registry
 }
@@ -59,30 +63,30 @@ func countedRuntime(
 func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		callsTurn(
-			agentports.ToolCall{ID: "invented", Name: "delete_everything"},
-			agentports.ToolCall{
+			llmports.ToolCall{ID: "invented", Name: "delete_everything"},
+			llmports.ToolCall{
 				ID:        "ran",
 				Name:      "shipment_get",
 				Arguments: map[string]any{"id": "shp_1"},
 			},
-			agentports.ToolCall{
+			llmports.ToolCall{
 				ID:             "cut_off",
 				Name:           "shipment_get",
 				Arguments:      map[string]any{},
 				ArgumentsError: "unexpected end of JSON input",
 			},
 		),
-		textTurn("Done."),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	})
 	require.NoError(t, err)
@@ -90,7 +94,12 @@ func TestRun_CountsEveryToolCallByToolAndVerdict(t *testing.T) {
 	counts := toolOutcomeCounts(t, registry)
 	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeRan}], 0)
 	assert.InDelta(t, 1, counts[[2]string{"shipment_get", aitrace.OutcomeInvalid}], 0)
-	assert.InDelta(t, 1, counts[[2]string{unregisteredToolLabel, aitrace.OutcomeInvalid}], 0)
+	assert.InDelta(
+		t,
+		1,
+		counts[[2]string{toolaccess.UnregisteredToolLabel, aitrace.OutcomeInvalid}],
+		0,
+	)
 	_, named := counts[[2]string{"delete_everything", aitrace.OutcomeInvalid}]
 	assert.False(t, named, "an invented name never becomes a label")
 }
@@ -106,16 +115,16 @@ func (*replayingEffects) Replaying() bool { return true }
 func TestDrive_DoesNotCountCallsWhileReplaying(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("shipment_get", map[string]any{"id": "shp_1"}),
-		textTurn("Done."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("shipment_get", map[string]any{"id": "shp_1"}),
+		runtimetest.TextTurn("Done."),
 	}}
 	rt, registry := countedRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
+		Tools: []agenttoolports.AgentQueryTool{queryTool("shipment_get", map[string]any{}, nil)},
 	})
-	req := &agentports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
 	fx := &replayingEffects{localEffects: &localEffects{
@@ -134,14 +143,14 @@ func TestRestoreTurn_KeepsTheProviderKindItsOutcomesAreLabelledWith(t *testing.T
 	t.Parallel()
 
 	rt, _ := countedRuntime(&scriptedCompletion{}, &stubQueryRegistry{})
-	req := &agentports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Look it up.",
 	}
 	turn := rt.OpenTurn(t.Context(), req)
 	turn.providerKind = aiprovider.KindAnthropicMessages
 
-	restored := rt.RestoreTurn(req, turn.State())
+	restored := rt.RestoreTurn(req, new(turn.State()))
 	assert.Equal(t, aiprovider.KindAnthropicMessages, restored.providerKind)
 }

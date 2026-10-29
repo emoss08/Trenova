@@ -8,7 +8,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * The most characters one memory may hold. The single client copy of the
- * server's `agent.MaxMemoryContentChars`; every field and counter reads it
+ * server's `agentmemory.MaxMemoryContentChars`; every field and counter reads it
  * from here. A prompt shows the first 1200 and names the memory's id so the
  * agent can read the rest.
  */

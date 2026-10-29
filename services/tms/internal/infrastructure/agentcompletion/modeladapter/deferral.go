@@ -1,8 +1,6 @@
 package modeladapter
 
-import "slices"
-
-func deferredTools(tools []ToolSpec) map[string]struct{} {
+func DeferredTools(tools []ToolSpec) map[string]struct{} {
 	deferred := make(map[string]struct{}, len(tools))
 	for idx := range tools {
 		if tools[idx].Deferred {
@@ -13,12 +11,8 @@ func deferredTools(tools []ToolSpec) map[string]struct{} {
 	return deferred
 }
 
-func declaresLoadedTool(tools []ToolSpec) bool {
-	return slices.ContainsFunc(tools, func(tool ToolSpec) bool { return !tool.Deferred })
-}
-
-func loadedTools(tools []ToolSpec, messages []Message) []ToolSpec {
-	deferred := deferredTools(tools)
+func LoadedTools(tools []ToolSpec, messages []Message) []ToolSpec {
+	deferred := DeferredTools(tools)
 	if len(deferred) == 0 {
 		return tools
 	}
@@ -38,25 +32,6 @@ func loadedTools(tools []ToolSpec, messages []Message) []ToolSpec {
 		}
 		tool.Deferred = false
 		out = append(out, tool)
-	}
-
-	return out
-}
-
-func referencing(messages []Message, deferred map[string]struct{}) []Message {
-	out := slices.Clone(messages)
-	for idx := range out {
-		refs := out[idx].ToolReferences
-		if len(refs) == 0 {
-			continue
-		}
-		kept := make([]string, 0, len(refs))
-		for _, name := range refs {
-			if _, ok := deferred[name]; ok && !slices.Contains(kept, name) {
-				kept = append(kept, name)
-			}
-		}
-		out[idx].ToolReferences = kept
 	}
 
 	return out

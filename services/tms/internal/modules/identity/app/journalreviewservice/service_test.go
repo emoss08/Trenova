@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,12 +47,18 @@ func (f *fakeReview) LockEntry(
 	return &copied, nil
 }
 
-func (f *fakeReview) ApproveEntry(_ context.Context, params *journalentryports.ApproveJournalEntryParams) error {
+func (f *fakeReview) ApproveEntry(
+	_ context.Context,
+	params *journalentryports.ApproveJournalEntryParams,
+) error {
 	f.approved = append(f.approved, params)
 	return nil
 }
 
-func (f *fakeReview) PostEntry(_ context.Context, params *journalentryports.PostJournalEntryParams) error {
+func (f *fakeReview) PostEntry(
+	_ context.Context,
+	params *journalentryports.PostJournalEntryParams,
+) error {
 	f.posted = append(f.posted, params)
 	return nil
 }
@@ -93,8 +98,20 @@ func entry(number string, status journalentry.Status, approved bool) *journalent
 		TotalCredit:      500,
 		Version:          3,
 		Lines: []*journalentry.JournalEntryLine{
-			{ID: pulid.MustNew("jel_"), GLAccountID: debit, LineNumber: 1, DebitAmount: 500, NetAmount: 500},
-			{ID: pulid.MustNew("jel_"), GLAccountID: credit, LineNumber: 2, CreditAmount: 500, NetAmount: -500},
+			{
+				ID:          pulid.MustNew("jel_"),
+				GLAccountID: debit,
+				LineNumber:  1,
+				DebitAmount: 500,
+				NetAmount:   500,
+			},
+			{
+				ID:           pulid.MustNew("jel_"),
+				GLAccountID:  credit,
+				LineNumber:   2,
+				CreditAmount: 500,
+				NetAmount:    -500,
+			},
 		},
 	}
 }
@@ -102,7 +119,7 @@ func entry(number string, status journalentry.Status, approved bool) *journalent
 func newService(
 	t *testing.T,
 	repo *fakeReview,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	periods *fiscalperiodportsmock.MockFiscalPeriodRepository,
 ) *Service {
 	t.Helper()
@@ -129,7 +146,10 @@ func actor() *permissionports.RequestActor {
 	return &permissionports.RequestActor{UserID: reviewerID}
 }
 
-func openPeriod(t *testing.T, date int64) (*fiscalperiodportsmock.MockFiscalPeriodRepository, *fiscalperiod.FiscalPeriod) {
+func openPeriod(
+	t *testing.T,
+	date int64,
+) (*fiscalperiodportsmock.MockFiscalPeriodRepository, *fiscalperiod.FiscalPeriod) {
 	t.Helper()
 	period := &fiscalperiod.FiscalPeriod{
 		ID:           pulid.MustNew("fp_"),
@@ -156,7 +176,7 @@ func TestApproveApprovesPendingEntriesAndRefusesTheRest(t *testing.T) {
 	}}
 	missing := pulid.MustNew("je_")
 
-	result, err := newService(t, repo, &tenant.AccountingControl{}, nil).
+	result, err := newService(t, repo, &accountingcontrol.AccountingControl{}, nil).
 		Approve(t.Context(), request(pending.ID, posted.ID, pending.ID, missing), actor())
 	require.NoError(t, err)
 
@@ -183,7 +203,7 @@ func TestPostWritesAnApprovedEntryInItsOwnOpenPeriod(t *testing.T) {
 	repo := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{approved.ID: approved}}
 	periods, period := openPeriod(t, approved.AccountingDate)
 
-	result, err := newService(t, repo, &tenant.AccountingControl{}, periods).
+	result, err := newService(t, repo, &accountingcontrol.AccountingControl{}, periods).
 		Post(t.Context(), request(approved.ID), actor())
 	require.NoError(t, err)
 
@@ -227,17 +247,31 @@ func TestPostMovesAnEntryOutOfAPeriodClosedSinceItWasWritten(t *testing.T) {
 		Return([]*fiscalperiod.FiscalPeriod{closed, next}, nil).
 		Once()
 
-	moving := &tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen}
-	result, err := newService(t, repo, moving, periods).Post(t.Context(), request(approved.ID), actor())
+	moving := &accountingcontrol.AccountingControl{
+		ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyPostToNextOpen,
+	}
+	result, err := newService(
+		t,
+		repo,
+		moving,
+		periods,
+	).Post(t.Context(), request(approved.ID), actor())
 	require.NoError(t, err)
 	require.Len(t, repo.posted, 1)
 	assert.Equal(t, next.ID, repo.posted[0].FiscalPeriodID)
 	assert.Equal(t, int64(4_000), repo.posted[0].AccountingDate)
 	assert.Equal(t, 1, result.Changed)
 
-	strict := &tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}
+	strict := &accountingcontrol.AccountingControl{
+		ClosedPeriodPostingPolicy: accountingcontrol.ClosedPeriodPostingPolicyRequireReopen,
+	}
 	refused := &fakeReview{entries: map[pulid.ID]*journalentry.JournalEntry{approved.ID: approved}}
-	result, err = newService(t, refused, strict, periods).Post(t.Context(), request(approved.ID), actor())
+	result, err = newService(
+		t,
+		refused,
+		strict,
+		periods,
+	).Post(t.Context(), request(approved.ID), actor())
 	require.NoError(t, err)
 	assert.Empty(t, refused.posted)
 	assert.Equal(t, 1, result.Failed)
@@ -255,7 +289,7 @@ func TestPostRefusesEntriesThatAreNotReadyOrDoNotBalance(t *testing.T) {
 		unbalanced.ID:    unbalanced,
 	}}
 
-	result, err := newService(t, repo, &tenant.AccountingControl{}, nil).
+	result, err := newService(t, repo, &accountingcontrol.AccountingControl{}, nil).
 		Post(t.Context(), request(needsApproval.ID, unbalanced.ID), actor())
 	require.NoError(t, err)
 
@@ -268,7 +302,7 @@ func TestPostRefusesEntriesThatAreNotReadyOrDoNotBalance(t *testing.T) {
 func TestReviewValidatesTheRequest(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(t, &fakeReview{}, &tenant.AccountingControl{}, nil)
+	svc := newService(t, &fakeReview{}, &accountingcontrol.AccountingControl{}, nil)
 
 	_, err := svc.Approve(t.Context(), request(), actor())
 	require.Error(t, err)
@@ -288,8 +322,8 @@ func TestReviewValidatesTheRequest(t *testing.T) {
 func TestSummaryReportsTheQueueAndThePostingMode(t *testing.T) {
 	t.Parallel()
 
-	svc := newService(t, &fakeReview{}, &tenant.AccountingControl{
-		JournalPostingMode:      tenant.JournalPostingModeManual,
+	svc := newService(t, &fakeReview{}, &accountingcontrol.AccountingControl{
+		JournalPostingMode:      accountingcontrol.JournalPostingModeManual,
 		RequireManualJEApproval: true,
 	}, nil)
 
@@ -298,7 +332,7 @@ func TestSummaryReportsTheQueueAndThePostingMode(t *testing.T) {
 	assert.Equal(t, 2, summary.AwaitingApproval)
 	assert.Equal(t, 1, summary.ReadyToPost)
 	require.NotNil(t, summary.OldestAccountingDate)
-	assert.Equal(t, tenant.JournalPostingModeManual, summary.PostingMode)
+	assert.Equal(t, accountingcontrol.JournalPostingModeManual, summary.PostingMode)
 	assert.True(t, summary.RequiresApproval)
 }
 
@@ -341,7 +375,7 @@ func TestReviewCollapsesRepeatedEntryIDsBeforeCountingThem(t *testing.T) {
 		repeated = append(repeated, pending.ID)
 	}
 
-	result, err := newService(t, repo, &tenant.AccountingControl{}, nil).
+	result, err := newService(t, repo, &accountingcontrol.AccountingControl{}, nil).
 		Approve(t.Context(), request(repeated...), actor())
 	require.NoError(t, err)
 	require.Len(t, result.Outcomes, 1)

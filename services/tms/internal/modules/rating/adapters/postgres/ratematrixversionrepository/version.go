@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion/ratematrixversiondb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,58 +47,70 @@ func New(p Params) ratematrixports.RateMatrixVersionRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	version *ratematrix.RateMatrixVersion,
-) (*ratematrix.RateMatrixVersion, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrixVersion, error) {
-		if err := ratematrixdb.RateMatrixVersions.Create(ctx, r.db.Keel(ctx), version); err != nil {
-			r.l.Error("failed to create rate matrix version",
-				zap.String("matrixId", version.RateMatrixID.String()),
-				zap.Int64("versionNumber", version.VersionNumber),
-				zap.Error(err),
-			)
-			return nil, versionErrors.Map(err, version.ID.String())
-		}
+	version *ratematrixversion.RateMatrixVersion,
+) (*ratematrixversion.RateMatrixVersion, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ratematrixversion.RateMatrixVersion, error) {
+			if err := ratematrixversiondb.RateMatrixVersions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				version,
+			); err != nil {
+				r.l.Error("failed to create rate matrix version",
+					zap.String("matrixId", version.RateMatrixID.String()),
+					zap.Int64("versionNumber", version.VersionNumber),
+					zap.Error(err),
+				)
+				return nil, versionErrors.Map(err, version.ID.String())
+			}
 
-		return version, nil
-	})
+			return version, nil
+		},
+	)
 }
 
 func (r *repository) Get(
 	ctx context.Context,
 	req *ratematrixports.GetVersionRequest,
-) (*ratematrix.RateMatrixVersion, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratematrix.RateMatrixVersion, error) {
-		v := ratematrixdb.RateMatrixVersions
-		entity, err := v.Where(
-			v.RateMatrixID.Eq(req.RateMatrixID),
-			v.VersionNumber.Eq(req.VersionNumber),
-		).Load(v.PublishedBy()).One(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, versionErrors.Map(err, req.RateMatrixID.String())
-		}
-		if err = r.attachDimensions(ctx, entity); err != nil {
-			return nil, err
-		}
+) (*ratematrixversion.RateMatrixVersion, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ratematrixversion.RateMatrixVersion, error) {
+			v := ratematrixversiondb.RateMatrixVersions
+			entity, err := v.Where(
+				v.RateMatrixID.Eq(req.RateMatrixID),
+				v.VersionNumber.Eq(req.VersionNumber),
+			).Load(v.PublishedBy()).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, versionErrors.Map(err, req.RateMatrixID.String())
+			}
+			if err = r.attachDimensions(ctx, entity); err != nil {
+				return nil, err
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *ratematrixports.ListVersionsRequest,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ratematrix.RateMatrixVersion, error) {
+		func(ctx context.Context) ([]*ratematrixversion.RateMatrixVersion, error) {
 			limit := req.Limit
 			if limit <= 0 {
 				limit = defaultHistoryLimit
 			}
 			limit = min(limit, maxHistoryLimit)
 
-			v := ratematrixdb.RateMatrixVersions
+			v := ratematrixversiondb.RateMatrixVersions
 			versions, err := v.Where(v.RateMatrixID.Eq(req.RateMatrixID)).
 				Load(v.PublishedBy()).
 				Order(v.VersionNumber.Desc()).
@@ -118,14 +132,14 @@ func (r *repository) List(
 func (r *repository) GetByKeys(
 	ctx context.Context,
 	req *ratematrixports.GetVersionsByKeysRequest,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ratematrix.RateMatrixVersion, error) {
+		func(ctx context.Context) ([]*ratematrixversion.RateMatrixVersion, error) {
 			keys := uniqueKeys(req.Keys)
 			if len(keys) == 0 {
-				return []*ratematrix.RateMatrixVersion{}, nil
+				return []*ratematrixversion.RateMatrixVersion{}, nil
 			}
 
 			versions, err := versionsByKeysQuery(keys).List(ctx, r.db.Keel(ctx))
@@ -142,8 +156,10 @@ func (r *repository) GetByKeys(
 	)
 }
 
-func versionsByKeysQuery(keys []ratematrix.VersionKey) *keel.Query[*ratematrix.RateMatrixVersion] {
-	v := ratematrixdb.RateMatrixVersions
+func versionsByKeysQuery(
+	keys []ratematrixversion.VersionKey,
+) *keel.Query[*ratematrixversion.RateMatrixVersion] {
+	v := ratematrixversiondb.RateMatrixVersions
 	wanted := versionKeys(keys)
 
 	return v.With(wanted).
@@ -160,8 +176,8 @@ func servedMatrices() []keel.Pred {
 	}
 }
 
-func servedQuery() *keel.Query[*ratematrix.RateMatrixVersion] {
-	v := ratematrixdb.RateMatrixVersions
+func servedQuery() *keel.Query[*ratematrixversion.RateMatrixVersion] {
+	v := ratematrixversiondb.RateMatrixVersions
 	rm := ratematrixdb.RateMatrixes
 
 	return v.Join(
@@ -174,11 +190,11 @@ func servedQuery() *keel.Query[*ratematrix.RateMatrixVersion] {
 func (r *repository) ListServed(
 	ctx context.Context,
 	_ pagination.TenantInfo,
-) ([]*ratematrix.RateMatrixVersion, error) {
+) ([]*ratematrixversion.RateMatrixVersion, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*ratematrix.RateMatrixVersion, error) {
+		func(ctx context.Context) ([]*ratematrixversion.RateMatrixVersion, error) {
 			versions, err := servedQuery().List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list served rate matrix versions", zap.Error(err))
@@ -222,13 +238,13 @@ func (r *repository) ServedStamp(
 
 func (r *repository) attachDimensions(
 	ctx context.Context,
-	versions ...*ratematrix.RateMatrixVersion,
+	versions ...*ratematrixversion.RateMatrixVersion,
 ) error {
 	if len(versions) == 0 {
 		return nil
 	}
 
-	keys := make([]ratematrix.VersionKey, 0, len(versions))
+	keys := make([]ratematrixversion.VersionKey, 0, len(versions))
 	for _, version := range versions {
 		keys = append(keys, version.Key())
 	}
@@ -239,13 +255,16 @@ func (r *repository) attachDimensions(
 		return err
 	}
 
-	byKey := make(map[ratematrix.VersionKey]*ratematrix.RateMatrixVersion, len(versions))
+	byKey := make(
+		map[ratematrixversion.VersionKey]*ratematrixversion.RateMatrixVersion,
+		len(versions),
+	)
 	for _, version := range versions {
 		version.Dimensions = make([]*ratematrix.RateMatrixDimension, 0, ratematrix.MaxDimensions)
 		byKey[version.Key()] = version
 	}
 	for _, dimension := range dimensions {
-		key := ratematrix.VersionKey{
+		key := ratematrixversion.VersionKey{
 			RateMatrixID:  dimension.RateMatrixID,
 			VersionNumber: dimension.VersionNumber,
 		}
@@ -257,7 +276,9 @@ func (r *repository) attachDimensions(
 	return nil
 }
 
-func dimensionsQuery(keys []ratematrix.VersionKey) *keel.Query[*ratematrix.RateMatrixDimension] {
+func dimensionsQuery(
+	keys []ratematrixversion.VersionKey,
+) *keel.Query[*ratematrix.RateMatrixDimension] {
 	d := ratematrixdb.RateMatrixDimensions
 	wanted := versionKeys(keys)
 
@@ -266,7 +287,7 @@ func dimensionsQuery(keys []ratematrix.VersionKey) *keel.Query[*ratematrix.RateM
 		Order(d.RateMatrixID.Asc(), d.VersionNumber.Asc(), d.Position.Asc())
 }
 
-func versionKeys(keys []ratematrix.VersionKey) *keel.CTETable {
+func versionKeys(keys []ratematrixversion.VersionKey) *keel.CTETable {
 	matrixIDs := make([]string, 0, len(keys))
 	numbers := make([]int64, 0, len(keys))
 	for _, key := range keys {
@@ -289,9 +310,9 @@ func matchesKey(wanted *keel.CTETable, matrixID, versionNumber keel.Col) []keel.
 	}
 }
 
-func uniqueKeys(keys []ratematrix.VersionKey) []ratematrix.VersionKey {
-	seen := make(map[ratematrix.VersionKey]struct{}, len(keys))
-	unique := make([]ratematrix.VersionKey, 0, len(keys))
+func uniqueKeys(keys []ratematrixversion.VersionKey) []ratematrixversion.VersionKey {
+	seen := make(map[ratematrixversion.VersionKey]struct{}, len(keys))
+	unique := make([]ratematrixversion.VersionKey, 0, len(keys))
 	for _, key := range keys {
 		if _, ok := seen[key]; ok {
 			continue

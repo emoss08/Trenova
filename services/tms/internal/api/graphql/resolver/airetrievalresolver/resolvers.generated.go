@@ -3,13 +3,13 @@
 package airetrievalresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	retrievalports "github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 )
 
 type Deps struct {
-	*base.Core
-	AiRetrievalStatusService agentports.AIRetrievalStatusService
+	*resolvercore.Core
+	AiRetrievalStatusService retrievalports.AIRetrievalStatusService
 }
 
 type MutationResolver struct{ *Deps }

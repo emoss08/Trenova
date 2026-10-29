@@ -4,6 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -14,8 +19,8 @@ func tenantOf(orgID, buID pulid.ID) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: orgID, BuID: buID}
 }
 
-func PlanIssueAdvance(entity *driverpay.PayAdvance, userID pulid.ID) error {
-	entity.Status = driverpay.AdvanceStatusOutstanding
+func PlanIssueAdvance(entity *payadvance.PayAdvance, userID pulid.ID) error {
+	entity.Status = payadvance.AdvanceStatusOutstanding
 	entity.RecoveredMinor = 0
 	entity.WrittenOffMinor = 0
 
@@ -29,7 +34,7 @@ func PlanIssueAdvance(entity *driverpay.PayAdvance, userID pulid.ID) error {
 }
 
 func PlanWriteOffAdvance(
-	entity *driverpay.PayAdvance,
+	entity *payadvance.PayAdvance,
 	reason string,
 	userID pulid.ID,
 	now int64,
@@ -59,10 +64,10 @@ func PlanWriteOffAdvance(
 
 func (s *Service) PlanOpenEscrowAccount(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
+	entity *payescrow.EscrowAccount,
 	now int64,
 ) error {
-	entity.Status = driverpay.EscrowAccountStatusActive
+	entity.Status = payescrow.EscrowAccountStatusActive
 	entity.BalanceMinor = 0
 	if entity.OpenedDate == 0 {
 		entity.OpenedDate = now
@@ -100,8 +105,8 @@ func (s *Service) PlanOpenEscrowAccount(
 
 func (s *Service) PlanUpdateEscrowAccount(
 	ctx context.Context,
-	entity *driverpay.EscrowAccount,
-) (*driverpay.EscrowAccount, error) {
+	entity *payescrow.EscrowAccount,
+) (*payescrow.EscrowAccount, error) {
 	previous, err := s.escrowRepo.GetByID(ctx, driverpayports.GetEscrowAccountByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
@@ -125,14 +130,14 @@ func (s *Service) PlanUpdateEscrowAccount(
 }
 
 func PlanEscrowAdjustment(
-	account *driverpay.EscrowAccount,
+	account *payescrow.EscrowAccount,
 	req *EscrowAdjustmentRequest,
 	userID pulid.ID,
-) (*driverpay.EscrowTransaction, error) {
+) (*payescrow.EscrowTransaction, error) {
 	if err := CheckEscrowAdjustment(req); err != nil {
 		return nil, err
 	}
-	if account.Status != driverpay.EscrowAccountStatusActive {
+	if account.Status != payescrow.EscrowAccountStatusActive {
 		return nil, errortypes.NewValidationError(
 			"accountId",
 			errortypes.ErrInvalidOperation,
@@ -146,8 +151,8 @@ func PlanEscrowAdjustment(
 			"Adjustment would drive the escrow balance negative",
 		)
 	}
-	return &driverpay.EscrowTransaction{
-		Type:         driverpay.EscrowTransactionTypeAdjustment,
+	return &payescrow.EscrowTransaction{
+		Type:         payescrow.EscrowTransactionTypeAdjustment,
 		AmountMinor:  req.AmountMinor,
 		OccurredDate: req.OccurredDate,
 		Description:  req.Description,
@@ -174,21 +179,21 @@ func CheckEscrowAdjustment(req *EscrowAdjustmentRequest) error {
 }
 
 func PlanCloseEscrowAccount(
-	account *driverpay.EscrowAccount,
+	account *payescrow.EscrowAccount,
 	userID pulid.ID,
 	now int64,
-) (*driverpay.EscrowTransaction, error) {
-	if account.Status != driverpay.EscrowAccountStatusActive {
+) (*payescrow.EscrowTransaction, error) {
+	if account.Status != payescrow.EscrowAccountStatusActive {
 		return nil, errortypes.NewValidationError(
 			"accountId",
 			errortypes.ErrInvalidOperation,
 			"Escrow account is already closed",
 		)
 	}
-	var refund *driverpay.EscrowTransaction
+	var refund *payescrow.EscrowTransaction
 	if account.BalanceMinor > 0 {
-		refund = &driverpay.EscrowTransaction{
-			Type:         driverpay.EscrowTransactionTypeRefund,
+		refund = &payescrow.EscrowTransaction{
+			Type:         payescrow.EscrowTransactionTypeRefund,
 			AmountMinor:  -account.BalanceMinor,
 			OccurredDate: now,
 			Description:  "Escrow balance refunded on account closure",
@@ -198,26 +203,26 @@ func PlanCloseEscrowAccount(
 	return refund, nil
 }
 
-func StampEscrowTransaction(account *driverpay.EscrowAccount, tx *driverpay.EscrowTransaction) {
+func StampEscrowTransaction(account *payescrow.EscrowAccount, tx *payescrow.EscrowTransaction) {
 	tx.OrganizationID = account.OrganizationID
 	tx.BusinessUnitID = account.BusinessUnitID
 	tx.EscrowAccountID = account.ID
 	tx.BalanceAfterMinor = account.BalanceMinor + tx.AmountMinor
 }
 
-func CloseEscrowAccount(account *driverpay.EscrowAccount, now int64) {
-	account.Status = driverpay.EscrowAccountStatusClosed
+func CloseEscrowAccount(account *payescrow.EscrowAccount, now int64) {
+	account.Status = payescrow.EscrowAccountStatusClosed
 	account.ClosedDate = &now
 }
 
 type AssignmentPlan struct {
 	Profile *driverpay.PayProfile
-	Ended   []*driverpay.WorkerPayAssignment
+	Ended   []*payassignment.WorkerPayAssignment
 }
 
 func (s *Service) PlanAssignment(
 	ctx context.Context,
-	entity *driverpay.WorkerPayAssignment,
+	entity *payassignment.WorkerPayAssignment,
 ) (*AssignmentPlan, error) {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -249,10 +254,10 @@ func (s *Service) PlanAssignment(
 }
 
 func PlanEndOverlapping(
-	entity *driverpay.WorkerPayAssignment,
-	overlapping []*driverpay.WorkerPayAssignment,
-) ([]*driverpay.WorkerPayAssignment, error) {
-	ended := make([]*driverpay.WorkerPayAssignment, 0, len(overlapping))
+	entity *payassignment.WorkerPayAssignment,
+	overlapping []*payassignment.WorkerPayAssignment,
+) ([]*payassignment.WorkerPayAssignment, error) {
+	ended := make([]*payassignment.WorkerPayAssignment, 0, len(overlapping))
 	for _, existing := range overlapping {
 		if existing == nil {
 			continue
@@ -279,11 +284,11 @@ func (s *Service) GetAssignment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	assignmentID pulid.ID,
-) (*driverpay.WorkerPayAssignment, error) {
+) (*payassignment.WorkerPayAssignment, error) {
 	return s.assignmentRepo.GetByID(ctx, tenantInfo, assignmentID)
 }
 
-func PlanEndAssignment(entity *driverpay.WorkerPayAssignment, endDate int64) error {
+func PlanEndAssignment(entity *payassignment.WorkerPayAssignment, endDate int64) error {
 	if endDate <= entity.EffectiveFrom {
 		return errortypes.NewValidationError(
 			"endDate",
@@ -297,7 +302,7 @@ func PlanEndAssignment(entity *driverpay.WorkerPayAssignment, endDate int64) err
 
 func (s *Service) CheckDeduction(
 	ctx context.Context,
-	entity *driverpay.RecurringDeduction,
+	entity *recurringpay.RecurringDeduction,
 	autoLinkEscrow bool,
 ) error {
 	tenantInfo := tenantOf(entity.OrganizationID, entity.BusinessUnitID)
@@ -305,7 +310,7 @@ func (s *Service) CheckDeduction(
 		ctx,
 		tenantInfo,
 		entity.PayCodeID,
-		driverpay.PayCodeDirectionDeduction,
+		paycode.PayCodeDirectionDeduction,
 	); err != nil {
 		return err
 	}
@@ -335,12 +340,12 @@ func (s *Service) CheckDeduction(
 	return nil
 }
 
-func (s *Service) CheckEarning(ctx context.Context, entity *driverpay.RecurringEarning) error {
+func (s *Service) CheckEarning(ctx context.Context, entity *recurringpay.RecurringEarning) error {
 	if err := s.resolvePayCode(
 		ctx,
 		tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		entity.PayCodeID,
-		driverpay.PayCodeDirectionEarning,
+		paycode.PayCodeDirectionEarning,
 	); err != nil {
 		return err
 	}

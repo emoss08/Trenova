@@ -201,6 +201,8 @@ const SUBJECT_KEYS = [
   "dataset",
   "page",
   "question",
+  "withoutCredential",
+  "credentialTypeCode",
   "query",
   "search",
   "shipmentId",
@@ -349,7 +351,7 @@ export type ParsedToolResult =
 
 const FENCE_OPEN = "<untrusted_data>";
 const FENCE_CLOSE = "</untrusted_data>";
-// What the server appends when it cuts a result short (agentruntime/fence.go).
+// What the server appends when it cuts a result short (agentruntime/toolresult/fence.go).
 // Matched on its opening rather than in full: the notice is a paragraph of
 // instruction to the model and will be reworded, while the bracketed opening is
 // what identifies it. The older "…(truncated)" marker is still recognised so a

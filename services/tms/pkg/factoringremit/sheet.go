@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
 	"github.com/emoss08/trenova/pkg/rateimport"
 )
 
@@ -13,22 +13,22 @@ var ErrUnsupportedFile = errors.New(
 	"a remittance must be a CSV, an Excel workbook (.xlsx) or a PDF",
 )
 
-func FormatFor(fileName, contentType string) (factoring.RemittanceFormat, error) {
+func FormatFor(fileName, contentType string) (factoringremittance.RemittanceFormat, error) {
 	switch strings.ToLower(filepath.Ext(strings.TrimSpace(fileName))) {
 	case ".csv", ".txt":
-		return factoring.RemittanceFormatCsv, nil
+		return factoringremittance.RemittanceFormatCsv, nil
 	case ".xlsx":
-		return factoring.RemittanceFormatXlsx, nil
+		return factoringremittance.RemittanceFormatXlsx, nil
 	case ".pdf":
-		return factoring.RemittanceFormatPdf, nil
+		return factoringremittance.RemittanceFormatPdf, nil
 	}
 	switch strings.ToLower(strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0])) {
 	case "text/csv", "application/csv", "text/plain":
-		return factoring.RemittanceFormatCsv, nil
+		return factoringremittance.RemittanceFormatCsv, nil
 	case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-		return factoring.RemittanceFormatXlsx, nil
+		return factoringremittance.RemittanceFormatXlsx, nil
 	case "application/pdf":
-		return factoring.RemittanceFormatPdf, nil
+		return factoringremittance.RemittanceFormatPdf, nil
 	}
 	return "", ErrUnsupportedFile
 }
@@ -40,31 +40,31 @@ func IsRemittanceFile(fileName, contentType string) bool {
 
 func ReadSheet(
 	data []byte,
-	format factoring.RemittanceFormat,
+	format factoringremittance.RemittanceFormat,
 	limits rateimport.Limits,
 ) (*rateimport.Sheet, error) {
 	switch format {
-	case factoring.RemittanceFormatCsv:
+	case factoringremittance.RemittanceFormatCsv:
 		return rateimport.ReadCSV(data, limits)
-	case factoring.RemittanceFormatXlsx:
+	case factoringremittance.RemittanceFormatXlsx:
 		return rateimport.ReadXLSX(data, limits)
-	case factoring.RemittanceFormatPdf:
+	case factoringremittance.RemittanceFormatPdf:
 	}
 	return nil, ErrUnsupportedFile
 }
 
-func ToDomain(lines []*Line) []*factoring.RemittanceLine {
-	out := make([]*factoring.RemittanceLine, 0, len(lines))
+func ToDomain(lines []*Line) []*factoringremittance.RemittanceLine {
+	out := make([]*factoringremittance.RemittanceLine, 0, len(lines))
 	for _, line := range lines {
 		if line == nil {
 			continue
 		}
-		domainLine := &factoring.RemittanceLine{
+		domainLine := &factoringremittance.RemittanceLine{
 			RowNumber:         line.RowNumber,
 			Cells:             line.Cells,
 			Kind:              line.Kind,
 			InvoiceNumber:     line.InvoiceNumber,
-			NormalizedInvoice: factoring.NormalizeRemittanceReference(line.InvoiceNumber),
+			NormalizedInvoice: factoringremittance.NormalizeRemittanceReference(line.InvoiceNumber),
 			FactorReference:   line.FactorReference,
 			DebtorName:        line.Debtor,
 			FaceMinor:         line.FaceMinor,
@@ -73,12 +73,12 @@ func ToDomain(lines []*Line) []*factoring.RemittanceLine {
 			ReserveMinor:      line.ReserveMinor,
 			CashMinor:         line.CashMinor,
 			OccurredOn:        line.OccurredOn,
-			MatchStatus:       factoring.RemittanceLineUnmatched,
-			Suggestions:       []*factoring.RemittanceSuggestion{},
+			MatchStatus:       factoringremittance.RemittanceLineUnmatched,
+			Suggestions:       []*factoringremittance.RemittanceSuggestion{},
 		}
 		if line.Err != "" {
-			domainLine.MatchStatus = factoring.RemittanceLineError
-			domainLine.Error = clip(line.Err, factoring.MaxRemittanceReasonLength)
+			domainLine.MatchStatus = factoringremittance.RemittanceLineError
+			domainLine.Error = clip(line.Err, factoringremittance.MaxRemittanceReasonLength)
 		}
 		out = append(out, domainLine)
 	}

@@ -3,52 +3,63 @@
 package agentquerytoolservice_test
 
 import (
-	"slices"
-
-	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
 	"context"
 	"errors"
+	"slices"
 	"sync"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driverpayrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/driversettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementreviewservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance/payadvancedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode/paycodedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow/payescrowdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense/payexpensedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay/recurringpaydb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -143,7 +154,7 @@ func (s *settlementRows) shipment(
 	load := &shipment.Shipment{
 		ID: pulid.MustNew("shp_"), BusinessUnitID: bu, OrganizationID: org,
 		ServiceTypeID: service.ID, ShipmentTypeID: kind.ID, CustomerID: buyer.ID,
-		FormulaTemplateID: tariff.ID, Status: shipment.StatusNew,
+		FormulaTemplateID: tariff.ID, Status: shipmentvocab.StatusNew,
 		ProNumber: "PRO" + org.String()[4:12], BOL: "BOL" + org.String()[4:12],
 	}
 	if err := shipmentdb.Shipments.Create(ctx, s.admin, load); err != nil {
@@ -158,13 +169,13 @@ func (s *settlementRows) payCode(
 	ctx context.Context,
 	tenant *agentreadtest.Tenant,
 	label string,
-	direction driverpay.PayCodeDirection,
+	direction paycode.PayCodeDirection,
 ) (pulid.ID, error) {
-	row := &driverpay.PayCode{
+	row := &paycode.PayCode{
 		BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 		Status: "Active", Direction: direction, Code: "PC" + label, Name: "Pay code " + label,
 	}
-	if err := driverpaydb.PayCodes.Create(ctx, s.admin, row); err != nil {
+	if err := paycodedb.PayCodes.Create(ctx, s.admin, row); err != nil {
 		return pulid.Nil, err
 	}
 
@@ -208,14 +219,28 @@ func settlementServices(conn *postgres.Connection, services *agentread.ResolverP
 	services.CarrierSettlementRepo = carrierSettlements
 	services.DriverPayService = payService
 	services.DriverSettlementService = driversettlementservice.New(driversettlementservice.Params{
-		Logger: logger, DB: conn, SettlementRepo: settlements, DisputeRepo: disputes,
-		ExpenseRepo: expenses, BatchRepo: batches, PayEventRepo: events,
-		AssignmentRepo: assignments, DeductionRepo: deductions, EarningRepo: earnings,
-		PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow, PayService: payService,
+		Logger: logger, DB: conn, SettlementRepo: settlements, BatchRepo: batches,
+		PayEventRepo: events, AssignmentRepo: assignments, DeductionRepo: deductions,
+		EarningRepo: earnings, PayCodeRepo: codes, AdvanceRepo: advances, EscrowRepo: escrow,
 	})
-	services.CarrierSettlementService = carriersettlementservice.New(carriersettlementservice.Params{
-		Logger: logger, DB: conn, SettlementRepo: carrierSettlements,
-	})
+	services.DriverSettlementReviewService = driversettlementreviewservice.New(
+		driversettlementreviewservice.Params{
+			Logger: logger, Settlements: services.DriverSettlementService,
+			SettlementRepo: settlements, DisputeRepo: disputes, ExpenseRepo: expenses,
+			PayCodeRepo: codes,
+		},
+	)
+	services.DriverSettlementWorkspaceService = driversettlementworkspaceservice.New(
+		driversettlementworkspaceservice.Params{
+			Settlements: services.DriverSettlementService, SettlementRepo: settlements,
+			BatchRepo: batches, PayEventRepo: events,
+		},
+	)
+	services.CarrierSettlementService = carriersettlementservice.New(
+		carriersettlementservice.Params{
+			Logger: logger, DB: conn, SettlementRepo: carrierSettlements,
+		},
+	)
 }
 
 // settlementListCases are the settlement lists, each written as its screen
@@ -278,17 +303,17 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.ExpenseStatusPending
+				status := payexpense.ExpenseStatusPending
 				if marked {
-					status = driverpay.ExpenseStatusRejected
+					status = payexpense.ExpenseStatusRejected
 				}
-				row := &driverpay.Expense{
+				row := &payexpense.Expense{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, Status: status, AmountMinor: 4_250,
 					CurrencyCode: settlementCurrency, Description: "Lumper fee " + label,
 					IncurredDate: now - day, SubmittedByUserID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.Expenses, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payexpensedb.Expenses, row, &row.ID)
 			},
 		},
 		{
@@ -304,17 +329,17 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status, closedDate := driverpay.EscrowAccountStatusActive, (*int64)(nil)
+				status, closedDate := payescrow.EscrowAccountStatusActive, (*int64)(nil)
 				if marked {
-					status, closedDate = driverpay.EscrowAccountStatusClosed, new(now)
+					status, closedDate = payescrow.EscrowAccountStatusClosed, new(now)
 				}
-				row := &driverpay.EscrowAccount{
+				row := &payescrow.EscrowAccount{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, Status: status, TargetAmountMinor: 250_000,
 					BalanceMinor: 50_000, AnnualInterestRate: decimal.NewFromFloat(0.02),
 					OpenedDate: now - 30*day, ClosedDate: closedDate, CurrencyCode: settlementCurrency,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.EscrowAccounts, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payescrowdb.EscrowAccounts, row, &row.ID)
 			},
 		},
 		{
@@ -324,17 +349,17 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.AdvanceStatusOutstanding
+				status := payadvance.AdvanceStatusOutstanding
 				if marked {
-					status = driverpay.AdvanceStatusWrittenOff
+					status = payadvance.AdvanceStatusWrittenOff
 				}
-				row := &driverpay.PayAdvance{
+				row := &payadvance.PayAdvance{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
-					WorkerID: workerID, Status: status, Source: driverpay.AdvanceSourceCash,
+					WorkerID: workerID, Status: status, Source: payadvance.AdvanceSourceCash,
 					Reference: "ADV" + label, IssuedDate: now - day, AmountMinor: 20_000,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.PayAdvances, row, &row.ID)
+				return insertWithID(ctx, rows.admin, payadvancedb.PayAdvances, row, &row.ID)
 			},
 		},
 		{
@@ -344,22 +369,33 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				code, err := rows.payCode(ctx, tenant, "D"+label, driverpay.PayCodeDirectionDeduction)
+				code, err := rows.payCode(
+					ctx,
+					tenant,
+					"D"+label,
+					paycode.PayCodeDirectionDeduction,
+				)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.DeductionStatusActive
+				status := recurringpay.DeductionStatusActive
 				if marked {
-					status = driverpay.DeductionStatusPaused
+					status = recurringpay.DeductionStatusPaused
 				}
-				row := &driverpay.RecurringDeduction{
+				row := &recurringpay.RecurringDeduction{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, PayCodeID: code, Status: status,
-					Kind: driverpay.DeductionKindStandard, Frequency: driverpay.DeductionFrequencyEverySettlement,
+					Kind: recurringpay.DeductionKindStandard, Frequency: recurringpay.DeductionFrequencyEverySettlement,
 					Description: "Insurance " + label, AmountMinor: 7_500, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.RecurringDeductions, row, &row.ID)
+				return insertWithID(
+					ctx,
+					rows.admin,
+					recurringpaydb.RecurringDeductions,
+					row,
+					&row.ID,
+				)
 			},
 		},
 		{
@@ -369,22 +405,22 @@ func settlementListCases(
 				if err != nil {
 					return pulid.Nil, err
 				}
-				code, err := rows.payCode(ctx, tenant, "R"+label, driverpay.PayCodeDirectionEarning)
+				code, err := rows.payCode(ctx, tenant, "R"+label, paycode.PayCodeDirectionEarning)
 				if err != nil {
 					return pulid.Nil, err
 				}
-				status := driverpay.EarningStatusActive
+				status := recurringpay.EarningStatusActive
 				if marked {
-					status = driverpay.EarningStatusPaused
+					status = recurringpay.EarningStatusPaused
 				}
-				row := &driverpay.RecurringEarning{
+				row := &recurringpay.RecurringEarning{
 					BusinessUnitID: tenant.Actor.BusinessUnitID, OrganizationID: tenant.Actor.OrganizationID,
 					WorkerID: workerID, PayCodeID: code, Status: status,
-					Kind: driverpay.EarningKindStandard, Frequency: driverpay.EarningFrequencyEverySettlement,
+					Kind: recurringpay.EarningKindStandard, Frequency: recurringpay.EarningFrequencyEverySettlement,
 					Description: "Per diem " + label, AmountMinor: 6_000, StartDate: now - 30*day,
 					CurrencyCode: settlementCurrency, CreatedByID: tenant.Actor.UserID,
 				}
-				return insertWithID(ctx, rows.admin, driverpaydb.RecurringEarnings, row, &row.ID)
+				return insertWithID(ctx, rows.admin, recurringpaydb.RecurringEarnings, row, &row.ID)
 			},
 		},
 	}
@@ -627,7 +663,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 
 	engine := &mocks.DenyResourcesPermissionEngine{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services})
-	public := agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services})
+	public := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+	)
 	restricted := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &restrictedRole{}, Resolvers: services,
 	})
@@ -651,7 +690,11 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("nothing is withheld where access reaches Restricted", func(t *testing.T) {
-				open, err := agentquerytoolservice.ConvertedGetTool(name, restricted, &restrictedRole{})
+				open, err := agentquerytoolservice.ConvertedGetTool(
+					name,
+					restricted,
+					&restrictedRole{},
+				)
 				require.NoError(t, err)
 				params := internalCall(actor, map[string]any{param: ours.rows[0]})
 				params.DataAccessCeiling = permission.SensitivityRestricted
@@ -661,7 +704,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("only the documented fields are withheld at Internal", func(t *testing.T) {
-				data, err := get.Query(ours.ctx, internalCall(actor, map[string]any{param: ours.rows[0]}))
+				data, err := get.Query(
+					ours.ctx,
+					internalCall(actor, map[string]any{param: ours.rows[0]}),
+				)
 				require.NoError(t, err)
 				withheld, _ := asMap(t, data)["withheldByAccess"].([]any)
 				for _, path := range withheld {
@@ -670,7 +716,10 @@ func TestConvertedGets_SettlementsReadOneRecordUnderRowLevelSecurity(t *testing.
 			})
 
 			t.Run("another tenant's record is not found", func(t *testing.T) {
-				_, err := get.Query(ours.ctx, internalCall(actor, map[string]any{param: other.rows[0]}))
+				_, err := get.Query(
+					ours.ctx,
+					internalCall(actor, map[string]any{param: other.rows[0]}),
+				)
 				require.Error(t, err)
 			})
 
@@ -720,7 +769,11 @@ func TestConvertedGets_DriverEarningsAreReadByTheWorker(t *testing.T) {
 		return event.WorkerID.String()
 	}
 
-	get, err := agentquerytoolservice.ConvertedGetTool("settlement_get_driver_earnings", reader, engine)
+	get, err := agentquerytoolservice.ConvertedGetTool(
+		"settlement_get_driver_earnings",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 
 	mineID := workerOf(ours.rows[0])
@@ -773,7 +826,11 @@ func TestConvertedReads_MarkTheDriversWordsOnlyWhenShown(t *testing.T) {
 	mine := agentreadtest.SeedTenant(t, admin, "A")
 	ours := writeReferenceRows(t, expenses, mine, "A")
 
-	list, err := agentquerytoolservice.ConvertedListTool("settlement_list_driver_expenses", reader, engine)
+	list, err := agentquerytoolservice.ConvertedListTool(
+		"settlement_list_driver_expenses",
+		reader,
+		engine,
+	)
 	require.NoError(t, err)
 	params := internalCall(mine.Actor, map[string]any{"limit": 50})
 
@@ -802,8 +859,8 @@ func TestConvertedReads_MarkTheDriversWordsOnlyWhenShown(t *testing.T) {
 func internalCall(
 	actor *permissionports.RequestActor,
 	args map[string]any,
-) *agentports.QueryToolParams {
-	return &agentports.QueryToolParams{
+) *agenttoolports.QueryToolParams {
+	return &agenttoolports.QueryToolParams{
 		OrganizationID:    actor.OrganizationID,
 		BusinessUnitID:    actor.BusinessUnitID,
 		Actor:             actor,
@@ -837,7 +894,7 @@ func TestConvertedLists_EscrowAccountsSearchWithoutTheirMoney(t *testing.T) {
 			Engine: restrictedEngine, Resolvers: services,
 		}), restrictedEngine)
 	require.NoError(t, err)
-	data, err := reached.Query(ours.ctx, &agentports.QueryToolParams{
+	data, err := reached.Query(ours.ctx, &agenttoolports.QueryToolParams{
 		OrganizationID: mine.Actor.OrganizationID, BusinessUnitID: mine.Actor.BusinessUnitID,
 		Actor: mine.Actor, Timezone: "America/Chicago",
 		Params:            map[string]any{"query": "Closed"},

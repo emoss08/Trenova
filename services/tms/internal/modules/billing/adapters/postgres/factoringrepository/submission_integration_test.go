@@ -8,8 +8,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringwatchtowerports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +21,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func newSubmissionRepos(e *factoringEnv) (factoringports.SubmissionRepository, factoringports.TransportRepository) {
+func newSubmissionRepos(
+	e *factoringEnv,
+) (factoringsubmissionports.SubmissionRepository, factoringsubmissionports.TransportRepository) {
 	p := Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()}
 	return NewSubmissionRepository(p), NewTransportRepository(p)
 }
@@ -28,22 +32,22 @@ func (e *factoringEnv) submission(
 	agreement *factoring.Agreement,
 	number, key string,
 	invoices ...*invoice.Invoice,
-) *factoring.Submission {
-	sub := &factoring.Submission{
+) *factoringsubmission.Submission {
+	sub := &factoringsubmission.Submission{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		Number:             number,
 		FactoringCompanyID: agreement.FactoringCompanyID,
 		AgreementID:        agreement.ID,
-		Status:             factoring.SubmissionStatusSending,
+		Status:             factoringsubmission.SubmissionStatusSending,
 		CurrencyCode:       "USD",
-		TransportMethod:    factoring.TransportMethodEmail,
+		TransportMethod:    factoringsubmission.TransportMethodEmail,
 		TransportTarget:    "schedules@factor.test",
 		IdempotencyKey:     key,
 	}
 	for _, inv := range invoices {
 		funding := factoring.ExpectedFunding(inv.TotalAmountMinor, agreement, 30)
-		sub.Items = append(sub.Items, &factoring.SubmissionItem{
+		sub.Items = append(sub.Items, &factoringsubmission.SubmissionItem{
 			InvoiceID:            inv.ID,
 			InvoiceNumber:        inv.Number,
 			CustomerID:           inv.CustomerID,
@@ -62,13 +66,19 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	e := setupFactoringEnv(t)
 	submissions, _ := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FSUB")
-	agreement, err := e.agreements.Create(e.ctx, e.agreement(factor.ID, time.Now().Add(-time.Hour).Unix(), nil))
+	agreement, err := e.agreements.Create(
+		e.ctx,
+		e.agreement(factor.ID, time.Now().Add(-time.Hour).Unix(), nil),
+	)
 	require.NoError(t, err)
 
 	first := e.postInvoice(t, 100000, &factor.ID)
 	second := e.postInvoice(t, 50000, &factor.ID)
 
-	created, err := submissions.Create(e.ctx, e.submission(agreement, "FS-1", "key-1", first, second))
+	created, err := submissions.Create(
+		e.ctx,
+		e.submission(agreement, "FS-1", "key-1", first, second),
+	)
 	require.NoError(t, err)
 	require.Len(t, created.Items, 2)
 	assert.Equal(t, 1, created.Items[0].Position)
@@ -78,11 +88,14 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err))
 
-	_, err = submissions.Create(e.ctx, e.submission(agreement, "FS-3", "key-1", e.postInvoice(t, 1000, &factor.ID)))
+	_, err = submissions.Create(
+		e.ctx,
+		e.submission(agreement, "FS-3", "key-1", e.postInvoice(t, 1000, &factor.ID)),
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err))
 
-	live, err := submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+	live, err := submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo: e.tenantInfo,
 		InvoiceIDs: []pulid.ID{first.ID, second.ID},
 	})
@@ -90,22 +103,30 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	require.Len(t, live, 2)
 	assert.Equal(t, "FS-1", live[first.ID].SubmissionNumber)
 
-	byKey, err := submissions.GetByIdempotencyKey(e.ctx, factoringports.GetSubmissionByKeyRequest{
-		TenantInfo:     e.tenantInfo,
-		IdempotencyKey: "key-1",
-	})
+	byKey, err := submissions.GetByIdempotencyKey(
+		e.ctx,
+		factoringsubmissionports.GetSubmissionByKeyRequest{
+			TenantInfo:     e.tenantInfo,
+			IdempotencyKey: "key-1",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, byKey.ID)
 	assert.Len(t, byKey.Items, 2)
 
-	require.NoError(t, submissions.SetDocuments(e.ctx, &factoringports.SetSubmissionDocumentsRequest{
-		TenantInfo:            e.tenantInfo,
-		SubmissionID:          created.ID,
-		SchedulePDFDocumentID: pulid.MustNew("doc_"),
-		Packets:               map[pulid.ID]pulid.ID{created.Items[0].ID: pulid.MustNew("doc_")},
-	}))
+	require.NoError(
+		t,
+		submissions.SetDocuments(e.ctx, &factoringsubmissionports.SetSubmissionDocumentsRequest{
+			TenantInfo:            e.tenantInfo,
+			SubmissionID:          created.ID,
+			SchedulePDFDocumentID: pulid.MustNew("doc_"),
+			Packets: map[pulid.ID]pulid.ID{
+				created.Items[0].ID: pulid.MustNew("doc_"),
+			},
+		}),
+	)
 
-	loaded, err := submissions.GetByID(e.ctx, factoringports.GetSubmissionRequest{
+	loaded, err := submissions.GetByID(e.ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID: created.ID, TenantInfo: e.tenantInfo, IncludeItems: true,
 	})
 	require.NoError(t, err)
@@ -119,8 +140,10 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, failedVersion+1, loaded.Version)
 
-	failed, err := NewWatchtowerReader(Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()}).
-		ListFailedSubmissions(e.ctx, &factoringports.ListFailedSubmissionsRequest{TenantInfo: e.tenantInfo})
+	failed, err := NewWatchtowerReader(
+		Params{DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop()},
+	).
+		ListFailedSubmissions(e.ctx, &factoringwatchtowerports.ListFailedSubmissionsRequest{TenantInfo: e.tenantInfo})
 	require.NoError(t, err)
 	require.Len(t, failed, 1)
 	assert.Equal(t, "FS-1", failed[0].Number)
@@ -136,7 +159,7 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	_, err = submissions.Update(e.ctx, loaded)
 	require.NoError(t, err)
 
-	live, err = submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+	live, err = submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo: e.tenantInfo,
 		InvoiceIDs: []pulid.ID{first.ID, second.ID},
 	})
@@ -146,25 +169,34 @@ func TestSubmissionLifecycleAndLiveInvoices(t *testing.T) {
 	again, err := submissions.Create(e.ctx, e.submission(agreement, "FS-4", "key-4", second))
 	require.NoError(t, err)
 
-	items, err := submissions.ListItemsBySubmissionIDs(e.ctx, &factoringports.ListItemsBySubmissionIDsRequest{
-		TenantInfo:    e.tenantInfo,
-		SubmissionIDs: []pulid.ID{created.ID, again.ID},
-	})
+	items, err := submissions.ListItemsBySubmissionIDs(
+		e.ctx,
+		&factoringsubmissionports.ListItemsBySubmissionIDsRequest{
+			TenantInfo:    e.tenantInfo,
+			SubmissionIDs: []pulid.ID{created.ID, again.ID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, items[created.ID], 2)
-	assert.Equal(t, factoring.SubmissionItemStatusReleased, items[created.ID][0].Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusReleased, items[created.ID][0].Status)
 	assert.Len(t, items[again.ID], 1)
 
-	page, err := submissions.ListConnection(e.ctx, &factoringports.ListSubmissionConnectionRequest{
-		Filter: &pagination.QueryOptions{TenantInfo: e.tenantInfo, Query: second.Number},
-		Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
-	})
+	page, err := submissions.ListConnection(
+		e.ctx,
+		&factoringsubmissionports.ListSubmissionConnectionRequest{
+			Filter: &pagination.QueryOptions{TenantInfo: e.tenantInfo, Query: second.Number},
+			Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 2, *page.TotalCount)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = submissions.GetByID(dbscope.WithTenant(e.ctx, other.DBTenant()), factoringports.GetSubmissionRequest{ID: created.ID, TenantInfo: other})
+	_, err = submissions.GetByID(
+		dbscope.WithTenant(e.ctx, other.DBTenant()),
+		factoringsubmissionports.GetSubmissionRequest{ID: created.ID, TenantInfo: other},
+	)
 	require.Error(t, err)
 }
 
@@ -173,33 +205,33 @@ func TestTransportOnePerFactor(t *testing.T) {
 	_, transports := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FTRN")
 
-	entity := &factoring.Transport{
+	entity := &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"schedules@factor.test"},
 		AttachPackets:      true,
 	}
 	created, err := transports.Create(e.ctx, entity)
 	require.NoError(t, err)
 
-	_, err = transports.Create(e.ctx, &factoring.Transport{
+	_, err = transports.Create(e.ctx, &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"other@factor.test"},
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsConflictError(err))
 
-	created.Method = factoring.TransportMethodSftp
+	created.Method = factoringsubmission.TransportMethodSftp
 	created.EmailRecipients = nil
 	created.SftpHost = "sftp.factor.test"
 	created.SftpPort = 22
 	created.SftpUsername = "carrier"
-	created.SftpAuthMethod = factoring.SftpAuthPassword
+	created.SftpAuthMethod = factoringsubmission.SftpAuthPassword
 	created.SftpSecret = "sealed"
 	created.SftpKnownHostKey = "ssh-ed25519 AAAA"
 	created.SftpDirectory = "/in"
@@ -210,11 +242,11 @@ func TestTransportOnePerFactor(t *testing.T) {
 	updated.RecordTest(time.Now().Unix(), nil)
 	require.NoError(t, transports.RecordTest(e.ctx, updated))
 
-	got, err := transports.Get(e.ctx, factoringports.GetTransportRequest{
+	got, err := transports.Get(e.ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo: e.tenantInfo, FactoringCompanyID: factor.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, factoring.TransportMethodSftp, got.Method)
+	assert.Equal(t, factoringsubmission.TransportMethodSftp, got.Method)
 	assert.Equal(t, "sealed", got.SftpSecret)
 	assert.NotNil(t, got.LastTestedAt)
 }
@@ -224,17 +256,17 @@ func TestTransportKeepsPacketsOffWhenCreatedWithout(t *testing.T) {
 	_, transports := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FNOP")
 
-	_, err := transports.Create(e.ctx, &factoring.Transport{
+	_, err := transports.Create(e.ctx, &factoringsubmission.Transport{
 		OrganizationID:     e.tenantInfo.OrgID,
 		BusinessUnitID:     e.tenantInfo.BuID,
 		FactoringCompanyID: factor.ID,
-		Method:             factoring.TransportMethodEmail,
+		Method:             factoringsubmission.TransportMethodEmail,
 		EmailRecipients:    []string{"schedules@factor.test"},
 		AttachPackets:      false,
 	})
 	require.NoError(t, err)
 
-	got, err := transports.Get(e.ctx, factoringports.GetTransportRequest{
+	got, err := transports.Get(e.ctx, factoringsubmissionports.GetTransportRequest{
 		TenantInfo: e.tenantInfo, FactoringCompanyID: factor.ID,
 	})
 	require.NoError(t, err)
@@ -245,38 +277,50 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	e := setupFactoringEnv(t)
 	submissions, _ := newSubmissionRepos(e)
 	factor := e.createFactor(t, "FFUN")
-	agreement, err := e.agreements.Create(e.ctx, e.agreement(factor.ID, time.Now().Add(-time.Hour).Unix(), nil))
+	agreement, err := e.agreements.Create(
+		e.ctx,
+		e.agreement(factor.ID, time.Now().Add(-time.Hour).Unix(), nil),
+	)
 	require.NoError(t, err)
 
 	first := e.postInvoice(t, 100000, &factor.ID)
 	second := e.postInvoice(t, 50000, &factor.ID)
-	created, err := submissions.Create(e.ctx, e.submission(agreement, "FS-F1", "key-f1", first, second))
+	created, err := submissions.Create(
+		e.ctx,
+		e.submission(agreement, "FS-F1", "key-f1", first, second),
+	)
 	require.NoError(t, err)
 	require.NoError(t, created.MarkSent(time.Now().Unix(), "", 1))
 	created, err = submissions.Update(e.ctx, created)
 	require.NoError(t, err)
 
 	fundedOn := time.Now().Unix()
-	byInvoice := make(map[pulid.ID]*factoring.SubmissionItem, len(created.Items))
+	byInvoice := make(map[pulid.ID]*factoringsubmission.SubmissionItem, len(created.Items))
 	for _, item := range created.Items {
 		byInvoice[item.InvoiceID] = item
 	}
-	require.NoError(t, byInvoice[first.ID].Fund(fundedOn, factoring.ItemFunding{AdvanceMinor: 90000, FeeMinor: 2500}))
+	require.NoError(
+		t,
+		byInvoice[first.ID].Fund(
+			fundedOn,
+			factoringsubmission.ItemFunding{AdvanceMinor: 90000, FeeMinor: 2500},
+		),
+	)
 	require.NoError(t, byInvoice[second.ID].Reject("Debtor over its credit limit"))
 	created.Resolve(fundedOn)
-	assert.Equal(t, factoring.SubmissionStatusFunded, created.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFunded, created.Status)
 	_, err = submissions.Update(e.ctx, created)
 	require.NoError(t, err)
 
-	loaded, err := submissions.GetByID(e.ctx, factoringports.GetSubmissionRequest{
+	loaded, err := submissions.GetByID(e.ctx, factoringsubmissionports.GetSubmissionRequest{
 		ID: created.ID, TenantInfo: e.tenantInfo, IncludeItems: true,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, factoring.SubmissionStatusFunded, loaded.Status)
+	assert.Equal(t, factoringsubmission.SubmissionStatusFunded, loaded.Status)
 	require.NotNil(t, loaded.FundedAt)
 	funded := loaded.Item(byInvoice[first.ID].ID)
 	require.NotNil(t, funded)
-	assert.Equal(t, factoring.SubmissionItemStatusFunded, funded.Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusFunded, funded.Status)
 	advance, fee, reserve := funded.Actuals()
 	assert.Equal(t, int64(90000), advance)
 	assert.Equal(t, int64(2500), fee)
@@ -285,45 +329,55 @@ func TestSubmissionFundingPersistsItemOutcomes(t *testing.T) {
 	assert.Equal(t, fundedOn, *funded.FundedOn)
 	rejected := loaded.Item(byInvoice[second.ID].ID)
 	require.NotNil(t, rejected)
-	assert.Equal(t, factoring.SubmissionItemStatusRejected, rejected.Status)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusRejected, rejected.Status)
 	assert.Equal(t, "Debtor over its credit limit", rejected.RejectionReason)
 
-	live, err := submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+	live, err := submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo: e.tenantInfo,
 		InvoiceIDs: []pulid.ID{first.ID, second.ID},
 	})
 	require.NoError(t, err)
 	require.Len(t, live, 1)
-	assert.Equal(t, factoring.SubmissionItemStatusFunded, live[first.ID].ItemStatus)
+	assert.Equal(t, factoringsubmission.SubmissionItemStatusFunded, live[first.ID].ItemStatus)
 
 	require.NoError(t, funded.ChargeBack(fundedOn+86_400, "Customer never paid"))
 	_, err = submissions.Update(e.ctx, loaded)
 	require.NoError(t, err)
 
-	live, err = submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
+	live, err = submissions.ListLiveItems(e.ctx, &factoringsubmissionports.ListLiveItemsRequest{
 		TenantInfo: e.tenantInfo,
 		InvoiceIDs: []pulid.ID{first.ID},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, live)
 
-	withChargebacks, err := submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
-		TenantInfo:         e.tenantInfo,
-		InvoiceIDs:         []pulid.ID{first.ID},
-		IncludeChargedBack: true,
-	})
+	withChargebacks, err := submissions.ListLiveItems(
+		e.ctx,
+		&factoringsubmissionports.ListLiveItemsRequest{
+			TenantInfo:         e.tenantInfo,
+			InvoiceIDs:         []pulid.ID{first.ID},
+			IncludeChargedBack: true,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, withChargebacks, 1)
-	assert.Equal(t, factoring.SubmissionItemStatusChargedBack, withChargebacks[first.ID].ItemStatus)
+	assert.Equal(
+		t,
+		factoringsubmission.SubmissionItemStatusChargedBack,
+		withChargebacks[first.ID].ItemStatus,
+	)
 	assert.False(t, withChargebacks[first.ID].IsLive())
 
 	again, err := submissions.Create(e.ctx, e.submission(agreement, "FS-F2", "key-f2", first))
 	require.NoError(t, err)
-	withChargebacks, err = submissions.ListLiveItems(e.ctx, &factoringports.ListLiveItemsRequest{
-		TenantInfo:         e.tenantInfo,
-		InvoiceIDs:         []pulid.ID{first.ID},
-		IncludeChargedBack: true,
-	})
+	withChargebacks, err = submissions.ListLiveItems(
+		e.ctx,
+		&factoringsubmissionports.ListLiveItemsRequest{
+			TenantInfo:         e.tenantInfo,
+			InvoiceIDs:         []pulid.ID{first.ID},
+			IncludeChargedBack: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, again.ID, withChargebacks[first.ID].SubmissionID)
 	assert.True(t, withChargebacks[first.ID].IsLive())

@@ -3,7 +3,7 @@ package ediinboundservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,8 +23,14 @@ func TestInspectInboundFile_LaysOutTheInterchangeTheFileCarried(t *testing.T) {
 	t.Parallel()
 
 	fixture := newInboundFixture(t, simulatorTender)
-	req := ediports.GetEDIInboundFileByIDRequest{ID: fixture.file.ID, TenantInfo: fixture.tenantInfo()}
-	fixture.inboundFileRepo.EXPECT().GetInboundFileByID(t.Context(), req).Return(fixture.file, nil).Once()
+	req := edimessageports.GetEDIInboundFileByIDRequest{
+		ID:         fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	}
+	fixture.inboundFileRepo.EXPECT().
+		GetInboundFileByID(t.Context(), req).
+		Return(fixture.file, nil).
+		Once()
 
 	result, err := fixture.service.InspectInboundFile(t.Context(), req)
 	require.NoError(t, err)
@@ -45,8 +51,14 @@ func TestInspectInboundFile_FlagsWhatTheFileGotWrong(t *testing.T) {
 		"*261014*1513*^*00401*000000043*0*T*>~GS*SM*SIMPARTNER*TRENOVA*20261014*1513*43*X*004010~" +
 		"ST*204*0001~B2**SIML**SIM000043**PP~B2A*00~SE*15*0001~GE*1*43~IEA*1*000000043~"
 	fixture := newInboundFixture(t, miscounted)
-	req := ediports.GetEDIInboundFileByIDRequest{ID: fixture.file.ID, TenantInfo: fixture.tenantInfo()}
-	fixture.inboundFileRepo.EXPECT().GetInboundFileByID(t.Context(), req).Return(fixture.file, nil).Once()
+	req := edimessageports.GetEDIInboundFileByIDRequest{
+		ID:         fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	}
+	fixture.inboundFileRepo.EXPECT().
+		GetInboundFileByID(t.Context(), req).
+		Return(fixture.file, nil).
+		Once()
 
 	result, err := fixture.service.InspectInboundFile(t.Context(), req)
 	require.NoError(t, err)
@@ -63,8 +75,14 @@ func TestInspectInboundFile_SaysAFileThatIsNotX12CarriesNoInterchange(t *testing
 	t.Parallel()
 
 	fixture := newInboundFixture(t, "Hi team,\nPlease see this week's tenders below.\n")
-	req := ediports.GetEDIInboundFileByIDRequest{ID: fixture.file.ID, TenantInfo: fixture.tenantInfo()}
-	fixture.inboundFileRepo.EXPECT().GetInboundFileByID(t.Context(), req).Return(fixture.file, nil).Once()
+	req := edimessageports.GetEDIInboundFileByIDRequest{
+		ID:         fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	}
+	fixture.inboundFileRepo.EXPECT().
+		GetInboundFileByID(t.Context(), req).
+		Return(fixture.file, nil).
+		Once()
 
 	result, err := fixture.service.InspectInboundFile(t.Context(), req)
 	require.NoError(t, err)
@@ -79,8 +97,14 @@ func TestInspectInboundFile_RefusesAFileWhoseRawContentWasPurged(t *testing.T) {
 	fixture := newInboundFixture(t, "")
 	purgedAt := int64(1_760_000_000)
 	fixture.file.RawPurgedAt = &purgedAt
-	req := ediports.GetEDIInboundFileByIDRequest{ID: fixture.file.ID, TenantInfo: fixture.tenantInfo()}
-	fixture.inboundFileRepo.EXPECT().GetInboundFileByID(t.Context(), req).Return(fixture.file, nil).Once()
+	req := edimessageports.GetEDIInboundFileByIDRequest{
+		ID:         fixture.file.ID,
+		TenantInfo: fixture.tenantInfo(),
+	}
+	fixture.inboundFileRepo.EXPECT().
+		GetInboundFileByID(t.Context(), req).
+		Return(fixture.file, nil).
+		Once()
 
 	result, err := fixture.service.InspectInboundFile(t.Context(), req)
 

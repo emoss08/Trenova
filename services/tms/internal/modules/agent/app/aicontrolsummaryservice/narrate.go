@@ -9,9 +9,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentnarration"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
 )
@@ -55,9 +55,9 @@ func (s *Service) narrate(
 		ctx,
 		s.completion,
 		s.l,
-		&agentports.StructuredCompletionRequest{
+		&llmports.StructuredCompletionRequest{
 			TenantInfo:   tenantInfo,
-			Task:         aiprovider.TaskOperationalInsights,
+			Task:         aitask.TaskOperationalInsights,
 			System:       systemPrompt,
 			Context:      promptContext(tab, facts, plain),
 			OutputSchema: outputSchema(),
@@ -152,7 +152,7 @@ func promptContext(
 	tab aicontrolsummary.Tab,
 	facts *aicontrolsummary.Facts,
 	plain []aicontrolsummary.Segment,
-) agentports.DelimitedContext {
+) llmports.DelimitedContext {
 	var builder strings.Builder
 	write := func(label string, value int) {
 		builder.WriteString(label)
@@ -193,7 +193,7 @@ func promptContext(
 		builder.WriteByte('\n')
 	}
 
-	return agentports.DelimitedContext{Sections: []agentports.ContextSection{{
+	return llmports.DelimitedContext{Sections: []llmports.ContextSection{{
 		Title:   "AI control",
 		Trusted: false,
 		Content: builder.String(),

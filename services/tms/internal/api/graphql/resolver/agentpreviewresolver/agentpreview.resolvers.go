@@ -9,15 +9,18 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // A decision's preview is filtered again for whoever reads it: what the
 // decider saw is not necessarily what this reader may see.
-func (r *AgentDecisionResolver) Preview(ctx context.Context, obj *agent.AgentDecision) (*agent.ProposalPreview, error) {
+func (r *AgentDecisionResolver) Preview(ctx context.Context, obj *agentdecision.AgentDecision) (*agentpreview.ProposalPreview, error) {
 	if obj.Preview == nil || r.ProposalPreviewService == nil {
 		return nil, nil
 	}
@@ -30,51 +33,51 @@ func (r *AgentDecisionResolver) Preview(ctx context.Context, obj *agent.AgentDec
 	return r.ProposalPreviewService.ForDecision(ctx, obj, r.PreviewViewer(ctx, authCtx)), nil
 }
 
-func (r *AgentPreviewFieldChangeResolver) Type(ctx context.Context, obj *agent.PreviewFieldChange) (string, error) {
+func (r *AgentPreviewFieldChangeResolver) Type(ctx context.Context, obj *agentpreview.PreviewFieldChange) (string, error) {
 	return string(obj.Type), nil
 }
 
-func (r *AgentPreviewMessageResolver) TemplateVersionID(ctx context.Context, obj *agent.MessagePreview) (*string, error) {
-	return base.IDPtr(obj.TemplateVersionID), nil
+func (r *AgentPreviewMessageResolver) TemplateVersionID(ctx context.Context, obj *agentpreview.MessagePreview) (*string, error) {
+	return gqlid.IDPtr(obj.TemplateVersionID), nil
 }
 
-func (r *AgentPreviewMoneyResolver) TotalBefore(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.TotalBefore), nil
+func (r *AgentPreviewMoneyResolver) TotalBefore(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error) {
+	return gqldecimal.NullDecimalToStringPtr(obj.TotalBefore), nil
 }
 
-func (r *AgentPreviewMoneyResolver) TotalAfter(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.TotalAfter), nil
+func (r *AgentPreviewMoneyResolver) TotalAfter(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error) {
+	return gqldecimal.NullDecimalToStringPtr(obj.TotalAfter), nil
 }
 
-func (r *AgentPreviewMoneyResolver) Delta(ctx context.Context, obj *agent.MoneyPreview) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.Delta), nil
+func (r *AgentPreviewMoneyResolver) Delta(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error) {
+	return gqldecimal.NullDecimalToStringPtr(obj.Delta), nil
 }
 
-func (r *AgentPreviewMoneyLineResolver) Before(ctx context.Context, obj *agent.MoneyLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.Before), nil
+func (r *AgentPreviewMoneyLineResolver) Before(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error) {
+	return gqldecimal.NullDecimalToStringPtr(obj.Before), nil
 }
 
-func (r *AgentPreviewMoneyLineResolver) After(ctx context.Context, obj *agent.MoneyLine) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.After), nil
+func (r *AgentPreviewMoneyLineResolver) After(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error) {
+	return gqldecimal.NullDecimalToStringPtr(obj.After), nil
 }
 
-func (r *AgentPreviewRecordChangeResolver) Resource(ctx context.Context, obj *agent.RecordChange) (string, error) {
+func (r *AgentPreviewRecordChangeResolver) Resource(ctx context.Context, obj *agentpreview.RecordChange) (string, error) {
 	return obj.Resource.String(), nil
 }
 
-func (r *AgentPreviewRecordChangeResolver) EntityID(ctx context.Context, obj *agent.RecordChange) (*string, error) {
-	return base.IDPtr(obj.EntityID), nil
+func (r *AgentPreviewRecordChangeResolver) EntityID(ctx context.Context, obj *agentpreview.RecordChange) (*string, error) {
+	return gqlid.IDPtr(obj.EntityID), nil
 }
 
-func (r *AgentPreviewRefResolver) Resource(ctx context.Context, obj *agent.PreviewRef) (string, error) {
+func (r *AgentPreviewRefResolver) Resource(ctx context.Context, obj *agentpreview.PreviewRef) (string, error) {
 	return obj.Resource.String(), nil
 }
 
-func (r *AgentPreviewWarningResolver) Code(ctx context.Context, obj *agent.PreviewWarning) (string, error) {
+func (r *AgentPreviewWarningResolver) Code(ctx context.Context, obj *agentpreview.PreviewWarning) (string, error) {
 	return string(obj.Code), nil
 }
 
-func (r *QueryResolver) AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error) {
+func (r *QueryResolver) AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -88,7 +91,7 @@ func (r *QueryResolver) AgentProposalPreview(ctx context.Context, id string, mod
 	return r.ProposalPreview(ctx, authCtx, proposalID, modifications)
 }
 
-func (r *QueryResolver) AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error) {
+func (r *QueryResolver) AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -102,7 +105,7 @@ func (r *QueryResolver) AgentPlanPreview(ctx context.Context, id string) (*agent
 	return r.PlanPreview(ctx, authCtx, planID)
 }
 
-func (r *QueryResolver) MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error) {
+func (r *QueryResolver) MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -116,7 +119,7 @@ func (r *QueryResolver) MyProposalPreview(ctx context.Context, id string, modifi
 	if err = r.AgentDecisionService.AssertOwnProposal(
 		ctx,
 		proposalID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	); err != nil {
 		return nil, err
@@ -125,7 +128,7 @@ func (r *QueryResolver) MyProposalPreview(ctx context.Context, id string, modifi
 	return r.ProposalPreview(ctx, authCtx, proposalID, modifications)
 }
 
-func (r *QueryResolver) MyPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error) {
+func (r *QueryResolver) MyPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -139,7 +142,7 @@ func (r *QueryResolver) MyPlanPreview(ctx context.Context, id string) (*agent.Pl
 	if err = r.AgentPlanService.AssertOwnPlan(
 		ctx,
 		planID,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		actorutil.FromAuthContext(authCtx),
 	); err != nil {
 		return nil, err

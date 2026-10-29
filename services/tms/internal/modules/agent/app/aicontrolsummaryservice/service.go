@@ -12,10 +12,13 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicontrolsummaryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -46,23 +49,23 @@ type Params struct {
 
 	Logger     *zap.Logger
 	Facts      agentrosterports.AIControlFactsRepository
-	Providers  agentports.AIProviderRepository
+	Providers  aiproviderports.AIProviderRepository
 	Controls   tenantports.AgentControlRepository
 	Cache      aicontrolsummaryports.AIControlSummaryCache
-	Dismissals agentports.AIProviderFailureDismissalRepository
+	Dismissals aiproviderports.AIProviderFailureDismissalRepository
 	Usage      aiusageports.AIUsageRepository
-	Completion agentports.CompletionService `optional:"true"`
+	Completion llmports.CompletionService `optional:"true"`
 }
 
 type Service struct {
 	l          *zap.Logger
 	facts      agentrosterports.AIControlFactsRepository
-	providers  agentports.AIProviderRepository
+	providers  aiproviderports.AIProviderRepository
 	controls   tenantports.AgentControlRepository
 	cache      aicontrolsummaryports.AIControlSummaryCache
-	dismissals agentports.AIProviderFailureDismissalRepository
+	dismissals aiproviderports.AIProviderFailureDismissalRepository
 	usage      aiusageports.AIUsageRepository
-	completion agentports.CompletionService
+	completion llmports.CompletionService
 	inflight   singleflight.Group
 	now        func() time.Time
 	// detach starts a rewording that outlives the request asking for it.
@@ -268,8 +271,8 @@ func failingProviders(
 
 func uncoveredTasks(enabled []*aiprovider.Provider) int {
 	uncovered := 0
-	for _, task := range aiprovider.AllTasks() {
-		if aiprovider.RouteFor(enabled, task) == nil {
+	for _, task := range aitask.AllTasks() {
+		if airouting.RouteFor(enabled, task) == nil {
 			uncovered++
 		}
 	}

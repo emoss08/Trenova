@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/formulatemplatetest"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,7 @@ func scheduleRequest(
 	effectiveFrom *int64,
 ) *formulatemplateports.UpdateEffectiveDateRequest {
 	return &formulatemplateports.UpdateEffectiveDateRequest{
-		TenantInfo:    newTenantInfo(),
+		TenantInfo:    formulatemplatetest.NewTenantInfo(),
 		TemplateID:    template.ID,
 		VersionNumber: version,
 		EffectiveFrom: effectiveFrom,
@@ -37,7 +38,7 @@ func approvedSnapshot(
 		Name:          template.Name,
 		Description:   template.Description,
 		Status:        formulatemplate.StatusActive,
-		Source:        perMileSource,
+		Source:        formulatemplatetest.PerMileSource,
 		Imports:       []tarifftypes.Import{},
 		TestCount:     1,
 		CreatedAt:     effectiveFrom,
@@ -49,7 +50,7 @@ func TestUpdateVersionEffectiveDate_AWindowThatBilledCannotBeUnscheduled(t *test
 	t.Parallel()
 	deps := setupTest(t)
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	started := timeutils.NowUnix() - 30*86_400
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
 		Return(approvedSnapshot(template, 2, started), nil)
@@ -65,7 +66,7 @@ func TestUpdateVersionEffectiveDate_ClearingAPendingWindowStartsItNow(t *testing
 	t.Parallel()
 	deps := setupTest(t)
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	pending := timeutils.NowUnix() + 30*86_400
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).
 		Return(approvedSnapshot(template, 2, pending), nil)
@@ -91,11 +92,11 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentStartsANewWindow(t *t
 	t.Parallel()
 	deps := setupTest(t)
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.CurrentVersionNumber = 4
 	started := timeutils.NowUnix() - 30*86_400
 	old := approvedSnapshot(template, 2, started)
-	old.Source = perMileRetypedSource
+	old.Source = formulatemplatetest.PerMileRetypedSource
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(old, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -122,7 +123,7 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentStartsANewWindow(t *t
 
 	require.NotNil(t, created)
 	assert.EqualValues(t, 5, created.VersionNumber, "a new window, not a moved one")
-	assert.Equal(t, perMileRetypedSource, created.Source)
+	assert.Equal(t, formulatemplatetest.PerMileRetypedSource, created.Source)
 	assert.Equal(t, formulatemplate.StatusActive, created.Status)
 	require.NotNil(t, created.EffectiveFrom)
 	assert.Equal(t, next, *created.EffectiveFrom)
@@ -135,10 +136,10 @@ func TestUpdateVersionEffectiveDate_SchedulingBilledContentRunsItsTests(t *testi
 	t.Parallel()
 	deps := setupTest(t)
 
-	template := newTestTemplate()
+	template := formulatemplatetest.NewTemplate()
 	template.CurrentVersionNumber = 4
 	old := approvedSnapshot(template, 2, timeutils.NowUnix()-30*86_400)
-	old.Source = perMileFailingSource
+	old.Source = formulatemplatetest.PerMileFailingSource
 
 	deps.versionRepo.On("GetByTemplateAndVersion", mock.Anything, mock.Anything).Return(old, nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)

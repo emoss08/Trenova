@@ -8,10 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/accounttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
@@ -59,7 +61,7 @@ type Params struct {
 	Plans            platformplanports.PlanService           `optional:"true"`
 	PlatformEmail    kernelports.PlatformEmailService        `optional:"true"`
 	PlatformInvites  kernelports.PlatformAccountInviteSender `optional:"true"`
-	Config           *config.Config
+	SecurityConfig   *securityconfig.Config
 	Logger           *zap.Logger
 }
 
@@ -75,7 +77,7 @@ type Service struct {
 	plans        platformplanports.PlanService
 	platform     kernelports.PlatformEmailService
 	invites      kernelports.PlatformAccountInviteSender
-	cfg          *config.Config
+	cfg          *securityconfig.Config
 	l            *zap.Logger
 }
 
@@ -92,7 +94,7 @@ func New(p Params) *Service {
 		plans:        p.Plans,
 		platform:     p.PlatformEmail,
 		invites:      p.PlatformInvites,
-		cfg:          p.Config,
+		cfg:          p.SecurityConfig,
 		l:            p.Logger.Named("service.password-reset"),
 	}
 }
@@ -154,7 +156,7 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) (err er
 	// was slow should not be left with two live credentials in their mailbox.
 	if err = s.issueToken(scoped, &linkRequest{
 		user:    user,
-		purpose: tenant.PasswordResetPurposeReset,
+		purpose: passwordreset.PasswordResetPurposeReset,
 	}); err != nil {
 		log.Error("failed to issue a reset link", zap.Error(err))
 		return err
@@ -207,10 +209,10 @@ func (s *Service) RequestResetForUser(ctx context.Context, req AdminResetRequest
 		)
 	}
 
-	link := &linkRequest{user: user, purpose: tenant.PasswordResetPurposeReset}
+	link := &linkRequest{user: user, purpose: passwordreset.PasswordResetPurposeReset}
 	comment := "Password reset link sent by an administrator"
 	if user.AwaitingAccountSetup() {
-		link.purpose = tenant.PasswordResetPurposeInvite
+		link.purpose = passwordreset.PasswordResetPurposeInvite
 		link.invitedBy = s.actorName(ctx, req.Actor)
 		comment = "Account invitation resent by an administrator"
 	}
@@ -248,7 +250,7 @@ func (s *Service) SendInvite(ctx context.Context, req InviteRequest) error {
 
 	if err := s.issueToken(ctx, &linkRequest{
 		user:      req.User,
-		purpose:   tenant.PasswordResetPurposeInvite,
+		purpose:   passwordreset.PasswordResetPurposeInvite,
 		invitedBy: s.actorName(ctx, req.Actor),
 	}); err != nil {
 		s.l.Error("failed to issue an account invitation",
@@ -263,7 +265,7 @@ func (s *Service) SendInvite(ctx context.Context, req InviteRequest) error {
 type adminLinkAudit struct {
 	user    *tenant.User
 	actor   pagination.TenantInfo
-	purpose tenant.PasswordResetPurpose
+	purpose passwordreset.PasswordResetPurpose
 	comment string
 }
 
@@ -310,7 +312,7 @@ func (s *Service) actorName(ctx context.Context, actor pagination.TenantInfo) st
 // one-live-link rule, or on what actually reaches the mailbox.
 type linkRequest struct {
 	user      *tenant.User
-	purpose   tenant.PasswordResetPurpose
+	purpose   passwordreset.PasswordResetPurpose
 	invitedBy string
 }
 
@@ -327,7 +329,7 @@ func (s *Service) issueToken(ctx context.Context, link *linkRequest) error {
 		return err
 	}
 
-	if err = s.tokens.Create(ctx, &tenant.PasswordResetToken{
+	if err = s.tokens.Create(ctx, &passwordreset.PasswordResetToken{
 		UserID:         link.user.ID,
 		BusinessUnitID: link.user.BusinessUnitID,
 		OrganizationID: link.user.CurrentOrganizationID,
@@ -347,11 +349,11 @@ func (s *Service) issueToken(ctx context.Context, link *linkRequest) error {
 	return nil
 }
 
-func (s *Service) linkTTL(purpose tenant.PasswordResetPurpose) time.Duration {
+func (s *Service) linkTTL(purpose passwordreset.PasswordResetPurpose) time.Duration {
 	if purpose.IsInvite() {
-		return s.cfg.Security.PasswordReset.GetInviteTokenTTL()
+		return s.cfg.PasswordReset.GetInviteTokenTTL()
 	}
-	return s.cfg.Security.PasswordReset.GetTokenTTL()
+	return s.cfg.PasswordReset.GetTokenTTL()
 }
 
 func (s *Service) withinRequestAllowance(
@@ -365,7 +367,7 @@ func (s *Service) withinRequestAllowance(
 		return false, err
 	}
 
-	if issued >= s.cfg.Security.PasswordReset.GetMaxRequestsPerHour() {
+	if issued >= s.cfg.PasswordReset.GetMaxRequestsPerHour() {
 		s.l.Warn("password reset rate limit reached",
 			zap.String("userId", user.ID.String()),
 			zap.Int("issued", issued))
@@ -498,13 +500,13 @@ func (s *Service) sendResetEmail(
 		BuID:   user.BusinessUnitID,
 	}
 
-	resetURL, err := s.linkURL(rawToken, tenant.PasswordResetPurposeReset)
+	resetURL, err := s.linkURL(rawToken, passwordreset.PasswordResetPurposeReset)
 	if err != nil {
 		log.Error("password reset email cannot be sent", zap.Error(err))
 		return
 	}
 
-	ttl := s.cfg.Security.PasswordReset.GetTokenTTL()
+	ttl := s.cfg.PasswordReset.GetTokenTTL()
 	idempotencyKey := "password-reset-" + tokenutils.Hash(rawToken)
 
 	if s.usesPlatformSender(ctx, tenantInfo) {
@@ -535,7 +537,7 @@ func (s *Service) sendResetEmail(
 		&documenttemplateports.RenderMessageRequest{
 			TenantInfo: tenantInfo,
 			Kind:       documenttemplate.KindPasswordResetEmail,
-			Data: documenttemplate.PasswordResetContext{
+			Data: accounttemplate.PasswordResetContext{
 				FirstName:   stringutils.FirstName(user.Name),
 				FullName:    user.Name,
 				CompanyName: s.companyName(ctx, user),
@@ -593,8 +595,11 @@ var errNoResetBaseURL = errors.New(
 // linkURL refuses to guess. Deriving the origin from the request's Host header is how
 // reset links end up pointing at an attacker's domain, so an unconfigured deployment
 // gets a logged error instead of a link.
-func (s *Service) linkURL(rawToken string, purpose tenant.PasswordResetPurpose) (string, error) {
-	base := s.cfg.Security.PasswordReset.GetBaseURL()
+func (s *Service) linkURL(
+	rawToken string,
+	purpose passwordreset.PasswordResetPurpose,
+) (string, error) {
+	base := s.cfg.PasswordReset.GetBaseURL()
 	if base == "" {
 		return "", errNoResetBaseURL
 	}
@@ -661,7 +666,7 @@ func (s *Service) sendInviteEmail(
 		&documenttemplateports.RenderMessageRequest{
 			TenantInfo: tenantInfo,
 			Kind:       documenttemplate.KindAccountInviteEmail,
-			Data: documenttemplate.AccountInviteContext{
+			Data: accounttemplate.AccountInviteContext{
 				FirstName:     stringutils.FirstName(user.Name),
 				FullName:      user.Name,
 				Username:      user.Username,

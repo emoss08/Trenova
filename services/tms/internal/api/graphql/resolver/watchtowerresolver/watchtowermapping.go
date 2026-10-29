@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/identityloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -91,7 +93,10 @@ func (r *MutationResolver) exceptionTarget(
 		return nil, watchtowerports.ExceptionTarget{}, err
 	}
 
-	target := watchtowerports.ExceptionTarget{TenantInfo: base.TenantInfo(authCtx), ItemID: itemID}
+	target := watchtowerports.ExceptionTarget{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ItemID:     itemID,
+	}
 	if expectedVersion != nil {
 		target.ExpectedVersion = int64(*expectedVersion)
 	}
@@ -104,7 +109,7 @@ func optionalUser(ctx context.Context, id pulid.ID) (*tenant.User, error) {
 		return nil, nil //nolint:nilnil // no person behind the change is no user and no error
 	}
 
-	return base.OptionalMatch(loaders.UserByID(ctx, id.String()))
+	return loaderfields.OptionalMatch(identityloaders.UserByID(ctx, id.String()))
 }
 
 func optionalAgent(ctx context.Context, id pulid.ID) (*agentdefinition.Definition, error) {
@@ -112,7 +117,7 @@ func optionalAgent(ctx context.Context, id pulid.ID) (*agentdefinition.Definitio
 		return nil, nil //nolint:nilnil // no agent behind the work is no agent and no error
 	}
 
-	return base.OptionalMatch(loaders.AgentDefinitionByID(ctx, id.String()))
+	return loaderfields.OptionalMatch(agentloaders.AgentDefinitionByID(ctx, id.String()))
 }
 
 func suggestedAgent(
@@ -123,7 +128,7 @@ func suggestedAgent(
 		return nil, nil //nolint:nilnil // an item no agent can take has no suggestion
 	}
 
-	return loaders.SuggestedAgentByEventKind(ctx, string(item.EventKind))
+	return agentloaders.SuggestedAgentByEventKind(ctx, string(item.EventKind))
 }
 
 func recordModel(item *watchtower.Item) *watchtower.RecordRef {

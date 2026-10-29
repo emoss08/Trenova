@@ -5,7 +5,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 )
 
 type Holiday struct {
@@ -25,7 +25,7 @@ func HolidayWindowFor(year int) HolidayWindow {
 	}
 }
 
-func HolidaysFor(rows []*worker.OrgHoliday, year int) []Holiday {
+func HolidaysFor(rows []*pto.OrgHoliday, year int) []Holiday {
 	first, last := year-1, year+1
 	seen := make(map[Holiday]struct{}, len(rows)*3)
 	out := make([]Holiday, 0, len(rows)*3)
@@ -39,7 +39,7 @@ func HolidaysFor(rows []*worker.OrgHoliday, year int) []Holiday {
 	}
 
 	for _, row := range rows {
-		if row == nil || row.Kind != worker.HolidayKindHoliday || row.HolidayDate <= 0 {
+		if row == nil || row.Kind != pto.HolidayKindHoliday || row.HolidayDate <= 0 {
 			continue
 		}
 		day := time.Unix(row.HolidayDate, 0).UTC()

@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -45,7 +46,7 @@ type AIUsageRecord struct {
 	ProviderID   pulid.ID        `json:"providerId"   keel:"provider_id,nullzero"`
 	ProviderKind aiprovider.Kind `json:"providerKind" keel:"provider_kind"`
 	Model        string          `json:"model"        keel:"model"`
-	Task         aiprovider.Task `json:"task"         keel:"task"`
+	Task         aitask.Task     `json:"task"         keel:"task"`
 	Surface      Surface         `json:"surface"      keel:"surface"`
 
 	// Attribution: who and what the call was for, as far as the caller said.

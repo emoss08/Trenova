@@ -5,36 +5,49 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func paymentTurns(count int) []*agentports.ChatCompletionResult {
-	turns := make([]*agentports.ChatCompletionResult, 0, count)
+func paymentTurns(count int) []*llmports.ChatCompletionResult {
+	turns := make([]*llmports.ChatCompletionResult, 0, count)
 	for range count {
-		turns = append(turns, toolTurn("apply_payment", map[string]any{"invoiceId": pulid.MustNew("inv_").String()}))
+		turns = append(
+			turns,
+			runtimetest.ToolTurn(
+				"apply_payment",
+				map[string]any{"invoiceId": pulid.MustNew("inv_").String()},
+			),
+		)
 	}
 
 	return turns
 }
 
-func tenPaymentLimits() agent.MoneyLimits {
+func tenPaymentLimits() agenttooltrust.MoneyLimits {
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 10
 
 	return limits
 }
 
-func delegatedPayments(definition *agentdefinition.Definition, spent agent.MoneyUse) *agentports.RunRequest {
-	return &agentports.RunRequest{
+func delegatedPayments(
+	definition *agentdefinition.Definition,
+	spent agenttooltrust.MoneyUse,
+) *agentruntimeports.RunRequest {
+	return &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply one more payment.",
-		Delegation: &agentports.Delegation{
+		Delegation: &agentruntimeports.Delegation{
 			ParentAgentID:   pulid.MustNew("agdef_"),
 			ParentAgentName: "Billing",
 			CallID:          "call_delegate",
@@ -45,11 +58,11 @@ func delegatedPayments(definition *agentdefinition.Definition, spent agent.Money
 	}
 }
 
-func executedPayments(count int, amountMinor int64) []agentports.PendingAction {
-	actions := make([]agentports.PendingAction, 0, count)
+func executedPayments(count int, amountMinor int64) []agentruntimeports.PendingAction {
+	actions := make([]agentruntimeports.PendingAction, 0, count)
 	for range count {
 		amount := amountMinor
-		actions = append(actions, agentports.PendingAction{
+		actions = append(actions, agentruntimeports.PendingAction{
 			ToolName:      "apply_payment",
 			Tier:          agent.TierAutoExecute,
 			Executed:      true,
@@ -65,130 +78,142 @@ func executedPayments(count int, amountMinor int64) []agentports.PendingAction {
 func TestRun_TheDelegateIsHandedWhatTheTurnHasAlreadyMoved(t *testing.T) {
 	t.Parallel()
 
-	builder := reportBuilder()
+	builder := runtimetest.ReportBuilder()
 	turns := append(paymentTurns(10),
 		delegateTurn(builder.ID, "Apply the last payment."),
-		textTurn("Done."))
-	pay := moneyTool()
+		runtimetest.TextTurn("Done."))
+	pay := runtimetest.MoneyTool()
 	rt := newRuntime(&scriptedCompletion{Turns: turns}, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
-	rt.budgets = &moneyBudgets{Limits: tenPaymentLimits()}
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: tenPaymentLimits()} })
 
 	req := delegatingRequest(builder)
-	req.Definition = autoDefinition("apply_payment")
+	req.Definition = runtimetest.AutoDefinition("apply_payment")
 	req.Taint = &agent.RunTaint{}
 	fx := &delegateRecorder{run: scriptedDelegateRun(builder)}
 	driveWith(t, rt, req, fx)
 
 	assert.Equal(t, 10, pay.Calls)
 	require.Len(t, fx.calls, 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, fx.calls[0].MoneySpent,
-		"the delegate's caps start from what the turn moved")
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		fx.calls[0].MoneySpent,
+		"the delegate's caps start from what the turn moved",
+	)
 }
 
 func TestRun_ADelegateHandedTenPaymentsIsHeldAtTheEleventh(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
-		textTurn("Filed."),
+	pay := runtimetest.MoneyTool()
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
+		runtimetest.TextTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
-	rt.budgets = budgets
+	rewire(rt, func(p *Params) { p.Budgets = budgets })
 
 	run := runTainted(t, rt, delegatedPayments(
-		autoDefinition("apply_payment"),
-		agent.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		runtimetest.AutoDefinition("apply_payment"),
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
 	))
 
 	assert.Zero(t, pay.Calls)
 	require.Len(t, run.result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, run.result.Actions[0].HeldBy)
 	require.Len(t, budgets.Asked(), 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, budgets.Asked()[0].Unrecorded)
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		budgets.Asked()[0].Unrecorded,
+	)
 }
 
 func TestRun_ADelegateIsHeldWhereTheTurnAndItTogetherPassTheRunTotal(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		textTurn("Filed."),
+	pay := runtimetest.MoneyTool()
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.TextTurn("Filed."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunAmountMinor = 50_000
-	rt.budgets = &moneyBudgets{Limits: limits}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
 
 	run := runTainted(t, rt, delegatedPayments(
-		autoDefinition("apply_payment"),
-		agent.MoneyUse{Calls: 1, AmountMinor: 45_000},
+		runtimetest.AutoDefinition("apply_payment"),
+		agenttooltrust.MoneyUse{Calls: 1, AmountMinor: 45_000},
 	))
 
 	assert.Zero(t, pay.Calls, "10,000 more would take the two past 50,000")
 	require.Len(t, run.result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunAmount}, run.result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunAmount}, run.result.Actions[0].HeldBy)
 }
 
 func TestRun_WhatADelegateMovedCountsAgainstTheTurnAfterIt(t *testing.T) {
 	t.Parallel()
 
-	builder := reportBuilder()
-	pay := moneyTool()
-	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
+	builder := runtimetest.ReportBuilder()
+	pay := runtimetest.MoneyTool()
+	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
 		delegateTurn(builder.ID, "Apply ten payments."),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
-		textTurn("Filed the last one."),
-	}}, &stubQueryRegistry{}, &stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_11"}),
+		runtimetest.TextTurn("Filed the last one."),
+	}}, &stubQueryRegistry{}, &stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	budgets := &moneyBudgets{Limits: tenPaymentLimits()}
-	rt.budgets = budgets
+	rewire(rt, func(p *Params) { p.Budgets = budgets })
 
 	delegated := scriptedDelegateRun(builder)
 	delegated.Result.Actions = executedPayments(10, 10_000)
 	delegated.Result.Taint = &agent.RunTaint{}
 	req := delegatingRequest(builder)
-	req.Definition = autoDefinition("apply_payment")
+	req.Definition = runtimetest.AutoDefinition("apply_payment")
 	req.Taint = &agent.RunTaint{}
 	result := driveWith(t, rt, req, &delegateRecorder{run: delegated})
 
 	assert.Zero(t, pay.Calls)
 	require.Len(t, result.Actions, 1)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, result.Actions[0].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, result.Actions[0].HeldBy)
 	require.Len(t, budgets.Asked(), 1)
-	assert.Equal(t, agent.MoneyUse{Calls: 10, AmountMinor: 100_000}, budgets.Asked()[0].Unrecorded)
+	assert.Equal(
+		t,
+		agenttooltrust.MoneyUse{Calls: 10, AmountMinor: 100_000},
+		budgets.Asked()[0].Unrecorded,
+	)
 }
 
 func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) {
 	t.Parallel()
 
-	failing := moneyTool()
+	failing := runtimetest.MoneyTool()
 	failing.Err = errors.New("the invoice is closed")
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
-		textTurn("Tried twice."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
+		runtimetest.TextTurn("Tried twice."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{failing}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{failing}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
 	budgets := &moneyBudgets{Limits: limits}
-	rt.budgets = budgets
+	rewire(rt, func(p *Params) { p.Budgets = budgets })
 
-	run := runTainted(t, rt, &agentports.RunRequest{
-		Definition: autoDefinition("apply_payment"),
-		Actor:      testActor(),
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
+		Definition: runtimetest.AutoDefinition("apply_payment"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply both payments.",
 	})
 
 	assert.Equal(t, 2, failing.Calls, "the failed write left the run's one change unspent")
 	require.Len(t, budgets.Asked(), 2)
-	assert.Equal(t, agent.MoneyUse{}, budgets.Asked()[1].Unrecorded)
+	assert.Equal(t, agenttooltrust.MoneyUse{}, budgets.Asked()[1].Unrecorded)
 	require.Len(t, run.result.Actions, 2)
 	assert.NotEmpty(t, run.result.Actions[0].ExecutionError)
 }
@@ -196,23 +221,23 @@ func TestRun_AFailedMoneyWriteMovedNothingAndCountsAgainstNothing(t *testing.T) 
 func TestRun_ASimulatedRunIsHeldWhereTheRealRunWouldBe(t *testing.T) {
 	t.Parallel()
 
-	pay := moneyTool()
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
-		toolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
-		textTurn("Simulated."),
+	pay := runtimetest.MoneyTool()
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_1"}),
+		runtimetest.ToolTurn("apply_payment", map[string]any{"invoiceId": "inv_2"}),
+		runtimetest.TextTurn("Simulated."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{pay}}, nil)
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{pay}}, nil)
 	limits := roomyMoneyLimits()
 	limits.RunCalls = 1
-	rt.budgets = &moneyBudgets{Limits: limits}
+	rewire(rt, func(p *Params) { p.Budgets = &moneyBudgets{Limits: limits} })
 
-	definition := autoDefinition("apply_payment")
+	definition := runtimetest.AutoDefinition("apply_payment")
 	definition.SimulationMode = true
-	run := runTainted(t, rt, &agentports.RunRequest{
+	run := runTainted(t, rt, &agentruntimeports.RunRequest{
 		Definition: definition,
-		Actor:      testActor(),
+		Actor:      runtimetest.Actor(),
 		Input:      "Apply both payments.",
 	})
 
@@ -220,5 +245,5 @@ func TestRun_ASimulatedRunIsHeldWhereTheRealRunWouldBe(t *testing.T) {
 	require.Len(t, run.result.Actions, 2)
 	assert.True(t, run.result.Actions[0].Simulated)
 	assert.False(t, run.result.Actions[1].Simulated)
-	assert.Equal(t, []string{agent.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
+	assert.Equal(t, []string{agenttooltrust.HeldByMoneyRunCalls}, run.result.Actions[1].HeldBy)
 }

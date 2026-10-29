@@ -31,25 +31,6 @@ func AllAccessModes() []AccessMode {
 	return []AccessMode{AccessEveryone, AccessRoles}
 }
 
-// AudienceCoverage is how much of an agent a role could use: all of its
-// tools, some of them, or none because the role cannot use the assistant.
-type AudienceCoverage string
-
-const (
-	CoverageFull    = AudienceCoverage("Full")
-	CoveragePartial = AudienceCoverage("Partial")
-	CoverageNone    = AudienceCoverage("None")
-)
-
-func (c AudienceCoverage) IsValid() bool {
-	switch c {
-	case CoverageFull, CoveragePartial, CoverageNone:
-		return true
-	default:
-		return false
-	}
-}
-
 // EffectiveAccessMode is who may use the agent as the checks read it. A
 // system agent is open to everyone whatever its row says: the platform fires
 // it for people, and restricting it would break the feature it serves.

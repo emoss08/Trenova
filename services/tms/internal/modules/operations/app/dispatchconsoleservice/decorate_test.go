@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -26,7 +26,7 @@ func TestUrgencyFor(t *testing.T) {
 		windowStart int64
 		expect      UrgencyBucket
 	}{
-		{"already open and uncovered", testNow - 3600, UrgencyLate},
+		{"past an appointment with no window end", testNow - 3600, UrgencyLate},
 		{"within four hours", testNow + 2*secondsPerHour, UrgencyNow},
 		{"later today", testNow + 12*secondsPerHour, UrgencyToday},
 		{"tomorrow", testNow + 36*secondsPerHour, UrgencyTomorrow},
@@ -37,10 +37,34 @@ func TestUrgencyFor(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got := urgencyFor(&shipmentports.BoardMove{OriginWindowStart: tc.windowStart}, testNow)
+			got := urgencyFor(
+				&dispatchboardports.BoardMove{OriginWindowStart: tc.windowStart},
+				testNow,
+			)
 			assert.Equal(t, tc.expect, got)
 		})
 	}
+}
+
+// A pickup is late once its window has closed, as a delivery is: inside its
+// window it is due now. The board called an open pickup window Late while the
+// shipment list's late read only closed ones, so the same question got two
+// counts.
+func TestUrgencyFor_APickupIsLateOnlyOnceItsWindowCloses(t *testing.T) {
+	t.Parallel()
+
+	at := func(v int64) *int64 { return &v }
+	open := dispatchboardports.BoardMove{
+		OriginWindowStart: testNow - secondsPerHour,
+		OriginWindowEnd:   at(testNow + secondsPerHour),
+	}
+	assert.Equal(t, UrgencyNow, urgencyFor(&open, testNow))
+
+	closed := dispatchboardports.BoardMove{
+		OriginWindowStart: testNow - 3*secondsPerHour,
+		OriginWindowEnd:   at(testNow - secondsPerHour),
+	}
+	assert.Equal(t, UrgencyLate, urgencyFor(&closed, testNow))
 }
 
 func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
@@ -50,29 +74,29 @@ func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
 	at := func(v int64) *int64 { return &v }
 	cases := []struct {
 		name   string
-		move   shipmentports.BoardMove
+		move   dispatchboardports.BoardMove
 		expect UrgencyBucket
 	}{
-		{"on the road, delivery later today", shipmentports.BoardMove{
+		{"on the road, delivery later today", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow + 10*secondsPerHour,
 		}, UrgencyToday},
-		{"on the road, delivery window open", shipmentports.BoardMove{
+		{"on the road, delivery window open", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow - secondsPerHour,
 			DestinationWindowEnd:   at(testNow + secondsPerHour),
 		}, UrgencyNow},
-		{"on the road, delivery window closed", shipmentports.BoardMove{
+		{"on the road, delivery window closed", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart: testNow - 3*secondsPerHour,
 			DestinationWindowEnd:   at(testNow - secondsPerHour),
 		}, UrgencyLate},
-		{"arrived at delivery", shipmentports.BoardMove{
+		{"arrived at delivery", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 			DestinationWindowStart:  testNow - 3*secondsPerHour,
 			DestinationActualArrive: at(testNow - 2*secondsPerHour),
 		}, UrgencyPlanned},
-		{"picked up, delivery unscheduled", shipmentports.BoardMove{
+		{"picked up, delivery unscheduled", dispatchboardports.BoardMove{
 			OriginWindowStart: testNow - 8*secondsPerHour, OriginActualArrive: at(pickedUp),
 		}, UrgencyPlanned},
 	}
@@ -88,13 +112,13 @@ func TestUrgencyFor_APickedUpMoveFollowsItsDelivery(t *testing.T) {
 func TestDecorateMove_MarksCoverage(t *testing.T) {
 	t.Parallel()
 
-	uncovered := decorateMove(&shipmentports.BoardMove{
+	uncovered := decorateMove(&dispatchboardports.BoardMove{
 		OriginWindowStart: testNow + secondsPerHour,
 	}, testNow)
 	assert.False(t, uncovered.IsCovered)
 	assert.Equal(t, int64(60), uncovered.MinutesToPickup)
 
-	covered := decorateMove(&shipmentports.BoardMove{
+	covered := decorateMove(&dispatchboardports.BoardMove{
 		AssignmentID:      pulid.MustNew("asn_"),
 		OriginWindowStart: testNow + secondsPerHour,
 	}, testNow)
@@ -102,13 +126,13 @@ func TestDecorateMove_MarksCoverage(t *testing.T) {
 }
 
 func snapshotWith(
-	driver *shipmentports.BoardDriver,
+	driver *dispatchboardports.BoardDriver,
 	w *worker.Worker,
 	state *telematics.WorkerHOSState,
 ) *dispatchcandidateservice.FleetSnapshot {
 	return &dispatchcandidateservice.FleetSnapshot{
 		Now:     testNow,
-		Drivers: []*shipmentports.BoardDriver{driver},
+		Drivers: []*dispatchboardports.BoardDriver{driver},
 		WorkersByID: map[pulid.ID]*worker.Worker{
 			driver.WorkerID: w,
 		},
@@ -116,9 +140,9 @@ func snapshotWith(
 			driver.WorkerID: state,
 		},
 		PosByTractor:        map[pulid.ID]*telematics.VehiclePosition{},
-		CommitmentsByWorker: map[pulid.ID][]*shipmentports.WorkerCommitment{},
-		TimeOffByWorker:     map[pulid.ID][]*shipmentports.WorkerTimeOff{},
-		WorkloadByWorker:    map[pulid.ID]*shipmentports.WorkerWorkload{},
+		CommitmentsByWorker: map[pulid.ID][]*dispatchboardports.WorkerCommitment{},
+		TimeOffByWorker:     map[pulid.ID][]*dispatchboardports.WorkerTimeOff{},
+		WorkloadByWorker:    map[pulid.ID]*dispatchboardports.WorkerWorkload{},
 	}
 }
 
@@ -142,7 +166,11 @@ func TestDecorateDrivers_IdleDriverReadsAsOpen(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID, FirstName: "Ada", LastName: "Reed"}
+	driver := &dispatchboardports.BoardDriver{
+		WorkerID:  workerID,
+		FirstName: "Ada",
+		LastName:  "Reed",
+	}
 	snapshot := snapshotWith(driver, availableWorker(workerID), &telematics.WorkerHOSState{
 		DutyStatus:       telematics.DutyStatusOffDuty,
 		DriveRemainingMs: 11 * 3600 * 1000,
@@ -162,9 +190,9 @@ func TestDecorateDrivers_PTAComesFromTheLastCommitment(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	snapshot := snapshotWith(driver, availableWorker(workerID), nil)
-	snapshot.CommitmentsByWorker[workerID] = []*shipmentports.WorkerCommitment{
+	snapshot.CommitmentsByWorker[workerID] = []*dispatchboardports.WorkerCommitment{
 		{WindowEnd: testNow + 10*secondsPerHour},
 		{WindowEnd: testNow + 30*secondsPerHour},
 	}
@@ -180,9 +208,9 @@ func TestDecorateDrivers_DriverWrappingUpReadsAsFinishing(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	snapshot := snapshotWith(driver, availableWorker(workerID), nil)
-	snapshot.CommitmentsByWorker[workerID] = []*shipmentports.WorkerCommitment{
+	snapshot.CommitmentsByWorker[workerID] = []*dispatchboardports.WorkerCommitment{
 		{WindowEnd: testNow + secondsPerHour},
 	}
 
@@ -195,9 +223,9 @@ func TestDecorateDrivers_FinishedWorkReadsAsOpen(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	snapshot := snapshotWith(driver, availableWorker(workerID), nil)
-	snapshot.CommitmentsByWorker[workerID] = []*shipmentports.WorkerCommitment{
+	snapshot.CommitmentsByWorker[workerID] = []*dispatchboardports.WorkerCommitment{
 		{WindowEnd: testNow - 2*secondsPerHour},
 	}
 
@@ -215,8 +243,8 @@ func TestAvailabilityFor_PTOEndDateIsInclusiveThroughTheDay(t *testing.T) {
 	dayStart := (testNow / secondsPerDay) * secondsPerDay
 
 	row := &BoardDriver{
-		BoardDriver: &shipmentports.BoardDriver{},
-		TimeOff: []*shipmentports.WorkerTimeOff{
+		BoardDriver: &dispatchboardports.BoardDriver{},
+		TimeOff: []*dispatchboardports.WorkerTimeOff{
 			{StartDate: dayStart - 2*secondsPerDay, EndDate: dayStart},
 		},
 	}
@@ -224,7 +252,7 @@ func TestAvailabilityFor_PTOEndDateIsInclusiveThroughTheDay(t *testing.T) {
 	assert.Equal(t, AvailabilityTimeOff, availabilityFor(row, testNow),
 		"time off ending today keeps the driver off through end of day")
 
-	row.TimeOff = []*shipmentports.WorkerTimeOff{
+	row.TimeOff = []*dispatchboardports.WorkerTimeOff{
 		{StartDate: dayStart - 3*secondsPerDay, EndDate: dayStart - secondsPerDay},
 	}
 	assert.Equal(t, AvailabilityOpen, availabilityFor(row, testNow),
@@ -237,12 +265,12 @@ func TestDecorateDrivers_BlockOutranksTimeOffAndCommitments(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	w := availableWorker(workerID)
 	w.AvailableForDispatch = false
 
 	snapshot := snapshotWith(driver, w, nil)
-	snapshot.TimeOffByWorker[workerID] = []*shipmentports.WorkerTimeOff{
+	snapshot.TimeOffByWorker[workerID] = []*dispatchboardports.WorkerTimeOff{
 		{StartDate: testNow - secondsPerDay, EndDate: testNow + secondsPerDay},
 	}
 
@@ -256,9 +284,9 @@ func TestDecorateDrivers_ActiveTimeOffReadsAsTimeOff(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	snapshot := snapshotWith(driver, availableWorker(workerID), nil)
-	snapshot.TimeOffByWorker[workerID] = []*shipmentports.WorkerTimeOff{
+	snapshot.TimeOffByWorker[workerID] = []*dispatchboardports.WorkerTimeOff{
 		{StartDate: testNow - secondsPerDay, EndDate: testNow + secondsPerDay},
 	}
 
@@ -271,7 +299,7 @@ func TestDecorateDrivers_StaleHOSIsFlaggedNotBlocked(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	dc := control()
 	dc.EnforceHOSCompliance = true
 
@@ -307,7 +335,7 @@ func TestCustomerIDsOf_DeduplicatesAndSkipsEmpty(t *testing.T) {
 	first := pulid.MustNew("cus_")
 	second := pulid.MustNew("cus_")
 
-	ids := dispatchcandidateservice.CustomerIDsOf([]*shipmentports.BoardMove{
+	ids := dispatchcandidateservice.CustomerIDsOf([]*dispatchboardports.BoardMove{
 		{CustomerID: first},
 		{CustomerID: second},
 		{CustomerID: first},
@@ -321,7 +349,7 @@ func TestSpanOf_CoversEveryMove(t *testing.T) {
 	t.Parallel()
 
 	end := int64(5000)
-	start, finish := spanOf([]*shipmentports.BoardMove{
+	start, finish := spanOf([]*dispatchboardports.BoardMove{
 		{OriginWindowStart: 2000, DestinationWindowStart: 3000},
 		{OriginWindowStart: 1000, DestinationWindowStart: 4000, DestinationWindowEnd: &end},
 	}, testNow)
@@ -333,11 +361,11 @@ func TestSpanOf_CoversEveryMove(t *testing.T) {
 func TestSpanOf_MissingWindowsFallBackToNow(t *testing.T) {
 	t.Parallel()
 
-	start, end := spanOf([]*shipmentports.BoardMove{{}}, testNow)
+	start, end := spanOf([]*dispatchboardports.BoardMove{{}}, testNow)
 	assert.Equal(t, testNow, start)
 	assert.Equal(t, testNow, end)
 
-	start, end = spanOf([]*shipmentports.BoardMove{
+	start, end = spanOf([]*dispatchboardports.BoardMove{
 		{DestinationWindowStart: testNow + 5000},
 	}, testNow)
 	assert.Equal(t, testNow, start)
@@ -348,7 +376,7 @@ func TestAvailabilityFindings_NoHOSFindingsWithoutTelematics(t *testing.T) {
 	t.Parallel()
 
 	workerID := pulid.MustNew("wrk_")
-	driver := &shipmentports.BoardDriver{WorkerID: workerID}
+	driver := &dispatchboardports.BoardDriver{WorkerID: workerID}
 	dc := control()
 	dc.EnforceHOSCompliance = true
 

@@ -3,12 +3,12 @@
 package tableconfigurationresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	tableconfigurationservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	TableConfigurationService *tableconfigurationservice.Service
 }
 

@@ -20,15 +20,23 @@ func ExpectedFunding(faceMinor int64, agreement *Agreement, days int) Funding {
 	if agreement == nil || faceMinor <= 0 {
 		return out
 	}
-	out.AdvanceMinor = basisPointsOf(faceMinor, agreement.AdvanceRateBP)
 	out.ReserveMinor = basisPointsOf(faceMinor, agreement.ReserveRateBP)
-	if tier := tierFor(agreement.FeeTiers, days); tier != nil {
-		out.FeeRateBP = tier.RateBP
-		out.FeeMinor = basisPointsOf(faceMinor, tier.RateBP) + tier.FlatMinor
-	}
-	out.FeeMinor = max(out.FeeMinor, agreement.MinimumFeeMinor)
-	out.RestOnReleaseMinor = max(faceMinor-out.AdvanceMinor-out.FeeMinor, 0)
+	out.FeeRateBP, out.FeeMinor = feeFor(faceMinor, agreement, days)
+	out.AdvanceMinor = advanceLeavingRoomForFee(faceMinor, agreement.AdvanceRateBP, out.FeeMinor)
+	out.RestOnReleaseMinor = faceMinor - out.AdvanceMinor - out.FeeMinor
 	return out
+}
+
+func feeFor(faceMinor int64, agreement *Agreement, days int) (rateBP int, feeMinor int64) {
+	if tier := tierFor(agreement.FeeTiers, days); tier != nil {
+		rateBP = tier.RateBP
+		feeMinor = basisPointsOf(faceMinor, tier.RateBP) + tier.FlatMinor
+	}
+	return rateBP, min(max(feeMinor, agreement.MinimumFeeMinor), faceMinor)
+}
+
+func advanceLeavingRoomForFee(faceMinor int64, advanceRateBP int, feeMinor int64) int64 {
+	return min(basisPointsOf(faceMinor, advanceRateBP), faceMinor-feeMinor)
 }
 
 func DaysToRun(dueDate *int64, at int64) int {

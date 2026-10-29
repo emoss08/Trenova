@@ -7,13 +7,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 )
 
 func VisibleRecordSources() kernelports.VisibleRecordSources {
@@ -36,9 +36,9 @@ func TemplateConsumers() formulatemplateports.TemplateConsumers {
 	return formulatemplateports.TemplateConsumers{Shipments: shipmentdb.Shipments.FormulaTemplateID}
 }
 
-func RotaAssignments() workerports.RotaAssignments {
+func RotaAssignments() workerscheduleports.RotaAssignments {
 	a := shipmentdb.Assignments
-	return workerports.RotaAssignments{
+	return workerscheduleports.RotaAssignments{
 		WorkerID:   a.PrimaryWorkerID,
 		CreatedAt:  a.CreatedAt,
 		ArchivedAt: a.ArchivedAt,
@@ -67,7 +67,7 @@ func MoveColumns() equipmentcontinuityports.MoveColumns {
 		AssignmentArchivedAt: a.ArchivedAt,
 		MoveID:               sm.ID,
 		MoveShipmentID:       sm.ShipmentID,
-		MoveInProgress:       sm.Status.Eq(shipment.MoveStatusInTransit),
+		MoveInProgress:       sm.Status.Eq(shipmentvocab.MoveStatusInTransit),
 		ShipmentID:           sp.ID,
 		ShipmentProNumber:    sp.ProNumber,
 		StopMoveID:           st.ShipmentMoveID,

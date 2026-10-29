@@ -9,6 +9,8 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
+	"github.com/emoss08/trenova/shared/quickbookstxn"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +27,8 @@ func readJSON(t *testing.T, r *http.Request) map[string]any {
 	return body
 }
 
-func freightInvoice() *quickbooks.SalesTxn {
-	return &quickbooks.SalesTxn{
+func freightInvoice() *quickbookstxn.SalesTxn {
+	return &quickbookstxn.SalesTxn{
 		CustomerID:   "58",
 		DocNumber:    "INV-1001",
 		TxnDate:      "2026-09-20",
@@ -35,7 +37,7 @@ func freightInvoice() *quickbooks.SalesTxn {
 		CurrencyCode: "usd",
 		PrivateNote:  "Trenova INV-1001",
 		CustomerMemo: "PRO 12345",
-		Lines: []quickbooks.SalesLine{
+		Lines: []quickbookstxn.SalesLine{
 			{
 				Description: "Line haul",
 				ItemID:      "21",
@@ -68,7 +70,7 @@ func TestCreateInvoiceSendsRequestIDAndPricedLines(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_invoice.json"))
 	})
 
-	result, err := client.CreateInvoice(t.Context(), testRequestID, freightInvoice())
+	result, err := quickbookstxn.CreateInvoice(t.Context(), client, testRequestID, freightInvoice())
 	require.NoError(t, err)
 	assert.Equal(t, "145", result.ID)
 	assert.Equal(t, "INV-1001", result.DocNumber)
@@ -91,7 +93,12 @@ func TestCreateInvoiceSendsRequestIDAndPricedLines(t *testing.T) {
 	assert.Equal(t, "2026-09-18", haulDetail["ServiceDate"])
 
 	detention := lines[1].(map[string]any)["SalesItemLineDetail"].(map[string]any)
-	assert.NotContains(t, detention, "Qty", "a rate that does not multiply out sends the amount alone")
+	assert.NotContains(
+		t,
+		detention,
+		"Qty",
+		"a rate that does not multiply out sends the amount alone",
+	)
 	assert.NotContains(t, detention, "UnitPrice")
 }
 
@@ -104,15 +111,15 @@ func TestCreateSalesRejectsWhatQuickBooksWould(t *testing.T) {
 
 	long := freightInvoice()
 	long.DocNumber = strings.Repeat("9", 22)
-	_, err := client.CreateInvoice(t.Context(), testRequestID, long)
-	require.ErrorIs(t, err, quickbooks.ErrDocNumberTooLong)
+	_, err := quickbookstxn.CreateInvoice(t.Context(), client, testRequestID, long)
+	require.ErrorIs(t, err, quickbookstxn.ErrDocNumberTooLong)
 
 	noItem := freightInvoice()
 	noItem.Lines[0].ItemID = " "
-	_, err = client.CreateCreditMemo(t.Context(), testRequestID, noItem)
-	require.ErrorIs(t, err, quickbooks.ErrItemRequired)
+	_, err = quickbookstxn.CreateCreditMemo(t.Context(), client, testRequestID, noItem)
+	require.ErrorIs(t, err, quickbookstxn.ErrItemRequired)
 
-	_, err = client.CreateInvoice(t.Context(), "", freightInvoice())
+	_, err = quickbookstxn.CreateInvoice(t.Context(), client, "", freightInvoice())
 	require.ErrorIs(t, err, quickbooks.ErrRequestIDRequired)
 }
 
@@ -126,18 +133,27 @@ func TestCreatePaymentLinksInvoicesAndCredits(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_payment.json"))
 	})
 
-	result, err := client.CreatePayment(t.Context(), testRequestID, &quickbooks.PaymentTxn{
-		CustomerID:       "58",
-		TxnDate:          "2026-09-22",
-		PaymentMethodID:  "4",
-		DepositAccountID: "35",
-		PaymentRefNum:    "ACH-0001-THAT-IS-VERY-LONG",
-		TotalAmount:      decimal.NewFromInt(975),
-		Links: []quickbooks.PaymentLink{
-			{TxnID: "145", TxnKind: quickbooks.TxnInvoice, Amount: decimal.NewFromInt(1000)},
-			{TxnID: "146", TxnKind: quickbooks.TxnCreditMemo, Amount: decimal.NewFromInt(25)},
+	result, err := quickbookstxn.CreatePayment(
+		t.Context(),
+		client,
+		testRequestID,
+		&quickbookstxn.PaymentTxn{
+			CustomerID:       "58",
+			TxnDate:          "2026-09-22",
+			PaymentMethodID:  "4",
+			DepositAccountID: "35",
+			PaymentRefNum:    "ACH-0001-THAT-IS-VERY-LONG",
+			TotalAmount:      decimal.NewFromInt(975),
+			Links: []quickbookstxn.PaymentLink{
+				{TxnID: "145", TxnKind: quickbookstxn.TxnInvoice, Amount: decimal.NewFromInt(1000)},
+				{
+					TxnID:   "146",
+					TxnKind: quickbookstxn.TxnCreditMemo,
+					Amount:  decimal.NewFromInt(25),
+				},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "147", result.ID)
 
@@ -147,7 +163,11 @@ func TestCreatePaymentLinksInvoicesAndCredits(t *testing.T) {
 	lines := body["Line"].([]any)
 	require.Len(t, lines, 2)
 	credit := lines[1].(map[string]any)
-	assert.Equal(t, []any{map[string]any{"TxnId": "146", "TxnType": "CreditMemo"}}, credit["LinkedTxn"])
+	assert.Equal(
+		t,
+		[]any{map[string]any{"TxnId": "146", "TxnType": "CreditMemo"}},
+		credit["LinkedTxn"],
+	)
 }
 
 func TestUpdateAndVoidPaymentReadTheSyncTokenFirst(t *testing.T) {
@@ -171,15 +191,21 @@ func TestUpdateAndVoidPaymentReadTheSyncTokenFirst(t *testing.T) {
 		}
 	})
 
-	_, err := client.UpdatePayment(t.Context(), testRequestID, "147", &quickbooks.PaymentTxn{
-		CustomerID:  "58",
-		TotalAmount: decimal.NewFromInt(975),
-		Links: []quickbooks.PaymentLink{
-			{TxnID: "145", TxnKind: quickbooks.TxnInvoice, Amount: decimal.NewFromInt(975)},
+	_, err := quickbookstxn.UpdatePayment(
+		t.Context(),
+		client,
+		testRequestID,
+		"147",
+		&quickbookstxn.PaymentTxn{
+			CustomerID:  "58",
+			TotalAmount: decimal.NewFromInt(975),
+			Links: []quickbookstxn.PaymentLink{
+				{TxnID: "145", TxnKind: quickbookstxn.TxnInvoice, Amount: decimal.NewFromInt(975)},
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
-	voided, err := client.VoidPayment(t.Context(), testRequestID+"-2", "147")
+	voided, err := quickbookstxn.VoidPayment(t.Context(), client, testRequestID+"-2", "147")
 	require.NoError(t, err)
 	assert.Equal(t, "4", voided.SyncToken)
 
@@ -204,7 +230,7 @@ func TestDeleteCreditMemoUsesTheDeleteOperation(t *testing.T) {
 		_, _ = w.Write(fixture(t, "delete_credit_memo.json"))
 	})
 
-	result, err := client.DeleteCreditMemo(t.Context(), testRequestID, "146")
+	result, err := quickbookstxn.DeleteCreditMemo(t.Context(), client, testRequestID, "146")
 	require.NoError(t, err)
 	assert.Equal(t, "delete", operation)
 	assert.Equal(t, "Deleted", result.Status)
@@ -219,18 +245,33 @@ func TestFindTransactionByDocNumberEscapesAndMatchesOne(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_invoice_by_number.json"))
 	})
 
-	found, ok, err := client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnInvoice, "O'NEIL-9")
+	found, ok, err := quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnInvoice,
+		"O'NEIL-9",
+	)
 	require.NoError(t, err)
 	require.True(t, ok)
 	assert.Equal(t, "90", found.ID)
 	assert.Equal(t, `select * from Invoice where DocNumber = 'O\'NEIL-9'`, query)
 
-	_, ok, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnInvoice, strings.Repeat("1", 30))
+	_, ok, err = quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnInvoice,
+		strings.Repeat("1", 30),
+	)
 	require.NoError(t, err)
 	assert.False(t, ok, "a number QuickBooks cannot hold is never looked up")
 
-	_, _, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnPayment, "1")
-	require.ErrorIs(t, err, quickbooks.ErrUnknownTxnKind)
+	_, _, err = quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnPayment,
+		"1",
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrUnknownTxnKind)
 }
 
 func TestUpdateCustomerSendsASparseUpdate(t *testing.T) {
@@ -247,10 +288,16 @@ func TestUpdateCustomerSendsASparseUpdate(t *testing.T) {
 		_, _ = w.Write(fixture(t, "update_customer.json"))
 	})
 
-	updated, err := client.UpdateCustomer(t.Context(), testRequestID, "58", &quickbooks.PartyDraft{
-		DisplayName: "Acme Foods Inc",
-		CompanyName: "Acme Foods Inc",
-	})
+	updated, err := quickbookstxn.UpdateCustomer(
+		t.Context(),
+		client,
+		testRequestID,
+		"58",
+		&quickbooksref.PartyDraft{
+			DisplayName: "Acme Foods Inc",
+			CompanyName: "Acme Foods Inc",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "Acme Foods Inc", updated.Name)
 	assert.Equal(t, "6", body["SyncToken"])
@@ -265,9 +312,9 @@ func TestTransactionFaultsAreRecognised(t *testing.T) {
 		fixture string
 		check   func(error) bool
 	}{
-		{fixture: "fault_duplicate_doc_number.json", check: quickbooks.IsDuplicateDocNumber},
-		{fixture: "fault_stale_object.json", check: quickbooks.IsStaleObject},
-		{fixture: "fault_closed_period.json", check: quickbooks.IsClosedPeriod},
+		{fixture: "fault_duplicate_doc_number.json", check: quickbookstxn.IsDuplicateDocNumber},
+		{fixture: "fault_stale_object.json", check: quickbookstxn.IsStaleObject},
+		{fixture: "fault_closed_period.json", check: quickbookstxn.IsClosedPeriod},
 	}
 	for _, tt := range tests {
 		t.Run(tt.fixture, func(t *testing.T) {
@@ -277,10 +324,15 @@ func TestTransactionFaultsAreRecognised(t *testing.T) {
 				w.WriteHeader(http.StatusBadRequest)
 				_, _ = w.Write(fixture(t, tt.fixture))
 			})
-			_, err := client.CreateInvoice(t.Context(), testRequestID, freightInvoice())
+			_, err := quickbookstxn.CreateInvoice(
+				t.Context(),
+				client,
+				testRequestID,
+				freightInvoice(),
+			)
 			require.Error(t, err)
 			assert.True(t, tt.check(err))
-			assert.True(t, quickbooks.IsValidationFault(err))
+			assert.True(t, quickbookstxn.IsValidationFault(err))
 			assert.False(t, quickbooks.IsTransient(err))
 		})
 	}
@@ -289,21 +341,21 @@ func TestTransactionFaultsAreRecognised(t *testing.T) {
 func TestTxnKindAppPaths(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "/app/invoice?txnId=", quickbooks.TxnInvoice.AppPath())
-	assert.Equal(t, "/app/creditmemo?txnId=", quickbooks.TxnCreditMemo.AppPath())
-	assert.Equal(t, "/app/recvpayment?txnId=", quickbooks.TxnPayment.AppPath())
-	assert.Equal(t, "/app/bill?txnId=", quickbooks.TxnBill.AppPath())
-	assert.Equal(t, "/app/vendorcredit?txnId=", quickbooks.TxnVendorCredit.AppPath())
-	assert.Equal(t, "/app/billpayment?txnId=", quickbooks.TxnBillPayment.AppPath())
-	assert.Equal(t, "/app/customerdetail?nameId=", quickbooks.CustomerAppPath())
-	assert.Equal(t, "/app/vendordetail?nameId=", quickbooks.VendorAppPath())
-	assert.Empty(t, quickbooks.TxnKind("Estimate").AppPath())
-	assert.True(t, quickbooks.TxnBillPayment.IsValid())
-	assert.False(t, quickbooks.TxnKind("Estimate").IsValid())
+	assert.Equal(t, "/app/invoice?txnId=", quickbookstxn.TxnInvoice.AppPath())
+	assert.Equal(t, "/app/creditmemo?txnId=", quickbookstxn.TxnCreditMemo.AppPath())
+	assert.Equal(t, "/app/recvpayment?txnId=", quickbookstxn.TxnPayment.AppPath())
+	assert.Equal(t, "/app/bill?txnId=", quickbookstxn.TxnBill.AppPath())
+	assert.Equal(t, "/app/vendorcredit?txnId=", quickbookstxn.TxnVendorCredit.AppPath())
+	assert.Equal(t, "/app/billpayment?txnId=", quickbookstxn.TxnBillPayment.AppPath())
+	assert.Equal(t, "/app/customerdetail?nameId=", quickbookstxn.CustomerAppPath())
+	assert.Equal(t, "/app/vendordetail?nameId=", quickbookstxn.VendorAppPath())
+	assert.Empty(t, quickbookstxn.TxnKind("Estimate").AppPath())
+	assert.True(t, quickbookstxn.TxnBillPayment.IsValid())
+	assert.False(t, quickbookstxn.TxnKind("Estimate").IsValid())
 }
 
-func carrierBill() *quickbooks.PurchaseTxn {
-	return &quickbooks.PurchaseTxn{
+func carrierBill() *quickbookstxn.PurchaseTxn {
+	return &quickbookstxn.PurchaseTxn{
 		VendorID:     "91",
 		APAccountID:  "33",
 		DocNumber:    "CINV-778",
@@ -311,7 +363,7 @@ func carrierBill() *quickbooks.PurchaseTxn {
 		DueDate:      "2026-10-05",
 		CurrencyCode: "usd",
 		PrivateNote:  "Trenova carrier settlement CS-1042",
-		Lines: []quickbooks.PurchaseLine{
+		Lines: []quickbookstxn.PurchaseLine{
 			{
 				Description: "Purchased transportation",
 				AccountID:   "61",
@@ -339,9 +391,9 @@ func TestCreateBillSendsAccountLinesWithDeductions(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_bill.json"))
 	})
 
-	result, err := client.CreateBill(t.Context(), testRequestID, carrierBill())
+	result, err := quickbookstxn.CreateBill(t.Context(), client, testRequestID, carrierBill())
 	require.NoError(t, err)
-	assert.Equal(t, quickbooks.TxnBill, result.Kind)
+	assert.Equal(t, quickbookstxn.TxnBill, result.Kind)
 	assert.Equal(t, "210", result.ID)
 	assert.Equal(t, "CINV-778", result.DocNumber)
 	assert.True(t, decimal.NewFromInt(1350).Equal(result.TotalAmount))
@@ -388,20 +440,20 @@ func TestCreateVendorCreditHasNoDueDateAndOmitsEmptyRefs(t *testing.T) {
 	credit.APAccountID = " "
 	credit.CurrencyCode = ""
 	credit.DocNumber = ""
-	credit.PrivateNote = strings.Repeat("n", quickbooks.MaxPrivateNoteLength+10)
-	credit.Lines = []quickbooks.PurchaseLine{
+	credit.PrivateNote = strings.Repeat("n", quickbookstxn.MaxPrivateNoteLength+10)
+	credit.Lines = []quickbookstxn.PurchaseLine{
 		{AccountID: "61", Amount: decimal.RequireFromString("150")},
 	}
-	result, err := client.CreateVendorCredit(t.Context(), testRequestID, credit)
+	result, err := quickbookstxn.CreateVendorCredit(t.Context(), client, testRequestID, credit)
 	require.NoError(t, err)
-	assert.Equal(t, quickbooks.TxnVendorCredit, result.Kind)
+	assert.Equal(t, quickbookstxn.TxnVendorCredit, result.Kind)
 	assert.Equal(t, "211", result.ID)
 
 	assert.NotContains(t, body, "DueDate", "a vendor credit has no due date")
 	assert.NotContains(t, body, "APAccountRef")
 	assert.NotContains(t, body, "CurrencyRef")
 	assert.NotContains(t, body, "DocNumber")
-	assert.Len(t, body["PrivateNote"], quickbooks.MaxPrivateNoteLength)
+	assert.Len(t, body["PrivateNote"], quickbookstxn.MaxPrivateNoteLength)
 	line := body["Line"].([]any)[0].(map[string]any)
 	assert.NotContains(t, line, "Description")
 }
@@ -415,33 +467,33 @@ func TestCreatePurchaseRejectsWhatQuickBooksWould(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(txn *quickbooks.PurchaseTxn)
+		mutate func(txn *quickbookstxn.PurchaseTxn)
 		want   error
 	}{
 		{
 			name:   "negative total",
-			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines[1].Amount = decimal.NewFromInt(-1501) },
-			want:   quickbooks.ErrNegativeAmount,
+			mutate: func(txn *quickbookstxn.PurchaseTxn) { txn.Lines[1].Amount = decimal.NewFromInt(-1501) },
+			want:   quickbookstxn.ErrNegativeAmount,
 		},
 		{
 			name:   "missing account",
-			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines[1].AccountID = " " },
-			want:   quickbooks.ErrAccountRequired,
+			mutate: func(txn *quickbookstxn.PurchaseTxn) { txn.Lines[1].AccountID = " " },
+			want:   quickbookstxn.ErrAccountRequired,
 		},
 		{
 			name:   "doc number too long",
-			mutate: func(txn *quickbooks.PurchaseTxn) { txn.DocNumber = strings.Repeat("9", 22) },
-			want:   quickbooks.ErrDocNumberTooLong,
+			mutate: func(txn *quickbookstxn.PurchaseTxn) { txn.DocNumber = strings.Repeat("9", 22) },
+			want:   quickbookstxn.ErrDocNumberTooLong,
 		},
 		{
 			name:   "no vendor",
-			mutate: func(txn *quickbooks.PurchaseTxn) { txn.VendorID = "" },
-			want:   quickbooks.ErrVendorRequired,
+			mutate: func(txn *quickbookstxn.PurchaseTxn) { txn.VendorID = "" },
+			want:   quickbookstxn.ErrVendorRequired,
 		},
 		{
 			name:   "no lines",
-			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines = nil },
-			want:   quickbooks.ErrLinesRequired,
+			mutate: func(txn *quickbookstxn.PurchaseTxn) { txn.Lines = nil },
+			want:   quickbookstxn.ErrLinesRequired,
 		},
 	}
 	for _, tt := range tests {
@@ -450,16 +502,16 @@ func TestCreatePurchaseRejectsWhatQuickBooksWould(t *testing.T) {
 
 			txn := carrierBill()
 			tt.mutate(txn)
-			_, err := client.CreateBill(t.Context(), testRequestID, txn)
+			_, err := quickbookstxn.CreateBill(t.Context(), client, testRequestID, txn)
 			require.ErrorIs(t, err, tt.want)
-			_, err = client.CreateVendorCredit(t.Context(), testRequestID, txn)
+			_, err = quickbookstxn.CreateVendorCredit(t.Context(), client, testRequestID, txn)
 			require.ErrorIs(t, err, tt.want)
 		})
 	}
 
-	_, err := client.CreateBill(t.Context(), testRequestID, nil)
-	require.ErrorIs(t, err, quickbooks.ErrVendorRequired)
-	_, err = client.CreateBill(t.Context(), "", carrierBill())
+	_, err := quickbookstxn.CreateBill(t.Context(), client, testRequestID, nil)
+	require.ErrorIs(t, err, quickbookstxn.ErrVendorRequired)
+	_, err = quickbookstxn.CreateBill(t.Context(), client, "", carrierBill())
 	require.ErrorIs(t, err, quickbooks.ErrRequestIDRequired)
 
 	zero := carrierBill()
@@ -467,12 +519,12 @@ func TestCreatePurchaseRejectsWhatQuickBooksWould(t *testing.T) {
 	zeroClient := newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write(fixture(t, "create_bill.json"))
 	})
-	_, err = zeroClient.CreateBill(t.Context(), testRequestID, zero)
+	_, err = quickbookstxn.CreateBill(t.Context(), zeroClient, testRequestID, zero)
 	require.NoError(t, err, "a zero-total bill is still sent")
 }
 
-func settlementPayment() *quickbooks.BillPaymentTxn {
-	return &quickbooks.BillPaymentTxn{
+func settlementPayment() *quickbookstxn.BillPaymentTxn {
+	return &quickbookstxn.BillPaymentTxn{
 		VendorID:      "91",
 		BankAccountID: "35",
 		BillID:        "210",
@@ -496,9 +548,14 @@ func TestCreateBillPaymentPaysTheBillByCheck(t *testing.T) {
 		_, _ = w.Write(fixture(t, "create_bill_payment.json"))
 	})
 
-	result, err := client.CreateBillPayment(t.Context(), testRequestID, settlementPayment())
+	result, err := quickbookstxn.CreateBillPayment(
+		t.Context(),
+		client,
+		testRequestID,
+		settlementPayment(),
+	)
 	require.NoError(t, err)
-	assert.Equal(t, quickbooks.TxnBillPayment, result.Kind)
+	assert.Equal(t, quickbookstxn.TxnBillPayment, result.Kind)
 	assert.Equal(t, "212", result.ID)
 
 	assert.Equal(t, map[string]any{
@@ -526,33 +583,33 @@ func TestCreateBillPaymentRejectsWhatQuickBooksWould(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		mutate func(txn *quickbooks.BillPaymentTxn)
+		mutate func(txn *quickbookstxn.BillPaymentTxn)
 		want   error
 	}{
 		{
 			name:   "zero amount",
-			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.Amount = decimal.Zero },
-			want:   quickbooks.ErrNonPositiveAmount,
+			mutate: func(txn *quickbookstxn.BillPaymentTxn) { txn.Amount = decimal.Zero },
+			want:   quickbookstxn.ErrNonPositiveAmount,
 		},
 		{
 			name:   "negative amount",
-			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.Amount = decimal.NewFromInt(-5) },
-			want:   quickbooks.ErrNonPositiveAmount,
+			mutate: func(txn *quickbookstxn.BillPaymentTxn) { txn.Amount = decimal.NewFromInt(-5) },
+			want:   quickbookstxn.ErrNonPositiveAmount,
 		},
 		{
 			name:   "no bank account",
-			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.BankAccountID = "" },
-			want:   quickbooks.ErrBankAccountRequired,
+			mutate: func(txn *quickbookstxn.BillPaymentTxn) { txn.BankAccountID = "" },
+			want:   quickbookstxn.ErrBankAccountRequired,
 		},
 		{
 			name:   "no bill",
-			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.BillID = " " },
-			want:   quickbooks.ErrBillRequired,
+			mutate: func(txn *quickbookstxn.BillPaymentTxn) { txn.BillID = " " },
+			want:   quickbookstxn.ErrBillRequired,
 		},
 		{
 			name:   "no vendor",
-			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.VendorID = "" },
-			want:   quickbooks.ErrVendorRequired,
+			mutate: func(txn *quickbookstxn.BillPaymentTxn) { txn.VendorID = "" },
+			want:   quickbookstxn.ErrVendorRequired,
 		},
 	}
 	for _, tt := range tests {
@@ -561,7 +618,7 @@ func TestCreateBillPaymentRejectsWhatQuickBooksWould(t *testing.T) {
 
 			txn := settlementPayment()
 			tt.mutate(txn)
-			_, err := client.CreateBillPayment(t.Context(), testRequestID, txn)
+			_, err := quickbookstxn.CreateBillPayment(t.Context(), client, testRequestID, txn)
 			require.ErrorIs(t, err, tt.want)
 		})
 	}
@@ -578,7 +635,7 @@ func TestPayablesRetireReadsTheSyncTokenFirst(t *testing.T) {
 		operation string
 		include   string
 		sparse    bool
-		retire    func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error)
+		retire    func(ctx context.Context, c *quickbooks.Client, id string) (*quickbookstxn.TxnResult, error)
 		status    string
 	}{
 		{
@@ -587,8 +644,8 @@ func TestPayablesRetireReadsTheSyncTokenFirst(t *testing.T) {
 			read:      "create_bill.json",
 			reply:     "delete_bill.json",
 			operation: "delete",
-			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
-				return c.DeleteBill(ctx, testRequestID, id)
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbookstxn.TxnResult, error) {
+				return quickbookstxn.DeleteBill(ctx, c, testRequestID, id)
 			},
 			status: "Deleted",
 		},
@@ -598,8 +655,8 @@ func TestPayablesRetireReadsTheSyncTokenFirst(t *testing.T) {
 			read:      "create_vendor_credit.json",
 			reply:     "delete_vendor_credit.json",
 			operation: "delete",
-			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
-				return c.DeleteVendorCredit(ctx, testRequestID, id)
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbookstxn.TxnResult, error) {
+				return quickbookstxn.DeleteVendorCredit(ctx, c, testRequestID, id)
 			},
 			status: "Deleted",
 		},
@@ -611,8 +668,8 @@ func TestPayablesRetireReadsTheSyncTokenFirst(t *testing.T) {
 			operation: "update",
 			include:   "void",
 			sparse:    true,
-			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
-				return c.VoidBillPayment(ctx, testRequestID, id)
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbookstxn.TxnResult, error) {
+				return quickbookstxn.VoidBillPayment(ctx, c, testRequestID, id)
 			},
 		},
 	}
@@ -665,9 +722,9 @@ func TestDeleteBillReportsAMissingBill(t *testing.T) {
 		))
 	})
 
-	_, err := client.DeleteBill(t.Context(), testRequestID, "210")
+	_, err := quickbookstxn.DeleteBill(t.Context(), client, testRequestID, "210")
 	require.Error(t, err)
-	assert.True(t, quickbooks.IsObjectNotFound(err))
+	assert.True(t, quickbookstxn.IsObjectNotFound(err))
 }
 
 func TestReadAndFindPayablesTransactions(t *testing.T) {
@@ -683,23 +740,43 @@ func TestReadAndFindPayablesTransactions(t *testing.T) {
 		_, _ = w.Write(fixture(t, "query_bill_by_number.json"))
 	})
 
-	read, err := client.ReadTransaction(t.Context(), quickbooks.TxnBillPayment, "212")
+	read, err := quickbookstxn.ReadTransaction(
+		t.Context(),
+		client,
+		quickbookstxn.TxnBillPayment,
+		"212",
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "212", read.ID)
 
-	found, ok, err := client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnBill, "CINV-700")
+	found, ok, err := quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnBill,
+		"CINV-700",
+	)
 	require.NoError(t, err)
 	require.True(t, ok)
 	assert.Equal(t, "205", found.ID)
-	assert.Equal(t, quickbooks.TxnBill, found.Kind)
+	assert.Equal(t, quickbookstxn.TxnBill, found.Kind)
 	assert.Equal(t, `select * from Bill where DocNumber = 'CINV-700'`, query)
 
-	_, ok, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnVendorCredit, "CS-1")
+	_, ok, err = quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnVendorCredit,
+		"CS-1",
+	)
 	require.NoError(t, err)
 	assert.False(t, ok, "a reply for another kind is not a match")
 
-	_, _, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnBillPayment, "1")
-	require.ErrorIs(t, err, quickbooks.ErrUnknownTxnKind)
+	_, _, err = quickbookstxn.FindTransactionByDocNumber(
+		t.Context(),
+		client,
+		quickbookstxn.TxnBillPayment,
+		"1",
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrUnknownTxnKind)
 }
 
 func TestUpdateVendorSendsASparseUpdate(t *testing.T) {
@@ -719,13 +796,19 @@ func TestUpdateVendorSendsASparseUpdate(t *testing.T) {
 		_, _ = w.Write(fixture(t, "update_vendor.json"))
 	})
 
-	updated, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
-		DisplayName: "Swift Haul LLC",
-		CompanyName: "Swift Haul LLC",
-		Is1099:      true,
-	})
+	updated, err := quickbookstxn.UpdateVendor(
+		t.Context(),
+		client,
+		testRequestID,
+		"91",
+		&quickbooksref.PartyDraft{
+			DisplayName: "Swift Haul LLC",
+			CompanyName: "Swift Haul LLC",
+			Is1099:      true,
+		},
+	)
 	require.NoError(t, err)
-	assert.Equal(t, quickbooks.KindVendor, updated.Kind)
+	assert.Equal(t, quickbooksref.KindVendor, updated.Kind)
 	assert.Equal(t, "Swift Haul LLC", updated.Name)
 	assert.True(t, updated.Is1099)
 	assert.Equal(t, testRequestID, requestID)
@@ -752,16 +835,28 @@ func TestUpdateVendorLeaves1099AloneWhenNotSet(t *testing.T) {
 		_, _ = w.Write(fixture(t, "update_vendor.json"))
 	})
 
-	_, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
-		DisplayName: "Swift Haul LLC",
-	})
+	_, err := quickbookstxn.UpdateVendor(
+		t.Context(),
+		client,
+		testRequestID,
+		"91",
+		&quickbooksref.PartyDraft{
+			DisplayName: "Swift Haul LLC",
+		},
+	)
 	require.NoError(t, err)
 	assert.NotContains(t, body, "Vendor1099")
 
-	_, err = client.UpdateVendor(t.Context(), testRequestID, " ", &quickbooks.PartyDraft{
-		DisplayName: "Swift Haul LLC",
-	})
-	require.ErrorIs(t, err, quickbooks.ErrTxnIDRequired)
+	_, err = quickbookstxn.UpdateVendor(
+		t.Context(),
+		client,
+		testRequestID,
+		" ",
+		&quickbooksref.PartyDraft{
+			DisplayName: "Swift Haul LLC",
+		},
+	)
+	require.ErrorIs(t, err, quickbookstxn.ErrTxnIDRequired)
 }
 
 func TestUpdateVendorRejectsACustomerReply(t *testing.T) {
@@ -771,9 +866,15 @@ func TestUpdateVendorRejectsACustomerReply(t *testing.T) {
 		_, _ = w.Write(fixture(t, "read_customer.json"))
 	})
 
-	_, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
-		DisplayName: "Swift Haul LLC",
-	})
+	_, err := quickbookstxn.UpdateVendor(
+		t.Context(),
+		client,
+		testRequestID,
+		"91",
+		&quickbooksref.PartyDraft{
+			DisplayName: "Swift Haul LLC",
+		},
+	)
 	require.ErrorIs(t, err, quickbooks.ErrUnexpectedPayload)
 }
 
@@ -789,18 +890,18 @@ func TestExchangeRateIsSentOnlyWithACurrency(t *testing.T) {
 	priced := freightInvoice()
 	priced.CurrencyCode = "CAD"
 	priced.ExchangeRate = decimal.RequireFromString("0.7312")
-	_, err := client.CreateInvoice(t.Context(), testRequestID, priced)
+	_, err := quickbookstxn.CreateInvoice(t.Context(), client, testRequestID, priced)
 	require.NoError(t, err)
 
 	unpriced := freightInvoice()
 	unpriced.CurrencyCode = "CAD"
-	_, err = client.CreateInvoice(t.Context(), testRequestID, unpriced)
+	_, err = quickbookstxn.CreateInvoice(t.Context(), client, testRequestID, unpriced)
 	require.NoError(t, err)
 
 	homeless := freightInvoice()
 	homeless.CurrencyCode = ""
 	homeless.ExchangeRate = decimal.RequireFromString("0.7312")
-	_, err = client.CreateInvoice(t.Context(), testRequestID, homeless)
+	_, err = quickbookstxn.CreateInvoice(t.Context(), client, testRequestID, homeless)
 	require.NoError(t, err)
 
 	require.Len(t, bodies, 3)
@@ -827,23 +928,25 @@ func TestExchangeRateRidesEveryTransactionKind(t *testing.T) {
 	})
 	rate := decimal.RequireFromString("0.7312")
 
-	payment := &quickbooks.PaymentTxn{
+	payment := &quickbookstxn.PaymentTxn{
 		CustomerID:   "58",
 		CurrencyCode: "CAD",
 		ExchangeRate: rate,
 		TotalAmount:  decimal.NewFromInt(10),
-		Links:        []quickbooks.PaymentLink{{TxnID: "1", TxnKind: quickbooks.TxnInvoice, Amount: decimal.NewFromInt(10)}},
+		Links: []quickbookstxn.PaymentLink{
+			{TxnID: "1", TxnKind: quickbookstxn.TxnInvoice, Amount: decimal.NewFromInt(10)},
+		},
 	}
-	_, err := client.CreatePayment(t.Context(), testRequestID, payment)
+	_, err := quickbookstxn.CreatePayment(t.Context(), client, testRequestID, payment)
 	require.NoError(t, err)
 
 	bill := carrierBill()
 	bill.CurrencyCode = "CAD"
 	bill.ExchangeRate = rate
-	_, err = client.CreateBill(t.Context(), testRequestID, bill)
+	_, err = quickbookstxn.CreateBill(t.Context(), client, testRequestID, bill)
 	require.NoError(t, err)
 
-	billPayment := &quickbooks.BillPaymentTxn{
+	billPayment := &quickbookstxn.BillPaymentTxn{
 		VendorID:      "91",
 		BankAccountID: "35",
 		BillID:        "210",
@@ -851,7 +954,7 @@ func TestExchangeRateRidesEveryTransactionKind(t *testing.T) {
 		ExchangeRate:  rate,
 		Amount:        decimal.NewFromInt(10),
 	}
-	_, err = client.CreateBillPayment(t.Context(), testRequestID, billPayment)
+	_, err = quickbookstxn.CreateBillPayment(t.Context(), client, testRequestID, billPayment)
 	require.NoError(t, err)
 
 	require.Len(t, bodies, 3)

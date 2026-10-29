@@ -10,9 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception/agentexceptiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunstep/agentrunstepdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -30,7 +35,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.AgentScorecardRepository {
+func New(p Params) agentevaluationports.AgentScorecardRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.agent-scorecard-repository"),
@@ -84,51 +89,55 @@ type scorecardReads struct {
 // has been.
 func (r *repository) Aggregate(
 	ctx context.Context,
-	req agentports.ScorecardRequest,
-) (*agent.ScorecardTotals, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ScorecardTotals, error) {
-		var reads scorecardReads
-		if err := keel.Batch(ctx, r.db.Keel(ctx),
-			keel.IntoValue(runsQuery(&req), &reads.runs),
-			keel.IntoSlice(proposalsQuery(&req), &reads.tools),
-			keel.IntoSlice(verdictsQuery(&req), &reads.verdicts),
-			keel.CountInto(exceptionsQuery(&req), &reads.exceptions),
-			keel.IntoValue(usageQuery(&req), &reads.usage),
-		); err != nil {
-			r.l.Error("failed to read the agent scorecard", zap.Error(err))
+	req agentevaluationports.ScorecardRequest,
+) (*agentevaluation.ScorecardTotals, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*agentevaluation.ScorecardTotals, error) {
+			var reads scorecardReads
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoValue(runsQuery(&req), &reads.runs),
+				keel.IntoSlice(proposalsQuery(&req), &reads.tools),
+				keel.IntoSlice(verdictsQuery(&req), &reads.verdicts),
+				keel.CountInto(exceptionsQuery(&req), &reads.exceptions),
+				keel.IntoValue(usageQuery(&req), &reads.usage),
+			); err != nil {
+				r.l.Error("failed to read the agent scorecard", zap.Error(err))
 
-			return nil, fmt.Errorf("read agent scorecard: %w", err)
-		}
+				return nil, fmt.Errorf("read agent scorecard: %w", err)
+			}
 
-		totals := &agent.ScorecardTotals{
-			Runs:         reads.runs.Runs,
-			RunsFailed:   reads.runs.Failed,
-			Exceptions:   int(reads.exceptions),
-			InputTokens:  reads.usage.InputTokens,
-			OutputTokens: reads.usage.OutputTokens,
-			CostUSD:      reads.usage.CostUSD,
-			ByTool:       make([]agent.ToolOutcomeCount, 0, len(reads.tools)),
-			ToolVerdicts: foldVerdicts(reads.verdicts),
-			Trend:        []agent.ScorecardPoint{},
-		}
-		for _, row := range reads.tools {
-			totals.ByTool = append(totals.ByTool, agent.ToolOutcomeCount{
-				ToolName:  row.ToolName,
-				Approved:  row.Approved,
-				Modified:  row.Modified,
-				Rejected:  row.Rejected,
-				Executed:  row.Executed,
-				Failed:    row.Failed,
-				Pending:   row.Pending,
-				Automatic: row.Automatic,
-			})
-		}
+			totals := &agentevaluation.ScorecardTotals{
+				Runs:         reads.runs.Runs,
+				RunsFailed:   reads.runs.Failed,
+				Exceptions:   int(reads.exceptions),
+				InputTokens:  reads.usage.InputTokens,
+				OutputTokens: reads.usage.OutputTokens,
+				CostUSD:      reads.usage.CostUSD,
+				ByTool:       make([]agentevaluation.ToolOutcomeCount, 0, len(reads.tools)),
+				ToolVerdicts: foldVerdicts(reads.verdicts),
+				Trend:        []agentevaluation.ScorecardPoint{},
+			}
+			for _, row := range reads.tools {
+				totals.ByTool = append(totals.ByTool, agentevaluation.ToolOutcomeCount{
+					ToolName:  row.ToolName,
+					Approved:  row.Approved,
+					Modified:  row.Modified,
+					Rejected:  row.Rejected,
+					Executed:  row.Executed,
+					Failed:    row.Failed,
+					Pending:   row.Pending,
+					Automatic: row.Automatic,
+				})
+			}
 
-		return totals, nil
-	})
+			return totals, nil
+		},
+	)
 }
 
-func runsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentRun] {
+func runsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*agent.AgentRun] {
 	run := agentdb.AgentRuns
 
 	return run.Pick(keel.Count(), keel.Count().Filter(run.Status.Eq(agent.RunStatusFailed))).
@@ -139,7 +148,7 @@ func runsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentRun] {
 // being rejected" is the question a person actually has, and one total hides
 // a bad tool inside nine good ones. An automatic write is one the trust
 // ladder let through: it ran at the auto tier, so nobody was asked.
-func proposalsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentProposal] {
+func proposalsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 	status := func(s agent.ProposalStatus) keel.Agg {
 		return keel.Count().Filter(p.Status.Eq(s))
@@ -172,25 +181,25 @@ func proposalsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentPr
 // A step from before verdicts were kept reads as its status implies, and a
 // step still Started, whose outcome nobody recorded, as unknown. The ranking
 // is done in SQL, so only the few reasons kept per verdict leave the database.
-func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
-	step := agentdb.AgentRunSteps
+func verdictsQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*keel.Row] {
+	step := agentrunstepdb.AgentRunSteps
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
 			step.ToolName,
 			step.Outcome.Text("verdict").NullIf("").Coalesce(keel.CaseString().
 				When(
-					step.Status.Eq(string(agentports.RunStepStarted)),
+					step.Status.Eq(string(agentruntimeports.RunStepStarted)),
 					keel.Text(string(aitrace.OutcomeUnknown)),
 				).
 				When(
-					step.Status.Eq(string(agentports.RunStepFailed)),
+					step.Status.Eq(string(agentruntimeports.RunStepFailed)),
 					keel.Text(string(aitrace.OutcomeFailed)),
 				).
 				Else(keel.Text(string(aitrace.OutcomeRan)))),
 			step.Outcome.Text("reason").Coalesce(""),
 		).
 		Where(
-			step.Kind.Eq(string(agentports.RunStepTool)),
+			step.Kind.Eq(string(agentruntimeports.RunStepTool)),
 			step.AgentDefinitionID.Eq(req.AgentDefinitionID),
 			step.CreatedAt.Gte(req.Since),
 		))
@@ -233,31 +242,35 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
 			ranked.Col("calls"),
 			ranked.Col("total"),
 		).
-		Where(rank.Lte(agent.MaxVerdictReasons)).
+		Where(rank.Lte(agentevaluation.MaxVerdictReasons)).
 		Order(ranked.Col("tool_name").Asc(), ranked.Col("verdict").Asc(), rank.Asc())
 }
 
 // foldVerdicts turns the ranked reason rows, ordered by tool, verdict and
 // rank, into one count per tool and verdict. A verdict's total is on every
 // one of its rows; an empty reason is a call that gave none.
-func foldVerdicts(rows []verdictRow) []agent.ToolVerdictCount {
-	out := make([]agent.ToolVerdictCount, 0, len(rows))
+func foldVerdicts(rows []verdictRow) []agentevaluation.ToolVerdictCount {
+	out := make([]agentevaluation.ToolVerdictCount, 0, len(rows))
 	for idx := range rows {
 		row := &rows[idx]
 		last := len(out) - 1
 		if last < 0 || out[last].ToolName != row.ToolName || out[last].Verdict != row.Verdict {
-			out = append(out, agent.ToolVerdictCount{
-				ToolName:   row.ToolName,
-				Verdict:    row.Verdict,
-				Calls:      row.Total,
-				TopReasons: make([]agent.ToolVerdictReason, 0, agent.MaxVerdictReasons),
+			out = append(out, agentevaluation.ToolVerdictCount{
+				ToolName: row.ToolName,
+				Verdict:  row.Verdict,
+				Calls:    row.Total,
+				TopReasons: make(
+					[]agentevaluation.ToolVerdictReason,
+					0,
+					agentevaluation.MaxVerdictReasons,
+				),
 			})
 			last++
 		}
 		if row.Reason == "" {
 			continue
 		}
-		out[last].TopReasons = append(out[last].TopReasons, agent.ToolVerdictReason{
+		out[last].TopReasons = append(out[last].TopReasons, agentevaluation.ToolVerdictReason{
 			Reason: row.Reason,
 			Calls:  row.Calls,
 		})
@@ -266,15 +279,17 @@ func foldVerdicts(rows []verdictRow) []agent.ToolVerdictCount {
 	return out
 }
 
-func exceptionsQuery(req *agentports.ScorecardRequest) *keel.Query[*agent.AgentException] {
-	e := agentdb.AgentExceptions
+func exceptionsQuery(
+	req *agentevaluationports.ScorecardRequest,
+) *keel.Query[*agentexception.AgentException] {
+	e := agentexceptiondb.AgentExceptions
 	run := agentdb.AgentRuns
 
 	return e.Join(run, run.ID.EqCol(e.RunID)).
 		Where(run.AgentDefinitionID.Eq(req.AgentDefinitionID), e.CreatedAt.Gte(req.Since))
 }
 
-func usageQuery(req *agentports.ScorecardRequest) *keel.Query[*aiusage.AIUsageRecord] {
+func usageQuery(req *agentevaluationports.ScorecardRequest) *keel.Query[*aiusage.AIUsageRecord] {
 	u := aiusagedb.AIUsageRecords
 
 	return u.Pick(

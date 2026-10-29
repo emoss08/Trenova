@@ -7,7 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,19 +20,19 @@ import (
 )
 
 type inlineRuns struct {
-	agentports.AgentRunService
+	agentruntimeports.AgentRunService
 }
 
 func (inlineRuns) StartInline(
 	_ context.Context,
-	req *agentports.StartInlineAgentRunRequest,
+	req *agentruntimeports.StartInlineAgentRunRequest,
 	_ *permissionports.RequestActor,
 ) (*agent.AgentRun, error) {
 	return &agent.AgentRun{ID: pulid.MustNew("arun_"), AgentType: req.AgentType}, nil
 }
 
 type createdProposals struct {
-	agentports.AgentProposalRepository
+	agentproposalports.AgentProposalRepository
 
 	created []*agent.AgentProposal
 }
@@ -44,7 +47,10 @@ func (r *createdProposals) Create(
 	return entity, nil
 }
 
-func recordingService(t *testing.T, tools ...agentports.AgentTool) (*Service, *createdProposals) {
+func recordingService(
+	t *testing.T,
+	tools ...agenttoolports.AgentTool,
+) (*Service, *createdProposals) {
 	t.Helper()
 
 	proposals := &createdProposals{}
@@ -60,19 +66,21 @@ func recordingService(t *testing.T, tools ...agentports.AgentTool) (*Service, *c
 	}, proposals
 }
 
-func onePlannedMove() *agentports.DispatchPlan {
+func onePlannedMove() *dispatchconsoleports.DispatchPlan {
 	candidate := score(80)
 
-	return &agentports.DispatchPlan{Assignments: []*agentports.DispatchPlannedAssignment{{
-		MoveID:    pulid.MustNew("smv_"),
-		WorkerID:  candidate.WorkerID,
-		TractorID: candidate.TractorID,
-		Score:     candidate,
-	}}}
+	return &dispatchconsoleports.DispatchPlan{
+		Assignments: []*dispatchconsoleports.DispatchPlannedAssignment{{
+			MoveID:    pulid.MustNew("smv_"),
+			WorkerID:  candidate.WorkerID,
+			TractorID: candidate.TractorID,
+			Score:     candidate,
+		}},
+	}
 }
 
-func planRequest() *agentports.DispatchPlanRequest {
-	return &agentports.DispatchPlanRequest{TenantInfo: pagination.TenantInfo{
+func planRequest() *dispatchconsoleports.DispatchPlanRequest {
+	return &dispatchconsoleports.DispatchPlanRequest{TenantInfo: pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
@@ -93,8 +101,12 @@ func TestRecordPlan_ClassifiesEachProposalByTheAssignToolsPolicy(t *testing.T) {
 		Egress:   agent.EgressInternal,
 	})
 
-	recorded, err := svc.recordPlan(t.Context(), planRequest(), Policy{Tier: agent.TierActWithApproval},
-		onePlannedMove())
+	recorded, err := svc.recordPlan(
+		t.Context(),
+		planRequest(),
+		Policy{Tier: agent.TierActWithApproval},
+		onePlannedMove(),
+	)
 	require.NoError(t, err)
 	require.Len(t, recorded, 1)
 	require.Len(t, proposals.created, 1)

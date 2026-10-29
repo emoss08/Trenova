@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueueevent/billingqueueeventdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueuereview"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -246,13 +249,16 @@ func (r *repository) CountOpenIssues(
 	})
 }
 
-func (r *repository) CreateEvents(ctx context.Context, events ...*billingqueue.ItemEvent) error {
+func (r *repository) CreateEvents(
+	ctx context.Context,
+	events ...*billingqueueevent.ItemEvent,
+) error {
 	if len(events) == 0 {
 		return nil
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := billingqueuedb.ItemEvents.CreateMany(ctx, r.db.Keel(ctx), events)
+		err := billingqueueeventdb.ItemEvents.CreateMany(ctx, r.db.Keel(ctx), events)
 		return eventErrors.Map(err, "")
 	})
 }
@@ -270,10 +276,10 @@ func (r *repository) ListEvents(
 				limit = 30
 			}
 
-			e := billingqueuedb.ItemEvents
+			e := billingqueueeventdb.ItemEvents
 			var (
 				total  int64
-				events []*billingqueue.ItemEvent
+				events []*billingqueueevent.ItemEvent
 			)
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.CountInto(e.Where(e.ItemID.Eq(req.ItemID)), &total),
@@ -295,7 +301,7 @@ func (r *repository) ListEvents(
 				events = events[:limit]
 			}
 			if events == nil {
-				events = []*billingqueue.ItemEvent{}
+				events = []*billingqueueevent.ItemEvent{}
 			}
 			page.Items = events
 
@@ -498,7 +504,7 @@ func (r *repository) ListSummaries(
 					AllocatedTotalAmount: row.AllocatedTotalAmount,
 					OpenChecks:           row.OpenChecks,
 					NeedsCount:           needs,
-					Ready:                billingqueue.IsReviewable(row.Status) && needs == 0,
+					Ready:                billingqueuereview.IsReviewable(row.Status) && needs == 0,
 				})
 			}
 

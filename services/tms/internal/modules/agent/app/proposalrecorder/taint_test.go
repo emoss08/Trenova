@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,8 +22,8 @@ func (r *openedRuns) Create(_ context.Context, run *agent.AgentRun) (*agent.Agen
 	return run, nil
 }
 
-func messageEvidence(agentports.PendingAction, pulid.ID) []agent.EvidenceRef {
-	return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
+func messageEvidence(agentruntimeports.PendingAction, pulid.ID) []agentevidence.EvidenceRef {
+	return []agentevidence.EvidenceRef{{Type: "message", ID: "amsg_1"}}
 }
 
 func readTaint() *agent.RunTaint {
@@ -62,7 +63,7 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 			InputContextHash: "hash",
 		},
 		Taint: taint,
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{
 				ToolName:  "shipment_add_comment",
 				Arguments: map[string]any{},
@@ -122,7 +123,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 			InputContextHash: "hash",
 		},
 		Taint:   &agent.RunTaint{},
-		Actions: []agentports.PendingAction{pendingAction("dispatch_assign_move")},
+		Actions: []agentruntimeports.PendingAction{pendingAction("dispatch_assign_move")},
 	})
 	require.NoError(t, err)
 
@@ -155,7 +156,7 @@ func TestRecord_KeepsWhatAnAutomaticMoneyWriteMovedWithItsCurrency(t *testing.T)
 			InputContextHash: "hash",
 		},
 		Taint: &agent.RunTaint{},
-		Actions: []agentports.PendingAction{
+		Actions: []agentruntimeports.PendingAction{
 			{
 				ToolName:      "receivable_post_customer_payment",
 				Arguments:     map[string]any{},

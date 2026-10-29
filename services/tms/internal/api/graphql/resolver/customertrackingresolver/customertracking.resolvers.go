@@ -4,7 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -49,7 +50,7 @@ func (r *MutationResolver) UpdateCustomerTrackingProfile(
 	return r.CustomerTrackingService.UpdateProfile(
 		ctx,
 		&customertrackingports.UpdateProfileRequest{
-			TenantInfo: base.TenantInfo(authCtx),
+			TenantInfo: resolvercore.TenantInfo(authCtx),
 			Profile: &customertracking.Profile{
 				CustomerID:      customerID,
 				LinkEnabled:     input.LinkEnabled,
@@ -60,7 +61,7 @@ func (r *MutationResolver) UpdateCustomerTrackingProfile(
 				NotifyDelivered: input.NotifyDelivered,
 				NotifyPodReady:  input.NotifyPodReady,
 				IncludeLink:     input.IncludeLink,
-				Recipients:      base.StringValue(input.Recipients),
+				Recipients:      gqlscalar.StringValue(input.Recipients),
 			},
 			ExpectedVersion: expected,
 			UpdatedByID:     authCtx.UserID,
@@ -82,9 +83,9 @@ func (r *MutationResolver) IssueCustomerTrackingLink(
 	}
 
 	issued, err := r.CustomerTrackingService.IssueLink(ctx, &customertrackingports.IssueLinkRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ShipmentID:     shipmentID,
-		RecipientEmail: base.StringValue(input.RecipientEmail),
+		RecipientEmail: gqlscalar.StringValue(input.RecipientEmail),
 		IssuedByID:     authCtx.UserID,
 	})
 	if err != nil {
@@ -95,7 +96,7 @@ func (r *MutationResolver) IssueCustomerTrackingLink(
 		Link:       issued.Link,
 		URL:        issued.URL,
 		Emailed:    issued.Emailed,
-		EmailError: base.NonEmptyPtr(issued.EmailError),
+		EmailError: gqlscalar.NonEmptyPtr(issued.EmailError),
 	}, nil
 }
 
@@ -113,14 +114,14 @@ func (r *MutationResolver) RevokeCustomerTrackingLink(
 		return 0, err
 	}
 	link := pulid.Nil
-	if value := base.StringValue(linkID); value != "" {
+	if value := gqlscalar.StringValue(linkID); value != "" {
 		if link, err = parseID("linkId", value); err != nil {
 			return 0, err
 		}
 	}
 
 	return r.CustomerTrackingService.RevokeLink(ctx, &customertrackingports.RevokeLinkRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		ShipmentID:  shipment,
 		LinkID:      link,
 		RevokedByID: authCtx.UserID,
@@ -140,7 +141,7 @@ func (r *QueryResolver) CustomerTrackingProfile(
 		return nil, err
 	}
 
-	return r.CustomerTrackingService.GetProfile(ctx, base.TenantInfo(authCtx), id)
+	return r.CustomerTrackingService.GetProfile(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) CustomerTrackingLinks(
@@ -156,7 +157,7 @@ func (r *QueryResolver) CustomerTrackingLinks(
 		return nil, err
 	}
 
-	return r.CustomerTrackingService.ListLinks(ctx, base.TenantInfo(authCtx), id)
+	return r.CustomerTrackingService.ListLinks(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) CustomerStatusNotifications(
@@ -172,7 +173,7 @@ func (r *QueryResolver) CustomerStatusNotifications(
 		return nil, err
 	}
 
-	return r.CustomerTrackingService.ListNotifications(ctx, base.TenantInfo(authCtx), id)
+	return r.CustomerTrackingService.ListNotifications(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func parseID(field, value string) (pulid.ID, error) {

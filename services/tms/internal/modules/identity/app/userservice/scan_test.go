@@ -3,7 +3,7 @@ package userservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
@@ -28,7 +28,7 @@ func TestUploadProfilePicture_RefusesAFileTheScannerCannotCheck(t *testing.T) {
 		l:           zap.NewNop(),
 		repo:        users,
 		storage:     kernelportsmock.NewMockClient(t),
-		storageCfg:  &config.StorageConfig{MaxFileSize: 1 << 20},
+		storageCfg:  &storageconfig.Config{MaxFileSize: 1 << 20},
 		contentGate: gate,
 	}
 	content := []byte("\x89PNG\r\n\x1a\nportrait")

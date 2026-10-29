@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -13,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -31,9 +32,13 @@ func (f *fakeRecords) Enqueue(
 	defer f.mu.Unlock()
 	result := &accountingsyncports.EnqueueAccountingSyncRecordsResult{}
 	for _, record := range records {
-		duplicate := slices.ContainsFunc(f.rows, func(row *accountingsync.AccountingSyncRecord) bool {
-			return row.ConnectionID == record.ConnectionID && row.IdempotencyKey == record.IdempotencyKey
-		})
+		duplicate := slices.ContainsFunc(
+			f.rows,
+			func(row *accountingsync.AccountingSyncRecord) bool {
+				return row.ConnectionID == record.ConnectionID &&
+					row.IdempotencyKey == record.IdempotencyKey
+			},
+		)
 		if duplicate {
 			result.Existing++
 			continue
@@ -148,7 +153,7 @@ func (f *fakeInvoiceRepo) GetByID(
 
 type bookEnqueuer struct {
 	records *fakeRecords
-	conns   []*accountingsync.AccountingConnection
+	conns   []*accountingconnection.AccountingConnection
 	at      int64
 }
 
@@ -162,7 +167,10 @@ func (b *bookEnqueuer) enqueue(
 	inserted := make([]*accountingsync.AccountingSyncRecord, 0, len(b.conns))
 	for _, conn := range b.conns {
 		record := accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
-			TenantInfo:   pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
+			TenantInfo: pagination.TenantInfo{
+				OrgID: conn.OrganizationID,
+				BuID:  conn.BusinessUnitID,
+			},
 			ConnectionID: conn.ID,
 			Key: accountingsync.SyncRecordKey{
 				ObjectType: objectType,
@@ -187,7 +195,8 @@ type createdMemo struct {
 }
 
 type fakeInvoices struct {
-	invoiceports.InvoiceService
+	invoiceports.InvoiceMemoService
+	invoiceports.InvoiceVoidService
 	book            *bookEnqueuer
 	memos           []createdMemo
 	voids           []invoiceports.VoidInvoiceRequest
@@ -287,8 +296,11 @@ type fakeControls struct {
 	cash       pulid.ID
 }
 
-func (f *fakeControls) GetByOrgID(context.Context, pulid.ID) (*tenant.AccountingControl, error) {
-	return &tenant.AccountingControl{
+func (f *fakeControls) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*accountingcontrol.AccountingControl, error) {
+	return &accountingcontrol.AccountingControl{
 		ReconciliationToleranceAmount: decimal.RequireFromString(f.tolerance),
 		FunctionalCurrencyCode:        f.functional,
 		DefaultCashAccountID:          f.cash,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -25,7 +25,10 @@ type recordingGenerator struct {
 	requests []*seqgen.GenerateRequest
 }
 
-func (g *recordingGenerator) Generate(_ context.Context, req *seqgen.GenerateRequest) (string, error) {
+func (g *recordingGenerator) Generate(
+	_ context.Context,
+	req *seqgen.GenerateRequest,
+) (string, error) {
 	g.requests = append(g.requests, req)
 	return req.Format.Prefix + "-0001", nil
 }
@@ -36,11 +39,13 @@ func (g *recordingGenerator) GenerateInvoiceNumber(
 	return "INV-0001", nil
 }
 
-type staticFormats struct{ format *tenant.SequenceFormat }
+type staticFormats struct {
+	format *sequenceconfig.SequenceFormat
+}
 
 func (f staticFormats) GetFormat(
-	context.Context, tenant.SequenceType, pulid.ID, pulid.ID,
-) (*tenant.SequenceFormat, error) {
+	context.Context, sequenceconfig.SequenceType, pulid.ID, pulid.ID,
+) (*sequenceconfig.SequenceFormat, error) {
 	return f.format, nil
 }
 
@@ -56,7 +61,7 @@ func TestInvoiceNumberTakesThePayersPrefix(t *testing.T) {
 
 	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	payerID := pulid.MustNew("cus_")
-	base := &tenant.SequenceFormat{Prefix: "INV"}
+	base := &sequenceconfig.SequenceFormat{Prefix: "INV"}
 	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req customerports.GetCustomerByIDRequest) bool {
@@ -68,7 +73,11 @@ func TestInvoiceNumberTakesThePayersPrefix(t *testing.T) {
 
 	number, err := billingnumber.New(generator, staticFormats{format: base}, customers).Next(
 		t.Context(),
-		&billingnumber.Request{TenantInfo: tenantInfo, BillType: billingqueue.BillTypeInvoice, PayerID: payerID},
+		&billingnumber.Request{
+			TenantInfo: tenantInfo,
+			BillType:   billingqueue.BillTypeInvoice,
+			PayerID:    payerID,
+		},
 	)
 
 	require.NoError(t, err)
@@ -86,7 +95,11 @@ func TestInvoiceNumberFallsBackToTheTenantDefault(t *testing.T) {
 		Return(nil, errortypes.NewNotFoundError("Customer not found")).
 		Once()
 	generator := &recordingGenerator{}
-	numberer := billingnumber.New(generator, staticFormats{format: &tenant.SequenceFormat{Prefix: "INV"}}, customers)
+	numberer := billingnumber.New(
+		generator,
+		staticFormats{format: &sequenceconfig.SequenceFormat{Prefix: "INV"}},
+		customers,
+	)
 
 	number, err := numberer.Next(t.Context(), &billingnumber.Request{
 		TenantInfo: tenantInfo, BillType: billingqueue.BillTypeInvoice, PayerID: pulid.MustNew("cus_"),
@@ -97,7 +110,9 @@ func TestInvoiceNumberFallsBackToTheTenantDefault(t *testing.T) {
 	number, err = numberer.Next(t.Context(), &billingnumber.Request{
 		TenantInfo: tenantInfo,
 		BillType:   billingqueue.BillTypeInvoice,
-		Profile:    &customer.CustomerBillingProfile{InvoiceNumberFormat: customer.InvoiceNumberFormatDefault},
+		Profile: &customer.CustomerBillingProfile{
+			InvoiceNumberFormat: customer.InvoiceNumberFormatDefault,
+		},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "INV-0001", number)
@@ -122,7 +137,9 @@ func TestForItemRenumbersForTheItemsPayer(t *testing.T) {
 		Once()
 
 	number, err := billingnumber.New(
-		&recordingGenerator{}, staticFormats{format: &tenant.SequenceFormat{Prefix: "INV"}}, customers,
+		&recordingGenerator{},
+		staticFormats{format: &sequenceconfig.SequenceFormat{Prefix: "INV"}},
+		customers,
 	).ForItem(t.Context(), item)
 
 	require.NoError(t, err)

@@ -25,10 +25,10 @@ IdempotencyMiddleware ── Claim(scoped key, fingerprint) ──▶ Redis  ide
 |---|---|
 | Header names, key validation, scoping, fingerprint, context carrier | `services/tms/pkg/idempotency` |
 | Store port | `internal/modules/kernel/ports/kernelports/idempotency.go` |
-| Redis store (Lua claim / complete / release) | `internal/infrastructure/redis/repositories/idempotency.go` |
+| Redis store (Lua claim / complete / release) | `internal/infrastructure/redis/idempotencystore/idempotency.go` |
 | Middleware | `internal/api/middleware/idempotency.go`, registered in `Router.protectedGroup` |
-| Shipment create backstop | `shipments.idempotency_key`, `shipmentservice/shipment_idempotency.go` |
-| Configuration and defaults | `security.idempotency` in `config/config.example.yaml`, `config.IdempotencyConfig` |
+| Shipment create backstop | `shipments.idempotency_key`, `shipmentwrite/shipment_idempotency.go` |
+| Configuration and defaults | `security.idempotency` in `config/config.example.yaml`, `securityconfig.IdempotencyConfig` |
 | Browser | `@trenova/shared/lib/idempotency`, `apps/web/src/hooks/use-idempotency-key.ts` |
 
 ## What a key means
@@ -87,7 +87,7 @@ request without replay. It still puts the scoped key in the request context, so 
 write with its own backstop stays exactly-once. Shipment create is one: the
 GraphQL `createShipment` resolver and `POST /api/v1/shipments/` copy the key onto
 `Shipment.IdempotencyKey` (`json:"-"`, never accepted from the body).
-`shipmentservice.Create` then:
+`shipmentwrite.Create` then:
 
 1. looks up a shipment already booked under that key and returns it, with its
    details, instead of creating another;

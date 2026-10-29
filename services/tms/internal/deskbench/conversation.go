@@ -7,15 +7,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
-
+	"github.com/emoss08/trenova/internal/deskbench/benchcell"
+	"github.com/emoss08/trenova/internal/deskbench/benchlive"
+	"github.com/emoss08/trenova/internal/deskbench/benchnamespace"
+	"github.com/emoss08/trenova/internal/deskbench/benchrecord"
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
+	"github.com/emoss08/trenova/internal/deskbench/benchwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantturnservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -23,34 +39,21 @@ import (
 const (
 	firstTurnWithin  = 2 * time.Minute
 	followUpWithin   = 3 * time.Minute
-	cleanupWithin    = 45 * time.Second
+	CleanupWithin    = 45 * time.Second
 	settleAfterTurn  = 5 * time.Second
-	turnTimeout      = 15 * time.Minute
+	TurnTimeout      = 15 * time.Minute
 	relayGrace       = 20 * time.Second
 	lookupAttempts   = 25
 	lookupEvery      = 200 * time.Millisecond
-	windowLead       = time.Second
+	WindowLead       = time.Second
 	cleanupNote      = "Closed by the desk bench at the end of its run."
-	DecisionApprove  = DecisionAction("approve")
-	DecisionReject   = DecisionAction("reject")
-	benchTitlePrefix = "[bench] "
+	BenchTitlePrefix = "[bench] "
 )
 
 var ErrNothingToDecide = errors.New("no proposal is waiting for a decision in this conversation")
 
-type DecisionAction string
-
-type Utterance struct {
-	Content     string
-	Page        *agent.PageContext
-	Mentions    []agent.EntityRef
-	Surface     agent.Surface
-	Directed    pulid.ID
-	Attachments []string
-}
-
 type Decide struct {
-	Action        DecisionAction
+	Action        benchscenario.DecisionAction
 	Note          string
 	Tool          string
 	Modifications map[string]any
@@ -70,13 +73,13 @@ type Conversation struct {
 	Agent    *agentdefinition.Definition
 	Provider *aiprovider.Provider
 	Thread   *conversation.Thread
-	queue    *turnQueue
-	turns    []*TurnRecord
+	queue    *benchwatch.TurnQueue
+	turns    []*benchrecord.TurnRecord
 	formula  *formulaState
 	palette  bool
 	CodeMode codemode.Override
 
-	needsText bool
+	NeedsText bool
 }
 
 func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation, error) {
@@ -93,9 +96,9 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 		if req.Agent == nil {
 			return nil, errors.New("a new conversation needs an agent")
 		}
-		thread, err = s.bench.Assistant.StartThread(ctx, &agentports.StartThreadRequest{
+		thread, err = s.bench.Assistant.StartThread(ctx, &assistantports.StartThreadRequest{
 			AgentDefinitionID: req.Agent.ID,
-			Title:             benchTitlePrefix + strings.TrimSpace(req.Title),
+			Title:             BenchTitlePrefix + strings.TrimSpace(req.Title),
 			TenantInfo:        s.Tenant,
 			Origin:            conversation.ThreadOriginDesk,
 		}, &s.Actor)
@@ -115,32 +118,39 @@ func (s *Session) Open(ctx context.Context, req OpenConversation) (*Conversation
 		Agent:    req.Agent,
 		Provider: req.Provider,
 		Thread:   thread,
-		queue:    s.bench.watcher.watch(thread.ID),
+		queue:    s.bench.watcher.Watch(thread.ID),
 	}, nil
 }
 
-func (s *Session) threadRequest(threadID pulid.ID) agentports.GetThreadRequest {
-	return agentports.GetThreadRequest{ID: threadID, UserID: s.User.ID, TenantInfo: s.Tenant}
+func (s *Session) threadRequest(threadID pulid.ID) *conversationports.GetThreadRequest {
+	return &conversationports.GetThreadRequest{
+		ID:         threadID,
+		UserID:     s.User.ID,
+		TenantInfo: s.Tenant,
+	}
 }
 
-func (c *Conversation) Turns() []*TurnRecord {
+func (c *Conversation) Turns() []*benchrecord.TurnRecord {
 	return c.turns
 }
 
-func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, error) {
+func (c *Conversation) Say(
+	ctx context.Context,
+	u *benchscenario.Utterance,
+) ([]*benchrecord.TurnRecord, error) {
 	ctx = c.session.Context(ctx)
 	bench := c.session.bench
 
 	surface := u.Surface
 	if surface == "" {
-		surface = agent.SurfaceDesk
+		surface = agentpagecontext.SurfaceDesk
 	}
 	if c.formula != nil {
 		u.Page = c.formula.page()
-		surface = agent.SurfaceAssistant
+		surface = agentpagecontext.SurfaceAssistant
 	}
 	if c.palette {
-		surface = agent.SurfacePalette
+		surface = agentpagecontext.SurfacePalette
 	}
 
 	attached, err := c.attach(ctx, u.Attachments)
@@ -152,9 +162,9 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 		ThreadID:   c.Thread.ID,
 		UserID:     c.session.User.ID,
 		TenantInfo: c.session.Tenant,
-		Origin:     conversation.AssistantTurnOriginPerson,
+		Origin:     conversationturn.AssistantTurnOriginPerson,
 		Input:      u.Content,
-	}, func(turn *conversation.AssistantTurn) (string, error) {
+	}, func(turn *conversationturn.AssistantTurn) (string, error) {
 		start := assistantcontract.TurnStart{
 			Actor:   c.session.Actor,
 			Content: u.Content,
@@ -162,7 +172,7 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 				Page:                  u.Page,
 				Surface:               surface,
 				Mentions:              u.Mentions,
-				PreferredProviderID:   providerID(c.Provider),
+				PreferredProviderID:   benchcell.ProviderID(c.Provider),
 				ProviderChosen:        c.Provider != nil,
 				DirectedAgentID:       u.Directed,
 				AttachmentDocumentIDs: attached,
@@ -171,7 +181,7 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 			},
 		}
 		var runID string
-		startErr := retryNamespaceLookup(ctx, func() error {
+		startErr := benchnamespace.RetryLookup(ctx, func() error {
 			run, err := assistantcontract.StartTurnWorkflow(ctx, bench.watcher, turn, start)
 			if err != nil {
 				return err
@@ -193,7 +203,7 @@ func (c *Conversation) Say(ctx context.Context, u *Utterance) ([]*TurnRecord, er
 func (c *Conversation) Decide(
 	ctx context.Context,
 	d Decide,
-) ([]*DecisionRecord, []*TurnRecord, error) {
+) ([]*benchrecord.DecisionRecord, []*benchrecord.TurnRecord, error) {
 	return c.decide(ctx, d, followUpWithin)
 }
 
@@ -201,7 +211,7 @@ func (c *Conversation) decide(
 	ctx context.Context,
 	d Decide,
 	within time.Duration,
-) ([]*DecisionRecord, []*TurnRecord, error) {
+) ([]*benchrecord.DecisionRecord, []*benchrecord.TurnRecord, error) {
 	ctx = c.session.Context(ctx)
 
 	pending, err := c.pending(ctx, d.Tool)
@@ -212,7 +222,7 @@ func (c *Conversation) decide(
 		return nil, nil, ErrNothingToDecide
 	}
 
-	decisions := make([]*DecisionRecord, 0, len(pending))
+	decisions := make([]*benchrecord.DecisionRecord, 0, len(pending))
 	plans := make(map[pulid.ID]struct{}, 2)
 	for _, proposal := range pending {
 		if proposal.PlanID.IsNotNil() {
@@ -228,13 +238,13 @@ func (c *Conversation) decide(
 	}
 
 	for _, decision := range decisions {
-		c.session.bench.live.Line(c.Label, "decided %s %s%s", decision.Decision, decision.Tool,
+		c.session.bench.live.Linef(c.Label, "decided %s %s%s", decision.Decision, decision.Tool,
 			errorSuffix(decision.Error))
 	}
 	turns, err := c.collect(ctx, within)
 	c.settleDecisions(ctx, decisions)
 	for _, decision := range decisions {
-		c.session.bench.live.Line(c.Label, "%s %s -> %s%s", decision.Decision, decision.Tool,
+		c.session.bench.live.Linef(c.Label, "%s %s -> %s%s", decision.Decision, decision.Tool,
 			decision.StatusAfter, errorSuffix(decision.ExecutionError))
 	}
 
@@ -246,14 +256,17 @@ type CloseOptions struct {
 	Delete       bool
 }
 
-func (c *Conversation) Close(ctx context.Context, opts CloseOptions) ([]*TurnRecord, error) {
+func (c *Conversation) Close(
+	ctx context.Context,
+	opts CloseOptions,
+) ([]*benchrecord.TurnRecord, error) {
 	bench := c.session.bench
-	defer bench.watcher.forget(c.Thread.ID)
+	defer bench.watcher.Forget(c.Thread.ID)
 
-	var turns []*TurnRecord
+	var turns []*benchrecord.TurnRecord
 	if !opts.LeavePending {
-		cleanup := Decide{Action: DecisionReject, Note: cleanupNote}
-		if _, closing, err := c.decide(ctx, cleanup, cleanupWithin); err == nil {
+		cleanup := Decide{Action: benchscenario.DecisionReject, Note: cleanupNote}
+		if _, closing, err := c.decide(ctx, cleanup, CleanupWithin); err == nil {
 			turns = closing
 		} else if !errors.Is(err, ErrNothingToDecide) {
 			return nil, fmt.Errorf("reject what the run left waiting: %w", err)
@@ -275,18 +288,21 @@ func (c *Conversation) Close(ctx context.Context, opts CloseOptions) ([]*TurnRec
 	return turns, nil
 }
 
-func (c *Conversation) collect(ctx context.Context, within time.Duration) ([]*TurnRecord, error) {
-	records := make([]*TurnRecord, 0, 2)
+func (c *Conversation) collect(
+	ctx context.Context,
+	within time.Duration,
+) ([]*benchrecord.TurnRecord, error) {
+	records := make([]*benchrecord.TurnRecord, 0, 2)
 	wait := within
 	for {
 		timer := time.NewTimer(wait)
-		started, ok := c.queue.next(ctx, timer.C)
+		started, ok := c.queue.Next(ctx, timer.C)
 		timer.Stop()
 		if !ok {
 			break
 		}
 
-		record := c.capture(ctx, started)
+		record := c.capture(ctx, &started)
 		records = append(records, record)
 		c.turns = append(c.turns, record)
 		if c.formula != nil {
@@ -298,9 +314,12 @@ func (c *Conversation) collect(ctx context.Context, within time.Duration) ([]*Tu
 	return records, ctx.Err()
 }
 
-func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRecord {
+func (c *Conversation) capture(
+	ctx context.Context,
+	started *benchwatch.StartedTurn,
+) *benchrecord.TurnRecord {
 	bench := c.session.bench
-	record := &TurnRecord{
+	record := &benchrecord.TurnRecord{
 		TurnID:    started.TurnID,
 		ThreadID:  started.ThreadID,
 		Input:     started.Content,
@@ -316,14 +335,14 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 		record.TraceID = turn.TraceID
 	}
 
-	live := bench.live.turn(c.Label)
-	live.line(
+	live := bench.live.Turn(c.Label)
+	live.Linef(
 		"== turn %s (%s) ==",
 		started.TurnID,
 		stringutils.WithDefault(string(record.Origin), "Person"),
 	)
 	if started.Content != "" {
-		live.line("person: %s", started.Content)
+		live.Linef("person: %s", started.Content)
 	}
 	collector := newEventCollector(live)
 	relayCtx, cancelRelay := context.WithCancel(ctx)
@@ -338,21 +357,27 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 		relayDone <- nil
 	}
 
-	runCtx, cancelRun := context.WithTimeout(ctx, turnTimeout)
+	runCtx, cancelRun := context.WithTimeout(ctx, TurnTimeout)
 	var outcome assistantcontract.AssistantTurnResult
 	runErr := started.Run.Get(runCtx, &outcome)
 	timedOut := errors.Is(runCtx.Err(), context.DeadlineExceeded)
 	cancelRun()
 	if timedOut && turn != nil {
 		if stopErr := bench.Turns.Stop(ctx, turn); stopErr != nil {
-			record.CaptureError = joinErrors(record.CaptureError, "stop: "+stopErr.Error())
+			record.CaptureError = benchrecord.JoinErrors(
+				record.CaptureError,
+				"stop: "+stopErr.Error(),
+			)
 		}
 	}
 
 	select {
 	case relayErr := <-relayDone:
 		if relayErr != nil && !errors.Is(relayErr, context.Canceled) {
-			record.CaptureError = joinErrors(record.CaptureError, "relay: "+relayErr.Error())
+			record.CaptureError = benchrecord.JoinErrors(
+				record.CaptureError,
+				"relay: "+relayErr.Error(),
+			)
 		}
 	case <-time.After(relayGrace):
 		cancelRelay()
@@ -374,36 +399,16 @@ func (c *Conversation) capture(ctx context.Context, started StartedTurn) *TurnRe
 		}
 	}
 
-	bench.measure(ctx, c.session, record, record.StartedAt.Add(-windowLead))
+	bench.Measure(ctx, c.session, record, record.StartedAt.Add(-WindowLead))
 
-	announceTurnEnd(live, record)
+	benchlive.AnnounceTurnEnd(live, record)
 
 	return record
 }
 
-func announceTurnEnd(live *liveTurn, record *TurnRecord) {
-	live.flush()
-	live.line("== %s · %s · %d tool calls · %s ==", record.Status,
-		record.Duration().Round(100*time.Millisecond), len(record.Tools), usageLine(record.Usage))
-	for _, proposal := range record.Proposals {
-		live.line(
-			"proposal %s %s (%s)",
-			proposal.Tool,
-			stringutils.Ellipsize(
-				compactJSON(proposal.Arguments, liveArgsLimit),
-				liveArgsLimit,
-			),
-			proposal.Status,
-		)
-	}
-	if record.Failure != "" {
-		live.line("failure: %s", record.Failure)
-	}
-}
-
 func (c *Conversation) fill(
 	ctx context.Context,
-	record *TurnRecord,
+	record *benchrecord.TurnRecord,
 	outcome *assistantcontract.AssistantTurnResult,
 ) {
 	if outcome.Status != "" {
@@ -411,7 +416,7 @@ func (c *Conversation) fill(
 	}
 	record.Refused = outcome.Refused
 	if outcome.Message != "" {
-		record.Failure = joinErrors(record.Failure, outcome.Message)
+		record.Failure = benchrecord.JoinErrors(record.Failure, outcome.Message)
 	}
 
 	result := outcome.Result
@@ -423,7 +428,7 @@ func (c *Conversation) fill(
 	record.Refused = record.Refused || result.Refused
 	record.Messages = result.Messages
 	record.Artifacts = result.Artifacts
-	record.Proposals = make([]*ProposalRecord, 0, len(result.Proposals))
+	record.Proposals = make([]*benchrecord.ProposalRecord, 0, len(result.Proposals))
 	for idx := range result.Proposals {
 		record.Proposals = append(record.Proposals, c.describeProposal(ctx, &result.Proposals[idx]))
 	}
@@ -431,9 +436,9 @@ func (c *Conversation) fill(
 
 func (c *Conversation) describeProposal(
 	ctx context.Context,
-	summary *agentports.AssistantProposal,
-) *ProposalRecord {
-	record := &ProposalRecord{
+	summary *assistantproposalports.AssistantProposal,
+) *benchrecord.ProposalRecord {
+	record := &benchrecord.ProposalRecord{
 		ID:        summary.ID,
 		PlanID:    summary.PlanID,
 		PlanStep:  summary.PlanStep,
@@ -458,10 +463,13 @@ func (c *Conversation) describeProposal(
 		return record
 	}
 
-	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
-		Proposal: proposal,
-		Viewer:   &agentports.PreviewViewer{Actor: &c.session.Actor},
-	})
+	preview, err := c.session.bench.Previews.ForProposal(
+		ctx,
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal: proposal,
+			Viewer:   &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
+		},
+	)
 	if err != nil {
 		record.Error = "preview: " + err.Error()
 		return record
@@ -475,15 +483,18 @@ func (c *Conversation) loadProposal(
 	ctx context.Context,
 	id pulid.ID,
 ) (*agent.AgentProposal, error) {
-	return c.session.bench.Proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	return c.session.bench.Proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         id,
 		TenantInfo: &c.session.Tenant,
 	})
 }
 
-func (c *Conversation) pending(ctx context.Context, tool string) ([]*ProposalRecord, error) {
+func (c *Conversation) pending(
+	ctx context.Context,
+	tool string,
+) ([]*benchrecord.ProposalRecord, error) {
 	seen := make(map[pulid.ID]struct{}, 4)
-	pending := make([]*ProposalRecord, 0, 4)
+	pending := make([]*benchrecord.ProposalRecord, 0, 4)
 	for _, turn := range c.turns {
 		for _, proposal := range turn.Proposals {
 			if _, dup := seen[proposal.ID]; dup {
@@ -508,39 +519,39 @@ func (c *Conversation) pending(ctx context.Context, tool string) ([]*ProposalRec
 	return pending, nil
 }
 
-func (d Decide) decision() agent.DecisionType {
-	if d.Action == DecisionReject {
-		return agent.DecisionRejected
+func (d Decide) decision() agentdecision.DecisionType {
+	if d.Action == benchscenario.DecisionReject {
+		return agentdecision.DecisionRejected
 	}
 	if len(d.Modifications) > 0 {
-		return agent.DecisionModified
+		return agentdecision.DecisionModified
 	}
 
-	return agent.DecisionAccepted
+	return agentdecision.DecisionAccepted
 }
 
 func (c *Conversation) decideProposal(
 	ctx context.Context,
-	proposal *ProposalRecord,
+	proposal *benchrecord.ProposalRecord,
 	d Decide,
-) *DecisionRecord {
+) *benchrecord.DecisionRecord {
 	bench := c.session.bench
 	decision := d.decision()
-	record := &DecisionRecord{
+	record := &benchrecord.DecisionRecord{
 		ProposalID: proposal.ID,
 		Tool:       proposal.Tool,
 		Decision:   decision,
 		Note:       d.Note,
 	}
 
-	req := &agentports.DecideAgentProposalRequest{
+	req := &agentdecisionports.DecideAgentProposalRequest{
 		ProposalID:    proposal.ID,
 		Decision:      decision,
 		Modifications: d.Modifications,
 		Note:          d.Note,
 		TenantInfo:    c.session.Tenant,
 	}
-	if decision != agent.DecisionRejected {
+	if decision != agentdecision.DecisionRejected {
 		digest, err := c.proposalDigest(ctx, proposal, d.Modifications)
 		if err != nil {
 			record.Error = "preview: " + err.Error()
@@ -553,11 +564,11 @@ func (c *Conversation) decideProposal(
 		record.Error = err.Error()
 		return record
 	}
-	if decision == agent.DecisionRejected {
+	if decision == agentdecision.DecisionRejected {
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentapprovalports.SettleApprovalRequest{
 		ProposalID: proposal.ID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -569,28 +580,28 @@ func (c *Conversation) decideProposal(
 
 func (c *Conversation) decidePlan(
 	ctx context.Context,
-	proposal *ProposalRecord,
+	proposal *benchrecord.ProposalRecord,
 	d Decide,
-) *DecisionRecord {
+) *benchrecord.DecisionRecord {
 	bench := c.session.bench
 	decision := d.decision()
-	if decision == agent.DecisionModified {
-		decision = agent.DecisionAccepted
+	if decision == agentdecision.DecisionModified {
+		decision = agentdecision.DecisionAccepted
 	}
-	record := &DecisionRecord{
+	record := &benchrecord.DecisionRecord{
 		PlanID:   proposal.PlanID,
 		Tool:     proposal.Tool,
 		Decision: decision,
 		Note:     d.Note,
 	}
 
-	planReq := &agentports.DecideAgentPlanRequest{
+	planReq := &agentplanports.DecideAgentPlanRequest{
 		PlanID:     proposal.PlanID,
 		Decision:   decision,
 		Note:       d.Note,
 		TenantInfo: c.session.Tenant,
 	}
-	if decision != agent.DecisionRejected {
+	if decision != agentdecision.DecisionRejected {
 		digest, err := c.planDigest(ctx, proposal.PlanID)
 		if err != nil {
 			record.Error = "preview: " + err.Error()
@@ -602,11 +613,11 @@ func (c *Conversation) decidePlan(
 		record.Error = err.Error()
 		return record
 	}
-	if decision == agent.DecisionRejected {
+	if decision == agentdecision.DecisionRejected {
 		return record
 	}
 
-	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentports.SettleApprovalRequest{
+	if err := bench.Committer.CommitOwnApprovalNow(ctx, &agentapprovalports.SettleApprovalRequest{
 		PlanID:     proposal.PlanID,
 		TenantInfo: c.session.Tenant,
 	}, &c.session.Actor); err != nil {
@@ -618,7 +629,7 @@ func (c *Conversation) decidePlan(
 
 func (c *Conversation) proposalDigest(
 	ctx context.Context,
-	proposal *ProposalRecord,
+	proposal *benchrecord.ProposalRecord,
 	modifications map[string]any,
 ) (string, error) {
 	if len(modifications) == 0 && proposal.Preview != nil {
@@ -628,11 +639,14 @@ func (c *Conversation) proposalDigest(
 	if err != nil {
 		return "", err
 	}
-	preview, err := c.session.bench.Previews.ForProposal(ctx, &agentports.ProposalPreviewRequest{
-		Proposal:      current,
-		Modifications: modifications,
-		Viewer:        &agentports.PreviewViewer{Actor: &c.session.Actor},
-	})
+	preview, err := c.session.bench.Previews.ForProposal(
+		ctx,
+		&agentruntimeports.ProposalPreviewRequest{
+			Proposal:      current,
+			Modifications: modifications,
+			Viewer:        &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
+		},
+	)
 	if err != nil {
 		return "", err
 	}
@@ -641,16 +655,16 @@ func (c *Conversation) proposalDigest(
 }
 
 func (c *Conversation) planDigest(ctx context.Context, planID pulid.ID) (string, error) {
-	plan, err := c.session.bench.Plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+	plan, err := c.session.bench.Plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 		ID:         planID,
 		TenantInfo: c.session.Tenant,
 	})
 	if err != nil {
 		return "", err
 	}
-	preview, err := c.session.bench.Previews.ForPlan(ctx, &agentports.PlanPreviewRequest{
+	preview, err := c.session.bench.Previews.ForPlan(ctx, &agentruntimeports.PlanPreviewRequest{
 		Plan:   plan,
-		Viewer: &agentports.PreviewViewer{Actor: &c.session.Actor},
+		Viewer: &agentruntimeports.PreviewViewer{Actor: &c.session.Actor},
 	})
 	if err != nil {
 		return "", err
@@ -659,7 +673,10 @@ func (c *Conversation) planDigest(ctx context.Context, planID pulid.ID) (string,
 	return preview.Digest, nil
 }
 
-func (c *Conversation) settleDecisions(ctx context.Context, decisions []*DecisionRecord) {
+func (c *Conversation) settleDecisions(
+	ctx context.Context,
+	decisions []*benchrecord.DecisionRecord,
+) {
 	for _, decision := range decisions {
 		if decision.ProposalID.IsNil() {
 			c.settlePlan(ctx, decision)
@@ -668,7 +685,7 @@ func (c *Conversation) settleDecisions(ctx context.Context, decisions []*Decisio
 
 		proposal, err := c.loadProposal(ctx, decision.ProposalID)
 		if err != nil {
-			decision.Error = joinErrors(decision.Error, "re-read: "+err.Error())
+			decision.Error = benchrecord.JoinErrors(decision.Error, "re-read: "+err.Error())
 			continue
 		}
 		decision.StatusAfter = proposal.Status
@@ -678,7 +695,7 @@ func (c *Conversation) settleDecisions(ctx context.Context, decisions []*Decisio
 	}
 }
 
-func (c *Conversation) settlePlan(ctx context.Context, decision *DecisionRecord) {
+func (c *Conversation) settlePlan(ctx context.Context, decision *benchrecord.DecisionRecord) {
 	failures := make([]string, 0, 2)
 	executed := true
 	for _, turn := range c.turns {
@@ -708,8 +725,8 @@ func (c *Conversation) settlePlan(ctx context.Context, decision *DecisionRecord)
 func (c *Conversation) lookupTurn(
 	ctx context.Context,
 	turnID pulid.ID,
-) (*conversation.AssistantTurn, error) {
-	req := agentports.GetAssistantTurnRequest{
+) (*conversationturn.AssistantTurn, error) {
+	req := assistantturnports.GetAssistantTurnRequest{
 		ID:         turnID,
 		TenantInfo: c.session.Tenant,
 		UserID:     c.session.User.ID,
@@ -717,7 +734,7 @@ func (c *Conversation) lookupTurn(
 
 	var lastErr error
 	for range lookupAttempts {
-		turn, err := c.session.bench.Turns.Get(ctx, req)
+		turn, err := c.session.bench.Turns.Get(ctx, &req)
 		if err == nil {
 			return turn, nil
 		}
@@ -741,15 +758,7 @@ func errorSuffix(message string) string {
 	return " · error: " + message
 }
 
-func joinErrors(existing, next string) string {
-	if existing == "" {
-		return next
-	}
-
-	return existing + "; " + next
-}
-
-func (c *Conversation) directedAgent(ctx context.Context, ref string) (pulid.ID, error) {
+func (c *Conversation) DirectedAgent(ctx context.Context, ref string) (pulid.ID, error) {
 	definition, err := c.session.Agent(ctx, ref)
 	if err != nil {
 		return pulid.Nil, err

@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -184,7 +185,7 @@ func (c *contractStack) shipment() *shipment.Shipment {
 		OrganizationID:    c.rule.OrganizationID,
 		BusinessUnitID:    c.rule.BusinessUnitID,
 		CustomerID:        c.rule.PartyID,
-		Status:            shipment.StatusNew,
+		Status:            shipmentvocab.StatusNew,
 		FormulaTemplateID: c.template.TemplateID,
 		TariffInputs:      c.rule.Inputs.Clone(),
 		Moves: []*shipment.ShipmentMove{{
@@ -193,15 +194,15 @@ func (c *contractStack) shipment() *shipment.Shipment {
 			Stops: []*shipment.Stop{
 				{
 					ID:         pulid.MustNew("stp_"),
-					Type:       shipment.StopTypePickup,
-					Status:     shipment.StopStatusNew,
+					Type:       shipmentvocab.StopTypePickup,
+					Status:     shipmentvocab.StopStatusNew,
 					LocationID: pulid.MustNew("loc_"),
 				},
 				{
 					ID:         pulid.MustNew("stp_"),
 					Sequence:   1,
-					Type:       shipment.StopTypeDelivery,
-					Status:     shipment.StopStatusNew,
+					Type:       shipmentvocab.StopTypeDelivery,
+					Status:     shipmentvocab.StopStatusNew,
 					LocationID: pulid.MustNew("loc_"),
 				},
 			},
@@ -231,7 +232,7 @@ func TestRateAndAdoptContract_OneTariffCallPricesTheWholeBill(t *testing.T) {
 	rating, err := c.calculator.RateAndAdoptContract(
 		t.Context(),
 		entity,
-		&tenant.ShipmentControl{},
+		&shipmentcontrol.ShipmentControl{},
 		pulid.MustNew("usr_"),
 	)
 	require.NoError(t, err)
@@ -258,7 +259,7 @@ func TestRateAndAdoptContract_OneTariffCallPricesTheWholeBill(t *testing.T) {
 
 	lumpers := chargeFor(entity, c.lumper)
 	require.Len(t, lumpers, 1, "the two-stop condition held in the same call")
-	assert.Equal(t, shipment.SystemOwnerAgreement, lumpers[0].Owner())
+	assert.Equal(t, shipmentvocab.SystemOwnerAgreement, lumpers[0].Owner())
 	assert.True(t, lumpers[0].Amount.Equal(decimal.NewFromInt(125)))
 
 	assert.Empty(t, chargeFor(entity, c.layover), "the hazmat condition did not hold")
@@ -280,7 +281,7 @@ func TestRecalculate_ReratesWithOneTariffCallAndKeepsOneOwnerPerCode(t *testing.
 	c := newContractStack(t)
 	entity := c.shipment()
 	userID := pulid.MustNew("usr_")
-	control := &tenant.ShipmentControl{}
+	control := &shipmentcontrol.ShipmentControl{}
 
 	_, err := c.calculator.RateAndAdoptContract(t.Context(), entity, control, userID)
 	require.NoError(t, err)

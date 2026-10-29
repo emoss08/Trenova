@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderchange"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -15,7 +16,7 @@ import (
 type advisorCheck struct {
 	before *aiprovider.Provider
 	after  *aiprovider.Provider
-	req    *agentports.SaveAIProviderRequest
+	req    *aiproviderports.SaveAIProviderRequest
 }
 
 func (c *advisorCheck) needed() bool {
@@ -23,8 +24,8 @@ func (c *advisorCheck) needed() bool {
 		return false
 	}
 
-	return c.before == nil || aiprovider.AdvisorSettingsChanged(c.before, c.after) ||
-		!aiprovider.SameCredentialTarget(c.before, c.after)
+	return c.before == nil || aiproviderchange.AdvisorSettingsChanged(c.before, c.after) ||
+		!aiproviderchange.SameCredentialTarget(c.before, c.after)
 }
 
 // confirmAdvisor refuses an advisor the provider's endpoint does not list.
@@ -40,9 +41,9 @@ func (s *Service) confirmAdvisor(
 	}
 
 	advisor := check.after.AdvisorModelName()
-	options, err := s.ListModels(ctx, &agentports.ListAIProviderModelsRequest{
+	options, err := s.ListModels(ctx, &aiproviderports.ListAIProviderModelsRequest{
 		TenantInfo: check.req.TenantInfo,
-		Endpoint: agentports.AIProviderEndpoint{
+		Endpoint: aiproviderports.AIProviderEndpoint{
 			ProviderID:          check.req.ID,
 			Kind:                check.after.Kind,
 			Platform:            check.after.Platform,

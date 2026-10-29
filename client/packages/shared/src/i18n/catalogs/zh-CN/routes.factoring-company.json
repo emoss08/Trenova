@@ -6,6 +6,7 @@
   "Activate this agreement?": "要启用此协议吗？",
   "Add at least one fee tier": "至少添加一个费用档位",
   "Add the address the factor takes schedules at": "添加保理公司接收清单的地址",
+  "Advance and fee rate together cannot be more than 100% of the invoice": "预付比例与手续费率合计不得超过发票金额的 100%",
   "Advance and reserve": "预付与保留金",
   "Advance and reserve together cannot be more than 100%": "预付与保留金合计不得超过 100%",
   "Advance rate": "预付比例",

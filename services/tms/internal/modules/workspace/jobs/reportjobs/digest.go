@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/keel/analytics/format"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/reporttemplate"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportvalue"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -79,10 +79,10 @@ func digestContext(
 	loc *time.Location,
 	locale string,
 	rowCount int64,
-) (documenttemplate.ReportDigest, error) {
+) (reporttemplate.ReportDigest, error) {
 	envelope, err := readDigest(digest)
 	if err != nil || envelope == nil {
-		return documenttemplate.ReportDigest{}, err
+		return reporttemplate.ReportDigest{}, err
 	}
 
 	reader := envelope.Table.Reader()
@@ -93,9 +93,9 @@ func digestContext(
 	})
 	totalLabel := i18n.Translate(i18n.FromContext(ctx), "Total")
 
-	out := documenttemplate.ReportDigest{
+	out := reporttemplate.ReportDigest{
 		Headers: make([]string, 0, len(columns)),
-		Rows:    make([]documenttemplate.ReportRow, 0, reportports.MaxDigestRows),
+		Rows:    make([]reporttemplate.ReportRow, 0, reportports.MaxDigestRows),
 	}
 	for i := range columns {
 		out.Headers = append(out.Headers, columns[i].Label)
@@ -107,7 +107,7 @@ func digestContext(
 			break
 		}
 		if nextErr != nil {
-			return documenttemplate.ReportDigest{}, nextErr
+			return reporttemplate.ReportDigest{}, nextErr
 		}
 		for i := range batch.Len {
 			level := batch.Level(i)
@@ -120,20 +120,20 @@ func digestContext(
 				continue
 			}
 			cells := render.FormatRow(formatters, batch, i, "")
-			row := documenttemplate.ReportRow{
-				Cells: make([]documenttemplate.ReportCell, 0, len(cells)),
+			row := reporttemplate.ReportRow{
+				Cells: make([]reporttemplate.ReportCell, 0, len(cells)),
 			}
 			for _, cell := range cells {
 				row.Cells = append(
 					row.Cells,
-					documenttemplate.ReportCell{Text: cell.Text, Tone: cell.Tone},
+					reporttemplate.ReportCell{Text: cell.Text, Tone: cell.Tone},
 				)
 			}
 			out.Rows = append(out.Rows, row)
 		}
 	}
 	if len(out.Rows) == 0 {
-		return documenttemplate.ReportDigest{}, nil
+		return reporttemplate.ReportDigest{}, nil
 	}
 	out.Note = digestNote(ctx, digest, len(out.Rows), rowCount)
 	return out, nil

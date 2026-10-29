@@ -6,10 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -20,17 +20,17 @@ import (
 )
 
 type recordingRecommender struct {
-	answer *agentports.AgentMatch
-	asked  []*agentports.AgentMatchRequest
+	answer *agentrecommendationports.AgentMatch
+	asked  []*agentrecommendationports.AgentMatchRequest
 }
 
 func (r *recordingRecommender) MatchAgent(
 	_ context.Context,
-	req *agentports.AgentMatchRequest,
-) (*agentports.AgentMatch, error) {
+	req *agentrecommendationports.AgentMatchRequest,
+) (*agentrecommendationports.AgentMatch, error) {
 	r.asked = append(r.asked, req)
 	if r.answer == nil {
-		return &agentports.AgentMatch{Outcome: agentsuggestion.MatchNone}, nil
+		return &agentrecommendationports.AgentMatch{Outcome: agentsuggestion.MatchNone}, nil
 	}
 
 	return r.answer, nil
@@ -68,7 +68,7 @@ func recommendationResolver(
 	})
 
 	return &QueryResolver{&Deps{
-		Core:             &base.Core{PermissionEngine: permissions},
+		Core:             &resolvercore.Core{PermissionEngine: permissions},
 		AgentRecommender: recommender,
 	}}, ctx, userID
 }
@@ -78,10 +78,10 @@ func TestMyAgentMatch_AsksForThePersonTheAgentChosenAndTheContextAndMapsTheAnswe
 
 	suggested := &agentdefinition.Definition{ID: pulid.MustNew("agdef_"), Name: "Customer service"}
 	current := pulid.MustNew("agdef_")
-	recommender := &recordingRecommender{answer: &agentports.AgentMatch{
+	recommender := &recordingRecommender{answer: &agentrecommendationports.AgentMatch{
 		Outcome: agentsuggestion.MatchBetterAgent,
 		Agent:   suggested,
-		Tools: []agentports.AgentMatchTool{
+		Tools: []agentrecommendationports.AgentMatchTool{
 			{Name: "draft_reply", Summary: "Draft an email reply to a customer."},
 			{Name: "shipment_eta", Summary: "A shipment's projected arrival."},
 		},
@@ -122,9 +122,11 @@ func TestMyAgentMatch_AsksForThePersonTheAgentChosenAndTheContextAndMapsTheAnswe
 func TestMyAgentMatch_SaysWhenNoAgentCanHelp(t *testing.T) {
 	t.Parallel()
 
-	recommender := &recordingRecommender{answer: &agentports.AgentMatch{
+	recommender := &recordingRecommender{answer: &agentrecommendationports.AgentMatch{
 		Outcome: agentsuggestion.MatchNoAgent,
-		Tools:   []agentports.AgentMatchTool{{Name: "invoice_list", Summary: "List invoices."}},
+		Tools: []agentrecommendationports.AgentMatchTool{
+			{Name: "invoice_list", Summary: "List invoices."},
+		},
 	}}
 	resolver, ctx, _ := recommendationResolver(t, recommender, &assistantPermissions{allowed: true})
 
@@ -142,9 +144,16 @@ func TestMyAgentMatch_RefusesSomeoneWhoMayNotStartAConversation(t *testing.T) {
 	t.Parallel()
 
 	recommender := &recordingRecommender{}
-	resolver, ctx, _ := recommendationResolver(t, recommender, &assistantPermissions{allowed: false})
+	resolver, ctx, _ := recommendationResolver(
+		t,
+		recommender,
+		&assistantPermissions{allowed: false},
+	)
 
-	result, err := resolver.MyAgentMatch(ctx, gqlmodel.MyAgentMatchInput{Text: "When will it arrive?"})
+	result, err := resolver.MyAgentMatch(
+		ctx,
+		gqlmodel.MyAgentMatchInput{Text: "When will it arrive?"},
+	)
 
 	require.Error(t, err)
 	assert.Nil(t, result)

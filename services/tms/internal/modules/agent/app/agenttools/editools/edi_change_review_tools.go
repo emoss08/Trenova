@@ -5,14 +5,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidecision"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editransferchangeservice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -39,45 +47,45 @@ var ediReviewDecisions = agenttoolschema.Source(
 type tenderChangeReviewer interface {
 	GetTenderChange(
 		ctx context.Context,
-		req ediports.GetEDITenderChangeByIDRequest,
-	) (*edi.TenderChange, error)
+		req editenderports.GetEDITenderChangeByIDRequest,
+	) (*editenderchange.TenderChange, error)
 	ApplyTenderChange(
 		ctx context.Context,
-		req *ediservice.TenderChangeActionRequest,
+		req *editenderchangeservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TenderChange, error)
+	) (*editenderchange.TenderChange, error)
 	RejectTenderChange(
 		ctx context.Context,
-		req *ediservice.TenderChangeActionRequest,
+		req *editenderchangeservice.TenderChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TenderChange, error)
+	) (*editenderchange.TenderChange, error)
 }
 
 type transferChangeReviewer interface {
 	GetTransferChange(
 		ctx context.Context,
-		req ediports.GetEDITransferChangeByIDRequest,
-	) (*edi.TransferChange, error)
+		req editenderports.GetEDITransferChangeByIDRequest,
+	) (*edisync.TransferChange, error)
 	CheckTransferChangeReview(
 		ctx context.Context,
-		change *edi.TransferChange,
+		change *edisync.TransferChange,
 		tenantInfo pagination.TenantInfo,
 	) error
 	PlanTransferChangeEffect(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		change *edi.TransferChange,
-	) (*ediservice.TransferChangeEffect, error)
+		change *edisync.TransferChange,
+	) (*editransferchangeservice.TransferChangeEffect, error)
 	ApplyTransferChange(
 		ctx context.Context,
-		req *ediservice.TransferChangeActionRequest,
+		req *editransferchangeservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TransferChange, error)
+	) (*edisync.TransferChange, error)
 	RejectTransferChange(
 		ctx context.Context,
-		req *ediservice.TransferChangeActionRequest,
+		req *editransferchangeservice.TransferChangeActionRequest,
 		actor *permissionports.RequestActor,
-	) (*edi.TransferChange, error)
+	) (*edisync.TransferChange, error)
 }
 
 type changeReviewCall struct {
@@ -90,7 +98,7 @@ type changeReviewCall struct {
 
 type changeReviewPlan struct {
 	summary string
-	changes []*agent.RecordChange
+	changes []*agentpreview.RecordChange
 	partial bool
 	refusal error
 }
@@ -100,7 +108,7 @@ type changeReviewKind struct {
 	description string
 	rationale   string
 	idGuidance  string
-	changeKind  permission.RecordKind
+	changeKind  recordkind.Kind
 	plan        func(context.Context, *changeReviewCall) (*changeReviewPlan, error)
 	run         func(context.Context, *changeReviewCall) error
 	recipe      []string
@@ -124,7 +132,7 @@ func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 				"as it is.",
 			ediReviewDecisions,
 		),
-		common.FieldReason: map[string]any{
+		changepreview.FieldReason: map[string]any{
 			toolschema.KeyType:      toolschema.TypeString,
 			toolschema.KeyMaxLength: maxChangeReviewReasonChars,
 			toolschema.KeyDescription: "Why, in a sentence the other side reads with the " +
@@ -133,50 +141,50 @@ func (t *EdiChangeReviewTool) ParamSchema() map[string]any {
 	}, paramEDIChangeID, paramEDIReviewDecision)
 }
 
-func (t *EdiChangeReviewTool) Policy() agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func (t *EdiChangeReviewTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          t.Name(),
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceEDI,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
 		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     t.kind.rationale + ediDecisionRationaleEnd,
 	}
 }
 
-func (t *EdiChangeReviewTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
-	return common.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
+func (t *EdiChangeReviewTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
+	return toolparams.TargetOf(params, paramEDIChangeID, permission.ResourceEDI)
 }
 
 func (t *EdiChangeReviewTool) call(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*changeReviewCall, error) {
-	if err := common.GuardPreview(t, params); err != nil {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 
-	changeID, err := common.RequirePulid(params.Params, paramEDIChangeID)
+	changeID, err := toolparams.RequirePulid(params.Params, paramEDIChangeID)
 	if err != nil {
 		return nil, err
 	}
 
-	decision := common.OptionalString(params.Params, paramEDIReviewDecision)
+	decision := toolparams.OptionalString(params.Params, paramEDIReviewDecision)
 	if decision != reviewApply && decision != reviewReject {
 		return nil, fmt.Errorf(
 			"parameter %q must be Apply or Reject, not %q", paramEDIReviewDecision, decision,
 		)
 	}
 
-	reason := strings.TrimSpace(common.OptionalString(params.Params, common.FieldReason))
+	reason := strings.TrimSpace(toolparams.OptionalString(params.Params, changepreview.FieldReason))
 	if len(reason) > maxChangeReviewReasonChars {
 		return nil, fmt.Errorf(
 			"parameter %q is %d characters; a review keeps at most %d",
-			common.FieldReason, len(reason), maxChangeReviewReasonChars,
+			changepreview.FieldReason, len(reason), maxChangeReviewReasonChars,
 		)
 	}
 
@@ -184,14 +192,14 @@ func (t *EdiChangeReviewTool) call(
 		changeID: changeID,
 		apply:    decision == reviewApply,
 		reason:   reason,
-		tenant:   common.TenantFrom(*params),
+		tenant:   toolparams.TenantFrom(params),
 		actor:    params.Actor,
 	}, nil
 }
 
 func (t *EdiChangeReviewTool) plan(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*changeReviewPlan, error) {
 	call, err := t.call(params)
 	if err != nil {
@@ -203,9 +211,9 @@ func (t *EdiChangeReviewTool) plan(
 
 func (t *EdiChangeReviewTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	plan, err := t.plan(ctx, &params)
+	plan, err := t.plan(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -215,16 +223,16 @@ func (t *EdiChangeReviewTool) Validate(
 
 func (t *EdiChangeReviewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrEDIDecisionNeedsAPerson
 	}
 
-	call, err := t.call(&params)
+	call, err := t.call(params)
 	if err != nil {
 		return err
 	}
@@ -232,8 +240,8 @@ func (t *EdiChangeReviewTool) Execute(
 	return t.kind.run(ctx, call)
 }
 
-func (c *changeReviewCall) mark() *ediservice.ChangeReviewMark {
-	return &ediservice.ChangeReviewMark{
+func (c *changeReviewCall) mark() *edidecision.ChangeReviewMark {
+	return &edidecision.ChangeReviewMark{
 		Applied:    c.apply,
 		ReviewerID: actorUserID(c.actor),
 		Reason:     c.reason,
@@ -246,10 +254,10 @@ func (c *changeReviewCall) verb() string {
 		return "apply"
 	}
 
-	return common.VerbReject
+	return changepreview.VerbReject
 }
 
-func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.AgentTool {
+func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agenttoolports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
 		name:   "edi_review_tender_change",
 		recipe: []string{"edi_list_tender_changes", "edi_review_tender_change"},
@@ -262,12 +270,15 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.Agen
 		rationale: "Changes a load this organization committed to on another " +
 			"organization's word, and that organization sees the outcome.",
 		idGuidance: "The tender change, from edi_list_tender_changes. Never guess one.",
-		changeKind: permission.KindEDITenderChange,
+		changeKind: recordkind.EDITenderChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
-			change, err := reviewer.GetTenderChange(ctx, ediports.GetEDITenderChangeByIDRequest{
-				ID:         call.changeID,
-				TenantInfo: call.tenant,
-			})
+			change, err := reviewer.GetTenderChange(
+				ctx,
+				editenderports.GetEDITenderChangeByIDRequest{
+					ID:         call.changeID,
+					TenantInfo: call.tenant,
+				},
+			)
 			if err != nil {
 				return nil, err
 			}
@@ -275,7 +286,7 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.Agen
 			return planTenderChangeReview(change, call)
 		},
 		run: func(ctx context.Context, call *changeReviewCall) error {
-			req := &ediservice.TenderChangeActionRequest{
+			req := &editenderchangeservice.TenderChangeActionRequest{
 				ChangeID:   call.changeID,
 				TenantInfo: call.tenant,
 				Reason:     call.reason,
@@ -292,7 +303,7 @@ func NewReviewEDITenderChangeTool(reviewer tenderChangeReviewer) agentports.Agen
 	}}
 }
 
-func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.AgentTool {
+func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agenttoolports.AgentTool {
 	return &EdiChangeReviewTool{kind: changeReviewKind{
 		name: "edi_review_transfer_change",
 		recipe: []string{
@@ -308,11 +319,11 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.
 		rationale: "Changes a shipment on another organization's report, and that " +
 			"organization sees the outcome on its own shipment.",
 		idGuidance: "The transfer change, from edi_list_transfer_changes. Never guess one.",
-		changeKind: permission.KindEDITransferChange,
+		changeKind: recordkind.EDITransferChange,
 		plan: func(ctx context.Context, call *changeReviewCall) (*changeReviewPlan, error) {
 			change, err := reviewer.GetTransferChange(
 				ctx,
-				ediports.GetEDITransferChangeByIDRequest{
+				editenderports.GetEDITransferChangeByIDRequest{
 					ID:         call.changeID,
 					TenantInfo: call.tenant,
 				},
@@ -324,7 +335,7 @@ func NewReviewEDITransferChangeTool(reviewer transferChangeReviewer) agentports.
 			return planTransferChangeReview(ctx, reviewer, change, call)
 		},
 		run: func(ctx context.Context, call *changeReviewCall) error {
-			req := &ediservice.TransferChangeActionRequest{
+			req := &editransferchangeservice.TransferChangeActionRequest{
 				ChangeID:   call.changeID,
 				TenantInfo: call.tenant,
 				Reason:     call.reason,

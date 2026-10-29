@@ -15,9 +15,9 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/numberguard"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,12 +35,12 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Completion agentports.CompletionService
+	Completion llmports.CompletionService
 }
 
 type Service struct {
 	l          *zap.Logger
-	completion agentports.CompletionService
+	completion llmports.CompletionService
 }
 
 func New(p Params) *Service {
@@ -86,9 +86,9 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 		return result
 	}
 
-	completion, err := s.completion.CompleteStructured(ctx, &agentports.StructuredCompletionRequest{
+	completion, err := s.completion.CompleteStructured(ctx, &llmports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
-		Task:         aiprovider.TaskDailyBriefing,
+		Task:         aitask.TaskDailyBriefing,
 		System:       systemPrompt,
 		Context:      buildContext(req),
 		OutputSchema: outputSchema(),
@@ -123,7 +123,7 @@ func (s *Service) Write(ctx context.Context, req *Request) Result {
 func (s *Service) apply(
 	req *Request,
 	written *briefingDraft,
-	completion *agentports.StructuredCompletionResult,
+	completion *llmports.StructuredCompletionResult,
 	result *Result,
 ) {
 	known := make(map[briefing.SectionKey]struct{}, len(req.Sections))
@@ -168,7 +168,7 @@ func (s *Service) apply(
 
 func (s *Service) rejected(
 	req *Request,
-	completion *agentports.StructuredCompletionResult,
+	completion *llmports.StructuredCompletionResult,
 	where string,
 	unsupported []string,
 ) {
@@ -181,7 +181,7 @@ func (s *Service) rejected(
 }
 
 func (s *Service) logUnavailable(err error, role briefing.RoleKey) {
-	if errors.Is(err, agentports.ErrNoProviderConfigured) {
+	if errors.Is(err, llmports.ErrNoProviderConfigured) {
 		s.l.Info("no provider configured for the daily briefing; using computed wording",
 			zap.String("role", string(role)),
 		)

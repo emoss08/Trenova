@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -164,7 +166,7 @@ func TestValidateConfig_ValidationStructError(t *testing.T) {
 	l := NewLoader()
 
 	cfg := &Config{
-		App: AppConfig{
+		App: appconfig.Config{
 			Name:    "",
 			Version: "",
 			Env:     "development",
@@ -195,7 +197,7 @@ func TestValidateConfig_LoggingOutputFileWithFileConfig(t *testing.T) {
 	l := NewLoader()
 	cfg := newValidConfig()
 	cfg.Logging.Output = "file"
-	cfg.Logging.File = &LogFileConfig{
+	cfg.Logging.File = &loggingconfig.FileConfig{
 		Path:       "/var/log/app.log",
 		MaxSize:    100,
 		MaxAge:     30,

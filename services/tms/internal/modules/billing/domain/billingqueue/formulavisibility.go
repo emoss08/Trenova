@@ -1,11 +1,13 @@
 package billingqueue
 
+import "github.com/emoss08/trenova/internal/modules/operations/domain/shipmentformula"
+
 func (i *BillingQueueItem) WithoutFormulaContent() *BillingQueueItem {
 	if i == nil || i.Shipment == nil {
 		return i
 	}
 
-	shp := i.Shipment.WithoutFormulaContent()
+	shp := shipmentformula.Withhold(i.Shipment)
 	if shp == i.Shipment {
 		return i
 	}

@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/agentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -20,17 +20,17 @@ import (
 )
 
 type transcriptRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 
 	runs     map[pulid.ID]*agent.AgentRun
-	requests []agentports.ListAgentRunsByIDsRequest
+	requests []agentruntimeports.ListAgentRunsByIDsRequest
 }
 
 func (f *transcriptRuns) ListTranscriptsByIDs(
 	_ context.Context,
-	req agentports.ListAgentRunsByIDsRequest,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
 ) ([]*agent.AgentRun, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 	found := make([]*agent.AgentRun, 0, len(req.IDs))
 	for _, id := range req.IDs {
 		if run, ok := f.runs[id]; ok {
@@ -65,14 +65,14 @@ func newTranscriptFixture(granted bool) *transcriptFixture {
 }
 
 func (f *transcriptFixture) resolver() *AgentRunResolver {
-	return &AgentRunResolver{Deps: &Deps{Core: &base.Core{PermissionEngine: f.engine}}}
+	return &AgentRunResolver{Deps: &Deps{Core: &resolvercore.Core{PermissionEngine: f.engine}}}
 }
 
 func (f *transcriptFixture) ctx(t *testing.T) context.Context {
 	t.Helper()
 
-	factory := loaders.NewAgentRunTranscriptByIDLoaderFactory(
-		loaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
+	factory := agentloaders.NewAgentRunTranscriptByIDLoaderFactory(
+		agentloaders.AgentRunTranscriptByIDLoaderFactoryParams{Runs: f.runs},
 	)
 	ctx := factory.Attach(t.Context(), f.tenant)
 

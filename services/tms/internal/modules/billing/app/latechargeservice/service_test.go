@@ -5,20 +5,19 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -131,11 +130,11 @@ type lateChargeFixture struct {
 	actor          *permissionports.RequestActor
 	repo           *latechargeportsmock.MockLateChargeRepository
 	billingRepo    *tenantportsmock.MockBillingControlRepository
-	invoiceService *invoiceportsmock.MockInvoiceService
+	invoiceService *invoiceportsmock.MockInvoiceMemoService
 	svc            *Service
 }
 
-func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateChargeFixture {
+func newLateChargeFixture(t *testing.T, control *billingcontrol.BillingControl) *lateChargeFixture {
 	t.Helper()
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -145,16 +144,16 @@ func newLateChargeFixture(t *testing.T, control *tenant.BillingControl) *lateCha
 		actor:          testutil.NewSessionActor(userID, orgID, buID),
 		repo:           latechargeportsmock.NewMockLateChargeRepository(t),
 		billingRepo:    tenantportsmock.NewMockBillingControlRepository(t),
-		invoiceService: invoiceportsmock.NewMockInvoiceService(t),
+		invoiceService: invoiceportsmock.NewMockInvoiceMemoService(t),
 	}
 	f.billingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(control, nil).Once()
 	f.svc = &Service{
-		l:              zap.NewNop(),
-		db:             markingDB{},
-		repo:           f.repo,
-		billingRepo:    f.billingRepo,
-		invoiceService: f.invoiceService,
-		auditService:   &mocks.NoopAuditService{},
+		l:            zap.NewNop(),
+		db:           markingDB{},
+		repo:         f.repo,
+		billingRepo:  f.billingRepo,
+		invoiceMemos: f.invoiceService,
+		auditService: &mocks.NoopAuditService{},
 	}
 
 	return f
@@ -194,7 +193,9 @@ func TestAssessPreviewWritesNothing(t *testing.T) {
 
 	f := newLateChargeFixture(
 		t,
-		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeDisabled,
+		},
 	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
@@ -205,7 +206,7 @@ func TestAssessPreviewWritesNothing(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.True(t, result.Preview)
-	assert.Equal(t, tenant.LateChargeAssessmentModeDisabled, result.Mode)
+	assert.Equal(t, billingcontrol.LateChargeAssessmentModeDisabled, result.Mode)
 	assert.Equal(t, 0, result.MemosCreated)
 	assert.Equal(t, int64(750), result.TotalChargeMinor)
 	require.Len(t, result.Customers, 1)
@@ -219,7 +220,9 @@ func TestAssessRefusesARealRunWhenDisabled(t *testing.T) {
 
 	f := newLateChargeFixture(
 		t,
-		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeDisabled,
+		},
 	)
 
 	_, err := f.svc.Assess(
@@ -236,9 +239,9 @@ func TestAssessRefusesARealRunWhenDisabled(t *testing.T) {
 func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{
-		LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic,
-		InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+	f := newLateChargeFixture(t, &billingcontrol.BillingControl{
+		LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeAutomatic,
+		InvoicePostingMode:       billingcontrol.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
 	})
 	asOf := dueDate + 5*day + 31*day
 	amd := candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000)
@@ -314,9 +317,9 @@ func TestAssessRaisesOneLateChargeMemoPerCustomer(t *testing.T) {
 func TestAssessDoesNotAutoPostUnderManualReview(t *testing.T) {
 	t.Parallel()
 
-	f := newLateChargeFixture(t, &tenant.BillingControl{
-		LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic,
-		InvoicePostingMode:       tenant.InvoicePostingModeManualReviewRequired,
+	f := newLateChargeFixture(t, &billingcontrol.BillingControl{
+		LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeAutomatic,
+		InvoicePostingMode:       billingcontrol.InvoicePostingModeManualReviewRequired,
 	})
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
@@ -354,7 +357,9 @@ func TestAssessRollsBackAssessmentsWhenTheMemoFails(t *testing.T) {
 
 	f := newLateChargeFixture(
 		t,
-		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic},
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeAutomatic,
+		},
 	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
@@ -387,7 +392,9 @@ func TestAssessSkipsACustomerAnotherRunGotToFirst(t *testing.T) {
 
 	f := newLateChargeFixture(
 		t,
-		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeAutomatic},
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeAutomatic,
+		},
 	)
 	asOf := dueDate + 5*day + 1
 	f.expectCandidates(asOf, candidate(pulid.MustNew("cus_"), "AMD", "INV-2", 50_000))
@@ -441,7 +448,11 @@ func TestBuildPlansSeparatesACustomersCurrencies(t *testing.T) {
 		[]*latechargeports.LateChargeCandidate{usd, cad},
 		dueDate+5*day+1,
 		0,
-		testutil.NewSessionActor(pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("bu_")),
+		testutil.NewSessionActor(
+			pulid.MustNew("usr_"),
+			pulid.MustNew("org_"),
+			pulid.MustNew("bu_"),
+		),
 	)
 
 	require.Len(t, plans, 2, "a charge on a CAD invoice is owed in CAD, on its own memo")
@@ -455,7 +466,9 @@ func TestAssessReadsCustomersAPageAtATime(t *testing.T) {
 
 	f := newLateChargeFixture(
 		t,
-		&tenant.BillingControl{LateChargeAssessmentMode: tenant.LateChargeAssessmentModeDisabled},
+		&billingcontrol.BillingControl{
+			LateChargeAssessmentMode: billingcontrol.LateChargeAssessmentModeDisabled,
+		},
 	)
 	asOf := dueDate + 5*day + 1
 	first := make([]pulid.ID, customerPageSize)

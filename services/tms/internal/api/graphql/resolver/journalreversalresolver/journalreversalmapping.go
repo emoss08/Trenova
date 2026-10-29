@@ -2,7 +2,7 @@ package journalreversalresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -10,7 +10,7 @@ import (
 func journalReversalConnectionToModel(
 	result *pagination.CursorListResult[*journalreversal.Reversal],
 ) (*gqlmodel.JournalReversalConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *journalreversal.Reversal, cursor string) *gqlmodel.JournalReversalEdge {
 			return &gqlmodel.JournalReversalEdge{

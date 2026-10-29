@@ -8,11 +8,13 @@ import (
 	"mime/multipart"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/contentscanports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -34,17 +36,18 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           kernelports.Transactor
-	Repo         tenantports.OrganizationRepository
-	SSORepo      tenantports.SSOConfigRepository
-	AuditService auditports.AuditService
-	Storage      kernelports.Client
-	Config       *config.Config
-	Validator    *Validator
-	Encryption   *encryptionservice.Service
-	Plans        platformplanports.PlanService `optional:"true"`
-	ContentGate  contentscanports.Gate
+	Logger         *zap.Logger
+	DB             kernelports.Transactor
+	Repo           tenantports.OrganizationRepository
+	SSORepo        tenantports.SSOConfigRepository
+	AuditService   auditports.AuditService
+	Storage        kernelports.Client
+	SecurityConfig *securityconfig.Config
+	StorageConfig  *storageconfig.Config
+	Validator      *Validator
+	Encryption     *encryptionservice.Service
+	Plans          platformplanports.PlanService `optional:"true"`
+	ContentGate    contentscanports.Gate
 }
 
 type service struct {
@@ -54,7 +57,7 @@ type service struct {
 	ssoRepo      tenantports.SSOConfigRepository
 	auditService auditports.AuditService
 	storage      kernelports.Client
-	storageCfg   *config.StorageConfig
+	storageCfg   *storageconfig.Config
 	v            *Validator
 	enc          *encryptionservice.Service
 	plans        platformplanports.PlanService
@@ -70,11 +73,11 @@ func New(p Params) tenantports.OrganizationService {
 		ssoRepo:      p.SSORepo,
 		storage:      p.Storage,
 		auditService: p.AuditService,
-		storageCfg:   p.Config.GetStorageConfig(),
+		storageCfg:   p.StorageConfig,
 		v:            p.Validator,
 		enc:          p.Encryption,
 		plans:        p.Plans,
-		issuers:      p.Config.SSOIssuerPolicy(),
+		issuers:      p.SecurityConfig.SSOIssuerPolicy(),
 		contentGate:  p.ContentGate,
 	}
 }
@@ -381,7 +384,7 @@ func (s *service) GetMicrosoftSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
 ) (*tenantports.MicrosoftSSOConfig, error) {
-	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderAzureAD)
+	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, sso.SSOProviderAzureAD)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return &tenantports.MicrosoftSSOConfig{
@@ -421,7 +424,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	clientID := strings.TrimSpace(cfg.ClientID)
 	redirectURL := strings.TrimSpace(cfg.RedirectURL)
 
-	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, tenant.SSOProviderAzureAD)
+	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, sso.SSOProviderAzureAD)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -454,7 +457,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	if rawClientSecret != "" {
 		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
 			tenantInfo,
-			string(tenant.SSOProviderAzureAD),
+			string(sso.SSOProviderAzureAD),
 		))
 		if err != nil {
 			return nil, errortypes.NewBusinessError("Failed to encrypt Entra ID client secret").
@@ -462,12 +465,12 @@ func (s *service) UpsertMicrosoftSSOConfig(
 		}
 	}
 
-	entity := &tenant.SSOConfig{
+	entity := &sso.SSOConfig{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		Name:             "Microsoft Entra ID",
-		Provider:         tenant.SSOProviderAzureAD,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderAzureAD,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          cfg.Enabled,
 		EnforceSSO:       cfg.EnforceSSO,
 		AutoProvision:    false,
@@ -488,7 +491,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	return mapMicrosoftSSOConfig(saved), nil
 }
 
-func mapMicrosoftSSOConfig(entity *tenant.SSOConfig) *tenantports.MicrosoftSSOConfig {
+func mapMicrosoftSSOConfig(entity *sso.SSOConfig) *tenantports.MicrosoftSSOConfig {
 	if entity == nil {
 		return nil
 	}
@@ -527,7 +530,7 @@ func (s *service) GetOktaSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
 ) (*tenantports.OktaSSOConfig, error) {
-	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderOkta)
+	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, sso.SSOProviderOkta)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return &tenantports.OktaSSOConfig{
@@ -568,7 +571,7 @@ func (s *service) UpsertOktaSSOConfig(
 	clientID := strings.TrimSpace(cfg.ClientID)
 	redirectURL := strings.TrimSpace(cfg.RedirectURL)
 
-	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, tenant.SSOProviderOkta)
+	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, sso.SSOProviderOkta)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -584,7 +587,7 @@ func (s *service) UpsertOktaSSOConfig(
 		if issuerURL == "" {
 			multiErr.Add("issuerUrl", errortypes.ErrRequired, "Issuer URL is required")
 		}
-		tenant.ValidateOIDCIssuerURL(multiErr, "issuerUrl", issuerURL, s.issuers)
+		sso.ValidateOIDCIssuerURL(multiErr, "issuerUrl", issuerURL, s.issuers)
 		if clientID == "" {
 			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
 		}
@@ -602,7 +605,7 @@ func (s *service) UpsertOktaSSOConfig(
 	if rawClientSecret != "" {
 		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
 			tenantInfo,
-			string(tenant.SSOProviderOkta),
+			string(sso.SSOProviderOkta),
 		))
 		if err != nil {
 			return nil, errortypes.NewBusinessError("Failed to encrypt Okta client secret").
@@ -615,12 +618,12 @@ func (s *service) UpsertOktaSSOConfig(
 		scopes = []string{"openid", "profile", "email"}
 	}
 
-	entity := &tenant.SSOConfig{
+	entity := &sso.SSOConfig{
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		Name:             "Okta",
-		Provider:         tenant.SSOProviderOkta,
-		Protocol:         tenant.SSOProtocolOIDC,
+		Provider:         sso.SSOProviderOkta,
+		Protocol:         sso.SSOProtocolOIDC,
 		Enabled:          cfg.Enabled,
 		EnforceSSO:       cfg.EnforceSSO,
 		AutoProvision:    false,
@@ -641,7 +644,7 @@ func (s *service) UpsertOktaSSOConfig(
 	return mapOktaSSOConfig(saved), nil
 }
 
-func mapOktaSSOConfig(entity *tenant.SSOConfig) *tenantports.OktaSSOConfig {
+func mapOktaSSOConfig(entity *sso.SSOConfig) *tenantports.OktaSSOConfig {
 	if entity == nil {
 		return nil
 	}

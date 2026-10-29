@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerreviewports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,46 +16,56 @@ import (
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListReviewTemplatesRequest,
-) (*pagination.CursorListResult[*worker.PerformanceReviewTemplate], error) {
+	req *workerreviewports.ListReviewTemplatesRequest,
+) (*pagination.CursorListResult[*workerreview.PerformanceReviewTemplate], error) {
 	return s.repo.ListTemplates(ctx, req)
 }
 
 func (s *Service) GetTemplate(
 	ctx context.Context,
-	req *workerports.GetReviewTemplateByIDRequest,
-) (*worker.PerformanceReviewTemplate, error) {
+	req *workerreviewports.GetReviewTemplateByIDRequest,
+) (*workerreview.PerformanceReviewTemplate, error) {
 	return s.repo.GetTemplateByID(ctx, req)
+}
+
+func (s *Service) GetTemplatesByIDs(
+	ctx context.Context,
+	req *workerreviewports.GetReviewTemplatesByIDsRequest,
+) ([]*workerreview.PerformanceReviewTemplate, error) {
+	return s.repo.GetTemplatesByIDs(ctx, req)
 }
 
 func (s *Service) ActiveTemplates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.PerformanceReviewTemplate, error) {
+) ([]*workerreview.PerformanceReviewTemplate, error) {
 	return s.repo.ListActiveTemplates(ctx, tenantInfo)
 }
 
 func (s *Service) TemplateSelectOptions(
 	ctx context.Context,
-	req *workerports.ReviewTemplateSelectOptionsRequest,
-) (*pagination.ListResult[*worker.PerformanceReviewTemplate], error) {
+	req *workerreviewports.ReviewTemplateSelectOptionsRequest,
+) (*pagination.ListResult[*workerreview.PerformanceReviewTemplate], error) {
 	return s.repo.TemplateSelectOptions(ctx, req)
 }
 
 func (s *Service) validateTemplate(
 	ctx context.Context,
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 ) error {
 	entity.NormalizeCode()
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.TemplateCodeExists(ctx, &workerports.ReviewTemplateCodeExistsRequest{
-			TenantInfo: templateTenant(entity),
-			Code:       entity.Code,
-			ExcludeID:  entity.ID,
-		})
+		exists, err := s.repo.TemplateCodeExists(
+			ctx,
+			&workerreviewports.ReviewTemplateCodeExistsRequest{
+				TenantInfo: templateTenant(entity),
+				Code:       entity.Code,
+				ExcludeID:  entity.ID,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -76,9 +86,9 @@ func (s *Service) validateTemplate(
 
 func (s *Service) CreateTemplate(
 	ctx context.Context,
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 	userID pulid.ID,
-) (*worker.PerformanceReviewTemplate, error) {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	log := s.l.With(zap.String("operation", "CreateTemplate"))
 
 	if err := s.validateTemplate(ctx, entity); err != nil {
@@ -114,12 +124,12 @@ func (s *Service) CreateTemplate(
 
 func (s *Service) UpdateTemplate(
 	ctx context.Context,
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 	userID pulid.ID,
-) (*worker.PerformanceReviewTemplate, error) {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	log := s.l.With(zap.String("operation", "UpdateTemplate"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetReviewTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: templateTenant(entity),
 	})
@@ -172,14 +182,14 @@ type TemplateStatusChangeRequest struct {
 func (s *Service) ArchiveTemplate(
 	ctx context.Context,
 	req *TemplateStatusChangeRequest,
-) (*worker.PerformanceReviewTemplate, error) {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	return s.changeTemplateStatus(ctx, req, domaintypes.StatusInactive, permission.OpArchive)
 }
 
 func (s *Service) RestoreTemplate(
 	ctx context.Context,
 	req *TemplateStatusChangeRequest,
-) (*worker.PerformanceReviewTemplate, error) {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	return s.changeTemplateStatus(ctx, req, domaintypes.StatusActive, permission.OpRestore)
 }
 
@@ -188,10 +198,10 @@ func (s *Service) changeTemplateStatus(
 	req *TemplateStatusChangeRequest,
 	target domaintypes.Status,
 	operation permission.Operation,
-) (*worker.PerformanceReviewTemplate, error) {
+) (*workerreview.PerformanceReviewTemplate, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetReviewTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerreviewports.GetReviewTemplateByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -242,13 +252,16 @@ func (s *Service) changeTemplateStatus(
 
 func (s *Service) requireTemplateRetirable(
 	ctx context.Context,
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 ) error {
-	count, err := s.repo.CountReviewsByTemplate(ctx, &workerports.CountReviewsByTemplateRequest{
-		TenantInfo: templateTenant(entity),
-		TemplateID: entity.ID,
-		OpenOnly:   true,
-	})
+	count, err := s.repo.CountReviewsByTemplate(
+		ctx,
+		&workerreviewports.CountReviewsByTemplateRequest{
+			TenantInfo: templateTenant(entity),
+			TemplateID: entity.ID,
+			OpenOnly:   true,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -264,9 +277,9 @@ func (s *Service) requireTemplateRetirable(
 
 func (s *Service) CountOpenReviews(
 	ctx context.Context,
-	entity *worker.PerformanceReviewTemplate,
+	entity *workerreview.PerformanceReviewTemplate,
 ) (int, error) {
-	return s.repo.CountReviewsByTemplate(ctx, &workerports.CountReviewsByTemplateRequest{
+	return s.repo.CountReviewsByTemplate(ctx, &workerreviewports.CountReviewsByTemplateRequest{
 		TenantInfo: templateTenant(entity),
 		TemplateID: entity.ID,
 		OpenOnly:   true,
@@ -278,11 +291,14 @@ func (s *Service) CountOpenReviewsByTemplates(
 	tenantInfo pagination.TenantInfo,
 	templateIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountReviewsByTemplateIDs(ctx, &workerports.CountReviewsByTemplateIDsRequest{
-		TenantInfo:  tenantInfo,
-		TemplateIDs: templateIDs,
-		OpenOnly:    true,
-	})
+	return s.repo.CountReviewsByTemplateIDs(
+		ctx,
+		&workerreviewports.CountReviewsByTemplateIDsRequest{
+			TenantInfo:  tenantInfo,
+			TemplateIDs: templateIDs,
+			OpenOnly:    true,
+		},
+	)
 }
 
 func plural(count int) string {

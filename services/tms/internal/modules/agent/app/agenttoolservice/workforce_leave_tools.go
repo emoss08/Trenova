@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/workforcetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/timeofftools"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
 )
 
-var _ workforcetools.LeaveKeeper = (*workerleaveservice.Service)(nil)
+var _ timeofftools.LeaveKeeper = (*workerleaveservice.Service)(nil)

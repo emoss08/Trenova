@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 const (
@@ -57,7 +59,7 @@ type RecordRead struct {
 func NewAccountClient(cfg AccountConfig, opts ...Option) (*Client, error) {
 	token := strings.TrimSpace(cfg.AccessToken)
 	if token == "" {
-		return nil, ErrAccessTokenRequired
+		return nil, netsuiteerrors.ErrAccessTokenRequired
 	}
 	account, err := NormalizeAccountID(cfg.AccountID)
 	if err != nil {
@@ -94,7 +96,7 @@ func (c *Client) Upsert(ctx context.Context, req RecordWrite) (string, error) {
 		return "", err
 	}
 	if req.Body == nil {
-		return "", ErrBodyRequired
+		return "", netsuiteerrors.ErrBodyRequired
 	}
 	resp, err := c.core.do(ctx, &call{
 		endpoint: "record-upsert",
@@ -115,7 +117,7 @@ func (c *Client) Create(ctx context.Context, recordType string, body any) (strin
 		return "", err
 	}
 	if body == nil {
-		return "", ErrBodyRequired
+		return "", netsuiteerrors.ErrBodyRequired
 	}
 	resp, err := c.core.do(ctx, &call{
 		endpoint: "record-create",
@@ -136,7 +138,7 @@ func (c *Client) Patch(ctx context.Context, req RecordPatch) error {
 		return err
 	}
 	if req.Body == nil {
-		return ErrBodyRequired
+		return netsuiteerrors.ErrBodyRequired
 	}
 	var query url.Values
 	if len(req.Replace) > 0 {
@@ -177,7 +179,7 @@ func (c *Client) Get(ctx context.Context, req RecordRead, out any) error {
 		return err
 	}
 	if out == nil {
-		return ErrOutRequired
+		return netsuiteerrors.ErrOutRequired
 	}
 	query := url.Values{}
 	if req.ExpandSubResources {
@@ -201,7 +203,7 @@ func (c *Client) Get(ctx context.Context, req RecordRead, out any) error {
 		return err
 	}
 	if len(resp.Body) == 0 {
-		return ErrUnexpectedPayload
+		return netsuiteerrors.ErrUnexpectedPayload
 	}
 	return nil
 }
@@ -221,7 +223,7 @@ func recordItemPath(recordType, id string) (string, error) {
 func validRecordType(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if !recordTypePattern.MatchString(value) {
-		return "", ErrInvalidRecordType
+		return "", netsuiteerrors.ErrInvalidRecordType
 	}
 	return value, nil
 }
@@ -229,7 +231,7 @@ func validRecordType(raw string) (string, error) {
 func validExternalID(raw string) (string, error) {
 	value := strings.TrimSpace(raw)
 	if len(value) > MaxExternalIDLength || !externalIDPattern.MatchString(value) {
-		return "", ErrInvalidExternalID
+		return "", netsuiteerrors.ErrInvalidExternalID
 	}
 	return value, nil
 }
@@ -244,7 +246,7 @@ func recordIDSegment(raw string) (string, error) {
 		return externalIDPrefix + id, nil
 	}
 	if !isInternalID(value) {
-		return "", ErrInvalidRecordID
+		return "", netsuiteerrors.ErrInvalidRecordID
 	}
 	return value, nil
 }
@@ -266,7 +268,7 @@ func joinFieldNames(names []string) (string, error) {
 	for _, name := range names {
 		value := strings.TrimSpace(name)
 		if !fieldNamePattern.MatchString(value) {
-			return "", ErrInvalidFieldName
+			return "", netsuiteerrors.ErrInvalidFieldName
 		}
 		cleaned = append(cleaned, value)
 	}

@@ -3,7 +3,7 @@ package permissionchange
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +20,13 @@ type Params struct {
 	fx.In
 
 	Cache    permissionports.PermissionCacheRepository
-	Realtime agentports.RealtimeService
+	Realtime realtimeports.RealtimeService
 	Logger   *zap.Logger
 }
 
 type Notifier struct {
 	cache    permissionports.PermissionCacheRepository
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	l        *zap.Logger
 }
 
@@ -76,7 +76,7 @@ func (n *Notifier) announce(
 
 	if err := n.realtime.PublishResourceInvalidation(
 		ctx,
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			AudienceUserID: audience,

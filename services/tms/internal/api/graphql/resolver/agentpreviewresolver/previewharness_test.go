@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -47,8 +47,13 @@ func newPreviewHarness(t *testing.T, granted ...string) *previewHarness {
 		proposal:  proposalID,
 	}
 	h.resolver = &QueryResolver{&Deps{
-		Core:                   &base.Core{L: zap.NewNop(), PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants}},
-		AgentProposalService:   &resolvertest.PreviewProposals{Proposal: &agent.AgentProposal{ID: proposalID}},
+		Core: &resolvercore.Core{
+			L:                zap.NewNop(),
+			PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants},
+		},
+		AgentProposalService: &resolvertest.PreviewProposals{
+			Proposal: &agent.AgentProposal{ID: proposalID},
+		},
 		AgentDecisionService:   h.decisions,
 		AgentPlanService:       h.plans,
 		ProposalPreviewService: h.previews,

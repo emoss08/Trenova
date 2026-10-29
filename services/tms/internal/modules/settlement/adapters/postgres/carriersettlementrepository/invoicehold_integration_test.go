@@ -6,21 +6,23 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicarrierinvoicerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice/edicarrierinvoicedb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carrierinvoicematchrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/carriersettlementrepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -65,7 +67,8 @@ func setupHoldFixture(t *testing.T) *holdFixture {
 		ctx,
 		db,
 		pgx.RowToStructByPos[tenantRow],
-		"SELECT organization_id, business_unit_id FROM shipment_moves LIMIT 1",
+		"SELECT organization_id, business_unit_id FROM shipment_moves "+
+			"ORDER BY organization_id, business_unit_id LIMIT 1",
 	)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
@@ -132,8 +135,8 @@ func (f *holdFixture) assignment(t *testing.T) pulid.ID {
 		BusinessUnitID: f.tenant.BuID,
 		ShipmentMoveID: moveID,
 		CarrierID:      f.carrierID,
-		Status:         shipment.CarrierAssignmentStatusConfirmed,
-		RateMethod:     shipment.CarrierRateMethodFlat,
+		Status:         shipmentvocab.CarrierAssignmentStatusConfirmed,
+		RateMethod:     shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:       decimal.NewFromInt(1000),
 		TotalCost:      decimal.NewFromInt(1000),
 		CurrencyCode:   "USD",
@@ -142,7 +145,11 @@ func (f *holdFixture) assignment(t *testing.T) pulid.ID {
 	return assignment.ID
 }
 
-func (f *holdFixture) costEvent(t *testing.T, assignmentID *pulid.ID, settlementID *pulid.ID) pulid.ID {
+func (f *holdFixture) costEvent(
+	t *testing.T,
+	assignmentID *pulid.ID,
+	settlementID *pulid.ID,
+) pulid.ID {
 	t.Helper()
 	event := &carriersettlement.CostEvent{
 		ID:                  pulid.MustNew("cce_"),
@@ -210,30 +217,39 @@ func TestHoldUntilInvoiceMatched_Integration(t *testing.T) {
 	bareEvent := f.costEvent(t, &bareLoad, nil)
 	manualEvent := f.costEvent(t, nil, nil)
 
-	held, err := f.costs.ListPendingByCarrier(f.ctx, &carriersettlementports.ListPendingCostEventsRequest{
-		TenantInfo:              f.tenant,
-		CarrierID:               f.carrierID,
-		PeriodEnd:               1_800_000_000,
-		HoldUntilInvoiceMatched: true,
-	})
+	held, err := f.costs.ListPendingByCarrier(
+		f.ctx,
+		&carriersettlementports.ListPendingCostEventsRequest{
+			TenantInfo:              f.tenant,
+			CarrierID:               f.carrierID,
+			PeriodEnd:               1_800_000_000,
+			HoldUntilInvoiceMatched: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Subset(t, eventIDs(held), []pulid.ID{resolvedEvent, manualEvent})
 	assert.NotContains(t, eventIDs(held), openEvent)
 	assert.NotContains(t, eventIDs(held), bareEvent)
 
-	all, err := f.costs.ListPendingByCarrier(f.ctx, &carriersettlementports.ListPendingCostEventsRequest{
-		TenantInfo: f.tenant,
-		CarrierID:  f.carrierID,
-		PeriodEnd:  1_800_000_000,
-	})
+	all, err := f.costs.ListPendingByCarrier(
+		f.ctx,
+		&carriersettlementports.ListPendingCostEventsRequest{
+			TenantInfo: f.tenant,
+			CarrierID:  f.carrierID,
+			PeriodEnd:  1_800_000_000,
+		},
+	)
 	require.NoError(t, err)
 	assert.Subset(t, eventIDs(all), []pulid.ID{resolvedEvent, openEvent, bareEvent, manualEvent})
 
-	carriers, err := f.costs.ListCarrierIDsWithPendingEvents(f.ctx, carriersettlementports.ListCarriersWithPendingEventsRequest{
-		TenantInfo:              f.tenant,
-		PeriodEnd:               1_800_000_000,
-		HoldUntilInvoiceMatched: true,
-	})
+	carriers, err := f.costs.ListCarrierIDsWithPendingEvents(
+		f.ctx,
+		carriersettlementports.ListCarriersWithPendingEventsRequest{
+			TenantInfo:              f.tenant,
+			PeriodEnd:               1_800_000_000,
+			HoldUntilInvoiceMatched: true,
+		},
+	)
 	require.NoError(t, err)
 	assert.Contains(t, carriers, f.carrierID)
 
@@ -246,10 +262,13 @@ func TestHoldUntilInvoiceMatched_Integration(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, awaiting, "one load, counted once, still waits on its match")
 
-	resolved, err := f.matches.ListResolvedAssignmentIDs(f.ctx, carriersettlementports.ListResolvedMatchAssignmentsRequest{
-		TenantInfo:    f.tenant,
-		AssignmentIDs: []pulid.ID{resolvedLoad, openLoad, bareLoad},
-	})
+	resolved, err := f.matches.ListResolvedAssignmentIDs(
+		f.ctx,
+		carriersettlementports.ListResolvedMatchAssignmentsRequest{
+			TenantInfo:    f.tenant,
+			AssignmentIDs: []pulid.ID{resolvedLoad, openLoad, bareLoad},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{resolvedLoad}, resolved)
 }
@@ -262,25 +281,35 @@ func TestCarrierInvoiceDuplicates_Integration(t *testing.T) {
 	first, err := f.match(t, load, "inv 1001", carriersettlement.InvoiceMatchStatusMatched)
 	require.NoError(t, err)
 
-	live, err := f.matches.GetLiveByCarrierInvoiceNumber(f.ctx, &carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest{
-		TenantInfo:    f.tenant,
-		CarrierID:     f.carrierID,
-		InvoiceNumber: " INV  1001 ",
-	})
+	live, err := f.matches.GetLiveByCarrierInvoiceNumber(
+		f.ctx,
+		&carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest{
+			TenantInfo:    f.tenant,
+			CarrierID:     f.carrierID,
+			InvoiceNumber: " INV  1001 ",
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, live)
 	assert.Equal(t, first.ID, live.ID)
 
 	_, err = f.match(t, otherLoad, "INV 1001", carriersettlement.InvoiceMatchStatusMatched)
 	require.Error(t, err)
-	assert.True(t, dberror.IsUniqueConstraintViolation(err), "a carrier's invoice number holds one live match")
+	assert.True(
+		t,
+		dberror.IsUniqueConstraintViolation(err),
+		"a carrier's invoice number holds one live match",
+	)
 
 	_, err = f.match(t, otherLoad, "INV 1002", carriersettlement.InvoiceMatchStatusMatched)
 	require.NoError(t, err)
-	onLoad, err := f.matches.ListLiveByAssignment(f.ctx, carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
-		TenantInfo:   f.tenant,
-		AssignmentID: load,
-	})
+	onLoad, err := f.matches.ListLiveByAssignment(
+		f.ctx,
+		carriersettlementports.ListLiveCarrierInvoiceMatchesByAssignmentRequest{
+			TenantInfo:   f.tenant,
+			AssignmentID: load,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, onLoad, 1)
 
@@ -290,8 +319,8 @@ func TestCarrierInvoiceDuplicates_Integration(t *testing.T) {
 	_, err = f.match(t, otherLoad, "INV 1001", carriersettlement.InvoiceMatchStatusMatched)
 	require.NoError(t, err, "a rejected match frees its number")
 
-	invoice := func(number string) *edi.CarrierInvoice {
-		return &edi.CarrierInvoice{
+	invoice := func(number string) *edicarrierinvoice.CarrierInvoice {
+		return &edicarrierinvoice.CarrierInvoice{
 			OrganizationID:   f.tenant.OrgID,
 			BusinessUnitID:   f.tenant.BuID,
 			EDIPartnerID:     f.partnerID,
@@ -303,13 +332,20 @@ func TestCarrierInvoiceDuplicates_Integration(t *testing.T) {
 	require.NoError(t, err)
 	_, err = f.invoices.CreateCarrierInvoice(f.ctx, invoice(" a-77"))
 	require.Error(t, err)
-	assert.True(t, dberror.IsUniqueConstraintViolation(err), "a partner's invoice number is recorded once")
+	assert.True(
+		t,
+		dberror.IsUniqueConstraintViolation(err),
+		"a partner's invoice number is recorded once",
+	)
 
-	found, err := f.invoices.GetCarrierInvoiceByNumber(f.ctx, &ediports.GetEDICarrierInvoiceByNumberRequest{
-		TenantInfo:    f.tenant,
-		PartnerID:     f.partnerID,
-		InvoiceNumber: "a-77 ",
-	})
+	found, err := f.invoices.GetCarrierInvoiceByNumber(
+		f.ctx,
+		&ediports.GetEDICarrierInvoiceByNumberRequest{
+			TenantInfo:    f.tenant,
+			PartnerID:     f.partnerID,
+			InvoiceNumber: "a-77 ",
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, recorded.ID, found.ID)
 }
@@ -329,7 +365,7 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 
 	invoiceIDs := make([]pulid.ID, 0, 2)
 	for i, number := range []string{"R-9", " r-9"} {
-		invoice := &edi.CarrierInvoice{
+		invoice := &edicarrierinvoice.CarrierInvoice{
 			ID:               pulid.MustNew("edici_"),
 			OrganizationID:   f.tenant.OrgID,
 			BusinessUnitID:   f.tenant.BuID,
@@ -337,7 +373,7 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 			InboundMessageID: pulid.MustNew("edim_"),
 			InvoiceNumber:    number,
 		}
-		require.NoError(t, edidb.CarrierInvoices.Create(f.ctx, f.db, invoice))
+		require.NoError(t, edicarrierinvoicedb.CarrierInvoices.Create(f.ctx, f.db, invoice))
 		_, err := keel.Exec(
 			f.ctx,
 			f.db,
@@ -367,10 +403,13 @@ func TestCarrierInvoiceDuplicatesMigration_MarksExistingRepeats_Integration(t *t
 	require.NoError(t, err)
 	assert.Equal(t, invoiceIDs[0], duplicateOf, "the later copy points at the first")
 
-	repeat, err := f.matches.GetByID(f.ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
-		ID:         repeatMatch.ID,
-		TenantInfo: f.tenant,
-	})
+	repeat, err := f.matches.GetByID(
+		f.ctx,
+		carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
+			ID:         repeatMatch.ID,
+			TenantInfo: f.tenant,
+		},
+	)
 	require.NoError(t, err)
 	require.True(t, repeat.IsDuplicate())
 	assert.Equal(t, firstMatch.ID, *repeat.DuplicateOfMatchID)

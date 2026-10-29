@@ -31,7 +31,7 @@ var aIUsageRecordsTable = schema.Table{
 		{Name: "provider_id", Quoted: `"provider_id"`, Field: "ProviderID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Provider ID`, JSON: `providerId`},
 		{Name: "provider_kind", Quoted: `"provider_kind"`, Field: "ProviderKind", Kind: schema.KindString, Flags: 0, Label: `Provider Kind`, JSON: `providerKind`, Enum: enumAiproviderKind[:]},
 		{Name: "model", Quoted: `"model"`, Field: "Model", Kind: schema.KindString, Flags: 0, Label: `Model`, JSON: `model`},
-		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAiproviderTask[:]},
+		{Name: "task", Quoted: `"task"`, Field: "Task", Kind: schema.KindString, Flags: 0, Label: `Task`, JSON: `task`, Enum: enumAitaskTask[:]},
 		{Name: "surface", Quoted: `"surface"`, Field: "Surface", Kind: schema.KindString, Flags: 0, Label: `Surface`, JSON: `surface`, Enum: enumSurface[:]},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `User ID`, Doc: `Attribution: who and what the call was for, as far as the caller said.`, JSON: `userId`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
@@ -100,7 +100,7 @@ type AIUsageRecordsTable struct {
 	ProviderID              keelkinds.PulidIDCol
 	ProviderKind            aiproviderdb.KindCol
 	Model                   keel.StringCol
-	Task                    aiproviderdb.TaskCol
+	Task                    keelkinds.AitaskTaskCol
 	Surface                 SurfaceCol
 	UserID                  keelkinds.PulidIDCol
 	AgentDefinitionID       keelkinds.PulidIDCol
@@ -150,7 +150,7 @@ var AIUsageRecords = &AIUsageRecordsTable{
 	ProviderID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 3}}},
 	ProviderKind:            aiproviderdb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 4}}},
 	Model:                   keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 5}},
-	Task:                    aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 6}}},
+	Task:                    keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 6}}},
 	Surface:                 SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 7}}},
 	UserID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 8}}},
 	AgentDefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 9}}},
@@ -201,7 +201,7 @@ func BuildAIUsageRecords(r *keel.Ref) *AIUsageRecordsTable {
 		ProviderID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ProviderKind:            aiproviderdb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Model:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Task:                    aiproviderdb.TaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Task:                    keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Surface:                 SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		UserID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		AgentDefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
@@ -536,7 +536,7 @@ var enumAiproviderKind = [...]schema.EnumValue{
 	{Value: `OpenAIChat`, Label: `Open AI Chat`},
 }
 
-var enumAiproviderTask = [...]schema.EnumValue{
+var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `DocumentClassification`, Label: `Document Classification`},
 	{Value: `DocumentExtraction`, Label: `Document Extraction`},
 	{Value: `BillingDiagnosis`, Label: `Billing Diagnosis`},

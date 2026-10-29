@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +19,11 @@ func TestFiguresFindsWhatTheBoardShouldReadLive(t *testing.T) {
 			"the delivery window closed 22h 33m ago, 1557 minutes past it",
 			[]string{"22h", "33m", "1557 minutes"},
 		},
-		"money and percentages": {"it owes $1,240.50, 15% of the total", []string{"$1,240.50", "15%"}},
-		"a count":               {"the board marks all 40 moves as Late", []string{"40 moves"}},
+		"money and percentages": {
+			"it owes $1,240.50, 15% of the total",
+			[]string{"$1,240.50", "15%"},
+		},
+		"a count": {"the board marks all 40 moves as Late", []string{"40 moves"}},
 		"identifiers": {
 			"SEED-SHP-010 and S26100294798288 on I-35 with a 3PL in Q3",
 			[]string{},
@@ -53,7 +57,7 @@ func TestParseRefusesFiguresWrittenIntoTheWords(t *testing.T) {
 	args := lateBoard()
 	args["verdict"] = "SEED-SHP-010 is [22h 33m behind][2]."
 
-	_, problems := board.Parse(args)
+	_, problems := boardparse.Parse(args)
 
 	assert.Equal(t, []string{
 		`verdict states "22h", "33m"; the board reads every figure live from its blocks, ` +

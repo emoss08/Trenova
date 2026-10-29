@@ -3,10 +3,15 @@ package billingtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 )
 
 const bulkAssignBillersDescription = "Assign the biller who reviews billing queue items, one " +
@@ -45,27 +50,29 @@ const artifactBillingQueueItem = "billing_queue_item"
 // card, one decision, each item assigned as AssignBillerTool would.
 type AssignBillersTool struct {
 	single *AssignBillerTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
-func NewAssignBillersTool(billing common.BillingQueueDecider) agentports.AgentTool {
+func NewAssignBillersTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	single, _ := NewAssignBillerTool(billing).(*AssignBillerTool)
 
 	return &AssignBillersTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbAssignBiller,
 			Past:        pastAssigned,
 			Shared:      []string{paramBillerID},
 			Single:      single,
 			Unchanged:   unchangedAlreadyThere,
-			Labels:      common.QueueItemNumbers(billing),
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -75,28 +82,28 @@ func (t *AssignBillersTool) Name() string { return toolAssignBiller }
 func (t *AssignBillersTool) Recipe() []string {
 	return []string{
 		"billing_list_queue_items",
-		toolGetBillingQueueItem,
+		billingqueuepreview.ToolGetBillingQueueItem,
 		toolAssignBiller,
 	}
 }
 
-func (t *AssignBillersTool) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *AssignBillersTool) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
 func (t *AssignBillersTool) SearchTerms() []string {
-	return []string{"biller", "reviewer", "assign me", "start review", common.SearchTermBulk}
+	return []string{"biller", "reviewer", "assign me", "start review", recordbatch.SearchTermBulk}
 }
 
 func (t *AssignBillersTool) Description() string { return bulkAssignBillersDescription }
 
 func (t *AssignBillersTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
+	return recordbatch.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
 		paramBillerID: billerProperty(),
 	})
 }
 
-func (t *AssignBillersTool) Policy() agentports.ToolPolicy {
+func (t *AssignBillersTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = artifactBillingQueueItem
@@ -108,9 +115,9 @@ func (t *AssignBillersTool) Policy() agentports.ToolPolicy {
 
 func (t *AssignBillersTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -119,14 +126,14 @@ func (t *AssignBillersTool) SplitRecords(params map[string]any) ([]map[string]an
 
 func (t *AssignBillersTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *AssignBillersTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -135,36 +142,38 @@ func (t *AssignBillersTool) Execute(
 
 func (t *AssignBillersTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }
 
 // TransitionItemsToInReviewTool moves a set of items into review, each as
 // TransitionToInReviewTool would.
 type TransitionItemsToInReviewTool struct {
 	single *TransitionToInReviewTool
-	batch  *common.RecordBatch
+	batch  *recordbatch.RecordBatch
 }
 
-func NewTransitionItemsToInReviewTool(billing common.BillingQueueDecider) agentports.AgentTool {
+func NewTransitionItemsToInReviewTool(
+	billing billingqueuepreview.BillingQueueDecider,
+) agenttoolports.AgentTool {
 	single, _ := NewTransitionToInReviewTool(billing).(*TransitionToInReviewTool)
 
 	return &TransitionItemsToInReviewTool{
 		single: single,
-		batch: &common.RecordBatch{
-			Param:       common.ParamBillingQueueItemIDs,
-			SingleParam: common.ParamBillingQueueItemID,
+		batch: &recordbatch.RecordBatch{
+			Param:       billingqueuepreview.ParamBillingQueueItemIDs,
+			SingleParam: billingqueuepreview.ParamBillingQueueItemID,
 			Resource:    permission.ResourceBillingQueue,
-			Kinds:       []permission.RecordKind{permission.KindBillingQueueItem},
-			Noun:        common.NounBillingQueueItem,
-			Nouns:       common.NounBillingQueueItems,
+			Kinds:       []recordkind.Kind{recordkind.BillingQueueItem},
+			Noun:        billingqueuepreview.NounBillingQueueItem,
+			Nouns:       billingqueuepreview.NounBillingQueueItems,
 			Verb:        verbMoveIntoReview,
 			Past:        pastMovedIntoReview,
 			Shared:      []string{paramBillerID},
 			Single:      single,
 			Unchanged:   unchangedAlreadyThere,
-			Labels:      common.QueueItemNumbers(billing),
+			Labels:      billingqueuepreview.QueueItemNumbers(billing),
 		},
 	}
 }
@@ -173,27 +182,27 @@ func (t *TransitionItemsToInReviewTool) Name() string { return toolStartReview }
 
 func (t *TransitionItemsToInReviewTool) Target(
 	params map[string]any,
-) (agentports.ToolTarget, bool) {
+) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
 func (t *TransitionItemsToInReviewTool) SearchTerms() []string {
-	return []string{"review", "unblock", common.SearchTermBulk}
+	return []string{"review", "unblock", recordbatch.SearchTermBulk}
 }
 
 func (t *TransitionItemsToInReviewTool) Description() string { return bulkInReviewDescription }
 
 func (t *TransitionItemsToInReviewTool) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
+	return recordbatch.BulkIDsSchema(t.batch, bulkQueueItemIDsDescription, map[string]any{
 		paramBillerID: billerProperty(),
 	})
 }
 
-func (t *TransitionItemsToInReviewTool) Policy() agentports.ToolPolicy {
+func (t *TransitionItemsToInReviewTool) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = artifactBillingQueueItem
-	policy.Condition = &agentports.TierCondition{
+	policy.Condition = &agenttoolports.TierCondition{
 		Description: inReviewConditionDescription + " A set is held to what its most " +
 			"guarded item allows.",
 		Limit: t.tierLimit,
@@ -208,20 +217,20 @@ func (t *TransitionItemsToInReviewTool) Policy() agentports.ToolPolicy {
 // so a held item among ten waiting ones still puts the call before a person.
 func (t *TransitionItemsToInReviewTool) tierLimit(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // a TierCondition passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) agent.AutonomyTier {
 	if params.Actor == nil {
 		return agent.TierPropose
 	}
-	ids, err := common.RequirePulidSlice(
+	ids, err := toolparams.RequirePulidSlice(
 		params.Params,
-		common.ParamBillingQueueItemIDs,
-		common.MaxBulkRecords,
+		billingqueuepreview.ParamBillingQueueItemIDs,
+		recordbatch.MaxBulkRecords,
 	)
 	if err != nil {
 		return agent.TierPropose
 	}
-	tenant := common.TenantFrom(params)
+	tenant := toolparams.TenantFrom(params)
 	for _, id := range ids {
 		if t.single.tierFor(ctx, tenant, id) == agent.TierPropose {
 			return agent.TierPropose
@@ -233,9 +242,9 @@ func (t *TransitionItemsToInReviewTool) tierLimit(
 
 func (t *TransitionItemsToInReviewTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *TransitionItemsToInReviewTool) SplitRecords(
@@ -246,14 +255,14 @@ func (t *TransitionItemsToInReviewTool) SplitRecords(
 
 func (t *TransitionItemsToInReviewTool) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *TransitionItemsToInReviewTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -262,7 +271,7 @@ func (t *TransitionItemsToInReviewTool) Execute(
 
 func (t *TransitionItemsToInReviewTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }

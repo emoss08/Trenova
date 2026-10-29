@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/workflow"
@@ -12,10 +12,10 @@ import (
 
 type MetricsInterceptor struct {
 	interceptor.InterceptorBase
-	metrics *metrics.Temporal
+	metrics *platformmetrics.Temporal
 }
 
-func NewMetricsInterceptor(m *metrics.Temporal) *MetricsInterceptor {
+func NewMetricsInterceptor(m *platformmetrics.Temporal) *MetricsInterceptor {
 	return &MetricsInterceptor{
 		metrics: m,
 	}
@@ -43,7 +43,7 @@ func (m *MetricsInterceptor) InterceptWorkflow(
 
 type metricsActivityInbound struct {
 	interceptor.ActivityInboundInterceptorBase
-	metrics *metrics.Temporal
+	metrics *platformmetrics.Temporal
 }
 
 func (a *metricsActivityInbound) ExecuteActivity(
@@ -69,7 +69,7 @@ func (a *metricsActivityInbound) ExecuteActivity(
 
 type metricsWorkflowInbound struct {
 	interceptor.WorkflowInboundInterceptorBase
-	metrics *metrics.Temporal
+	metrics *platformmetrics.Temporal
 }
 
 func (w *metricsWorkflowInbound) ExecuteWorkflow(

@@ -10,7 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -32,7 +34,7 @@ const (
 type messageContext struct {
 	message     *inboundmessage.InboundMessage
 	shipment    *inboundmessageports.ShipmentPeek
-	reply       inboundmessageports.ReplyContext
+	reply       inboundreplyports.ReplyContext
 	stops       *inboundmessageports.StopTimes
 	location    *time.Location
 	orgName     string
@@ -83,8 +85,8 @@ func replyContextFor(
 	shipment *inboundmessageports.ShipmentPeek,
 	location *time.Location,
 	now int64,
-) inboundmessageports.ReplyContext {
-	out := inboundmessageports.ReplyContext{
+) inboundreplyports.ReplyContext {
+	out := inboundreplyports.ReplyContext{
 		SenderFirstName: stringutils.FirstName(message.FromName),
 		SenderAddress:   message.FromAddress,
 	}
@@ -124,7 +126,7 @@ func isDeliveredStatus(status string) bool {
 
 func behindPhrase(minutes int) string {
 	if minutes < minutesPerHour {
-		return "about " + stringutils.CountNoun(minutes, "minute", "minutes")
+		return "about " + inflect.CountNoun(minutes, "minute", "minutes")
 	}
 
 	hours := (minutes + halfHourMinutes) / minutesPerHour

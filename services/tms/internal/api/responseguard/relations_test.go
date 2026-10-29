@@ -15,7 +15,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/shared/textcase"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
 	"gopkg.in/yaml.v3"
@@ -304,7 +305,7 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry.JournalEntryLine":                           "a line of the journal entry that carries it",
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal.Line":                                      "a line of the manual journal request that carries it",
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation.Thread":                                          "the caller's own conversation a message belongs to",
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue.ApprovalRunItem":                               "one item of the billing queue approval run that carries it",
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun.ApprovalRunItem":                         "one item of the billing queue approval run that carries it",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment.Application":                                "how the payment that carries it was applied to an invoice",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice.Attachment":                                         "a file attached to the invoice that carries it",
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice.DocumentShareToken":                                 "the share link of an invoice delivery attachment",
@@ -321,19 +322,19 @@ var carried = map[string]string{
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureItem":                                      "a scanned item of the capture batch that carries it",
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture.CapturePage":                                      "a page of a scanned capture item",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIConnection":                                              "a connection of the EDI partner that carries it",
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIDocumentType":                                            "the document type an EDI message or communication profile is for",
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.EDIDocumentType":                                    "the document type an EDI message or communication profile is for",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfile":                                          "the field mapping of the EDI partner that carries it",
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem":                                      "one mapping of an EDI mapping profile",
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMessageValidationError":                                  "a validation error of the EDI message that carries it",
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITransactionSet":                                          "the X12 transaction set an EDI document type names",
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi.TenderRecipient":                                            "who a tender is sent to on the EDI connection that carries it",
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission.ResourcePermission":                             "a grant of the role that carries it",
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission.UserRoleAssignment":                             "a role held by the user that carries it",
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage.EDIMessageValidationError":                           "a validation error of the EDI message that carries it",
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument.EDITransactionSet":                                  "the X12 transaction set an EDI document type names",
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange.TenderRecipient":                                "who a tender is sent to on the EDI connection that carries it",
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac.ResourcePermission":                                   "a grant of the role that carries it",
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac.UserRoleAssignment":                                   "a role held by the user that carries it",
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant.OrganizationMembership":                             "an organization the user that carries it belongs to",
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate.UsState":                                             "reference data: a US state, the same for every tenant",
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention.DetentionEvidence":                             "evidence attached to the detention that carries it",
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention.DetentionNotice":                               "a notice sent for the detention that carries it",
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention.DetentionPolicyTier":                           "a tier of the detention policy that carries it",
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence.DetentionEvidence":                     "evidence attached to the detention that carries it",
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice.DetentionNotice":                         "a notice sent for the detention that carries it",
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy.DetentionPolicyTier":                     "a tier of the detention policy that carries it",
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order.OrderCharge":                                       "a charge of the order that carries it",
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment.AdditionalCharge":                               "an additional charge of the shipment that carries it",
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment.Assignment":                                     "the equipment and workers assigned to the move that carries it",
@@ -400,7 +401,10 @@ func TestCarriedListsOnlyTypesWithNoKind(t *testing.T) {
 	for key := range carried {
 		pkgPath, name := splitTypeKey(key)
 		if kind := kindOfName(registry, pkgPath, name); kind != "" {
-			stale = append(stale, fmt.Sprintf("%s is the %s kind; remove it from carried", key, kind))
+			stale = append(
+				stale,
+				fmt.Sprintf("%s is the %s kind; remove it from carried", key, kind),
+			)
 			continue
 		}
 		if _, ok := targets[key]; !ok {
@@ -555,14 +559,18 @@ func TestNamedKindsAreRegisteredResources(t *testing.T) {
 		require.Truef(t, registry.HasResource(kind.String()),
 			"%s names unknown resource %s", typ, kind)
 		require.Truef(t, isDomainPackage(typ.PkgPath()), "%s is not a domain type", typ)
-		require.NotEqualf(t, permission.Resource(stringutils.ConvertCamelToSnake(typ.Name())), kind,
+		require.NotEqualf(t, permission.Resource(textcase.ConvertCamelToSnake(typ.Name())), kind,
 			"%s is spelled as its resource; it needs no entry", typ)
 	}
 }
 
 // rootKindsOf is every kind a response written as typ returns as its own
 // record: the value itself, each item of a list, or each item of a page.
-func rootKindsOf(registry *permission.Registry, typ types.Type, depth int) []permission.Resource {
+func rootKindsOf(
+	registry *permissioncatalog.Registry,
+	typ types.Type,
+	depth int,
+) []permission.Resource {
 	if depth > maxDepth {
 		return nil
 	}
@@ -605,7 +613,7 @@ func rootKindsOf(registry *permission.Registry, typ types.Type, depth int) []per
 // whose every route requires an operation on the kind (or marks its records
 // as references), may write one as the response's own record.
 func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T) {
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	scoped := registry.DatabaseScopedResources()
 
 	var outside []string
@@ -616,9 +624,16 @@ func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T
 				continue
 			}
 			reached++
-			own := "internal/api/handlers/" + strings.ReplaceAll(kind.String(), "_", "") + "handler/"
+			own := "internal/api/handlers/" + strings.ReplaceAll(
+				kind.String(),
+				"_",
+				"",
+			) + "handler/"
 			if !strings.Contains(position, own) {
-				outside = append(outside, fmt.Sprintf("%s writes %s", shortPosition(position), kind))
+				outside = append(
+					outside,
+					fmt.Sprintf("%s writes %s", shortPosition(position), kind),
+				)
 			}
 		}
 	}

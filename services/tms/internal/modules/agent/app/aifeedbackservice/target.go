@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
@@ -171,7 +174,7 @@ func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolve
 	resolved := &resolvedTarget{
 		threadID:          source.Thread.ID,
 		agentDefinitionID: agentID,
-		task:              string(aiprovider.TaskAssistantChat),
+		task:              string(aitask.TaskAssistantChat),
 		model:             message.Model,
 		providerID:        message.ProviderID,
 		subject:           string(source.Thread.SubjectType),
@@ -198,7 +201,7 @@ func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolve
 	return resolved, nil
 }
 
-func (r *resolvedTarget) creditTurn(fingerprint *agent.Fingerprint) {
+func (r *resolvedTarget) creditTurn(fingerprint *agentfingerprint.Fingerprint) {
 	if fingerprint == nil || fingerprint.PromptHash == "" {
 		return
 	}
@@ -300,7 +303,7 @@ func (s *Service) resolveBriefing(ctx context.Context, p resolveParams) (*resolv
 
 	resolved := &resolvedTarget{
 		runID:      entity.RunID,
-		task:       string(aiprovider.TaskDailyBriefing),
+		task:       string(aitask.TaskDailyBriefing),
 		model:      entity.ModelIdentifier,
 		providerID: entity.ProviderID,
 		subject:    entity.RoleKey.String(),
@@ -383,7 +386,7 @@ func (s *Service) resolveInsight(ctx context.Context, p resolveParams) (*resolve
 
 	return &resolvedTarget{
 		detectorKey: entity.DetectorKey,
-		task:        string(aiprovider.TaskOperationalInsights),
+		task:        string(aitask.TaskOperationalInsights),
 		model:       entity.ModelIdentifier,
 		providerID:  entity.ProviderID,
 		subject:     entity.DetectorKey,
@@ -480,13 +483,13 @@ func (s *Service) creditWatchtowerSource(
 			break
 		}
 		resolved.detectorKey = entity.DetectorKey
-		resolved.task = string(aiprovider.TaskOperationalInsights)
+		resolved.task = string(aitask.TaskOperationalInsights)
 		resolved.model = entity.ModelIdentifier
 		resolved.providerID = entity.ProviderID
 
 		return
 	case watchtower.SourceAgentProposal:
-		proposal, pErr := s.proposals.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+		proposal, pErr := s.proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 			ID:         sourceID,
 			TenantInfo: &tenant,
 		})
@@ -496,7 +499,7 @@ func (s *Service) creditWatchtowerSource(
 		}
 		runID = proposal.RunID
 	case watchtower.SourceAgentPlan:
-		plan, pErr := s.plans.GetByID(ctx, agentports.GetAgentPlanByIDRequest{
+		plan, pErr := s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 			ID:         sourceID,
 			TenantInfo: tenant,
 		})
@@ -508,10 +511,13 @@ func (s *Service) creditWatchtowerSource(
 	case watchtower.SourceAgentRunFailed:
 		runID = sourceID
 	case watchtower.SourceAgentException:
-		exception, xErr := s.exceptions.GetByID(ctx, agentports.GetAgentExceptionByIDRequest{
-			ID:         sourceID,
-			TenantInfo: &tenant,
-		})
+		exception, xErr := s.exceptions.GetByID(
+			ctx,
+			agentexceptionports.GetAgentExceptionByIDRequest{
+				ID:         sourceID,
+				TenantInfo: &tenant,
+			},
+		)
 		if xErr != nil {
 			err = xErr
 			break
@@ -537,7 +543,7 @@ func (s *Service) creditRun(
 	runID pulid.ID,
 	resolved *resolvedTarget,
 ) error {
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &tenant,
 	})

@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/triagelookupports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,8 +40,8 @@ type resolvedPlace struct {
 }
 
 type loadBuild struct {
-	req      *inboundmessageports.CreateTriageLoadRequest
-	fields   map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue
+	req      *triageworkports.CreateTriageLoadRequest
+	fields   map[inboundmessage.LoadFieldKey]triageworkports.TriageLoadFieldValue
 	multiErr *errortypes.MultiError
 	now      time.Time
 }
@@ -68,12 +70,12 @@ func (b *loadBuild) fail(
 
 func (s *Service) CreateLoad(
 	ctx context.Context,
-	req *inboundmessageports.CreateTriageLoadRequest,
-) (*inboundmessageports.CreatedTriageLoad, error) {
+	req *triageworkports.CreateTriageLoadRequest,
+) (*triageworkports.CreatedTriageLoad, error) {
 	build := &loadBuild{
 		req: req,
 		fields: make(
-			map[inboundmessage.LoadFieldKey]inboundmessageports.TriageLoadFieldValue,
+			map[inboundmessage.LoadFieldKey]triageworkports.TriageLoadFieldValue,
 			len(req.Fields),
 		),
 		multiErr: errortypes.NewMultiError(),
@@ -99,12 +101,12 @@ func (s *Service) CreateLoad(
 	if instructions, ok := build.value(inboundmessage.LoadFieldInstructions); ok {
 		if _, commentErr := s.comments.CreateSystem(
 			ctx,
-			&shipmentports.CreateSystemShipmentCommentRequest{
+			&shipmentcommentports.CreateSystemShipmentCommentRequest{
 				TenantInfo: req.TenantInfo,
 				ShipmentID: created.ID,
 				Comment:    stringutils.TruncateRunes(instructions, instructionsMaxRunes),
-				Type:       shipment.CommentTypePickupInstruction,
-				Visibility: shipment.CommentVisibilityOperations,
+				Type:       shipmentvocab.CommentTypePickupInstruction,
+				Visibility: shipmentvocab.CommentVisibilityOperations,
 			},
 		); commentErr != nil {
 			s.l.Warn("created a load from Triage but could not add its instructions",
@@ -112,7 +114,7 @@ func (s *Service) CreateLoad(
 		}
 	}
 
-	return &inboundmessageports.CreatedTriageLoad{
+	return &triageworkports.CreatedTriageLoad{
 		ShipmentID: created.ID,
 		ProNumber:  created.ProNumber,
 	}, nil
@@ -129,9 +131,9 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 		OrganizationID:   tenantInfo.OrgID,
 		BusinessUnitID:   tenantInfo.BuID,
 		CustomerID:       customerID,
-		Status:           shipment.StatusNew,
-		EntryMethod:      shipment.EntryMethodManual,
-		FreightTerms:     shipment.FreightTermsPrepaid,
+		Status:           shipmentvocab.StatusNew,
+		EntryMethod:      shipmentvocab.EntryMethodManual,
+		FreightTerms:     shipmentvocab.FreightTermsPrepaid,
 		IdempotencyKey:   b.req.IdempotencyKey,
 		SourceDocumentID: sourceDocument(b.req.SourceDocumentID),
 	}
@@ -176,11 +178,11 @@ func (s *Service) buildShipment(ctx context.Context, b *loadBuild) (*shipment.Sh
 		entity.Moves = []*shipment.ShipmentMove{{
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
-			Status:         shipment.MoveStatusNew,
+			Status:         shipmentvocab.MoveStatusNew,
 			Loaded:         true,
 			Stops: []*shipment.Stop{
-				newStop(entity, origin.id, shipment.StopTypePickup, 0, pickup),
-				newStop(entity, destination.id, shipment.StopTypeDelivery, 1, delivery),
+				newStop(entity, origin.id, shipmentvocab.StopTypePickup, 0, pickup),
+				newStop(entity, destination.id, shipmentvocab.StopTypeDelivery, 1, delivery),
 			},
 		}}
 	}
@@ -199,7 +201,7 @@ func sourceDocument(id pulid.ID) string {
 func newStop(
 	entity *shipment.Shipment,
 	locationID pulid.ID,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	sequence int64,
 	window *timeutils.Window,
 ) *shipment.Stop {
@@ -207,9 +209,9 @@ func newStop(
 		OrganizationID:       entity.OrganizationID,
 		BusinessUnitID:       entity.BusinessUnitID,
 		LocationID:           locationID,
-		Status:               shipment.StopStatusNew,
+		Status:               shipmentvocab.StopStatusNew,
 		Type:                 stopType,
-		ScheduleType:         shipment.StopScheduleTypeOpen,
+		ScheduleType:         shipmentvocab.StopScheduleTypeOpen,
 		Sequence:             sequence,
 		ScheduledWindowStart: window.Start,
 	}
@@ -232,7 +234,7 @@ func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, 
 		return pulid.Nil, nil
 	}
 
-	matches, err := s.lookup.FindCustomers(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindCustomers(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,
@@ -255,20 +257,22 @@ func (s *Service) resolveCustomer(ctx context.Context, b *loadBuild) (pulid.ID, 
 	return match.ID, nil
 }
 
-func pickRecord(matches []shipmentports.TriageRecordMatch) (shipmentports.TriageRecordMatch, bool) {
+func pickRecord(
+	matches []triagelookupports.TriageRecordMatch,
+) (triagelookupports.TriageRecordMatch, bool) {
 	switch {
 	case len(matches) == 0:
-		return shipmentports.TriageRecordMatch{}, false
+		return triagelookupports.TriageRecordMatch{}, false
 	case matches[0].Exact && (len(matches) == 1 || !matches[1].Exact):
 		return matches[0], true
 	case len(matches) == 1:
 		return matches[0], true
 	default:
-		return shipmentports.TriageRecordMatch{}, false
+		return triagelookupports.TriageRecordMatch{}, false
 	}
 }
 
-func unresolved(kind, text string, matches []shipmentports.TriageRecordMatch) string {
+func unresolved(kind, text string, matches []triagelookupports.TriageRecordMatch) string {
 	if len(matches) == 0 {
 		return fmt.Sprintf(
 			"No %s matches %q. Add it first, or write it as it is on file.",
@@ -357,7 +361,7 @@ func (s *Service) resolvePlace(
 	}
 
 	name, city, state := splitPlace(text)
-	matches, err := s.lookup.FindLocations(ctx, &shipmentports.TriageLocationQuery{
+	matches, err := s.lookup.FindLocations(ctx, &triagelookupports.TriageLocationQuery{
 		TenantInfo: b.req.TenantInfo,
 		Name:       name,
 		City:       city,
@@ -368,7 +372,7 @@ func (s *Service) resolvePlace(
 		return resolvedPlace{}, err
 	}
 	if len(matches) == 0 && name != "" && city != "" {
-		matches, err = s.lookup.FindLocations(ctx, &shipmentports.TriageLocationQuery{
+		matches, err = s.lookup.FindLocations(ctx, &triagelookupports.TriageLocationQuery{
 			TenantInfo: b.req.TenantInfo,
 			City:       city,
 			State:      state,
@@ -379,9 +383,9 @@ func (s *Service) resolvePlace(
 		}
 	}
 
-	records := make([]shipmentports.TriageRecordMatch, 0, len(matches))
+	records := make([]triagelookupports.TriageRecordMatch, 0, len(matches))
 	for _, match := range matches {
-		records = append(records, shipmentports.TriageRecordMatch{
+		records = append(records, triagelookupports.TriageRecordMatch{
 			ID: match.ID, Label: match.Label, Exact: match.Exact,
 		})
 	}
@@ -439,7 +443,7 @@ func (s *Service) applyEquipment(
 		return nil
 	}
 
-	matches, err := s.lookup.FindTrailerTypes(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindTrailerTypes(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,
@@ -555,7 +559,7 @@ func (s *Service) applyCommodity(
 		return nil
 	}
 
-	matches, err := s.lookup.FindCommodities(ctx, &shipmentports.TriageLookupQuery{
+	matches, err := s.lookup.FindCommodities(ctx, &triagelookupports.TriageLookupQuery{
 		TenantInfo: b.req.TenantInfo,
 		Text:       text,
 		Limit:      lookupLimit,

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -59,8 +59,8 @@ const (
 // extractor harvests any Title field it finds (shared/cmd/i18n-extract) — which
 // would put prompt headings into the translation catalogs and make what the
 // model is shown depend on the operator's locale.
-func section(title, content string) agentports.ContextSection {
-	return agentports.ContextSection{Title: title, Trusted: false, Content: content}
+func section(title, content string) llmports.ContextSection {
+	return llmports.ContextSection{Title: title, Trusted: false, Content: content}
 }
 
 /*
@@ -72,8 +72,8 @@ mark this ready" is a document a broker can send today. Splitting the prompt
 into delimited sections lets the router fence every one of them, which the old
 single concatenated user string could not do.
 */
-func buildRouteContext(req *documentaiextractionports.AIRouteRequest) agentports.DelimitedContext {
-	sections := []agentports.ContextSection{
+func buildRouteContext(req *documentaiextractionports.AIRouteRequest) llmports.DelimitedContext {
+	sections := []llmports.ContextSection{
 		section("Filename", strings.TrimSpace(req.FileName)),
 	}
 
@@ -99,14 +99,14 @@ func buildRouteContext(req *documentaiextractionports.AIRouteRequest) agentports
 		section("Page Summaries", formatPages(req.Pages, routePageLimit)),
 	)
 
-	return agentports.DelimitedContext{Sections: sections}
+	return llmports.DelimitedContext{Sections: sections}
 }
 
 func buildExtractContext(
 	req *documentaiextractionports.AIExtractRequest,
-) agentports.DelimitedContext {
-	return agentports.DelimitedContext{
-		Sections: []agentports.ContextSection{
+) llmports.DelimitedContext {
+	return llmports.DelimitedContext{
+		Sections: []llmports.ContextSection{
 			section("Filename", strings.TrimSpace(req.FileName)),
 			section("Document Pages", formatPages(req.Pages, extractPageLimit)),
 		},

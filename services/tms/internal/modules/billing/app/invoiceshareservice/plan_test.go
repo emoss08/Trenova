@@ -3,7 +3,7 @@ package invoiceshareservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +20,11 @@ func TestPreviewShareRendersEachEmailAndSendsNothing(t *testing.T) {
 
 	preview, err := h.svc.PreviewShare(
 		h.ctxWithSharerActivation(t),
-		h.request([]pulid.ID{dana.ID}, "  Check the detention line  ", invoice.ShareTabCharges),
+		h.request(
+			[]pulid.ID{dana.ID},
+			"  Check the detention line  ",
+			invoiceshare.ShareTabCharges,
+		),
 		h.actor,
 	)
 	require.NoError(t, err)
@@ -44,7 +48,7 @@ func TestPreviewShareRefusesWhatShareRefuses(t *testing.T) {
 	h := newHarness(t)
 	_, err := h.svc.PreviewShare(
 		t.Context(),
-		h.request([]pulid.ID{h.sharer.ID}, "", invoice.ShareTabOverview),
+		h.request([]pulid.ID{h.sharer.ID}, "", invoiceshare.ShareTabOverview),
 		h.actor,
 	)
 	require.Error(t, err)
@@ -63,7 +67,7 @@ func TestPreviewShareSaysWhenNoEmailWouldGo(t *testing.T) {
 
 	preview, err := h.svc.PreviewShare(
 		h.ctxWithSharerActivation(t),
-		h.request([]pulid.ID{dana.ID}, "", invoice.ShareTabOverview),
+		h.request([]pulid.ID{dana.ID}, "", invoiceshare.ShareTabOverview),
 		h.actor,
 	)
 	require.NoError(t, err)

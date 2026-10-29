@@ -10,9 +10,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -29,7 +32,6 @@ type Options struct {
 	// filled in.
 	Resolvers agentread.ResolverParams
 	Engine    permissionports.PermissionEngine
-	Config    *config.Config
 }
 
 // NewReader is the reader a converted tool reads through, built as the
@@ -39,34 +41,31 @@ type Options struct {
 func NewReader(t testing.TB, opts Options) *agentread.Reader {
 	t.Helper()
 
-	cfg := opts.Config
-	if cfg == nil {
-		cfg = &config.Config{}
-	}
+	monitoring := &monitoringconfig.Config{}
 	logger := zap.NewNop()
 	registry := &metrics.Registry{
-		GraphQL: metrics.NewGraphQL(nil, logger, false, metrics.GraphQLOptions{}),
+		GraphQL: httpmetrics.NewGraphQL(nil, logger, false, httpmetrics.GraphQLOptions{}),
 	}
 
 	resolvers := opts.Resolvers
 	resolvers.Logger = logger
 	resolvers.PermissionEngine = opts.Engine
-	resolvers.Config = cfg
+	resolvers.MonitoringConfig = monitoring
 
 	return agentread.New(agentread.Params{
 		Params: gqlext.Params{
 			Observability: gqlext.NewObservabilityExtension(gqlext.ObservabilityParams{
-				Config: cfg, Logger: logger, Metrics: registry, Tracer: noopTracer{},
+				MonitoringConfig: monitoring, Logger: logger, Metrics: registry, Tracer: noopTracer{},
 			}),
 			CostBudget: gqlext.NewCostBudgetExtension(gqlext.CostBudgetParams{
-				Config: cfg, Logger: logger, Metrics: registry,
+				SecurityConfig: &securityconfig.Config{}, Logger: logger, Metrics: registry,
 			}),
 			ReadOnly: gqlext.NewReadOnlyExtension(gqlext.ReadOnlyParams{Logger: logger}),
 			FieldGuard: gqlext.NewFieldGuardExtension(gqlext.FieldGuardParams{
 				PermissionEngine: opts.Engine,
 			}),
 		},
-		Config:      cfg,
+		AppConfig:   &appconfig.Config{},
 		Schema:      agentread.NewSchema(resolvers),
 		Permissions: opts.Engine,
 	})
@@ -76,13 +75,13 @@ func NewReader(t testing.TB, opts Options) *agentread.Reader {
 // carries, at the given data access ceiling.
 func Read(
 	ctx context.Context,
-	reader agentports.GraphQLReader,
+	reader graphqlreadports.GraphQLReader,
 	actor *permissionports.RequestActor,
 	operation string,
 	variables map[string]any,
 	ceiling permission.FieldSensitivity,
-) (*agentports.GraphQLReadResult, error) {
-	return reader.Read(readscope.With(ctx, nil), &agentports.GraphQLReadRequest{
+) (*graphqlreadports.GraphQLReadResult, error) {
+	return reader.Read(readscope.With(ctx, nil), &graphqlreadports.GraphQLReadRequest{
 		Actor:             actor,
 		Operation:         operation,
 		Variables:         variables,

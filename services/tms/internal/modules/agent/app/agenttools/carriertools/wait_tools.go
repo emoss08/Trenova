@@ -8,14 +8,20 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -38,19 +44,19 @@ var errNoWaitService = errors.New("waits are not available here")
 // waitPolicy is the policy both wait tools share. A wait changes nothing in
 // the world: it parks the agent's own work and hands it back later, so it
 // runs on its own and leaves nothing for anyone outside the organization.
-func waitPolicy(name, rationale string) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+func waitPolicy(name, rationale string) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          name,
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceAgentRun,
 		Operation:     permission.OpRead,
-		Scope:         agent.ToolScopeRun,
+		Scope:         agenttooltrust.ToolScopeRun,
 		DefaultTier:   agent.TierAutoExecute,
 		MaxTier:       agent.TierAutoExecute,
 		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agent.ToolEffectChange,
+		Effect:        agenttooltrust.ToolEffectChange,
 		Reversible:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		CarriesTaint:  true,
 		// A wait is part of the agent's own runs: what it reports is read
 		// beside them in AI Control.
@@ -63,23 +69,23 @@ type waitUntilTool struct {
 	waits agentwaitports.AgentWaitService
 }
 
-func NewWaitUntilTool(waits agentwaitports.AgentWaitService) agentports.AgentTool {
+func NewWaitUntilTool(waits agentwaitports.AgentWaitService) agenttoolports.AgentTool {
 	return &waitUntilTool{waits: waits}
 }
 
 func (t *waitUntilTool) Name() string { return waitUntilName }
 
 func (t *waitUntilTool) Description() string {
-	return "Use it when someone asks to be told when something happens (\"let me know when it " +
-		"delivers\", \"tell me when the driver gets there\"): it parks the work until then, " +
-		"instead of checking back. It waits for a stop's arrival or departure (StopArrival, " +
-		"StopDeparture: met when the truck is seen there or the time is recorded), a reply about " +
-		"a shipment or from a carrier or customer (Reply), an appointment coming round " +
-		"(AppointmentNear), detention free time running out (FreeTimeEnding), a driver's drive " +
-		"time falling low (HOSDriveBelow), or a time (Time). When it ends, or gives up after " +
-		"giveUpAfterHours, you are started again here, told what happened and what you said you " +
-		"would do. A wait on something already true is refused with what is true now. After " +
-		"setting one, end your turn: say in one line what you wait for and what you will do then."
+	return "Park your work until something happens (\"let me know when it delivers\", \"tell " +
+		"me when the driver gets there\") instead of checking back. It waits for a stop's " +
+		"arrival or departure (StopArrival, StopDeparture: met when the truck is seen there " +
+		"or the time is recorded), a reply about a shipment or from a carrier or customer " +
+		"(Reply), an appointment coming round (AppointmentNear), detention free time running " +
+		"out (FreeTimeEnding), a driver's drive time falling low (HOSDriveBelow), or a time " +
+		"(Time). When it ends, or gives up after giveUpAfterHours, you are started again " +
+		"here, told what happened and what you said you would do. A wait on something " +
+		"already true is refused with what is true now. After setting one, end your turn: " +
+		"say in one line what you wait for and what you will do then."
 }
 
 func (t *waitUntilTool) ParamSchema() map[string]any {
@@ -87,7 +93,7 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
 			"until": agenttoolschema.Enum("What to wait for.", waitKinds),
-			common.FieldDescription: map[string]any{
+			changepreview.FieldDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
 					"beside the conversation: \"Truck 2214 to reach Kroger DC\".",
@@ -98,28 +104,28 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"meant to.",
 			},
 			"at": agenttoolschema.LocalDateTime("For Time: when to pick the work up."),
-			common.ParamShipmentMoveID: agenttoolschema.RecordIDText(
+			toolparams.ParamShipmentMoveID: agenttoolschema.RecordIDText(
 				permission.ResourceShipmentMove,
 				"For StopArrival, StopDeparture and AppointmentNear: the move the stop is on, from "+
 					"shipment_get.",
 			),
-			common.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
+			toolparams.ParamStopID: agenttoolschema.RecordIDText(permission.ResourceShipmentStop,
 				"The stop, from shipment_get: required for AppointmentNear; for StopArrival "+
 					"and StopDeparture, leave it out to wait for the move's next one."),
-			common.FieldShipmentID: agenttoolschema.RecordIDText(
+			changepreview.FieldShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
 				"For Reply: a reply about this shipment, from shipment_list or the run subject.",
 			),
-			common.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
+			toolparams.ParamCarrierID: agenttoolschema.RecordIDText(permission.ResourceCarrier,
 				"For Reply: a reply from this carrier, from carrier_list."),
-			common.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
+			toolparams.ParamCustomerID: agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"For Reply: a reply from this customer, from customer_list."),
-			common.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
+			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
 				"For HOSDriveBelow: the driver, from worker_list."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",
-				permission.KindDetentionOccurrence,
+				recordkind.DetentionOccurrence,
 			),
 			"minutesBefore": map[string]any{
 				toolschema.KeyType: toolschema.TypeInteger,
@@ -136,38 +142,38 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 					"anyway. Defaults to 24; at most 168.",
 			},
 		},
-		toolschema.KeyRequired:             []string{"until", common.FieldDescription},
+		toolschema.KeyRequired:             []string{"until", changepreview.FieldDescription},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
-func (t *waitUntilTool) Policy() agentports.ToolPolicy {
+func (t *waitUntilTool) Policy() agenttoolports.ToolPolicy {
 	return waitPolicy(t.Name(), "Parks the agent's own work until something happens and "+
 		"starts it again then; it changes no record and reaches nobody.")
 }
 
 func (t *waitUntilTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	_, err := t.request(&params)
+	_, err := t.request(params)
 
 	return err
 }
 
 func (t *waitUntilTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
-		return common.WarnWouldFail(
+		return changepreview.WarnWouldFail(
 			toolpreview.Build("Would park this work until something happens."),
 			err,
 		), nil
@@ -186,7 +192,7 @@ func (t *waitUntilTool) Preview(
 
 func (t *waitUntilTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -195,15 +201,15 @@ func (t *waitUntilTool) Execute(
 
 func (t *waitUntilTool) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	if err := common.GuardExecute(t, params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 	if t.waits == nil {
 		return nil, errNoWaitService
 	}
-	request, err := t.request(&params)
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +219,7 @@ func (t *waitUntilTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	return &agent.ToolExecutionResult{
+	return &agentrecord.ToolExecutionResult{
 		Action: "set",
 		Kind:   "wait",
 		Name:   wait.Description,
@@ -222,9 +228,9 @@ func (t *waitUntilTool) ExecuteWithResult(
 }
 
 func (t *waitUntilTool) request(
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*agentwaitports.RegisterWaitRequest, error) {
-	until, err := common.RequireString(params.Params, "until")
+	until, err := toolparams.RequireString(params.Params, "until")
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +239,7 @@ func (t *waitUntilTool) request(
 		return nil, errortypes.NewValidationError("until", errortypes.ErrInvalid,
 			"until must be one of "+strings.Join(waitKinds.Names(), ", "))
 	}
-	description, err := common.RequireString(params.Params, common.FieldDescription)
+	description, err := toolparams.RequireString(params.Params, changepreview.FieldDescription)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +258,13 @@ func (t *waitUntilTool) request(
 		Kind:            kind,
 		Condition:       condition,
 		Description:     description,
-		Then:            common.OptionalString(params.Params, "then"),
+		Then:            toolparams.OptionalString(params.Params, "then"),
 		LifetimeSeconds: giveUpAfter(params.Params),
 	}, nil
 }
 
 func giveUpAfter(params map[string]any) int64 {
-	hours := common.OptionalInt64(params, "giveUpAfterHours")
+	hours := toolparams.OptionalInt64(params, "giveUpAfterHours")
 	if hours <= 0 {
 		return 0
 	}
@@ -270,23 +276,23 @@ func giveUpAfter(params map[string]any) int64 {
 // which are required; this only reads what was sent.
 func waitCondition(
 	kind agentwait.Kind,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (agentwait.Condition, error) {
 	var condition agentwait.Condition
 	ids := []struct {
 		key    string
 		target *pulid.ID
 	}{
-		{common.ParamShipmentMoveID, &condition.ShipmentMoveID},
-		{common.ParamStopID, &condition.StopID},
-		{common.FieldShipmentID, &condition.ShipmentID},
-		{common.ParamCarrierID, &condition.CarrierID},
-		{common.ParamCustomerID, &condition.CustomerID},
-		{common.ParamWorkerID, &condition.WorkerID},
+		{toolparams.ParamShipmentMoveID, &condition.ShipmentMoveID},
+		{toolparams.ParamStopID, &condition.StopID},
+		{changepreview.FieldShipmentID, &condition.ShipmentID},
+		{toolparams.ParamCarrierID, &condition.CarrierID},
+		{toolparams.ParamCustomerID, &condition.CustomerID},
+		{toolparams.ParamWorkerID, &condition.WorkerID},
 		{"detentionOccurrenceId", &condition.DetentionOccurrenceID},
 	}
 	for _, field := range ids {
-		id, given, err := common.OptionalPulid(params.Params, field.key)
+		id, given, err := toolparams.OptionalPulid(params.Params, field.key)
 		if err != nil {
 			return condition, errortypes.NewValidationError(field.key, errortypes.ErrInvalid,
 				field.key+" is not a valid id")
@@ -295,13 +301,13 @@ func waitCondition(
 			*field.target = id
 		}
 	}
-	condition.MinutesBefore = int(common.OptionalInt64(params.Params, "minutesBefore"))
+	condition.MinutesBefore = int(toolparams.OptionalInt64(params.Params, "minutesBefore"))
 	if hours, ok := params.Params["driveHoursBelow"].(float64); ok {
 		condition.DriveMinutesBelow = int(math.Round(hours * 60))
 	}
 
 	if kind == agentwait.KindTime {
-		at, err := common.RequireLocalTime(
+		at, err := toolparams.RequireLocalTime(
 			params.Params,
 			"at",
 			timeutils.LoadLocation(params.Timezone),
@@ -319,7 +325,7 @@ type cancelWaitTool struct {
 	waits agentwaitports.AgentWaitService
 }
 
-func NewCancelWaitTool(waits agentwaitports.AgentWaitService) agentports.AgentTool {
+func NewCancelWaitTool(waits agentwaitports.AgentWaitService) agenttoolports.AgentTool {
 	return &cancelWaitTool{waits: waits}
 }
 
@@ -336,7 +342,7 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			paramWaitID: agenttoolschema.KindID(
 				"The wait to cancel, as agent_create_wait returned it (awt_…).",
-				permission.KindWait,
+				recordkind.Wait,
 			),
 		},
 		toolschema.KeyRequired:             []string{paramWaitID},
@@ -344,33 +350,33 @@ func (t *cancelWaitTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *cancelWaitTool) Policy() agentports.ToolPolicy {
+func (t *cancelWaitTool) Policy() agenttoolports.ToolPolicy {
 	return waitPolicy(t.Name(), "Cancels a wait the agent set on its own work; it changes "+
 		"no record and reaches nobody.")
 }
 
 func (t *cancelWaitTool) Validate(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
-	_, err := common.RequirePulid(params.Params, paramWaitID)
+	_, err := toolparams.RequirePulid(params.Params, paramWaitID)
 
 	return err
 }
 
 func (t *cancelWaitTool) Preview(
 	_ context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	if err := common.GuardPreview(t, &params); err != nil {
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
 	preview := toolpreview.Build("Would cancel the wait; the parked work would not be picked up.")
-	if _, err := common.RequirePulid(params.Params, paramWaitID); err != nil {
-		return common.WarnWouldFail(preview, err), nil
+	if _, err := toolparams.RequirePulid(params.Params, paramWaitID); err != nil {
+		return changepreview.WarnWouldFail(preview, err), nil
 	}
 
 	return preview, nil
@@ -378,15 +384,15 @@ func (t *cancelWaitTool) Preview(
 
 func (t *cancelWaitTool) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	if err := common.GuardExecute(t, params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return err
 	}
 	if t.waits == nil {
 		return errNoWaitService
 	}
-	id, err := common.RequirePulid(params.Params, paramWaitID)
+	id, err := toolparams.RequirePulid(params.Params, paramWaitID)
 	if err != nil {
 		return err
 	}

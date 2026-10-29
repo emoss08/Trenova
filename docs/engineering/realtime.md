@@ -19,18 +19,18 @@ domain write ── PublishResourceInvalidation ──▶ in-memory queue ──
 
 | Piece | Where |
 |---|---|
-| Port (events, envelopes, gateway, broker) | `internal/modules/agent/ports/agentports/realtime.go` |
+| Port (events, envelopes, gateway, broker) | `internal/modules/agent/ports/realtimeports/realtime.go` |
 | Publishing an invalidation | `internal/modules/kernel/app/realtimeservice/service.go` |
 | Opening streams, presence and typing rules | `internal/modules/kernel/app/realtimeservice/gateway.go` |
 | Redis bus, fan-out, replay, presence register | `internal/infrastructure/realtimebroker/` |
 | HTTP endpoints | `internal/api/handlers/realtimehandler/handler.go` |
 | Wiring (publisher in every process, gateway in the API) | `internal/bootstrap/modules/infrastructure/realtime.go` |
 | Browser client | `client/packages/shared/src/services/realtime.ts` (`realtimeClient`) |
-| Configuration and defaults | `realtime:` in `config/config.example.yaml`, `config.RealtimeConfig` |
+| Configuration and defaults | `realtime:` in `config/config.example.yaml`, `realtimeconfig.Config` |
 
 ## Publishing
 
-Call `agentports.RealtimeService.PublishResourceInvalidation` after a write
+Call `realtimeports.RealtimeService.PublishResourceInvalidation` after a write
 commits. It validates the request, encodes the event once (plus a redacted copy
 for portal readers) and puts it on a bounded queue. It does not wait on Redis
 or anything else, so it is safe on a hot path: a bulk operation that publishes
@@ -98,7 +98,7 @@ once and hands it to the streams open on that replica for the entry's tenant.
 
 ## Reading changes from a worker
 
-`realtimebroker.ChangeFeed` (`agentports.RecordChangeFeed`, provided with the
+`realtimebroker.ChangeFeed` (`realtimeports.RecordChangeFeed`, provided with the
 publisher in every process) lets code that is not a browser ask what changed to
 a set of records since a cursor: `Head` names the tenant's shard and newest entry,
 and `Since` scans forward from it, bounded, keeping tenant-wide invalidations

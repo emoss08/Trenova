@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -33,8 +34,8 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
-	connection, err := NewConnectionRepository(ConnectionParams{DB: conn, Logger: logger}).
-		Create(ctx, newConnection(tenant, userID, realm, 1_000))
+	connection, err := accountingconnectionrepository.NewConnectionRepository(accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}).
+		Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 	require.NoError(t, err)
 
 	const (
@@ -112,7 +113,12 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		Operation:    accountingsync.SyncOperationCreate,
 		PostedBefore: &before,
 	})
-	assert.Equal(t, []pulid.ID{backfillable.ID}, ids(backfill), "dated before the start date is never sent")
+	assert.Equal(
+		t,
+		[]pulid.ID{backfillable.ID},
+		ids(backfill),
+		"dated before the start date is never sent",
+	)
 	assert.Equal(t, "INV-CAND-1", backfill[0].ObjectNumber)
 	assert.Equal(t, start+50, backfill[0].DocumentDate)
 	assert.Equal(t, postedEarly, backfill[0].PostedAt)
@@ -191,7 +197,9 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	cp := customerpaymentdb.Payments
 	require.NoError(t, cp.CreateMany(ctx, db, []*customerpayment.Payment{undone, kept}))
 	for _, payment := range []*customerpayment.Payment{undone, kept} {
-		_, err = keel.Exec(ctx, db,
+		_, err = keel.Exec(
+			ctx,
+			db,
 			"UPDATE customer_payments SET created_at = $1 WHERE id = $2 AND organization_id = $3 AND business_unit_id = $4",
 			payment.PaymentDate+10,
 			payment.ID.String(),
@@ -207,7 +215,12 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 		PostedBefore: &before,
 		UndoneBefore: &before,
 	})
-	assert.Equal(t, []pulid.ID{kept.ID}, ids(payments), "a payment reversed before sync began nets to nothing")
+	assert.Equal(
+		t,
+		[]pulid.ID{kept.ID},
+		ids(payments),
+		"a payment reversed before sync began nets to nothing",
+	)
 	assert.Empty(t, payments[0].ObjectNumber)
 
 	voids := list(&accountingsyncports.ListAccountingSyncCandidatesRequest{
@@ -227,12 +240,15 @@ func TestSyncRecordRepository_ListCandidatesFindsPostedDocumentsWithoutARecord(t
 	assert.Error(t, err, "customers are dependencies, never swept")
 
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: org.BusinessUnitID}
-	none, err := records.ListCandidates(dbscope.WithTenant(ctx, stranger.DBTenant()), &accountingsyncports.ListAccountingSyncCandidatesRequest{
-		TenantInfo:   stranger,
-		ConnectionID: connection.ID,
-		ObjectType:   accountingsync.SyncObjectInvoice,
-		Operation:    accountingsync.SyncOperationCreate,
-	})
+	none, err := records.ListCandidates(
+		dbscope.WithTenant(ctx, stranger.DBTenant()),
+		&accountingsyncports.ListAccountingSyncCandidatesRequest{
+			TenantInfo:   stranger,
+			ConnectionID: connection.ID,
+			ObjectType:   accountingsync.SyncObjectInvoice,
+			Operation:    accountingsync.SyncOperationCreate,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, none)
 }

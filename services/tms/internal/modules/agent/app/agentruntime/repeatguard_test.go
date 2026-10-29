@@ -5,7 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,18 +23,18 @@ func TestRun_WillNotRepeatACallThatAlreadyFailedUnchanged(t *testing.T) {
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_run", args),
-		toolTurn("report_run", args),
-		textTurn("I could not start it."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_run", args),
+		runtimetest.ToolTurn("report_run", args),
+		runtimetest.TextTurn("I could not start it."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("report_run"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_run"),
+		Actor:      runtimetest.Actor(),
 		Input:      "run the unbilled report",
 	})
 	require.NoError(t, err)
@@ -60,20 +64,20 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 
 	args := map[string]any{"statuses": map[string]any{"item": []any{"Completed"}}}
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_run", args),
-		toolTurn("report_run", args),
-		toolTurn("report_run", args),
-		textTurn("The report refused the status filter, so it did not run."),
-		toolTurn("report_run", args),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_run", args),
+		runtimetest.ToolTurn("report_run", args),
+		runtimetest.ToolTurn("report_run", args),
+		runtimetest.TextTurn("The report refused the status filter, so it did not run."),
+		runtimetest.ToolTurn("report_run", args),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("report_run"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_run"),
+		Actor:      runtimetest.Actor(),
 		Input:      "run the unbilled report",
 	})
 	require.NoError(t, err)
@@ -88,7 +92,7 @@ func TestRun_StopsCallingToolsAfterRepeatedFailedCalls(t *testing.T) {
 	assert.Empty(t, completion.Requests[2].Reask)
 	assert.Equal(t, specNames(completion.Requests[2].Tools), specNames(final.Tools),
 		"the tools stay declared so the cached prefix holds")
-	assert.Equal(t, stuckNote, final.Messages[len(final.Messages)-1].Content)
+	assert.Equal(t, loopguard.StuckNote, final.Messages[len(final.Messages)-1].Content)
 }
 
 // The retry that was wanted: same tool, different arguments. Blocking that
@@ -98,18 +102,21 @@ func TestRun_AllowsARetryWithDifferentArguments(t *testing.T) {
 	t.Parallel()
 
 	tool := queryTool("report_run", nil, errors.New("expected a list, got map"))
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_run", map[string]any{"statuses": map[string]any{"item": []any{"A"}}}),
-		toolTurn("report_run", map[string]any{"statuses": []any{"A"}}),
-		textTurn("done"),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn(
+			"report_run",
+			map[string]any{"statuses": map[string]any{"item": []any{"A"}}},
+		),
+		runtimetest.ToolTurn("report_run", map[string]any{"statuses": []any{"A"}}),
+		runtimetest.TextTurn("done"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("report_run"),
-		Actor:      testActor(),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_run"),
+		Actor:      runtimetest.Actor(),
 		Input:      "run the unbilled report",
 	})
 	require.NoError(t, err)
@@ -125,18 +132,18 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 
 	args := map[string]any{"status": "Completed"}
 	tool := queryTool("shipment_list", map[string]any{"results": []any{}}, nil)
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("shipment_list", args),
-		toolTurn("shipment_list", args),
-		textTurn("nothing found"),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("shipment_list", args),
+		runtimetest.ToolTurn("shipment_list", args),
+		runtimetest.TextTurn("nothing found"),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{
-		Tools: []agentports.AgentQueryTool{tool},
+		Tools: []agenttoolports.AgentQueryTool{tool},
 	}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_list"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_list"),
+		Actor:      runtimetest.Actor(),
 		Input:      "anything",
 	})
 	require.NoError(t, err)
@@ -145,60 +152,4 @@ func TestRun_AnswersARepeatedReadFromTheFirst(t *testing.T) {
 	repeat := result.Messages[4]
 	assert.False(t, repeat.ToolFailed, "a repeated read is not shown as a failure")
 	assert.Contains(t, repeat.Content, "already ran earlier in this turn")
-}
-
-// Key order is a serialisation detail of whichever provider produced the call,
-// not a difference in what was asked.
-func TestCallKey_IgnoresArgumentOrder(t *testing.T) {
-	t.Parallel()
-
-	first, ok := callKey(agentports.ToolCall{
-		Name:      "report_run",
-		Arguments: map[string]any{"a": 1, "b": 2},
-	})
-	require.True(t, ok)
-	second, ok := callKey(agentports.ToolCall{
-		Name:      "report_run",
-		Arguments: map[string]any{"b": 2, "a": 1},
-	})
-	require.True(t, ok)
-
-	assert.Equal(t, first, second)
-}
-
-func TestCallKey_SeparatesToolsThatShareArguments(t *testing.T) {
-	t.Parallel()
-
-	args := map[string]any{"id": "shp_1"}
-	first, _ := callKey(agentports.ToolCall{Name: "shipment_get", Arguments: args})
-	second, _ := callKey(agentports.ToolCall{Name: "shipment_cancel", Arguments: args})
-
-	assert.NotEqual(t, first, second)
-}
-
-func TestFanOutNote_RemindsOnlyFromTheThirdSingleFetch(t *testing.T) {
-	t.Parallel()
-
-	assert.Empty(t, fanOutNote("billing_get_queue_item", 2))
-	assert.Empty(t, fanOutNote("billing_list_queue_items", 5))
-	assert.Contains(t, fanOutNote("billing_get_queue_item", 3), "3rd billing_get_queue_item call")
-	assert.Contains(t, fanOutNote("billing_get_queue_item", 12), "12th")
-}
-
-func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
-	t.Parallel()
-
-	guard := newRepeatGuard()
-	read := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
-	other := agentports.ToolCall{Name: "billing_get_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_2"}}
-	write := agentports.ToolCall{Name: "billing_approve_queue_item", Arguments: map[string]any{"billingQueueItemId": "bqi_1"}}
-
-	assert.False(t, guard.readBefore(read), "a first read runs")
-	guard.ran(read)
-	assert.True(t, guard.readBefore(read), "the same read again is answered from the first")
-	assert.False(t, guard.readBefore(other), "a read with other arguments runs")
-
-	guard.ran(write)
-	assert.False(t, guard.readBefore(read), "after a write the record may have changed, so it is read again")
-	assert.False(t, guard.readBefore(write), "a write is never answered from an earlier one")
 }

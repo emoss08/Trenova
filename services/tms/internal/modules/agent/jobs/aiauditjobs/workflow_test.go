@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -59,7 +59,7 @@ func TestRegistriesShareTheirQueuesWorkers(t *testing.T) {
 func TestSchedules(t *testing.T) {
 	t.Parallel()
 
-	schedules := NewScheduleProvider(&config.Config{}).GetSchedules()
+	schedules := NewScheduleProvider(&aiauditconfig.Config{}).GetSchedules()
 	require.Len(t, schedules, 4)
 
 	ids := map[string]bool{}
@@ -71,7 +71,7 @@ func TestSchedules(t *testing.T) {
 		ids[s.ID] = true
 	}
 	assert.Equal(t, ProjectorScheduleID, schedules[0].ID)
-	assert.Equal(t, (&config.AIAuditProjectorConfig{}).GetInterval(), schedules[0].Spec.Interval,
+	assert.Equal(t, (&aiauditconfig.ProjectorConfig{}).GetInterval(), schedules[0].Spec.Interval,
 		"the projector runs every aiAudit.projector.interval")
 }
 

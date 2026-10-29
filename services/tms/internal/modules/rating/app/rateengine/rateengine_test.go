@@ -1,14 +1,14 @@
 package rateengine
 
 import (
-	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -198,7 +199,7 @@ func testShipment() *shipment.Shipment {
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		CustomerID:     custID,
-		Status:         shipment.StatusNew,
+		Status:         shipmentvocab.StatusNew,
 		CreatedAt:      testNow,
 		Weight:         new(int64(40000)),
 		Pieces:         new(int64(22)),
@@ -218,15 +219,15 @@ func testShipment() *shipment.Shipment {
 					{
 						ID:         pulid.MustNew("stp_"),
 						Sequence:   0,
-						Type:       shipment.StopTypePickup,
-						Status:     shipment.StopStatusNew,
+						Type:       shipmentvocab.StopTypePickup,
+						Status:     shipmentvocab.StopStatusNew,
 						LocationID: pulid.MustNew("loc_"),
 					},
 					{
 						ID:         pulid.MustNew("stp_"),
 						Sequence:   1,
-						Type:       shipment.StopTypeDelivery,
-						Status:     shipment.StopStatusNew,
+						Type:       shipmentvocab.StopTypeDelivery,
+						Status:     shipmentvocab.StopStatusNew,
 						LocationID: pulid.MustNew("loc_"),
 					},
 				},
@@ -441,7 +442,11 @@ func TestARefusalTheModuleWroteIsInTheReadersLanguage(t *testing.T) {
 	result, err := d.svc.RateShipment(ctx, rateRequest(testShipment()))
 
 	require.NoError(t, err)
-	assert.Equal(t, "La entrada rate no tiene valor ni valor predeterminado", result.Quote.Trace.Error)
+	assert.Equal(
+		t,
+		"La entrada rate no tiene valor ni valor predeterminado",
+		result.Quote.Trace.Error,
+	)
 }
 
 func TestTraceRecordsWinnerAndLosers(t *testing.T) {
@@ -536,7 +541,7 @@ func TestTheBillingFallbackTemplateRunsWithItsDefaultsOnly(t *testing.T) {
 	entity.TariffInputs = tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.NewFromInt(999))}
 
 	req := rateRequest(entity)
-	req.BillingControl = &tenant.BillingControl{FallbackFormulaTemplateID: &fallback}
+	req.BillingControl = &billingcontrol.BillingControl{FallbackFormulaTemplateID: &fallback}
 
 	result, err := d.svc.RateShipment(t.Context(), req)
 

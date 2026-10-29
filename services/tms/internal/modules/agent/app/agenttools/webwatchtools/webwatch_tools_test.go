@@ -8,10 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -31,7 +34,7 @@ type fakeWatcher struct {
 }
 
 func newFakeWatcher() *fakeWatcher {
-	return &fakeWatcher{watchID: pulid.MustNew(agentextension.WebWatchIDPrefix)}
+	return &fakeWatcher{watchID: pulid.MustNew(extensionwebwatch.WebWatchIDPrefix)}
 }
 
 func (f *fakeWatcher) PlanWebWatch(
@@ -47,11 +50,11 @@ func (f *fakeWatcher) PlanWebWatch(
 		Query:          req.Query,
 		Purpose:        req.Purpose,
 		Sites:          req.Sites,
-		Cadence:        agentextension.WebWatchCadenceWeekly,
+		Cadence:        extensionwebwatch.WebWatchCadenceWeekly,
 		Days:           28,
 		EndsAt:         endsAt,
 		Vendor:         "Exa",
-		CostPerCheck:   agentextension.ExaMonitorRunCostUSD,
+		CostPerCheck:   extensionwebwatch.ExaMonitorRunCostUSD,
 		EstimatedCost:  decimal.RequireFromString("0.06"),
 		ActiveWatches:  1,
 		WatchesAllowed: 10,
@@ -70,8 +73,8 @@ func (f *fakeWatcher) WatchWeb(
 	return &agentextensionports.WebWatchView{
 		ID:      f.watchID,
 		Purpose: req.Purpose,
-		Cadence: agentextension.WebWatchCadenceWeekly,
-		Status:  agentextension.WebWatchStatusActive,
+		Cadence: extensionwebwatch.WebWatchCadenceWeekly,
+		Status:  extensionwebwatch.WebWatchStatusActive,
 		EndsAt:  endsAt,
 	}, nil
 }
@@ -92,13 +95,13 @@ func (f *fakeWatcher) StopWebWatch(
 	return &agentextensionports.WebWatchView{
 		ID:      req.WatchID,
 		Purpose: "FMCSA finalizing the broker transparency rule",
-		Status:  agentextension.WebWatchStatusStopped,
+		Status:  extensionwebwatch.WebWatchStatusStopped,
 	}, nil
 }
 
 type fakeWaits struct {
 	registered []*agentextensionports.RegisterWebWatchWaitRequest
-	ended      []*agentextension.WebWatch
+	ended      []*extensionwebwatch.WebWatch
 	err        error
 }
 
@@ -114,8 +117,8 @@ func (f *fakeWaits) RegisterWebWatchWait(
 func (f *fakeWaits) NotifyWebWatch(
 	context.Context,
 	pagination.TenantInfo,
-	*agentextension.WebWatch,
-	[]*agentextension.WebWatchFinding,
+	*extensionwebwatch.WebWatch,
+	[]*extensionwebwatch.WebWatchFinding,
 ) error {
 	return nil
 }
@@ -123,7 +126,7 @@ func (f *fakeWaits) NotifyWebWatch(
 func (f *fakeWaits) EndWebWatchWaits(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	watch *agentextension.WebWatch,
+	watch *extensionwebwatch.WebWatch,
 ) {
 	f.ended = append(f.ended, watch)
 }
@@ -138,7 +141,7 @@ func watchArgs() map[string]any {
 	}
 }
 
-func personParams(args map[string]any) agentports.ToolExecuteParams {
+func personParams(args map[string]any) *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.DeskParams(args)
 	params.ThreadID = pulid.MustNew("athr_")
 
@@ -150,12 +153,12 @@ func TestWatchingTheWebRunsOnItsOwnAndIsHeldAfterOutsideContent(t *testing.T) {
 
 	policy := NewWatchWebTool(newFakeWatcher(), &fakeWaits{}, nil).Policy()
 
-	assert.Equal(t, agent.ToolKindAction, policy.Kind)
+	assert.Equal(t, agenttooltrust.ToolKindAction, policy.Kind)
 	assert.Equal(t, agent.TierAutoExecute, policy.DefaultTier)
 	assert.Equal(t, permission.ResourceWebResearch, policy.Resource)
 	assert.Equal(t, permission.OpRead, policy.Operation)
 	assert.True(t, policy.CarriesTaint)
-	assert.Equal(t, string(permission.KindWebWatch), policy.Artifact)
+	assert.Equal(t, string(recordkind.WebWatch), policy.Artifact)
 }
 
 func TestTheWatchPreviewSaysWhatItSearchesHowOftenAndWhatItCosts(t *testing.T) {
@@ -219,8 +222,8 @@ func TestSettingAWatchParksTheConversationOnIt(t *testing.T) {
 
 	assert.Equal(t, "set", result.Action)
 	assert.Equal(t, watcher.watchID.String(), result.IDs["webWatchId"])
-	assert.Equal(t, &agent.RecordRef{
-		EntityType: string(permission.KindWebWatch),
+	assert.Equal(t, &agentrecord.RecordRef{
+		EntityType: string(recordkind.WebWatch),
 		ID:         watcher.watchID.String(),
 	}, result.Record)
 	assert.Equal(t, "Watching once a week until Oct 23, 2026. What it finds comes back to "+
@@ -277,5 +280,5 @@ func TestStoppingAWatchClosesTheWaitOnIt(t *testing.T) {
 	assert.Equal(t, params.Actor.UserID, watcher.stopped[0].StoppedBy)
 	assert.False(t, watcher.stopped[0].Administers, "an agent stops only what it may")
 	require.Len(t, waits.ended, 1)
-	assert.Equal(t, agentextension.WebWatchStatusStopped, waits.ended[0].Status)
+	assert.Equal(t, extensionwebwatch.WebWatchStatusStopped, waits.ended[0].Status)
 }

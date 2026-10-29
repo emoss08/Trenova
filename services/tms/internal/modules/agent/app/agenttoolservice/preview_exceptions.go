@@ -1,8 +1,8 @@
 package agenttoolservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/receivabletools"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/exceptiontools"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
-var _ agentports.ToolPreviewer = (*receivabletools.RaiseExceptionTool)(nil)
+var _ agenttoolports.ToolPreviewer = (*exceptiontools.RaiseExceptionTool)(nil)

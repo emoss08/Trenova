@@ -1,0 +1,320 @@
+package xerochangefeed
+
+import (
+	"context"
+	"strings"
+	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerodocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/xerosession"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
+	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xerodocs"
+	"github.com/emoss08/trenova/shared/xeropay"
+	"github.com/shopspring/decimal"
+)
+
+type readKind int
+
+const (
+	readInvoice readKind = iota + 1
+	readCreditNote
+	readPayment
+	readAllocation
+)
+
+func (c *Feed) DocumentReadLimits() accountingconnectorports.AccountingDocumentReadLimits {
+	return accountingconnectorports.AccountingDocumentReadLimits{MaxPerRead: xero.MaxIDsPerRead}
+}
+
+func readKindOf(
+	kind accountingsync.SyncObjectType,
+	target *accountingconnectorports.AccountingDocumentTarget,
+) (readKind, error) {
+	switch {
+	case kind == accountingsync.SyncObjectInvoice || kind == accountingsync.SyncObjectDebitMemo:
+		return readInvoice, nil
+	case kind == accountingsync.SyncObjectCreditMemo:
+		return readCreditNote, nil
+	case kind == accountingsync.SyncObjectCustomerPayment || kind.IsBillPayment():
+		return readPayment, nil
+	case kind == accountingsync.SyncObjectCreditApplication:
+		return readAllocation, nil
+	case kind.IsBill():
+		credit, err := xerodocsync.PurchaseIsCredit(target.Refs)
+		if err != nil {
+			return 0, err
+		}
+		if credit {
+			return readCreditNote, nil
+		}
+		return readInvoice, nil
+	default:
+		return 0, xerosession.ErrDocumentKind
+	}
+}
+
+type driftStep func(
+	ctx context.Context,
+	client *xero.Client,
+	plan *driftRead,
+) ([]*accountingconnectorports.AccountingDocumentState, error)
+
+type driftRead struct {
+	invoices    []string
+	creditNotes []string
+	payments    []*accountingconnectorports.AccountingDocumentTarget
+	allocations []*accountingconnectorports.AccountingDocumentTarget
+}
+
+func (c *Feed) ReadDocuments(
+	ctx context.Context,
+	req *accountingconnectorports.ReadAccountingDocumentsRequest,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	var plan driftRead
+	for idx := range req.Targets {
+		target := &req.Targets[idx]
+		kind, err := readKindOf(req.Kind, target)
+		if err != nil {
+			return nil, err
+		}
+		id := strings.TrimSpace(target.ExternalID)
+		if id == "" {
+			continue
+		}
+		switch kind {
+		case readInvoice:
+			plan.invoices = append(plan.invoices, id)
+		case readCreditNote:
+			plan.creditNotes = append(plan.creditNotes, id)
+		case readPayment:
+			plan.payments = append(plan.payments, target)
+		case readAllocation:
+			plan.allocations = append(plan.allocations, target)
+		}
+	}
+
+	client, err := c.Client(req.Auth)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(req.Targets))
+	for _, step := range []driftStep{
+		readInvoices,
+		readCreditNotes,
+		readPayments,
+		readAllocations,
+	} {
+		states, stepErr := step(ctx, client, &plan)
+		if stepErr != nil {
+			return nil, stepErr
+		}
+		out = append(out, states...)
+	}
+	return out, nil
+}
+
+func chunks(ids []string) [][]string {
+	out := make([][]string, 0, len(ids)/xero.MaxIDsPerRead+1)
+	for start := 0; start < len(ids); start += xero.MaxIDsPerRead {
+		out = append(out, ids[start:min(start+xero.MaxIDsPerRead, len(ids))])
+	}
+	return out
+}
+
+func readInvoices(
+	ctx context.Context,
+	client *xero.Client,
+	plan *driftRead,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	found := make(map[string]*xerodocs.Invoice, len(plan.invoices))
+	for _, chunk := range chunks(plan.invoices) {
+		invoices, err := xerodocs.InvoicesByID(ctx, client, chunk)
+		if err != nil {
+			return nil, err
+		}
+		for idx := range invoices {
+			found[strings.ToLower(invoices[idx].InvoiceID)] = &invoices[idx]
+		}
+	}
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(plan.invoices))
+	for _, id := range plan.invoices {
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
+		if invoice, ok := found[strings.ToLower(id)]; ok {
+			balance := invoice.AmountDue
+			state.Found = true
+			state.Voided = xerodocsync.ClosedStatus(invoice.Status)
+			state.DocNumber = invoice.InvoiceNumber
+			state.Total = invoice.Total
+			state.Balance = &balance
+			state.CurrencyCode = invoice.CurrencyCode
+			state.ModifiedAt = unixOrZero(invoice.UpdatedAt)
+		}
+		out = append(out, state)
+	}
+	return out, nil
+}
+
+func readCreditNotes(
+	ctx context.Context,
+	client *xero.Client,
+	plan *driftRead,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	found := make(map[string]*xerodocs.CreditNote, len(plan.creditNotes))
+	for _, chunk := range chunks(plan.creditNotes) {
+		notes, err := xerodocs.CreditNotesByID(ctx, client, chunk)
+		if err != nil {
+			return nil, err
+		}
+		for idx := range notes {
+			found[strings.ToLower(notes[idx].CreditNoteID)] = &notes[idx]
+		}
+	}
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(plan.creditNotes))
+	for _, id := range plan.creditNotes {
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
+		if note, ok := found[strings.ToLower(id)]; ok {
+			balance := note.RemainingCredit
+			state.Found = true
+			state.Voided = xerodocsync.ClosedStatus(note.Status)
+			state.DocNumber = note.CreditNoteNumber
+			state.Total = note.Total
+			state.Balance = &balance
+			state.CurrencyCode = note.CurrencyCode
+			state.ModifiedAt = unixOrZero(note.UpdatedAt)
+		}
+		out = append(out, state)
+	}
+	return out, nil
+}
+
+func paymentIDsOf(refs map[string]string) map[string]string {
+	out := make(map[string]string, len(refs))
+	for key, value := range refs {
+		if value == "" || !strings.HasPrefix(key, xerodocsync.RefPaymentPrefix) {
+			continue
+		}
+		out[strings.ToLower(strings.TrimPrefix(key, xerodocsync.RefPaymentPrefix))] = strings.ToLower(
+			value,
+		)
+	}
+	return out
+}
+
+func readPayments(
+	ctx context.Context,
+	client *xero.Client,
+	plan *driftRead,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	invoiceIDs := make([]string, 0, len(plan.payments))
+	seen := make(map[string]struct{}, len(plan.payments))
+	for _, target := range plan.payments {
+		for invoiceID := range paymentIDsOf(target.Refs) {
+			if _, dup := seen[invoiceID]; dup {
+				continue
+			}
+			seen[invoiceID] = struct{}{}
+			invoiceIDs = append(invoiceIDs, invoiceID)
+		}
+	}
+	byID := make(map[string]*xeropay.Payment, len(invoiceIDs))
+	for _, chunk := range chunks(invoiceIDs) {
+		payments, err := xeropay.FindPayments(ctx, client, xeropay.PaymentFilter{InvoiceIDs: chunk})
+		if err != nil {
+			return nil, err
+		}
+		for idx := range payments {
+			byID[strings.ToLower(payments[idx].PaymentID)] = &payments[idx]
+		}
+	}
+
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(plan.payments))
+	for _, target := range plan.payments {
+		wanted := paymentIDsOf(target.Refs)
+		if len(wanted) == 0 {
+			continue
+		}
+		state := &accountingconnectorports.AccountingDocumentState{
+			ExternalID: strings.TrimSpace(target.ExternalID),
+		}
+		total := decimal.Zero
+		deleted, read := 0, 0
+		for _, paymentID := range wanted {
+			payment, ok := byID[paymentID]
+			if !ok {
+				continue
+			}
+			read++
+			state.DocNumber = payment.Reference
+			if strings.EqualFold(payment.Status, xerodocs.StatusDeleted) {
+				deleted++
+				continue
+			}
+			total = total.Add(payment.Amount)
+			state.ModifiedAt = max(state.ModifiedAt, unixOrZero(payment.UpdatedAt))
+		}
+		if read > 0 {
+			state.Found = true
+			state.Voided = deleted == read
+			state.Total = total
+		}
+		out = append(out, state)
+	}
+	return out, nil
+}
+
+func readAllocations(
+	ctx context.Context,
+	client *xero.Client,
+	plan *driftRead,
+) ([]*accountingconnectorports.AccountingDocumentState, error) {
+	noteIDs := make([]string, 0, len(plan.allocations))
+	seen := make(map[string]struct{}, len(plan.allocations))
+	for _, target := range plan.allocations {
+		noteID := strings.ToLower(strings.TrimSpace(target.Refs[xerodocsync.RefCreditNote]))
+		if noteID == "" {
+			continue
+		}
+		if _, dup := seen[noteID]; !dup {
+			seen[noteID] = struct{}{}
+			noteIDs = append(noteIDs, noteID)
+		}
+	}
+	byID := make(map[string]*xerodocs.Allocation, len(noteIDs))
+	for _, chunk := range chunks(noteIDs) {
+		notes, err := xerodocs.CreditNotesByID(ctx, client, chunk)
+		if err != nil {
+			return nil, err
+		}
+		for idx := range notes {
+			for aIdx := range notes[idx].Allocations {
+				allocation := &notes[idx].Allocations[aIdx]
+				byID[strings.ToLower(allocation.AllocationID)] = allocation
+			}
+		}
+	}
+
+	out := make([]*accountingconnectorports.AccountingDocumentState, 0, len(plan.allocations))
+	for _, target := range plan.allocations {
+		if strings.TrimSpace(target.Refs[xerodocsync.RefCreditNote]) == "" {
+			continue
+		}
+		id := strings.TrimSpace(target.ExternalID)
+		state := &accountingconnectorports.AccountingDocumentState{ExternalID: id}
+		if allocation, ok := byID[strings.ToLower(id)]; ok {
+			state.Found = true
+			state.Voided = allocation.IsDeleted
+			state.Total = allocation.Amount
+		}
+		out = append(out, state)
+	}
+	return out, nil
+}
+
+func unixOrZero(t time.Time) int64 {
+	if t.IsZero() {
+		return 0
+	}
+	return t.Unix()
+}

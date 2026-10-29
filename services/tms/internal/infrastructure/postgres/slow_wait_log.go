@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/platformmetrics"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"golang.org/x/time/rate"
@@ -20,7 +20,7 @@ const (
 
 type slowWaitLog struct {
 	logger    *observability.ContextLogger
-	metrics   *metrics.Database
+	metrics   *platformmetrics.Database
 	component string
 	pool      string
 	kinds     map[keel.WaitKind]*slowWaitKind
@@ -41,7 +41,7 @@ func newSlowWaitKinds(interval time.Duration) map[keel.WaitKind]*slowWaitKind {
 }
 
 func (c *Connection) slowWaits(pool scopePool) keel.SlowWaitConfig {
-	after := c.cfg.Database.SlowWaitWarning
+	after := c.databaseConfig.SlowWaitWarning
 	if after <= 0 {
 		return keel.SlowWaitConfig{}
 	}

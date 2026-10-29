@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,9 +14,9 @@ func TestPlanGenerateExport_TotalsWithoutLocking(t *testing.T) {
 	t.Parallel()
 
 	sheet := openSheet()
-	sheet.Status = worker.TimesheetApproved
+	sheet.Status = timesheet.TimesheetApproved
 	sheet.RegularMinutes = 2400
-	repo := &fakeTimesheetRepo{sheets: []*worker.Timesheet{sheet}}
+	repo := &fakeTimesheetRepo{sheets: []*timesheet.Timesheet{sheet}}
 
 	plan, err := newService(repo, employee()).PlanGenerateExport(
 		t.Context(),
@@ -37,9 +37,9 @@ func TestPlanGenerateExport_TotalsWithoutLocking(t *testing.T) {
 func TestPlanVoidExport_ReopensNothingYet(t *testing.T) {
 	t.Parallel()
 
-	repo := &fakeTimesheetRepo{export: &worker.PayrollExport{
+	repo := &fakeTimesheetRepo{export: &timesheet.PayrollExport{
 		ID:          pulid.MustNew("pxb_"),
-		Status:      worker.PayrollExportGenerated,
+		Status:      timesheet.PayrollExportGenerated,
 		PeriodStart: weekStart(),
 		PeriodEnd:   weekStart() + 7*day,
 	}}
@@ -50,8 +50,8 @@ func TestPlanVoidExport_ReopensNothingYet(t *testing.T) {
 			TenantInfo: tenant()},
 	)
 	require.NoError(t, err)
-	assert.Equal(t, worker.PayrollExportVoided, change.After.Status)
-	assert.Equal(t, worker.PayrollExportGenerated, change.Before.Status)
+	assert.Equal(t, timesheet.PayrollExportVoided, change.After.Status)
+	assert.Equal(t, timesheet.PayrollExportGenerated, change.Before.Status)
 	assert.Equal(t, 0, repo.cleared)
 
 	_, err = newService(repo, employee()).PlanVoidExport(

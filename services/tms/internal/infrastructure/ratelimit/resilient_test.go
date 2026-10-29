@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,7 +63,7 @@ func TestResilientStore_LocalModeFallsBackToMemory(t *testing.T) {
 	store := NewResilientStore(ResilientStoreOptions{
 		Primary:     &failingStore{err: errStoreDown},
 		Fallback:    NewMemoryStore(MemoryStoreOptions{}),
-		FailureMode: config.RateLimitFailureModeLocal,
+		FailureMode: securityconfig.RateLimitFailureModeLocal,
 		OnFailure:   func(mode string) { failures = append(failures, mode) },
 	})
 
@@ -83,7 +83,7 @@ func TestResilientStore_AllowModeAdmitsEverything(t *testing.T) {
 	store := NewResilientStore(ResilientStoreOptions{
 		Primary:     &failingStore{err: errStoreDown},
 		Fallback:    NewMemoryStore(MemoryStoreOptions{}),
-		FailureMode: config.RateLimitFailureModeAllow,
+		FailureMode: securityconfig.RateLimitFailureModeAllow,
 	})
 
 	for range 3 {
@@ -100,7 +100,7 @@ func TestResilientStore_DenyModeReturnsSentinel(t *testing.T) {
 	store := NewResilientStore(ResilientStoreOptions{
 		Primary:     &failingStore{err: errStoreDown},
 		Fallback:    NewMemoryStore(MemoryStoreOptions{}),
-		FailureMode: config.RateLimitFailureModeDeny,
+		FailureMode: securityconfig.RateLimitFailureModeDeny,
 	})
 
 	_, err := store.Check(t.Context(), sampleRequests())

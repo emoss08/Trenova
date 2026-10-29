@@ -3,27 +3,40 @@
 package agentresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentactivityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	agentapprovalports "github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
+	agentcontrolports "github.com/emoss08/trenova/internal/modules/agent/ports/agentcontrolports"
+	agentdecisionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	agentdecisionqueueports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
+	agentevaluationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	agentexceptionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
+	agentmemoryports "github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	agentplanports "github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
+	agentproposalports "github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	agentreflectionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
+	agentruntimeports "github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	agenttoolports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	agenttrustports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 )
 
 type Deps struct {
-	*base.Core
-	AgentRunService           agentports.AgentRunService
-	AgentTrustService         agentports.AgentTrustService
-	AgentProposalService      agentports.AgentProposalService
-	AgentPlanService          agentports.AgentPlanService
-	AgentMemoryService        agentports.AgentMemoryService
-	AgentReflectionService    agentports.AgentReflectionService
-	AgentEvaluationService    agentports.AgentEvaluationService
-	AgentActivityService      agentports.AgentActivityService
-	AgentExceptionService     agentports.AgentExceptionService
-	AgentDecisionService      agentports.AgentDecisionService
-	AgentDecisionQueueService agentports.AgentDecisionQueueService
-	ApprovalCommitter         agentports.ApprovalCommitter
-	AgentTools                agentports.AgentToolRegistry
-	AgentControlService       agentports.AgentControlService
+	*resolvercore.Core
+	AgentRunService           agentruntimeports.AgentRunService
+	AgentTrustService         agenttrustports.AgentTrustService
+	AgentProposalService      agentproposalports.AgentProposalService
+	AgentPlanService          agentplanports.AgentPlanService
+	AgentMemoryService        agentmemoryports.AgentMemoryService
+	AgentReflectionService    agentreflectionports.AgentReflectionService
+	AgentEvaluationService    agentevaluationports.AgentEvaluationService
+	AgentActivityService      agentactivityports.AgentActivityService
+	AgentExceptionService     agentexceptionports.AgentExceptionService
+	AgentDecisionService      agentdecisionports.AgentDecisionService
+	AgentDecisionQueueService agentdecisionqueueports.AgentDecisionQueueService
+	ApprovalCommitter         agentapprovalports.ApprovalCommitter
+	AgentTools                agenttoolports.AgentToolRegistry
+	AgentControlService       agentcontrolports.AgentControlService
 	AccountingControlRepo     tenantports.AccountingControlRepository
 }
 

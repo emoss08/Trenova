@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -110,8 +110,8 @@ func (s *Service) UpdateMyContactInfo(
 	if err != nil {
 		return nil, err
 	}
-	control, err := s.requireFeature(ctx, tenantInfo,
-		func(control *tenant.DashControl) bool { return control.AllowContactInfoEdit },
+	control, err := s.RequireFeature(ctx, tenantInfo,
+		func(control *dashcontrol.DashControl) bool { return control.AllowContactInfoEdit },
 		"Your carrier manages contact details in the office — ask them to update your record.",
 	)
 	if err != nil {
@@ -124,7 +124,7 @@ func (s *Service) UpdateMyContactInfo(
 	if control.RequireContactChangeApproval && s.selfService != nil {
 		if _, err = s.selfService.SubmitChange(ctx, &selfserviceservice.SubmitChangeRequest{
 			Worker: wrk,
-			Wanted: worker.ContactSnapshot{
+			Wanted: profilechange.ContactSnapshot{
 				PhoneNumber:           strings.TrimSpace(req.PhoneNumber),
 				AddressLine1:          strings.TrimSpace(req.AddressLine1),
 				AddressLine2:          strings.TrimSpace(req.AddressLine2),
@@ -137,7 +137,7 @@ func (s *Service) UpdateMyContactInfo(
 		}); err != nil {
 			return nil, err
 		}
-		s.notifyDispatch(
+		s.NotifyDispatch(
 			ctx,
 			tenantInfo,
 			"profile_change_requested",

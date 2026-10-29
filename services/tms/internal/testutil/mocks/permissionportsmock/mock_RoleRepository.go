@@ -6,8 +6,8 @@ package permissionportsmock
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,7 +42,7 @@ func (_m *MockRoleRepository) EXPECT() *MockRoleRepository_Expecter {
 }
 
 // Create provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) Create(ctx context.Context, role *permission.Role) error {
+func (_mock *MockRoleRepository) Create(ctx context.Context, role *rbac.Role) error {
 	ret := _mock.Called(ctx, role)
 
 	if len(ret) == 0 {
@@ -50,7 +50,7 @@ func (_mock *MockRoleRepository) Create(ctx context.Context, role *permission.Ro
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permission.Role) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rbac.Role) error); ok {
 		r0 = returnFunc(ctx, role)
 	} else {
 		r0 = ret.Error(0)
@@ -65,20 +65,20 @@ type MockRoleRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - role *permission.Role
+//   - role *rbac.Role
 func (_e *MockRoleRepository_Expecter) Create(ctx any, role any) *MockRoleRepository_Create_Call {
 	return &MockRoleRepository_Create_Call{Call: _e.mock.On("Create", ctx, role)}
 }
 
-func (_c *MockRoleRepository_Create_Call) Run(run func(ctx context.Context, role *permission.Role)) *MockRoleRepository_Create_Call {
+func (_c *MockRoleRepository_Create_Call) Run(run func(ctx context.Context, role *rbac.Role)) *MockRoleRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *permission.Role
+		var arg1 *rbac.Role
 		if args[1] != nil {
-			arg1 = args[1].(*permission.Role)
+			arg1 = args[1].(*rbac.Role)
 		}
 		run(
 			arg0,
@@ -93,13 +93,13 @@ func (_c *MockRoleRepository_Create_Call) Return(err error) *MockRoleRepository_
 	return _c
 }
 
-func (_c *MockRoleRepository_Create_Call) RunAndReturn(run func(ctx context.Context, role *permission.Role) error) *MockRoleRepository_Create_Call {
+func (_c *MockRoleRepository_Create_Call) RunAndReturn(run func(ctx context.Context, role *rbac.Role) error) *MockRoleRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateAssignment provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) CreateAssignment(ctx context.Context, assignment *permission.UserRoleAssignment) error {
+func (_mock *MockRoleRepository) CreateAssignment(ctx context.Context, assignment *rbac.UserRoleAssignment) error {
 	ret := _mock.Called(ctx, assignment)
 
 	if len(ret) == 0 {
@@ -107,7 +107,7 @@ func (_mock *MockRoleRepository) CreateAssignment(ctx context.Context, assignmen
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permission.UserRoleAssignment) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rbac.UserRoleAssignment) error); ok {
 		r0 = returnFunc(ctx, assignment)
 	} else {
 		r0 = ret.Error(0)
@@ -122,20 +122,20 @@ type MockRoleRepository_CreateAssignment_Call struct {
 
 // CreateAssignment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - assignment *permission.UserRoleAssignment
+//   - assignment *rbac.UserRoleAssignment
 func (_e *MockRoleRepository_Expecter) CreateAssignment(ctx any, assignment any) *MockRoleRepository_CreateAssignment_Call {
 	return &MockRoleRepository_CreateAssignment_Call{Call: _e.mock.On("CreateAssignment", ctx, assignment)}
 }
 
-func (_c *MockRoleRepository_CreateAssignment_Call) Run(run func(ctx context.Context, assignment *permission.UserRoleAssignment)) *MockRoleRepository_CreateAssignment_Call {
+func (_c *MockRoleRepository_CreateAssignment_Call) Run(run func(ctx context.Context, assignment *rbac.UserRoleAssignment)) *MockRoleRepository_CreateAssignment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *permission.UserRoleAssignment
+		var arg1 *rbac.UserRoleAssignment
 		if args[1] != nil {
-			arg1 = args[1].(*permission.UserRoleAssignment)
+			arg1 = args[1].(*rbac.UserRoleAssignment)
 		}
 		run(
 			arg0,
@@ -150,13 +150,13 @@ func (_c *MockRoleRepository_CreateAssignment_Call) Return(err error) *MockRoleR
 	return _c
 }
 
-func (_c *MockRoleRepository_CreateAssignment_Call) RunAndReturn(run func(ctx context.Context, assignment *permission.UserRoleAssignment) error) *MockRoleRepository_CreateAssignment_Call {
+func (_c *MockRoleRepository_CreateAssignment_Call) RunAndReturn(run func(ctx context.Context, assignment *rbac.UserRoleAssignment) error) *MockRoleRepository_CreateAssignment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateResourcePermission provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error {
+func (_mock *MockRoleRepository) CreateResourcePermission(ctx context.Context, rp *rbac.ResourcePermission) error {
 	ret := _mock.Called(ctx, rp)
 
 	if len(ret) == 0 {
@@ -164,7 +164,7 @@ func (_mock *MockRoleRepository) CreateResourcePermission(ctx context.Context, r
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permission.ResourcePermission) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rbac.ResourcePermission) error); ok {
 		r0 = returnFunc(ctx, rp)
 	} else {
 		r0 = ret.Error(0)
@@ -179,20 +179,20 @@ type MockRoleRepository_CreateResourcePermission_Call struct {
 
 // CreateResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
-//   - rp *permission.ResourcePermission
+//   - rp *rbac.ResourcePermission
 func (_e *MockRoleRepository_Expecter) CreateResourcePermission(ctx any, rp any) *MockRoleRepository_CreateResourcePermission_Call {
 	return &MockRoleRepository_CreateResourcePermission_Call{Call: _e.mock.On("CreateResourcePermission", ctx, rp)}
 }
 
-func (_c *MockRoleRepository_CreateResourcePermission_Call) Run(run func(ctx context.Context, rp *permission.ResourcePermission)) *MockRoleRepository_CreateResourcePermission_Call {
+func (_c *MockRoleRepository_CreateResourcePermission_Call) Run(run func(ctx context.Context, rp *rbac.ResourcePermission)) *MockRoleRepository_CreateResourcePermission_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *permission.ResourcePermission
+		var arg1 *rbac.ResourcePermission
 		if args[1] != nil {
-			arg1 = args[1].(*permission.ResourcePermission)
+			arg1 = args[1].(*rbac.ResourcePermission)
 		}
 		run(
 			arg0,
@@ -207,7 +207,7 @@ func (_c *MockRoleRepository_CreateResourcePermission_Call) Return(err error) *M
 	return _c
 }
 
-func (_c *MockRoleRepository_CreateResourcePermission_Call) RunAndReturn(run func(ctx context.Context, rp *permission.ResourcePermission) error) *MockRoleRepository_CreateResourcePermission_Call {
+func (_c *MockRoleRepository_CreateResourcePermission_Call) RunAndReturn(run func(ctx context.Context, rp *rbac.ResourcePermission) error) *MockRoleRepository_CreateResourcePermission_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -270,23 +270,23 @@ func (_c *MockRoleRepository_Delete_Call) RunAndReturn(run func(ctx context.Cont
 }
 
 // DeleteAssignment provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error) {
+func (_mock *MockRoleRepository) DeleteAssignment(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*rbac.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAssignment")
 	}
 
-	var r0 *permission.UserRoleAssignment
+	var r0 *rbac.UserRoleAssignment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleAssignmentRequest) (*rbac.UserRoleAssignment, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleAssignmentRequest) *permission.UserRoleAssignment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.DeleteRoleAssignmentRequest) *rbac.UserRoleAssignment); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*permission.UserRoleAssignment)
+			r0 = ret.Get(0).(*rbac.UserRoleAssignment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.DeleteRoleAssignmentRequest) error); ok {
@@ -327,12 +327,12 @@ func (_c *MockRoleRepository_DeleteAssignment_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteAssignment_Call) Return(userRoleAssignment *permission.UserRoleAssignment, err error) *MockRoleRepository_DeleteAssignment_Call {
+func (_c *MockRoleRepository_DeleteAssignment_Call) Return(userRoleAssignment *rbac.UserRoleAssignment, err error) *MockRoleRepository_DeleteAssignment_Call {
 	_c.Call.Return(userRoleAssignment, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteAssignment_Call) RunAndReturn(run func(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*permission.UserRoleAssignment, error)) *MockRoleRepository_DeleteAssignment_Call {
+func (_c *MockRoleRepository_DeleteAssignment_Call) RunAndReturn(run func(ctx context.Context, req permissionports.DeleteRoleAssignmentRequest) (*rbac.UserRoleAssignment, error)) *MockRoleRepository_DeleteAssignment_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -395,23 +395,23 @@ func (_c *MockRoleRepository_DeleteResourcePermission_Call) RunAndReturn(run fun
 }
 
 // DeleteUserAssignments provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) DeleteUserAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error) {
+func (_mock *MockRoleRepository) DeleteUserAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, userID, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUserAssignments")
 	}
 
-	var r0 []*permission.UserRoleAssignment
+	var r0 []*rbac.UserRoleAssignment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*permission.UserRoleAssignment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*rbac.UserRoleAssignment, error)); ok {
 		return returnFunc(ctx, userID, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*permission.UserRoleAssignment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*rbac.UserRoleAssignment); ok {
 		r0 = returnFunc(ctx, userID, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.UserRoleAssignment)
+			r0 = ret.Get(0).([]*rbac.UserRoleAssignment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
@@ -458,12 +458,12 @@ func (_c *MockRoleRepository_DeleteUserAssignments_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteUserAssignments_Call) Return(userRoleAssignments []*permission.UserRoleAssignment, err error) *MockRoleRepository_DeleteUserAssignments_Call {
+func (_c *MockRoleRepository_DeleteUserAssignments_Call) Return(userRoleAssignments []*rbac.UserRoleAssignment, err error) *MockRoleRepository_DeleteUserAssignments_Call {
 	_c.Call.Return(userRoleAssignments, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_DeleteUserAssignments_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error)) *MockRoleRepository_DeleteUserAssignments_Call {
+func (_c *MockRoleRepository_DeleteUserAssignments_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.UserRoleAssignment, error)) *MockRoleRepository_DeleteUserAssignments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -543,23 +543,23 @@ func (_c *MockRoleRepository_ListOrphanedAssignments_Call) RunAndReturn(run func
 }
 
 // GetByID provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) GetByID(ctx context.Context, req permissionports.GetRoleByIDRequest) (*permission.Role, error) {
+func (_mock *MockRoleRepository) GetByID(ctx context.Context, req permissionports.GetRoleByIDRequest) (*rbac.Role, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *permission.Role
+	var r0 *rbac.Role
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleByIDRequest) (*permission.Role, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleByIDRequest) (*rbac.Role, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleByIDRequest) *permission.Role); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRoleByIDRequest) *rbac.Role); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*permission.Role)
+			r0 = ret.Get(0).(*rbac.Role)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.GetRoleByIDRequest) error); ok {
@@ -600,34 +600,102 @@ func (_c *MockRoleRepository_GetByID_Call) Run(run func(ctx context.Context, req
 	return _c
 }
 
-func (_c *MockRoleRepository_GetByID_Call) Return(role *permission.Role, err error) *MockRoleRepository_GetByID_Call {
+func (_c *MockRoleRepository_GetByID_Call) Return(role *rbac.Role, err error) *MockRoleRepository_GetByID_Call {
 	_c.Call.Return(role, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req permissionports.GetRoleByIDRequest) (*permission.Role, error)) *MockRoleRepository_GetByID_Call {
+func (_c *MockRoleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req permissionports.GetRoleByIDRequest) (*rbac.Role, error)) *MockRoleRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByIDs provides a mock function for the type MockRoleRepository
+func (_mock *MockRoleRepository) GetByIDs(ctx context.Context, req permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*rbac.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, permissionports.GetRolesByIDsRequest) []*rbac.Role); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*rbac.Role)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, permissionports.GetRolesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRoleRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockRoleRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req permissionports.GetRolesByIDsRequest
+func (_e *MockRoleRepository_Expecter) GetByIDs(ctx any, req any) *MockRoleRepository_GetByIDs_Call {
+	return &MockRoleRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) Run(run func(ctx context.Context, req permissionports.GetRolesByIDsRequest)) *MockRoleRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 permissionports.GetRolesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(permissionports.GetRolesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) Return(roles []*rbac.Role, err error) *MockRoleRepository_GetByIDs_Call {
+	_c.Call.Return(roles, err)
+	return _c
+}
+
+func (_c *MockRoleRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req permissionports.GetRolesByIDsRequest) ([]*rbac.Role, error)) *MockRoleRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetResourcePermissionsByRoleID provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) GetResourcePermissionsByRoleID(ctx context.Context, roleID pulid.ID) ([]*permission.ResourcePermission, error) {
+func (_mock *MockRoleRepository) GetResourcePermissionsByRoleID(ctx context.Context, roleID pulid.ID) ([]*rbac.ResourcePermission, error) {
 	ret := _mock.Called(ctx, roleID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetResourcePermissionsByRoleID")
 	}
 
-	var r0 []*permission.ResourcePermission
+	var r0 []*rbac.ResourcePermission
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*permission.ResourcePermission, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*rbac.ResourcePermission, error)); ok {
 		return returnFunc(ctx, roleID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*permission.ResourcePermission); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*rbac.ResourcePermission); ok {
 		r0 = returnFunc(ctx, roleID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.ResourcePermission)
+			r0 = ret.Get(0).([]*rbac.ResourcePermission)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
@@ -668,34 +736,34 @@ func (_c *MockRoleRepository_GetResourcePermissionsByRoleID_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockRoleRepository_GetResourcePermissionsByRoleID_Call) Return(resourcePermissions []*permission.ResourcePermission, err error) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
+func (_c *MockRoleRepository_GetResourcePermissionsByRoleID_Call) Return(resourcePermissions []*rbac.ResourcePermission, err error) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
 	_c.Call.Return(resourcePermissions, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_GetResourcePermissionsByRoleID_Call) RunAndReturn(run func(ctx context.Context, roleID pulid.ID) ([]*permission.ResourcePermission, error)) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
+func (_c *MockRoleRepository_GetResourcePermissionsByRoleID_Call) RunAndReturn(run func(ctx context.Context, roleID pulid.ID) ([]*rbac.ResourcePermission, error)) *MockRoleRepository_GetResourcePermissionsByRoleID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetRolesWithInheritance provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error) {
+func (_mock *MockRoleRepository) GetRolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error) {
 	ret := _mock.Called(ctx, roleIDs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRolesWithInheritance")
 	}
 
-	var r0 []*permission.Role
+	var r0 []*rbac.Role
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) ([]*permission.Role, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) ([]*rbac.Role, error)); ok {
 		return returnFunc(ctx, roleIDs)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) []*permission.Role); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []pulid.ID) []*rbac.Role); ok {
 		r0 = returnFunc(ctx, roleIDs)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.Role)
+			r0 = ret.Get(0).([]*rbac.Role)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, []pulid.ID) error); ok {
@@ -736,34 +804,34 @@ func (_c *MockRoleRepository_GetRolesWithInheritance_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockRoleRepository_GetRolesWithInheritance_Call) Return(roles []*permission.Role, err error) *MockRoleRepository_GetRolesWithInheritance_Call {
+func (_c *MockRoleRepository_GetRolesWithInheritance_Call) Return(roles []*rbac.Role, err error) *MockRoleRepository_GetRolesWithInheritance_Call {
 	_c.Call.Return(roles, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_GetRolesWithInheritance_Call) RunAndReturn(run func(ctx context.Context, roleIDs []pulid.ID) ([]*permission.Role, error)) *MockRoleRepository_GetRolesWithInheritance_Call {
+func (_c *MockRoleRepository_GetRolesWithInheritance_Call) RunAndReturn(run func(ctx context.Context, roleIDs []pulid.ID) ([]*rbac.Role, error)) *MockRoleRepository_GetRolesWithInheritance_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUserRoleAssignments provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) GetUserRoleAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error) {
+func (_mock *MockRoleRepository) GetUserRoleAssignments(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.UserRoleAssignment, error) {
 	ret := _mock.Called(ctx, userID, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserRoleAssignments")
 	}
 
-	var r0 []*permission.UserRoleAssignment
+	var r0 []*rbac.UserRoleAssignment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*permission.UserRoleAssignment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) ([]*rbac.UserRoleAssignment, error)); ok {
 		return returnFunc(ctx, userID, orgID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*permission.UserRoleAssignment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pulid.ID) []*rbac.UserRoleAssignment); ok {
 		r0 = returnFunc(ctx, userID, orgID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*permission.UserRoleAssignment)
+			r0 = ret.Get(0).([]*rbac.UserRoleAssignment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pulid.ID) error); ok {
@@ -810,12 +878,12 @@ func (_c *MockRoleRepository_GetUserRoleAssignments_Call) Run(run func(ctx conte
 	return _c
 }
 
-func (_c *MockRoleRepository_GetUserRoleAssignments_Call) Return(userRoleAssignments []*permission.UserRoleAssignment, err error) *MockRoleRepository_GetUserRoleAssignments_Call {
+func (_c *MockRoleRepository_GetUserRoleAssignments_Call) Return(userRoleAssignments []*rbac.UserRoleAssignment, err error) *MockRoleRepository_GetUserRoleAssignments_Call {
 	_c.Call.Return(userRoleAssignments, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_GetUserRoleAssignments_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*permission.UserRoleAssignment, error)) *MockRoleRepository_GetUserRoleAssignments_Call {
+func (_c *MockRoleRepository_GetUserRoleAssignments_Call) RunAndReturn(run func(ctx context.Context, userID pulid.ID, orgID pulid.ID) ([]*rbac.UserRoleAssignment, error)) *MockRoleRepository_GetUserRoleAssignments_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -889,23 +957,23 @@ func (_c *MockRoleRepository_GetUsersWithRole_Call) RunAndReturn(run func(ctx co
 }
 
 // List provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) List(ctx context.Context, req *permissionports.ListRolesRequest) (*pagination.ListResult[*permission.Role], error) {
+func (_mock *MockRoleRepository) List(ctx context.Context, req *permissionports.ListRolesRequest) (*pagination.ListResult[*rbac.Role], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*permission.Role]
+	var r0 *pagination.ListResult[*rbac.Role]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRolesRequest) (*pagination.ListResult[*permission.Role], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRolesRequest) (*pagination.ListResult[*rbac.Role], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRolesRequest) *pagination.ListResult[*permission.Role]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRolesRequest) *pagination.ListResult[*rbac.Role]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*permission.Role])
+			r0 = ret.Get(0).(*pagination.ListResult[*rbac.Role])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *permissionports.ListRolesRequest) error); ok {
@@ -946,34 +1014,34 @@ func (_c *MockRoleRepository_List_Call) Run(run func(ctx context.Context, req *p
 	return _c
 }
 
-func (_c *MockRoleRepository_List_Call) Return(listResult *pagination.ListResult[*permission.Role], err error) *MockRoleRepository_List_Call {
+func (_c *MockRoleRepository_List_Call) Return(listResult *pagination.ListResult[*rbac.Role], err error) *MockRoleRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *permissionports.ListRolesRequest) (*pagination.ListResult[*permission.Role], error)) *MockRoleRepository_List_Call {
+func (_c *MockRoleRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *permissionports.ListRolesRequest) (*pagination.ListResult[*rbac.Role], error)) *MockRoleRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListConnection provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) ListConnection(ctx context.Context, req *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*permission.Role], error) {
+func (_mock *MockRoleRepository) ListConnection(ctx context.Context, req *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*rbac.Role], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListConnection")
 	}
 
-	var r0 *pagination.CursorListResult[*permission.Role]
+	var r0 *pagination.CursorListResult[*rbac.Role]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*permission.Role], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*rbac.Role], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRoleConnectionRequest) *pagination.CursorListResult[*permission.Role]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *permissionports.ListRoleConnectionRequest) *pagination.CursorListResult[*rbac.Role]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*permission.Role])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*rbac.Role])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *permissionports.ListRoleConnectionRequest) error); ok {
@@ -1014,34 +1082,34 @@ func (_c *MockRoleRepository_ListConnection_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockRoleRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*permission.Role], err error) *MockRoleRepository_ListConnection_Call {
+func (_c *MockRoleRepository_ListConnection_Call) Return(cursorListResult *pagination.CursorListResult[*rbac.Role], err error) *MockRoleRepository_ListConnection_Call {
 	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*permission.Role], error)) *MockRoleRepository_ListConnection_Call {
+func (_c *MockRoleRepository_ListConnection_Call) RunAndReturn(run func(ctx context.Context, req *permissionports.ListRoleConnectionRequest) (*pagination.CursorListResult[*rbac.Role], error)) *MockRoleRepository_ListConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SelectOptions provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) SelectOptions(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*permission.Role], error) {
+func (_mock *MockRoleRepository) SelectOptions(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*rbac.Role], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SelectOptions")
 	}
 
-	var r0 *pagination.ListResult[*permission.Role]
+	var r0 *pagination.ListResult[*rbac.Role]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*permission.Role], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*rbac.Role], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*permission.Role]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*rbac.Role]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*permission.Role])
+			r0 = ret.Get(0).(*pagination.ListResult[*rbac.Role])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.SelectQueryRequest) error); ok {
@@ -1082,18 +1150,18 @@ func (_c *MockRoleRepository_SelectOptions_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockRoleRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*permission.Role], err error) *MockRoleRepository_SelectOptions_Call {
+func (_c *MockRoleRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*rbac.Role], err error) *MockRoleRepository_SelectOptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockRoleRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*permission.Role], error)) *MockRoleRepository_SelectOptions_Call {
+func (_c *MockRoleRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*rbac.Role], error)) *MockRoleRepository_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) Update(ctx context.Context, role *permission.Role) error {
+func (_mock *MockRoleRepository) Update(ctx context.Context, role *rbac.Role) error {
 	ret := _mock.Called(ctx, role)
 
 	if len(ret) == 0 {
@@ -1101,7 +1169,7 @@ func (_mock *MockRoleRepository) Update(ctx context.Context, role *permission.Ro
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permission.Role) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rbac.Role) error); ok {
 		r0 = returnFunc(ctx, role)
 	} else {
 		r0 = ret.Error(0)
@@ -1116,20 +1184,20 @@ type MockRoleRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - role *permission.Role
+//   - role *rbac.Role
 func (_e *MockRoleRepository_Expecter) Update(ctx any, role any) *MockRoleRepository_Update_Call {
 	return &MockRoleRepository_Update_Call{Call: _e.mock.On("Update", ctx, role)}
 }
 
-func (_c *MockRoleRepository_Update_Call) Run(run func(ctx context.Context, role *permission.Role)) *MockRoleRepository_Update_Call {
+func (_c *MockRoleRepository_Update_Call) Run(run func(ctx context.Context, role *rbac.Role)) *MockRoleRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *permission.Role
+		var arg1 *rbac.Role
 		if args[1] != nil {
-			arg1 = args[1].(*permission.Role)
+			arg1 = args[1].(*rbac.Role)
 		}
 		run(
 			arg0,
@@ -1144,13 +1212,13 @@ func (_c *MockRoleRepository_Update_Call) Return(err error) *MockRoleRepository_
 	return _c
 }
 
-func (_c *MockRoleRepository_Update_Call) RunAndReturn(run func(ctx context.Context, role *permission.Role) error) *MockRoleRepository_Update_Call {
+func (_c *MockRoleRepository_Update_Call) RunAndReturn(run func(ctx context.Context, role *rbac.Role) error) *MockRoleRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateResourcePermission provides a mock function for the type MockRoleRepository
-func (_mock *MockRoleRepository) UpdateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error {
+func (_mock *MockRoleRepository) UpdateResourcePermission(ctx context.Context, rp *rbac.ResourcePermission) error {
 	ret := _mock.Called(ctx, rp)
 
 	if len(ret) == 0 {
@@ -1158,7 +1226,7 @@ func (_mock *MockRoleRepository) UpdateResourcePermission(ctx context.Context, r
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *permission.ResourcePermission) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *rbac.ResourcePermission) error); ok {
 		r0 = returnFunc(ctx, rp)
 	} else {
 		r0 = ret.Error(0)
@@ -1173,20 +1241,20 @@ type MockRoleRepository_UpdateResourcePermission_Call struct {
 
 // UpdateResourcePermission is a helper method to define mock.On call
 //   - ctx context.Context
-//   - rp *permission.ResourcePermission
+//   - rp *rbac.ResourcePermission
 func (_e *MockRoleRepository_Expecter) UpdateResourcePermission(ctx any, rp any) *MockRoleRepository_UpdateResourcePermission_Call {
 	return &MockRoleRepository_UpdateResourcePermission_Call{Call: _e.mock.On("UpdateResourcePermission", ctx, rp)}
 }
 
-func (_c *MockRoleRepository_UpdateResourcePermission_Call) Run(run func(ctx context.Context, rp *permission.ResourcePermission)) *MockRoleRepository_UpdateResourcePermission_Call {
+func (_c *MockRoleRepository_UpdateResourcePermission_Call) Run(run func(ctx context.Context, rp *rbac.ResourcePermission)) *MockRoleRepository_UpdateResourcePermission_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *permission.ResourcePermission
+		var arg1 *rbac.ResourcePermission
 		if args[1] != nil {
-			arg1 = args[1].(*permission.ResourcePermission)
+			arg1 = args[1].(*rbac.ResourcePermission)
 		}
 		run(
 			arg0,
@@ -1201,7 +1269,7 @@ func (_c *MockRoleRepository_UpdateResourcePermission_Call) Return(err error) *M
 	return _c
 }
 
-func (_c *MockRoleRepository_UpdateResourcePermission_Call) RunAndReturn(run func(ctx context.Context, rp *permission.ResourcePermission) error) *MockRoleRepository_UpdateResourcePermission_Call {
+func (_c *MockRoleRepository_UpdateResourcePermission_Call) RunAndReturn(run func(ctx context.Context, rp *rbac.ResourcePermission) error) *MockRoleRepository_UpdateResourcePermission_Call {
 	_c.Call.Return(run)
 	return _c
 }

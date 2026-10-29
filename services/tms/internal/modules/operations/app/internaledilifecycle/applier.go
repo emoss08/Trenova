@@ -3,9 +3,10 @@ package internaledilifecycle
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edisync"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -32,20 +33,20 @@ type Params struct {
 }
 
 type PrepareRequest struct {
-	Link      *edi.ShipmentLink
-	Direction edi.TransferChangeDirection
+	Link      *edisync.ShipmentLink
+	Direction edisync.TransferChangeDirection
 }
 
 type PrepareLoadedRequest struct {
-	Link      *edi.ShipmentLink
-	Direction edi.TransferChangeDirection
+	Link      *edisync.ShipmentLink
+	Direction edisync.TransferChangeDirection
 	Source    *shipment.Shipment
 	Target    *shipment.Shipment
 }
 
 type Plan struct {
-	Link             *edi.ShipmentLink
-	Direction        edi.TransferChangeDirection
+	Link             *edisync.ShipmentLink
+	Direction        edisync.TransferChangeDirection
 	Source           *shipment.Shipment
 	Target           *shipment.Shipment
 	Changed          *shipment.Shipment
@@ -58,32 +59,32 @@ type Plan struct {
 }
 
 type StopActualDiff struct {
-	MoveSequence            int64             `json:"moveSequence"`
-	StopSequence            int64             `json:"stopSequence"`
-	StopType                shipment.StopType `json:"stopType"`
-	SourceStopID            string            `json:"sourceStopId"`
-	TargetStopID            string            `json:"targetStopId"`
-	PreviousActualArrival   *int64            `json:"previousActualArrival,omitempty"`
-	NewActualArrival        *int64            `json:"newActualArrival,omitempty"`
-	PreviousActualDeparture *int64            `json:"previousActualDeparture,omitempty"`
-	NewActualDeparture      *int64            `json:"newActualDeparture,omitempty"`
+	MoveSequence            int64                  `json:"moveSequence"`
+	StopSequence            int64                  `json:"stopSequence"`
+	StopType                shipmentvocab.StopType `json:"stopType"`
+	SourceStopID            string                 `json:"sourceStopId"`
+	TargetStopID            string                 `json:"targetStopId"`
+	PreviousActualArrival   *int64                 `json:"previousActualArrival,omitempty"`
+	NewActualArrival        *int64                 `json:"newActualArrival,omitempty"`
+	PreviousActualDeparture *int64                 `json:"previousActualDeparture,omitempty"`
+	NewActualDeparture      *int64                 `json:"newActualDeparture,omitempty"`
 }
 
 type Conflict struct {
-	Reason       string            `json:"reason"`
-	MoveSequence int64             `json:"moveSequence"`
-	StopSequence int64             `json:"stopSequence"`
-	StopType     shipment.StopType `json:"stopType"`
-	SourceStopID string            `json:"sourceStopId,omitempty"`
-	TargetStopID string            `json:"targetStopId,omitempty"`
-	Field        string            `json:"field,omitempty"`
-	Message      string            `json:"message,omitempty"`
+	Reason       string                 `json:"reason"`
+	MoveSequence int64                  `json:"moveSequence"`
+	StopSequence int64                  `json:"stopSequence"`
+	StopType     shipmentvocab.StopType `json:"stopType"`
+	SourceStopID string                 `json:"sourceStopId,omitempty"`
+	TargetStopID string                 `json:"targetStopId,omitempty"`
+	Field        string                 `json:"field,omitempty"`
+	Message      string                 `json:"message,omitempty"`
 }
 
 type stopKey struct {
 	moveSequence int64
 	stopSequence int64
-	stopType     shipment.StopType
+	stopType     shipmentvocab.StopType
 }
 
 type indexedStop struct {
@@ -169,7 +170,7 @@ func (a *Applier) ApplyPrepared(ctx context.Context, plan *Plan) (*shipment.Ship
 
 func (a *Applier) loadShipments(
 	ctx context.Context,
-	link *edi.ShipmentLink,
+	link *edisync.ShipmentLink,
 ) (*shipment.Shipment, *shipment.Shipment, error) {
 	source, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID: link.SourceShipmentID,
@@ -213,7 +214,7 @@ func basePlan(req PrepareLoadedRequest) *Plan {
 		Source:    req.Source,
 		Target:    req.Target,
 	}
-	if req.Direction == edi.TransferChangeDirectionSourceToTarget {
+	if req.Direction == edisync.TransferChangeDirectionSourceToTarget {
 		plan.Changed = req.Source
 		plan.OppositeOriginal = req.Target
 		plan.OppositeInfo = pagination.TenantInfo{

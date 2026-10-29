@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingledgerrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
@@ -246,7 +247,10 @@ func journalSource(
 		date:   je.AccountingDate,
 		at:     je.PostedAt,
 		filter: func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
-			return []keel.Pred{je.IsPosted.IsTrue(), withoutEntryTypes(je, unsentEntryTypes())}
+			return []keel.Pred{
+				je.IsPosted.IsTrue(),
+				accountingledgerrepository.SendableJournals(je),
+			}
 		},
 		queued: queued,
 	}

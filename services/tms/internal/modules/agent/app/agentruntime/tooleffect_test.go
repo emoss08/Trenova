@@ -1,12 +1,18 @@
 package agentruntime
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/askuser"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,10 +33,10 @@ func (c *steppedClock) Now() int64 {
 func effectRuntime() *Service {
 	return newRuntime(
 		&scriptedCompletion{},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("customer_list", nil, nil),
 		}},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
@@ -42,12 +48,24 @@ func TestToolEffect_DerivesFromMetadataAndNamesTheRuntimeTools(t *testing.T) {
 
 	rt := effectRuntime()
 
-	assert.Equal(t, agent.ToolEffectLookup, rt.ToolEffect("customer_list"))
-	assert.Equal(t, agent.ToolEffectChange, rt.ToolEffect("report_create"))
-	assert.Equal(t, agent.ToolEffectDiscover, rt.ToolEffect(findToolsName))
-	assert.Equal(t, agent.ToolEffectAsk, rt.ToolEffect(askUserName))
-	assert.Equal(t, agent.ToolEffectPresent, rt.ToolEffect(publishArtifactName))
-	assert.Empty(t, rt.ToolEffect("retired_tool"), "a tool that no longer exists has no effect")
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, rt.access.ToolEffect("customer_list"))
+	assert.Equal(t, agenttooltrust.ToolEffectChange, rt.access.ToolEffect("report_create"))
+	assert.Equal(
+		t,
+		agenttooltrust.ToolEffectDiscover,
+		rt.access.ToolEffect(runtimetools.FindToolsName),
+	)
+	assert.Equal(t, agenttooltrust.ToolEffectAsk, rt.access.ToolEffect(askuser.Name))
+	assert.Equal(
+		t,
+		agenttooltrust.ToolEffectPresent,
+		rt.access.ToolEffect(runtimetools.PublishArtifactName),
+	)
+	assert.Empty(
+		t,
+		rt.access.ToolEffect("retired_tool"),
+		"a tool that no longer exists has no effect",
+	)
 }
 
 func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *testing.T) {
@@ -65,11 +83,11 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 		{Role: conversation.RoleUser, Content: "Thanks."},
 	}
 
-	rt.MarkToolEffects(messages)
+	rt.access.MarkToolEffects(messages)
 
-	assert.Equal(t, agent.ToolEffectLookup, messages[0].ToolCalls[0].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, messages[0].ToolCalls[0].Effect)
 	assert.Empty(t, messages[0].ToolCalls[1].Effect)
-	assert.Equal(t, agent.ToolEffectLookup, messages[1].ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, messages[1].ToolEffect)
 	assert.Empty(t, messages[2].ToolEffect)
 	assert.Empty(t, messages[3].ToolEffect)
 	assert.Empty(t, stored[0].Effect, "the slice the messages were read with is not rewritten")
@@ -78,141 +96,16 @@ func TestMarkToolEffects_LabelsCallsAndResultsWithoutTouchingTheStoredCalls(t *t
 	assert.NotPanics(t, func() { nilRuntime.MarkToolEffects(messages) })
 }
 
-func TestSummarizeResult(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		name     string
-		tool     string
-		document any
-		want     string
-	}{
-		{
-			name: "one match names it",
-			tool: "customer_list",
-			document: map[string]any{
-				"count": float64(1),
-				"items": []any{map[string]any{"name": "Peak Distributing"}},
-			},
-			want: "Peak Distributing",
-		},
-		{
-			name: "several matches are counted",
-			tool: "customer_list",
-			document: map[string]any{
-				"count": float64(3),
-				"items": []any{map[string]any{"name": "A"}, map[string]any{}, map[string]any{}},
-			},
-			want: "3 customers",
-		},
-		{
-			name: "a full page says there are more",
-			tool: "shipment_list",
-			document: map[string]any{
-				"count":   float64(25),
-				"items":   []any{map[string]any{}},
-				"hasMore": true,
-			},
-			want: "25+ shipments",
-		},
-		{
-			name:     "nothing matched",
-			tool:     "customer_list",
-			document: map[string]any{"count": float64(0), "items": []any{}},
-			want:     "No customers",
-		},
-		{
-			name:     "a noun that is not a plural reads as results",
-			tool:     "worker_list_time_off",
-			document: []any{map[string]any{}, map[string]any{}},
-			want:     "2 results",
-		},
-		{
-			name:     "a record is named",
-			tool:     "worker_get",
-			document: map[string]any{"firstName": "Maria", "lastName": "Ortiz"},
-			want:     "Maria Ortiz",
-		},
-		{
-			name:     "a shipment is named by its number",
-			tool:     "shipment_get",
-			document: map[string]any{"proNumber": "PRO-1042", "status": "New"},
-			want:     "PRO-1042",
-		},
-		{
-			name:     "a page opened is named by its destination",
-			tool:     "agent_open_page",
-			document: map[string]any{"path": "/reports", "name": "Report library"},
-			want:     "Report library",
-		},
-		{
-			name: "a finished report run carries its row count",
-			tool: "report_run",
-			document: map[string]any{
-				"reportName": "Late loads",
-				"finished":   true,
-				"rowCount":   float64(42),
-			},
-			want: "Late loads · 42 rows",
-		},
-		{
-			name:     "a queued report run is named alone",
-			tool:     "report_run",
-			document: map[string]any{"reportName": "Late loads", "finished": false},
-			want:     "Late loads",
-		},
-		{
-			name:     "a result with nothing to name has no summary",
-			tool:     "dispatch_get_board",
-			document: map[string]any{"columns": []any{}},
-			want:     "",
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, tc.want, summarizeResult(tc.tool, tc.document))
-		})
-	}
-}
-
-func TestSummarizeOutcome_FailedCallsHaveNone(t *testing.T) {
-	t.Parallel()
-
-	call := agentports.ToolCall{Name: "report_create", Arguments: map[string]any{"name": "Late loads"}}
-
-	assert.Empty(t, summarizeOutcome(call, toolOutcome{failed: true, summary: "Late loads"}))
-	assert.Equal(t, "Late loads", summarizeOutcome(call, toolOutcome{
-		action: &agentports.PendingAction{ToolName: "report_create"},
-	}))
-	assert.Empty(t, summarizeOutcome(call, toolOutcome{content: "done"}))
-}
-
-func TestSummaryLine_KeepsOneShortLine(t *testing.T) {
-	t.Parallel()
-
-	long := "Quarterly\nlate   loads by customer and lane, with every exception the " +
-		"desk raised this year, every carrier it touched and every note it left behind"
-
-	line := summaryLine(long)
-
-	assert.NotContains(t, line, "\n")
-	assert.NotContains(t, line, "  ")
-	assert.LessOrEqual(t, len([]rune(line)), maxToolSummaryRunes+1)
-	assert.True(t, strings.HasSuffix(line, "…"))
-}
-
 func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("customer_list", map[string]any{"query": "peak"}),
-		textTurn("Peak Distributing is on file."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("customer_list", map[string]any{"query": "peak"}),
+		runtimetest.TextTurn("Peak Distributing is on file."),
 	}}
 	rt := newRuntime(
 		completion,
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("customer_list", map[string]any{
 				"count": 1,
 				"items": []map[string]any{{"name": "Peak Distributing"}},
@@ -223,9 +116,9 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	)
 
 	var events []kernelports.StreamEvent
-	req := &agentports.RunRequest{
-		Definition: testDefinition("customer_list"),
-		Actor:      testActor(),
+	req := &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("customer_list"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Is Peak on file?",
 	}
 	clock := &steppedClock{
@@ -249,20 +142,20 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	assert.Equal(t, int64(1_020), answered.CreatedAt)
 	assert.Equal(t, int64(1_030), reply.CreatedAt)
 
-	assert.Equal(t, agent.ToolEffectLookup, answered.ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, answered.ToolEffect)
 	assert.Equal(t, "Peak Distributing", answered.ToolSummary)
 	assert.Empty(t, asked.ToolCalls[0].Effect, "the call is stored as the model sent it")
 
-	var started *agentports.AssistantToolStartedEvent
-	var finished *agentports.AssistantToolFinishedEvent
-	var message *agentports.AssistantMessageEvent
+	var started *assistantstreamports.AssistantToolStartedEvent
+	var finished *assistantstreamports.AssistantToolFinishedEvent
+	var message *assistantstreamports.AssistantMessageEvent
 	for _, event := range events {
 		switch data := event.Data.(type) {
-		case agentports.AssistantToolStartedEvent:
+		case assistantstreamports.AssistantToolStartedEvent:
 			started = &data
-		case agentports.AssistantToolFinishedEvent:
+		case assistantstreamports.AssistantToolFinishedEvent:
 			finished = &data
-		case agentports.AssistantMessageEvent:
+		case assistantstreamports.AssistantMessageEvent:
 			message = &data
 		}
 	}
@@ -270,36 +163,36 @@ func TestDrive_StampsEachMessageWhenItWasProducedAndLabelsTheToolTraffic(t *test
 	require.NotNil(t, started)
 	require.NotNil(t, finished)
 	require.NotNil(t, message)
-	assert.Equal(t, agent.ToolEffectLookup, started.Effect)
-	assert.Equal(t, agent.ToolEffectLookup, finished.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, started.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, finished.Effect)
 	assert.Equal(t, "Peak Distributing", finished.Summary)
 	require.Len(t, message.ToolCalls, 1)
-	assert.Equal(t, agent.ToolEffectLookup, message.ToolCalls[0].Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectLookup, message.ToolCalls[0].Effect)
 }
 
 func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		toolTurn("report_create", map[string]any{"name": "Late loads"}),
-		textTurn("I proposed the report."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("report_create", map[string]any{"name": "Late loads"}),
+		runtimetest.TextTurn("I proposed the report."),
 	}}
 	rt := newRuntime(
 		completion,
 		&stubQueryRegistry{},
-		&stubActionRegistry{Tools: []agentports.AgentTool{
+		&stubActionRegistry{Tools: []agenttoolports.AgentTool{
 			actionTool("report_create", agent.TierPropose, nil),
 		}},
 		nil,
 	)
 
-	var finished *agentports.AssistantToolFinishedEvent
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("report_create"),
-		Actor:      testActor(),
+	var finished *assistantstreamports.AssistantToolFinishedEvent
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("report_create"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Save a late loads report.",
 		Emit: func(event kernelports.StreamEvent) {
-			if data, ok := event.Data.(agentports.AssistantToolFinishedEvent); ok {
+			if data, ok := event.Data.(assistantstreamports.AssistantToolFinishedEvent); ok {
 				finished = &data
 			}
 		},
@@ -308,10 +201,10 @@ func TestRun_AProposedWriteIsLabelledAChangeAndNamedFromItsArguments(t *testing.
 
 	require.NotNil(t, finished)
 	assert.True(t, finished.Proposed)
-	assert.Equal(t, agent.ToolEffectChange, finished.Effect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, finished.Effect)
 	assert.Equal(t, "Late loads", finished.Summary)
 
 	require.Len(t, result.Messages, 4)
-	assert.Equal(t, agent.ToolEffectChange, result.Messages[2].ToolEffect)
+	assert.Equal(t, agenttooltrust.ToolEffectChange, result.Messages[2].ToolEffect)
 	assert.Equal(t, "Late loads", result.Messages[2].ToolSummary)
 }

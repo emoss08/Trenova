@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -44,15 +44,15 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	req tenantports.GetSequenceConfigRequest,
-) (*tenant.SequenceConfigDocument, error) {
+) (*sequenceconfig.SequenceConfigDocument, error) {
 	return s.repo.GetByTenant(ctx, req)
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	doc *tenant.SequenceConfigDocument,
+	doc *sequenceconfig.SequenceConfigDocument,
 	userID pulid.ID,
-) (*tenant.SequenceConfigDocument, error) {
+) (*sequenceconfig.SequenceConfigDocument, error) {
 	if multiErr := s.validator.ValidateUpdate(ctx, doc); multiErr != nil {
 		return nil, multiErr
 	}

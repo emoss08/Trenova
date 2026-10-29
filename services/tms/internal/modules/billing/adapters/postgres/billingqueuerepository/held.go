@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/zap"
@@ -67,7 +67,7 @@ func (r *repository) CountHeldForPeriod(
 				).
 				Where(
 					bqi.Status.In(heldStatuses...),
-					sp.Status.Ne(shipment.StatusCanceled),
+					sp.Status.Ne(shipmentvocab.StatusCanceled),
 					unbilledInvoiceFreight(bqi, sp, req.CustomerIDs, req.PeriodEnd),
 				).
 				Group(bqi.BillToCustomerID))

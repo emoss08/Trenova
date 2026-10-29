@@ -45,7 +45,7 @@ import { useState, type ReactNode } from "react";
 
 export type AnalysisDatasetView = {
   name: string;
-  source: "ReportRun" | "Attachment";
+  source: "ReportRun" | "Attachment" | "ReportDefinition";
   sourceId: string;
   label: string;
   rows: number;

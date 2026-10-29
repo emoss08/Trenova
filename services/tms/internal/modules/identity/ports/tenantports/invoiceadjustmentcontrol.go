@@ -3,7 +3,7 @@ package tenantports
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,9 +16,9 @@ type InvoiceAdjustmentControlRepository interface {
 	GetByOrgID(
 		ctx context.Context,
 		orgID pulid.ID,
-	) (*tenant.InvoiceAdjustmentControl, error)
+	) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)
 	Update(
 		ctx context.Context,
-		control *tenant.InvoiceAdjustmentControl,
-	) (*tenant.InvoiceAdjustmentControl, error)
+		control *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
+	) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error)
 }

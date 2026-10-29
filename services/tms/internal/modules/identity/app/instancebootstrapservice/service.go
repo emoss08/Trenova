@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/instancebootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -46,12 +46,12 @@ var (
 type Params struct {
 	fx.In
 
-	DB      kernelports.Transactor
-	Tenants tenantports.TenantBootstrapRepository
-	Repo    instancebootstrapports.InstanceBootstrapRepository
-	Auditor permissionports.SecurityAuditor
-	Config  *config.Config
-	Logger  *zap.Logger
+	DB           kernelports.Transactor
+	Tenants      tenantports.TenantBootstrapRepository
+	Repo         instancebootstrapports.InstanceBootstrapRepository
+	Auditor      permissionports.SecurityAuditor
+	SystemConfig *systemconfig.Config
+	Logger       *zap.Logger
 }
 
 type Service struct {
@@ -67,8 +67,8 @@ type Service struct {
 //nolint:gocritic // this is dependency injection
 func New(p Params) *Service {
 	var systemUserPassword string
-	if p.Config != nil {
-		systemUserPassword = p.Config.System.SystemUserPassword
+	if p.SystemConfig != nil {
+		systemUserPassword = p.SystemConfig.SystemUserPassword
 	}
 
 	return &Service{

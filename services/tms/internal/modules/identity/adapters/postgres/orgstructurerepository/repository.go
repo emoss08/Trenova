@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation/approvaldelegationdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,7 +43,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.OrgStructureRepository {
+func New(p Params) orgstructureports.OrgStructureRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.org-structure-repository"),
@@ -57,7 +59,7 @@ func limitOr(requested, fallback int) int {
 
 func (r *repository) ListPositions(
 	ctx context.Context,
-	req *workerports.ListJobPositionsRequest,
+	req *orgstructureports.ListJobPositionsRequest,
 ) ([]*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
 		jp := workerdb.JobPositions
@@ -82,9 +84,31 @@ func (r *repository) ListPositions(
 	})
 }
 
+func (r *repository) GetPositionsByIDs(
+	ctx context.Context,
+	req *orgstructureports.GetJobPositionsByIDsRequest,
+) ([]*worker.JobPosition, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.JobPosition, error) {
+		if len(req.PositionIDs) == 0 {
+			return []*worker.JobPosition{}, nil
+		}
+
+		jp := workerdb.JobPositions
+		entities, err := jp.Where(jp.ID.In(req.PositionIDs...)).
+			Limit(len(req.PositionIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get job positions", zap.Error(err))
+			return nil, err
+		}
+
+		return entities, nil
+	})
+}
+
 func (r *repository) GetPositionByID(
 	ctx context.Context,
-	req *workerports.GetJobPositionByIDRequest,
+	req *orgstructureports.GetJobPositionByIDRequest,
 ) (*worker.JobPosition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.JobPosition, error) {
 		jp := workerdb.JobPositions
@@ -155,78 +179,102 @@ func (r *repository) CountPositionHolders(
 
 func (r *repository) ListDelegations(
 	ctx context.Context,
-	req *workerports.ListApprovalDelegationsRequest,
-) ([]*worker.ApprovalDelegation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.ApprovalDelegation, error) {
-		ad := workerdb.ApprovalDelegations
-		var active keel.Pred
-		if req.ActiveAt > 0 {
-			active = keel.And(
-				ad.StartsAt.Lte(req.ActiveAt),
-				keel.Or(ad.EndsAt.IsNull(), ad.EndsAt.Gte(req.ActiveAt)),
-				keel.Or(ad.RevokedAt.IsNull(), ad.RevokedAt.Gt(req.ActiveAt)),
-			)
-		}
+	req *orgstructureports.ListApprovalDelegationsRequest,
+) ([]*approvaldelegation.ApprovalDelegation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*approvaldelegation.ApprovalDelegation, error) {
+			ad := approvaldelegationdb.ApprovalDelegations
+			var active keel.Pred
+			if req.ActiveAt > 0 {
+				active = keel.And(
+					ad.StartsAt.Lte(req.ActiveAt),
+					keel.Or(ad.EndsAt.IsNull(), ad.EndsAt.Gte(req.ActiveAt)),
+					keel.Or(ad.RevokedAt.IsNull(), ad.RevokedAt.Gt(req.ActiveAt)),
+				)
+			}
 
-		q := ad.Where(
-			keel.When(!req.DelegatorID.IsNil(), ad.DelegatorID.Eq(req.DelegatorID)),
-			keel.When(!req.DelegateID.IsNil(), ad.DelegateID.Eq(req.DelegateID)),
-			active,
-		).
-			Order(ad.StartsAt.Desc()).
-			Limit(limitOr(req.Limit, defaultDelegationPageSize))
-		if req.IncludeUsers {
-			q = q.Load(ad.Delegator(), ad.Delegate())
-		}
+			q := ad.Where(
+				keel.When(!req.DelegatorID.IsNil(), ad.DelegatorID.Eq(req.DelegatorID)),
+				keel.When(!req.DelegateID.IsNil(), ad.DelegateID.Eq(req.DelegateID)),
+				active,
+			).
+				Order(ad.StartsAt.Desc()).
+				Limit(limitOr(req.Limit, defaultDelegationPageSize))
+			if req.IncludeUsers {
+				q = q.Load(ad.Delegator(), ad.Delegate())
+			}
 
-		entities, err := q.List(ctx, r.db.Keel(ctx))
-		if err != nil {
-			r.l.Error("failed to list approval delegations", zap.Error(err))
-			return nil, fmt.Errorf("list approval delegations: %w", err)
-		}
+			entities, err := q.List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list approval delegations", zap.Error(err))
+				return nil, fmt.Errorf("list approval delegations: %w", err)
+			}
 
-		return entities, nil
-	})
+			return entities, nil
+		},
+	)
 }
 
 func (r *repository) GetDelegationByID(
 	ctx context.Context,
-	req *workerports.GetApprovalDelegationByIDRequest,
-) (*worker.ApprovalDelegation, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.ApprovalDelegation, error) {
-		entity, err := workerdb.ApprovalDelegations.Get(ctx, r.db.Keel(ctx), req.ID)
-		if err != nil {
-			return nil, approvalDelegationErrors.Map(err, req.ID.String())
-		}
+	req *orgstructureports.GetApprovalDelegationByIDRequest,
+) (*approvaldelegation.ApprovalDelegation, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
+			entity, err := approvaldelegationdb.ApprovalDelegations.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, approvalDelegationErrors.Map(err, req.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) CreateDelegation(
 	ctx context.Context,
-	entity *worker.ApprovalDelegation,
-) (*worker.ApprovalDelegation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ApprovalDelegation, error) {
-		if err := workerdb.ApprovalDelegations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create approval delegation", zap.Error(err))
-			return nil, approvalDelegationErrors.Map(err, entity.ID.String())
-		}
+	entity *approvaldelegation.ApprovalDelegation,
+) (*approvaldelegation.ApprovalDelegation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
+			if err := approvaldelegationdb.ApprovalDelegations.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to create approval delegation", zap.Error(err))
+				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) UpdateDelegation(
 	ctx context.Context,
-	entity *worker.ApprovalDelegation,
-) (*worker.ApprovalDelegation, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.ApprovalDelegation, error) {
-		if err := workerdb.ApprovalDelegations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to update approval delegation", zap.Error(err))
-			return nil, approvalDelegationErrors.Map(err, entity.ID.String())
-		}
+	entity *approvaldelegation.ApprovalDelegation,
+) (*approvaldelegation.ApprovalDelegation, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*approvaldelegation.ApprovalDelegation, error) {
+			if err := approvaldelegationdb.ApprovalDelegations.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				r.l.Error("failed to update approval delegation", zap.Error(err))
+				return nil, approvalDelegationErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }

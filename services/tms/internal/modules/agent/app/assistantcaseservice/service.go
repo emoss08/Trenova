@@ -11,11 +11,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentsubjectports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -66,16 +69,16 @@ type Params struct {
 
 	Logger        *zap.Logger
 	States        *States
-	Conversations agentports.ConversationRepository
+	Conversations conversationports.ConversationRepository
 	Cases         deskcaseports.AssistantCaseRepository
-	Subjects      agentports.AgentSubjectRepository
-	Shipments     shipmentports.ShipmentService
+	Subjects      agentsubjectports.AgentSubjectRepository
+	Shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	Waits         agentwaitports.AgentWaitService
 	Checklists    deskcaseports.CaseChecklistRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
-	Runtime       agentports.AgentRuntime
+	Runtime       agentruntimeports.AgentRuntime
 	Permissions   permissionports.PermissionEngine
-	Realtime      agentports.RealtimeService `optional:"true"`
+	Realtime      realtimeports.RealtimeService `optional:"true"`
 }
 
 // Service makes a conversation a case about a shipment, invoice or dispute
@@ -85,15 +88,15 @@ type Params struct {
 type Service struct {
 	*States
 
-	conversations agentports.ConversationRepository
-	subjects      agentports.AgentSubjectRepository
-	shipments     shipmentports.ShipmentService
+	conversations conversationports.ConversationRepository
+	subjects      agentsubjectports.AgentSubjectRepository
+	shipments     shipmentserviceports.ShipmentBillingReadinessReader
 	agentWaits    agentwaitports.AgentWaitService
 	checklists    deskcaseports.CaseChecklistRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
-	runtime       agentports.AgentRuntime
+	runtime       agentruntimeports.AgentRuntime
 	permissions   permissionports.PermissionEngine
-	realtime      agentports.RealtimeService
+	realtime      realtimeports.RealtimeService
 }
 
 //nolint:gocritic // fx passes params by value
@@ -391,7 +394,7 @@ func (s *Service) Bind(
 		return nil, err
 	}
 
-	exists, err := s.subjects.Exists(ctx, agentports.AgentSubjectExistsRequest{
+	exists, err := s.subjects.Exists(ctx, &agentsubjectports.AgentSubjectExistsRequest{
 		TenantInfo:  req.TenantInfo,
 		SubjectType: req.SubjectType,
 		SubjectID:   req.SubjectID,
@@ -693,7 +696,7 @@ func (s *Service) ownThread(
 		return nil, errortypes.NewAuthorizationError("A case belongs to a person")
 	}
 
-	return s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	return s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         req.ThreadID,
 		UserID:     req.Actor.UserID,
 		TenantInfo: req.TenantInfo,
@@ -749,7 +752,7 @@ func (s *Service) announce(ctx context.Context, thread *conversation.Thread) {
 	}
 	if err := s.realtime.PublishResourceInvalidation(
 		context.WithoutCancel(ctx),
-		&agentports.PublishResourceInvalidationRequest{
+		&realtimeports.PublishResourceInvalidationRequest{
 			OrganizationID: thread.OrganizationID,
 			BusinessUnitID: thread.BusinessUnitID,
 			AudienceUserID: thread.UserID,

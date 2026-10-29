@@ -6,8 +6,9 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -18,19 +19,19 @@ const maxWebhookBodyBytes = 1 << 20
 type Params struct {
 	fx.In
 
-	Service      accountingsyncports.AccountingConnectionService
-	Connectors   accountingsyncports.AccountingConnectorRegistry
+	Webhooks     accountingconnectionports.AccountingWebhookReceiver
+	Connectors   accountingconnectorports.AccountingConnectorRegistry
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service    accountingsyncports.AccountingConnectionService
-	connectors accountingsyncports.AccountingConnectorRegistry
+	webhooks   accountingconnectionports.AccountingWebhookReceiver
+	connectors accountingconnectorports.AccountingConnectorRegistry
 	eh         *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
-	return &Handler{service: p.Service, connectors: p.Connectors, eh: p.ErrorHandler}
+	return &Handler{webhooks: p.Webhooks, connectors: p.Connectors, eh: p.ErrorHandler}
 }
 
 func WebhookPath(provider string) string {
@@ -48,8 +49,8 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) resolve(
 	c *gin.Context,
-) (*accountingsync.ProviderProfile, accountingsyncports.AccountingProvider, bool) {
-	profile, ok := accountingsync.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
+) (*accountingprovider.ProviderProfile, accountingconnectorports.AccountingProvider, bool) {
+	profile, ok := accountingprovider.ProfileByWebhookSlug(strings.ToLower(c.Param("provider")))
 	if !ok {
 		return nil, nil, false
 	}
@@ -73,14 +74,14 @@ func (h *Handler) handshake(c *gin.Context) {
 
 func (h *Handler) answerHandshake(
 	c *gin.Context,
-	profile *accountingsync.ProviderProfile,
-	provider accountingsyncports.AccountingProvider,
+	profile *accountingprovider.ProviderProfile,
+	provider accountingconnectorports.AccountingProvider,
 ) bool {
 	raw, present := c.GetQuery(validationTokenParam)
 	if !present || !profile.WebhookSubscriptions {
 		return false
 	}
-	subscribing, ok := provider.(accountingsyncports.AccountingSubscriptionProvider)
+	subscribing, ok := provider.(accountingconnectorports.AccountingSubscriptionProvider)
 	if !ok {
 		return false
 	}
@@ -116,9 +117,9 @@ func (h *Handler) receive(c *gin.Context) {
 		return
 	}
 
-	err = h.service.ReceiveWebhook(
+	err = h.webhooks.ReceiveWebhook(
 		c.Request.Context(),
-		&accountingsyncports.ReceiveAccountingWebhookRequest{
+		&accountingconnectionports.ReceiveAccountingWebhookRequest{
 			IntegrationType: typ,
 			AppID:           c.Param("app"),
 			Signature:       c.GetHeader(provider.WebhookSignatureHeader()),

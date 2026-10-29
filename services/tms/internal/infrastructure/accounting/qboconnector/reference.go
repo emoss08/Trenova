@@ -5,24 +5,26 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/quickbooksref"
 )
 
 var (
-	_ accountingsyncports.AccountingReferenceReader  = (*Connector)(nil)
-	_ accountingsyncports.AccountingReferenceCreator = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceReader  = (*Connector)(nil)
+	_ accountingconnectorports.AccountingReferenceCreator = (*Connector)(nil)
 )
 
 func (c *Connector) MaxReferencePageSize() int {
-	return quickbooks.MaxQueryResults
+	return quickbooksref.MaxQueryResults
 }
 
 func (c *Connector) ListReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingReferencePageRequest,
-) (*accountingsyncports.AccountingReferencePage, error) {
+	req *accountingconnectorports.AccountingReferencePageRequest,
+) (*accountingconnectorports.AccountingReferencePage, error) {
 	kind, err := providerKind(req.Kind)
 	if err != nil {
 		return nil, err
@@ -32,13 +34,13 @@ func (c *Connector) ListReference(
 		return nil, err
 	}
 
-	page, err := client.ListReference(ctx, kind, req.StartPosition, req.PageSize)
+	page, err := quickbooksref.ListReference(ctx, client, kind, req.StartPosition, req.PageSize)
 	if err != nil {
 		return nil, err
 	}
 
-	out := &accountingsyncports.AccountingReferencePage{
-		Objects:   make([]*accountingsync.AccountingReferenceObject, 0, len(page.Objects)),
+	out := &accountingconnectorports.AccountingReferencePage{
+		Objects:   make([]*accountingmapping.AccountingReferenceObject, 0, len(page.Objects)),
 		NextStart: page.NextStart,
 	}
 	for idx := range page.Objects {
@@ -49,32 +51,42 @@ func (c *Connector) ListReference(
 
 func (c *Connector) CreateReference(
 	ctx context.Context,
-	req *accountingsyncports.AccountingCreateReferenceRequest,
-) (*accountingsync.AccountingReferenceObject, error) {
+	req *accountingconnectorports.AccountingCreateReferenceRequest,
+) (*accountingmapping.AccountingReferenceObject, error) {
 	client, err := quickbooks.New(c.env, req.RealmID, req.AccessToken, c.apiOpts...)
 	if err != nil {
 		return nil, err
 	}
 
-	var created *quickbooks.ReferenceObject
+	var created *quickbooksref.ReferenceObject
 	switch req.Kind {
-	case accountingsync.ReferenceKindItem:
+	case accountingprovider.ReferenceKindItem:
 		if req.Item == nil {
 			return nil, errors.New("quickbooks: an item draft is required")
 		}
-		created, err = client.CreateItem(ctx, req.RequestID, quickbooks.ItemDraft{
+		created, err = quickbooksref.CreateItem(ctx, client, req.RequestID, quickbooksref.ItemDraft{
 			Name:            req.Item.Name,
 			Description:     req.Item.Description,
 			Sku:             req.Item.Sku,
 			IncomeAccountID: req.Item.IncomeAccountID,
 		})
-	case accountingsync.ReferenceKindCustomer:
-		created, err = client.CreateCustomer(ctx, req.RequestID, partyDraftOf(req.Party))
-	case accountingsync.ReferenceKindVendor:
-		created, err = client.CreateVendor(ctx, req.RequestID, partyDraftOf(req.Party))
-	case accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindTerm,
-		accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindCustomer:
+		created, err = quickbooksref.CreateCustomer(
+			ctx,
+			client,
+			req.RequestID,
+			partyDraftOf(req.Party),
+		)
+	case accountingprovider.ReferenceKindVendor:
+		created, err = quickbooksref.CreateVendor(
+			ctx,
+			client,
+			req.RequestID,
+			partyDraftOf(req.Party),
+		)
+	case accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindTerm,
+		accountingprovider.ReferenceKindPaymentMethod:
 		return nil, fmt.Errorf("quickbooks: %s records are not created from Trenova", req.Kind)
 	default:
 		return nil, fmt.Errorf("quickbooks: unknown reference kind %q", req.Kind)
@@ -87,21 +99,21 @@ func (c *Connector) CreateReference(
 }
 
 func (c *Connector) IsDuplicateName(err error) bool {
-	return quickbooks.IsDuplicateName(err)
+	return quickbooksref.IsDuplicateName(err)
 }
 
-func (c *Connector) SanitizeName(kind accountingsync.ReferenceKind, name string) string {
-	if kind == accountingsync.ReferenceKindItem {
-		return quickbooks.SanitizeName(name, quickbooks.MaxItemNameLength)
+func (c *Connector) SanitizeName(kind accountingprovider.ReferenceKind, name string) string {
+	if kind == accountingprovider.ReferenceKindItem {
+		return quickbooksref.SanitizeName(name, quickbooksref.MaxItemNameLength)
 	}
-	return quickbooks.SanitizeName(name, quickbooks.MaxPartyNameLength)
+	return quickbooksref.SanitizeName(name, quickbooksref.MaxPartyNameLength)
 }
 
-func partyDraftOf(draft *accountingsyncports.AccountingPartyDraft) *quickbooks.PartyDraft {
+func partyDraftOf(draft *accountingconnectorports.AccountingPartyDraft) *quickbooksref.PartyDraft {
 	if draft == nil {
 		return nil
 	}
-	return &quickbooks.PartyDraft{
+	return &quickbooksref.PartyDraft{
 		DisplayName:  draft.DisplayName,
 		CompanyName:  draft.CompanyName,
 		Email:        draft.Email,
@@ -114,30 +126,30 @@ func partyDraftOf(draft *accountingsyncports.AccountingPartyDraft) *quickbooks.P
 	}
 }
 
-func providerKind(kind accountingsync.ReferenceKind) (quickbooks.ReferenceKind, error) {
+func providerKind(kind accountingprovider.ReferenceKind) (quickbooksref.ReferenceKind, error) {
 	switch kind {
-	case accountingsync.ReferenceKindAccount:
-		return quickbooks.KindAccount, nil
-	case accountingsync.ReferenceKindItem:
-		return quickbooks.KindItem, nil
-	case accountingsync.ReferenceKindCustomer:
-		return quickbooks.KindCustomer, nil
-	case accountingsync.ReferenceKindVendor:
-		return quickbooks.KindVendor, nil
-	case accountingsync.ReferenceKindTerm:
-		return quickbooks.KindTerm, nil
-	case accountingsync.ReferenceKindPaymentMethod:
-		return quickbooks.KindPaymentMethod, nil
+	case accountingprovider.ReferenceKindAccount:
+		return quickbooksref.KindAccount, nil
+	case accountingprovider.ReferenceKindItem:
+		return quickbooksref.KindItem, nil
+	case accountingprovider.ReferenceKindCustomer:
+		return quickbooksref.KindCustomer, nil
+	case accountingprovider.ReferenceKindVendor:
+		return quickbooksref.KindVendor, nil
+	case accountingprovider.ReferenceKindTerm:
+		return quickbooksref.KindTerm, nil
+	case accountingprovider.ReferenceKindPaymentMethod:
+		return quickbooksref.KindPaymentMethod, nil
 	default:
 		return "", fmt.Errorf("quickbooks: unknown reference kind %q", kind)
 	}
 }
 
 func referenceObjectOf(
-	kind accountingsync.ReferenceKind,
-	obj *quickbooks.ReferenceObject,
-) *accountingsync.AccountingReferenceObject {
-	out := &accountingsync.AccountingReferenceObject{
+	kind accountingprovider.ReferenceKind,
+	obj *quickbooksref.ReferenceObject,
+) *accountingmapping.AccountingReferenceObject {
+	out := &accountingmapping.AccountingReferenceObject{
 		Kind:                    kind,
 		ExternalID:              obj.ID,
 		Name:                    obj.Name,
@@ -164,14 +176,14 @@ func referenceObjectOf(
 		Is1099:                  obj.Is1099,
 	}
 	switch kind {
-	case accountingsync.ReferenceKindTerm:
+	case accountingprovider.ReferenceKindTerm:
 		out.SubType = obj.TermType
-	case accountingsync.ReferenceKindPaymentMethod:
+	case accountingprovider.ReferenceKindPaymentMethod:
 		out.SubType = obj.PaymentMethodType
-	case accountingsync.ReferenceKindAccount,
-		accountingsync.ReferenceKindItem,
-		accountingsync.ReferenceKindCustomer,
-		accountingsync.ReferenceKindVendor:
+	case accountingprovider.ReferenceKindAccount,
+		accountingprovider.ReferenceKindItem,
+		accountingprovider.ReferenceKindCustomer,
+		accountingprovider.ReferenceKindVendor:
 	}
 	if obj.LastUpdatedAt > 0 {
 		updated := obj.LastUpdatedAt
@@ -182,27 +194,27 @@ func referenceObjectOf(
 
 const undepositedFundsSubType = "UndepositedFunds"
 
-var accountClasses = map[string]accountingsync.AccountClass{
-	"Accounts Receivable":     accountingsync.AccountClassReceivable,
-	"Accounts Payable":        accountingsync.AccountClassPayable,
-	"Bank":                    accountingsync.AccountClassBank,
-	"Income":                  accountingsync.AccountClassIncome,
-	"Other Income":            accountingsync.AccountClassOtherIncome,
-	"Cost of Goods Sold":      accountingsync.AccountClassCostOfSales,
-	"Expense":                 accountingsync.AccountClassExpense,
-	"Other Expense":           accountingsync.AccountClassOtherExpense,
-	"Other Current Asset":     accountingsync.AccountClassAsset,
-	"Fixed Asset":             accountingsync.AccountClassAsset,
-	"Other Asset":             accountingsync.AccountClassAsset,
-	"Credit Card":             accountingsync.AccountClassLiability,
-	"Other Current Liability": accountingsync.AccountClassLiability,
-	"Long Term Liability":     accountingsync.AccountClassLiability,
-	"Equity":                  accountingsync.AccountClassEquity,
+var accountClasses = map[string]accountingmapping.AccountClass{
+	"Accounts Receivable":     accountingmapping.AccountClassReceivable,
+	"Accounts Payable":        accountingmapping.AccountClassPayable,
+	"Bank":                    accountingmapping.AccountClassBank,
+	"Income":                  accountingmapping.AccountClassIncome,
+	"Other Income":            accountingmapping.AccountClassOtherIncome,
+	"Cost of Goods Sold":      accountingmapping.AccountClassCostOfSales,
+	"Expense":                 accountingmapping.AccountClassExpense,
+	"Other Expense":           accountingmapping.AccountClassOtherExpense,
+	"Other Current Asset":     accountingmapping.AccountClassAsset,
+	"Fixed Asset":             accountingmapping.AccountClassAsset,
+	"Other Asset":             accountingmapping.AccountClassAsset,
+	"Credit Card":             accountingmapping.AccountClassLiability,
+	"Other Current Liability": accountingmapping.AccountClassLiability,
+	"Long Term Liability":     accountingmapping.AccountClassLiability,
+	"Equity":                  accountingmapping.AccountClassEquity,
 }
 
-func AccountClassOf(accountType, subType string) accountingsync.AccountClass {
+func AccountClassOf(accountType, subType string) accountingmapping.AccountClass {
 	if subType == undepositedFundsSubType {
-		return accountingsync.AccountClassUndepositedFunds
+		return accountingmapping.AccountClassUndepositedFunds
 	}
 	return accountClasses[accountType]
 }

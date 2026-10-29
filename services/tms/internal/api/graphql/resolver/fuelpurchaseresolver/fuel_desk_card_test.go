@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -113,7 +113,9 @@ func (deskRates) ResolveRates(
 	return map[ifta.RateKey]*ifta.TaxRate{}, nil
 }
 
-type deskOrgs struct{ tenantports.OrganizationRepository }
+type deskOrgs struct {
+	tenantports.OrganizationRepository
+}
 
 func (deskOrgs) GetByID(
 	context.Context,
@@ -163,7 +165,7 @@ func deskResolver(
 		Users:         deskUsers{},
 	})
 	deps := &Deps{
-		Core:          &base.Core{L: zap.NewNop(), PermissionEngine: engine},
+		Core:          &resolvercore.Core{L: zap.NewNop(), PermissionEngine: engine},
 		FuelDeskCards: cards,
 	}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/factoringjobs/factoringcontract"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
@@ -44,7 +44,7 @@ func FactoringRemittanceStageWorkflow(
 	for {
 		step := *payload
 		step.GiveUp = !workflow.Now(ctx).Add(remittanceStagePoll).Before(deadline)
-		var staged factoringports.StagePendingResult
+		var staged factoringremittanceports.StagePendingResult
 		if err := workflow.ExecuteActivity(actx, a.StageFactoringRemittanceActivity, &step).
 			Get(actx, &staged); err != nil {
 			return result, err
@@ -66,12 +66,16 @@ func FactoringRemittanceStageWorkflow(
 func (a *Activities) StageFactoringRemittanceActivity(
 	ctx context.Context,
 	payload *factoringcontract.RemittanceStagePayload,
-) (*factoringports.StagePendingResult, error) {
-	result, err := a.remittances.StagePending(ctx, &factoringports.RemittanceVersionRequest{
-		TenantInfo: payload.TenantInfo(),
-		ID:         payload.RemittanceID,
-		Version:    payload.Version,
-	}, payload.GiveUp)
+) (*factoringremittanceports.StagePendingResult, error) {
+	result, err := a.remittances.StagePending(
+		ctx,
+		&factoringremittanceports.RemittanceVersionRequest{
+			TenantInfo: payload.TenantInfo(),
+			ID:         payload.RemittanceID,
+			Version:    payload.Version,
+		},
+		payload.GiveUp,
+	)
 	if err != nil {
 		return nil, err
 	}

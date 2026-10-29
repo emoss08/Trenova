@@ -9,11 +9,11 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -31,7 +31,7 @@ type harness struct {
 	db     *keel.DB
 	dsn    string
 	conn   *postgres.Connection
-	repo   agentports.AIRetrievalRepository
+	repo   retrievalports.AIRetrievalRepository
 	data   *seedtest.TestData
 	tenant pagination.TenantInfo
 }
@@ -56,7 +56,7 @@ func newHarness(t *testing.T) *harness {
 	}
 }
 
-func newRepository(conn *postgres.Connection) agentports.AIRetrievalRepository {
+func newRepository(conn *postgres.Connection) retrievalports.AIRetrievalRepository {
 	return New(Params{
 		DB:     conn,
 		Probe:  postgres.NewTestCapabilityProbe(conn),
@@ -100,12 +100,12 @@ func (h *harness) replace(
 	sourceID pulid.ID,
 	modelKey string,
 	dimensions int,
-	chunks ...agentports.EmbeddingChunk,
-) agentports.ReplaceEmbeddingChunksResult {
+	chunks ...retrievalports.EmbeddingChunk,
+) retrievalports.ReplaceEmbeddingChunksResult {
 	t.Helper()
 
-	result, err := h.repo.ReplaceChunks(h.as(tenant), &agentports.ReplaceEmbeddingChunksRequest{
-		Source: agentports.AIRetrievalSourceRef{
+	result, err := h.repo.ReplaceChunks(h.as(tenant), &retrievalports.ReplaceEmbeddingChunksRequest{
+		Source: retrievalports.AIRetrievalSourceRef{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			SourceID:   sourceID,
@@ -123,18 +123,18 @@ func (h *harness) as(tenant pagination.TenantInfo) context.Context {
 	return dbscope.WithTenant(h.ctx, tenant.DBTenant())
 }
 
-func (h *harness) insertMemory(t *testing.T, content string) *agent.Memory {
+func (h *harness) insertMemory(t *testing.T, content string) *agentmemory.Memory {
 	t.Helper()
 
-	memory := &agent.Memory{
+	memory := &agentmemory.Memory{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
-		Kind:           agent.MemoryKindFact,
-		Source:         agent.MemorySourceUser,
-		Status:         agent.MemoryStatusActive,
+		Kind:           agentmemory.MemoryKindFact,
+		Source:         agentmemory.MemorySourceUser,
+		Status:         agentmemory.MemoryStatusActive,
 		Content:        content,
 	}
-	require.NoError(t, agentdb.Memories.Create(h.ctx, h.db, memory))
+	require.NoError(t, agentmemorydb.Memories.Create(h.ctx, h.db, memory))
 
 	return memory
 }

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -187,7 +188,7 @@ func TestOccurrence_NoticeCountdown(t *testing.T) {
 	occ := billableOccurrence()
 	assert.Nil(t, occ.MinutesUntilNoticeDue(1000))
 
-	occ.NoticeDueAt = ptr(int64(7000))
+	occ.NoticeDueAt = new(int64(7000))
 	remaining := occ.MinutesUntilNoticeDue(4000)
 	require.NotNil(t, remaining)
 	assert.Equal(t, int32(50), *remaining)
@@ -202,7 +203,7 @@ func TestOccurrence_NoticeWindowOpen(t *testing.T) {
 
 	occ := billableOccurrence()
 	occ.NotificationStatus = detention.NotificationStatusPending
-	occ.NoticeDeadlineAt = ptr(int64(9000))
+	occ.NoticeDeadlineAt = new(int64(9000))
 
 	assert.True(t, occ.NoticeWindowOpen(8000))
 	assert.False(t, occ.NoticeWindowOpen(9001))
@@ -234,7 +235,7 @@ func TestOccurrence_Validation(t *testing.T) {
 			name: "clock stop precedes clock start",
 			mutate: func(o *detention.DetentionOccurrence) {
 				o.ClockStartAt = 5000
-				o.ClockStopAt = ptr(int64(1000))
+				o.ClockStopAt = new(int64(1000))
 			},
 			wantField: "clockStopAt",
 		},
@@ -275,17 +276,17 @@ func TestNotice_DeliveryTransitions(t *testing.T) {
 
 	t.Run("sent inside the window satisfies the requirement", func(t *testing.T) {
 		t.Parallel()
-		n := &detention.DetentionNotice{}
+		n := &detentionnotice.DetentionNotice{}
 		n.MarkSent(8000, &deadline, "msg-1")
 
-		assert.Equal(t, detention.NoticeDeliveryStatusSent, n.DeliveryStatus)
+		assert.Equal(t, detentionnotice.NoticeDeliveryStatusSent, n.DeliveryStatus)
 		assert.True(t, n.SatisfiesRequirement)
 		assert.Equal(t, "msg-1", n.ProviderMessageID)
 	})
 
 	t.Run("sent after the deadline does not", func(t *testing.T) {
 		t.Parallel()
-		n := &detention.DetentionNotice{}
+		n := &detentionnotice.DetentionNotice{}
 		n.MarkSent(9001, &deadline, "msg-2")
 
 		assert.False(t, n.SatisfiesRequirement)
@@ -293,7 +294,7 @@ func TestNotice_DeliveryTransitions(t *testing.T) {
 
 	t.Run("no deadline means any send counts", func(t *testing.T) {
 		t.Parallel()
-		n := &detention.DetentionNotice{}
+		n := &detentionnotice.DetentionNotice{}
 		n.MarkSent(99999, nil, "msg-3")
 
 		assert.True(t, n.SatisfiesRequirement)
@@ -301,13 +302,13 @@ func TestNotice_DeliveryTransitions(t *testing.T) {
 
 	t.Run("a bounce revokes the satisfaction", func(t *testing.T) {
 		t.Parallel()
-		n := &detention.DetentionNotice{}
+		n := &detentionnotice.DetentionNotice{}
 		n.MarkSent(8000, &deadline, "msg-4")
 		require.True(t, n.SatisfiesRequirement)
 
 		n.MarkBounced(8100, "mailbox full")
 
-		assert.Equal(t, detention.NoticeDeliveryStatusBounced, n.DeliveryStatus)
+		assert.Equal(t, detentionnotice.NoticeDeliveryStatusBounced, n.DeliveryStatus)
 		assert.False(t, n.SatisfiesRequirement,
 			"a notice the customer never received cannot support the claim")
 		assert.Contains(t, n.FailureReason, "mailbox full")
@@ -315,13 +316,13 @@ func TestNotice_DeliveryTransitions(t *testing.T) {
 
 	t.Run("delivery and open are recorded", func(t *testing.T) {
 		t.Parallel()
-		n := &detention.DetentionNotice{}
+		n := &detentionnotice.DetentionNotice{}
 		n.MarkSent(8000, &deadline, "msg-5")
 		n.MarkDelivered(8010)
 		assert.True(t, n.DeliveryStatus.IsDelivered())
 
 		n.MarkOpened(8020)
-		assert.Equal(t, detention.NoticeDeliveryStatusOpened, n.DeliveryStatus)
+		assert.Equal(t, detentionnotice.NoticeDeliveryStatusOpened, n.DeliveryStatus)
 		assert.True(t, n.DeliveryStatus.IsDelivered())
 	})
 }
@@ -346,4 +347,12 @@ func TestNotificationStatus_SatisfiesRequirement(t *testing.T) {
 	for _, status := range failing {
 		assert.False(t, status.SatisfiesRequirement(), "%s", status)
 	}
+}
+
+func errorFields(multiErr *errortypes.MultiError) []string {
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, err := range multiErr.Errors {
+		fields = append(fields, err.Field)
+	}
+	return fields
 }

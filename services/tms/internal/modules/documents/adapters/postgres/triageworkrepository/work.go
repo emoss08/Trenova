@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -35,7 +36,7 @@ type repository struct {
 	db *postgres.Connection
 }
 
-func New(p Params) inboundmessageports.TriageWorkRepository {
+func New(p Params) triageworkports.TriageWorkRepository {
 	return &repository{db: p.DB}
 }
 
@@ -190,7 +191,7 @@ func (r *repository) LatestExtractionID(
 
 func (r *repository) AlternateAddresses(
 	ctx context.Context,
-	req *inboundmessageports.AlternateAddressRequest,
+	req *triageworkports.AlternateAddressRequest,
 ) ([]string, error) {
 	domain := strings.ToLower(strings.TrimSpace(req.Domain))
 	exclude := strings.ToLower(strings.TrimSpace(req.Exclude))
@@ -248,12 +249,12 @@ func (r *repository) AlternateAddresses(
 
 func (r *repository) CustomerTriage(
 	ctx context.Context,
-	req *inboundmessageports.CustomerTriageRequest,
-) (*inboundmessageports.CustomerTriage, error) {
+	req *triageworkports.CustomerTriageRequest,
+) (*triageworkports.CustomerTriage, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) (*inboundmessageports.CustomerTriage, error) {
+		func(ctx context.Context) (*triageworkports.CustomerTriage, error) {
 			db := r.db.Keel(ctx)
 			m := inboundmessagedb.InboundMessages
 
@@ -301,7 +302,7 @@ func (r *repository) CustomerTriage(
 				recent = append(recent, sample)
 			}
 
-			return &inboundmessageports.CustomerTriage{Waiting: int(waiting), Recent: recent}, nil
+			return &triageworkports.CustomerTriage{Waiting: int(waiting), Recent: recent}, nil
 		},
 	)
 }

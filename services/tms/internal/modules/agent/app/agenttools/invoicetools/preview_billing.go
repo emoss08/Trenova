@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
 
 func (t *CorrectChargeCodeTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	request, err := t.request(&params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	request, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +31,7 @@ func (t *CorrectChargeCodeTool) Preview(
 			Resource: permission.ResourceShipment,
 			ID:       plan.Before.ID,
 			Label:    plan.Before.ProNumber,
-			Version:  common.PinnedVersion(plan.Before.Version),
+			Version:  changepreview.PinnedVersion(plan.Before.Version),
 		},
 		plan.Before,
 		plan.After,
@@ -39,7 +40,7 @@ func (t *CorrectChargeCodeTool) Preview(
 	if err != nil {
 		return nil, err
 	}
-	money, err := common.ChargeEditMoney(ctx, plan.Before, plan.After)
+	money, err := invoicepreview.ChargeEditMoney(ctx, plan.Before, plan.After)
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +55,13 @@ func (t *CorrectChargeCodeTool) Preview(
 			"with %s, taking its total from %s to %s.",
 		plan.Item.Number,
 		plan.Before.ProNumber,
-		common.CountOf(len(plan.After.AdditionalCharges), "charge"),
+		changepreview.CountOf(len(plan.After.AdditionalCharges), "charge"),
 		plan.Before.TotalChargeAmount.Decimal.StringFixed(2),
 		plan.After.TotalChargeAmount.Decimal.StringFixed(2),
 	)
 	preview := toolpreview.Build(summary, change)
 	if plan.ConvertedSplits > 0 {
-		toolpreview.Warn(preview, agent.PreviewWarningWouldFail, fmt.Sprintf(
+		toolpreview.Warn(preview, agentpreview.PreviewWarningWouldFail, fmt.Sprintf(
 			"%d split(s) by amount would be rewritten as percentages.", plan.ConvertedSplits,
 		))
 	}

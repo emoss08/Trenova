@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/formulavisibility"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingapprovalrun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -350,7 +350,7 @@ func (h *Handler) startBulkApprove(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	if len(body.ItemIDs) > billingqueue.MaxApprovalRunItems {
+	if len(body.ItemIDs) > billingapprovalrun.MaxApprovalRunItems {
 		h.eh.HandleError(c, errortypes.NewValidationError(
 			"itemIds", errortypes.ErrInvalid, "Approve at most 500 items at a time",
 		))

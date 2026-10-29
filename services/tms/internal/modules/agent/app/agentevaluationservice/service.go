@@ -8,12 +8,13 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -34,8 +35,8 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         agentports.AgentEvaluationRepository
-	Runs         agentports.AgentRunRepository
+	Repo         agentevaluationports.AgentEvaluationRepository
+	Runs         agentruntimeports.AgentRunRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Cases        agentqualityports.AgentEvalCaseRepository
 	Workflows    kernelports.WorkflowStarter
@@ -44,15 +45,16 @@ type Params struct {
 
 type Service struct {
 	l           *zap.Logger
-	repo        agentports.AgentEvaluationRepository
-	runs        agentports.AgentRunRepository
+	repo        agentevaluationports.AgentEvaluationRepository
+	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
 	cases       agentqualityports.AgentEvalCaseRepository
 	workflows   kernelports.WorkflowStarter
 	audit       auditports.AuditService
 }
 
-func New(p Params) agentports.AgentEvaluationService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentevaluationports.AgentEvaluationService {
 	return &Service{
 		l:           p.Logger.Named("service.agentevaluation"),
 		repo:        p.Repo,
@@ -68,14 +70,14 @@ func New(p Params) agentports.AgentEvaluationService {
 // workflow that carries it out.
 func (s *Service) Replay(
 	ctx context.Context,
-	req *agentports.ReplayAgentRunRequest,
+	req *agentevaluationports.ReplayAgentRunRequest,
 	actor *permissionports.RequestActor,
-) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
 
-	run, err := s.runs.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         req.RunID,
 		TenantInfo: &req.TenantInfo,
 	})
@@ -99,12 +101,12 @@ func (s *Service) Replay(
 		return nil, err
 	}
 
-	evaluation := &agent.Evaluation{
+	evaluation := &agentevaluation.Evaluation{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		AgentDefinitionID: definition.ID,
 		SourceRunID:       run.ID,
-		Status:            agent.EvaluationStatusPending,
+		Status:            agentevaluation.EvaluationStatusPending,
 		Trigger:           run.Trigger,
 		SubjectType:       run.SubjectType,
 		SubjectID:         run.SubjectID,
@@ -117,9 +119,9 @@ func (s *Service) Replay(
 
 func (s *Service) ReplayCase(
 	ctx context.Context,
-	req *agentports.ReplayAgentEvalCaseRequest,
+	req *agentevaluationports.ReplayAgentEvalCaseRequest,
 	actor *permissionports.RequestActor,
-) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
 	if !s.workflows.Enabled() {
 		return nil, errortypes.NewBusinessError("The workflow engine is not available")
 	}
@@ -147,12 +149,12 @@ func (s *Service) ReplayCase(
 	}
 
 	caseID := evalCase.ID
-	evaluation := &agent.Evaluation{
+	evaluation := &agentevaluation.Evaluation{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		AgentDefinitionID: definition.ID,
 		EvalCaseID:        &caseID,
-		Status:            agent.EvaluationStatusPending,
+		Status:            agentevaluation.EvaluationStatusPending,
 		Trigger:           evalCase.Trigger,
 		SubjectType:       evalCase.SubjectType,
 		SubjectID:         evalCase.SubjectID,
@@ -168,10 +170,10 @@ func (s *Service) ReplayCase(
 
 func (s *Service) start(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	actor *permissionports.RequestActor,
 	comment string,
-) (*agent.Evaluation, error) {
+) (*agentevaluation.Evaluation, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		userID := actor.UserID
 		evaluation.RequestedByUserID = &userID
@@ -206,7 +208,7 @@ func (s *Service) start(
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
 	}, agentcontract.AgentEvaluationWorkflowName, payload); err != nil {
 		completedAt := timeutils.NowUnix()
-		created.Status = agent.EvaluationStatusFailed
+		created.Status = agentevaluation.EvaluationStatusFailed
 		created.ErrorMessage = err.Error()
 		created.CompletedAt = &completedAt
 		if _, uErr := s.repo.Update(ctx, created); uErr != nil {
@@ -229,20 +231,20 @@ func (s *Service) start(
 
 func (s *Service) GetByID(
 	ctx context.Context,
-	req agentports.GetAgentEvaluationByIDRequest,
-) (*agent.Evaluation, error) {
+	req agentevaluationports.GetAgentEvaluationByIDRequest,
+) (*agentevaluation.Evaluation, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) ListConnection(
 	ctx context.Context,
-	req *agentports.ListAgentEvaluationConnectionRequest,
-) (*pagination.CursorListResult[*agent.Evaluation], error) {
+	req *agentevaluationports.ListAgentEvaluationConnectionRequest,
+) (*pagination.CursorListResult[*agentevaluation.Evaluation], error) {
 	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) log(
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	actor *permissionports.RequestActor,
 	comment string,
 ) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 
 type memoryCache struct {
 	epoch    int64
-	values   map[shipmentports.ShipmentBoardCacheKey][]byte
+	values   map[shipmentboardports.ShipmentBoardCacheKey][]byte
 	epochErr error
 }
 
@@ -25,7 +25,7 @@ func (m *memoryCache) Epoch(context.Context, pagination.TenantInfo) (int64, erro
 
 func (m *memoryCache) Get(
 	_ context.Context,
-	key *shipmentports.ShipmentBoardCacheKey,
+	key *shipmentboardports.ShipmentBoardCacheKey,
 	dest any,
 ) (bool, error) {
 	raw, ok := m.values[*key]
@@ -37,7 +37,7 @@ func (m *memoryCache) Get(
 
 func (m *memoryCache) Set(
 	_ context.Context,
-	key *shipmentports.ShipmentBoardCacheKey,
+	key *shipmentboardports.ShipmentBoardCacheKey,
 	value any,
 ) error {
 	raw, err := sonic.Marshal(value)
@@ -55,13 +55,13 @@ type payload struct {
 func TestGetOrComputeCachesPerEpoch(t *testing.T) {
 	t.Parallel()
 
-	cache := &memoryCache{values: map[shipmentports.ShipmentBoardCacheKey][]byte{}}
+	cache := &memoryCache{values: map[shipmentboardports.ShipmentBoardCacheKey][]byte{}}
 	calls := 0
 	compute := func(context.Context) (*payload, error) {
 		calls++
 		return &payload{Value: calls}, nil
 	}
-	req := &Request{Section: shipmentports.ShipmentBoardSectionWatchlist, Timezone: "UTC"}
+	req := &Request{Section: shipmentboardports.ShipmentBoardSectionWatchlist, Timezone: "UTC"}
 
 	first, err := GetOrCompute(t.Context(), cache, zap.NewNop(), req, compute)
 	require.NoError(t, err)

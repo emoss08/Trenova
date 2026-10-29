@@ -28,7 +28,7 @@ pub const MAX_BATCH_PAGES: u32 = 1000;
 pub const MAX_PRINT_JOB_BYTES: usize = 200 << 20;
 /// `capture.maxClientKeyLength`.
 pub const MAX_CLIENT_KEY_LENGTH: usize = 100;
-/// `captureservice.validPatchCodes`: the patch types the server records.
+/// `captureintake.validPatchCodes`: the patch types the server records.
 /// Anything else a scanner reports is dropped before upload.
 pub const PATCH_CODES: [&str; 6] = ["1", "2", "3", "4", "6", "T"];
 
@@ -209,7 +209,7 @@ pub enum BatchStatus {
     Unknown,
 }
 
-/// `captureservice.StartPairingRequest`.
+/// `capturedevices.StartPairingRequest`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StartPairingRequest {
@@ -220,7 +220,7 @@ pub struct StartPairingRequest {
     pub os_version: String,
 }
 
-/// `captureservice.PairingGrant`, RFC 8628 §3.2.
+/// `capturedevices.PairingGrant`, RFC 8628 §3.2.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PairingGrant {
@@ -241,7 +241,7 @@ pub struct ExchangePairingRequest {
     pub device_code: String,
 }
 
-/// `captureservice.TokenPair`: a device's credential.
+/// `capturedevices.TokenPair`: a device's credential.
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenPair {
@@ -271,7 +271,7 @@ impl std::fmt::Debug for TokenPair {
     }
 }
 
-/// `captureservice.RefreshRequest`.
+/// `capturedevices.RefreshRequest`.
 #[derive(Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RefreshRequest {
@@ -289,7 +289,7 @@ impl std::fmt::Debug for RefreshRequest {
     }
 }
 
-/// `captureservice.PairingErrorCode`: the RFC 8628 §3.5 answers the pairing
+/// `capturedevices.PairingErrorCode`: the RFC 8628 §3.5 answers the pairing
 /// and refresh endpoints give as `{"error": "..."}` with status 400.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -354,7 +354,7 @@ pub struct ProblemDetail {
     pub params: std::collections::HashMap<String, String>,
 }
 
-/// `captureservice.DisabledReasonParam` and `DisabledReason`.
+/// `capturesupport.DisabledReasonParam` and `DisabledReason`.
 pub const DISABLED_REASON_PARAM: &str = "reason";
 pub const DISABLED_REASON: &str = "capture_disabled";
 
@@ -433,7 +433,7 @@ pub struct CaptureDevice {
     pub last_seen_at: Option<i64>,
 }
 
-/// `captureservice.DevicePerson`.
+/// `capturedevices.DevicePerson`.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DevicePerson {
@@ -444,7 +444,7 @@ pub struct DevicePerson {
     pub email_address: String,
 }
 
-/// `captureservice.DeviceOrganization`.
+/// `capturedevices.DeviceOrganization`.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct DeviceOrganization {
     pub id: Id,
@@ -452,7 +452,7 @@ pub struct DeviceOrganization {
     pub name: String,
 }
 
-/// `captureservice.DeviceIdentity`: `GET device/`.
+/// `capturedevices.DeviceIdentity`: `GET device/`.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 pub struct DeviceIdentity {
     pub device: CaptureDevice,
@@ -464,7 +464,7 @@ pub struct DeviceIdentity {
     pub updates: DeviceUpdatePolicy,
 }
 
-/// `captureservice.DeviceUpdatePolicy`: the organization's say over the
+/// `capturedevices.DeviceUpdatePolicy`: the organization's say over the
 /// companion's version.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -550,7 +550,7 @@ pub struct CaptureRequest {
     pub profile: Option<CaptureProfile>,
 }
 
-/// `captureservice.RequestStatusReport`.
+/// `capturerequests.RequestStatusReport`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestStatusReport {
@@ -628,7 +628,7 @@ fn is_false(value: &bool) -> bool {
     !*value
 }
 
-/// `captureservice.OpenBatchInput`.
+/// `captureintake.OpenBatchInput`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenBatchInput {
@@ -679,7 +679,7 @@ pub struct CapturePage {
     pub byte_size: u64,
 }
 
-/// `captureservice.SealBatchInput`.
+/// `captureintake.SealBatchInput`.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SealBatchInput {
@@ -687,7 +687,7 @@ pub struct SealBatchInput {
     pub manifest_digest: String,
 }
 
-/// `captureservice.DeviceSignal`: the entity on a `capture.request` or
+/// `capturedevices.DeviceSignal`: the entity on a `capture.request` or
 /// `capture.revoked` event.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]

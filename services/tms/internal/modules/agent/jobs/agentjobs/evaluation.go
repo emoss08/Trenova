@@ -10,17 +10,27 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentscoring"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentevaluationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,9 +44,9 @@ import (
 // replay is an evaluation opened for replaying: the evaluation, what the source
 // run proposed, and the run request that replays it.
 type replay struct {
-	evaluation *agent.Evaluation
-	originals  []agent.OriginalProposal
-	request    *agentports.RunRequest
+	evaluation *agentevaluation.Evaluation
+	originals  []agentreplay.OriginalProposal
+	request    *agentruntimeports.RunRequest
 }
 
 type replaySkipped struct {
@@ -50,7 +60,7 @@ func skip(reason string) error { return &replaySkipped{reason: reason} }
 type replaySource struct {
 	actor     *permissionports.RequestActor
 	input     *replayInput
-	originals []agent.OriginalProposal
+	originals []agentreplay.OriginalProposal
 }
 
 // openReplay reads what an evaluation replays and marks it running. It returns
@@ -66,10 +76,13 @@ func (a *Activities) openReplay(
 ) (*replay, error) {
 	tenant := payload.TenantInfo()
 
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         payload.EvaluationID,
-		TenantInfo: tenant,
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         payload.EvaluationID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, temporal.NewNonRetryableApplicationError(
 			"agent evaluation unavailable", "EvaluationUnavailable", err,
@@ -106,7 +119,7 @@ func (a *Activities) openReplay(
 	}
 
 	startedAt := timeutils.NowUnix()
-	evaluation.Status = agent.EvaluationStatusRunning
+	evaluation.Status = agentevaluation.EvaluationStatusRunning
 	evaluation.StartedAt = &startedAt
 	evaluation.Input = source.input.input
 	evaluation.DefinitionVersion = definition.Version
@@ -126,7 +139,7 @@ func (a *Activities) openReplay(
 	return &replay{
 		evaluation: evaluation,
 		originals:  source.originals,
-		request: &agentports.RunRequest{
+		request: &agentruntimeports.RunRequest{
 			Definition:   &replayed,
 			Actor:        source.actor,
 			Context:      source.input.context,
@@ -139,7 +152,9 @@ func (a *Activities) openReplay(
 	}, nil
 }
 
-func (a *Activities) fingerprintOf(definition *agentdefinition.Definition) *agent.Fingerprint {
+func (a *Activities) fingerprintOf(
+	definition *agentdefinition.Definition,
+) *agentfingerprint.Fingerprint {
 	if a.runtime == nil {
 		return agentquality.FingerprintOf(definition, promptVersion)
 	}
@@ -150,10 +165,10 @@ func (a *Activities) fingerprintOf(definition *agentdefinition.Definition) *agen
 func (a *Activities) runSource(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	definition *agentdefinition.Definition,
 ) (*replaySource, error) {
-	source, err := a.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	source, err := a.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         evaluation.SourceRunID,
 		TenantInfo: &tenant,
 	})
@@ -189,7 +204,7 @@ func (a *Activities) runSource(
 func (a *Activities) caseSource(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	definition *agentdefinition.Definition,
 ) (*replaySource, error) {
 	evalCase, err := a.evalCases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
@@ -222,7 +237,7 @@ func (a *Activities) caseSource(
 		return nil, err
 	}
 
-	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
@@ -251,7 +266,7 @@ func (a *Activities) caseBackgroundInput(
 	definition *agentdefinition.Definition,
 	actor *permissionports.RequestActor,
 ) (*replayInput, error) {
-	var subject *agentdefinition.RuntimeSubject
+	var subject *agentturn.RuntimeSubject
 	if evalCase.SubjectType != "" {
 		described, err := a.subjects.Describe(ctx, tenant, evalCase.SubjectType, evalCase.SubjectID)
 		if errortypes.IsNotFoundError(err) {
@@ -263,7 +278,7 @@ func (a *Activities) caseBackgroundInput(
 		subject = described
 	}
 
-	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    evalCase.Trigger,
@@ -302,7 +317,7 @@ func (a *Activities) threadActor(
 		)
 	}
 
-	thread, err := a.conversations.GetThreadOwned(ctx, agentports.GetThreadOwnedRequest{
+	thread, err := a.conversations.GetThreadOwned(ctx, conversationports.GetThreadOwnedRequest{
 		ID:         threadID,
 		TenantInfo: tenant,
 	})
@@ -347,7 +362,7 @@ func (a *Activities) memberActor(
 
 func (a *Activities) skipEvaluation(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
+	evaluation *agentevaluation.Evaluation,
 	reason string,
 ) error {
 	evaluation.Skip(stringutils.Ellipsize(reason, maxSummaryChars), timeutils.NowUnix())
@@ -358,21 +373,21 @@ func (a *Activities) skipEvaluation(
 	return nil
 }
 
-func expectedOriginals(evalCase *agentquality.EvalCase) []agent.OriginalProposal {
-	originals := make([]agent.OriginalProposal, 0, len(evalCase.Expected.Proposals))
+func expectedOriginals(evalCase *agentquality.EvalCase) []agentreplay.OriginalProposal {
+	originals := make([]agentreplay.OriginalProposal, 0, len(evalCase.Expected.Proposals))
 	for _, proposal := range evalCase.Expected.Proposals {
-		original := agent.OriginalProposal{
+		original := agentreplay.OriginalProposal{
 			ToolName: proposal.ToolName,
 			Params:   proposal.Params,
 			Status:   agent.ProposalStatusAccepted,
-			Decision: agent.DecisionAccepted,
+			Decision: agentdecision.DecisionAccepted,
 		}
 		if id, err := pulid.Parse(proposal.SourceProposalID); err == nil {
 			original.ID = id
 		}
 		if proposal.Rejected {
 			original.Status = agent.ProposalStatusRejected
-			original.Decision = agent.DecisionRejected
+			original.Decision = agentdecision.DecisionRejected
 		}
 		originals = append(originals, original)
 	}
@@ -384,13 +399,13 @@ func expectedOriginals(evalCase *agentquality.EvalCase) []agent.OriginalProposal
 // did.
 func (a *Activities) storeReplay(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
-	originals []agent.OriginalProposal,
-	outcome *agentports.RunResult,
+	evaluation *agentevaluation.Evaluation,
+	originals []agentreplay.OriginalProposal,
+	outcome *agentruntimeports.RunResult,
 ) (*ReplayRunResult, error) {
-	actions := make([]agent.ReplayAction, 0, len(outcome.Actions))
+	actions := make([]agentreplay.ReplayAction, 0, len(outcome.Actions))
 	for _, action := range outcome.Actions {
-		actions = append(actions, agent.ReplayAction{
+		actions = append(actions, agentreplay.ReplayAction{
 			ToolName:   action.ToolName,
 			Arguments:  action.Arguments,
 			Rationale:  action.Rationale,
@@ -400,13 +415,13 @@ func (a *Activities) storeReplay(
 	}
 
 	completedAt := timeutils.NowUnix()
-	evaluation.Status = agent.EvaluationStatusCompleted
+	evaluation.Status = agentevaluation.EvaluationStatusCompleted
 	evaluation.CompletedAt = &completedAt
 	evaluation.Model = outcome.Model
 	evaluation.ProviderID = outcome.ProviderID
 	evaluation.Reply = stringutils.Ellipsize(strings.TrimSpace(outcome.Reply), maxSummaryChars)
 	evaluation.Actions = actions
-	evaluation.Comparison = agent.CompareReplay(originals, actions)
+	evaluation.Comparison = agentreplay.CompareReplay(originals, actions)
 	evaluation.ToolCallsUsed = outcome.ToolCallsUsed
 	evaluation.Fingerprint = evaluation.Fingerprint.Served(outcome.Model, outcome.ProviderID)
 	if evaluation.ReplaysCase() {
@@ -427,9 +442,9 @@ func (a *Activities) storeReplay(
 
 func (a *Activities) scoreReplay(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
-	outcome *agentports.RunResult,
-	actions []agent.ReplayAction,
+	evaluation *agentevaluation.Evaluation,
+	outcome *agentruntimeports.RunResult,
+	actions []agentreplay.ReplayAction,
 ) error {
 	evalCase, err := a.evalCases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
 		ID: *evaluation.EvalCaseID,
@@ -461,13 +476,13 @@ func (a *Activities) scoreReplay(
 }
 
 type observedReplay struct {
-	calls   []agent.ObservedCall
+	calls   []agentevaluation.ObservedCall
 	trace   []agentscoring.TracedCall
 	results []string
 	refused bool
 }
 
-func observeReplay(outcome *agentports.RunResult) observedReplay {
+func observeReplay(outcome *agentruntimeports.RunResult) observedReplay {
 	autoRun := make(map[string]struct{}, len(outcome.Actions))
 	for i := range outcome.Actions {
 		action := &outcome.Actions[i]
@@ -488,7 +503,7 @@ func observeReplay(outcome *agentports.RunResult) observedReplay {
 		switch message.Role {
 		case conversation.RoleAssistant:
 			for _, call := range message.ToolCalls {
-				observed.calls = append(observed.calls, agent.ObservedCall{
+				observed.calls = append(observed.calls, agentevaluation.ObservedCall{
 					ToolName:  call.Name,
 					Arguments: call.Arguments,
 				})
@@ -535,10 +550,13 @@ func (a *Activities) FinishReplayActivity(
 	ctx context.Context,
 	input *FinishReplayInput,
 ) (*ReplayRunResult, error) {
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         input.Payload.EvaluationID,
-		TenantInfo: input.Payload.TenantInfo(),
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         input.Payload.EvaluationID,
+			TenantInfo: input.Payload.TenantInfo(),
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -551,23 +569,23 @@ func (a *Activities) FinishReplayActivity(
 
 	outcome := input.Run
 	if outcome == nil {
-		outcome = &agentports.RunResult{}
+		outcome = &agentruntimeports.RunResult{}
 	}
 
 	stored, err := a.storeReplay(ctx, evaluation, input.Originals, outcome)
 	if err != nil {
 		return nil, err
 	}
-	emitEvaluationRoot(ctx, evaluation, outcome, agent.EvaluationStatusCompleted, "")
+	emitEvaluationRoot(ctx, evaluation, outcome, agentevaluation.EvaluationStatusCompleted, "")
 
 	return stored, nil
 }
 
 func emitEvaluationRoot(
 	ctx context.Context,
-	evaluation *agent.Evaluation,
-	outcome *agentports.RunResult,
-	status agent.EvaluationStatus,
+	evaluation *agentevaluation.Evaluation,
+	outcome *agentruntimeports.RunResult,
+	status agentevaluation.EvaluationStatus,
 	errorType string,
 ) {
 	var failure *modelcallcontract.Failure
@@ -604,10 +622,13 @@ func emitEvaluationRoot(
 // FailEvaluationActivity records why a replay did not finish, so the row
 // never sits at Running with nothing to say.
 func (a *Activities) FailEvaluationActivity(ctx context.Context, input *FailEvaluationInput) error {
-	evaluation, err := a.evaluations.GetByID(ctx, agentports.GetAgentEvaluationByIDRequest{
-		ID:         input.EvaluationID,
-		TenantInfo: input.TenantInfo,
-	})
+	evaluation, err := a.evaluations.GetByID(
+		ctx,
+		agentevaluationports.GetAgentEvaluationByIDRequest{
+			ID:         input.EvaluationID,
+			TenantInfo: input.TenantInfo,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -616,13 +637,13 @@ func (a *Activities) FailEvaluationActivity(ctx context.Context, input *FailEval
 	}
 
 	completedAt := timeutils.NowUnix()
-	evaluation.Status = agent.EvaluationStatusFailed
+	evaluation.Status = agentevaluation.EvaluationStatusFailed
 	evaluation.ErrorMessage = stringutils.Ellipsize(input.Error, maxSummaryChars)
 	evaluation.CompletedAt = &completedAt
 	if _, err = a.evaluations.Update(ctx, evaluation); err != nil {
 		return err
 	}
-	emitEvaluationRoot(ctx, evaluation, nil, agent.EvaluationStatusFailed, "failed")
+	emitEvaluationRoot(ctx, evaluation, nil, agentevaluation.EvaluationStatusFailed, "failed")
 
 	return nil
 }
@@ -633,11 +654,14 @@ func (a *Activities) originalProposals(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
-) ([]agent.OriginalProposal, error) {
-	proposals, err := a.proposalRepo.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
-		RunID:      runID,
-		TenantInfo: tenant,
-	})
+) ([]agentreplay.OriginalProposal, error) {
+	proposals, err := a.proposalRepo.ListByRun(
+		ctx,
+		agentproposalports.ListAgentProposalsByRunRequest{
+			RunID:      runID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("list source proposals: %w", err)
 	}
@@ -648,17 +672,23 @@ func (a *Activities) originalProposals(
 	}
 	decisions, err := a.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{ProposalIDs: ids, TenantInfo: tenant},
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
+			ProposalIDs: ids,
+			TenantInfo:  tenant,
+		},
 	)
 	if err != nil {
 		return nil, fmt.Errorf("list source decisions: %w", err)
 	}
 
 	// Newest first, so each proposal's decisions start with its latest.
-	byProposal := agent.DecisionsByProposal(decisions)
-	originals := make([]agent.OriginalProposal, 0, len(proposals))
+	byProposal := agentreplay.DecisionsByProposal(decisions)
+	originals := make([]agentreplay.OriginalProposal, 0, len(proposals))
 	for _, proposal := range proposals {
-		originals = append(originals, agent.NewOriginalProposal(proposal, byProposal[proposal.ID]))
+		originals = append(
+			originals,
+			agentreplay.NewOriginalProposal(proposal, byProposal[proposal.ID]),
+		)
 	}
 
 	return originals, nil
@@ -667,7 +697,7 @@ func (a *Activities) originalProposals(
 type replayInput struct {
 	input   string
 	history []conversation.Message
-	context agentdefinition.RuntimeContext
+	context agentturn.RuntimeContext
 }
 
 // replayInput rebuilds what the source run was asked. A background run is
@@ -692,7 +722,7 @@ func (a *Activities) replayInput(
 		return nil, fmt.Errorf("describe subject: %w", err)
 	}
 
-	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    source.Trigger,
@@ -721,7 +751,7 @@ func (a *Activities) chatReplayInput(
 		)
 	}
 
-	messages, err := a.conversations.ListMessages(ctx, agentports.ListMessagesRequest{
+	messages, err := a.conversations.ListMessages(ctx, &conversationports.ListMessagesRequest{
 		ThreadID:     source.SubjectID,
 		TenantInfo:   tenant,
 		ExcludeKinds: conversation.ModelHiddenKinds(),
@@ -747,7 +777,7 @@ func (a *Activities) chatReplayInput(
 		)
 	}
 
-	runtimeContext, err := a.contexts.Build(ctx, &agentports.RuntimeContextRequest{
+	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    agent.RunTriggerChat,
@@ -766,14 +796,14 @@ func (a *Activities) chatReplayInput(
 }
 
 func toolPolicies(
-	queryTools agentports.AgentQueryToolRegistry,
-	actionTools agentports.AgentToolRegistry,
+	queryTools agenttoolports.AgentQueryToolRegistry,
+	actionTools agenttoolports.AgentToolRegistry,
 ) agentscoring.PolicyLookup {
 	if queryTools == nil && actionTools == nil {
 		return nil
 	}
 
-	return func(name string) (agentports.ToolPolicy, bool) {
+	return func(name string) (agenttoolports.ToolPolicy, bool) {
 		if queryTools != nil {
 			if tool, ok := queryTools.Get(name); ok {
 				return tool.Policy(), true
@@ -785,6 +815,6 @@ func toolPolicies(
 			}
 		}
 
-		return agentports.ToolPolicy{}, false
+		return agenttoolports.ToolPolicy{}, false
 	}
 }

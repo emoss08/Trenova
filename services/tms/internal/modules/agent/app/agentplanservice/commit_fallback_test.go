@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentapprovalports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,14 +16,14 @@ import (
 )
 
 type announcedPlans struct {
-	agentports.AgentActivityPublisher
+	agentactivityports.AgentActivityPublisher
 
 	actions []string
 }
 
 func (a *announcedPlans) PlanChanged(
 	_ context.Context,
-	_ *agent.AgentPlan,
+	_ *agentplan.AgentPlan,
 	_ kernelports.AuditActor,
 	action string,
 ) {
@@ -31,7 +33,7 @@ func (a *announcedPlans) PlanChanged(
 type unreachableWindow struct {
 	kernelports.WorkflowStarter
 
-	started []*agentports.CommitApprovalRequest
+	started []*agentapprovalports.CommitApprovalRequest
 }
 
 func (w *unreachableWindow) Enabled() bool { return true }
@@ -43,7 +45,7 @@ func (w *unreachableWindow) StartWorkflow(
 	args ...any,
 ) (client.WorkflowRun, error) {
 	if len(args) == 1 {
-		if req, ok := args[0].(*agentports.CommitApprovalRequest); ok {
+		if req, ok := args[0].(*agentapprovalports.CommitApprovalRequest); ok {
 			w.started = append(w.started, req)
 		}
 	}
@@ -84,17 +86,25 @@ func TestCommitOwnApprovalNow_WithoutItsWorkflowCommitsTheApprovalThePersonMade(
 
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 	require.NoError(t, err)
-	require.Equal(t, agent.PlanStatusApproving, plan.Status)
+	require.Equal(t, agentplan.PlanStatusApproving, plan.Status)
 	require.Len(t, window.started, 1)
 	assert.Equal(t, "plan-digest", window.started[0].PreviewDigest)
-	assert.Equal(t, "plan-digest", f.plans.plan.ApprovalPreviewDigest, "the approval is kept with the plan")
+	assert.Equal(
+		t,
+		"plan-digest",
+		f.plans.plan.ApprovalPreviewDigest,
+		"the approval is kept with the plan",
+	)
 
-	require.NoError(t, f.svc.CommitOwnApprovalNow(t.Context(), &agentports.SettleApprovalRequest{
-		PlanID:     plan.ID,
-		TenantInfo: f.req.TenantInfo,
-	}, f.actor))
+	require.NoError(
+		t,
+		f.svc.CommitOwnApprovalNow(t.Context(), &agentapprovalports.SettleApprovalRequest{
+			PlanID:     plan.ID,
+			TenantInfo: f.req.TenantInfo,
+		}, f.actor),
+	)
 
-	assert.Equal(t, agent.PlanStatusCompleted, f.plans.plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, f.plans.plan.Status)
 	require.Len(t, f.decider.decided, len(f.steps.steps))
 	for _, decided := range f.decider.decided {
 		assert.True(t, decided.StepPreviewReviewed, "each step went through as reviewed")
@@ -116,18 +126,23 @@ func TestCommitApproval_AGatedPlanWithoutItsPreviewIsNotReportedAsCommitted(t *t
 	f.svc.activity = announced
 	f.req.PreviewDigest = ""
 	commitsAt := int64(1_800_000_000)
-	f.plans.plan.Status = agent.PlanStatusApproving
+	f.plans.plan.Status = agentplan.PlanStatusApproving
 	f.plans.plan.CommitsAt = &commitsAt
 
-	err := f.svc.CommitOwnApprovalNow(t.Context(), &agentports.SettleApprovalRequest{
+	err := f.svc.CommitOwnApprovalNow(t.Context(), &agentapprovalports.SettleApprovalRequest{
 		PlanID:     f.plans.plan.ID,
 		TenantInfo: f.req.TenantInfo,
 	}, f.actor)
 	require.Error(t, err)
 	assert.True(t, agent.IsReviewRequired(err))
 
-	assert.Equal(t, agent.PlanStatusPending, f.plans.plan.Status, "the plan waits on the person again")
+	assert.Equal(
+		t,
+		agentplan.PlanStatusPending,
+		f.plans.plan.Status,
+		"the plan waits on the person again",
+	)
 	assert.Empty(t, f.decider.decided, "no step ran")
-	assert.Equal(t, []string{agentports.ActivityReopened}, announced.actions,
+	assert.Equal(t, []string{agentactivityports.ActivityReopened}, announced.actions,
 		"nobody undid it, so it is not announced as undone")
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -745,7 +745,7 @@ func (r *repository) ListAcceptedMissingRateConfirmation(
 				ca.ShipmentMoveID.EqCol(t.ShipmentMoveID),
 				ca.OrganizationID.EqCol(t.OrganizationID),
 				ca.BusinessUnitID.EqCol(t.BusinessUnitID),
-				ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+				ca.Status.Ne(shipmentvocab.CarrierAssignmentStatusCanceled),
 				ca.CarrierID.EqCol(keel.Scalar(acceptedOfferCarrier)),
 				keel.NotExists(standingRateConfirmation),
 			)

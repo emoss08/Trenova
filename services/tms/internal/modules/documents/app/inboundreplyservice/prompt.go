@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
@@ -162,7 +163,7 @@ func (s *Service) writeReply(
 	req *DraftReplyRequest,
 	mc *messageContext,
 ) (string, error) {
-	result, err := s.nova.Complete(ctx, req.Mode, &agentports.StructuredCompletionRequest{
+	result, err := s.nova.Complete(ctx, req.Mode, &llmports.StructuredCompletionRequest{
 		TenantInfo:   req.TenantInfo,
 		System:       replySystemPrompt,
 		Context:      replyContextSections(mc),
@@ -195,46 +196,46 @@ func (s *Service) writeReply(
 	), nil
 }
 
-func replyContextSections(mc *messageContext) agentports.DelimitedContext {
+func replyContextSections(mc *messageContext) llmports.DelimitedContext {
 	message := mc.message
-	sections := []agentports.ContextSection{
+	sections := []llmports.ContextSection{
 		{Title: "What to write", Trusted: true, Content: taskFor(mc)},
 		{Title: "Team", Trusted: true, Content: teamFor(mc)},
 	}
 	if shipment := shipmentFacts(mc); shipment != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title: "Shipment", Trusted: true, Content: shipment,
 		})
 	}
 	if stops := stopFacts(mc); stops != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title: "Stop times", Trusted: true, Content: stops,
 		})
 	}
 	if decision := decisionFacts(&mc.message.ActionState); decision != "" {
-		sections = append(sections, agentports.ContextSection{
+		sections = append(sections, llmports.ContextSection{
 			Title: "Detention decision", Trusted: true, Content: decision,
 		})
 	}
-	sections = append(sections, agentports.ContextSection{
+	sections = append(sections, llmports.ContextSection{
 		Title: "Attachments", Trusted: true, Content: attachmentFacts(mc.attachments),
 	})
 
-	return agentports.DelimitedContext{Sections: append(
+	return llmports.DelimitedContext{Sections: append(
 		sections,
-		agentports.ContextSection{
+		llmports.ContextSection{
 			Title:   "Sender",
 			Content: strings.TrimSpace(message.FromName + " <" + message.FromAddress + ">"),
 		},
-		agentports.ContextSection{
+		llmports.ContextSection{
 			Title:   "Subject",
 			Content: stringutils.TruncateRunes(message.Subject, mailSubjectMaxRunes),
 		},
-		agentports.ContextSection{
+		llmports.ContextSection{
 			Title:   "Message",
 			Content: stringutils.TruncateRunes(message.TextBody, mailBodyMaxRunes),
 		},
-		agentports.ContextSection{
+		llmports.ContextSection{
 			Title:   "What the reading pulled out",
 			Content: factLines(message),
 		},
@@ -329,12 +330,12 @@ func stopFacts(mc *messageContext) string {
 	add("Checked in", format(stops.CheckedInAt))
 	add("Departed", format(stops.DepartedAt))
 	if stops.LateMinutes > 0 {
-		add("Late by", stringutils.CountNoun(stops.LateMinutes, "minute", "minutes"))
+		add("Late by", inflect.CountNoun(stops.LateMinutes, "minute", "minutes"))
 	}
 	if stops.BilledDetentionMinutes > 0 {
 		add(
 			"Billed detention",
-			stringutils.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"),
+			inflect.CountNoun(stops.BilledDetentionMinutes, "minute", "minutes"),
 		)
 	}
 	if stops.BilledDetentionAmount != nil {

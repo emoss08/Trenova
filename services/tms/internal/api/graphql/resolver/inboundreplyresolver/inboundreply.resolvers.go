@@ -10,8 +10,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/documentloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagenova"
 	"github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
@@ -19,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -34,31 +38,31 @@ func (r *InboundAttachmentResolver) Reading(ctx context.Context, obj *inboundmes
 	if obj.DocumentID.IsNil() {
 		return nil, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return loaders.InboundDocumentReadingByDocumentID(ctx, obj.DocumentID.String())
+	return documentloaders.InboundDocumentReadingByDocumentID(ctx, obj.DocumentID.String())
 }
 
 func (r *InboundMessageResolver) Actions(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Action, error) {
 	if !obj.NovaRead {
 		return []*triage.Action{}, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
 	attachments := obj.Attachments
 	if attachments == nil {
-		loaded, err := loaders.InboundAttachmentsByMessageID(ctx, obj.ID.String())
+		loaded, err := documentloaders.InboundAttachmentsByMessageID(ctx, obj.ID.String())
 		if err != nil {
 			return nil, err
 		}
 		attachments = loaded
 	}
 
-	latest, err := loaders.InboundLatestReplyByMessageID(ctx, obj.ID.String())
+	latest, err := documentloaders.InboundLatestReplyByMessageID(ctx, obj.ID.String())
 	if err != nil {
 		return nil, err
 	}
@@ -70,19 +74,19 @@ func (r *InboundMessageResolver) Actions(ctx context.Context, obj *inboundmessag
 }
 
 func (r *InboundMessageResolver) Replies(ctx context.Context, obj *inboundmessage.InboundMessage) ([]*triage.Reply, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return loaders.InboundRepliesByMessageID(ctx, obj.ID.String())
+	return documentloaders.InboundRepliesByMessageID(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) ReplyDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*triage.Reply, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return loaders.InboundReplyDraftByMessageID(ctx, obj.ID.String())
+	return documentloaders.InboundReplyDraftByMessageID(ctx, obj.ID.String())
 }
 
 func (r *InboundMessageResolver) LoadDraft(ctx context.Context, obj *inboundmessage.InboundMessage) (*inboundmessage.LoadDraft, error) {
@@ -98,15 +102,15 @@ func (r *InboundReplyResolver) CcAddresses(ctx context.Context, obj *triage.Repl
 }
 
 func (r *InboundReplyResolver) TemplateID(ctx context.Context, obj *triage.Reply) (*string, error) {
-	return base.IDPtr(obj.TemplateID), nil
+	return gqlid.IDPtr(obj.TemplateID), nil
 }
 
 func (r *InboundReplyResolver) SuggestedAddress(ctx context.Context, obj *triage.Reply) (*string, error) {
-	return base.NonEmptyPtr(obj.SuggestedAddress), nil
+	return gqlscalar.NonEmptyPtr(obj.SuggestedAddress), nil
 }
 
 func (r *InboundReplyResolver) SentBy(ctx context.Context, obj *triage.Reply) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.SentByID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.SentByID))
 }
 
 func (r *InboundReplyResolver) SentAt(ctx context.Context, obj *triage.Reply) (*int, error) {
@@ -125,7 +129,7 @@ func (r *MutationResolver) DraftInboundReply(ctx context.Context, messageID stri
 	}
 
 	return r.InboundReplyService.DraftReply(ctx, &inboundreplyservice.DraftReplyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 		Mode:       triagenova.Interactive,
@@ -143,13 +147,13 @@ func (r *MutationResolver) SaveInboundReplyDraft(ctx context.Context, messageID 
 		return nil, err
 	}
 
-	documentIDs, err := base.ParseIDs(documentIds)
+	documentIDs, err := gqlid.ParseIDs(documentIds)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.InboundReplyService.SaveDraft(ctx, &inboundreplyservice.SaveDraftRequest{
-		TenantInfo:         base.TenantInfo(authCtx),
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
 		UserID:             authCtx.UserID,
 		MessageID:          id,
 		Subject:            subject,
@@ -170,7 +174,7 @@ func (r *MutationResolver) DiscardInboundReplyDraft(ctx context.Context, message
 		return nil, err
 	}
 
-	return r.InboundReplyService.DiscardDraft(ctx, base.TenantInfo(authCtx), id)
+	return r.InboundReplyService.DiscardDraft(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *MutationResolver) SendInboundReply(ctx context.Context, input gqlmodel.SendInboundReplyInput) (*triage.Reply, error) {
@@ -186,25 +190,25 @@ func (r *MutationResolver) SendInboundReply(ctx context.Context, input gqlmodel.
 	if err != nil {
 		return nil, err
 	}
-	templateID, err := base.OptionalID(input.TemplateID)
+	templateID, err := gqlid.OptionalID(input.TemplateID)
 	if err != nil {
 		return nil, err
 	}
-	documentIDs, err := base.ParseIDs(input.DocumentIds)
+	documentIDs, err := gqlid.ParseIDs(input.DocumentIds)
 	if err != nil {
 		return nil, err
 	}
 	idempotencyKey, _ := idempotency.KeyFrom(ctx)
 
 	return r.InboundReplyService.Send(ctx, &inboundreplyservice.SendRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		UserID:         authCtx.UserID,
 		MessageID:      messageID,
 		Subject:        input.Subject,
 		Body:           input.Body,
 		ToAddress:      stringutils.FromPtr(input.ToAddress),
 		TemplateID:     templateID,
-		DraftedByNova:  base.BoolValue(input.DraftedByNova),
+		DraftedByNova:  gqlscalar.BoolValue(input.DraftedByNova),
 		DocumentIDs:    documentIDs,
 		IdempotencyKey: idempotencyKey,
 	})
@@ -216,13 +220,13 @@ func (r *MutationResolver) DraftInboundMany(ctx context.Context, messageIds []st
 		return 0, err
 	}
 
-	ids, err := base.ParseIDs(messageIds)
+	ids, err := gqlid.ParseIDs(messageIds)
 	if err != nil {
 		return 0, err
 	}
 
 	return r.TriageWorkService.DraftMany(ctx, &triageworkservice.DraftManyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageIDs: ids,
 	})
@@ -235,7 +239,7 @@ func (r *MutationResolver) CreateTriageReplyTemplate(ctx context.Context, input 
 	}
 
 	return r.InboundReplyService.CreateTemplate(ctx, &inboundreplyservice.CreateTemplateRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Input:      templateInput(input),
 	})
@@ -253,7 +257,7 @@ func (r *MutationResolver) UpdateTriageReplyTemplate(ctx context.Context, id str
 	}
 
 	return r.InboundReplyService.UpdateTemplate(ctx, &inboundreplyservice.UpdateTemplateRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		ID:         templateID,
 		Version:    int64(version),
 		Input:      templateInput(input),
@@ -270,7 +274,7 @@ func (r *MutationResolver) DeleteTriageReplyTemplate(ctx context.Context, id str
 	if err != nil {
 		return false, err
 	}
-	if err = r.InboundReplyService.DeleteTemplate(ctx, base.TenantInfo(authCtx), templateID); err != nil {
+	if err = r.InboundReplyService.DeleteTemplate(ctx, resolvercore.TenantInfo(authCtx), templateID); err != nil {
 		return false, err
 	}
 
@@ -289,7 +293,7 @@ func (r *MutationResolver) DraftInboundLoad(ctx context.Context, messageID strin
 	}
 
 	return r.TriageWorkService.DraftLoad(ctx, &triageworkservice.LoadRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 	})
@@ -307,7 +311,7 @@ func (r *MutationResolver) DiscardInboundLoad(ctx context.Context, messageID str
 	}
 
 	return r.TriageWorkService.DiscardLoad(ctx, &triageworkservice.LoadRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 	})
@@ -329,7 +333,7 @@ func (r *MutationResolver) CreateInboundLoad(ctx context.Context, messageID stri
 	idempotencyKey, _ := idempotency.KeyFrom(ctx)
 
 	return r.TriageWorkService.CreateLoad(ctx, &triageworkservice.CreateLoadRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		UserID:         authCtx.UserID,
 		MessageID:      id,
 		Fields:         loadFieldInputs(fields),
@@ -355,7 +359,7 @@ func (r *MutationResolver) FileInboundAttachment(ctx context.Context, input gqlm
 	if err != nil {
 		return nil, err
 	}
-	req.TenantInfo = base.TenantInfo(authCtx)
+	req.TenantInfo = resolvercore.TenantInfo(authCtx)
 	req.UserID = authCtx.UserID
 
 	return r.TriageWorkService.File(ctx, req)
@@ -370,13 +374,13 @@ func (r *MutationResolver) FileInboundMany(ctx context.Context, messageIds []str
 		return nil, err
 	}
 
-	ids, err := base.ParseIDs(messageIds)
+	ids, err := gqlid.ParseIDs(messageIds)
 	if err != nil {
 		return nil, err
 	}
 
 	return r.TriageWorkService.FileMany(ctx, &triageworkservice.FileManyRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageIDs: ids,
 	})
@@ -397,7 +401,7 @@ func (r *MutationResolver) UnfileInboundAttachment(ctx context.Context, attachme
 	}
 
 	return r.TriageWorkService.Unfile(ctx, &triageworkservice.UnfileRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
 		UserID:       authCtx.UserID,
 		AttachmentID: id,
 	})
@@ -418,7 +422,7 @@ func (r *MutationResolver) LogInboundException(ctx context.Context, messageID st
 	}
 
 	return r.TriageWorkService.LogException(ctx, &triageworkservice.LogExceptionRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 		Kind:       input.Kind,
@@ -440,7 +444,7 @@ func (r *MutationResolver) BlockInboundSender(ctx context.Context, messageID str
 	}
 
 	return r.TriageWorkService.BlockSender(ctx, &triageworkservice.BlockSenderRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 	})
@@ -458,7 +462,7 @@ func (r *MutationResolver) UnblockInboundSender(ctx context.Context, mailboxID s
 	}
 
 	return r.TriageWorkService.UnblockSender(ctx, &triageworkservice.UnblockSenderRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MailboxID:  id,
 		Sender:     sender,
@@ -480,7 +484,7 @@ func (r *MutationResolver) DecideInboundStops(ctx context.Context, messageID str
 	}
 
 	return r.TriageWorkService.DecideStops(ctx, &triageworkservice.DecideStopsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		Actor:      actorutil.FromAuthContext(authCtx),
 		MessageID:  id,
@@ -494,7 +498,7 @@ func (r *QueryResolver) TriageReplyTemplates(ctx context.Context) ([]*triage.Rep
 		return nil, err
 	}
 
-	return r.InboundReplyService.ListTemplates(ctx, base.TenantInfo(authCtx))
+	return r.InboundReplyService.ListTemplates(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) RenderTriageReplyTemplate(ctx context.Context, templateID string, messageID string) (string, error) {
@@ -513,7 +517,7 @@ func (r *QueryResolver) RenderTriageReplyTemplate(ctx context.Context, templateI
 	}
 
 	return r.InboundReplyService.RenderTemplate(ctx, &inboundreplyservice.RenderTemplateRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		TemplateID: tplID,
 		MessageID:  msgID,
 	})
@@ -533,7 +537,7 @@ func (r *QueryResolver) TriageStopTimes(ctx context.Context, messageID string) (
 		return nil, err
 	}
 
-	return r.TriagePeekService.StopTimes(ctx, base.TenantInfo(authCtx), id)
+	return r.TriagePeekService.StopTimes(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error) {
@@ -550,7 +554,7 @@ func (r *QueryResolver) TriageShipmentPeek(ctx context.Context, shipmentID strin
 		return nil, err
 	}
 
-	return r.TriagePeekService.ShipmentPeek(ctx, base.TenantInfo(authCtx), id)
+	return r.TriagePeekService.ShipmentPeek(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error) {
@@ -568,7 +572,7 @@ func (r *QueryResolver) TriageCustomerPeek(ctx context.Context, customerID strin
 	}
 
 	return r.TriagePeekService.CustomerPeek(ctx, &triagepeekservice.CustomerPeekRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		CustomerID:    id,
 		WithShipments: r.HasPermission(ctx, authCtx, permission.ResourceShipment, permission.OpRead),
 	})
@@ -578,11 +582,11 @@ func (r *TriageActionResolver) Attachment(ctx context.Context, obj *triage.Actio
 	if obj.AttachmentID.IsNil() {
 		return nil, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.InboundAttachmentByID(ctx, obj.AttachmentID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundAttachmentByID(ctx, obj.AttachmentID.String()))
 }
 
 func (r *TriageActionResolver) Shipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error) {
@@ -599,18 +603,18 @@ func (r *TriageActionResolver) ReplyPurpose(ctx context.Context, obj *triage.Act
 }
 
 func (r *TriageActionResolver) RefusedFileName(ctx context.Context, obj *triage.Action) (*string, error) {
-	return base.NonEmptyPtr(obj.RefusedFileName), nil
+	return gqlscalar.NonEmptyPtr(obj.RefusedFileName), nil
 }
 
 func (r *TriageActionResolver) Reply(ctx context.Context, obj *triage.Action) (*triage.Reply, error) {
 	if obj.ReplyID.IsNil() {
 		return nil, nil
 	}
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return base.OptionalMatch(loaders.InboundReplyByID(ctx, obj.ReplyID.String()))
+	return loaderfields.OptionalMatch(documentloaders.InboundReplyByID(ctx, obj.ReplyID.String()))
 }
 
 func (r *TriageActionResolver) CreatedShipment(ctx context.Context, obj *triage.Action) (*shipmentports.ShipmentSummary, error) {
@@ -640,18 +644,18 @@ func (r *TriageActionResolver) CompletedAt(ctx context.Context, obj *triage.Acti
 }
 
 func (r *TriageReplyTemplateResolver) CreatedBy(ctx context.Context, obj *triage.ReplyTemplate) (*tenant.User, error) {
-	return base.OptionalMatch(base.LoadUser(ctx, obj.CreatedByID))
+	return loaderfields.OptionalMatch(loaderfields.LoadUser(ctx, obj.CreatedByID))
 }
 
 func (r *TriageStopTimesResolver) Shipment(ctx context.Context, obj *inboundmessageports.StopTimes) (*shipmentports.ShipmentSummary, error) {
-	if err := base.RequireLoaders(ctx); err != nil {
+	if err := loaderfields.RequireLoaders(ctx); err != nil {
 		return nil, err
 	}
 
-	return loaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
+	return documentloaders.ShipmentSummaryByID(ctx, obj.ShipmentID.String())
 }
 
-func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error) {
+func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceInboundMessage, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -663,7 +667,7 @@ func (r *QueryResolver) InboundReplyAttachables(ctx context.Context, messageID s
 	}
 
 	return r.InboundReplyService.Attachables(ctx, &inboundreplyservice.AttachablesRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		UserID:     authCtx.UserID,
 		MessageID:  id,
 	})

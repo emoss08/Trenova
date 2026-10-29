@@ -4,11 +4,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityservice"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualityengine"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -105,9 +105,9 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 	plan := payload.Plan
 	if plan == nil {
 		planCtx := workflow.WithActivityOptions(ctx, withPriority(planOptions, tenant.OrgID))
-		var planned agentqualityservice.SweepPlan
+		var planned agentqualityengine.SweepPlan
 		if err := workflow.ExecuteActivity(planCtx, a.PlanSweepActivity,
-			&agentqualityservice.SweepRequest{
+			&agentqualityengine.SweepRequest{
 				TenantInfo:        tenant,
 				AgentDefinitionID: payload.AgentDefinitionID,
 			},
@@ -139,11 +139,11 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 		sweepKey := sweepID + "/" + planned.AgentDefinitionID.String()
 		if planned.Skip {
 			if err := workflow.ExecuteActivity(stepCtx, a.RecordSkippedSuiteActivity,
-				&agentqualityservice.RecordSkippedRequest{
+				&agentqualityengine.RecordSkippedRequest{
 					TenantInfo: tenant,
 					Agent:      planned,
 					SweepKey:   sweepKey,
-					Trigger:    agentquality.SuiteRunTriggerScheduled,
+					Trigger:    agentqualitysuite.SuiteRunTriggerScheduled,
 				},
 			).Get(stepCtx, nil); err != nil {
 				logger.Warn("could not record an agent the sweep skipped",
@@ -157,13 +157,13 @@ func AgentQualitySweepWorkflow(ctx workflow.Context, payload *SweepPayload) (*Sw
 			continue
 		}
 
-		var opened agentqualityservice.OpenedSuite
+		var opened agentqualityengine.OpenedSuite
 		if err := workflow.ExecuteActivity(stepCtx, a.OpenSuiteActivity,
-			&agentqualityservice.OpenSuiteRequest{
+			&agentqualityengine.OpenSuiteRequest{
 				TenantInfo: tenant,
 				Agent:      planned,
 				SweepKey:   sweepKey,
-				Trigger:    agentquality.SuiteRunTriggerScheduled,
+				Trigger:    agentqualitysuite.SuiteRunTriggerScheduled,
 				Settings:   plan.Settings,
 			},
 		).Get(stepCtx, &opened); err != nil {
@@ -232,9 +232,9 @@ func AgentSuiteRunWorkflow(
 			return nil, workflow.NewContinueAsNewError(ctx, AgentSuiteRunWorkflowName, &next)
 		}
 
-		var cases []agentqualityservice.SuiteCase
+		var cases []agentqualityengine.SuiteCase
 		if err := workflow.ExecuteActivity(stepCtx, a.ListSuiteCasesActivity,
-			&agentqualityservice.ListSuiteCasesRequest{
+			&agentqualityengine.ListSuiteCasesRequest{
 				TenantInfo:   tenant,
 				SuiteRunID:   payload.SuiteRunID,
 				AfterOrdinal: cursor,
@@ -265,7 +265,7 @@ func AgentSuiteRunWorkflow(
 
 			replayed++
 			childCtx := workflow.WithChildOptions(ctx, childOptions(
-				agentquality.EvaluationWorkflowID(suiteCase.EvaluationID),
+				agentqualitycontrol.EvaluationWorkflowID(suiteCase.EvaluationID),
 				tenant.OrgID,
 			))
 			if err = workflow.ExecuteChildWorkflow(childCtx, agentcontract.AgentEvaluationWorkflowName,
@@ -290,9 +290,9 @@ func AgentSuiteRunWorkflow(
 		}
 	}
 
-	var scored agentqualityservice.ScoredSuite
+	var scored agentqualityengine.ScoredSuite
 	if err := workflow.ExecuteActivity(stepCtx, a.ScoreSuiteActivity,
-		&agentqualityservice.ScoreSuiteRequest{
+		&agentqualityengine.ScoreSuiteRequest{
 			TenantInfo: tenant,
 			SuiteRunID: payload.SuiteRunID,
 			SampleSeed: payload.SampleSeed,
@@ -336,14 +336,14 @@ func submitJudgeBatch(
 	a *Activities,
 	payload *SuiteRunPayload,
 	evaluationIDs []pulid.ID,
-) *agentqualityservice.JudgeBatch {
+) *agentqualityengine.JudgeBatch {
 	submitCtx := workflow.WithActivityOptions(
 		ctx,
 		withPriority(submitBatchOptions, payload.OrganizationID),
 	)
-	var batch agentqualityservice.JudgeBatch
+	var batch agentqualityengine.JudgeBatch
 	if err := workflow.ExecuteActivity(submitCtx, a.SubmitJudgeBatchActivity,
-		&agentqualityservice.SubmitJudgeBatchRequest{
+		&agentqualityengine.SubmitJudgeBatchRequest{
 			TenantInfo:    payload.tenantInfo(),
 			SuiteRunID:    payload.SuiteRunID,
 			EvaluationIDs: evaluationIDs,
@@ -353,10 +353,11 @@ func submitJudgeBatch(
 			CommittedUSD:  payload.CommittedUSD,
 		},
 	).Get(submitCtx, &batch); err != nil {
-		workflow.GetLogger(ctx).Warn("the judge batch could not be sent; judging each case on its own",
-			"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
+		workflow.GetLogger(ctx).
+			Warn("the judge batch could not be sent; judging each case on its own",
+				"suiteRunId", payload.SuiteRunID.String(), "error", err.Error())
 
-		return &agentqualityservice.JudgeBatch{}
+		return &agentqualityengine.JudgeBatch{}
 	}
 
 	return &batch
@@ -367,7 +368,7 @@ func judgeLater(
 	a *Activities,
 	payload *SuiteRunPayload,
 	replayed int,
-	batch *agentqualityservice.JudgeBatch,
+	batch *agentqualityengine.JudgeBatch,
 ) (*SuiteRunResult, error) {
 	judging := &SuiteJudgePayload{Suite: *payload, Batch: *batch}
 	judging.Suite.Replayed = replayed
@@ -388,7 +389,7 @@ func judgeLater(
 
 	return &SuiteRunResult{
 		Replayed:     replayed,
-		Status:       agentquality.SuiteRunStatusRunning,
+		Status:       agentqualitysuite.SuiteRunStatusRunning,
 		Judging:      true,
 		CommittedUSD: batch.EstimateUSD,
 	}, nil
@@ -409,9 +410,9 @@ func judgeBatchAndFinalize(
 			ctx,
 			withPriority(collectBatchOptions, suite.OrganizationID),
 		)
-		var collected agentqualityservice.CollectedJudgeBatch
+		var collected agentqualityengine.CollectedJudgeBatch
 		if err := workflow.ExecuteActivity(collectCtx, a.CollectJudgeBatchActivity,
-			&agentqualityservice.CollectJudgeBatchRequest{
+			&agentqualityengine.CollectJudgeBatchRequest{
 				TenantInfo: suite.tenantInfo(),
 				SuiteRunID: suite.SuiteRunID,
 				Batch:      *batch,
@@ -444,7 +445,7 @@ func awaitJudgeBatch(
 	ctx workflow.Context,
 	a *Activities,
 	suite *SuiteRunPayload,
-	batch *agentqualityservice.JudgeBatch,
+	batch *agentqualityengine.JudgeBatch,
 ) bool {
 	logger := workflow.GetLogger(ctx)
 	pollCtx := workflow.WithActivityOptions(ctx, withPriority(stepOptions, suite.OrganizationID))
@@ -455,9 +456,9 @@ func awaitJudgeBatch(
 			return false
 		}
 
-		var status agentqualityservice.JudgeBatchStatus
+		var status agentqualityengine.JudgeBatchStatus
 		err := workflow.ExecuteActivity(pollCtx, a.CheckJudgeBatchActivity,
-			&agentqualityservice.CheckJudgeBatchRequest{
+			&agentqualityengine.CheckJudgeBatchRequest{
 				TenantInfo: suite.tenantInfo(),
 				Batch:      *batch,
 			},
@@ -500,9 +501,9 @@ func judgeEach(
 			return judged, budget.Reason, nil
 		}
 
-		var verdict agentqualityservice.JudgedCase
+		var verdict agentqualityengine.JudgedCase
 		if err = workflow.ExecuteActivity(judgeCtx, a.JudgeCaseActivity,
-			&agentqualityservice.JudgeCaseRequest{
+			&agentqualityengine.JudgeCaseRequest{
 				TenantInfo:   tenant,
 				EvaluationID: evaluationID,
 			},
@@ -532,9 +533,9 @@ func finalizeSuite(
 		ctx,
 		withPriority(finalizeOptions, payload.OrganizationID),
 	)
-	var finalized agentqualityservice.FinalizedSuite
+	var finalized agentqualityengine.FinalizedSuite
 	if err := workflow.ExecuteActivity(finalizeCtx, a.FinalizeSuiteActivity,
-		&agentqualityservice.FinalizeSuiteRequest{
+		&agentqualityengine.FinalizeSuiteRequest{
 			TenantInfo: payload.tenantInfo(),
 			SuiteRunID: payload.SuiteRunID,
 			Settings:   payload.Settings,
@@ -557,10 +558,10 @@ func checkBudget(
 	ctx workflow.Context,
 	a *Activities,
 	payload *SuiteRunPayload,
-) (agentquality.BudgetDecision, error) {
-	var decision agentquality.BudgetDecision
+) (agentqualitysuite.BudgetDecision, error) {
+	var decision agentqualitysuite.BudgetDecision
 	err := workflow.ExecuteActivity(ctx, a.CheckEvalBudgetActivity,
-		&agentqualityservice.CheckBudgetRequest{
+		&agentqualityengine.CheckBudgetRequest{
 			TenantInfo:   payload.tenantInfo(),
 			DayStart:     payload.DayStart,
 			MonthStart:   payload.MonthStart,
@@ -586,7 +587,7 @@ func failSuite(
 	)
 
 	if err := workflow.ExecuteActivity(failCtx, a.FailSuiteActivity,
-		&agentqualityservice.FailSuiteRequest{
+		&agentqualityengine.FailSuiteRequest{
 			TenantInfo: payload.tenantInfo(),
 			SuiteRunID: payload.SuiteRunID,
 			Error:      cause.Error(),

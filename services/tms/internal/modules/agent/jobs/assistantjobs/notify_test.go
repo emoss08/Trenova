@@ -7,7 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/assistantjobs/assistantcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -58,14 +59,14 @@ func (n *notices) Create(
 type conversations struct {
 	thread *conversation.Thread
 	err    error
-	read   agentports.GetThreadRequest
+	read   conversationports.GetThreadRequest
 }
 
 func (c *conversations) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	c.read = req
+	c.read = *req
 	if c.err != nil {
 		return nil, c.err
 	}
@@ -145,8 +146,12 @@ func TestNotifyUnseenTurn_TellsThePersonWhoAskedWhereTheirReplyIs(t *testing.T) 
 	assert.Equal(t, notification.ChannelUser, created.Channel)
 	assert.Equal(t, ReplyReadyKind, created.EventType)
 	assert.Equal(t, "Your reply is ready", created.Title)
-	assert.NotContains(t, created.Title+created.Message, "Late loads this week",
-		"a notification reaches every socket in the organization, so it never names the conversation")
+	assert.NotContains(
+		t,
+		created.Title+created.Message,
+		"Late loads this week",
+		"a notification reaches every socket in the organization, so it never names the conversation",
+	)
 
 	assert.Equal(t, map[string]any{
 		"kind":     "assistant_reply_ready",
@@ -339,7 +344,7 @@ func TestTurnCanceller_SaysWhenNoExecutionCarriesTheTurn(t *testing.T) {
 
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
-	require.ErrorIs(t, err, agentports.ErrNoTurnExecution)
+	require.ErrorIs(t, err, assistantturnports.ErrNoTurnExecution)
 	assert.Equal(t, "assistant-turn:atrn_1", workflows.cancelled)
 }
 
@@ -352,7 +357,7 @@ func TestTurnCanceller_PassesOnAnyOtherFailure(t *testing.T) {
 	err := canceller.CancelTurn(t.Context(), "assistant-turn:atrn_1")
 
 	require.ErrorIs(t, err, down)
-	assert.NotErrorIs(t, err, agentports.ErrNoTurnExecution)
+	assert.NotErrorIs(t, err, assistantturnports.ErrNoTurnExecution)
 }
 
 func TestTurnCanceller_CancelsTheExecution(t *testing.T) {
@@ -360,6 +365,10 @@ func TestTurnCanceller_CancelsTheExecution(t *testing.T) {
 
 	workflows := &cancels{}
 
-	require.NoError(t, assistantcontract.NewTurnCanceller(workflows).CancelTurn(t.Context(), "assistant-turn:atrn_1"))
+	require.NoError(
+		t,
+		assistantcontract.NewTurnCanceller(workflows).
+			CancelTurn(t.Context(), "assistant-turn:atrn_1"),
+	)
 	assert.Equal(t, "assistant-turn:atrn_1", workflows.cancelled)
 }

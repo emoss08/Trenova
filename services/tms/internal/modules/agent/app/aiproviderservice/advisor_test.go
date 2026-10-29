@@ -6,7 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,15 +17,15 @@ import (
 
 type listingTester struct {
 	fakeTester
-	models []agentports.AIProviderModelOption
+	models []aiproviderports.AIProviderModelOption
 	err    error
 	asked  int
 }
 
 func (f *listingTester) ListModels(
 	_ context.Context,
-	_ *agentports.ProbeAIProviderModelsRequest,
-) ([]agentports.AIProviderModelOption, error) {
+	_ *aiproviderports.ProbeAIProviderModelsRequest,
+) ([]aiproviderports.AIProviderModelOption, error) {
 	f.asked++
 
 	return f.models, f.err
@@ -37,7 +38,7 @@ func advisedDraft() *aiprovider.Provider {
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Kind:           aiprovider.KindAnthropicMessages,
 		Model:          "claude-haiku-5-5",
-		Tasks:          []aiprovider.Task{aiprovider.TaskAssistantChat},
+		Tasks:          []aitask.Task{aitask.TaskAssistantChat},
 		AdvisorEnabled: true,
 	}
 }
@@ -56,7 +57,7 @@ func confirm(
 	svc.confirmAdvisor(t.Context(), &advisorCheck{
 		before: before,
 		after:  after,
-		req: &agentports.SaveAIProviderRequest{
+		req: &aiproviderports.SaveAIProviderRequest{
 			APIKey: &typed,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: after.OrganizationID,
@@ -71,7 +72,7 @@ func confirm(
 func TestConfirmAdvisor_TheModelListMustNameTheAdvisor(t *testing.T) {
 	t.Parallel()
 
-	listed := &listingTester{models: []agentports.AIProviderModelOption{
+	listed := &listingTester{models: []aiproviderports.AIProviderModelOption{
 		{ID: "claude-haiku-5-5"}, {ID: "claude-opus-5-5"},
 	}}
 	assert.False(t, confirm(t, listed, nil, advisedDraft()).HasErrors())

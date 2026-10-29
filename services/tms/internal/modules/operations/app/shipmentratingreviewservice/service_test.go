@@ -10,7 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentratingreviewservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/ratingreviewports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,13 +27,13 @@ type store struct {
 	mu     sync.Mutex
 	row    *shipment.Shipment
 	saves  int
-	reads  []*shipmentports.ApproveRatingReviewRequest
+	reads  []*ratingreviewports.ApproveRatingReviewRequest
 	failOn error
 }
 
 func (s *store) GetForRatingReview(
 	_ context.Context,
-	req *shipmentports.ApproveRatingReviewRequest,
+	req *ratingreviewports.ApproveRatingReviewRequest,
 ) (*shipment.Shipment, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -123,12 +124,12 @@ func TestApprove_RecordsWhoApprovedTheReviewedRatingAndAuditsIt(t *testing.T) {
 
 	saved, err := newService(repo, audit).Approve(
 		t.Context(),
-		&shipmentports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant},
+		&ratingreviewports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant},
 		actor,
 	)
 	require.NoError(t, err)
 
-	assert.False(t, saved.AwaitsRatingReview())
+	assert.False(t, shipmentrating.AwaitsReview(saved))
 	require.NotNil(t, saved.RatingDetail.ReviewApproval)
 	assert.Equal(t, actor.UserID, saved.RatingDetail.ReviewApproval.ApprovedByID)
 	assert.Equal(
@@ -154,14 +155,17 @@ func TestApprove_IsANoOpOnceTheRatingIsApproved(t *testing.T) {
 	repo := &store{row: heldShipment(tenant, "Holiday pickup")}
 	audit := &auditLog{}
 	svc := newService(repo, audit)
-	req := &shipmentports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant}
+	req := &ratingreviewports.ApproveRatingReviewRequest{
+		ShipmentID: repo.row.ID,
+		TenantInfo: tenant,
+	}
 
 	_, err := svc.Approve(t.Context(), req, person(tenant))
 	require.NoError(t, err)
 	again, err := svc.Approve(t.Context(), req, person(tenant))
 	require.NoError(t, err)
 
-	assert.False(t, again.AwaitsRatingReview())
+	assert.False(t, shipmentrating.AwaitsReview(again))
 	assert.Equal(t, 1, repo.saves)
 	assert.Len(t, audit.entries, 1)
 }
@@ -177,7 +181,7 @@ func TestApprove_RefusesARatingWithNothingToReview(t *testing.T) {
 		repo := &store{row: row}
 		_, err := newService(repo, &auditLog{}).Approve(
 			t.Context(),
-			&shipmentports.ApproveRatingReviewRequest{ShipmentID: row.ID, TenantInfo: tenant},
+			&ratingreviewports.ApproveRatingReviewRequest{ShipmentID: row.ID, TenantInfo: tenant},
 			person(tenant),
 		)
 
@@ -193,7 +197,10 @@ func TestApprove_IsAPersonsDecision(t *testing.T) {
 	tenant := tenantInfo()
 	repo := &store{row: heldShipment(tenant, "Holiday pickup")}
 	agentID := pulid.MustNew("agt_")
-	req := &shipmentports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant}
+	req := &ratingreviewports.ApproveRatingReviewRequest{
+		ShipmentID: repo.row.ID,
+		TenantInfo: tenant,
+	}
 
 	for _, actor := range []*permissionports.RequestActor{
 		nil,
@@ -219,11 +226,11 @@ func TestApprove_ReturnsTheSaveErrorAndAuditsNothing(t *testing.T) {
 
 	_, err := newService(repo, audit).Approve(
 		t.Context(),
-		&shipmentports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant},
+		&ratingreviewports.ApproveRatingReviewRequest{ShipmentID: repo.row.ID, TenantInfo: tenant},
 		person(tenant),
 	)
 
 	require.ErrorIs(t, err, conflict)
 	assert.Empty(t, audit.entries)
-	assert.True(t, repo.row.AwaitsRatingReview(), "the stored rating is still held")
+	assert.True(t, shipmentrating.AwaitsReview(repo.row), "the stored rating is still held")
 }

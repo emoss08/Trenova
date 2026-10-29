@@ -10,19 +10,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
-
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/placesloaders"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/operationsquerytools"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
@@ -30,20 +24,28 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurereasoncoderepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/servicefailurerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/tenderrepository"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentioneffects"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionreview"
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailurereasoncodeservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/servicefailureservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/places/adapters/postgres/locationrepository"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
@@ -95,7 +97,9 @@ func tenantInfoOf(tenant *agentreadtest.Tenant) pagination.TenantInfo {
 
 // fixture is the tenant's customer, types and location category, written
 // once.
-func (w *operationsWorld) fixture(tenant *agentreadtest.Tenant) *testutil.ShipmentIntegrationFixture {
+func (w *operationsWorld) fixture(
+	tenant *agentreadtest.Tenant,
+) *testutil.ShipmentIntegrationFixture {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
@@ -112,13 +116,16 @@ func (w *operationsWorld) fixture(tenant *agentreadtest.Tenant) *testutil.Shipme
 
 // shipment writes one shipment of the tenant's, with one move of a pickup
 // and a delivery.
-func (w *operationsWorld) shipment(tenant *agentreadtest.Tenant, label string) *testutil.ShipmentGraph {
+func (w *operationsWorld) shipment(
+	tenant *agentreadtest.Tenant,
+	label string,
+) *testutil.ShipmentGraph {
 	return testutil.CreateShipmentGraph(w.t, w.t.Context(), w.admin, w.fixture(tenant),
 		tenantInfoOf(tenant), testutil.ShipmentGraphParams{
 			BOL:          "BOL" + label + tenant.Actor.OrganizationID.String()[4:10],
 			ProNumber:    "PRO" + label + tenant.Actor.OrganizationID.String()[4:10],
 			ShipmentID:   pulid.MustNew("shp_"),
-			MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
+			MoveStatuses: []shipmentvocab.MoveStatus{shipmentvocab.MoveStatusNew},
 		})
 }
 
@@ -344,14 +351,14 @@ func (w *operationsWorld) writeTender(
 		{
 			ID: pulid.MustNew("tof_"), BusinessUnitID: bu, OrganizationID: org,
 			TenderID: row.ID, CarrierID: hauler.ID, Rank: 1,
-			RateMethod: shipment.CarrierRateMethodFlat, Rate: decimal.NewFromInt(900),
+			RateMethod: shipmentvocab.CarrierRateMethodFlat, Rate: decimal.NewFromInt(900),
 			OfferTTLSeconds: 900, Channel: tender.ChannelEmail,
 			Status: tender.OfferStatusDeclined, DeclineReason: "No trucks in the lane",
 		},
 		{
 			ID: pulid.MustNew("tof_"), BusinessUnitID: bu, OrganizationID: org,
 			TenderID: row.ID, CarrierID: hauler.ID, Rank: 2,
-			RateMethod: shipment.CarrierRateMethodFlat, Rate: decimal.NewFromInt(950),
+			RateMethod: shipmentvocab.CarrierRateMethodFlat, Rate: decimal.NewFromInt(950),
 			OfferTTLSeconds: 900, Channel: tender.ChannelEmail, Status: tender.OfferStatusSent,
 		},
 	}
@@ -366,28 +373,29 @@ func operationsServices(conn *postgres.Connection, services *agentread.ResolverP
 	orders := orderrepository.New(orderrepository.Params{DB: conn, Logger: logger})
 	reasons := servicefailurereasoncoderepository.New(
 		servicefailurereasoncoderepository.Params{DB: conn, Logger: logger})
-	failures := servicefailurerepository.New(servicefailurerepository.Params{DB: conn, Logger: logger})
+	failures := servicefailurerepository.New(
+		servicefailurerepository.Params{DB: conn, Logger: logger},
+	)
 
 	services.OrderService = orderservice.New(orderservice.Params{Logger: logger, Repo: orders})
-	services.RecurringShipmentService = recurringshipmentservice.New(recurringshipmentservice.Params{
-		Logger: logger,
-		Repo: recurringshipmentrepository.New(
-			recurringshipmentrepository.Params{DB: conn, Logger: logger}),
-	})
+	services.RecurringShipmentService = recurringshipmentservice.New(
+		recurringshipmentservice.Params{
+			Logger: logger,
+			Repo: recurringshipmentrepository.New(
+				recurringshipmentrepository.Params{DB: conn, Logger: logger}),
+		},
+	)
 	services.ServiceFailureReasonCodeSvc = servicefailurereasoncodeservice.New(
 		servicefailurereasoncodeservice.Params{Logger: logger, Repo: reasons})
 	services.ServiceFailureSvc = servicefailureservice.New(servicefailureservice.Params{
 		Logger: logger, Repo: failures, ReasonCodeRepo: reasons,
 	})
-	services.DetentionService = detentionservice.New(detentionservice.Params{
-		Logger: logger,
+	services.DetentionReview = detentionreview.New(detentionreview.Params{
 		OccurrenceRepo: detentionrepository.NewOccurrenceRepository(
 			detentionrepository.OccurrenceParams{DB: conn, Logger: logger}),
+		Effects: detentioneffects.New(detentioneffects.Params{Logger: logger}),
 	})
-	services.TenderService = tenderservice.New(tenderservice.Params{
-		Logger: logger,
-		Repo:   tenderrepository.New(tenderrepository.Params{DB: conn, Logger: logger}),
-	})
+	services.TenderRepo = tenderrepository.New(tenderrepository.Params{DB: conn, Logger: logger})
 }
 
 // operationsListCases are the converted order, recurring shipment, reason
@@ -400,7 +408,7 @@ func operationsListCases(world *operationsWorld, conn *postgres.Connection) []re
 	return []referenceCase{
 		{
 			tool: "order_list", marked: canceled, oldMarked: oldCanceled,
-			old: agentquerytoolservice.NewListOrdersTool(
+			old: operationsquerytools.NewListOrdersTool(
 				orderrepository.New(orderrepository.Params{DB: conn, Logger: logger}), engine),
 			write: func(ctx context.Context, tenant *agentreadtest.Tenant, label string, marked bool) (pulid.ID, error) {
 				return world.writeOrder(ctx, tenant, label, pulid.Nil, marked)
@@ -408,8 +416,10 @@ func operationsListCases(world *operationsWorld, conn *postgres.Connection) []re
 		},
 		{
 			tool: "shipment_list_recurring", marked: paused, oldMarked: oldPaused,
-			old: agentquerytoolservice.NewListRecurringShipmentsTool(recurringshipmentrepository.New(
-				recurringshipmentrepository.Params{DB: conn, Logger: logger})),
+			old: operationsquerytools.NewListRecurringShipmentsTool(
+				recurringshipmentrepository.New(
+					recurringshipmentrepository.Params{DB: conn, Logger: logger}),
+			),
 			write: world.writeSeries,
 		},
 		{
@@ -438,7 +448,9 @@ var (
 
 // operationsEnv is the converted lists' environment with the operations
 // services, over two tenants of a fresh database.
-func operationsEnv(t *testing.T) (*convertedListEnv, *operationsWorld, *postgres.Connection, agentread.ResolverParams) {
+func operationsEnv(
+	t *testing.T,
+) (*convertedListEnv, *operationsWorld, *postgres.Connection, agentread.ResolverParams) {
 	t.Helper()
 
 	_, admin, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
@@ -448,26 +460,40 @@ func operationsEnv(t *testing.T) (*convertedListEnv, *operationsWorld, *postgres
 	_, services := convertedListCases(conn, admin)
 	operationsServices(conn, &services)
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	customers := loaders.NewCustomerByIDLoaderFactory(loaders.CustomerByIDLoaderFactoryParams{
-		CustomerService: services.CustomerService,
-	})
-	places := loaders.NewLocationByIDLoaderFactory(loaders.LocationByIDLoaderFactoryParams{
-		LocationRepo: locationrepository.New(locationrepository.Params{DB: conn, Logger: zap.NewNop()}),
-	})
+	customers := partiesloaders.NewCustomerByIDLoaderFactory(
+		partiesloaders.CustomerByIDLoaderFactoryParams{
+			CustomerService: services.CustomerService,
+		},
+	)
+	places := placesloaders.NewLocationByIDLoaderFactory(
+		placesloaders.LocationByIDLoaderFactoryParams{
+			LocationRepo: locationrepository.New(
+				locationrepository.Params{DB: conn, Logger: zap.NewNop()},
+			),
+		},
+	)
 
 	return &convertedListEnv{
 		attach: func(ctx context.Context, tenant *agentreadtest.Tenant) context.Context {
 			return places.Attach(customers.Attach(ctx, tenantInfoOf(tenant)), tenantInfoOf(tenant))
 		},
 		engine: engine,
-		reader: agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: services}),
-		public: agentreadtest.NewReader(t, agentreadtest.Options{Engine: &publicRole{}, Resolvers: services}),
+		reader: agentreadtest.NewReader(
+			t,
+			agentreadtest.Options{Engine: engine, Resolvers: services},
+		),
+		public: agentreadtest.NewReader(
+			t,
+			agentreadtest.Options{Engine: &publicRole{}, Resolvers: services},
+		),
 		mine:   agentreadtest.SeedTenant(t, admin, "A"),
 		theirs: agentreadtest.SeedTenant(t, admin, "B"),
 	}, newOperationsWorld(t, admin), conn, services
 }
 
-func TestConvertedLists_OperationsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_OperationsReadWhatTheRepositoryToolsReadUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	env, world, conn, _ := operationsEnv(t)
 
 	cases := operationsListCases(world, conn)
@@ -503,7 +529,7 @@ func TestConvertedLists_OrderListIsNarrowedToTheOwnerOnBothPaths(t *testing.T) {
 	})
 	converted, err := agentquerytoolservice.ConvertedListTool("order_list", env.reader, env.engine)
 	require.NoError(t, err)
-	old := agentquerytoolservice.NewListOrdersTool(
+	old := operationsquerytools.NewListOrdersTool(
 		orderrepository.New(orderrepository.Params{DB: conn, Logger: zap.NewNop()}), env.engine)
 
 	before, _ := walk(t, scoped, old, tenant.Actor, nil)
@@ -569,7 +595,9 @@ func TestConvertedGets_OperationsReadOneRecordOfTheTenantUnderRowLevelSecurity(t
 // every row of ours and none of theirs, narrows as its arguments say, reads
 // what the service the repository tool read returned, and withholds at
 // Public what that role may not see.
-func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSecurity(t *testing.T) {
+func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSecurity(
+	t *testing.T,
+) {
 	env, world, _, services := operationsEnv(t)
 	actor := env.mine.Actor
 	ours := readscope.With(dbscope.WithTenant(t.Context(), env.mine.Scope()), nil)
@@ -595,7 +623,12 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 				oneShipment = graph.Shipment.ID
 			}
 		}
-		other, err := world.writeOccurrence(theirs, env.theirs, world.shipment(env.theirs, "DL9"), false)
+		other, err := world.writeOccurrence(
+			theirs,
+			env.theirs,
+			world.shipment(env.theirs, "DL9"),
+			false,
+		)
 		require.NoError(t, err)
 
 		occurrences := func(page map[string]any) []string {
@@ -614,9 +647,9 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		assert.NotContains(t, all, other.String())
 
 		tenant := tenantInfoOf(env.mine)
-		open, err := services.DetentionService.ListDesk(ours, tenant)
+		open, err := services.DetentionReview.ListDesk(ours, tenant)
 		require.NoError(t, err)
-		waiting, err := services.DetentionService.ListAwaitingApproval(ours, tenant)
+		waiting, err := services.DetentionReview.ListAwaitingApproval(ours, tenant)
 		require.NoError(t, err)
 		before := make([]string, 0, len(open)+len(waiting))
 		for _, entry := range slices.Concat(open, waiting) {
@@ -653,7 +686,7 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		second := &shipment.ShipmentMove{
 			ID: pulid.MustNew("sm_"), BusinessUnitID: actor.BusinessUnitID,
 			OrganizationID: actor.OrganizationID, ShipmentID: graph.Shipment.ID,
-			Status: shipment.MoveStatusNew, Loaded: true, Sequence: 1,
+			Status: shipmentvocab.MoveStatusNew, Loaded: true, Sequence: 1,
 		}
 		require.NoError(t, world.insert(ours, second))
 		first, err := world.writeTender(ours, env.mine, graph.Shipment.ID, graph.Moves[0].ID, "T1")
@@ -665,12 +698,21 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 			elsewhere.Moves[0].ID, "T3")
 		require.NoError(t, err)
 
-		page := callTool(t, ours, tool, actor, map[string]any{"shipmentId": graph.Shipment.ID.String()})
+		page := callTool(
+			t,
+			ours,
+			tool,
+			actor,
+			map[string]any{"shipmentId": graph.Shipment.ID.String()},
+		)
 		assert.ElementsMatch(t, []string{first.String(), other.String()}, itemIDs(page))
 
-		listed, err := services.TenderService.ListByShipment(ours, tenderports.ListTendersByShipmentRequest{
-			TenantInfo: tenantInfoOf(env.mine), ShipmentID: graph.Shipment.ID,
-		})
+		listed, err := services.TenderRepo.ListByShipment(
+			ours,
+			tenderports.ListTendersByShipmentRequest{
+				TenantInfo: tenantInfoOf(env.mine), ShipmentID: graph.Shipment.ID,
+			},
+		)
 		require.NoError(t, err)
 		before := make([]string, 0, len(listed))
 		for _, entity := range listed {
@@ -687,7 +729,10 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		assert.Equal(t, true, row["live"])
 		offers := row["offers"].([]any)
 		require.Len(t, offers, 2)
-		answerable := []any{offers[0].(map[string]any)["answerable"], offers[1].(map[string]any)["answerable"]}
+		answerable := []any{
+			offers[0].(map[string]any)["answerable"],
+			offers[1].(map[string]any)["answerable"],
+		}
 		assert.ElementsMatch(t, []any{false, true}, answerable)
 		assert.NotContains(t, fmt.Sprint(narrowed), "No trucks in the lane",
 			"a carrier's own words are never read")
@@ -699,7 +744,13 @@ func TestConvertedLists_OperationsUnpagedListsReadTheTenantsRowsUnderRowLevelSec
 		hidden, err := agentquerytoolservice.ConvertedListTool("dispatch_list_tenders",
 			env.public, &publicRole{})
 		require.NoError(t, err)
-		page = callTool(t, ours, hidden, actor, map[string]any{"shipmentId": graph.Shipment.ID.String()})
+		page = callTool(
+			t,
+			ours,
+			hidden,
+			actor,
+			map[string]any{"shipmentId": graph.Shipment.ID.String()},
+		)
 		withheld, _ := page["withheldByAccess"].([]any)
 		require.NotEmpty(t, withheld)
 		for _, item := range page["items"].([]any) {

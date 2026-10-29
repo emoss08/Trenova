@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -48,14 +48,14 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) workerports.WorkerPTORepository {
+func New(p Params) workerptoports.WorkerPTORepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.worker-pto-repository"),
 	}
 }
 
-func (r *repository) listFilter(req *workerports.ListPTORequest) []keel.Pred {
+func (r *repository) listFilter(req *workerptoports.ListPTORequest) []keel.Pred {
 	p := workerdb.WorkerPTOs
 	preds := make([]keel.Pred, 0, 5)
 
@@ -94,7 +94,7 @@ func (r *repository) listFilter(req *workerports.ListPTORequest) []keel.Pred {
 
 func (r *repository) List(
 	ctx context.Context,
-	req *workerports.ListPTORequest,
+	req *workerptoports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return dbtx.Read(
 		ctx,
@@ -121,7 +121,7 @@ func (r *repository) List(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req *workerports.GetPTOByIDRequest,
+	req *workerptoports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
 		p := workerdb.WorkerPTOs
@@ -183,7 +183,7 @@ func (r *repository) Update(
 
 func (r *repository) GetByIDs(
 	ctx context.Context,
-	req *workerports.GetPTOsByIDsRequest,
+	req *workerptoports.GetPTOsByIDsRequest,
 ) ([]*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTO, error) {
 		if len(req.IDs) == 0 {
@@ -205,7 +205,7 @@ func (r *repository) GetByIDs(
 
 func (r *repository) HasOverlap(
 	ctx context.Context,
-	req *workerports.PTOOverlapRequest,
+	req *workerptoports.PTOOverlapRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
 		p := workerdb.WorkerPTOs
@@ -231,7 +231,7 @@ func (r *repository) HasOverlap(
 
 func (r *repository) SetBalanceAfter(
 	ctx context.Context,
-	req *workerports.SetPTOBalanceAfterRequest,
+	req *workerptoports.SetPTOBalanceAfterRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		p := workerdb.WorkerPTOs
@@ -250,7 +250,7 @@ func (r *repository) SetBalanceAfter(
 	})
 }
 
-func statusAssignments(req *workerports.UpdatePTOStatusRequest) []keel.Assignment {
+func statusAssignments(req *workerptoports.UpdatePTOStatusRequest) []keel.Assignment {
 	p := workerdb.WorkerPTOs
 	sets := []keel.Assignment{p.Status.To(req.Status)}
 
@@ -268,7 +268,7 @@ func statusAssignments(req *workerports.UpdatePTOStatusRequest) []keel.Assignmen
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
 		sources := worker.PTOStatusSourcesFor(req.Status)
@@ -305,10 +305,10 @@ func (r *repository) UpdateStatus(
 
 func (r *repository) explainStatusConflict(
 	ctx context.Context,
-	req *workerports.UpdatePTOStatusRequest,
+	req *workerptoports.UpdatePTOStatusRequest,
 	sources []worker.PTOStatus,
 ) error {
-	current, err := r.GetByID(ctx, &workerports.GetPTOByIDRequest{
+	current, err := r.GetByID(ctx, &workerptoports.GetPTOByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -336,7 +336,7 @@ func (r *repository) explainStatusConflict(
 }
 
 func (r *repository) upcomingPTODateBoundaries(
-	req *workerports.ListUpcomingPTORequest,
+	req *workerptoports.ListUpcomingPTORequest,
 	timezone string,
 	log *zap.Logger,
 ) (startFloor, endCeiling int64) {
@@ -380,7 +380,7 @@ type upcomingPTOFilterParsed struct {
 }
 
 func (r *repository) parseUpcomingPTOFilterParams(
-	req *workerports.ListUpcomingPTORequest,
+	req *workerptoports.ListUpcomingPTORequest,
 ) (*upcomingPTOFilterParsed, error) {
 	out := &upcomingPTOFilterParsed{}
 	if req.Type != "" {
@@ -420,7 +420,7 @@ func (r *repository) parseUpcomingPTOFilterParams(
 	return out, nil
 }
 
-func (r *repository) upcomingFilter(req *workerports.ListUpcomingPTORequest) []keel.Pred {
+func (r *repository) upcomingFilter(req *workerptoports.ListUpcomingPTORequest) []keel.Pred {
 	log := r.l.With(zap.String("operation", "ListUpcoming"))
 	timezone := timeutils.NormalizeTimezone(req.Timezone)
 	startFloor, endCeiling := r.upcomingPTODateBoundaries(req, timezone, log)
@@ -455,7 +455,7 @@ func (r *repository) upcomingFilter(req *workerports.ListUpcomingPTORequest) []k
 	return preds
 }
 
-func upcomingPTOCursorFilter(req *workerports.ListUpcomingPTORequest) *pagination.QueryOptions {
+func upcomingPTOCursorFilter(req *workerptoports.ListUpcomingPTORequest) *pagination.QueryOptions {
 	filter := pagination.QueryOptions{}
 	if req.Filter != nil {
 		filter = *req.Filter
@@ -476,7 +476,7 @@ func upcomingPTOCursorFilter(req *workerports.ListUpcomingPTORequest) *paginatio
 
 func (r *repository) ListUpcoming(
 	ctx context.Context,
-	req *workerports.ListUpcomingPTORequest,
+	req *workerptoports.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return dbtx.Read(
 		ctx,
@@ -515,53 +515,53 @@ type ptoDayRow struct {
 
 type ptoAggregate struct {
 	Count   int
-	Workers []workerports.PTOChartWorker
+	Workers []workerptoports.PTOChartWorker
 }
 
 type chartFieldSetter struct {
-	countSetter func(*workerports.PTOChartDataPoint, int)
+	countSetter func(*workerptoports.PTOChartDataPoint, int)
 	workerKey   string
 }
 
 var chartTypeSetters = map[worker.PTOType]chartFieldSetter{
 	worker.PTOTypeVacation: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Vacation = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Vacation = count },
 		workerKey:   worker.PTOTypeVacation.String(),
 	},
 	worker.PTOTypeSick: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Sick = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Sick = count },
 		workerKey:   worker.PTOTypeSick.String(),
 	},
 	worker.PTOTypeHoliday: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Holiday = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Holiday = count },
 		workerKey:   worker.PTOTypeHoliday.String(),
 	},
 	worker.PTOTypeBereavement: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Bereavement = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Bereavement = count },
 		workerKey:   worker.PTOTypeBereavement.String(),
 	},
 	worker.PTOTypeMaternity: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Maternity = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Maternity = count },
 		workerKey:   worker.PTOTypeMaternity.String(),
 	},
 	worker.PTOTypePaternity: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Paternity = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Paternity = count },
 		workerKey:   worker.PTOTypePaternity.String(),
 	},
 	worker.PTOTypePersonal: {
-		countSetter: func(dp *workerports.PTOChartDataPoint, count int) { dp.Personal = count },
+		countSetter: func(dp *workerptoports.PTOChartDataPoint, count int) { dp.Personal = count },
 		workerKey:   worker.PTOTypePersonal.String(),
 	},
 }
 
 func (r *repository) GetChartData(
 	ctx context.Context,
-	req *workerports.PTOChartRequest,
-) ([]*workerports.PTOChartDataPoint, error) {
+	req *workerptoports.PTOChartRequest,
+) ([]*workerptoports.PTOChartDataPoint, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*workerports.PTOChartDataPoint, error) {
+		func(ctx context.Context) ([]*workerptoports.PTOChartDataPoint, error) {
 			log := r.l.With(zap.String("operation", "GetPTOChart"))
 			timezone := timeutils.NormalizeTimezone(req.Timezone)
 			fromDayStartUnix, toDayEndUnix, err := r.calculateChartDateBoundaries(req, timezone)
@@ -668,7 +668,7 @@ func calendarDay(ts int64, loc *time.Location) time.Time {
 }
 
 func chartFilters(
-	req *workerports.PTOChartRequest,
+	req *workerptoports.PTOChartRequest,
 ) (ptoType worker.PTOType, workerID pulid.ID, err error) {
 	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
 		parsed, parseErr := worker.PTOTypeFromString(req.Type)
@@ -698,7 +698,7 @@ func chartFilters(
 }
 
 func (r *repository) calculateChartDateBoundaries(
-	req *workerports.PTOChartRequest,
+	req *workerptoports.PTOChartRequest,
 	timezone string,
 ) (fromDayStartUnix, toDayEndUnix int64, err error) {
 	fromDayStartUnix, err = timeutils.DayStartUnix(req.StartDateFrom, timezone)
@@ -728,7 +728,7 @@ func (r *repository) aggregatePTOData(
 			byType[row.Type] = agg
 		}
 		agg.Count++
-		agg.Workers = append(agg.Workers, workerports.PTOChartWorker{
+		agg.Workers = append(agg.Workers, workerptoports.PTOChartWorker{
 			ID:        row.WorkerID.String(),
 			FirstName: row.FirstName,
 			LastName:  row.LastName,
@@ -742,15 +742,15 @@ func (r *repository) aggregatePTOData(
 func (r *repository) buildPTOChartDataQuery(
 	dateSeries []string,
 	ptoMap map[string]map[worker.PTOType]*ptoAggregate,
-) []*workerports.PTOChartDataPoint {
-	result := make([]*workerports.PTOChartDataPoint, 0, len(dateSeries))
+) []*workerptoports.PTOChartDataPoint {
+	result := make([]*workerptoports.PTOChartDataPoint, 0, len(dateSeries))
 	for _, date := range dateSeries {
-		dataPoint := &workerports.PTOChartDataPoint{
+		dataPoint := &workerptoports.PTOChartDataPoint{
 			Date:    date,
-			Workers: make(map[string][]workerports.PTOChartWorker),
+			Workers: make(map[string][]workerptoports.PTOChartWorker),
 		}
 		for ptoType := range chartTypeSetters {
-			dataPoint.Workers[ptoType.String()] = []workerports.PTOChartWorker{}
+			dataPoint.Workers[ptoType.String()] = []workerptoports.PTOChartWorker{}
 		}
 
 		for ptoType, agg := range ptoMap[date] {

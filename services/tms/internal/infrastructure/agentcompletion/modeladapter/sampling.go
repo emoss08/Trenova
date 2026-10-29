@@ -1,6 +1,8 @@
 package modeladapter
 
-import "github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+)
 
 // Sampling is how adventurously a model picks its next token.
 //
@@ -27,41 +29,41 @@ type Sampling struct {
 // judged on how it reads and its figures are checked afterwards anyway.
 // The nucleus cutoff is the same everywhere, because the tail it removes
 // is never the right token in either kind of work.
-func SamplingForTask(task aiprovider.Task) Sampling {
-	if task == aiprovider.TaskEmbedding {
+func SamplingForTask(task aitask.Task) Sampling {
+	if task == aitask.TaskEmbedding {
 		return Sampling{}
 	}
 
 	temperature := 0.3
 	switch task {
-	case aiprovider.TaskScopeClassification,
-		aiprovider.TaskDocumentClassification,
-		aiprovider.TaskInboundClassification,
-		aiprovider.TaskAccountingMapping,
-		aiprovider.TaskRemittanceExtraction,
+	case aitask.TaskScopeClassification,
+		aitask.TaskDocumentClassification,
+		aitask.TaskInboundClassification,
+		aitask.TaskAccountingMapping,
+		aitask.TaskRemittanceExtraction,
 		// Compiling a sentence into a table's filters is the same kind of work:
 		// the answer is a structure checked against a catalogue afterwards, and
 		// the same question giving two different sets of filters is a defect
 		// nobody can reproduce.
-		aiprovider.TaskQueryCompose,
+		aitask.TaskQueryCompose,
 		// Whether a question starts a new chapter is a yes-or-no too, and a
 		// title that changes each time the same conversation is read again
 		// is noise.
-		aiprovider.TaskChapterTitling,
-		aiprovider.TaskEvaluationJudge:
+		aitask.TaskChapterTitling,
+		aitask.TaskEvaluationJudge:
 		// A yes-or-no with a category. There is nothing to be imaginative
 		// about, and a reclassification that changes between two identical
 		// questions is a bug a person cannot reproduce.
 		temperature = 0
-	case aiprovider.TaskDocumentExtraction, aiprovider.TaskBillingDiagnosis:
+	case aitask.TaskDocumentExtraction, aitask.TaskBillingDiagnosis:
 		// Both copy values out of a record. A digit invented here reaches
 		// an invoice.
 		temperature = 0.1
-	case aiprovider.TaskFormulaAssistant:
+	case aitask.TaskFormulaAssistant:
 		temperature = 0.2
-	case aiprovider.TaskAssistantChat, aiprovider.TaskGeneral:
+	case aitask.TaskAssistantChat, aitask.TaskGeneral:
 		temperature = 0.3
-	case aiprovider.TaskOperationalInsights, aiprovider.TaskDailyBriefing:
+	case aitask.TaskOperationalInsights, aitask.TaskDailyBriefing:
 		// Prose, whose numbers are checked against the computed facts after
 		// the fact, so it can afford to read like a person wrote it.
 		temperature = 0.6

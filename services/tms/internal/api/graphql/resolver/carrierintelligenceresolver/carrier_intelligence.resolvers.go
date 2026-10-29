@@ -10,13 +10,31 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelenrollmentservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelreviewservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelverifyservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelvetservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -24,19 +42,19 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierIntelSnapshot, error) {
+func (r *CarrierResolver) Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, nil
 	}
 	return loadCarrierSnapshot(ctx,
-		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return r.CarrierIntelService.CurrentSnapshotsByCarrierIDs(
-				ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID},
+		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+			return r.CarrierIntelReviewService.CurrentSnapshotsByCarrierIDs(
+				ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
 			)
 		},
-		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return loaders.CarrierIntelSnapshotByCarrierID(ctx, obj.ID.String())
+		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+			return partiesloaders.CarrierIntelSnapshotByCarrierID(ctx, obj.ID.String())
 		},
 	)
 }
@@ -46,11 +64,11 @@ func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.
 	if err != nil {
 		return 0, nil
 	}
-	if loaders.Available(ctx) {
-		return loaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
+	if loadercore.Available(ctx) {
+		return partiesloaders.CarrierIntelOpenEventCount(ctx, obj.ID.String())
 	}
-	counts, err := r.CarrierIntelService.OpenEventCountsByCarrierIDs(
-		ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID},
+	counts, err := r.CarrierIntelReviewService.OpenEventCountsByCarrierIDs(
+		ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID},
 	)
 	if err != nil {
 		return 0, err
@@ -58,16 +76,16 @@ func (r *CarrierResolver) OpenIntelEventCount(ctx context.Context, obj *carrier.
 	return counts[obj.ID], nil
 }
 
-func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierMonitoringEnrollment, error) {
+func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintelenrollment.CarrierMonitoringEnrollment, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, nil
 	}
-	var rows []*carrierintel.CarrierMonitoringEnrollment
-	if loaders.Available(ctx) {
-		rows, err = loaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
+	var rows []*carrierintelenrollment.CarrierMonitoringEnrollment
+	if loadercore.Available(ctx) {
+		rows, err = partiesloaders.CarrierMonitoringEnrollmentByCarrierID(ctx, obj.ID.String())
 	} else {
-		rows, err = r.CarrierIntelService.EnrollmentsByCarrierIDs(ctx, base.TenantInfo(authCtx), []pulid.ID{obj.ID})
+		rows, err = r.CarrierIntelEnrollmentService.EnrollmentsByCarrierIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{obj.ID})
 	}
 	if err != nil {
 		return nil, err
@@ -75,11 +93,11 @@ func (r *CarrierResolver) MonitoringEnrollment(ctx context.Context, obj *carrier
 	return preferredEnrollment(rows), nil
 }
 
-func (r *CarrierEquipmentVerificationResolver) ShipmentMoveID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error) {
-	return base.IDPtr(obj.ShipmentMoveID), nil
+func (r *CarrierEquipmentVerificationResolver) ShipmentMoveID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error) {
+	return gqlid.IDPtr(obj.ShipmentMoveID), nil
 }
 
-func (r *CarrierEquipmentVerificationResolver) Provider(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error) {
+func (r *CarrierEquipmentVerificationResolver) Provider(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error) {
 	if obj.Provider == "" {
 		return nil, nil
 	}
@@ -87,15 +105,15 @@ func (r *CarrierEquipmentVerificationResolver) Provider(ctx context.Context, obj
 	return &provider, nil
 }
 
-func (r *CarrierEquipmentVerificationResolver) OverrideByID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error) {
-	return base.IDPtr(obj.OverrideByID), nil
+func (r *CarrierEquipmentVerificationResolver) OverrideByID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error) {
+	return gqlid.IDPtr(obj.OverrideByID), nil
 }
 
-func (r *CarrierEquipmentVerificationResolver) Cleared(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (bool, error) {
+func (r *CarrierEquipmentVerificationResolver) Cleared(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (bool, error) {
 	return obj.IsCleared(), nil
 }
 
-func (r *CarrierIntelControlResolver) PrimaryProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error) {
+func (r *CarrierIntelControlResolver) PrimaryProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error) {
 	provider, ok := obj.PrimaryType()
 	if !ok {
 		return nil, nil
@@ -104,7 +122,7 @@ func (r *CarrierIntelControlResolver) PrimaryProvider(ctx context.Context, obj *
 	return &value, nil
 }
 
-func (r *CarrierIntelControlResolver) FallbackProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error) {
+func (r *CarrierIntelControlResolver) FallbackProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error) {
 	provider, ok := obj.FallbackType()
 	if !ok {
 		return nil, nil
@@ -113,12 +131,12 @@ func (r *CarrierIntelControlResolver) FallbackProvider(ctx context.Context, obj 
 	return &value, nil
 }
 
-func (r *CarrierIntelControlResolver) Rules(ctx context.Context, obj *carrierintel.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error) {
+func (r *CarrierIntelControlResolver) Rules(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error) {
 	return ruleSettingsToModel(obj.Rules), nil
 }
 
-func (r *CarrierIntelControlResolver) MonthlySpendCap(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error) {
-	return base.DecimalPtrString(obj.MonthlySpendCap), nil
+func (r *CarrierIntelControlResolver) MonthlySpendCap(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error) {
+	return gqldecimal.DecimalPtrString(obj.MonthlySpendCap), nil
 }
 
 func (r *CarrierIntelEquipmentResolver) UnitType(ctx context.Context, obj *carrierintel.Equipment) (*string, error) {
@@ -129,19 +147,19 @@ func (r *CarrierIntelEquipmentResolver) UnitType(ctx context.Context, obj *carri
 	return &value, nil
 }
 
-func (r *CarrierIntelEventResolver) CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
-	return base.IDPtr(obj.CarrierID), nil
+func (r *CarrierIntelEventResolver) CarrierID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
+	return gqlid.IDPtr(obj.CarrierID), nil
 }
 
-func (r *CarrierIntelEventResolver) Provider(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (string, error) {
+func (r *CarrierIntelEventResolver) Provider(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (string, error) {
 	return obj.Provider.String(), nil
 }
 
-func (r *CarrierIntelEventResolver) FieldLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+func (r *CarrierIntelEventResolver) FieldLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
 	return carrierIntelEventFieldLabel(obj), nil
 }
 
-func (r *CarrierIntelEventResolver) RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+func (r *CarrierIntelEventResolver) RuleCode(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
 	if obj.RuleCode == "" {
 		return nil, nil
 	}
@@ -149,11 +167,11 @@ func (r *CarrierIntelEventResolver) RuleCode(ctx context.Context, obj *carrierin
 	return &value, nil
 }
 
-func (r *CarrierIntelEventResolver) RuleLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+func (r *CarrierIntelEventResolver) RuleLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
 	return carrierIntelEventRuleLabel(obj), nil
 }
 
-func (r *CarrierIntelEventResolver) Action(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.RuleAction, error) {
+func (r *CarrierIntelEventResolver) Action(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintel.RuleAction, error) {
 	if !obj.Action.IsValid() {
 		return nil, nil
 	}
@@ -161,31 +179,31 @@ func (r *CarrierIntelEventResolver) Action(ctx context.Context, obj *carrierinte
 	return &action, nil
 }
 
-func (r *CarrierIntelEventResolver) PriorValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+func (r *CarrierIntelEventResolver) PriorValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
 	return jsonValueString(obj.PriorValue), nil
 }
 
-func (r *CarrierIntelEventResolver) CurrentValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
+func (r *CarrierIntelEventResolver) CurrentValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
 	return jsonValueString(obj.CurrentValue), nil
 }
 
-func (r *CarrierIntelEventResolver) AcknowledgedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
-	return base.IDPtr(obj.AcknowledgedByID), nil
+func (r *CarrierIntelEventResolver) AcknowledgedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
+	return gqlid.IDPtr(obj.AcknowledgedByID), nil
 }
 
-func (r *CarrierIntelEventResolver) AcknowledgedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.AcknowledgedByID)
+func (r *CarrierIntelEventResolver) AcknowledgedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.AcknowledgedByID)
 }
 
-func (r *CarrierIntelEventResolver) ResolvedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
-	return base.IDPtr(obj.ResolvedByID), nil
+func (r *CarrierIntelEventResolver) ResolvedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
+	return gqlid.IDPtr(obj.ResolvedByID), nil
 }
 
-func (r *CarrierIntelEventResolver) ResolvedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error) {
-	return base.LoadUser(ctx, obj.ResolvedByID)
+func (r *CarrierIntelEventResolver) ResolvedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.ResolvedByID)
 }
 
-func (r *CarrierIntelEventResolver) Resolution(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.EventResolution, error) {
+func (r *CarrierIntelEventResolver) Resolution(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintelevent.EventResolution, error) {
 	if !obj.Resolution.IsValid() {
 		return nil, nil
 	}
@@ -193,15 +211,15 @@ func (r *CarrierIntelEventResolver) Resolution(ctx context.Context, obj *carrier
 	return &resolution, nil
 }
 
-func (r *CarrierIntelEventResolver) SnapshotID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error) {
-	return base.IDPtr(obj.SnapshotID), nil
+func (r *CarrierIntelEventResolver) SnapshotID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error) {
+	return gqlid.IDPtr(obj.SnapshotID), nil
 }
 
-func (r *CarrierIntelFeedStateResolver) Provider(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (string, error) {
+func (r *CarrierIntelFeedStateResolver) Provider(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (string, error) {
 	return obj.Provider.String(), nil
 }
 
-func (r *CarrierIntelFeedStateResolver) PausedReason(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (*string, error) {
+func (r *CarrierIntelFeedStateResolver) PausedReason(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (*string, error) {
 	if !obj.IsPaused() {
 		return nil, nil
 	}
@@ -209,67 +227,67 @@ func (r *CarrierIntelFeedStateResolver) PausedReason(ctx context.Context, obj *c
 	return &value, nil
 }
 
-func (r *CarrierIntelFindingResolver) Code(ctx context.Context, obj *carrierintel.Finding) (string, error) {
+func (r *CarrierIntelFindingResolver) Code(ctx context.Context, obj *carrierintelrule.Finding) (string, error) {
 	return obj.Code.String(), nil
 }
 
-func (r *CarrierIntelFindingResolver) OverrideID(ctx context.Context, obj *carrierintel.Finding) (*string, error) {
-	return base.IDPtr(obj.OverrideID), nil
+func (r *CarrierIntelFindingResolver) OverrideID(ctx context.Context, obj *carrierintelrule.Finding) (*string, error) {
+	return gqlid.IDPtr(obj.OverrideID), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) BIPDOnFile(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.BIPDOnFile), nil
+	return gqldecimal.DecimalPtrString(obj.BIPDOnFile), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) BIPDRequired(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.BIPDRequired), nil
+	return gqldecimal.DecimalPtrString(obj.BIPDRequired), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) CargoOnFile(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.CargoOnFile), nil
+	return gqldecimal.DecimalPtrString(obj.CargoOnFile), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) CargoRequired(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.CargoRequired), nil
+	return gqldecimal.DecimalPtrString(obj.CargoRequired), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) BondOnFile(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.BondOnFile), nil
+	return gqldecimal.DecimalPtrString(obj.BondOnFile), nil
 }
 
 func (r *CarrierIntelInsuranceResolver) BondRequired(ctx context.Context, obj *carrierintel.Insurance) (*string, error) {
-	return base.DecimalPtrString(obj.BondRequired), nil
+	return gqldecimal.DecimalPtrString(obj.BondRequired), nil
 }
 
-func (r *CarrierIntelInsuranceChangeResolver) PolicyID(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error) {
-	return base.IDPtr(obj.PolicyID), nil
+func (r *CarrierIntelInsuranceChangeResolver) PolicyID(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error) {
+	return gqlid.IDPtr(obj.PolicyID), nil
 }
 
-func (r *CarrierIntelInsuranceChangeResolver) CurrentCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error) {
-	return base.DecimalPtrString(obj.CurrentCoverage), nil
+func (r *CarrierIntelInsuranceChangeResolver) CurrentCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error) {
+	return gqldecimal.DecimalPtrString(obj.CurrentCoverage), nil
 }
 
-func (r *CarrierIntelInsuranceChangeResolver) ProposedCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error) {
-	return base.DecimalPtrString(obj.ProposedCoverage), nil
+func (r *CarrierIntelInsuranceChangeResolver) ProposedCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error) {
+	return gqldecimal.DecimalPtrString(obj.ProposedCoverage), nil
 }
 
 func (r *CarrierIntelInsuranceFilingResolver) Coverage(ctx context.Context, obj *carrierintel.InsuranceFiling) (*string, error) {
-	return base.DecimalPtrString(obj.Coverage), nil
+	return gqldecimal.DecimalPtrString(obj.Coverage), nil
 }
 
-func (r *CarrierIntelOverrideResolver) RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (string, error) {
+func (r *CarrierIntelOverrideResolver) RuleCode(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (string, error) {
 	return obj.RuleCode.String(), nil
 }
 
-func (r *CarrierIntelOverrideResolver) RevokedByID(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (*string, error) {
-	return base.IDPtr(obj.RevokedByID), nil
+func (r *CarrierIntelOverrideResolver) RevokedByID(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (*string, error) {
+	return gqlid.IDPtr(obj.RevokedByID), nil
 }
 
-func (r *CarrierIntelOverrideResolver) Active(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (bool, error) {
+func (r *CarrierIntelOverrideResolver) Active(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (bool, error) {
 	return obj.IsActive(r.CarrierIntelNow()), nil
 }
 
-func (r *CarrierIntelRuleDefinitionResolver) Code(ctx context.Context, obj *carrierintel.RuleDefinition) (string, error) {
+func (r *CarrierIntelRuleDefinitionResolver) Code(ctx context.Context, obj *carrierintelrule.RuleDefinition) (string, error) {
 	return obj.Code.String(), nil
 }
 
@@ -289,60 +307,60 @@ func (r *CarrierIntelSafetyResolver) RiskScore(ctx context.Context, obj *carrier
 	return &value, nil
 }
 
-func (r *CarrierIntelSnapshotResolver) CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error) {
-	return base.IDPtr(obj.CarrierID), nil
+func (r *CarrierIntelSnapshotResolver) CarrierID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error) {
+	return gqlid.IDPtr(obj.CarrierID), nil
 }
 
-func (r *CarrierIntelSnapshotResolver) Provider(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error) {
+func (r *CarrierIntelSnapshotResolver) Provider(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error) {
 	return obj.Provider.String(), nil
 }
 
-func (r *CarrierIntelSnapshotResolver) Source(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error) {
+func (r *CarrierIntelSnapshotResolver) Source(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error) {
 	return obj.Source.String(), nil
 }
 
-func (r *CarrierIntelSnapshotResolver) ReviewedByID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error) {
-	return base.IDPtr(obj.ReviewedByID), nil
+func (r *CarrierIntelSnapshotResolver) ReviewedByID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error) {
+	return gqlid.IDPtr(obj.ReviewedByID), nil
 }
 
-func (r *CarrierIntelSnapshotResolver) EffectiveAsOf(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (int, error) {
+func (r *CarrierIntelSnapshotResolver) EffectiveAsOf(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (int, error) {
 	return int(obj.EffectiveAsOf()), nil
 }
 
-func (r *CarrierIntelSnapshotResolver) HasRawPayload(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (bool, error) {
+func (r *CarrierIntelSnapshotResolver) HasRawPayload(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (bool, error) {
 	return obj.RawPayloadID.IsNotNil(), nil
 }
 
-func (r *CarrierMonitoringEnrollmentResolver) CarrierID(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (*string, error) {
-	return base.IDPtr(obj.CarrierID), nil
+func (r *CarrierMonitoringEnrollmentResolver) CarrierID(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (*string, error) {
+	return gqlid.IDPtr(obj.CarrierID), nil
 }
 
-func (r *CarrierMonitoringEnrollmentResolver) Provider(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (string, error) {
+func (r *CarrierMonitoringEnrollmentResolver) Provider(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (string, error) {
 	return obj.Provider.String(), nil
 }
 
-func (r *CarrierSourcingResultResolver) ExistingCarrierID(ctx context.Context, obj *carrierintelservice.SourcingResult) (*string, error) {
-	return base.IDPtr(obj.ExistingCarrierID), nil
+func (r *CarrierSourcingResultResolver) ExistingCarrierID(ctx context.Context, obj *carrierintelsourcingservice.SourcingResult) (*string, error) {
+	return gqlid.IDPtr(obj.ExistingCarrierID), nil
 }
 
-func (r *CustomerResolver) BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintel.CarrierIntelSnapshot, error) {
+func (r *CustomerResolver) BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, nil
 	}
 	return loadCarrierSnapshot(ctx,
-		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return r.CarrierIntelService.CurrentSnapshotsBySubjects(
-				ctx, base.TenantInfo(authCtx), carrierintel.SubjectTypeCustomer, []string{obj.ID.String()},
+		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+			return r.CarrierIntelReviewService.CurrentSnapshotsBySubjects(
+				ctx, resolvercore.TenantInfo(authCtx), carrierintel.SubjectTypeCustomer, []string{obj.ID.String()},
 			)
 		},
-		func() ([]*carrierintel.CarrierIntelSnapshot, error) {
-			return loaders.CarrierIntelSnapshotByCustomerID(ctx, obj.ID.String())
+		func() ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
+			return partiesloaders.CarrierIntelSnapshotByCustomerID(ctx, obj.ID.String())
 		},
 	)
 }
 
-func (r *MutationResolver) UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error) {
+func (r *MutationResolver) UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintelcontrol.CarrierIntelControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpManage)
 	if err != nil {
 		return nil, err
@@ -351,15 +369,15 @@ func (r *MutationResolver) UpdateCarrierIntelControl(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.UpdateControl(ctx, base.TenantInfo(authCtx), patch)
+	return r.CarrierIntelEnrollmentService.UpdateControl(ctx, resolvercore.TenantInfo(authCtx), patch)
 }
 
-func (r *MutationResolver) SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error) {
+func (r *MutationResolver) SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintelcontrol.CarrierIntelControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SwitchPrimaryProvider(ctx, base.TenantInfo(authCtx), integration.Type(provider))
+	return r.CarrierIntelEnrollmentService.SwitchPrimaryProvider(ctx, resolvercore.TenantInfo(authCtx), integration.Type(provider))
 }
 
 func (r *MutationResolver) ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error) {
@@ -367,7 +385,7 @@ func (r *MutationResolver) ResumeCarrierIntelMonitoring(ctx context.Context) (bo
 	if err != nil {
 		return false, err
 	}
-	if err = r.CarrierIntelService.ResumeFeeds(ctx, base.TenantInfo(authCtx)); err != nil {
+	if err = r.CarrierIntelEnrollmentService.ResumeFeeds(ctx, resolvercore.TenantInfo(authCtx)); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -382,15 +400,15 @@ func (r *MutationResolver) VetCarrier(ctx context.Context, carrierID string, dep
 	if err != nil {
 		return nil, err
 	}
-	request := &carrierintelservice.VetCarrierRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	request := &carrierintelvetservice.VetCarrierRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
-		Force:      base.BoolValue(force),
+		Force:      gqlscalar.BoolValue(force),
 	}
 	if depth != nil {
 		request.Depth = *depth
 	}
-	result, err := r.CarrierIntelService.VetCarrier(ctx, request)
+	result, err := r.CarrierIntelVetService.VetCarrier(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +424,7 @@ func (r *MutationResolver) VetCustomerBroker(ctx context.Context, customerID str
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.VetCustomerBroker(ctx, base.TenantInfo(authCtx), id, base.BoolValue(force))
+	result, err := r.CarrierIntelVetService.VetCustomerBroker(ctx, resolvercore.TenantInfo(authCtx), id, gqlscalar.BoolValue(force))
 	if err != nil {
 		return nil, err
 	}
@@ -418,12 +436,12 @@ func (r *MutationResolver) SetCarrierMonitoring(ctx context.Context, carrierIds 
 	if err != nil {
 		return 0, err
 	}
-	ids, err := base.ParseIDs(carrierIds)
+	ids, err := gqlid.ParseIDs(carrierIds)
 	if err != nil {
 		return 0, errortypes.NewValidationError("carrierIds", errortypes.ErrInvalid, "Carrier selection is invalid")
 	}
-	return r.CarrierIntelService.SetManualEnrollment(ctx, &carrierintelservice.EnrollSubjectsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CarrierIntelEnrollmentService.SetManualEnrollment(ctx, &carrierintelenrollmentservice.EnrollSubjectsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierIDs: ids,
 		Enroll:     enabled,
 	})
@@ -434,14 +452,14 @@ func (r *MutationResolver) AcknowledgeCarrierIntelEvents(ctx context.Context, id
 	if err != nil {
 		return 0, err
 	}
-	eventIDs, err := base.ParseIDs(ids)
+	eventIDs, err := gqlid.ParseIDs(ids)
 	if err != nil {
 		return 0, errortypes.NewValidationError("ids", errortypes.ErrInvalid, "Event selection is invalid")
 	}
-	return r.CarrierIntelService.AcknowledgeEvents(ctx, base.TenantInfo(authCtx), eventIDs)
+	return r.CarrierIntelReviewService.AcknowledgeEvents(ctx, resolvercore.TenantInfo(authCtx), eventIDs)
 }
 
-func (r *MutationResolver) ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintel.CarrierIntelEvent, error) {
+func (r *MutationResolver) ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintelevent.CarrierIntelEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -450,11 +468,11 @@ func (r *MutationResolver) ResolveCarrierIntelEvent(ctx context.Context, input g
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ResolveEvent(ctx, &carrierintelservice.ResolveEventRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CarrierIntelReviewService.ResolveEvent(ctx, &carrierintelreviewservice.ResolveEventRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		EventID:    id,
 		Resolution: input.Resolution,
-		Note:       base.StringValue(input.Note),
+		Note:       gqlscalar.StringValue(input.Note),
 	})
 }
 
@@ -467,8 +485,8 @@ func (r *MutationResolver) MarkCarrierIntelReviewed(ctx context.Context, carrier
 	if err != nil {
 		return false, err
 	}
-	if err = r.CarrierIntelService.MarkReviewed(ctx, &carrierintelservice.MarkReviewedRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	if err = r.CarrierIntelReviewService.MarkReviewed(ctx, &carrierintelreviewservice.MarkReviewedRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		Note:       note,
 	}); err != nil {
@@ -477,7 +495,7 @@ func (r *MutationResolver) MarkCarrierIntelReviewed(ctx context.Context, carrier
 	return true, nil
 }
 
-func (r *MutationResolver) GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierintel.CarrierIntelOverride, error) {
+func (r *MutationResolver) GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierinteloverride.CarrierIntelOverride, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -486,16 +504,16 @@ func (r *MutationResolver) GrantCarrierIntelOverride(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.GrantOverride(ctx, &carrierintelservice.GrantOverrideRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CarrierIntelReviewService.GrantOverride(ctx, &carrierintelreviewservice.GrantOverrideRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
-		RuleCode:   carrierintel.RuleCode(input.RuleCode),
+		RuleCode:   carrierintelrule.RuleCode(input.RuleCode),
 		Reason:     input.Reason,
-		ExpiresAt:  base.Int64Value(input.ExpiresAt),
+		ExpiresAt:  gqlscalar.Int64Value(input.ExpiresAt),
 	})
 }
 
-func (r *MutationResolver) RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierintel.CarrierIntelOverride, error) {
+func (r *MutationResolver) RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierinteloverride.CarrierIntelOverride, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -504,8 +522,8 @@ func (r *MutationResolver) RevokeCarrierIntelOverride(ctx context.Context, id st
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.RevokeOverride(ctx, &carrierintelservice.RevokeOverrideRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CarrierIntelReviewService.RevokeOverride(ctx, &carrierintelreviewservice.RevokeOverrideRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		OverrideID: overrideID,
 		Reason:     reason,
 	})
@@ -523,12 +541,12 @@ func (r *MutationResolver) ApplyCarrierIntelSuggestions(ctx context.Context, inp
 	if err != nil {
 		return 0, err
 	}
-	policyIDs, err := base.ParseIDs(input.PolicyIds)
+	policyIDs, err := gqlid.ParseIDs(input.PolicyIds)
 	if err != nil {
 		return 0, errortypes.NewValidationError("policyIds", errortypes.ErrInvalid, "Policy selection is invalid")
 	}
-	return r.CarrierIntelService.ApplySuggestions(ctx, &carrierintelservice.ApplySuggestionsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.CarrierIntelVetService.ApplySuggestions(ctx, &carrierintelvetservice.ApplySuggestionsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		CarrierID:  id,
 		Fields:     input.Fields,
 		PolicyIDs:  policyIDs,
@@ -543,15 +561,15 @@ func (r *MutationResolver) ImportSourcedCarrier(ctx context.Context, input gqlmo
 	if _, err = r.RequirePermission(ctx, permission.ResourceCarrier, permission.OpCreate); err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ImportProspect(ctx, &carrierintelservice.ImportProspectRequest{
-		TenantInfo:       base.TenantInfo(authCtx),
+	return r.CarrierIntelSourcingService.ImportProspect(ctx, &carrierintelsourcingservice.ImportProspectRequest{
+		TenantInfo:       resolvercore.TenantInfo(authCtx),
 		DOTNumber:        input.DOTNumber,
-		Code:             base.StringValue(input.Code),
-		EnrollMonitoring: base.BoolValue(input.EnrollMonitoring),
+		Code:             gqlscalar.StringValue(input.Code),
+		EnrollMonitoring: gqlscalar.BoolValue(input.EnrollMonitoring),
 	})
 }
 
-func (r *MutationResolver) VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintel.CarrierEquipmentVerification, error) {
+func (r *MutationResolver) VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEquipmentVerification, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -560,18 +578,18 @@ func (r *MutationResolver) VerifyCarrierEquipment(ctx context.Context, input gql
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.VerifyEquipment(ctx, &carrierintelservice.VerifyEquipmentRequest{
-		TenantInfo:          base.TenantInfo(authCtx),
+	return r.CarrierIntelVerifyService.VerifyEquipment(ctx, &carrierintelverifyservice.VerifyEquipmentRequest{
+		TenantInfo:          resolvercore.TenantInfo(authCtx),
 		CarrierAssignmentID: assignmentID,
 		UnitType:            input.UnitType,
-		VIN:                 base.StringValue(input.Vin),
-		PlateNumber:         base.StringValue(input.PlateNumber),
-		PlateState:          base.StringValue(input.PlateState),
-		UnitNumber:          base.StringValue(input.UnitNumber),
+		VIN:                 gqlscalar.StringValue(input.Vin),
+		PlateNumber:         gqlscalar.StringValue(input.PlateNumber),
+		PlateState:          gqlscalar.StringValue(input.PlateState),
+		UnitNumber:          gqlscalar.StringValue(input.UnitNumber),
 	})
 }
 
-func (r *MutationResolver) OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintel.CarrierEquipmentVerification, error) {
+func (r *MutationResolver) OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintelverification.CarrierEquipmentVerification, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEquipmentVerification, permission.OpApprove)
 	if err != nil {
 		return nil, err
@@ -580,19 +598,19 @@ func (r *MutationResolver) OverrideCarrierEquipmentVerification(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.OverrideVerification(ctx, &carrierintelservice.OverrideVerificationRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+	return r.CarrierIntelVerifyService.OverrideVerification(ctx, &carrierintelverifyservice.OverrideVerificationRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		VerificationID: verificationID,
 		Reason:         reason,
 	})
 }
 
-func (r *QueryResolver) CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error) {
+func (r *QueryResolver) CarrierIntelControl(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.Control(ctx, base.TenantInfo(authCtx))
+	return r.CarrierIntelService.Control(ctx, resolvercore.TenantInfo(authCtx))
 }
 
 func (r *QueryResolver) CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error) {
@@ -600,15 +618,15 @@ func (r *QueryResolver) CarrierIntelProvider(ctx context.Context) (*gqlmodel.Car
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelProviderInfo(ctx, base.TenantInfo(authCtx))
+	return r.CarrierIntelProviderInfo(ctx, resolvercore.TenantInfo(authCtx))
 }
 
-func (r *QueryResolver) CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error) {
+func (r *QueryResolver) CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintelrule.RuleDefinition, error) {
 	if _, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead); err != nil {
 		return nil, err
 	}
-	catalog := r.CarrierIntelService.RuleCatalog()
-	out := make([]*carrierintel.RuleDefinition, 0, len(catalog))
+	catalog := r.CarrierIntelEnrollmentService.RuleCatalog()
+	out := make([]*carrierintelrule.RuleDefinition, 0, len(catalog))
 	for idx := range catalog {
 		out = append(out, &catalog[idx])
 	}
@@ -620,7 +638,7 @@ func (r *QueryResolver) CarrierIntelEvents(ctx context.Context, input gqlmodel.D
 	if err != nil {
 		return nil, err
 	}
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, base.TenantInfo(authCtx))
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -631,14 +649,14 @@ func (r *QueryResolver) CarrierIntelEvents(ctx context.Context, input gqlmodel.D
 	if err = eventFilterFromInput(filter, request); err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.ListEvents(ctx, request)
+	result, err := r.CarrierIntelReviewService.ListEvents(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 	return carrierIntelEventConnectionToModel(result)
 }
 
-func (r *QueryResolver) CarrierIntelEvent(ctx context.Context, id string) (*carrierintel.CarrierIntelEvent, error) {
+func (r *QueryResolver) CarrierIntelEvent(ctx context.Context, id string) (*carrierintelevent.CarrierIntelEvent, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -647,7 +665,7 @@ func (r *QueryResolver) CarrierIntelEvent(ctx context.Context, id string) (*carr
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.GetEvent(ctx, base.TenantInfo(authCtx), eventID)
+	return r.CarrierIntelReviewService.GetEvent(ctx, resolvercore.TenantInfo(authCtx), eventID)
 }
 
 func (r *QueryResolver) CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error) {
@@ -655,25 +673,25 @@ func (r *QueryResolver) CarrierIntelMonitoringStatus(ctx context.Context) (*gqlm
 	if err != nil {
 		return nil, err
 	}
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 
 	provider, err := r.CarrierIntelProviderInfo(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	enrollmentCounts, err := r.CarrierIntelService.EnrollmentCounts(ctx, tenant)
+	enrollmentCounts, err := r.CarrierIntelEnrollmentService.EnrollmentCounts(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	eventCounts, err := r.CarrierIntelService.EventCounts(ctx, tenant)
+	eventCounts, err := r.CarrierIntelReviewService.EventCounts(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	feeds, err := r.CarrierIntelService.FeedStates(ctx, tenant)
+	feeds, err := r.CarrierIntelEnrollmentService.FeedStates(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	queue, err := r.CarrierIntelService.ReviewQueue(ctx, tenant, carrierIntelReviewQueueCountLimit)
+	queue, err := r.CarrierIntelReviewService.ReviewQueue(ctx, tenant, carrierIntelReviewQueueCountLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -697,8 +715,8 @@ func (r *QueryResolver) CarrierMonitoringEnrollments(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	tenant := base.TenantInfo(authCtx)
-	tableInput, err := base.DataTableConnectionFromGraphQL(ctx, &input, tenant)
+	tenant := resolvercore.TenantInfo(authCtx)
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -719,22 +737,22 @@ func (r *QueryResolver) CarrierMonitoringEnrollments(ctx context.Context, input 
 		}
 		request.VendorStates = filter.VendorStates
 	}
-	result, err := r.CarrierIntelService.ListEnrollments(ctx, request)
+	result, err := r.CarrierIntelEnrollmentService.ListEnrollments(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 	return carrierMonitoringEnrollmentConnectionToModel(result)
 }
 
-func (r *QueryResolver) CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error) {
+func (r *QueryResolver) CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ReviewQueue(ctx, base.TenantInfo(authCtx), base.IntValue(limit))
+	return r.CarrierIntelReviewService.ReviewQueue(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.IntValue(limit))
 }
 
-func (r *QueryResolver) CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error) {
+func (r *QueryResolver) CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -743,11 +761,11 @@ func (r *QueryResolver) CarrierIntelSnapshotHistory(ctx context.Context, carrier
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SnapshotHistory(ctx, &carrierintelports.ListCarrierIntelSnapshotHistoryRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
+	return r.CarrierIntelReviewService.SnapshotHistory(ctx, &carrierintelports.ListCarrierIntelSnapshotHistoryRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   id.String(),
-		Limit:       base.IntValue(limit),
+		Limit:       gqlscalar.IntValue(limit),
 	})
 }
 
@@ -756,20 +774,20 @@ func (r *QueryResolver) CarrierIntelUsage(ctx context.Context, month *int) (*gql
 	if err != nil {
 		return nil, err
 	}
-	summary, err := r.CarrierIntelService.Usage(ctx, base.TenantInfo(authCtx), monthFromTimestamp(month))
+	summary, err := r.CarrierIntelMonitorService.Usage(ctx, resolvercore.TenantInfo(authCtx), monthFromTimestamp(month))
 	if err != nil {
 		return nil, err
 	}
 	return usageSummaryToModel(summary), nil
 }
 
-func (r *QueryResolver) CarrierIntelCostEstimate(ctx context.Context, policy carrierintel.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error) {
+func (r *QueryResolver) CarrierIntelCostEstimate(ctx context.Context, policy carrierintelcontrol.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpManage)
 	if err != nil {
 		return nil, err
 	}
-	estimate, err := r.CarrierIntelService.EstimateEnrollmentCost(
-		ctx, base.TenantInfo(authCtx), policy, base.IntValue(recentUsageDays), base.BoolValue(includeOpenTenders),
+	estimate, err := r.CarrierIntelEnrollmentService.EstimateEnrollmentCost(
+		ctx, resolvercore.TenantInfo(authCtx), policy, gqlscalar.IntValue(recentUsageDays), gqlscalar.BoolValue(includeOpenTenders),
 	)
 	if err != nil {
 		return nil, err
@@ -783,7 +801,7 @@ func (r *QueryResolver) CarrierIntelCostEstimate(ctx context.Context, policy car
 	}, nil
 }
 
-func (r *QueryResolver) CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintel.SyncPlan, error) {
+func (r *QueryResolver) CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintelsync.SyncPlan, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -792,10 +810,10 @@ func (r *QueryResolver) CarrierIntelSyncPlan(ctx context.Context, carrierID stri
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SyncPlan(ctx, base.TenantInfo(authCtx), id)
+	return r.CarrierIntelVetService.SyncPlan(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
-func (r *QueryResolver) CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierintel.CarrierIntelOverride, error) {
+func (r *QueryResolver) CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierinteloverride.CarrierIntelOverride, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -804,7 +822,7 @@ func (r *QueryResolver) CarrierIntelOverrides(ctx context.Context, carrierID str
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.ListOverrides(ctx, base.TenantInfo(authCtx), id)
+	return r.CarrierIntelReviewService.ListOverrides(ctx, resolvercore.TenantInfo(authCtx), id)
 }
 
 func (r *QueryResolver) CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error) {
@@ -820,7 +838,7 @@ func (r *QueryResolver) CarrierIntelRawPayload(ctx context.Context, carrierID st
 	if err != nil {
 		return nil, err
 	}
-	payload, err := r.CarrierIntelService.RawPayload(ctx, base.TenantInfo(authCtx), snapID, carrierintelports.CarrierIntelSubjectRef{
+	payload, err := r.CarrierIntelReviewService.RawPayload(ctx, resolvercore.TenantInfo(authCtx), snapID, carrierintelports.CarrierIntelSubjectRef{
 		SubjectType: carrierintel.SubjectTypeCarrier,
 		SubjectID:   id.String(),
 	})
@@ -842,31 +860,31 @@ func (r *QueryResolver) CarrierIntelLookup(ctx context.Context, input gqlmodel.C
 	if err != nil {
 		return nil, err
 	}
-	request := &carrierintelservice.LookupProspectRequest{
-		TenantInfo:   base.TenantInfo(authCtx),
-		DOTNumber:    base.StringValue(input.DOTNumber),
-		DocketNumber: base.StringValue(input.DocketNumber),
+	request := &carrierintelsourcingservice.LookupProspectRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		DOTNumber:    gqlscalar.StringValue(input.DOTNumber),
+		DocketNumber: gqlscalar.StringValue(input.DocketNumber),
 	}
 	if input.Depth != nil {
 		request.Depth = *input.Depth
 	}
-	result, existing, err := r.CarrierIntelService.LookupProspect(ctx, request)
+	result, existing, err := r.CarrierIntelSourcingService.LookupProspect(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 	lookup := &gqlmodel.CarrierIntelProspectLookup{Snapshot: result.Snapshot}
 	if id, found := existing[result.Snapshot.DOTNumber]; found {
-		lookup.ExistingCarrierID = base.IDPtr(id)
+		lookup.ExistingCarrierID = gqlid.IDPtr(id)
 	}
 	return lookup, nil
 }
 
-func (r *QueryResolver) CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error) {
+func (r *QueryResolver) CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelsourcingservice.SourcingPage, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierSourcing, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.SearchCarriers(ctx, sourcingQueryFromInput(&input, base.TenantInfo(authCtx)))
+	return r.CarrierIntelSourcingService.SearchCarriers(ctx, sourcingQueryFromInput(&input, resolvercore.TenantInfo(authCtx)))
 }
 
 func (r *QueryResolver) CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error) {
@@ -874,7 +892,7 @@ func (r *QueryResolver) CarrierSourcingAutocomplete(ctx context.Context, query s
 	if err != nil {
 		return nil, err
 	}
-	suggestions, err := r.CarrierIntelService.AutocompleteCarriers(ctx, base.TenantInfo(authCtx), query, base.IntValue(limit))
+	suggestions, err := r.CarrierIntelSourcingService.AutocompleteCarriers(ctx, resolvercore.TenantInfo(authCtx), query, gqlscalar.IntValue(limit))
 	if err != nil {
 		return nil, err
 	}
@@ -885,7 +903,7 @@ func (r *QueryResolver) CarrierSourcingAutocomplete(ctx context.Context, query s
 	return out, nil
 }
 
-func (r *QueryResolver) CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error) {
+func (r *QueryResolver) CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceEquipmentVerification, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -894,19 +912,19 @@ func (r *QueryResolver) CarrierEquipmentVerifications(ctx context.Context, carri
 	if err != nil {
 		return nil, err
 	}
-	return r.CarrierIntelService.VerificationsByAssignmentIDs(ctx, base.TenantInfo(authCtx), []pulid.ID{id})
+	return r.CarrierIntelVerifyService.VerificationsByAssignmentIDs(ctx, resolvercore.TenantInfo(authCtx), []pulid.ID{id})
 }
 
 func (r *QueryResolver) MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error) {
 	operation := permission.OpRead
-	if base.BoolValue(refresh) {
+	if gqlscalar.BoolValue(refresh) {
 		operation = permission.OpUpdate
 	}
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceCarrierIntelligence, operation)
 	if err != nil {
 		return nil, err
 	}
-	result, err := r.CarrierIntelService.MyIntelligence(ctx, base.TenantInfo(authCtx), base.BoolValue(refresh))
+	result, err := r.CarrierIntelVetService.MyIntelligence(ctx, resolvercore.TenantInfo(authCtx), gqlscalar.BoolValue(refresh))
 	if err != nil {
 		return nil, err
 	}

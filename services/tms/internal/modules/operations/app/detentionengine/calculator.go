@@ -1,0 +1,1066 @@
+package detentionengine
+
+import (
+	"fmt"
+	"sort"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/shopspring/decimal"
+)
+
+const (
+	secondsPerMinute = 60
+	minutesPerHour   = 60
+	minutesPerDay    = 1440
+)
+
+var (
+	minutesPerHourDec = decimal.NewFromInt(minutesPerHour)
+	minutesPerDayDec  = decimal.NewFromInt(minutesPerDay)
+)
+
+// ComputeInput is the complete, immutable set of facts a detention charge is
+// derived from. Nothing outside this struct may influence the result, which is
+// what makes a stored trace replayable months later during a dispute.
+type ComputeInput struct {
+	Snapshot         detentionpolicy.PolicySnapshot
+	StopType         shipmentvocab.StopType
+	ScheduleType     shipmentvocab.StopScheduleType
+	ArrivedAt        *int64
+	DepartedAt       *int64
+	AppointmentStart *int64
+	AppointmentEnd   *int64
+	NoticeSentAt     *int64
+	Now              int64
+	Location         *time.Location
+	DriverPayRate    decimal.NullDecimal
+	DayAccrued       map[string]decimal.Decimal
+	ShipmentAccrued  decimal.Decimal
+}
+
+// ComputeResult is everything the engine derived, ready to be persisted onto an
+// occurrence.
+type ComputeResult struct {
+	Applicable         bool
+	ClockStartAt       int64
+	ClockStopAt        *int64
+	IsOpen             bool
+	FreeTimeExpiresAt  int64
+	NoticeDueAt        *int64
+	NoticeDeadlineAt   *int64
+	ArrivedLate        bool
+	LateByMinutes      int32
+	FreeMinutesGranted int32
+	RawDwellMinutes    int32
+	BillableMinutes    int32
+	RoundedMinutes     int32
+	BillableUnits      decimal.Decimal
+	GrossAmount        decimal.Decimal
+	BillableAmount     decimal.Decimal
+	DriverPayMinutes   int32
+	DriverPayAmount    decimal.Decimal
+	NetMargin          decimal.Decimal
+	CapApplied         detention.CapKind
+	ConvertedToLayover bool
+	Status             detention.OccurrenceStatus
+	NotificationStatus detention.NotificationStatus
+	SuppressedByGate   bool
+	RequiresApproval   bool
+	DayAllocation      map[string]decimal.Decimal
+	Trace              *detention.CalculationTrace
+}
+
+// Compute derives a detention charge from immutable facts and frozen policy
+// terms. It never reads the clock or any external state beyond ComputeInput.
+func Compute(in *ComputeInput) ComputeResult {
+	snap := &in.Snapshot
+	trace := detention.NewTrace(in.Now)
+	result := newComputeResult(trace)
+
+	if in.ArrivedAt == nil || *in.ArrivedAt <= 0 {
+		return result
+	}
+
+	result.Applicable = true
+
+	trace.Add(detention.TraceStep{
+		Kind:   detention.TraceStepPolicyResolved,
+		Label:  "Policy applied",
+		Detail: fmt.Sprintf("%s (%s)", snap.PolicyName, snap.PolicyCode),
+		Term:   fmt.Sprintf("specificity %d, priority %d", snap.SpecificityScore, snap.Priority),
+	})
+
+	clockStart, lateness := resolveClockStart(in, trace)
+	result.ArrivedLate = lateness.isLate
+	result.LateByMinutes = lateness.byMinutes
+
+	entitlement := applyLateArrival(in, lateness, clockStart, trace)
+	clockStart = entitlement.clockStart
+	freeMinutes := entitlement.freeMinutes
+
+	result.ClockStartAt = clockStart
+	result.FreeMinutesGranted = freeMinutes
+	result.FreeTimeExpiresAt = clockStart + int64(freeMinutes)*secondsPerMinute
+
+	if entitlement.forfeited {
+		result.IsOpen = in.DepartedAt == nil
+		result.Status = detention.OccurrenceStatusNotBillable
+		finalizeTrace(trace, &result)
+		return result
+	}
+
+	clockStop, isOpen := resolveClockStop(in, clockStart)
+	result.IsOpen = isOpen
+	if !isOpen {
+		stop := clockStop
+		result.ClockStopAt = &stop
+	}
+
+	trace.AddTimestamp(detention.TraceStepClockStop,
+		clockStopLabel(isOpen), clockStopDetail(isOpen),
+		"Clock stop basis: Departure", clockStop)
+
+	billable := measureDwell(&result, clockStop-clockStart, freeMinutes, trace)
+
+	result.NotificationStatus, result.NoticeDueAt, result.NoticeDeadlineAt = resolveNotification(
+		in, result.FreeTimeExpiresAt,
+	)
+
+	if billable == 0 || belowMinimum(billable, snap, trace) {
+		return finishUnbilled(in, &result, trace)
+	}
+
+	result.BillableMinutes = billable
+
+	rounded := roundBillable(billable, snap, trace)
+	rounded, result.ConvertedToLayover, result.CapApplied = applyMinuteCaps(
+		rounded, freeMinutes, snap, trace, result.CapApplied,
+	)
+	result.RoundedMinutes = rounded
+
+	if rounded == 0 {
+		return finishUnbilled(in, &result, trace)
+	}
+
+	priceBillable(in, &result, &billableWindow{
+		rounded:     rounded,
+		clockStart:  clockStart,
+		clockStop:   clockStop,
+		freeMinutes: freeMinutes,
+	}, trace)
+
+	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+		in,
+		result.RawDwellMinutes,
+		trace,
+	)
+
+	applyNotificationGate(&result, snap, trace)
+	applyApprovalThresholds(&result, snap, trace)
+
+	result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
+	result.Status = resolveStatus(&result, snap, isOpen)
+
+	finalizeTrace(trace, &result)
+
+	return result
+}
+
+func newComputeResult(trace *detention.CalculationTrace) ComputeResult {
+	return ComputeResult{
+		BillableUnits:      decimal.Zero,
+		GrossAmount:        decimal.Zero,
+		BillableAmount:     decimal.Zero,
+		DriverPayAmount:    decimal.Zero,
+		NetMargin:          decimal.Zero,
+		CapApplied:         detention.CapKindNone,
+		Status:             detention.OccurrenceStatusNotBillable,
+		NotificationStatus: detention.NotificationStatusNotRequired,
+		DayAllocation:      map[string]decimal.Decimal{},
+		Trace:              trace,
+	}
+}
+
+type lateArrivalEntitlement struct {
+	clockStart  int64
+	freeMinutes int32
+	forfeited   bool
+}
+
+func applyLateArrival(
+	in *ComputeInput,
+	lateness latenessResult,
+	clockStart int64,
+	trace *detention.CalculationTrace,
+) lateArrivalEntitlement {
+	freeMinutes := in.Snapshot.FreeMinutes
+	entitlement := lateArrivalEntitlement{clockStart: clockStart, freeMinutes: freeMinutes}
+
+	if !lateness.isLate {
+		return entitlement
+	}
+
+	switch in.Snapshot.LateArrivalRule {
+	case detentionpolicy.LateArrivalRuleForfeit:
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Detention forfeited",
+			fmt.Sprintf("Arrived %d min after the appointment window", lateness.byMinutes),
+			"Late arrival rule: Forfeit", lateness.byMinutes, true)
+		entitlement.forfeited = true
+	case detentionpolicy.LateArrivalRuleClockFromAppointment:
+		if in.AppointmentStart != nil {
+			entitlement.clockStart = *in.AppointmentStart
+			trace.AddTimestamp(detention.TraceStepLateArrival,
+				"Clock anchored to appointment",
+				"Lateness consumes the carrier's own free time",
+				"Late arrival rule: ClockFromAppointment", entitlement.clockStart)
+		}
+	case detentionpolicy.LateArrivalRuleReduceFreeTime:
+		reduced := max(freeMinutes-lateness.byMinutes, 0)
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Free time reduced by lateness",
+			fmt.Sprintf("%d min granted instead of %d", reduced, freeMinutes),
+			"Late arrival rule: ReduceFreeTime", freeMinutes-reduced, true)
+		entitlement.freeMinutes = reduced
+	case detentionpolicy.LateArrivalRuleNoEffect:
+		trace.AddMinutes(detention.TraceStepLateArrival,
+			"Late arrival noted, entitlement unaffected",
+			fmt.Sprintf("Arrived %d min late", lateness.byMinutes),
+			"Late arrival rule: NoEffect", lateness.byMinutes, false)
+	}
+
+	return entitlement
+}
+
+func measureDwell(
+	result *ComputeResult,
+	rawSeconds int64,
+	freeMinutes int32,
+	trace *detention.CalculationTrace,
+) int32 {
+	result.RawDwellMinutes = intutils.SafeToInt32(max(rawSeconds, 0) / secondsPerMinute)
+
+	trace.AddMinutes(detention.TraceStepRawDwell, "Total time on site",
+		FormatMinutes(result.RawDwellMinutes), "", result.RawDwellMinutes, false)
+
+	trace.AddMinutes(detention.TraceStepFreeTime, "Free time deducted",
+		FormatMinutes(freeMinutes), fmt.Sprintf("%d min contractual free time", freeMinutes),
+		freeMinutes, true)
+
+	return max(result.RawDwellMinutes-freeMinutes, 0)
+}
+
+func belowMinimum(
+	billable int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) bool {
+	if snap.MinimumBillableMinutes <= 0 || billable >= snap.MinimumBillableMinutes {
+		return false
+	}
+
+	trace.AddMinutes(
+		detention.TraceStepMinimum,
+		"Below minimum billable threshold",
+		fmt.Sprintf(
+			"%d min is under the %d min minimum",
+			billable,
+			snap.MinimumBillableMinutes,
+		),
+		fmt.Sprintf("Minimum billable: %d min", snap.MinimumBillableMinutes),
+		billable,
+		true,
+	)
+
+	return true
+}
+
+func finishUnbilled(
+	in *ComputeInput,
+	result *ComputeResult,
+	trace *detention.CalculationTrace,
+) ComputeResult {
+	result.Status = openOrNotBillable(result.IsOpen)
+	result.DriverPayMinutes, result.DriverPayAmount = computeDriverPay(
+		in,
+		result.RawDwellMinutes,
+		trace,
+	)
+	result.NetMargin = result.BillableAmount.Sub(result.DriverPayAmount)
+	finalizeTrace(trace, result)
+	return *result
+}
+
+func roundBillable(
+	billable int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) int32 {
+	rounded := applyRounding(billable, snap.RoundingMode, snap.BillingIncrementMinutes)
+	if rounded != billable {
+		trace.AddMinutes(detention.TraceStepRounding,
+			fmt.Sprintf("Rounded %s to %s", FormatMinutes(billable), FormatMinutes(rounded)),
+			roundingDetail(snap.RoundingMode, snap.BillingIncrementMinutes),
+			fmt.Sprintf("%s to %d min increments", snap.RoundingMode, snap.BillingIncrementMinutes),
+			rounded, rounded < billable)
+	}
+	return rounded
+}
+
+type billableWindow struct {
+	rounded     int32
+	clockStart  int64
+	clockStop   int64
+	freeMinutes int32
+}
+
+func priceBillable(
+	in *ComputeInput,
+	result *ComputeResult,
+	window *billableWindow,
+	trace *detention.CalculationTrace,
+) {
+	loc := in.Location
+	if loc == nil {
+		loc = time.UTC
+	}
+
+	units, gross := applyRate(window.rounded, &in.Snapshot, trace)
+	result.BillableUnits = units
+	result.GrossAmount = gross
+
+	capped, capKind, allocation := applyAmountCaps(&applyAmountCapsInput{
+		gross:       gross,
+		rounded:     window.rounded,
+		snapshot:    &in.Snapshot,
+		clockStart:  window.clockStart,
+		freeMins:    window.freeMinutes,
+		clockStop:   window.clockStop,
+		location:    loc,
+		dayAccrued:  in.DayAccrued,
+		shipAccrued: in.ShipmentAccrued,
+		trace:       trace,
+	})
+	result.BillableAmount = capped
+	result.DayAllocation = allocation
+	if capKind != detention.CapKindNone {
+		result.CapApplied = capKind
+	}
+}
+
+type latenessResult struct {
+	isLate    bool
+	byMinutes int32
+}
+
+func resolveClockStart(
+	in *ComputeInput,
+	trace *detention.CalculationTrace,
+) (int64, latenessResult) {
+	arrival := *in.ArrivedAt
+	snap := &in.Snapshot
+
+	clockStart := arrival
+	basisDetail := "Driver arrival"
+
+	switch snap.ClockStartBasis {
+	case detentionpolicy.ClockStartBasisArrival:
+		clockStart = arrival
+		basisDetail = "Driver arrival"
+	case detentionpolicy.ClockStartBasisAppointment:
+		if in.AppointmentStart != nil {
+			clockStart = *in.AppointmentStart
+			basisDetail = "Scheduled appointment, regardless of arrival"
+		}
+	case detentionpolicy.ClockStartBasisLaterOfArrivalOrAppointment:
+		if in.AppointmentStart != nil && *in.AppointmentStart > arrival {
+			clockStart = *in.AppointmentStart
+			basisDetail = "Appointment, because the driver arrived early"
+		} else {
+			basisDetail = "Driver arrival, at or after the appointment"
+		}
+	case detentionpolicy.ClockStartBasisEarlierOfArrivalOrAppointment:
+		if in.AppointmentStart != nil && *in.AppointmentStart < arrival {
+			clockStart = *in.AppointmentStart
+			basisDetail = "Appointment, because it preceded arrival"
+		} else {
+			basisDetail = "Driver arrival, because it preceded the appointment"
+		}
+	}
+
+	trace.AddTimestamp(detention.TraceStepClockStart, "Clock started", basisDetail,
+		"Clock start basis: "+snap.ClockStartBasis.String(), clockStart)
+
+	return clockStart, detectLateness(in, arrival)
+}
+
+// detectLateness measures arrival against the close of the appointment window,
+// falling back to the appointment start when no window end was scheduled.
+func detectLateness(in *ComputeInput, arrival int64) latenessResult {
+	deadline := in.AppointmentEnd
+	if deadline == nil {
+		deadline = in.AppointmentStart
+	}
+	if deadline == nil {
+		return latenessResult{}
+	}
+
+	grace := int64(in.Snapshot.LateArrivalGraceMinutes) * secondsPerMinute
+	threshold := *deadline + grace
+
+	if arrival <= threshold {
+		return latenessResult{}
+	}
+
+	return latenessResult{
+		isLate:    true,
+		byMinutes: intutils.SafeToInt32((arrival - *deadline) / secondsPerMinute),
+	}
+}
+
+func resolveClockStop(in *ComputeInput, clockStart int64) (int64, bool) {
+	if in.DepartedAt != nil && *in.DepartedAt > 0 {
+		stop := *in.DepartedAt
+		if stop < clockStart {
+			stop = clockStart
+		}
+		return stop, false
+	}
+
+	projected := in.Now
+	if projected < clockStart {
+		projected = clockStart
+	}
+
+	return projected, true
+}
+
+// applyRounding collapses raw billable minutes onto the contract's increment.
+// Rounding errors are a named cause of rejected detention invoices, so the mode
+// and increment are always contract terms rather than engine defaults.
+func applyRounding(minutes int32, mode detentionpolicy.RoundingMode, increment int16) int32 {
+	if mode == detentionpolicy.RoundingModeExact || increment <= 0 {
+		return minutes
+	}
+
+	inc := int32(increment)
+	whole := minutes / inc
+	remainder := minutes % inc
+
+	if remainder == 0 {
+		return minutes
+	}
+
+	switch mode {
+	case detentionpolicy.RoundingModeUp:
+		return (whole + 1) * inc
+	case detentionpolicy.RoundingModeDown:
+		return whole * inc
+	case detentionpolicy.RoundingModeNearest:
+		if remainder*2 >= inc {
+			return (whole + 1) * inc
+		}
+		return whole * inc
+	case detentionpolicy.RoundingModeExact:
+		return minutes
+	default:
+		return minutes
+	}
+}
+
+func applyMinuteCaps(
+	rounded, freeMinutes int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+	current detention.CapKind,
+) (capped int32, convertedToLayover bool, capKind detention.CapKind) {
+	capKind = current
+
+	if snap.ConvertToLayoverAtMinutes != nil {
+		boundary := *snap.ConvertToLayoverAtMinutes - freeMinutes
+		if boundary < 0 {
+			boundary = 0
+		}
+		if rounded > boundary {
+			trace.AddMinutes(detention.TraceStepLayover, "Converted to layover",
+				fmt.Sprintf("Detention capped at %s; the remainder bills as layover",
+					FormatMinutes(boundary)),
+				fmt.Sprintf("Layover conversion at %d min on site",
+					*snap.ConvertToLayoverAtMinutes),
+				boundary, true)
+			rounded = boundary
+			convertedToLayover = true
+			capKind = detention.CapKindLayoverBoundary
+		}
+	}
+
+	if snap.MaxBillableMinutesPerStop != nil && rounded > *snap.MaxBillableMinutesPerStop {
+		trace.AddMinutes(detention.TraceStepMinutesCap, "Billable minutes capped",
+			fmt.Sprintf("Reduced to %s", FormatMinutes(*snap.MaxBillableMinutesPerStop)),
+			fmt.Sprintf("Maximum billable: %d min per stop", *snap.MaxBillableMinutesPerStop),
+			*snap.MaxBillableMinutesPerStop, true)
+		rounded = *snap.MaxBillableMinutesPerStop
+		capKind = detention.CapKindMaxMinutes
+	}
+
+	return rounded, convertedToLayover, capKind
+}
+
+// applyRate walks the graduated ladder when the contract has one, otherwise
+// multiplies the flat accessorial rate.
+func applyRate(
+	rounded int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) (units, amount decimal.Decimal) {
+	if snap.RateSource == detentionpolicy.RateSourceTiers && len(snap.Tiers) > 0 {
+		return applyTieredRate(rounded, snap, trace)
+	}
+
+	units = unitsForMinutes(rounded, snap.FlatRateUnit)
+	amount = snap.FlatRate.Mul(units).Round(2)
+
+	trace.AddAmount(detention.TraceStepFlatRate,
+		fmt.Sprintf("%s × %s", units.StringFixed(2), RateLabel(snap.FlatRate, snap.FlatRateUnit)),
+		FormatMinutes(rounded)+" billable",
+		"Accessorial "+snap.AccessorialCode, amount, false)
+
+	return units, amount
+}
+
+func applyTieredRate(
+	rounded int32,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) (totalUnits, totalAmount decimal.Decimal) {
+	tiers := make([]detentionpolicy.TierSnapshot, len(snap.Tiers))
+	copy(tiers, snap.Tiers)
+	sort.SliceStable(
+		tiers,
+		func(a, b int) bool { return tiers[a].FromMinute < tiers[b].FromMinute },
+	)
+
+	totalUnits = decimal.Zero
+	totalAmount = decimal.Zero
+
+	for _, tier := range tiers {
+		span := tier.SpanMinutes(rounded)
+		if span <= 0 {
+			continue
+		}
+
+		units := unitsForMinutes(span, tier.RateUnit)
+		amount := tier.Rate.Mul(units).Round(2)
+
+		totalUnits = totalUnits.Add(units)
+		totalAmount = totalAmount.Add(amount)
+
+		trace.AddAmount(detention.TraceStepTier,
+			tierLabel(tier),
+			fmt.Sprintf("%s at %s", FormatMinutes(span), RateLabel(tier.Rate, tier.RateUnit)),
+			TierBandTerm(tier), amount, false)
+	}
+
+	return totalUnits, totalAmount
+}
+
+func unitsForMinutes(minutes int32, unit detentionpolicy.TierRateUnit) decimal.Decimal {
+	if minutes <= 0 {
+		return decimal.Zero
+	}
+
+	switch unit {
+	case detentionpolicy.TierRateUnitHour:
+		return decimal.NewFromInt(int64(minutes)).Div(minutesPerHourDec).Round(4)
+	case detentionpolicy.TierRateUnitDay:
+		return decimal.NewFromInt(int64(minutes)).Div(minutesPerDayDec).Round(4)
+	case detentionpolicy.TierRateUnitFlat:
+		return decimal.NewFromInt(1)
+	default:
+		return decimal.NewFromInt(int64(minutes)).Div(minutesPerHourDec).Round(4)
+	}
+}
+
+type applyAmountCapsInput struct {
+	gross       decimal.Decimal
+	rounded     int32
+	snapshot    *detentionpolicy.PolicySnapshot
+	clockStart  int64
+	freeMins    int32
+	clockStop   int64
+	location    *time.Location
+	dayAccrued  map[string]decimal.Decimal
+	shipAccrued decimal.Decimal
+	trace       *detention.CalculationTrace
+}
+
+// applyAmountCaps clamps the computed charge against the contract's ceilings.
+// The per-day cap is the subtle one: a stay that spans midnight would otherwise
+// generate two full daily charges, so the amount is allocated across calendar
+// days in the organization's timezone and each day is capped independently.
+func applyAmountCaps(
+	in *applyAmountCapsInput,
+) (decimal.Decimal, detention.CapKind, map[string]decimal.Decimal) {
+	amount := in.gross
+	capKind := detention.CapKindNone
+	snap := in.snapshot
+
+	allocation := allocateByDay(allocateByDayInput{
+		amount:    amount,
+		rounded:   in.rounded,
+		billStart: in.clockStart + int64(in.freeMins)*secondsPerMinute,
+		clockStop: in.clockStop,
+		location:  in.location,
+	})
+
+	if snap.MaxChargePerStop.Valid && amount.GreaterThan(snap.MaxChargePerStop.Decimal) {
+		in.trace.AddAmount(detention.TraceStepAmountCap, "Per-stop cap applied",
+			fmt.Sprintf("Reduced from %s", amount.StringFixed(2)),
+			"Maximum charge per stop: "+snap.MaxChargePerStop.Decimal.StringFixed(2),
+			snap.MaxChargePerStop.Decimal, true)
+		amount = snap.MaxChargePerStop.Decimal
+		capKind = detention.CapKindPerStopAmount
+		allocation = rescaleAllocation(allocation, in.gross, amount)
+	}
+
+	if snap.MaxChargePerDay.Valid && len(allocation) > 0 {
+		capped, changed := applyDailyCap(allocation, in.dayAccrued, snap.MaxChargePerDay.Decimal)
+		if changed {
+			in.trace.AddAmount(detention.TraceStepAmountCap, "Daily cap applied",
+				fmt.Sprintf("Reduced from %s across %d calendar day(s)",
+					amount.StringFixed(2), len(allocation)),
+				"Maximum charge per day: "+snap.MaxChargePerDay.Decimal.StringFixed(2),
+				capped, true)
+			amount = capped
+			capKind = detention.CapKindPerDayAmount
+		}
+	}
+
+	if snap.MaxChargePerShipment.Valid {
+		remaining := snap.MaxChargePerShipment.Decimal.Sub(in.shipAccrued)
+		if remaining.LessThan(decimal.Zero) {
+			remaining = decimal.Zero
+		}
+		if amount.GreaterThan(remaining) {
+			in.trace.AddAmount(detention.TraceStepAmountCap, "Shipment cap applied",
+				fmt.Sprintf("Reduced from %s; %s already accrued on this shipment",
+					amount.StringFixed(2), in.shipAccrued.StringFixed(2)),
+				"Maximum charge per shipment: "+
+					snap.MaxChargePerShipment.Decimal.StringFixed(2),
+				remaining, true)
+			amount = remaining
+			capKind = detention.CapKindPerShipment
+			allocation = rescaleAllocation(allocation, in.gross, amount)
+		}
+	}
+
+	return amount.Round(2), capKind, allocation
+}
+
+type allocateByDayInput struct {
+	amount    decimal.Decimal
+	rounded   int32
+	billStart int64
+	clockStop int64
+	location  *time.Location
+}
+
+// allocateByDay splits the charge across the calendar days the billable window
+// actually touches, pro-rata by minutes.
+func allocateByDay(in allocateByDayInput) map[string]decimal.Decimal {
+	allocation := map[string]decimal.Decimal{}
+
+	if in.rounded <= 0 || in.clockStop <= in.billStart {
+		if in.rounded > 0 {
+			key := time.Unix(in.billStart, 0).In(in.location).Format(time.DateOnly)
+			allocation[key] = in.amount
+		}
+		return allocation
+	}
+
+	totalSeconds := in.clockStop - in.billStart
+	minutesByDay := map[string]int64{}
+
+	cursor := in.billStart
+	for cursor < in.clockStop {
+		dayStart := time.Unix(cursor, 0).In(in.location)
+		nextMidnight := time.Date(
+			dayStart.Year(), dayStart.Month(), dayStart.Day()+1,
+			0, 0, 0, 0, in.location,
+		).Unix()
+
+		segmentEnd := nextMidnight
+		if segmentEnd > in.clockStop {
+			segmentEnd = in.clockStop
+		}
+
+		minutesByDay[dayStart.Format(time.DateOnly)] += segmentEnd - cursor
+		cursor = segmentEnd
+	}
+
+	if totalSeconds <= 0 {
+		return allocation
+	}
+
+	totalDec := decimal.NewFromInt(totalSeconds)
+	assigned := decimal.Zero
+	keys := make([]string, 0, len(minutesByDay))
+	for key := range minutesByDay {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for i, key := range keys {
+		if i == len(keys)-1 {
+			allocation[key] = in.amount.Sub(assigned).Round(2)
+			continue
+		}
+		share := in.amount.Mul(decimal.NewFromInt(minutesByDay[key])).Div(totalDec).Round(2)
+		allocation[key] = share
+		assigned = assigned.Add(share)
+	}
+
+	return allocation
+}
+
+func applyDailyCap(
+	allocation map[string]decimal.Decimal,
+	priorAccrued map[string]decimal.Decimal,
+	dailyCap decimal.Decimal,
+) (decimal.Decimal, bool) {
+	total := decimal.Zero
+	changed := false
+
+	keys := make([]string, 0, len(allocation))
+	for key := range allocation {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		share := allocation[key]
+		prior := decimal.Zero
+		if priorAccrued != nil {
+			if existing, ok := priorAccrued[key]; ok {
+				prior = existing
+			}
+		}
+
+		remaining := dailyCap.Sub(prior)
+		if remaining.LessThan(decimal.Zero) {
+			remaining = decimal.Zero
+		}
+
+		if share.GreaterThan(remaining) {
+			share = remaining
+			changed = true
+		}
+
+		allocation[key] = share
+		total = total.Add(share)
+	}
+
+	return total.Round(2), changed
+}
+
+func rescaleAllocation(
+	allocation map[string]decimal.Decimal,
+	from, to decimal.Decimal,
+) map[string]decimal.Decimal {
+	if len(allocation) == 0 || from.IsZero() {
+		return allocation
+	}
+
+	rescaled := make(map[string]decimal.Decimal, len(allocation))
+	keys := make([]string, 0, len(allocation))
+	for key := range allocation {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	assigned := decimal.Zero
+	for i, key := range keys {
+		if i == len(keys)-1 {
+			rescaled[key] = to.Sub(assigned).Round(2)
+			continue
+		}
+		share := allocation[key].Mul(to).Div(from).Round(2)
+		rescaled[key] = share
+		assigned = assigned.Add(share)
+	}
+
+	return rescaled
+}
+
+// computeDriverPay derives the AP side from the same dwell. Carriers routinely
+// lose margin when a customer negotiates longer free time than the driver's pay
+// profile grants; surfacing both numbers on one record makes that visible.
+func computeDriverPay(
+	in *ComputeInput,
+	rawDwellMinutes int32,
+	trace *detention.CalculationTrace,
+) (int32, decimal.Decimal) {
+	payFree := in.Snapshot.PayFreeMinutes
+	payMinutes := rawDwellMinutes - payFree
+	if payMinutes < 0 {
+		payMinutes = 0
+	}
+
+	if payMinutes == 0 || !in.DriverPayRate.Valid {
+		return payMinutes, decimal.Zero
+	}
+
+	hours := decimal.NewFromInt(int64(payMinutes)).Div(minutesPerHourDec).Round(4)
+	amount := in.DriverPayRate.Decimal.Mul(hours).Round(2)
+
+	trace.AddAmount(detention.TraceStepDriverPay, "Driver detention pay",
+		fmt.Sprintf("%s beyond %s of pay free time",
+			FormatMinutes(payMinutes), FormatMinutes(payFree)),
+		"Driver pay free time: "+FormatMinutes(payFree), amount, false)
+
+	return payMinutes, amount
+}
+
+func resolveNotification(
+	in *ComputeInput,
+	freeTimeExpiresAt int64,
+) (status detention.NotificationStatus, dueAt, deadlineAt *int64) {
+	snap := &in.Snapshot
+
+	if snap.NotificationRequirement == detentionpolicy.NotificationRequirementNone {
+		return detention.NotificationStatusNotRequired, nil, nil
+	}
+
+	due := freeTimeExpiresAt - int64(snap.NotificationLeadMinutes)*secondsPerMinute
+	deadline := freeTimeExpiresAt + int64(snap.NotificationDeadlineMinutes)*secondsPerMinute
+
+	if in.NoticeSentAt != nil {
+		if *in.NoticeSentAt <= deadline {
+			return detention.NotificationStatusSent, &due, &deadline
+		}
+		return detention.NotificationStatusLate, &due, &deadline
+	}
+
+	if in.Now > deadline {
+		return detention.NotificationStatusMissed, &due, &deadline
+	}
+
+	return detention.NotificationStatusPending, &due, &deadline
+}
+
+// applyNotificationGate enforces the contractual requirement that the customer
+// be told detention started. A missed notice is the single most common reason a
+// otherwise-valid detention claim goes uncollected.
+func applyNotificationGate(
+	result *ComputeResult,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) {
+	if snap.NotificationRequirement != detentionpolicy.NotificationRequirementRequired {
+		return
+	}
+
+	if result.NotificationStatus.SatisfiesRequirement() {
+		trace.Add(detention.TraceStep{
+			Kind:   detention.TraceStepNotification,
+			Label:  "Notice requirement satisfied",
+			Detail: "Customer was notified within the contractual window",
+			Term:   "Notification: Required",
+		})
+		return
+	}
+
+	if result.IsOpen && result.NotificationStatus == detention.NotificationStatusPending {
+		return
+	}
+
+	switch snap.UnnotifiedBehavior {
+	case detentionpolicy.UnnotifiedBehaviorSuppress:
+		trace.AddAmount(
+			detention.TraceStepNotification,
+			"Charge suppressed: notice not sent in time",
+			fmt.Sprintf("Contract requires notice; status is %s", result.NotificationStatus),
+			"Unnotified behavior: Suppress",
+			decimal.Zero,
+			true,
+		)
+		result.BillableAmount = decimal.Zero
+		result.SuppressedByGate = true
+	case detentionpolicy.UnnotifiedBehaviorFlag:
+		trace.Add(detention.TraceStep{
+			Kind:  detention.TraceStepNotification,
+			Label: "Held for review: notice not sent in time",
+			Detail: fmt.Sprintf(
+				"Contract requires notice; status is %s",
+				result.NotificationStatus,
+			),
+			Term: "Unnotified behavior: Flag",
+		})
+		result.RequiresApproval = true
+	case detentionpolicy.UnnotifiedBehaviorBill:
+		trace.Add(detention.TraceStep{
+			Kind:   detention.TraceStepNotification,
+			Label:  "Notice missed; billing anyway",
+			Detail: "Collectability is reduced without a notice receipt",
+			Term:   "Unnotified behavior: Bill",
+		})
+	}
+}
+
+func applyApprovalThresholds(
+	result *ComputeResult,
+	snap *detentionpolicy.PolicySnapshot,
+	trace *detention.CalculationTrace,
+) {
+	if snap.RequireApprovalOverAmount.Valid &&
+		result.BillableAmount.GreaterThan(snap.RequireApprovalOverAmount.Decimal) {
+		trace.Add(detention.TraceStep{
+			Kind:  detention.TraceStepNotification,
+			Label: "Approval required",
+			Detail: fmt.Sprintf("%s exceeds the %s approval threshold",
+				result.BillableAmount.StringFixed(2),
+				snap.RequireApprovalOverAmount.Decimal.StringFixed(2)),
+			Term: "Approval threshold",
+		})
+		result.RequiresApproval = true
+	}
+}
+
+func resolveStatus(
+	result *ComputeResult,
+	snap *detentionpolicy.PolicySnapshot,
+	isOpen bool,
+) detention.OccurrenceStatus {
+	if isOpen {
+		return detention.OccurrenceStatusAccruing
+	}
+
+	if result.SuppressedByGate || result.BillableAmount.LessThanOrEqual(decimal.Zero) {
+		return detention.OccurrenceStatusNotBillable
+	}
+
+	if result.RequiresApproval {
+		return detention.OccurrenceStatusPending
+	}
+
+	if snap.AutoApproveUnderAmount.Valid &&
+		result.BillableAmount.LessThanOrEqual(snap.AutoApproveUnderAmount.Decimal) {
+		return detention.OccurrenceStatusApproved
+	}
+
+	return detention.OccurrenceStatusPending
+}
+
+func openOrNotBillable(isOpen bool) detention.OccurrenceStatus {
+	if isOpen {
+		return detention.OccurrenceStatusAccruing
+	}
+	return detention.OccurrenceStatusNotBillable
+}
+
+func finalizeTrace(trace *detention.CalculationTrace, result *ComputeResult) {
+	trace.AddAmount(detention.TraceStepFinal, "Billable detention",
+		fmt.Sprintf("%s billable of %s on site",
+			FormatMinutes(result.RoundedMinutes), FormatMinutes(result.RawDwellMinutes)),
+		"", result.BillableAmount, false)
+}
+
+func FormatMinutes(minutes int32) string {
+	if minutes <= 0 {
+		return "0 min"
+	}
+	if minutes < minutesPerHour {
+		return fmt.Sprintf("%d min", minutes)
+	}
+
+	hours := minutes / minutesPerHour
+	rem := minutes % minutesPerHour
+	if rem == 0 {
+		return fmt.Sprintf("%dh", hours)
+	}
+	return fmt.Sprintf("%dh %dm", hours, rem)
+}
+
+func RateLabel(rate decimal.Decimal, unit detentionpolicy.TierRateUnit) string {
+	switch unit {
+	case detentionpolicy.TierRateUnitHour:
+		return rate.StringFixed(2) + "/hr"
+	case detentionpolicy.TierRateUnitDay:
+		return rate.StringFixed(2) + "/day"
+	case detentionpolicy.TierRateUnitFlat:
+		return rate.StringFixed(2) + " flat"
+	default:
+		return rate.StringFixed(2)
+	}
+}
+
+func tierLabel(tier detentionpolicy.TierSnapshot) string {
+	if tier.Label != "" {
+		return tier.Label
+	}
+	return "Tier " + TierBandTerm(tier)
+}
+
+func TierBandTerm(tier detentionpolicy.TierSnapshot) string {
+	if tier.ToMinute == nil {
+		return fmt.Sprintf("%s and beyond", FormatMinutes(tier.FromMinute))
+	}
+	return fmt.Sprintf("%s–%s", FormatMinutes(tier.FromMinute), FormatMinutes(*tier.ToMinute))
+}
+
+func clockStopLabel(isOpen bool) string {
+	if isOpen {
+		return "Clock still running"
+	}
+	return "Clock stopped"
+}
+
+func clockStopDetail(isOpen bool) string {
+	if isOpen {
+		return "Projected to now; the driver has not departed"
+	}
+	return "Driver departure"
+}
+
+func roundingDetail(mode detentionpolicy.RoundingMode, increment int16) string {
+	if mode == detentionpolicy.RoundingModeExact || increment <= 0 {
+		return "Billed to the exact minute"
+	}
+	return fmt.Sprintf("%s to the nearest %d-minute increment",
+		roundingVerb(mode), increment)
+}
+
+func roundingVerb(mode detentionpolicy.RoundingMode) string {
+	switch mode {
+	case detentionpolicy.RoundingModeUp:
+		return "Rounded up"
+	case detentionpolicy.RoundingModeDown:
+		return "Rounded down"
+	case detentionpolicy.RoundingModeNearest:
+		return "Rounded"
+	case detentionpolicy.RoundingModeExact:
+		return "Exact"
+	default:
+		return "Rounded"
+	}
+}
+
+// TierUnitFromAccessorial maps an accessorial's rate unit onto the tier unit
+// vocabulary so a flat-rate policy and a tiered one share one code path.
+func TierUnitFromAccessorial(unit accessorialcharge.RateUnit) detentionpolicy.TierRateUnit {
+	switch unit {
+	case accessorialcharge.RateUnitHour:
+		return detentionpolicy.TierRateUnitHour
+	case accessorialcharge.RateUnitDay:
+		return detentionpolicy.TierRateUnitDay
+	case accessorialcharge.RateUnitStop, accessorialcharge.RateUnitMile:
+		return detentionpolicy.TierRateUnitFlat
+	default:
+		return detentionpolicy.TierRateUnitHour
+	}
+}

@@ -3,12 +3,12 @@
 package schedulingresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	SchedulingService *schedulingservice.Service
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/pkg/authctx"
 )
 
@@ -29,5 +30,5 @@ func (r *QueryResolver) requireCapacityRead(
 }
 
 func (r *QueryResolver) showsMargins(ctx context.Context, authCtx *authctx.AuthContext) bool {
-	return r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins)
+	return r.VisibleFieldGroups(ctx, authCtx).Has(protectedfield.Margins)
 }

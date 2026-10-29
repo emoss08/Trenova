@@ -8,9 +8,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -57,13 +59,13 @@ func (e *readerEngine) GetResourcePermissionsBatch(
 }
 
 type groupAccess struct {
-	visible permission.FieldGroupSet
+	visible protectedfield.GroupSet
 }
 
 func (g groupAccess) Visible(
 	context.Context,
 	*permissionports.RequestActor,
-) permission.FieldGroupSet {
+) protectedfield.GroupSet {
 	return g.visible
 }
 
@@ -75,12 +77,12 @@ type reader struct {
 
 func (r reader) provider() *Provider {
 	engine := &readerEngine{denied: r.denied, ceiling: r.ceiling}
-	groups := permission.FieldGroupSet(0)
+	groups := protectedfield.GroupSet(0)
 	if r.margins {
-		groups = groups.With(permission.FieldGroupMargins)
+		groups = groups.With(protectedfield.Margins)
 	}
 	return &Provider{
-		views:       refview.NewPort(refview.New(permission.NewRegistry()), engine),
+		views:       refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine),
 		fieldAccess: groupAccess{visible: groups},
 	}
 }
@@ -199,7 +201,7 @@ func tomorrowsPickups() *TomorrowsPickupsCard {
 			Origin:           "TERM-LA",
 			Destination:      "DC-CHI",
 			Driver:           "M. Alvarez",
-			ShipmentStatus:   shipment.StatusAssigned,
+			ShipmentStatus:   shipmentvocab.StatusAssigned,
 			HasPrimaryWorker: true,
 		}},
 	)

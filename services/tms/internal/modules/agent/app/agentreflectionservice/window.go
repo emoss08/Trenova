@@ -7,9 +7,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,10 +31,13 @@ func (s *Service) threadProposals(
 	threadID pulid.ID,
 	messages []conversation.Message,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByThread(ctx, agentports.ListAgentProposalsByThreadRequest{
-		ThreadID:   threadID,
-		TenantInfo: tenant,
-	})
+	stored, err := s.proposals.ListByThread(
+		ctx,
+		agentproposalports.ListAgentProposalsByThreadRequest{
+			ThreadID:   threadID,
+			TenantInfo: tenant,
+		},
+	)
 	if err != nil {
 		s.l.Warn("agent reflection: the conversation's proposals could not be read",
 			zap.String("thread", threadID.String()),
@@ -47,7 +57,7 @@ func (s *Service) threadProposals(
 		ctx,
 		tenant,
 		stored,
-		func(proposal *agent.AgentProposal, decision *agent.AgentDecision) bool {
+		func(proposal *agent.AgentProposal, decision *agentdecision.AgentDecision) bool {
 			if _, ok := inWindow[proposal.SourceMessageID]; ok {
 				return true
 			}
@@ -62,7 +72,7 @@ func (s *Service) runProposals(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) []DecidedProposal {
-	stored, err := s.proposals.ListByRun(ctx, agentports.ListAgentProposalsByRunRequest{
+	stored, err := s.proposals.ListByRun(ctx, agentproposalports.ListAgentProposalsByRunRequest{
 		RunID:      runID,
 		TenantInfo: tenant,
 	})
@@ -75,16 +85,21 @@ func (s *Service) runProposals(
 		return nil
 	}
 
-	return s.decided(ctx, tenant, stored, func(*agent.AgentProposal, *agent.AgentDecision) bool {
-		return true
-	})
+	return s.decided(
+		ctx,
+		tenant,
+		stored,
+		func(*agent.AgentProposal, *agentdecision.AgentDecision) bool {
+			return true
+		},
+	)
 }
 
 func (s *Service) decided(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	stored []*agent.AgentProposal,
-	keep func(*agent.AgentProposal, *agent.AgentDecision) bool,
+	keep func(*agent.AgentProposal, *agentdecision.AgentDecision) bool,
 ) []DecidedProposal {
 	ids := make([]pulid.ID, 0, len(stored))
 	byID := make(map[pulid.ID]*agent.AgentProposal, len(stored))
@@ -100,7 +115,7 @@ func (s *Service) decided(
 
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
-		agentports.ListAgentDecisionsByProposalsRequest{
+		agentdecisionports.ListAgentDecisionsByProposalsRequest{
 			ProposalIDs: ids,
 			TenantInfo:  tenant,
 		},
@@ -120,8 +135,9 @@ func (s *Service) decided(
 		if !ok || !keep(proposal, decision) {
 			continue
 		}
-		outcome := agent.OutcomeOfDecision(decision.Decision, decision.Modifications)
-		if outcome != agent.TrustOutcomeModified && outcome != agent.TrustOutcomeRejected {
+		outcome := agenttooltrust.OutcomeOfDecision(decision.Decision, decision.Modifications)
+		if outcome != agenttooltrust.TrustOutcomeModified &&
+			outcome != agenttooltrust.TrustOutcomeRejected {
 			continue
 		}
 		reason := strings.TrimSpace(decision.Note)
@@ -189,7 +205,7 @@ func (s *Service) runMessages(
 	tenant pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]conversation.Message, error) {
-	runs, err := s.runs.ListTranscriptsByIDs(ctx, agentports.ListAgentRunsByIDsRequest{
+	runs, err := s.runs.ListTranscriptsByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        []pulid.ID{runID},
 		TenantInfo: tenant,
 	})
@@ -205,7 +221,7 @@ func (s *Service) runMessages(
 		for idx := range run.Transcript.Messages {
 			messages = append(
 				messages,
-				conversation.MessageOfTranscript(&run.Transcript.Messages[idx]),
+				conversationtranscript.MessageOfTranscript(&run.Transcript.Messages[idx]),
 			)
 		}
 
@@ -215,14 +231,14 @@ func (s *Service) runMessages(
 	return nil, nil
 }
 
-func windowRecords(messages []conversation.Message) []agent.EntityRef {
-	records := make([]agent.EntityRef, 0, maxWindowRecords)
-	seen := make(map[agent.EntityRef]struct{}, maxWindowRecords)
+func windowRecords(messages []conversation.Message) []agentpagecontext.EntityRef {
+	records := make([]agentpagecontext.EntityRef, 0, maxWindowRecords)
+	seen := make(map[agentpagecontext.EntityRef]struct{}, maxWindowRecords)
 	add := func(kind, id string) {
 		if len(records) >= maxWindowRecords || kind == "" || id == "" {
 			return
 		}
-		ref := agent.EntityRef{Type: kind, ID: id}
+		ref := agentpagecontext.EntityRef{Type: kind, ID: id}
 		if _, ok := seen[ref]; ok {
 			return
 		}
@@ -231,7 +247,7 @@ func windowRecords(messages []conversation.Message) []agent.EntityRef {
 	}
 	addIDs := func(text string) {
 		for _, id := range recordIDsIn(text) {
-			if kind, ok := agent.MemoryRecordKindOfID(id); ok {
+			if kind, ok := agentmemory.MemoryRecordKindOfID(id); ok {
 				add(string(kind), id.String())
 			}
 		}

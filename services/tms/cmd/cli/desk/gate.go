@@ -10,7 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/deskbench"
+	"github.com/emoss08/trenova/internal/deskbench/benchgate"
+	"github.com/emoss08/trenova/internal/deskbench/benchreport"
+	"github.com/emoss08/trenova/internal/deskbench/benchresult"
+	"github.com/emoss08/trenova/internal/deskbench/benchrun"
+	"github.com/emoss08/trenova/internal/deskbench/benchscenario"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/spf13/cobra"
 )
@@ -79,7 +83,7 @@ func runGate(cmd *cobra.Command, args []string) error {
 
 	switch {
 	case gateFlags.probe:
-		spec, specErr := deskbench.LoadGateSpec(flags.spec)
+		spec, specErr := benchgate.LoadGateSpec(flags.spec)
 		if specErr != nil {
 			return specErr
 		}
@@ -87,7 +91,7 @@ func runGate(cmd *cobra.Command, args []string) error {
 	case gateFlags.confirm != "":
 		return runGateConfirm(cmd.Context(), scenarios)
 	default:
-		spec, specErr := deskbench.LoadGateSpec(flags.spec)
+		spec, specErr := benchgate.LoadGateSpec(flags.spec)
 		if specErr != nil {
 			return specErr
 		}
@@ -103,7 +107,7 @@ type spendCap struct {
 	hit    bool
 }
 
-func (c *spendCap) progress(result *deskbench.CaseResult) {
+func (c *spendCap) progress(result *benchresult.CaseResult) {
 	printProgress(result)
 	if c == nil || c.limit <= 0 || result.Usage.CostUSD == nil {
 		return
@@ -122,15 +126,15 @@ func (c *spendCap) progress(result *deskbench.CaseResult) {
 }
 
 type groupRun struct {
-	group     *deskbench.GateGroup
-	scenarios []*deskbench.Scenario
+	group     *benchgate.GateGroup
+	scenarios []*benchscenario.Scenario
 }
 
-func gateRuns(groups []deskbench.GateGroup, scenarios []*deskbench.Scenario) []groupRun {
+func gateRuns(groups []benchgate.GateGroup, scenarios []*benchscenario.Scenario) []groupRun {
 	runs := make([]groupRun, 0, len(groups))
 	for idx := range groups {
 		group := &groups[idx]
-		picked := deskbench.PlannedScenarios(group, scenarios)
+		picked := benchgate.PlannedScenarios(group, scenarios)
 		if len(picked) == 0 {
 			fmt.Fprintf(os.Stderr, "group %s: no scenario matches, skipped\n", group.Name)
 			continue
@@ -147,11 +151,11 @@ func runGroups(
 	repeat, passK int,
 	runs []groupRun,
 	limit *spendCap,
-) ([]*deskbench.CaseResult, error) {
-	cases := make([]*deskbench.CaseResult, 0, 256)
+) ([]*benchresult.CaseResult, error) {
+	cases := make([]*benchresult.CaseResult, 0, 256)
 	var runErrs []error
 	for _, run := range runs {
-		dir := deskbench.GroupDir(root, stringutils.SlugifyASCII(run.group.Name, groupSlugLength))
+		dir := benchgate.GroupDir(root, stringutils.SlugifyASCII(run.group.Name, groupSlugLength))
 		if err := os.MkdirAll(dir, dirMode); err != nil {
 			return cases, fmt.Errorf("create %s: %w", dir, err)
 		}
@@ -165,7 +169,7 @@ func runGroups(
 			label:   label + " " + run.group.Name,
 			outDir:  dir,
 			noWrite: true,
-		}, deskbench.RunOptions{
+		}, benchrun.RunOptions{
 			Scenarios: run.scenarios,
 			User:      flags.user,
 			Agent:     flags.agent,
@@ -191,12 +195,12 @@ func runGroups(
 	return cases, errors.Join(runErrs...)
 }
 
-func writeGateRun(root string, meta deskbench.ReportMeta, cases []*deskbench.CaseResult) error {
-	return deskbench.WriteGateRun(root, &meta, cases)
+func writeGateRun(root string, meta benchreport.ReportMeta, cases []*benchresult.CaseResult) error {
+	return benchgate.WriteGateRun(root, &meta, cases)
 }
 
-func gateMeta(label string, passK int, started time.Time) deskbench.ReportMeta {
-	return deskbench.ReportMeta{
+func gateMeta(label string, passK int, started time.Time) benchreport.ReportMeta {
+	return benchreport.ReportMeta{
 		StartedAt:  started,
 		FinishedAt: time.Now(),
 		Namespace:  flags.namespace,
@@ -210,8 +214,8 @@ func gateMeta(label string, passK int, started time.Time) deskbench.ReportMeta {
 
 func runGateProbe(
 	ctx context.Context,
-	spec *deskbench.GateSpec,
-	scenarios []*deskbench.Scenario,
+	spec *benchgate.GateSpec,
+	scenarios []*benchscenario.Scenario,
 ) error {
 	root, err := gateDirectory("-probe")
 	if err != nil {
@@ -220,7 +224,7 @@ func runGateProbe(
 	runs := make([]groupRun, 0, len(spec.Groups))
 	for idx := range spec.Groups {
 		group := &spec.Groups[idx]
-		sampled := deskbench.ProbeScenarios(spec, group, scenarios)
+		sampled := benchgate.ProbeScenarios(spec, group, scenarios)
 		if len(sampled) == 0 {
 			fmt.Fprintf(os.Stderr, "group %s: no development scenario to probe\n", group.Name)
 			continue
@@ -233,7 +237,7 @@ func runGateProbe(
 	if err = writeGateRun(root, gateMeta("gate probe", 1, started), cases); err != nil {
 		return errors.Join(runErr, err)
 	}
-	projection := deskbench.Project(spec, cases, scenarios, flags.parallel)
+	projection := benchgate.Project(spec, cases, scenarios, flags.parallel)
 	if err = projection.Write(root); err != nil {
 		return errors.Join(runErr, err)
 	}
@@ -254,13 +258,13 @@ func runGateProbe(
 
 func runGateMatrix(
 	parent context.Context,
-	spec *deskbench.GateSpec,
-	scenarios []*deskbench.Scenario,
+	spec *benchgate.GateSpec,
+	scenarios []*benchscenario.Scenario,
 ) error {
 	if gateFlags.budget == "" {
 		return errors.New("run --probe first and pass its directory with --budget")
 	}
-	projection, err := deskbench.LoadProjection(gateFlags.budget)
+	projection, err := benchgate.LoadProjection(gateFlags.budget)
 	if err != nil {
 		return err
 	}
@@ -289,7 +293,7 @@ func runGateMatrix(
 			limit.spent, limit.limit, root))
 	}
 
-	result := deskbench.EvaluateGate(spec, cases)
+	result := benchgate.EvaluateGate(spec, cases)
 	result.Run = root
 	result.Commit = commit()
 	result.StartedAt = started
@@ -309,12 +313,12 @@ func runGateMatrix(
 func runMatrix(
 	ctx context.Context,
 	root string,
-	spec *deskbench.GateSpec,
-	scenarios []*deskbench.Scenario,
+	spec *benchgate.GateSpec,
+	scenarios []*benchscenario.Scenario,
 	limit *spendCap,
-) ([]*deskbench.CaseResult, error) {
-	first := make([]deskbench.GateGroup, 0, len(spec.Groups))
-	deferred := make([]deskbench.GateGroup, 0, 1)
+) ([]*benchresult.CaseResult, error) {
+	first := make([]benchgate.GateGroup, 0, len(spec.Groups))
+	deferred := make([]benchgate.GateGroup, 0, 1)
 	for idx := range spec.Groups {
 		if spec.Groups[idx].AdvisorRoutes {
 			deferred = append(deferred, spec.Groups[idx])
@@ -329,9 +333,12 @@ func runMatrix(
 		return cases, runErr
 	}
 
-	routes := deskbench.AdvisorRoutes(spec, cases)
+	routes := benchgate.AdvisorRoutes(spec, cases)
 	if len(routes) == 0 {
-		fmt.Fprintln(os.Stderr, "the advisor is tried on no route: Haiku is within the gap everywhere")
+		fmt.Fprintln(
+			os.Stderr,
+			"the advisor is tried on no route: Haiku is within the gap everywhere",
+		)
 		return cases, runErr
 	}
 	fmt.Fprintf(os.Stderr, "trying the advisor on: %v\n", routes)
@@ -344,12 +351,12 @@ func runMatrix(
 	return append(cases, more...), errors.Join(runErr, moreErr)
 }
 
-func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) error {
-	gate, err := deskbench.LoadGateResult(gateFlags.confirm)
+func runGateConfirm(parent context.Context, scenarios []*benchscenario.Scenario) error {
+	gate, err := benchgate.LoadGateResult(gateFlags.confirm)
 	if err != nil {
 		return err
 	}
-	first, err := deskbench.LoadGateRunReport(gate.Run)
+	first, err := benchgate.LoadGateRunReport(gate.Run)
 	if err != nil {
 		return fmt.Errorf("read run 1's report: %w", err)
 	}
@@ -362,7 +369,7 @@ func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) err
 	defer cancel()
 	var limit *spendCap
 	if gateFlags.budget != "" {
-		projection, loadErr := deskbench.LoadProjection(gateFlags.budget)
+		projection, loadErr := benchgate.LoadProjection(gateFlags.budget)
 		if loadErr != nil {
 			return loadErr
 		}
@@ -381,7 +388,7 @@ func runGateConfirm(parent context.Context, scenarios []*deskbench.Scenario) err
 			"the confirming run was cut short; nothing is confirmed (%s)", root))
 	}
 
-	confirmation := deskbench.ConfirmGate(gate, first.Cases, cases)
+	confirmation := benchgate.ConfirmGate(gate, first.Cases, cases)
 	confirmation.Gate = gateFlags.confirm
 	confirmation.Run = root
 	confirmation.Commit = commit()

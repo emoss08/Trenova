@@ -6,14 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
 
-func (s *service) PreviewUpdateCharges(
+func (s *Service) PreviewUpdateCharges(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -27,7 +29,7 @@ func (s *service) PreviewUpdateCharges(
 // and a split by amount the edit leaves stale is refused or converted. A
 // rate or formula change reprices through the rating engine, which writes,
 // so only the write may make one.
-func (s *service) planChargeUpdate(
+func (s *Service) planChargeUpdate(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -39,7 +41,7 @@ func (s *service) planChargeUpdate(
 // planChargeUpdateFrom is planChargeUpdate for a caller that may also edit an
 // item still waiting for review. Settling a check from the item edits its
 // charges before anyone has started the review, and that edit is the review.
-func (s *service) planChargeUpdateFrom(
+func (s *Service) planChargeUpdateFrom(
 	ctx context.Context,
 	req *billingqueueports.UpdateChargesRequest,
 	actor *permissionports.RequestActor,
@@ -102,19 +104,19 @@ func (s *service) planChargeUpdateFrom(
 
 	chargeNames := accessorialNames(shp.AdditionalCharges)
 	if req.AdditionalCharges != nil {
-		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
+		shipmentrating.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
 		shp.AdditionalCharges = req.AdditionalCharges
 	}
 
 	freight := shp.FreightChargeAmount.Decimal
-	other, err := shipment.AdditionalChargeTotals(ctx, shp.AdditionalCharges, freight)
+	other, err := chargeallocation.AdditionalChargeTotals(ctx, shp.AdditionalCharges, freight)
 	if err != nil {
 		return nil, err
 	}
 	shp.OtherChargeAmount = decimal.NewNullDecimal(other.Sum)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(other.Sum))
 
-	rebalance, err := shipment.RebalanceAmountSplits(ctx, shp, shp.ChargeAllocations)
+	rebalance, err := chargeallocation.RebalanceAmountSplits(ctx, shp, shp.ChargeAllocations)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +136,7 @@ func (s *service) planChargeUpdateFrom(
 	}, nil
 }
 
-func (s *service) applyRateChange(
+func (s *Service) applyRateChange(
 	ctx context.Context,
 	shp *shipment.Shipment,
 	req *billingqueueports.UpdateChargesRequest,

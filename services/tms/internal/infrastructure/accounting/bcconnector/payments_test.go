@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,7 +54,7 @@ func (s *journalServer) respond(call bcCall) (int, string) {
 		exists := s.exists
 		s.mu.Unlock()
 		if exists {
-			return http.StatusOK, `{"value":[` + journalJSON(batchCode(testBank)) + `]}`
+			return http.StatusOK, `{"value":[` + journalJSON(bcdocsync.BatchCode(testBank)) + `]}`
 		}
 		return http.StatusOK, `{"value":[]}`
 	case call.is(http.MethodPost, s.journals):
@@ -62,7 +64,7 @@ func (s *journalServer) respond(call bcCall) (int, string) {
 			s.mu.Unlock()
 			return http.StatusBadRequest, readFixture(s.t, "error_duplicate.json")
 		}
-		return http.StatusCreated, journalJSON(batchCode(testBank))
+		return http.StatusCreated, journalJSON(bcdocsync.BatchCode(testBank))
 	case call.is(http.MethodGet, "/generalLedgerEntries"):
 		if s.ledger != "" {
 			return http.StatusOK, s.ledger
@@ -93,8 +95,8 @@ func newCustomerJournals(t *testing.T) *journalServer {
 	return &journalServer{t: t, journals: customerJournals, payments: "/customerPayments"}
 }
 
-func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
-	return &accountingsyncports.AccountingPaymentDocument{
+func paymentDoc() *accountingconnectorports.AccountingPaymentDocument {
+	return &accountingconnectorports.AccountingPaymentDocument{
 		Auth:                     testAuth(),
 		RequestID:                testRequestID,
 		CustomerExternalID:       testCustomer,
@@ -103,9 +105,17 @@ func paymentDoc() *accountingsyncports.AccountingPaymentDocument {
 		DepositAccountExternalID: testBank,
 		ReferenceNumber:          "CHK 4411",
 		TotalAmount:              decimal.NewFromInt(150),
-		Applications: []accountingsyncports.AccountingPaymentApplication{
-			{InvoiceExternalID: testInvoice, InvoiceNumber: "INV-1", AppliedAmount: decimal.NewFromInt(100)},
-			{InvoiceExternalID: testNewInvoice, InvoiceNumber: "INV-2", AppliedAmount: decimal.NewFromInt(50)},
+		Applications: []accountingconnectorports.AccountingPaymentApplication{
+			{
+				InvoiceExternalID: testInvoice,
+				InvoiceNumber:     "INV-1",
+				AppliedAmount:     decimal.NewFromInt(100),
+			},
+			{
+				InvoiceExternalID: testNewInvoice,
+				InvoiceNumber:     "INV-2",
+				AppliedAmount:     decimal.NewFromInt(50),
+			},
 		},
 	}
 }
@@ -119,14 +129,18 @@ func TestSavePaymentCreatesTheBatchAddsALinePerInvoiceAndPosts(t *testing.T) {
 
 	result, err := conn.SavePayment(t.Context(), paymentDoc())
 	require.NoError(t, err)
-	number := requestReference(testRequestID)
+	number := bcdocsync.RequestReference(testRequestID)
 	assert.Len(t, number, 20)
 	assert.Equal(t, number, result.ExternalID)
 	assert.Equal(t, number, result.DocNumber)
-	assert.Equal(t, testJournal, result.Refs[refJournal])
-	assert.Equal(t, docTypeCustomerPayment, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(t, testJournal, result.Refs[bcdocsync.RefJournal])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeCustomerPayment,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
-	code := batchCode(testBank)
+	code := bcdocsync.BatchCode(testBank)
 	assert.Len(t, code, 10)
 	assert.True(t, strings.HasPrefix(code, "TRN"))
 	lookup, ok := fake.find(http.MethodGet, customerJournals)
@@ -161,7 +175,7 @@ func TestSavePaymentResumesUnpostedLinesInsteadOfAddingMore(t *testing.T) {
 	server := newCustomerJournals(t)
 	server.exists = true
 	server.lines = `{"value":[{"id":"ffffffff-0000-4111-8222-333333333331","journalId":"` +
-		testJournal + `","documentNumber":"` + requestReference(testRequestID) +
+		testJournal + `","documentNumber":"` + bcdocsync.RequestReference(testRequestID) +
 		`","appliesToInvoiceId":"` + strings.ToUpper(testInvoice) + `","amount":-100}]}`
 	fake := &fakeBC{respond: server.respond}
 	conn := testConnector(t, fake)
@@ -170,7 +184,7 @@ func TestSavePaymentResumesUnpostedLinesInsteadOfAddingMore(t *testing.T) {
 	require.NoError(t, err)
 	_, created := fake.find(http.MethodPost, customerJournals)
 	assert.False(t, created)
-	number := requestReference(testRequestID)
+	number := bcdocsync.RequestReference(testRequestID)
 	assert.Equal(t, []string{"line:" + number, "post"}, server.events)
 	lookup, ok := fake.find(http.MethodGet,
 		entity("customerPaymentJournals", testJournal)+"/customerPayments")
@@ -189,7 +203,7 @@ func TestSavePaymentAlreadyPostedWritesNothingMore(t *testing.T) {
 
 	result, err := conn.SavePayment(t.Context(), paymentDoc())
 	require.NoError(t, err)
-	assert.Equal(t, requestReference(testRequestID), result.ExternalID)
+	assert.Equal(t, bcdocsync.RequestReference(testRequestID), result.ExternalID)
 	assert.Empty(t, fake.writes())
 }
 
@@ -205,8 +219,12 @@ func TestSavePaymentWhenTheBatchCannotBePostedBlocksAsConfiguration(t *testing.T
 	classified := conn.ClassifyDocumentError(err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, classified.Category)
 	assert.Equal(t, "journal-post", classified.Code)
-	assert.Contains(t, classified.Resolution, "Post the "+batchCode(testBank)+" payment journal")
-	assert.Equal(t, testJournal, result.Refs[refJournal])
+	assert.Contains(
+		t,
+		classified.Resolution,
+		"Post the "+bcdocsync.BatchCode(testBank)+" payment journal",
+	)
+	assert.Equal(t, testJournal, result.Refs[bcdocsync.RefJournal])
 }
 
 func TestSavePaymentHoldsTheBatchLockAcrossLinesAndPost(t *testing.T) {
@@ -221,7 +239,7 @@ func TestSavePaymentHoldsTheBatchLockAcrossLinesAndPost(t *testing.T) {
 	second := paymentDoc()
 	second.RequestID = testRequestID + "-2"
 	var wg sync.WaitGroup
-	for _, doc := range []*accountingsyncports.AccountingPaymentDocument{first, second} {
+	for _, doc := range []*accountingconnectorports.AccountingPaymentDocument{first, second} {
 		wg.Go(func() {
 			_, err := conn.SavePayment(t.Context(), doc)
 			assert.NoError(t, err)
@@ -270,18 +288,27 @@ func TestSavePaymentRefusalsAndValidation(t *testing.T) {
 	_, err = conn.SavePayment(t.Context(), closed)
 	assert.Equal(t, accountingsync.SyncErrorClosedPeriod, syncErrorOf(t, err).Category)
 
-	ref := &accountingsyncports.AccountingDocumentRef{Auth: testAuth(), ExternalID: "T123"}
+	ref := &accountingconnectorports.AccountingDocumentRef{Auth: testAuth(), ExternalID: "T123"}
 	_, err = conn.VoidPayment(t.Context(), ref)
 	assert.Equal(t, "reverse-transaction", syncErrorOf(t, err).Code)
-	_, err = conn.UpdateBillPayment(t.Context(), &accountingsyncports.AccountingBillPaymentDocument{})
+	_, err = conn.UpdateBillPayment(
+		t.Context(),
+		&accountingconnectorports.AccountingBillPaymentDocument{},
+	)
 	assert.Equal(t, "reverse-transaction", syncErrorOf(t, err).Code)
-	_, err = conn.CreateCreditApplication(t.Context(), &accountingsyncports.AccountingCreditApplicationDocument{})
+	_, err = conn.CreateCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingCreditApplicationDocument{},
+	)
 	creditErr := syncErrorOf(t, err)
 	assert.Equal(t, accountingsync.SyncErrorConfiguration, creditErr.Category)
 	assert.Contains(t, creditErr.Resolution, "Apply the credit memo in Business Central")
-	_, err = conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth: testAuth(), Refs: map[string]string{},
-	})
+	_, err = conn.VoidCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth: testAuth(), Refs: map[string]string{},
+		},
+	)
 	assert.Equal(t, "credit-application", syncErrorOf(t, err).Code)
 	assert.Empty(t, fake.writes())
 }
@@ -349,18 +376,24 @@ func TestVoidCreditApplicationCancelsAMemoCreatedApplied(t *testing.T) {
 	fake := &fakeBC{respond: memos.respond}
 	conn := testConnector(t, fake)
 
-	result, err := conn.VoidCreditApplication(t.Context(), &accountingsyncports.AccountingDocumentRef{
-		Auth:       testAuth(),
-		Kind:       accountingsync.SyncObjectCreditApplication,
-		ExternalID: "app-1",
-		Refs: map[string]string{
-			accountingsync.ExternalRefDocument:    testCreditMemo,
-			accountingsync.ExternalRefApplication: testInvoice,
+	result, err := conn.VoidCreditApplication(
+		t.Context(),
+		&accountingconnectorports.AccountingDocumentRef{
+			Auth:       testAuth(),
+			Kind:       accountingsync.SyncObjectCreditApplication,
+			ExternalID: "app-1",
+			Refs: map[string]string{
+				accountingsync.ExternalRefDocument:    testCreditMemo,
+				accountingsync.ExternalRefApplication: testInvoice,
+			},
 		},
-	})
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "app-1", result.ExternalID)
-	_, cancelled := fake.find(http.MethodPost, entity("salesCreditMemos", testCreditMemo)+cancelAction)
+	_, cancelled := fake.find(
+		http.MethodPost,
+		entity("salesCreditMemos", testCreditMemo)+cancelAction,
+	)
 	assert.True(t, cancelled)
 }
 
@@ -371,7 +404,7 @@ func TestCreateBillPaymentPostsAVendorPaymentAppliedToTheBill(t *testing.T) {
 	fake := &fakeBC{respond: server.respond}
 	conn := testConnector(t, fake)
 
-	doc := &accountingsyncports.AccountingBillPaymentDocument{
+	doc := &accountingconnectorports.AccountingBillPaymentDocument{
 		Auth:                  testAuth(),
 		RequestID:             testRequestID,
 		Kind:                  accountingsync.SyncObjectCarrierBillPay,
@@ -385,23 +418,34 @@ func TestCreateBillPaymentPostsAVendorPaymentAppliedToTheBill(t *testing.T) {
 	}
 	result, err := conn.CreateBillPayment(t.Context(), doc)
 	require.NoError(t, err)
-	assert.Equal(t, requestReference(testRequestID), result.ExternalID)
-	assert.Equal(t, docTypeVendorPayment, result.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(t, bcdocsync.RequestReference(testRequestID), result.ExternalID)
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeVendorPayment,
+		result.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
 	created, ok := fake.find(http.MethodPost, vendorJournals)
 	require.True(t, ok)
-	assert.Equal(t, "Trenova payments "+batchCode(testBank), created.Body["displayName"])
-	line, ok := fake.find(http.MethodPost, entity("vendorPaymentJournals", testJournal)+"/vendorPayments")
+	assert.Equal(t, "Trenova payments "+bcdocsync.BatchCode(testBank), created.Body["displayName"])
+	line, ok := fake.find(
+		http.MethodPost,
+		entity("vendorPaymentJournals", testJournal)+"/vendorPayments",
+	)
 	require.True(t, ok)
 	assert.InDelta(t, 900, line.Body["amount"], 0)
 	assert.Equal(t, testBill, line.Body["appliesToInvoiceId"])
 	assert.Equal(t, testVendor, line.Body["vendorId"])
 	assert.Equal(t, "ACH-77", line.Body["externalDocumentNumber"])
-	assert.Equal(t, []string{"line:" + requestReference(testRequestID), "post"}, server.events)
+	assert.Equal(
+		t,
+		[]string{"line:" + bcdocsync.RequestReference(testRequestID), "post"},
+		server.events,
+	)
 
 	doc.Kind = accountingsync.SyncObjectCarrierBill
 	_, err = conn.CreateBillPayment(t.Context(), doc)
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 	doc.Kind = accountingsync.SyncObjectDriverBillPay
 	doc.BankAccountExternalID = ""
 	_, err = conn.CreateBillPayment(t.Context(), doc)
@@ -418,7 +462,7 @@ func TestSavePaymentFindsABatchCreatedConcurrently(t *testing.T) {
 
 	result, err := conn.SavePayment(t.Context(), paymentDoc())
 	require.NoError(t, err)
-	assert.Equal(t, testJournal, result.Refs[refJournal])
+	assert.Equal(t, testJournal, result.Refs[bcdocsync.RefJournal])
 	assert.Equal(t, 2, fake.count(http.MethodGet, customerJournals))
 	assert.Equal(t, 1, fake.count(http.MethodPost, customerJournals))
 }

@@ -1,0 +1,568 @@
+package workertraining
+
+import (
+	"context"
+	"errors"
+	"net/url"
+	"slices"
+	"strconv"
+	"strings"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
+)
+
+var (
+	ErrInvalidTrainingCategory = errors.New("invalid training category")
+	ErrInvalidTrainingDelivery = errors.New("invalid training delivery")
+	ErrInvalidTrainingStatus   = errors.New("invalid training status")
+	ErrInvalidTrainingHealth   = errors.New("invalid training health")
+)
+
+type TrainingCategory string
+
+const (
+	TrainingCategorySafety             = TrainingCategory("Safety")
+	TrainingCategoryCompliance         = TrainingCategory("Compliance")
+	TrainingCategoryEquipment          = TrainingCategory("Equipment")
+	TrainingCategoryOrientation        = TrainingCategory("Orientation")
+	TrainingCategoryHazardousMaterials = TrainingCategory("HazardousMaterials")
+	TrainingCategoryOther              = TrainingCategory("Other")
+)
+
+func (c TrainingCategory) String() string { return string(c) }
+
+func (c TrainingCategory) IsValid() bool {
+	switch c {
+	case TrainingCategorySafety, TrainingCategoryCompliance, TrainingCategoryEquipment,
+		TrainingCategoryOrientation, TrainingCategoryHazardousMaterials, TrainingCategoryOther:
+		return true
+	default:
+		return false
+	}
+}
+
+// TrainingDelivery is how a course is taken. Online and Document courses can be
+// finished from the driver portal by acknowledging them; Classroom and OnTheJob
+// need the office to record the result.
+type TrainingDelivery string
+
+const (
+	TrainingDeliveryOnline    = TrainingDelivery("Online")
+	TrainingDeliveryClassroom = TrainingDelivery("Classroom")
+	TrainingDeliveryOnTheJob  = TrainingDelivery("OnTheJob")
+	TrainingDeliveryDocument  = TrainingDelivery("Document")
+)
+
+func (d TrainingDelivery) String() string { return string(d) }
+
+func (d TrainingDelivery) IsValid() bool {
+	switch d {
+	case TrainingDeliveryOnline, TrainingDeliveryClassroom, TrainingDeliveryOnTheJob,
+		TrainingDeliveryDocument:
+		return true
+	default:
+		return false
+	}
+}
+
+// SelfServe reports whether a driver can complete the course from the portal
+// without the office scoring it.
+func (d TrainingDelivery) SelfServe() bool {
+	return d == TrainingDeliveryOnline || d == TrainingDeliveryDocument
+}
+
+type TrainingStatus string
+
+const (
+	TrainingStatusAssigned   = TrainingStatus("Assigned")
+	TrainingStatusInProgress = TrainingStatus("InProgress")
+	TrainingStatusCompleted  = TrainingStatus("Completed")
+	TrainingStatusFailed     = TrainingStatus("Failed")
+	TrainingStatusExpired    = TrainingStatus("Expired")
+	TrainingStatusWaived     = TrainingStatus("Waived")
+	TrainingStatusCancelled  = TrainingStatus("Cancelled")
+)
+
+func (s TrainingStatus) String() string { return string(s) }
+
+func (s TrainingStatus) IsValid() bool {
+	switch s {
+	case TrainingStatusAssigned, TrainingStatusInProgress, TrainingStatusCompleted,
+		TrainingStatusFailed, TrainingStatusExpired, TrainingStatusWaived, TrainingStatusCancelled:
+		return true
+	default:
+		return false
+	}
+}
+
+// IsOpen reports whether the record still has work outstanding.
+func (s TrainingStatus) IsOpen() bool {
+	return s == TrainingStatusAssigned || s == TrainingStatusInProgress
+}
+
+const dueSoonDays = int64(7)
+
+var (
+	_ domaintypes.PostgresSearchable     = (*TrainingCourse)(nil)
+	_ pagination.CursorEntity            = (*TrainingCourse)(nil)
+	_ validationframework.TenantedEntity = (*TrainingCourse)(nil)
+)
+
+type TrainingCourse struct {
+	keel.Table              `keel:"training_courses"`
+	ID                      pulid.ID            `keel:"id,pk,autoid:trnc_"                       json:"id"`
+	BusinessUnitID          pulid.ID            `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID          pulid.ID            `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Code                    string              `keel:"code"                                     json:"code"`
+	Name                    string              `keel:"name"                                     json:"name"`
+	Description             string              `keel:"description,nullzero"                     json:"description"`
+	Category                TrainingCategory    `keel:"category"                                 json:"category"`
+	Status                  domaintypes.Status  `keel:"status"                                   json:"status"`
+	Delivery                TrainingDelivery    `keel:"delivery"                                 json:"delivery"`
+	ContentURL              string              `keel:"content_url,nullzero"                     json:"contentUrl"`
+	DurationMinutes         int32               `keel:"duration_minutes"                         json:"durationMinutes"`
+	PassingScore            decimal.NullDecimal `keel:"passing_score"                            json:"passingScore"`
+	ValidityMonths          *int32              `keel:"validity_months"                          json:"validityMonths"`
+	RenewalWindowDays       int32               `keel:"renewal_window_days"                      json:"renewalWindowDays"`
+	IsRequired              bool                `keel:"is_required"                              json:"isRequired"`
+	RequiredForDriverTypes  []worker.DriverType `keel:"required_for_driver_types,jsonb"          json:"requiredForDriverTypes"`
+	DueDaysAfterAssignment  int32               `keel:"due_days_after_assignment"                json:"dueDaysAfterAssignment"`
+	RequiresAcknowledgement bool                `keel:"requires_acknowledgement"                 json:"requiresAcknowledgement"`
+	SortOrder               int32               `keel:"sort_order"                               json:"sortOrder"`
+	Version                 int64               `keel:"version,version"                          json:"version"`
+	CreatedAt               int64               `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt               int64               `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector            string              `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+}
+
+func (c *TrainingCourse) BeforeUpdate(_ context.Context) error {
+	if c.RequiredForDriverTypes == nil {
+		c.RequiredForDriverTypes = []worker.DriverType{}
+	}
+
+	return nil
+}
+
+func (c *TrainingCourse) BeforeCreate(_ context.Context) error {
+	if c.RequiredForDriverTypes == nil {
+		c.RequiredForDriverTypes = []worker.DriverType{}
+	}
+	if c.Category == "" {
+		c.Category = TrainingCategoryOther
+	}
+	if c.Status == "" {
+		c.Status = domaintypes.StatusActive
+	}
+	if c.Delivery == "" {
+		c.Delivery = TrainingDeliveryOnline
+	}
+	if c.RenewalWindowDays == 0 {
+		c.RenewalWindowDays = 30
+	}
+	if c.DueDaysAfterAssignment == 0 {
+		c.DueDaysAfterAssignment = 30
+	}
+
+	return nil
+}
+
+func (c *TrainingCourse) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(c,
+		validation.Field(&c.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, 50).Error("Code must be between 1 and 50 characters"),
+		),
+		validation.Field(&c.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
+		),
+		validation.Field(&c.Category,
+			validation.Required.Error("Category is required"),
+			domainvalidation.ValidEnum[TrainingCategory](
+				"category must be one of: Safety, Compliance, Equipment, Orientation, HazardousMaterials, Other",
+			),
+		),
+		validation.Field(&c.Delivery,
+			validation.Required.Error("Delivery is required"),
+			domainvalidation.ValidEnum[TrainingDelivery](
+				"delivery must be one of: Online, Classroom, OnTheJob, Document",
+			),
+		),
+		validation.Field(&c.Status,
+			validation.Required.Error("Status is required"),
+			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
+				Error("Status must be either Active or Inactive"),
+		),
+		validation.Field(&c.ContentURL,
+			validation.Length(0, 500).Error("Link cannot exceed 500 characters"),
+		),
+		validation.Field(&c.DurationMinutes,
+			validation.Min(int32(0)).Error("Duration cannot be negative"),
+		),
+		validation.Field(&c.RenewalWindowDays,
+			validation.Min(int32(0)).Error("Renewal window cannot be negative"),
+			validation.Max(int32(365)).Error("Renewal window cannot exceed 365 days"),
+		),
+		validation.Field(&c.DueDaysAfterAssignment,
+			validation.Min(int32(0)).Error("Due days cannot be negative"),
+			validation.Max(int32(730)).Error("Due days cannot exceed two years"),
+		),
+	))
+
+	if c.ValidityMonths != nil && *c.ValidityMonths <= 0 {
+		multiErr.Add("validityMonths", errortypes.ErrInvalid, "Validity must be at least one month")
+	}
+	if c.PassingScore.Valid {
+		score := c.PassingScore.Decimal
+		if score.IsNegative() || score.GreaterThan(decimal.NewFromInt(100)) {
+			multiErr.Add(
+				"passingScore",
+				errortypes.ErrInvalid,
+				"Passing score must be between 0 and 100",
+			)
+		}
+	}
+	if c.ContentURL != "" {
+		parsed, err := url.Parse(c.ContentURL)
+		if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") ||
+			parsed.Host == "" {
+			multiErr.Add("contentUrl", errortypes.ErrInvalid, "Link must be a full http(s) address")
+		}
+	}
+	if c.Delivery == TrainingDeliveryOnline && c.ContentURL == "" {
+		multiErr.Add(
+			"contentUrl",
+			errortypes.ErrRequired,
+			"Online courses need a link the driver can open",
+		)
+	}
+	for i, driverType := range c.RequiredForDriverTypes {
+		if !driverType.IsValid() {
+			multiErr.Add(
+				"requiredForDriverTypes["+strconv.Itoa(i)+"]",
+				errortypes.ErrInvalid,
+				"Unknown driver type",
+			)
+		}
+	}
+}
+
+// AppliesTo reports whether the course is required for the worker: a required
+// course with no driver-type filter applies to everyone, otherwise only to the
+// listed driver types.
+func (c *TrainingCourse) AppliesTo(wrk *worker.Worker) bool {
+	if c == nil || !c.IsRequired || c.Status != domaintypes.StatusActive {
+		return false
+	}
+	if len(c.RequiredForDriverTypes) == 0 {
+		return true
+	}
+	if wrk == nil {
+		return false
+	}
+	return slices.Contains(c.RequiredForDriverTypes, wrk.DriverType)
+}
+
+// Recurs reports whether a completion lapses and has to be renewed.
+func (c *TrainingCourse) Recurs() bool {
+	return c != nil && c.ValidityMonths != nil && *c.ValidityMonths > 0
+}
+
+// ExpiryFor returns when a completion on the given day lapses, nil for
+// one-time courses.
+func (c *TrainingCourse) ExpiryFor(completedAt int64) *int64 {
+	if !c.Recurs() {
+		return nil
+	}
+	expiry := timeutils.AddMonthsUTC(completedAt, int(*c.ValidityMonths))
+	return &expiry
+}
+
+// DueFor returns the due date for an assignment made on assignedAt.
+func (c *TrainingCourse) DueFor(assignedAt int64) *int64 {
+	if c == nil || c.DueDaysAfterAssignment <= 0 {
+		return nil
+	}
+	due := assignedAt + int64(c.DueDaysAfterAssignment)*timeutils.SecondsPerDay
+	return &due
+}
+
+// Grade decides whether a score passes. Courses without a passing score pass
+// on completion; courses with one need a score.
+func (c *TrainingCourse) Grade(score decimal.NullDecimal) (bool, error) {
+	if !c.PassingScore.Valid {
+		return true, nil
+	}
+	if !score.Valid {
+		return false, errortypes.NewValidationError(
+			"score",
+			errortypes.ErrRequired,
+			"{0} is scored; enter the result", c.Name,
+		)
+	}
+	return score.Decimal.GreaterThanOrEqual(c.PassingScore.Decimal), nil
+}
+
+func (c *TrainingCourse) NormalizeCode() {
+	c.Code = strings.ToUpper(strings.TrimSpace(c.Code))
+}
+
+func (c *TrainingCourse) GetID() pulid.ID { return c.ID }
+
+func (c *TrainingCourse) GetCreatedAt() int64 { return c.CreatedAt }
+
+func (c *TrainingCourse) GetOrganizationID() pulid.ID { return c.OrganizationID }
+
+func (c *TrainingCourse) GetBusinessUnitID() pulid.ID { return c.BusinessUnitID }
+
+func (c *TrainingCourse) GetTableName() string { return "training_courses" }
+
+func (c *TrainingCourse) GetResourceType() string { return "training_course" }
+
+func (c *TrainingCourse) GetResourceID() string { return c.ID.String() }
+
+func (c *TrainingCourse) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "trnc",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
+
+func (c *TrainingCourse) BeforeSave(_ context.Context) error {
+	if c.RequiredForDriverTypes == nil {
+		c.RequiredForDriverTypes = []worker.DriverType{}
+	}
+
+	return nil
+}
+
+func (TrainingCourse) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_training_courses_code",
+			Message: "A course with this code already exists",
+		},
+	}
+}
+
+var (
+	_ validationframework.TenantedEntity = (*WorkerTrainingRecord)(nil)
+)
+
+type WorkerTrainingRecord struct {
+	keel.Table `keel:"worker_training_records"`
+
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:wtrn_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WorkerID       pulid.ID            `json:"workerId"       keel:"worker_id"`
+	CourseID       pulid.ID            `json:"courseId"       keel:"course_id"`
+	Status         TrainingStatus      `json:"status"         keel:"status"`
+	AssignedAt     int64               `json:"assignedAt"     keel:"assigned_at"`
+	DueAt          *int64              `json:"dueAt"          keel:"due_at"`
+	StartedAt      *int64              `json:"startedAt"      keel:"started_at"`
+	CompletedAt    *int64              `json:"completedAt"    keel:"completed_at"`
+	ExpiresAt      *int64              `json:"expiresAt"      keel:"expires_at"`
+	Score          decimal.NullDecimal `json:"score"          keel:"score"`
+	Passed         *bool               `json:"passed"         keel:"passed"`
+	AcknowledgedAt *int64              `json:"acknowledgedAt" keel:"acknowledged_at"`
+	DocumentID     pulid.ID            `json:"documentId"     keel:"document_id,nullzero"`
+	AssignedByID   pulid.ID            `json:"assignedById"   keel:"assigned_by_id,nullzero"`
+	RecordedByID   pulid.ID            `json:"recordedById"   keel:"recorded_by_id,nullzero"`
+	Notes          string              `json:"notes"          keel:"notes,nullzero"`
+	WaivedReason   string              `json:"waivedReason"   keel:"waived_reason,nullzero"`
+	Version        int64               `json:"version"        keel:"version,version"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
+
+	Course     *TrainingCourse    `json:"course,omitempty"     keel:"belongs:course_id"`
+	Worker     *worker.Worker     `json:"worker,omitempty"     keel:"belongs:worker_id"`
+	Document   *document.Document `json:"document,omitempty"   keel:"belongs:document_id"`
+	AssignedBy *tenant.User       `json:"assignedBy,omitempty" keel:"belongs:assigned_by_id"`
+	RecordedBy *tenant.User       `json:"recordedBy,omitempty" keel:"belongs:recorded_by_id"`
+}
+
+func (r *WorkerTrainingRecord) Validate(multiErr *errortypes.MultiError) {
+	multiErr.AddOzzoError(validation.ValidateStruct(r,
+		validation.Field(&r.WorkerID, validation.Required.Error("Worker is required")),
+		validation.Field(&r.CourseID, validation.Required.Error("Course is required")),
+		validation.Field(&r.Status,
+			validation.Required.Error("Status is required"),
+			domainvalidation.ValidEnum[TrainingStatus]("status is not a known training status"),
+		),
+		validation.Field(&r.AssignedAt,
+			validation.Required.Error("Assigned date is required"),
+		),
+		validation.Field(&r.WaivedReason,
+			validation.Length(0, 255).Error("Reason cannot exceed 255 characters"),
+		),
+	))
+
+	if r.DueAt != nil && *r.DueAt <= 0 {
+		multiErr.Add("dueAt", errortypes.ErrInvalid, "Due date must be a valid date")
+	}
+	if r.CompletedAt != nil && *r.CompletedAt <= 0 {
+		multiErr.Add("completedAt", errortypes.ErrInvalid, "Completion date must be a valid date")
+	}
+	if r.Score.Valid {
+		score := r.Score.Decimal
+		if score.IsNegative() || score.GreaterThan(decimal.NewFromInt(100)) {
+			multiErr.Add("score", errortypes.ErrInvalid, "Score must be between 0 and 100")
+		}
+	}
+	if r.Status == TrainingStatusWaived && strings.TrimSpace(r.WaivedReason) == "" {
+		multiErr.Add("waivedReason", errortypes.ErrRequired, "Say why the course is waived")
+	}
+}
+
+func (r *WorkerTrainingRecord) IsOpen() bool { return r.Status.IsOpen() }
+
+func (r *WorkerTrainingRecord) IsAcknowledged() bool {
+	return r.AcknowledgedAt != nil && *r.AcknowledgedAt > 0
+}
+
+// Health grades the record on its own; the summary uses the same rule and
+// adds Missing for required courses with no record.
+func (r *WorkerTrainingRecord) Health(now int64) worker.TrainingHealth {
+	window := int32(30)
+	if r.Course != nil {
+		window = r.Course.RenewalWindowDays
+	}
+	return EvaluateTrainingHealth(r, window, now)
+}
+
+func (r *WorkerTrainingRecord) DaysUntilDue(now int64) *int64 {
+	if r.DueAt == nil || *r.DueAt <= 0 || !r.IsOpen() {
+		return nil
+	}
+	days := workercredential.DaysUntil(*r.DueAt, now)
+	return &days
+}
+
+func (r *WorkerTrainingRecord) DaysUntilExpiry(now int64) *int64 {
+	if r.ExpiresAt == nil || *r.ExpiresAt <= 0 {
+		return nil
+	}
+	days := workercredential.DaysUntil(*r.ExpiresAt, now)
+	return &days
+}
+
+// EvaluateTrainingHealth is the pure grading rule shared by the summary, the
+// portal and the reminder sweep.
+func EvaluateTrainingHealth(
+	record *WorkerTrainingRecord,
+	renewalWindowDays int32,
+	now int64,
+) worker.TrainingHealth {
+	if record == nil {
+		return worker.TrainingHealthMissing
+	}
+	switch record.Status {
+	case TrainingStatusAssigned, TrainingStatusInProgress:
+		if record.DueAt == nil || *record.DueAt <= 0 {
+			return worker.TrainingHealthScheduled
+		}
+		days := workercredential.DaysUntil(*record.DueAt, now)
+		switch {
+		case days < 0:
+			return worker.TrainingHealthOverdue
+		case days <= dueSoonDays:
+			return worker.TrainingHealthDueSoon
+		default:
+			return worker.TrainingHealthScheduled
+		}
+	case TrainingStatusCompleted:
+		if record.ExpiresAt == nil || *record.ExpiresAt <= 0 {
+			return worker.TrainingHealthCurrent
+		}
+		days := workercredential.DaysUntil(*record.ExpiresAt, now)
+		switch {
+		case days < 0:
+			return worker.TrainingHealthExpired
+		case days <= int64(renewalWindowDays):
+			return worker.TrainingHealthExpiringSoon
+		default:
+			return worker.TrainingHealthCurrent
+		}
+	case TrainingStatusWaived:
+		return worker.TrainingHealthCurrent
+	case TrainingStatusExpired:
+		return worker.TrainingHealthExpired
+	case TrainingStatusFailed:
+		return worker.TrainingHealthFailed
+	case TrainingStatusCancelled:
+		return worker.TrainingHealthMissing
+	default:
+		return worker.TrainingHealthMissing
+	}
+}
+
+func (r *WorkerTrainingRecord) GetID() pulid.ID { return r.ID }
+
+func (r *WorkerTrainingRecord) GetCreatedAt() int64 { return r.CreatedAt }
+
+func (r *WorkerTrainingRecord) GetOrganizationID() pulid.ID { return r.OrganizationID }
+
+func (r *WorkerTrainingRecord) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
+
+func (r *WorkerTrainingRecord) GetTableName() string { return "worker_training_records" }
+
+func (r *WorkerTrainingRecord) GetResourceType() string { return "worker_training" }
+
+func (r *WorkerTrainingRecord) GetResourceID() string { return r.ID.String() }
+
+func (r *WorkerTrainingRecord) BeforeCreate(_ context.Context) error {
+	now := timeutils.NowUnix()
+	if r.Status == "" {
+		r.Status = TrainingStatusAssigned
+	}
+	if r.AssignedAt == 0 {
+		r.AssignedAt = now
+	}
+
+	return nil
+}
+
+func (WorkerTrainingRecord) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_worker_training_records_open",
+			Field:   "courseId",
+			Message: "This worker already has this course assigned",
+		},
+		{
+			Name:    "fk_worker_training_records_worker",
+			Message: "Worker does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_training_records_course",
+			Message: "Course does not exist or belongs to a different organization",
+		},
+		{
+			Name:    "fk_worker_training_records_document",
+			Message: "Document does not exist or belongs to a different organization",
+		},
+	}
+}

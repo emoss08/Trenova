@@ -3,7 +3,7 @@ package billingqueueservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -19,13 +19,13 @@ type DocumentObserverParams struct {
 	fx.In
 
 	Repo     billingqueueports.BillingQueueRepository
-	Realtime agentports.RealtimeService `optional:"true"`
+	Realtime realtimeports.RealtimeService `optional:"true"`
 	Logger   *zap.Logger
 }
 
 type DocumentObserver struct {
 	repo     billingqueueports.BillingQueueRepository
-	realtime agentports.RealtimeService
+	realtime realtimeports.RealtimeService
 	l        *zap.Logger
 }
 

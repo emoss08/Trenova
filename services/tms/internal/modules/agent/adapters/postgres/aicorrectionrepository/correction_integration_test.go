@@ -12,8 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol/agentcontroldb"
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -90,11 +90,14 @@ func TestProviderTotals_BucketCorrectionsByProviderAndWeek(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	weekly, err := repo.WeeklyTotalsByProvider(ctx, &aicorrectionports.WeeklyAICorrectionTotalsRequest{
-		TenantInfo: tenant,
-		Task:       aicorrection.TaskShipmentDraftExtraction,
-		Since:      monday,
-	})
+	weekly, err := repo.WeeklyTotalsByProvider(
+		ctx,
+		&aicorrectionports.WeeklyAICorrectionTotalsRequest{
+			TenantInfo: tenant,
+			Task:       aicorrection.TaskShipmentDraftExtraction,
+			Since:      monday,
+		},
+	)
 	require.NoError(t, err)
 
 	type key struct {
@@ -179,12 +182,15 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	everyTenant := dbscope.WithSystem(ctx, "test")
 	count := func(capPerOrganization int) int {
 		t.Helper()
-		total, err := repo.CountTrainable(everyTenant, &aicorrectionports.CountTrainableAICorrectionsRequest{
-			Task:               aicorrection.TaskShipmentDraftExtraction,
-			CapturedFrom:       from,
-			CapturedTo:         to,
-			PerOrganizationCap: capPerOrganization,
-		})
+		total, err := repo.CountTrainable(
+			everyTenant,
+			&aicorrectionports.CountTrainableAICorrectionsRequest{
+				Task:               aicorrection.TaskShipmentDraftExtraction,
+				CapturedFrom:       from,
+				CapturedTo:         to,
+				PerOrganizationCap: capPerOrganization,
+			},
+		)
 		require.NoError(t, err)
 		return total
 	}
@@ -204,15 +210,15 @@ func TestTrainableCorrections_CountAndWeeklyTotalsFollowConsent(t *testing.T) {
 	assert.Zero(t, count(100), "an organization without consent has nothing to train on")
 	assert.Empty(t, weekly())
 
-	controls := tenantdb.AgentControls
+	controls := agentcontroldb.AgentControls
 	updated, err := controls.Where(keel.True()).Update(ctx, db, controls.AITrainingConsent.To(true))
 	require.NoError(t, err)
 	if updated == 0 {
-		require.NoError(t, controls.Create(ctx, db, &tenant.AgentControl{
+		require.NoError(t, controls.Create(ctx, db, &agentcontrol.AgentControl{
 			OrganizationID:     tenantInfo.OrgID,
 			BusinessUnitID:     tenantInfo.BuID,
 			AITrainingConsent:  true,
-			PromotionThreshold: tenant.DefaultPromotionThreshold,
+			PromotionThreshold: agentcontrol.DefaultPromotionThreshold,
 		}))
 	}
 

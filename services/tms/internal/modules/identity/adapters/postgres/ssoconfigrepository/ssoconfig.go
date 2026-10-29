@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sso/ssodb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -62,8 +62,8 @@ func enabledOIDC() keel.Pred {
 func (r *repository) ListEnabledByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,
-) ([]*tenant.SSOConfig, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.SSOConfig, error) {
+) ([]*sso.SSOConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*sso.SSOConfig, error) {
 		idp := iamdb.IdentityProviders
 		providers, err := forTenant(
 			ctx,
@@ -77,7 +77,7 @@ func (r *repository) ListEnabledByOrganizationID(
 			return nil, err
 		}
 
-		configs := make([]*tenant.SSOConfig, 0, len(providers))
+		configs := make([]*sso.SSOConfig, 0, len(providers))
 		for _, provider := range providers {
 			configs = append(configs, identityProviderToSSOConfig(provider))
 		}
@@ -88,9 +88,9 @@ func (r *repository) ListEnabledByOrganizationID(
 func (r *repository) GetEnabledByID(
 	ctx context.Context,
 	providerID pulid.ID,
-) (*tenant.SSOConfig, error) {
+) (*sso.SSOConfig, error) {
 	ctx = dbscope.WithSystem(ctx, resolveProviderScopeReason)
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*sso.SSOConfig, error) {
 		idp := iamdb.IdentityProviders
 		provider, err := idp.AllTenants().
 			Where(idp.ID.Eq(providerID), enabledOIDC()).
@@ -106,9 +106,9 @@ func (r *repository) GetEnabledByID(
 func (r *repository) GetByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,
-	provider tenant.SSOProvider,
-) (*tenant.SSOConfig, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
+	provider sso.SSOProvider,
+) (*sso.SSOConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*sso.SSOConfig, error) {
 		entity, err := r.find(ctx, organizationID, provider)
 		if err != nil {
 			return nil, ssoConfigErrors.Map(err, organizationID.String())
@@ -121,9 +121,9 @@ func (r *repository) GetByOrganizationID(
 func (r *repository) find(
 	ctx context.Context,
 	organizationID pulid.ID,
-	provider tenant.SSOProvider,
-) (*tenant.SSOConfig, error) {
-	sc := tenantdb.SSOConfigs
+	provider sso.SSOProvider,
+) (*sso.SSOConfig, error) {
+	sc := ssodb.SSOConfigs
 	return forTenant(
 		ctx,
 		sc.Query(),
@@ -135,9 +135,9 @@ func (r *repository) find(
 func (r *repository) GetEnabledByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,
-	provider tenant.SSOProvider,
-) (*tenant.SSOConfig, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
+	provider sso.SSOProvider,
+) (*sso.SSOConfig, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*sso.SSOConfig, error) {
 		idp := iamdb.IdentityProviders
 		entity, err := forTenant(
 			ctx,
@@ -156,10 +156,10 @@ func (r *repository) GetEnabledByOrganizationID(
 
 func (r *repository) Save(
 	ctx context.Context,
-	entity *tenant.SSOConfig,
-) (*tenant.SSOConfig, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.SSOConfig, error) {
-		sc := tenantdb.SSOConfigs
+	entity *sso.SSOConfig,
+) (*sso.SSOConfig, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*sso.SSOConfig, error) {
+		sc := ssodb.SSOConfigs
 		db := r.db.Keel(ctx)
 
 		existing, err := r.find(ctx, entity.OrganizationID, entity.Provider)
@@ -203,7 +203,7 @@ func (r *repository) Save(
 	})
 }
 
-func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *tenant.SSOConfig) error {
+func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *sso.SSOConfig) error {
 	idp := iamdb.IdentityProviders
 	provider := &iam.IdentityProvider{
 		ID:                cfg.ID,
@@ -250,14 +250,14 @@ func (r *repository) upsertIdentityProvider(ctx context.Context, cfg *tenant.SSO
 	return err
 }
 
-func identityProviderToSSOConfig(provider *iam.IdentityProvider) *tenant.SSOConfig {
-	return &tenant.SSOConfig{
+func identityProviderToSSOConfig(provider *iam.IdentityProvider) *sso.SSOConfig {
+	return &sso.SSOConfig{
 		ID:                provider.ID,
 		OrganizationID:    provider.OrganizationID,
 		BusinessUnitID:    provider.BusinessUnitID,
 		Name:              provider.Name,
 		Provider:          providerFromSlug(provider.Slug),
-		Protocol:          tenant.SSOProtocolOIDC,
+		Protocol:          sso.SSOProtocolOIDC,
 		Enabled:           provider.Enabled,
 		EnforceSSO:        provider.EnforceSSO,
 		AutoProvision:     provider.AutoProvision,
@@ -276,17 +276,17 @@ func identityProviderToSSOConfig(provider *iam.IdentityProvider) *tenant.SSOConf
 	}
 }
 
-func providerSlug(provider tenant.SSOProvider) string {
+func providerSlug(provider sso.SSOProvider) string {
 	return strings.ToLower(string(provider))
 }
 
-func providerFromSlug(slug string) tenant.SSOProvider {
+func providerFromSlug(slug string) sso.SSOProvider {
 	switch strings.ToLower(strings.TrimSpace(slug)) {
-	case providerSlug(tenant.SSOProviderAzureAD):
-		return tenant.SSOProviderAzureAD
-	case providerSlug(tenant.SSOProviderOkta):
-		return tenant.SSOProviderOkta
+	case providerSlug(sso.SSOProviderAzureAD):
+		return sso.SSOProviderAzureAD
+	case providerSlug(sso.SSOProviderOkta):
+		return sso.SSOProviderOkta
 	default:
-		return tenant.SSOProvider(slug)
+		return sso.SSOProvider(slug)
 	}
 }

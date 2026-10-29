@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,14 +31,14 @@ func limitedEffectivePermissions() *permissionports.EffectivePermissions {
 	}
 }
 
-func adminRole(orgID pulid.ID) *permission.Role {
-	return &permission.Role{
+func adminRole(orgID pulid.ID) *rbac.Role {
+	return &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		Name:           "Organization Administrator",
 		MaxSensitivity: permission.SensitivityConfidential,
 		IsSystem:       true,
-		Permissions: []*permission.ResourcePermission{{
+		Permissions: []*rbac.ResourcePermission{{
 			Resource:   permission.ResourceUser.String(),
 			Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
 			DataScope:  permission.DataScopeAll,
@@ -66,7 +67,7 @@ func TestUpsertRoleHierarchyEdge_RefusesInheritingMoreThanTheActorHolds(t *testi
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
-	senior := &permission.Role{
+	senior := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		Name:           "Manager",
@@ -108,12 +109,12 @@ func TestUpsertRoleHierarchyEdge_RefusesTheJuniorsInheritedGrants(t *testing.T) 
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 	admin := adminRole(orgID)
-	senior := &permission.Role{
+	senior := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		MaxSensitivity: permission.SensitivityInternal,
 	}
-	wrapper := &permission.Role{
+	wrapper := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		MaxSensitivity: permission.SensitivityInternal,
@@ -129,7 +130,7 @@ func TestUpsertRoleHierarchyEdge_RefusesTheJuniorsInheritedGrants(t *testing.T) 
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(wrapper, nil)
 	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{admin.ID}).
-		Return([]*permission.Role{admin}, nil)
+		Return([]*rbac.Role{admin}, nil)
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(limitedEffectivePermissions(), nil)
 
@@ -174,8 +175,8 @@ func TestUpsertRoleHierarchyEdge_AllowsWhatTheActorHolds(t *testing.T) {
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
-	senior := &permission.Role{ID: pulid.MustNew("rol_"), OrganizationID: orgID}
-	junior := &permission.Role{
+	senior := &rbac.Role{ID: pulid.MustNew("rol_"), OrganizationID: orgID}
+	junior := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		MaxSensitivity: permission.SensitivityInternal,
@@ -208,21 +209,21 @@ func TestAssignRole_RefusesARoleWhoseParentsExceedTheActor(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
+	}).Return(&rbac.Role{
 		ID:             roleID,
 		OrganizationID: orgID,
 		MaxSensitivity: permission.SensitivityInternal,
 		ParentRoleIDs:  []pulid.ID{admin.ID},
 	}, nil)
 	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{admin.ID}).
-		Return([]*permission.Role{admin}, nil)
+		Return([]*rbac.Role{admin}, nil)
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(limitedEffectivePermissions(), nil)
 
 	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
 		ActorID:        actorID,
 		OrganizationID: orgID,
-		Assignment: &permission.UserRoleAssignment{
+		Assignment: &rbac.UserRoleAssignment{
 			UserID: pulid.MustNew("usr_"),
 			RoleID: roleID,
 		},
@@ -241,14 +242,14 @@ func TestCreateRole_RefusesParentsInAnotherOrganization(t *testing.T) {
 	foreign.IsSystem = false
 
 	deps.roleRepo.On("GetByID", ctx, mock.Anything).
-		Return(&permission.Role{ID: foreign.ID}, nil)
+		Return(&rbac.Role{ID: foreign.ID}, nil)
 	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{foreign.ID}).
-		Return([]*permission.Role{foreign}, nil)
+		Return([]*rbac.Role{foreign}, nil)
 
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
-		Role: &permission.Role{
+		Role: &rbac.Role{
 			Name:           "Borrowed",
 			MaxSensitivity: permission.SensitivityInternal,
 			ParentRoleIDs:  []pulid.ID{foreign.ID},
@@ -267,13 +268,13 @@ func TestCreateRole_CannotCreateASystemRole(t *testing.T) {
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
 	ctx := t.Context()
-	role := &permission.Role{
+	role := &rbac.Role{
 		Name:           "Pretend system",
 		MaxSensitivity: permission.SensitivityInternal,
 		IsSystem:       true,
 	}
 
-	deps.roleRepo.On("Create", ctx, mock.MatchedBy(func(created *permission.Role) bool {
+	deps.roleRepo.On("Create", ctx, mock.MatchedBy(func(created *rbac.Role) bool {
 		return !created.IsSystem
 	})).Return(nil)
 
@@ -292,7 +293,7 @@ func TestUpdateRole_IgnoresFieldsTheEditorDoesNotOwn(t *testing.T) {
 	ctx := t.Context()
 	actorID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
-	existing := &permission.Role{
+	existing := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
 		BusinessUnitID: pulid.MustNew("bu_"),
@@ -301,18 +302,18 @@ func TestUpdateRole_IgnoresFieldsTheEditorDoesNotOwn(t *testing.T) {
 		ParentRoleIDs:  []pulid.ID{},
 		CreatedBy:      pulid.MustNew("usr_"),
 	}
-	grant := &permission.ResourcePermission{
+	grant := &rbac.ResourcePermission{
 		Resource:   permission.ResourceShipment.String(),
 		Operations: []permission.Operation{permission.OpRead},
 		DataScope:  permission.DataScopeOrganization,
 	}
-	request := &permission.Role{
+	request := &rbac.Role{
 		ID:             existing.ID,
 		OrganizationID: pulid.MustNew("org_"),
 		Name:           "Senior dispatcher",
 		IsSystem:       true,
 		ParentRoleIDs:  []pulid.ID{pulid.MustNew("rol_")},
-		Permissions:    []*permission.ResourcePermission{grant, nil},
+		Permissions:    []*rbac.ResourcePermission{grant, nil},
 	}
 
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
@@ -320,9 +321,9 @@ func TestUpdateRole_IgnoresFieldsTheEditorDoesNotOwn(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(existing, nil)
 
-	var written *permission.Role
+	var written *rbac.Role
 	deps.roleRepo.On("Update", ctx, mock.Anything).Run(func(args mock.Arguments) {
-		written = args.Get(1).(*permission.Role)
+		written = args.Get(1).(*rbac.Role)
 	}).Return(nil)
 
 	require.NoError(t, deps.svc.UpdateRole(ctx, UpdateRoleRequest{
@@ -339,7 +340,7 @@ func TestUpdateRole_IgnoresFieldsTheEditorDoesNotOwn(t *testing.T) {
 	assert.Empty(t, written.ParentRoleIDs)
 	assert.Equal(t, existing.CreatedBy, written.CreatedBy)
 	assert.Equal(t, permission.SensitivityInternal, written.MaxSensitivity)
-	assert.Equal(t, []*permission.ResourcePermission{grant}, written.Permissions)
+	assert.Equal(t, []*rbac.ResourcePermission{grant}, written.Permissions)
 	assert.Equal(t, "Senior dispatcher", request.Name)
 	assert.False(t, request.IsSystem)
 }
@@ -355,12 +356,12 @@ func TestUpdateRole_RefusesARoleOfAnotherOrganization(t *testing.T) {
 	deps.roleRepo.On("GetByID", ctx, permissionports.GetRoleByIDRequest{
 		ID:         roleID,
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{ID: roleID}, nil)
+	}).Return(&rbac.Role{ID: roleID}, nil)
 
 	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
 		OrganizationID: orgID,
-		Role:           &permission.Role{ID: roleID, Name: "Shared"},
+		Role:           &rbac.Role{ID: roleID, Name: "Shared"},
 	})
 
 	require.ErrorIs(t, err, ErrCannotModifySystemRole)
@@ -375,7 +376,7 @@ func TestDeleteRole_RefusesARoleSomeoneHoldsUnlessForced(t *testing.T) {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	}
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -403,7 +404,7 @@ func TestDeleteRole_ForcedTakesItFromItsHolders(t *testing.T) {
 		BuID:   pulid.MustNew("bu_"),
 		UserID: pulid.MustNew("usr_"),
 	}
-	role := &permission.Role{
+	role := &rbac.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: tenant.OrgID,
 		BusinessUnitID: tenant.BuID,
@@ -437,14 +438,17 @@ func TestDeleteRole_ForcingNeedsPermissionToUnassign(t *testing.T) {
 
 	deps := setupTestService(t)
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), UserID: pulid.MustNew("usr_")}
-	role := &permission.Role{ID: pulid.MustNew("rol_"), OrganizationID: tenant.OrgID}
+	role := &rbac.Role{ID: pulid.MustNew("rol_"), OrganizationID: tenant.OrgID}
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(role, nil)
 	deps.roleRepo.On("GetUsersWithRole", mock.Anything, role.ID).
 		Return([]permissionports.ImpactedUser{{UserID: pulid.MustNew("usr_")}}, nil)
 	deps.permEngine.On("GetEffectivePermissions", mock.Anything, tenant.UserID, tenant.OrgID).
 		Return(limitedEffectivePermissions(), nil)
 
-	err := deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{Tenant: tenant, RoleID: role.ID, Force: true})
+	err := deps.svc.DeleteRole(
+		t.Context(),
+		DeleteRoleRequest{Tenant: tenant, RoleID: role.ID, Force: true},
+	)
 
 	requireForbidden(t, err)
 	deps.roleRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
@@ -458,7 +462,10 @@ func TestDeleteRole_RefusesASystemRole(t *testing.T) {
 	admin := adminRole(tenant.OrgID)
 	deps.roleRepo.On("GetByID", mock.Anything, mock.Anything).Return(admin, nil)
 
-	err := deps.svc.DeleteRole(t.Context(), DeleteRoleRequest{Tenant: tenant, RoleID: admin.ID, Force: true})
+	err := deps.svc.DeleteRole(
+		t.Context(),
+		DeleteRoleRequest{Tenant: tenant, RoleID: admin.ID, Force: true},
+	)
 
 	require.ErrorIs(t, err, ErrCannotDeleteSystemRole)
 }

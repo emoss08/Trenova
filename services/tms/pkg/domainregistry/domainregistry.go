@@ -4,20 +4,32 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/modules/places/domain/distanceoverride"
@@ -26,6 +38,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratesimulation"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
@@ -40,30 +55,30 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&tenant.BusinessUnit{},
 		&formulatemplate.FormulaTemplate{},
-		&tenant.DocumentControl{},
+		&documentcontrol.DocumentControl{},
 		&documenttemplate.DocumentTemplate{},
 		&documenttemplate.DocumentTemplateVersion{},
 		&documenttemplate.DocumentTemplateAssignment{},
-		&documenttemplate.GeneratedDocument{},
+		&generateddocument.GeneratedDocument{},
 		&dispatchcontrol.DispatchControl{},
-		&tenant.BillingControl{},
+		&billingcontrol.BillingControl{},
 		&invoice.Invoice{},
 		&invoice.InvoiceLine{},
 		&invoice.Attachment{},
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},
 		&invoice.DocumentShareToken{},
-		&invoice.InvoiceShare{},
+		&invoiceshare.InvoiceShare{},
 		&invoicerun.InvoiceRun{},
 		&invoicerun.InvoiceRunGroup{},
 		&invoicerun.InvoiceRunGroupItem{},
-		&permission.Role{},
-		&permission.ResourcePermission{},
-		&permission.UserRoleAssignment{},
-		&permission.RoleHierarchyEdge{},
-		&permission.RoleConstraint{},
-		&permission.RoleConstraintRole{},
-		&tenant.ShipmentControl{},
+		&rbac.Role{},
+		&rbac.ResourcePermission{},
+		&rbac.UserRoleAssignment{},
+		&rbac.RoleHierarchyEdge{},
+		&rbac.RoleConstraint{},
+		&rbac.RoleConstraintRole{},
+		&shipmentcontrol.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
 		&equipmentcontinuity.EquipmentContinuity{},
@@ -77,19 +92,19 @@ func RegisterEntities() []any {
 		&edi.EDICommunicationProfile{},
 		&edi.EDIMappingProfile{},
 		&edi.EDIMappingProfileItem{},
-		&edi.EDITransfer{},
-		&edi.EDIDocumentType{},
-		&edi.LadingProject{},
-		&edi.LadingVersion{},
-		&edi.LadingSample{},
-		&edi.LadingReplay{},
-		&edi.LadingShadowResult{},
-		&edi.FlowInstance{},
-		&edi.FlowEvent{},
-		&edi.EDIControlNumberSequence{},
-		&edi.EDIMessage{},
-		&edi.EDIInboundFile{},
-		&edi.EDIMessageValidationError{},
+		&editransfer.EDITransfer{},
+		&edidocument.EDIDocumentType{},
+		&ladingproject.LadingProject{},
+		&ladingproject.LadingVersion{},
+		&ladingproject.LadingSample{},
+		&ladingproject.LadingReplay{},
+		&ladingproject.LadingShadowResult{},
+		&ladingproject.FlowInstance{},
+		&ladingproject.FlowEvent{},
+		&edidocument.EDIControlNumberSequence{},
+		&edimessage.EDIMessage{},
+		&ediinboundfile.EDIInboundFile{},
+		&edimessage.EDIMessageValidationError{},
 		&audit.Entry{},
 		&shipment.Assignment{},
 		&shipment.Stop{},
@@ -98,7 +113,7 @@ func RegisterEntities() []any {
 		&shipment.ShipmentCommodity{},
 		&shipment.ShipmentComment{},
 		&shipment.ShipmentCommentMention{},
-		&shipment.ShipmentHold{},
+		&shipmenthold.ShipmentHold{},
 		&servicefailure.ReasonCode{},
 		&servicefailure.ServiceFailure{},
 		&shipment.Shipment{},
@@ -116,9 +131,9 @@ func RegisterEntities() []any {
 		&ratezone.RateZoneMember{},
 		&ratematrix.RateMatrix{},
 		&ratematrix.RateMatrixDimension{},
-		&ratematrix.RateMatrixCell{},
-		&ratematrix.RateMatrixVersion{},
-		&ratematrix.RateMatrixReview{},
+		&ratematrixcell.RateMatrixCell{},
+		&ratematrixversion.RateMatrixVersion{},
+		&ratematrixreview.RateMatrixReview{},
 		&ratesimulation.RateSimulation{},
 		&ratesimulation.RateSimulationResult{},
 		&rateimport.RateImportBatch{},
@@ -133,6 +148,6 @@ func RegisterEntities() []any {
 		&factoring.FeeTier{},
 		&factoring.AgreementDocumentType{},
 		&factoring.Noa{},
-		&factoring.InvoiceState{},
+		&factoringreadiness.InvoiceState{},
 	}
 }

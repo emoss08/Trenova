@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/homelayout/homelayoutdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/homelayoutports"
@@ -192,7 +192,7 @@ func (r *repository) ListRoleUserAssignments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]homelayoutports.HomeRoleUserAssignment, error) {
-			a := permissiondb.UserRoleAssignments
+			a := rbacdb.UserRoleAssignments
 			role := a.Role()
 			assignments, err := keel.Into[homelayoutports.HomeRoleUserAssignment](
 				ctx,

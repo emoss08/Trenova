@@ -30,12 +30,15 @@ and every tool call agree on which vendor answers.
 | Capabilities and the tools they own, what is active | `services/tms/internal/modules/agent/domain/agentextension/capability.go` |
 | Types, availability, each vendor's settings spec and validator | `services/tms/internal/modules/agent/domain/agentextension/` (`spec.go`, `webresearch.go`, one file per vendor) |
 | Stored settings and daily usage | `agent_extensions`, `agent_extension_usage_daily` |
-| Marketplace, settings, test, metering, web research, portal sites and tasks, analyses | `internal/modules/agent/app/agentextensionservice/` |
+| Marketplace, settings, test, metering, web research, analyses | `internal/modules/agent/app/agentextensionservice/` |
+| Portal sites and tasks | `internal/modules/agent/app/extensionportalservice/` |
+| Web watches | `internal/modules/agent/app/extensionwebwatchservice/` |
+| Secret scopes and re-encryption columns | `internal/modules/agent/app/extensionsecrets/` |
 | REST API (`/agent-extensions/...`) | `internal/api/handlers/agentextensionhandler/` |
 | Vendor connectors | `internal/infrastructure/agentextension/<vendor>connector/` over `shared/<vendor>`, registered with `connectorkit.Provide` |
-| Tools | `internal/modules/agent/app/agentquerytoolservice/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
-| Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/extensions.go` |
-| Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
+| Tools | `internal/modules/agent/app/querytools/webquerytools/` (`web_tools.go`, `web_watch_tools.go`, `portal_tools.go`, `analysis_tool.go`) for reads, `internal/modules/agent/app/agenttools/portaltools/` for `web_use_portal`, `agenttools/webwatchtools/` for `web_watch` and `web_stop_watch` |
+| Runtime gating and the approval rule | `internal/modules/agent/app/agentruntime/toolaccess/extensions.go` |
+| Extension commands (`/browser`, `/search`) | `agentextension/command.go`, `agentruntime/command.go`, `assistantservice/commands.go`, `assistantservice/assistantthreads/commands.go`, `EXTENSION_COMMANDS` in the client's `composer-commands.ts` and `use-desk-extension-commands.ts` |
 | Marketplace UI | `client/apps/web/src/routes/agent-control/_components/extensions/` |
 
 Settings reuse the integration field spec (`domain/configspec`) and the encrypted secret codec
@@ -177,7 +180,7 @@ organization (a web page, or a trading partner's text or guide it was given)". B
 has a `Propose` ceiling of its own and carries the guide's digest; see
 [edi-spec-onboarding.md](edi-spec-onboarding.md).
 
-Which tools set the flag is decided from the name alone (`agentruntime.ReadsExternalContent`: an
+Which tools set the flag is decided from the name alone (`toolaccess.ReadsExternalContent`: an
 extension tool its capability lists as returning outside content
 (`agentextension.ReturnsExternalContent`), or a name in `outsideTextTools`), because the loop
 runs in workflow code and must decide the same way on replay. Each such tool's policy declares
@@ -250,7 +253,7 @@ connector cannot do what the capability needs.
 3. Write its client in `shared/<vendor>` and its connector in
    `internal/infrastructure/agentextension/<vendor>connector`, and register it in that module.
    A vendor that does not report cost computes it from its published prices.
-4. Add its catalog `definition` in `agentextensionservice/catalog.go`.
+4. Add its catalog `Definition` in `agentextensionservice/catalog.go`.
 5. Bundle the vendor's mark in `client/packages/shared/src/components/ui/logos/` from Brandfetch
    and register its domain, so the marketplace needs no network call to draw it. Use the SVG
    Brandfetch lists; a vendor it has only as an image is bundled as that image, unmodified,

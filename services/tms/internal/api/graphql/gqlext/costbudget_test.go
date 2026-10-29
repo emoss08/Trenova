@@ -11,8 +11,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/querycost"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/httpmetrics"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,12 +21,15 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestCostBudget(t *testing.T, cfg config.GraphQLCostBudgetConfig) *CostBudgetExtension {
+func newTestCostBudget(
+	t *testing.T,
+	cfg securityconfig.GraphQLCostBudgetConfig,
+) *CostBudgetExtension {
 	t.Helper()
 
 	ext := newCostBudgetExtension(
 		cfg,
-		metrics.NewGraphQL(nil, zap.NewNop(), false, metrics.GraphQLOptions{}),
+		httpmetrics.NewGraphQL(nil, zap.NewNop(), false, httpmetrics.GraphQLOptions{}),
 		zap.NewNop(),
 	)
 	base := time.Date(2026, time.September, 5, 12, 0, 0, 0, time.UTC)
@@ -62,7 +65,7 @@ func costedOperationContext(cost int) *graphql.OperationContext {
 func TestCostBudgetExtension_Contract(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{Enabled: true})
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{Enabled: true})
 
 	assert.Equal(t, costBudgetExtensionName, ext.ExtensionName())
 	assert.NoError(t, ext.Validate(nil))
@@ -74,7 +77,7 @@ func TestCostBudgetExtension_Contract(t *testing.T) {
 func TestCostBudgetExtension_DisabledSkipsAccounting(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{Enabled: false, Burst: 10})
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{Enabled: false, Burst: 10})
 	ctx, _ := costBudgetContext(t)
 
 	for range 5 {
@@ -86,7 +89,7 @@ func TestCostBudgetExtension_DisabledSkipsAccounting(t *testing.T) {
 func TestCostBudgetExtension_AllowsWithinBurst(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{
 		Enabled:         true,
 		PointsPerMinute: 60,
 		Burst:           querycost.MaxOperationCost,
@@ -109,7 +112,7 @@ func TestCostBudgetExtension_AllowsWithinBurst(t *testing.T) {
 func TestCostBudgetExtension_RejectsWhenBudgetExhausted(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{
 		Enabled:         true,
 		PointsPerMinute: 60,
 		Burst:           querycost.MaxOperationCost,
@@ -135,7 +138,7 @@ func TestCostBudgetExtension_RejectsWhenBudgetExhausted(t *testing.T) {
 func TestCostBudgetExtension_RefillsOverTime(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{
 		Enabled:         true,
 		PointsPerMinute: 6000,
 		Burst:           querycost.MaxOperationCost,
@@ -156,7 +159,7 @@ func TestCostBudgetExtension_RefillsOverTime(t *testing.T) {
 func TestCostBudgetExtension_BudgetsAreScopedToPrincipal(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{
 		Enabled:         true,
 		PointsPerMinute: 60,
 		Burst:           querycost.MaxOperationCost,
@@ -179,7 +182,7 @@ func TestCostBudgetExtension_BudgetsAreScopedToPrincipal(t *testing.T) {
 func TestCostBudgetExtension_SkipsWithoutCostOrPrincipal(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{Enabled: true, Burst: 1})
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{Enabled: true, Burst: 1})
 	ctx, _ := costBudgetContext(t)
 
 	assert.Nil(t, ext.MutateOperationContext(ctx, &graphql.OperationContext{}))
@@ -190,7 +193,7 @@ func TestCostBudgetExtension_SkipsWithoutCostOrPrincipal(t *testing.T) {
 func TestCostBudgetExtension_BurstNeverBelowSingleOperationLimit(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{Enabled: true, Burst: 1})
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{Enabled: true, Burst: 1})
 	ctx, _ := costBudgetContext(t)
 
 	assert.Nil(
@@ -202,7 +205,7 @@ func TestCostBudgetExtension_BurstNeverBelowSingleOperationLimit(t *testing.T) {
 func TestCostBudgetExtension_CleanupDropsIdlePrincipals(t *testing.T) {
 	t.Parallel()
 
-	ext := newTestCostBudget(t, config.GraphQLCostBudgetConfig{
+	ext := newTestCostBudget(t, securityconfig.GraphQLCostBudgetConfig{
 		Enabled:         true,
 		CleanupInterval: time.Minute,
 	})

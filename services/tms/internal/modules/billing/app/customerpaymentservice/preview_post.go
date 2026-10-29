@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
@@ -40,7 +40,7 @@ func (s *Service) PreviewPostAndApply(
 }
 
 type postPlan struct {
-	control  *tenant.AccountingControl
+	control  *accountingcontrol.AccountingControl
 	entity   *customerpayment.Payment
 	invoices []*invoice.Invoice
 	period   *fiscalperiod.FiscalPeriod

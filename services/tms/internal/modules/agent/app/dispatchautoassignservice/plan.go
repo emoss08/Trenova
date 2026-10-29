@@ -5,16 +5,17 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevidence"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/shared/assignmentsolver"
 	"github.com/shopspring/decimal"
 )
 
 type plannedAssignmentParams struct {
-	Move       *shipmentports.BoardMove
+	Move       *dispatchboardports.BoardMove
 	Score      *dispatchcandidateservice.CandidateScore
 	Tier       agent.AutonomyTier
 	Threshold  decimal.Decimal
@@ -23,10 +24,10 @@ type plannedAssignmentParams struct {
 
 func plannedAssignmentFor(
 	p *plannedAssignmentParams,
-) *agentports.DispatchPlannedAssignment {
+) *dispatchconsoleports.DispatchPlannedAssignment {
 	confidence := confidenceFor(p.Score)
 
-	planned := &agentports.DispatchPlannedAssignment{
+	planned := &dispatchconsoleports.DispatchPlannedAssignment{
 		MoveID:     p.Move.MoveID,
 		ProNumber:  p.Move.ProNumber,
 		WorkerID:   p.Score.WorkerID,
@@ -92,7 +93,7 @@ func confidenceFor(score *dispatchcandidateservice.CandidateScore) decimal.Decim
 
 func rationaleFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *shipmentports.BoardMove,
+	move *dispatchboardports.BoardMove,
 ) string {
 	if score == nil {
 		return ""
@@ -124,12 +125,12 @@ func rationaleFor(
 
 func evidenceFor(
 	score *dispatchcandidateservice.CandidateScore,
-	move *shipmentports.BoardMove,
-) []agent.EvidenceRef {
-	evidence := make([]agent.EvidenceRef, 0, 3)
+	move *dispatchboardports.BoardMove,
+) []agentevidence.EvidenceRef {
+	evidence := make([]agentevidence.EvidenceRef, 0, 3)
 
 	evidence = append(evidence,
-		agent.EvidenceRef{
+		agentevidence.EvidenceRef{
 			Type: evidenceTypeMove,
 			ID:   move.MoveID.String(),
 			Note: fmt.Sprintf(
@@ -139,7 +140,7 @@ func evidenceFor(
 				move.OriginWindowStart,
 			),
 		},
-		agent.EvidenceRef{
+		agentevidence.EvidenceRef{
 			Type: evidenceTypeHOS,
 			ID:   score.WorkerID.String(),
 			Note: fmt.Sprintf(
@@ -151,7 +152,7 @@ func evidenceFor(
 		})
 
 	if score.DeadheadMiles != nil {
-		evidence = append(evidence, agent.EvidenceRef{
+		evidence = append(evidence, agentevidence.EvidenceRef{
 			Type: evidenceTypeDeadhead,
 			ID:   score.TractorID.String(),
 			Note: fmt.Sprintf(
@@ -165,22 +166,24 @@ func evidenceFor(
 	return evidence
 }
 
-func originLabel(move *shipmentports.BoardMove) string {
+func originLabel(move *dispatchboardports.BoardMove) string {
 	if move.OriginCity == "" {
 		return move.OriginName
 	}
 	return fmt.Sprintf("%s, %s", move.OriginCity, move.OriginState)
 }
 
-func destinationLabel(move *shipmentports.BoardMove) string {
+func destinationLabel(move *dispatchboardports.BoardMove) string {
 	if move.DestinationCity == "" {
 		return move.DestinationName
 	}
 	return fmt.Sprintf("%s, %s", move.DestinationCity, move.DestinationState)
 }
 
-func moveStubFor(planned *agentports.DispatchPlannedAssignment) *shipmentports.BoardMove {
-	return &shipmentports.BoardMove{
+func moveStubFor(
+	planned *dispatchconsoleports.DispatchPlannedAssignment,
+) *dispatchboardports.BoardMove {
+	return &dispatchboardports.BoardMove{
 		MoveID:    planned.MoveID,
 		ProNumber: planned.ProNumber,
 	}

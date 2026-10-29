@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/netsuiteerrors"
 )
 
 const (
@@ -44,10 +46,10 @@ type queryResponse struct {
 func (c *Client) Query(ctx context.Context, q Query, rows any) (*QueryPage, error) {
 	sql := strings.TrimSpace(q.SQL)
 	if sql == "" || strings.ContainsRune(sql, 0) {
-		return nil, ErrQueryRequired
+		return nil, netsuiteerrors.ErrQueryRequired
 	}
 	if q.Limit > MaxQueryLimit || q.Limit < 0 {
-		return nil, ErrInvalidLimit
+		return nil, netsuiteerrors.ErrInvalidLimit
 	}
 	limit := q.Limit
 	if limit == 0 {
@@ -56,7 +58,7 @@ func (c *Client) Query(ctx context.Context, q Query, rows any) (*QueryPage, erro
 	target := reflect.ValueOf(rows)
 	if !target.IsValid() || target.Kind() != reflect.Pointer || target.IsNil() ||
 		target.Elem().Kind() != reflect.Slice {
-		return nil, ErrInvalidRows
+		return nil, netsuiteerrors.ErrInvalidRows
 	}
 	target.Elem().SetLen(0)
 
@@ -75,7 +77,7 @@ func (c *Client) Query(ctx context.Context, q Query, rows any) (*QueryPage, erro
 		return nil, err
 	}
 	if len(resp.Body) == 0 {
-		return nil, ErrUnexpectedPayload
+		return nil, netsuiteerrors.ErrUnexpectedPayload
 	}
 	return &QueryPage{
 		HasMore:      wire.HasMore,
@@ -87,7 +89,7 @@ func (c *Client) Query(ctx context.Context, q Query, rows any) (*QueryPage, erro
 func ParseQueryTime(value string) (time.Time, error) {
 	parsed, err := time.ParseInLocation(QueryTimeLayout, strings.TrimSpace(value), time.UTC)
 	if err != nil {
-		return time.Time{}, ErrInvalidQueryTime
+		return time.Time{}, netsuiteerrors.ErrInvalidQueryTime
 	}
 	return parsed, nil
 }
@@ -95,7 +97,7 @@ func ParseQueryTime(value string) (time.Time, error) {
 func ParseQueryDate(value string) (time.Time, error) {
 	parsed, err := time.ParseInLocation(QueryDateLayout, strings.TrimSpace(value), time.UTC)
 	if err != nil {
-		return time.Time{}, ErrInvalidQueryTime
+		return time.Time{}, netsuiteerrors.ErrInvalidQueryTime
 	}
 	return parsed, nil
 }

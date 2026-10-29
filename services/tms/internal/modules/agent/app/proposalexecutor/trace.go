@@ -6,7 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.opentelemetry.io/otel/attribute"
@@ -41,7 +42,7 @@ func startExecute(
 func startTool(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy *agentports.ToolPolicy,
+	policy *agenttoolports.ToolPolicy,
 ) (context.Context, trace.Span) {
 	attrs := make([]attribute.KeyValue, 0, 6)
 	attrs = append(attrs,
@@ -97,7 +98,7 @@ func executeFailure(err error) string {
 		return executeTenant
 	case errors.Is(err, ErrToolMissing):
 		return aitrace.OutcomeInvalid
-	case errors.Is(err, agent.ErrTargetChanged):
+	case errors.Is(err, agentplan.ErrTargetChanged):
 		return executeStaleTarget
 	case errors.Is(err, ErrTaintedNeedsPerson):
 		return aitrace.OutcomeDenied

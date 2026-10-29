@@ -5,9 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/emoss08/trenova/shared/businesscentral"
+	"github.com/emoss08/trenova/shared/businesscentralerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -36,16 +39,19 @@ func referenceResponder(t *testing.T) func(call bcCall) (int, string) {
 func listKind(
 	t *testing.T,
 	conn *Connector,
-	kind accountingsync.ReferenceKind,
-) []*accountingsync.AccountingReferenceObject {
+	kind accountingprovider.ReferenceKind,
+) []*accountingmapping.AccountingReferenceObject {
 	t.Helper()
-	page, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-		RealmID:       testRef().String(),
-		AccessToken:   "access-token",
-		Kind:          kind,
-		StartPosition: 1,
-		PageSize:      conn.MaxReferencePageSize(),
-	})
+	page, err := conn.ListReference(
+		t.Context(),
+		&accountingconnectorports.AccountingReferencePageRequest{
+			RealmID:       testRef().String(),
+			AccessToken:   "access-token",
+			Kind:          kind,
+			StartPosition: 1,
+			PageSize:      conn.MaxReferencePageSize(),
+		},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, page.NextStart)
 	return page.Objects
@@ -57,82 +63,52 @@ func TestListReferenceReadsEveryKind(t *testing.T) {
 	conn := testConnector(t, &fakeBC{respond: referenceResponder(t)})
 	assert.Equal(t, businesscentral.MaxPageSize, conn.MaxReferencePageSize())
 
-	accounts := listKind(t, conn, accountingsync.ReferenceKindAccount)
+	accounts := listKind(t, conn, accountingprovider.ReferenceKindAccount)
 	require.Len(t, accounts, 3)
 	assert.Equal(t, testBank, accounts[0].ExternalID)
 	assert.Equal(t, "10100", accounts[0].Number)
-	assert.Equal(t, accountingsync.AccountClassBank, accounts[0].AccountClass)
+	assert.Equal(t, accountingmapping.AccountClassBank, accounts[0].AccountClass)
 	assert.True(t, accounts[0].Active)
 	assert.False(t, accounts[1].Active)
-	assert.Equal(t, accountingsync.AccountClassIncome, accounts[1].AccountClass)
+	assert.Equal(t, accountingmapping.AccountClassIncome, accounts[1].AccountClass)
 	assert.False(t, accounts[2].Active)
 	assert.Empty(t, accounts[2].AccountClass)
 
-	items := listKind(t, conn, accountingsync.ReferenceKindItem)
+	items := listKind(t, conn, accountingprovider.ReferenceKindItem)
 	require.Len(t, items, 2)
 	assert.Equal(t, "Linehaul", items[0].Name)
 	assert.Equal(t, "Service", items[0].ItemType)
 	assert.True(t, items[0].Active)
 	assert.False(t, items[1].Active)
 
-	customers := listKind(t, conn, accountingsync.ReferenceKindCustomer)
+	customers := listKind(t, conn, accountingprovider.ReferenceKindCustomer)
 	require.Len(t, customers, 2)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, customers[0].Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, customers[0].Kind)
 	assert.Equal(t, "O'Brien Logistics", customers[0].Name)
 	assert.Equal(t, "Atlanta", customers[0].City)
 	assert.True(t, customers[0].Active)
 	assert.False(t, customers[1].Active)
 	assert.Equal(t, "CAD", customers[1].CurrencyCode)
 
-	vendors := listKind(t, conn, accountingsync.ReferenceKindVendor)
+	vendors := listKind(t, conn, accountingprovider.ReferenceKindVendor)
 	require.Len(t, vendors, 1)
-	assert.Equal(t, accountingsync.ReferenceKindVendor, vendors[0].Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindVendor, vendors[0].Kind)
 	assert.False(t, vendors[0].Active)
 
-	terms := listKind(t, conn, accountingsync.ReferenceKindTerm)
+	terms := listKind(t, conn, accountingprovider.ReferenceKindTerm)
 	require.Len(t, terms, 1)
 	assert.Equal(t, "Net 30 days", terms[0].Name)
 	require.NotNil(t, terms[0].DueDays)
 	assert.Equal(t, 30, *terms[0].DueDays)
 
-	assert.Empty(t, listKind(t, conn, accountingsync.ReferenceKindPaymentMethod))
-	_, err := conn.ListReference(t.Context(), &accountingsyncports.AccountingReferencePageRequest{
-		RealmID: testRef().String(), AccessToken: "x", Kind: "Nope",
-	})
+	assert.Empty(t, listKind(t, conn, accountingprovider.ReferenceKindPaymentMethod))
+	_, err := conn.ListReference(
+		t.Context(),
+		&accountingconnectorports.AccountingReferencePageRequest{
+			RealmID: testRef().String(), AccessToken: "x", Kind: "Nope",
+		},
+	)
 	require.Error(t, err)
-}
-
-func TestAccountClassOf(t *testing.T) {
-	t.Parallel()
-
-	cases := []struct {
-		category string
-		sub      string
-		want     accountingsync.AccountClass
-	}{
-		{businesscentral.CategoryIncome, "Income, Services", accountingsync.AccountClassIncome},
-		{businesscentral.CategoryCostOfGoodsSold, "", accountingsync.AccountClassCostOfSales},
-		{businesscentral.CategoryExpense, "Rent Expense", accountingsync.AccountClassExpense},
-		{businesscentral.CategoryAssets, "Accounts Receivable", accountingsync.AccountClassReceivable},
-		{businesscentral.CategoryAssets, "Cash", accountingsync.AccountClassBank},
-		{businesscentral.CategoryAssets, "Bank Accounts", accountingsync.AccountClassBank},
-		{businesscentral.CategoryAssets, "Inventory", accountingsync.AccountClassAsset},
-		{businesscentral.CategoryLiabilities, "Accounts Payable", accountingsync.AccountClassPayable},
-		{businesscentral.CategoryLiabilities, "Long Term Liabilities", accountingsync.AccountClassLiability},
-		{businesscentral.CategoryEquity, "Retained Earnings", accountingsync.AccountClassEquity},
-		{"", "", ""},
-	}
-	for _, tc := range cases {
-		got := AccountClassOf(&businesscentral.Account{Category: tc.category, SubCategory: tc.sub})
-		assert.Equal(t, tc.want, got, tc.category+"/"+tc.sub)
-	}
-	assert.True(t, accountObjectOf(&businesscentral.Account{
-		AccountType: businesscentral.AccountTypePosting, DirectPosting: false,
-	}).Active)
-	assert.False(t, accountObjectOf(&businesscentral.Account{
-		AccountType: businesscentral.AccountTypePosting, Blocked: true,
-	}).Active)
-	assert.False(t, accountObjectOf(&businesscentral.Account{AccountType: "Heading"}).Active)
 }
 
 func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
@@ -150,13 +126,13 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 		return referenceResponder(t)(call)
 	}}
 	conn := testConnector(t, fake)
-	base := accountingsyncports.AccountingCreateReferenceRequest{
+	base := accountingconnectorports.AccountingCreateReferenceRequest{
 		RealmID: testRef().String(), AccessToken: "x", RequestID: testRequestID,
 	}
 
 	itemReq := base
-	itemReq.Kind = accountingsync.ReferenceKindItem
-	itemReq.Item = &accountingsyncports.AccountingItemDraft{Name: " Fuel\nsurcharge "}
+	itemReq.Kind = accountingprovider.ReferenceKindItem
+	itemReq.Item = &accountingconnectorports.AccountingItemDraft{Name: " Fuel\nsurcharge "}
 	item, err := conn.CreateReference(t.Context(), &itemReq)
 	require.NoError(t, err)
 	assert.Equal(t, "44444444-5555-4666-8777-888888888883", item.ExternalID)
@@ -165,35 +141,37 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 	assert.Equal(t, "Fuel surcharge", created.Body["displayName"])
 	assert.Equal(t, "Service", created.Body["type"])
 
-	itemReq.Item = &accountingsyncports.AccountingItemDraft{Name: "linehaul"}
+	itemReq.Item = &accountingconnectorports.AccountingItemDraft{Name: "linehaul"}
 	_, err = conn.CreateReference(t.Context(), &itemReq)
 	require.Error(t, err)
 	assert.True(t, conn.IsDuplicateName(err))
 
 	partyReq := base
-	partyReq.Kind = accountingsync.ReferenceKindCustomer
-	partyReq.Party = &accountingsyncports.AccountingPartyDraft{
+	partyReq.Kind = accountingprovider.ReferenceKindCustomer
+	partyReq.Party = &accountingconnectorports.AccountingPartyDraft{
 		DisplayName: "Northwind Traders", Email: "billing@northwind.example",
 		City: strings.Repeat("c", 40),
 	}
 	customer, err := conn.CreateReference(t.Context(), &partyReq)
 	require.NoError(t, err)
 	assert.Equal(t, "Northwind Traders", customer.Name)
-	assert.Equal(t, accountingsync.ReferenceKindCustomer, customer.Kind)
+	assert.Equal(t, accountingprovider.ReferenceKindCustomer, customer.Kind)
 	posted, ok := fake.find(http.MethodPost, "/customers")
 	require.True(t, ok)
 	assert.Len(t, posted.Body["city"], 30)
 
-	partyReq.Party = &accountingsyncports.AccountingPartyDraft{DisplayName: "O'Brien Logistics"}
+	partyReq.Party = &accountingconnectorports.AccountingPartyDraft{
+		DisplayName: "O'Brien Logistics",
+	}
 	_, err = conn.CreateReference(t.Context(), &partyReq)
 	assert.True(t, conn.IsDuplicateName(err))
-	assert.True(t, conn.IsDuplicateName(&businesscentral.APIError{
-		Status: 400, Code: businesscentral.CodeEntityWithSameKey,
+	assert.True(t, conn.IsDuplicateName(&businesscentralerrors.APIError{
+		Status: 400, Code: businesscentralerrors.CodeEntityWithSameKey,
 	}))
-	assert.False(t, conn.IsDuplicateName(businesscentral.ErrFieldTooLong))
+	assert.False(t, conn.IsDuplicateName(businesscentralerrors.ErrFieldTooLong))
 
-	for _, kind := range []accountingsync.ReferenceKind{
-		accountingsync.ReferenceKindAccount, accountingsync.ReferenceKindTerm, "Nope",
+	for _, kind := range []accountingprovider.ReferenceKind{
+		accountingprovider.ReferenceKindAccount, accountingprovider.ReferenceKindTerm, "Nope",
 	} {
 		other := base
 		other.Kind = kind
@@ -201,15 +179,15 @@ func TestCreateReferenceLooksForTheNameFirst(t *testing.T) {
 		require.Error(t, err)
 	}
 	missing := base
-	missing.Kind = accountingsync.ReferenceKindVendor
+	missing.Kind = accountingprovider.ReferenceKindVendor
 	_, err = conn.CreateReference(t.Context(), &missing)
-	require.ErrorIs(t, err, errPartyDraftRequired)
-	missing.Kind = accountingsync.ReferenceKindItem
+	require.ErrorIs(t, err, bcsession.ErrPartyDraftRequired)
+	missing.Kind = accountingprovider.ReferenceKindItem
 	_, err = conn.CreateReference(t.Context(), &missing)
-	require.ErrorIs(t, err, errItemDraftRequired)
+	require.ErrorIs(t, err, bcsession.ErrItemDraftRequired)
 
 	assert.Equal(t, strings.Repeat("a", 100),
-		conn.SanitizeName(accountingsync.ReferenceKindCustomer, strings.Repeat("a", 120)))
+		conn.SanitizeName(accountingprovider.ReferenceKindCustomer, strings.Repeat("a", 120)))
 }
 
 func TestUpsertCustomerCreatesWhenUnmapped(t *testing.T) {
@@ -225,10 +203,13 @@ func TestUpsertCustomerCreatesWhenUnmapped(t *testing.T) {
 		return 0, ""
 	}}
 	conn := testConnector(t, fake)
-	result, err := conn.UpsertCustomer(t.Context(), &accountingsyncports.AccountingCustomerDocument{
-		Auth:  testAuth(),
-		Party: accountingsyncports.AccountingPartyDraft{DisplayName: "Northwind Traders"},
-	})
+	result, err := conn.UpsertCustomer(
+		t.Context(),
+		&accountingconnectorports.AccountingCustomerDocument{
+			Auth:  testAuth(),
+			Party: accountingconnectorports.AccountingPartyDraft{DisplayName: "Northwind Traders"},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, "55555555-6666-4777-8888-999999999993", result.ExternalID)
 	assert.Equal(t, "Northwind Traders", result.DocNumber)

@@ -8,8 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -19,7 +22,7 @@ import (
 )
 
 type fakeShipments struct {
-	shipmentports.ShipmentService
+	shipmentserviceports.ShipmentReader
 
 	entity *shipment.Shipment
 }
@@ -35,16 +38,16 @@ func (f *fakeShipments) Get(
 }
 
 type fakeConsole struct {
-	shipmentports.DispatchConsoleRepository
+	dispatchboardports.DispatchConsoleRepository
 
-	moves   []*shipmentports.BoardMove
-	filters []*shipmentports.DispatchBoardFilter
+	moves   []*dispatchboardports.BoardMove
+	filters []*dispatchboardports.DispatchBoardFilter
 }
 
 func (f *fakeConsole) ListBoardMoves(
 	_ context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-) ([]*shipmentports.BoardMove, error) {
+	filter *dispatchboardports.DispatchBoardFilter,
+) ([]*dispatchboardports.BoardMove, error) {
 	f.filters = append(f.filters, filter)
 
 	return f.moves, nil
@@ -71,9 +74,9 @@ func testTenant() pagination.TenantInfo {
 func TestService_MarksAShipmentEnteredByEDIAsWrittenOutside(t *testing.T) {
 	t.Parallel()
 
-	cases := map[shipment.EntryMethod]agent.TaintSource{
-		shipment.EntryMethodEDI:    agent.TaintSourceEDI,
-		shipment.EntryMethodManual: "",
+	cases := map[shipmentvocab.EntryMethod]agent.TaintSource{
+		shipmentvocab.EntryMethodEDI:    agent.TaintSourceEDI,
+		shipmentvocab.EntryMethodManual: "",
 	}
 	for method, want := range cases {
 		t.Run(string(method), func(t *testing.T) {
@@ -118,7 +121,7 @@ func TestService_SaysWhetherAMoveStartsInsideTheCoverageWindow(t *testing.T) {
 
 			moveID := pulid.MustNew("smv_")
 			svc := &Service{
-				console: &fakeConsole{moves: []*shipmentports.BoardMove{{
+				console: &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 					MoveID:            moveID,
 					ProNumber:         "S-2002",
 					OriginWindowStart: now + tc.startsIn,
@@ -157,7 +160,7 @@ func TestService_AMoveWithoutDispatchControlsStillDescribesTheMove(t *testing.T)
 
 	moveID := pulid.MustNew("smv_")
 	svc := &Service{
-		console: &fakeConsole{moves: []*shipmentports.BoardMove{{
+		console: &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 			MoveID:            moveID,
 			ProNumber:         "S-2003",
 			OriginWindowStart: timeutils.NowUnix(),
@@ -177,10 +180,10 @@ func TestService_ReadsACoveredOrFinishedMoveOffTheBoard(t *testing.T) {
 	t.Parallel()
 
 	moveID := pulid.MustNew("smv_")
-	console := &fakeConsole{moves: []*shipmentports.BoardMove{{
+	console := &fakeConsole{moves: []*dispatchboardports.BoardMove{{
 		MoveID:     moveID,
 		ProNumber:  "S-2004",
-		MoveStatus: shipment.MoveStatusCompleted,
+		MoveStatus: shipmentvocab.MoveStatusCompleted,
 	}}}
 	svc := &Service{console: console, logger: zap.NewNop()}
 
@@ -192,7 +195,7 @@ func TestService_ReadsACoveredOrFinishedMoveOffTheBoard(t *testing.T) {
 	filter := console.filters[0]
 	assert.Equal(t, []pulid.ID{moveID}, filter.MoveIDs)
 	assert.True(t, filter.IncludeCovered, "an arrival or departure is on a move with a driver")
-	assert.ElementsMatch(t, shipment.MoveStatuses(), filter.MoveStatuses,
+	assert.ElementsMatch(t, shipmentvocab.MoveStatuses(), filter.MoveStatuses,
 		"a delivered move is Completed, which the board leaves out by default")
 }
 
@@ -218,5 +221,5 @@ func TestService_ShipmentSubjectReadsEveryOneOfItsMoves(t *testing.T) {
 	assert.Equal(t, []pulid.ID{first, last}, filter.MoveIDs)
 	assert.Equal(t, 2, filter.Limit)
 	assert.True(t, filter.IncludeCovered)
-	assert.ElementsMatch(t, shipment.MoveStatuses(), filter.MoveStatuses)
+	assert.ElementsMatch(t, shipmentvocab.MoveStatuses(), filter.MoveStatuses)
 }

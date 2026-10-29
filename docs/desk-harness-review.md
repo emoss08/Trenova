@@ -138,7 +138,7 @@ a pre-turn router, in-turn tool discovery, and one level of delegation.
 | Layer | What it is | Where |
 |---|---|---|
 | Agents | 29 shipped templates (`DispatchAssistant`, `BillingAssistant`, `GeneralAssistant`, `Receivables`, `EDIDesk`, …). An organization creates agent definitions from them in AI Control, each with its own tools, instructions, autonomy ceiling, tool budget (default 12, ceiling 64) and delegate allowlist. | `domain/agentdefinition/templates.go`, `definition.go:38-47` |
-| Pre-turn router | `myAgentMatch` / `agentruntime.MatchAgent`. Before a question is sent, the question is ranked against tool names, descriptions and search terms by keyword plus embedding (reciprocal-rank fusion). The result is one of `BetterAgent`, `CurrentAgent`, `NoAgent`, `NoMatch`, and the Desk switches agents, offers a switch, or only suggests one, depending on the person's setting. No model is called. | `agentruntime/match.go`, `matchpool.go`; agent-runtime.md "Matching a question to an agent" |
+| Pre-turn router | `myAgentMatch` / `agentmatch.Matcher.MatchAgent`. Before a question is sent, the question is ranked against tool names, descriptions and search terms by keyword plus embedding (reciprocal-rank fusion). The result is one of `BetterAgent`, `CurrentAgent`, `NoAgent`, `NoMatch`, and the Desk switches agents, offers a switch, or only suggests one, depending on the person's setting. No model is called. | `agentruntime/agentmatch/match.go`, `matchpool.go`; agent-runtime.md "Matching a question to an agent" |
 | In-turn discovery | `find_tools` lets the agent load tools it holds but was not shown, and names a delegate or another agent when it finds nothing it may call. Palette questions hold every query tool the person may use, disclosed through `find_tools`. | `agenttoolcatalog/hybrid.go`, `agentruntime/discovery*`; agent-runtime.md "Quick questions from the palette" |
 | Delegation | `delegate_task` hands a task to an agent on the caller's allowlist (at most 8 delegates, 3 tasks per turn, one level only). The delegate runs inline in the same workflow, as the same person, with its own tools and autonomy. | agent-delegation.md |
 | The loop | `agentruntime.Service.Drive` (`runner.go:150`): a model call, then the tool calls, until the tool budget is spent or the reply has no calls. Each model call and each tool call is a Temporal activity. | `runner.go`, `jobs/agentflow` |
@@ -475,7 +475,7 @@ The cache is broken by:
 - The final tool-free answer (below).
 
 **Context.** The window comes from the provider's own setting, or else from a table keyed by
-model id (`aiprovider/contextwindow.go`). Conversations compact at 85% of the window, and
+model id (`aimodel/contextwindow.go`). Conversations compact at 85% of the window, and
 replay holds at most 120 messages. A tool result is capped at 12,000 characters, and a JSON
 result keeps its fields while its lists are cut (`RT/fence.go`).
 
@@ -595,7 +595,7 @@ The runtime can lower the tier further:
 
 - taint lowers it to ActWithApproval;
 - web or partner text read earlier in the turn lowers every later write to Propose
-  (`agentruntime/extensions.go:116`);
+  (`agentruntime/toolaccess/extensions.go:116`);
 - a write outside the agent's business hours is held (`changelimits.go:101`);
 - the organization's tool rules apply, and if they cannot be read the tool falls back to
   Propose (`dispatch.go:910-933`).
@@ -624,7 +624,7 @@ each call. 13 tools are marked "a person always decides".
 8. Simulation or the daily tool budget, for a call that runs automatically.
 
 **Approvals are bound to what the person saw.** The preview digest is SHA-256 over these
-inputs (`domain/agent/preview.go:368-440`):
+inputs (`domain/agentpreview/preview.go:368-440`):
 
 - the proposal and the tool;
 - the parameters as they would run;
@@ -646,7 +646,7 @@ key hashed from the owner, tool, canonical arguments and an ordinal (`stepkey.go
 
 - a settled claim replays its outcome;
 - a call whose outcome is unknown is reported to the model as unknown;
-- an unwritable ledger refuses the call (`agentruntime/guard.go:64-206`).
+- an unwritable ledger refuses the call (`agentruntime/tooldispatch/guard.go:64-206`).
 
 **Taint.** A run opens tainted when it starts from outside content: an email, a document, an EDI
 file, an attachment, a tainted memory, or an inherited conversation or delegator. While it is
@@ -701,11 +701,11 @@ succeeded, and steps and tokens per task.
 
 | Tool | What it measures | Size | Paths |
 |---|---|---|---|
-| Desk bench (`trenova desk run`) | Real turns on a seeded database through the production workflow. Deterministic checks: `calls`, `noCalls`, `maxCalls`, `maxFailedCalls`, `proposals`, `executed`, `replyIncludes/Excludes`, `facts`, `db`, `maxSeconds`. A provider matrix (`--provider A --provider B --repeat N`). | 134 scenarios, 202 steps, 20 files | `services/tms/deskbench/scenarios/`, `internal/deskbench/checks.go` |
+| Desk bench (`trenova desk run`) | Real turns on a seeded database through the production workflow. Deterministic checks: `calls`, `noCalls`, `maxCalls`, `maxFailedCalls`, `proposals`, `executed`, `replyIncludes/Excludes`, `facts`, `db`, `maxSeconds`. A provider matrix (`--provider A --provider B --repeat N`). | 134 scenarios, 202 steps, 20 files | `services/tms/deskbench/scenarios/`, `internal/deskbench/benchcheck/checks.go` |
 | Rubrics in the bench | 142 of the 202 steps carry a rubric. **None is scored**: each is printed beside the step. | – | `desk-bench.md:203` |
 | Routing bench (`trenova desk route`) | The pre-turn agent matcher. No model is called. | 33 labelled questions | `deskbench/routing/desk.yaml` |
 | Eval gate (CI) | `find_tools` / preselection **ranking**. It does not measure what a model chooses. | 557 keyword cases, 631 hybrid cases (557 plus 74 paraphrases) | `app/agentevalgate`, `evals/toolselection.floors.json` |
-| Quality suites (production) | Replays of captured cases against the live agent. The score is 0.7 deterministic (toolChoice 0.35, arguments 0.25, proposals 0.20, …) plus 0.3 from an LLM judge; a case passes at 0.8. Regression is measured against the median of recent runs. | Cases captured from decided proposals and replies given a thumbs-up | `agentscoring/scoring.go`, `agentqualityservice/judge.go` |
+| Quality suites (production) | Replays of captured cases against the live agent. The score is 0.7 deterministic (toolChoice 0.35, arguments 0.25, proposals 0.20, …) plus 0.3 from an LLM judge; a case passes at 0.8. Regression is measured against the median of recent runs. | Cases captured from decided proposals and replies given a thumbs-up | `agentscoring/scoring.go`, `agentqualityengine/judge.go` |
 | Red team | 15 injection cases against 14 invariants. The live baseline was **never measured** (`live-baseline.json`: `"cases":0`). | 15 cases | `app/agentredteam` |
 | Findings log | Every problem the bench has found. | 189 findings: 176 fixed, about 12 open, 1 won't fix | `deskbench/findings.yaml` |
 
@@ -771,7 +771,7 @@ thumbs.
 **Measurement defects that bias any comparison across providers:**
 
 1. Cache tokens are dropped. `ChatCompletionResult` has no cache fields
-   (`ports/agentports/agentcompletion.go:148-180`), and the Anthropic adapter reports only
+   (`ports/llmports/agentcompletion.go:148-180`), and the Anthropic adapter reports only
    uncached `input_tokens` (DB-002: a Haiku turn reads "4 in"). OpenAI's input count includes
    its cached tokens. Both the bench matrix and `ai_work_units.input_tokens` therefore undercount
    Claude's input heavily, relative to OpenAI. The trace spans normalize this; the rollups do not.
@@ -1058,7 +1058,7 @@ Where something is a hypothesis, it says so, and §6 says how to test it.
 ### 3.0 Two more audit facts, found while analysing
 
 1. **No unattended run is benched.** The desk bench drives chat turns only, through `StartTurn`.
-   There are no event-driven or scheduled scenarios (`internal/deskbench/scenario.go`,
+   There are no event-driven or scheduled scenarios (`internal/deskbench/benchscenario/scenario.go`,
    `deskbench/scenarios/*.yaml`), yet these are the owner's first-priority surface.
 2. **How unattended runs pick their first tools.** An unattended run's whole request is
    boilerplate (`agentdefinition/runinput.go`): "An event started this run: `<kind>`. It concerns
@@ -2228,7 +2228,7 @@ describes the design as built ("Job profiles in one runtime", "What a provider c
 
 **Job profiles (Phase 4).**
 
-- One runtime: `agentruntime.profileFor` gives every turn a profile, in one of four modes:
+- One runtime: `toolaccess.Access.ProfileFor` gives every turn a profile, in one of four modes:
   conversation, unattended, delegated, or read-only fan-out. The agent definition supplies what
   the profile holds.
 - A conversation turn can reach the tools other agents in the organization hold for the person.
@@ -2240,7 +2240,7 @@ describes the design as built ("Job profiles in one runtime", "What a provider c
   - the delegate hands back its tool results verbatim, as structured findings
     (`DelegateReport.Findings`).
 - The routing bench reports profile selection as a confusion matrix, with recall and precision
-  for each profile (`deskbench.ProfileConfusion`).
+  for each profile (`benchrouting.ProfileConfusion`).
 
 **Stable prefix and deferred loading (Phase 1).**
 

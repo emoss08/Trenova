@@ -8,10 +8,10 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,25 @@ import (
 	"go.uber.org/zap"
 )
 
-func invalidationFrame(t *testing.T, resource, action string, signal captureservice.DeviceSignal) agentports.RealtimeFrame {
+func invalidationFrame(
+	t *testing.T,
+	resource, action string,
+	signal capturedevices.DeviceSignal,
+) realtimeports.RealtimeFrame {
 	t.Helper()
 
-	data, err := sonic.Marshal(agentports.ResourceInvalidationEvent{
+	data, err := sonic.Marshal(realtimeports.ResourceInvalidationEvent{
 		Resource: resource,
 		Action:   action,
 		Entity:   signal,
 	})
 	require.NoError(t, err)
 
-	return agentports.RealtimeFrame{ID: "1-0", Event: agentports.RealtimeEventInvalidation, Data: data}
+	return realtimeports.RealtimeFrame{
+		ID:    "1-0",
+		Event: realtimeports.RealtimeEventInvalidation,
+		Data:  data,
+	}
 }
 
 func openTestStream(t *testing.T) (*helpers.EventStream, *httptest.ResponseRecorder) {
@@ -56,15 +64,23 @@ func TestStreamRelaysOnlyThisDevicesRequests(t *testing.T) {
 	mine, theirs := pulid.MustNew("cdev_"), pulid.MustNew("cdev_")
 	requestID := pulid.MustNew("creq_")
 
-	assert.False(t, h.forward(stream, invalidationFrame(t, permission.ResourceCaptureBatch.String(),
-		"request.created", captureservice.DeviceSignal{DeviceID: theirs, RequestID: requestID}), mine))
+	assert.False(t, h.forward(stream, invalidationFrame(
+		t,
+		permission.ResourceCaptureBatch.String(),
+		"request.created",
+		capturedevices.DeviceSignal{DeviceID: theirs, RequestID: requestID},
+	), mine))
 	assert.False(t, h.forward(stream, invalidationFrame(t, permission.ResourceShipment.String(),
-		"updated", captureservice.DeviceSignal{DeviceID: mine}), mine))
+		"updated", capturedevices.DeviceSignal{DeviceID: mine}), mine))
 	assert.NotContains(t, recorder.Body.String(), EventCaptureRequest,
 		"another device's request and unrelated resources are dropped")
 
-	assert.False(t, h.forward(stream, invalidationFrame(t, permission.ResourceCaptureBatch.String(),
-		"request.created", captureservice.DeviceSignal{DeviceID: mine, RequestID: requestID}), mine))
+	assert.False(t, h.forward(stream, invalidationFrame(
+		t,
+		permission.ResourceCaptureBatch.String(),
+		"request.created",
+		capturedevices.DeviceSignal{DeviceID: mine, RequestID: requestID},
+	), mine))
 	assert.Contains(t, recorder.Body.String(), "event: "+EventCaptureRequest)
 	assert.Contains(t, recorder.Body.String(), requestID.String())
 }
@@ -78,7 +94,7 @@ func TestStreamEndsWhenTheDeviceIsRevoked(t *testing.T) {
 
 	device := pulid.MustNew("cdev_")
 	done := h.forward(stream, invalidationFrame(t, permission.ResourceCaptureDevice.String(),
-		"revoked", captureservice.DeviceSignal{DeviceID: device}), device)
+		"revoked", capturedevices.DeviceSignal{DeviceID: device}), device)
 
 	assert.True(t, done)
 	assert.Contains(t, recorder.Body.String(), "event: "+EventCaptureRevoked)
@@ -95,13 +111,21 @@ func TestFailMapsDeviceErrors(t *testing.T) {
 		status int
 		body   string
 	}{
-		{&captureservice.PairingError{Code: captureservice.PairingSlowDown}, http.StatusBadRequest, `"error":"slow_down"`},
 		{
-			&captureservice.OutdatedAgentError{Current: "1.0.0", Minimum: "1.2.0"},
+			&capturedevices.PairingError{Code: capturedevices.PairingSlowDown},
+			http.StatusBadRequest,
+			`"error":"slow_down"`,
+		},
+		{
+			&capturedevices.OutdatedAgentError{Current: "1.0.0", Minimum: "1.2.0"},
 			http.StatusUpgradeRequired, `"minimumVersion":"1.2.0"`,
 		},
 		{
-			&captureservice.OutdatedAgentError{Current: "1.0.0", Minimum: "1.2.0", AutoUpdate: true},
+			&capturedevices.OutdatedAgentError{
+				Current:    "1.0.0",
+				Minimum:    "1.2.0",
+				AutoUpdate: true,
+			},
 			http.StatusUpgradeRequired, `"autoUpdate":true`,
 		},
 	}
@@ -121,8 +145,8 @@ func TestRequireDeviceRefusesAnythingButABearerToken(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	h := &Handler{l: zap.NewNop(), eh: helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
 	})}
 
 	for _, header := range []string{"", "Basic abc", "Bearer", "bearer "} {

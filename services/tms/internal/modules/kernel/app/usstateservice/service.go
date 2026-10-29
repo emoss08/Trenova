@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,6 +35,13 @@ func (s *Service) Get(
 	req usstateports.GetUsStateByIDRequest,
 ) (*usstate.UsState, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	ids []pulid.ID,
+) ([]*usstate.UsState, error) {
+	return s.repo.GetByIDs(ctx, ids)
 }
 
 func (s *Service) SelectOptions(

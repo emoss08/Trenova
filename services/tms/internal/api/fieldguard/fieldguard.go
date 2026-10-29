@@ -6,12 +6,13 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/gin-gonic/gin"
 )
 
-func Visible(c *gin.Context, engine permissionports.PermissionEngine) permission.FieldGroupSet {
+func Visible(c *gin.Context, engine permissionports.PermissionEngine) protectedfield.GroupSet {
 	authCtx := authctx.GetAuthContext(c)
 	if authCtx == nil || engine == nil {
 		return 0
@@ -22,7 +23,11 @@ func Visible(c *gin.Context, engine permissionports.PermissionEngine) permission
 		func(ctx context.Context, resource permission.Resource) (bool, error) {
 			result, err := engine.Check(
 				ctx,
-				middleware.BuildPermissionCheckRequest(authCtx, resource.String(), permission.OpRead),
+				middleware.BuildPermissionCheckRequest(
+					authCtx,
+					resource.String(),
+					permission.OpRead,
+				),
 			)
 			if err != nil || result == nil {
 				return false, err
@@ -32,7 +37,7 @@ func Visible(c *gin.Context, engine permissionports.PermissionEngine) permission
 	)
 }
 
-func Withhold[T permission.FieldWithholder](visible permission.FieldGroupSet, items ...T) {
+func Withhold[T protectedfield.Withholder](visible protectedfield.GroupSet, items ...T) {
 	if visible.HasAll() {
 		return
 	}

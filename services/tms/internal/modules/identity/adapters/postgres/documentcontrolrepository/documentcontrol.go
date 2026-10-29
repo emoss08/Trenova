@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/documentcontrol/documentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/resultcache"
@@ -39,63 +39,85 @@ func New(p Params) tenantports.DocumentControlRepository {
 func (r *repository) Get(
 	ctx context.Context,
 	req tenantports.GetDocumentControlRequest,
-) (*tenant.DocumentControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		entity, err := r.find(ctx)
-		if err != nil {
-			r.l.Error(
-				"failed to get document control",
-				zap.String("orgID", req.TenantInfo.OrgID.String()),
-				zap.String("buID", req.TenantInfo.BuID.String()),
-				zap.Error(err),
-			)
-			return nil, documentControlErrors.Map(err, req.TenantInfo.OrgID.String())
-		}
+) (*documentcontrol.DocumentControl, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
+			entity, err := r.find(ctx)
+			if err != nil {
+				r.l.Error(
+					"failed to get document control",
+					zap.String("orgID", req.TenantInfo.OrgID.String()),
+					zap.String("buID", req.TenantInfo.BuID.String()),
+					zap.Error(err),
+				)
+				return nil, documentControlErrors.Map(err, req.TenantInfo.OrgID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *tenant.DocumentControl,
-) (*tenant.DocumentControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		if err := tenantdb.DocumentControls.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, documentControlErrors.Map(err, entity.ID.String())
-		}
+	entity *documentcontrol.DocumentControl,
+) (*documentcontrol.DocumentControl, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
+			if err := documentcontroldb.DocumentControls.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				return nil, documentControlErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.DocumentControl,
-) (*tenant.DocumentControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		if err := tenantdb.DocumentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
-			return nil, documentControlErrors.Map(err, entity.ID.String())
-		}
+	entity *documentcontrol.DocumentControl,
+) (*documentcontrol.DocumentControl, error) {
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
+			if err := documentcontroldb.DocumentControls.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				return nil, documentControlErrors.Map(err, entity.ID.String())
+			}
 
-		return entity, nil
-	})
+			return entity, nil
+		},
+	)
 }
 
 func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
-) (*tenant.DocumentControl, error) {
-	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DocumentControl]{
-		Find: func(ctx context.Context) (*tenant.DocumentControl, error) {
+) (*documentcontrol.DocumentControl, error) {
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*documentcontrol.DocumentControl]{
+		Find: func(ctx context.Context) (*documentcontrol.DocumentControl, error) {
 			return dbtx.Read(ctx, r.db, r.find)
 		},
 		Create: func(ctx context.Context) error {
-			dc := tenantdb.DocumentControls
+			dc := documentcontroldb.DocumentControls
 			_, err := dc.CreateOrSkip(
 				ctx,
 				r.db.Keel(ctx),
-				[]*tenant.DocumentControl{tenant.NewDefaultDocumentControl(orgID, buID)},
+				[]*documentcontrol.DocumentControl{
+					documentcontrol.NewDefaultDocumentControl(orgID, buID),
+				},
 				dc.OrganizationID,
 				dc.BusinessUnitID,
 			)
@@ -108,8 +130,8 @@ func (r *repository) GetOrCreate(
 
 			return nil
 		},
-		Default: func() *tenant.DocumentControl {
-			return tenant.NewDefaultDocumentControl(orgID, buID)
+		Default: func() *documentcontrol.DocumentControl {
+			return documentcontrol.NewDefaultDocumentControl(orgID, buID)
 		},
 		MapError: func(err error) error {
 			return documentControlErrors.Map(err, orgID.String())
@@ -117,6 +139,7 @@ func (r *repository) GetOrCreate(
 	})
 }
 
-func (r *repository) find(ctx context.Context) (*tenant.DocumentControl, error) {
-	return tenantdb.DocumentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
+func (r *repository) find(ctx context.Context) (*documentcontrol.DocumentControl, error) {
+	return documentcontroldb.DocumentControls.Cache(resultcache.Settings()...).
+		One(ctx, r.db.Keel(ctx))
 }

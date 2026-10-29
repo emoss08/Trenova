@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
@@ -70,7 +70,7 @@ func cardResolver(
 		}),
 	})
 	deps := &Deps{
-		Core:         &base.Core{L: zap.NewNop(), PermissionEngine: engine},
+		Core:         &resolvercore.Core{L: zap.NewNop(), PermissionEngine: engine},
 		JournalCards: cards,
 	}
 	ctx := gqlctx.WithAuthContext(t.Context(), &authctx.AuthContext{
@@ -112,7 +112,9 @@ func TestJournalEntryCardLeavesOutWhatTheReaderMayNotRead(t *testing.T) {
 		}},
 	}
 	m.entries.EXPECT().GetByID(mock.Anything, mock.Anything).Return(entry, nil)
-	m.accts.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*glaccount.GLAccount{receivable}, nil)
+	m.accts.EXPECT().
+		GetByIDs(mock.Anything, mock.Anything).
+		Return([]*glaccount.GLAccount{receivable}, nil)
 	m.sources.EXPECT().
 		GetByJournalEntry(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("JournalSource not found"))
@@ -152,7 +154,7 @@ func TestJournalEntryCardRefusesAnIDThatIsNotOne(t *testing.T) {
 func TestJournalCardFieldsReadNullWhenTheirValueIsUnknown(t *testing.T) {
 	t.Parallel()
 
-	deps := &Deps{Core: &base.Core{L: zap.NewNop()}}
+	deps := &Deps{Core: &resolvercore.Core{L: zap.NewNop()}}
 	line := &JournalCardLineResolver{deps}
 	posting := &JournalCardPostingResolver{deps}
 	source := &JournalSourceInfoResolver{deps}

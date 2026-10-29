@@ -31,18 +31,18 @@ Four things make that observable and repeatable:
   a bench turn, and a bench run never touches the dev worker's work. Edit a tool description,
   run the bench again, and the new description is what the model reads. The edition's
   worker-only options are left out, since they add schedules of their own.
-- **A recorder on the model router.** `agentports.CompletionService` is decorated
-  (`deskbench.Recorder`) so every chat, streamed and structured call is copied as it was sent and
+- **A recorder on the model router.** `llmports.CompletionService` is decorated
+  (`benchrecord.Recorder`) so every chat, streamed and structured call is copied as it was sent and
   as it came back: the system prompt, the messages, the tools offered, thinking, tool calls,
   tokens, latency, cost, retries, fallbacks and errors. Calls are tied to a turn by their usage
   attribution (`ThreadID`, `OwnerID`); a call that carries neither (the scope guard's
   classifier) is listed beside the turn it ran during.
 - **A watcher on the workflow starter.** `kernelports.WorkflowStarter` is decorated
-  (`deskbench.TurnWatcher`) so every `AssistantTurnWorkflow` started on a bench conversation, by
+  (`benchwatch.TurnWatcher`) so every `AssistantTurnWorkflow` started on a bench conversation, by
   the bench or by the application (a decision follow-up), is seen the moment it starts. The
   bench follows each one's stream from the first frame, waits for its result, and keeps
   waiting a few seconds for another turn the last one started.
-- **No learning.** `agentports.AgentReflectionScheduler` is replaced with one that does
+- **No learning.** `agentreflectionports.AgentReflectionScheduler` is replaced with one that does
   nothing, so a bench conversation is never looked back over. A conversation goes quiet after
   ten minutes, so a run longer than that fed what its early cases taught to the cases after them:
   a rejected hold taught "this person does not want a hold for missing paperwork", and the case
@@ -50,13 +50,29 @@ Four things make that observable and repeatable:
   (`benchLeftovers`) also retires the memories earlier bench conversations taught and dismisses
   what they suggested; memories from people's own conversations are never touched. Reflection
   itself is covered by its own tests, not by the bench. For the same reason
-  `agentports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
+  `agenttrustports.AgentTrustService` is wrapped so the bench's approvals, its end-of-case
   rejections and its failed executions are not outcomes for earned autonomy: its streaks
   promoted `billing_transfer` to AutoExecute on Billing exceptions, and the case that
   approves that proposal found it had already run.
 
 The worker's own log goes to `worker.log` in the run directory, so a tool's error that never
 reached the model is there too.
+
+## Code layout
+
+`internal/deskbench` is the harness: `Bench` opens the isolated application (`app.go`), and
+`Session` and `Conversation` drive turns through it. Each concern around it is its own
+package under `internal/deskbench/`, and `cmd/cli/desk` wires them:
+
+| Package | Holds |
+|---|---|
+| `benchscenario`, `benchagent`, `benchcell` | what a run runs: scenarios and their checks, the bench agents (`agents.yaml`, the unattended shapes), provider cells |
+| `benchrecord` | what a turn records: turn, call and proposal records, the model-call recorder, pricing, output encoding |
+| `benchlive`, `benchwatch`, `benchnamespace` | the live feed, the workflow-starter watcher, the namespace lock and Temporal namespace |
+| `benchrun` | the runner: plans cases, drives each step, fires unattended runs |
+| `benchcheck`, `benchsql`, `benchaudit` | grading a step, the bench's SQL (facts, setup, requirements, data profile), the unauthorized-effects audit |
+| `benchresult`, `benchstats`, `benchreport` | case results and metrics, the statistics, the report, summary and transcript |
+| `benchgate`, `benchbaseline`, `benchrouting`, `benchfindings` | the gate, baseline and sweep, routing scores, `findings.yaml` |
 
 ## Commands
 
@@ -232,7 +248,7 @@ Each case, and each cell (a provider at an effort, split by scenario split), rep
   input the cache did not serve.
 - **Cost.** Priced per call at the provider's own prices, with cache reads and writes at their
   own rates and Haiku 5.5's long-prompt tier above 100K prompt tokens. A provider with no prices
-  is priced from the model's list price (`aiprovider.ListPrice`) or the price reference, and the
+  is priced from the model's list price (`aipricing.ListPrice`) or the price reference, and the
   figure is marked `~`.
 - **Work.** Model calls, tool calls, refused calls by verdict, guard re-asks by guard (the
   `reask` on each call), time to first token and time per task.
@@ -483,7 +499,7 @@ what a filed change does not hold, or stated money or a percentage nothing the c
 the detail lists the figures and fields). A decide step takes `decide: approve`
 or `decide: reject`, an optional `note` (on a rejection, what the agent is told), `tool` to
 decide only that tool's proposals, and `modifications` to approve with changed arguments.
-`page` and `mentions` take the shapes the Desk sends (`agent.PageContext`, `agent.EntityRef`).
+`page` and `mentions` take the shapes the Desk sends (`agentpagecontext.PageContext`, `agentpagecontext.EntityRef`).
 A seeded record's id changes with every reseed, so a mention may give `find:` in place of `id`:
 one `SELECT` whose single row is the id, run before the message the way a fact query runs
 (`find: select id from shipments where pro_number = 'SEED-PAY-002'`).
@@ -586,7 +602,7 @@ keys by stratum. `TestScenarioSplits_MatchTheLedger` and `TestToolSelectionSplit
 fail when the assignment moves, naming what joined and what left the held-out set. Adding a
 scenario or a case moves its stratum's quota, and renaming or merging tools can move a case to
 another desk, so a move is expected; review it before rewriting the ledger (`go test -count=1 -run
-TestScenarioSplits ./internal/deskbench/ -update`, and `-run 'AgainstFloors|Splits'` with
+TestScenarioSplits ./internal/deskbench/benchscenario/ -update`, and `-run 'AgainstFloors|Splits'` with
 `-update` in `agentevalgate`). A scenario that joins the held-out set after living in development
 may have been tuned against: write a new scenario for that desk instead of keeping it held out.
 

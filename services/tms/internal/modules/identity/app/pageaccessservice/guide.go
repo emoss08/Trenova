@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pageaccess"
 	"github.com/emoss08/trenova/shared/i18n"
@@ -81,7 +82,7 @@ func (s *Service) Guide(ctx context.Context, req *GuideRequest) ([]ResourceGuide
 
 func (s *Service) guide(
 	ctx context.Context,
-	def *permission.ResourceDefinition,
+	def *permissionspec.ResourceDefinition,
 	ceiling permission.FieldSensitivity,
 ) ResourceGuide {
 	name := i18n.T(ctx, def.DisplayName)

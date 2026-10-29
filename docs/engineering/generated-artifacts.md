@@ -164,7 +164,7 @@ schema or policy, or adding or removing a tool means refreshing them**:
 
 ```bash
 cd services/tms
-go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentdefinition/ -update
+go test -run TestPromptSnapshots ./internal/modules/agent/domain/agentprompt/ -update
 go test -run TestToolCatalogSnapshot ./internal/modules/agent/app/agentevalgate/ -update
 ```
 
@@ -241,7 +241,7 @@ package. The job also runs the prompt-injection red-team suite; see
 `go run ./internal/api/graphql/agentread/gen` is the last step of `task gqlgen` and of the
 `GraphQL server generated code` step in `Codegen Checks`. It writes the agent read executor
 (`internal/api/graphql/agentread/executor_gen.go`) and the tool bindings
-(`internal/modules/agent/app/agentquerytoolservice/graphqlreads_gen.go`) from
+(`internal/modules/agent/app/querytools/graphqlread/graphqlreads_gen.go`) from
 `agentread/reads.yml`, the persisted operations and the generated executor. It fails, naming the
 tool, when:
 

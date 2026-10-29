@@ -5,21 +5,29 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentbillingports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenttrackingports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentcommentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentholdportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentserviceportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -39,7 +47,7 @@ func (s *importAssistantStub) GetHistory(
 	context.Context,
 	string,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentImportChatHistoryResponse, error) {
+) (*shipmentimportassistantports.ShipmentImportChatHistoryResponse, error) {
 	panic("unexpected GetHistory call")
 }
 
@@ -141,35 +149,35 @@ func (s *permitServiceStub) WaiveRequirement(
 
 func setupShipmentHandler(
 	t *testing.T,
-	service *shipmentportsmock.MockShipmentService,
+	service *shipmentServiceMocks,
 ) *shipmenthandler.Handler {
 	t.Helper()
 
-	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
-	holdService := shipmentportsmock.NewMockShipmentHoldService(t)
+	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
+	holdService := shipmentholdportsmock.NewMockShipmentHoldService(t)
 	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService, nil)
 }
 
 func setupShipmentHandlerWithComments(
 	t *testing.T,
-	service *shipmentportsmock.MockShipmentService,
-	commentService *shipmentportsmock.MockShipmentCommentService,
+	service *shipmentServiceMocks,
+	commentService *shipmentcommentportsmock.MockShipmentCommentService,
 ) *shipmenthandler.Handler {
 	t.Helper()
-	holdService := shipmentportsmock.NewMockShipmentHoldService(t)
+	holdService := shipmentholdportsmock.NewMockShipmentHoldService(t)
 	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService, nil)
 }
 
 func setupShipmentHandlerWithSubresources(
 	t *testing.T,
-	service *shipmentportsmock.MockShipmentService,
-	commentService *shipmentportsmock.MockShipmentCommentService,
-	holdService *shipmentportsmock.MockShipmentHoldService,
-	importAssistant ...shipmentports.ShipmentImportAssistantService,
+	service *shipmentServiceMocks,
+	commentService *shipmentcommentportsmock.MockShipmentCommentService,
+	holdService *shipmentholdportsmock.MockShipmentHoldService,
+	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *shipmenthandler.Handler {
 	t.Helper()
 
-	var assistant shipmentports.ShipmentImportAssistantService
+	var assistant shipmentimportassistantports.ShipmentImportAssistantService
 	if len(importAssistant) > 0 {
 		assistant = importAssistant[0]
 	}
@@ -182,11 +190,35 @@ func setupShipmentHandlerWithSubresources(
 	})
 }
 
+type shipmentServiceMocks struct {
+	reader    *shipmentserviceportsmock.MockShipmentReader
+	writer    *shipmentserviceportsmock.MockShipmentWriter
+	lifecycle *shipmentserviceportsmock.MockShipmentLifecycleService
+	readiness *shipmentserviceportsmock.MockShipmentBillingReadinessReader
+	transfer  *shipmentserviceportsmock.MockShipmentBillingTransferService
+	autorater *shipmentserviceportsmock.MockShipmentAutoRater
+	loading   *shipmentserviceportsmock.MockShipmentLoadingPlanner
+}
+
+func newShipmentServiceMocks(t *testing.T) *shipmentServiceMocks {
+	t.Helper()
+
+	return &shipmentServiceMocks{
+		reader:    shipmentserviceportsmock.NewMockShipmentReader(t),
+		writer:    shipmentserviceportsmock.NewMockShipmentWriter(t),
+		lifecycle: shipmentserviceportsmock.NewMockShipmentLifecycleService(t),
+		readiness: shipmentserviceportsmock.NewMockShipmentBillingReadinessReader(t),
+		transfer:  shipmentserviceportsmock.NewMockShipmentBillingTransferService(t),
+		autorater: shipmentserviceportsmock.NewMockShipmentAutoRater(t),
+		loading:   shipmentserviceportsmock.NewMockShipmentLoadingPlanner(t),
+	}
+}
+
 type handlerDeps struct {
-	service         shipmentports.ShipmentService
-	commentService  shipmentports.ShipmentCommentService
-	holdService     shipmentports.ShipmentHoldService
-	importAssistant shipmentports.ShipmentImportAssistantService
+	service         *shipmentServiceMocks
+	commentService  shipmentcommentports.ShipmentCommentService
+	holdService     shipmentholdports.ShipmentHoldService
+	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
 	permitService   permitports.PermitService
 	etas            shipmenttrackingports.ShipmentEtaReader
 	permissions     permissionports.PermissionEngine
@@ -198,14 +230,14 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 
 	logger := zap.NewNop()
 	cfg := &config.Config{
-		App: config.AppConfig{
+		App: appconfig.Config{
 			Debug: true,
 		},
 	}
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: logger,
-		Config: cfg,
+		Logger:    logger,
+		AppConfig: &cfg.App,
 	})
 
 	permissions := deps.permissions
@@ -218,8 +250,19 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 		ErrorHandler:     errorHandler,
 	})
 
+	services := deps.service
+	if services == nil {
+		services = newShipmentServiceMocks(t)
+	}
+
 	return shipmenthandler.New(shipmenthandler.Params{
-		Service:              deps.service,
+		Reader:               services.reader,
+		Writer:               services.writer,
+		Lifecycle:            services.lifecycle,
+		Readiness:            services.readiness,
+		Transfer:             services.transfer,
+		AutoRater:            services.autorater,
+		Loading:              services.loading,
 		CommentService:       deps.commentService,
 		HoldService:          deps.holdService,
 		ImportAssistant:      deps.importAssistant,
@@ -235,8 +278,8 @@ func buildShipmentHandler(t *testing.T, deps handlerDeps) *shipmenthandler.Handl
 func TestShipmentHandler_CalculateTotals_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		CalculateTotals(mock.Anything, mock.Anything, testutil.TestUserID).
 		RunAndReturn(func(_ context.Context, entity *shipment.Shipment, _ pulid.ID) (*shipmentports.ShipmentTotalsResponse, error) {
 			assert.Equal(t, testutil.TestOrgID, entity.OrganizationID)
@@ -277,7 +320,7 @@ func TestShipmentHandler_CalculateTotals_Success(t *testing.T) {
 func TestShipmentHandler_CalculateTotals_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	handler := setupShipmentHandler(t, service)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -295,8 +338,8 @@ func TestShipmentHandler_CalculateTotals_BadJSON(t *testing.T) {
 func TestShipmentHandler_CalculateTotals_MissingFormulaTemplateID(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		CalculateTotals(mock.Anything, mock.Anything, testutil.TestUserID).
 		Return(nil, missingFormulaTemplateError())
 
@@ -325,12 +368,12 @@ func TestShipmentHandler_CalculateTotals_MissingFormulaTemplateID(t *testing.T) 
 func TestShipmentHandler_Create_CompletesImportHistoryWhenSourceDocumentPresent(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	sourceDocumentID := pulid.MustNew("doc_")
 	shipmentID := pulid.MustNew("shp_")
 	completed := false
 
-	service.EXPECT().
+	service.writer.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity.OrganizationID == testutil.TestOrgID &&
 				entity.BusinessUnitID == testutil.TestBuID &&
@@ -342,8 +385,8 @@ func TestShipmentHandler_Create_CompletesImportHistoryWhenSourceDocumentPresent(
 	handler := setupShipmentHandlerWithSubresources(
 		t,
 		service,
-		shipmentportsmock.NewMockShipmentCommentService(t),
-		shipmentportsmock.NewMockShipmentHoldService(t),
+		shipmentcommentportsmock.NewMockShipmentCommentService(t),
+		shipmentholdportsmock.NewMockShipmentHoldService(t),
 		&importAssistantStub{
 			completeHistoryFn: func(_ context.Context, documentID string, tenantInfo pagination.TenantInfo) error {
 				assert.Equal(t, sourceDocumentID.String(), documentID)
@@ -377,7 +420,7 @@ func TestShipmentHandler_Create_CompletesImportHistoryWhenSourceDocumentPresent(
 func TestShipmentHandler_Create_InvalidSourceDocumentID(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	handler := setupShipmentHandler(t, service)
 
 	ginCtx := testutil.NewGinTestContext().
@@ -400,11 +443,11 @@ func TestShipmentHandler_Create_InvalidSourceDocumentID(t *testing.T) {
 func TestShipmentHandler_Create_StillSucceedsWhenHistoryCompletionFails(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	sourceDocumentID := pulid.MustNew("doc_")
 	shipmentID := pulid.MustNew("shp_")
 
-	service.EXPECT().
+	service.writer.EXPECT().
 		Create(mock.Anything, mock.AnythingOfType("*shipment.Shipment"), mock.Anything).
 		Return(&shipment.Shipment{ID: shipmentID}, nil).
 		Once()
@@ -412,8 +455,8 @@ func TestShipmentHandler_Create_StillSucceedsWhenHistoryCompletionFails(t *testi
 	handler := setupShipmentHandlerWithSubresources(
 		t,
 		service,
-		shipmentportsmock.NewMockShipmentCommentService(t),
-		shipmentportsmock.NewMockShipmentHoldService(t),
+		shipmentcommentportsmock.NewMockShipmentCommentService(t),
+		shipmentholdportsmock.NewMockShipmentHoldService(t),
 		&importAssistantStub{
 			completeHistoryFn: func(context.Context, string, pagination.TenantInfo) error {
 				return errortypes.NewBusinessError("completion failed")
@@ -441,13 +484,13 @@ func TestShipmentHandler_Create_StillSucceedsWhenHistoryCompletionFails(t *testi
 func TestShipmentHandler_List_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		List(mock.Anything, mock.MatchedBy(func(req *shipmentports.ListShipmentsRequest) bool {
 			return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == testutil.TestBuID &&
 				req.ShipmentOptions.ExpandShipmentDetails &&
-				req.ShipmentOptions.Status == string(shipment.StatusAssigned)
+				req.ShipmentOptions.Status == string(shipmentvocab.StatusAssigned)
 		})).
 		Return(&pagination.CursorListResult[*shipment.Shipment]{
 			Items:       []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
@@ -475,8 +518,8 @@ func TestShipmentHandler_List_Success(t *testing.T) {
 func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		GetUnassigned(
 			mock.Anything,
 			mock.MatchedBy(func(req *shipmentports.GetUnassignedShipmentsRequest) bool {
@@ -517,8 +560,8 @@ func TestShipmentHandler_GetPermitAssessment_Success(t *testing.T) {
 	shipmentID := pulid.MustNew("shp_")
 	entity := &shipment.Shipment{ID: shipmentID}
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		Get(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
@@ -560,8 +603,8 @@ func TestShipmentHandler_GetPermitAssessment_Success(t *testing.T) {
 
 	handler := buildShipmentHandler(t, handlerDeps{
 		service:        service,
-		commentService: shipmentportsmock.NewMockShipmentCommentService(t),
-		holdService:    shipmentportsmock.NewMockShipmentHoldService(t),
+		commentService: shipmentcommentportsmock.NewMockShipmentCommentService(t),
+		holdService:    shipmentholdportsmock.NewMockShipmentHoldService(t),
 		permitService:  permitService,
 	})
 
@@ -593,9 +636,9 @@ func TestShipmentHandler_GetPermitAssessment_InvalidShipmentID(t *testing.T) {
 	t.Parallel()
 
 	handler := buildShipmentHandler(t, handlerDeps{
-		service:        shipmentportsmock.NewMockShipmentService(t),
-		commentService: shipmentportsmock.NewMockShipmentCommentService(t),
-		holdService:    shipmentportsmock.NewMockShipmentHoldService(t),
+		service:        newShipmentServiceMocks(t),
+		commentService: shipmentcommentportsmock.NewMockShipmentCommentService(t),
+		holdService:    shipmentholdportsmock.NewMockShipmentHoldService(t),
 		permitService:  &permitServiceStub{},
 	})
 
@@ -614,8 +657,8 @@ func TestShipmentHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		Get(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentByIDRequest) bool {
 			return req.ID == shipmentID &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
@@ -644,13 +687,13 @@ func TestShipmentHandler_Get_Success(t *testing.T) {
 func TestShipmentHandler_GetUIPolicy_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		GetUIPolicy(mock.Anything, pagination.TenantInfo{
 			OrgID: testutil.TestOrgID,
 			BuID:  testutil.TestBuID,
 		}).
-		Return(&shipmentports.ShipmentUIPolicy{
+		Return(&shipmentserviceports.ShipmentUIPolicy{
 			AllowMoveRemovals:      false,
 			CheckForDuplicateBOLs:  true,
 			MaxShipmentWeightLimit: 80000,
@@ -669,7 +712,7 @@ func TestShipmentHandler_GetUIPolicy_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp shipmentports.ShipmentUIPolicy
+	var resp shipmentserviceports.ShipmentUIPolicy
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.False(t, resp.AllowMoveRemovals)
 	assert.True(t, resp.CheckForDuplicateBOLs)
@@ -679,16 +722,16 @@ func TestShipmentHandler_GetUIPolicy_Success(t *testing.T) {
 func TestShipmentHandler_GetBillingReadiness_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
+	service := newShipmentServiceMocks(t)
 	shipmentID := pulid.MustNew("shp_")
-	service.EXPECT().
+	service.readiness.EXPECT().
 		GetBillingReadiness(mock.Anything, shipmentID, pagination.TenantInfo{
 			OrgID: testutil.TestOrgID,
 			BuID:  testutil.TestBuID,
 		}).
-		Return(&shipmentports.ShipmentBillingReadiness{
+		Return(&shipmentbillingports.ShipmentBillingReadiness{
 			ShipmentID:            shipmentID.String(),
-			ShipmentStatus:        shipment.StatusCompleted,
+			ShipmentStatus:        shipmentvocab.StatusCompleted,
 			CanMarkReadyToInvoice: true,
 		}, nil).
 		Once()
@@ -705,7 +748,7 @@ func TestShipmentHandler_GetBillingReadiness_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp shipmentports.ShipmentBillingReadiness
+	var resp shipmentbillingports.ShipmentBillingReadiness
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, shipmentID.String(), resp.ShipmentID)
 	assert.True(t, resp.CanMarkReadyToInvoice)
@@ -714,8 +757,8 @@ func TestShipmentHandler_GetBillingReadiness_Success(t *testing.T) {
 func TestShipmentHandler_Duplicate_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		Duplicate(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *shipmentports.BulkDuplicateShipmentRequest) (*shipmentports.ShipmentDuplicateWorkflowResponse, error) {
 			assert.Equal(t, testutil.TestOrgID, req.TenantInfo.OrgID)
@@ -759,10 +802,10 @@ func TestShipmentHandler_Duplicate_Success(t *testing.T) {
 func TestShipmentHandler_GetCommentCount_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
+	service := newShipmentServiceMocks(t)
+	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	commentService.EXPECT().
-		GetCountByShipmentID(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetShipmentCommentCountRequest) bool {
+		GetCountByShipmentID(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.GetShipmentCommentCountRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID &&
 				req.ShipmentID.IsNotNil()
@@ -790,8 +833,8 @@ func TestShipmentHandler_GetCommentCount_Success(t *testing.T) {
 func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
+	service := newShipmentServiceMocks(t)
+	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	shipmentID := pulid.MustNew("shp_")
 	commentID := pulid.MustNew("shc_")
 	encodedCursor, err := pagination.EncodeKeysetCursor([]pagination.CursorSortField{
@@ -801,7 +844,7 @@ func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
 	require.NoError(t, err)
 
 	commentService.EXPECT().
-		ListByShipmentID(mock.Anything, mock.MatchedBy(func(req *shipmentports.ListShipmentCommentsRequest) bool {
+		ListByShipmentID(mock.Anything, mock.MatchedBy(func(req *shipmentcommentports.ListShipmentCommentsRequest) bool {
 			return req.ShipmentID == shipmentID &&
 				req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.Filter.TenantInfo.BuID == testutil.TestBuID &&
@@ -841,8 +884,8 @@ func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
 func TestShipmentHandler_CreateComment_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
+	service := newShipmentServiceMocks(t)
+	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	shipmentID := pulid.MustNew("shp_")
 
 	commentService.EXPECT().
@@ -875,8 +918,8 @@ func TestShipmentHandler_CreateComment_Success(t *testing.T) {
 func TestShipmentHandler_DeleteComment_InvalidCommentID(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	commentService := shipmentportsmock.NewMockShipmentCommentService(t)
+	service := newShipmentServiceMocks(t)
+	commentService := shipmentcommentportsmock.NewMockShipmentCommentService(t)
 	handler := setupShipmentHandlerWithComments(t, service, commentService)
 	shipmentID := pulid.MustNew("shp_")
 
@@ -894,7 +937,7 @@ func TestShipmentHandler_DeleteComment_InvalidCommentID(t *testing.T) {
 func TestShipmentHandler_Duplicate_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	handler := setupShipmentHandler(t, shipmentportsmock.NewMockShipmentService(t))
+	handler := setupShipmentHandler(t, newShipmentServiceMocks(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -911,8 +954,8 @@ func TestShipmentHandler_Duplicate_BadJSON(t *testing.T) {
 func TestShipmentHandler_CheckForDuplicateBOLs_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		CheckForDuplicateBOLs(mock.Anything, mock.MatchedBy(func(req *shipmentports.DuplicateBOLCheckRequest) bool {
 			return req.BOL == "BOL-123" &&
 				req.TenantInfo.OrgID == testutil.TestOrgID &&
@@ -944,8 +987,8 @@ func TestShipmentHandler_CheckForDuplicateBOLs_Success(t *testing.T) {
 func TestShipmentHandler_CheckForDuplicateBOLs_Duplicate(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		CheckForDuplicateBOLs(mock.Anything, mock.Anything).
 		Return(func() error {
 			multiErr := errortypes.NewMultiError()
@@ -973,8 +1016,8 @@ func TestShipmentHandler_CheckForDuplicateBOLs_Duplicate(t *testing.T) {
 func TestShipmentHandler_GetPreviousRates_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.reader.EXPECT().
 		GetPreviousRates(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetPreviousRatesRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID &&
@@ -1019,7 +1062,7 @@ func TestShipmentHandler_GetPreviousRates_Success(t *testing.T) {
 func TestShipmentHandler_GetPreviousRates_BadJSON(t *testing.T) {
 	t.Parallel()
 
-	handler := setupShipmentHandler(t, shipmentportsmock.NewMockShipmentService(t))
+	handler := setupShipmentHandler(t, newShipmentServiceMocks(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).
@@ -1036,8 +1079,8 @@ func TestShipmentHandler_GetPreviousRates_BadJSON(t *testing.T) {
 func TestShipmentHandler_GetDelayedShipments_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		GetDelayedShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetDelayedShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
@@ -1061,8 +1104,8 @@ func TestShipmentHandler_GetDelayedShipments_Success(t *testing.T) {
 func TestShipmentHandler_DelayShipments_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		DelayShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.DelayShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
@@ -1086,8 +1129,8 @@ func TestShipmentHandler_DelayShipments_Success(t *testing.T) {
 func TestShipmentHandler_DelayShipments_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		DelayShipments(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, missingFormulaTemplateError()).
 		Once()
@@ -1108,8 +1151,8 @@ func TestShipmentHandler_DelayShipments_ServiceError(t *testing.T) {
 func TestShipmentHandler_GetAutoCancelableShipments_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		GetAutoCancelableShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetAutoCancelableShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
@@ -1133,8 +1176,8 @@ func TestShipmentHandler_GetAutoCancelableShipments_Success(t *testing.T) {
 func TestShipmentHandler_AutoCancelShipments_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		AutoCancelShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.AutoCancelShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == testutil.TestOrgID &&
 				req.TenantInfo.BuID == testutil.TestBuID
@@ -1158,8 +1201,8 @@ func TestShipmentHandler_AutoCancelShipments_Success(t *testing.T) {
 func TestShipmentHandler_AutoCancelShipments_ServiceError(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		AutoCancelShipments(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, missingFormulaTemplateError()).
 		Once()
@@ -1180,8 +1223,8 @@ func TestShipmentHandler_AutoCancelShipments_ServiceError(t *testing.T) {
 func TestShipmentHandler_Cancel_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		Cancel(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *shipmentports.CancelShipmentRequest, actor *permissionports.RequestActor) (*shipment.Shipment, error) {
 			assert.Equal(t, testutil.TestOrgID, req.TenantInfo.OrgID)
@@ -1189,7 +1232,7 @@ func TestShipmentHandler_Cancel_Success(t *testing.T) {
 			assert.Equal(t, "customer request", req.CancelReason)
 			assert.Equal(t, "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV", req.ShipmentID.String())
 			assert.NotNil(t, actor)
-			return &shipment.Shipment{ID: req.ShipmentID, Status: shipment.StatusCanceled}, nil
+			return &shipment.Shipment{ID: req.ShipmentID, Status: shipmentvocab.StatusCanceled}, nil
 		})
 
 	handler := setupShipmentHandler(t, service)
@@ -1211,8 +1254,8 @@ func TestShipmentHandler_Cancel_Success(t *testing.T) {
 func TestShipmentHandler_TransferOwnership_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		TransferOwnership(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *shipmentports.TransferOwnershipRequest, actor *permissionports.RequestActor) (*shipment.Shipment, error) {
 			assert.Equal(t, testutil.TestOrgID, req.TenantInfo.OrgID)
@@ -1242,15 +1285,15 @@ func TestShipmentHandler_TransferOwnership_Success(t *testing.T) {
 func TestShipmentHandler_Uncancel_Success(t *testing.T) {
 	t.Parallel()
 
-	service := shipmentportsmock.NewMockShipmentService(t)
-	service.EXPECT().
+	service := newShipmentServiceMocks(t)
+	service.lifecycle.EXPECT().
 		Uncancel(mock.Anything, mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, req *shipmentports.UncancelShipmentRequest, actor *permissionports.RequestActor) (*shipment.Shipment, error) {
 			assert.Equal(t, testutil.TestOrgID, req.TenantInfo.OrgID)
 			assert.Equal(t, testutil.TestBuID, req.TenantInfo.BuID)
 			assert.Equal(t, "shp_01ARZ3NDEKTSV4RRFFQ69G5FAV", req.ShipmentID.String())
 			assert.NotNil(t, actor)
-			return &shipment.Shipment{ID: req.ShipmentID, Status: shipment.StatusNew}, nil
+			return &shipment.Shipment{ID: req.ShipmentID, Status: shipmentvocab.StatusNew}, nil
 		})
 
 	handler := setupShipmentHandler(t, service)
@@ -1269,7 +1312,7 @@ func TestShipmentHandler_Uncancel_Success(t *testing.T) {
 func TestShipmentHandler_Cancel_BadShipmentID(t *testing.T) {
 	t.Parallel()
 
-	handler := setupShipmentHandler(t, shipmentportsmock.NewMockShipmentService(t))
+	handler := setupShipmentHandler(t, newShipmentServiceMocks(t))
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).

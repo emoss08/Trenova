@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -29,7 +31,7 @@ func (r *QueryResolver) shipmentsInvoicesBill(
 	if err != nil {
 		return nil, err
 	}
-	invoiceIDs, err := base.ParseIDs(rawInvoiceIDs)
+	invoiceIDs, err := gqlid.ParseIDs(rawInvoiceIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -37,15 +39,15 @@ func (r *QueryResolver) shipmentsInvoicesBill(
 		return []pulid.ID{}, nil
 	}
 
-	invoices, err := r.InvoiceService.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	invoices, err := r.InvoiceQueryService.GetByIDs(ctx, invoiceports.GetInvoicesByIDsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		InvoiceIDs: invoiceIDs,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return invoice.BilledShipmentIDs(invoices...), nil
+	return invoicechargegroup.BilledShipmentIDs(invoices...), nil
 }
 
 func (r *QueryResolver) shipmentsScope(
@@ -92,7 +94,7 @@ func (r *QueryResolver) shipmentsDriverSettlementsPay(
 	if err != nil {
 		return nil, err
 	}
-	settlementIDs, err := base.ParseIDs(rawSettlementIDs)
+	settlementIDs, err := gqlid.ParseIDs(rawSettlementIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +105,7 @@ func (r *QueryResolver) shipmentsDriverSettlementsPay(
 			ctx,
 			driversettlementports.GetDriverSettlementByIDRequest{
 				ID:           id,
-				TenantInfo:   base.TenantInfo(authCtx),
+				TenantInfo:   resolvercore.TenantInfo(authCtx),
 				IncludeLines: true,
 			},
 		)
@@ -127,7 +129,7 @@ func (r *QueryResolver) shipmentsCarrierSettlementsPay(
 	if err != nil {
 		return nil, err
 	}
-	settlementIDs, err := base.ParseIDs(rawSettlementIDs)
+	settlementIDs, err := gqlid.ParseIDs(rawSettlementIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,7 @@ func (r *QueryResolver) shipmentsCarrierSettlementsPay(
 			ctx,
 			carriersettlementports.GetCarrierSettlementByIDRequest{
 				ID:           id,
-				TenantInfo:   base.TenantInfo(authCtx),
+				TenantInfo:   resolvercore.TenantInfo(authCtx),
 				IncludeLines: true,
 			},
 		)
@@ -157,6 +159,6 @@ func emptyShipmentConnection() *gqlmodel.ShipmentConnection {
 		Edges:           []*gqlmodel.ShipmentEdge{},
 		TotalCount:      &total,
 		TotalCountExact: true,
-		PageInfo:        base.PageInfo(false, nil),
+		PageInfo:        gqlconnection.PageInfo(false, nil),
 	}
 }

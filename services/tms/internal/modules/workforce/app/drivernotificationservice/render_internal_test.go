@@ -1,14 +1,15 @@
 package drivernotificationservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documenttemplateportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +50,7 @@ func TestRenderKeysTheTemplateByEventTypeAndFillsTheRecipient(t *testing.T) {
 			assert.True(t, req.FallbackToBuiltIn,
 				"a lost notification is worse than an unstyled one")
 
-			data, ok := req.Data.(documenttemplate.SettlementNotificationContext)
+			data, ok := req.Data.(notificationtemplate.SettlementNotificationContext)
 			require.True(t, ok)
 			assert.Equal(t, "Marcus", data.FirstName)
 			assert.Equal(t, "Dell", data.LastName)
@@ -72,7 +73,7 @@ func TestRenderKeysTheTemplateByEventTypeAndFillsTheRecipient(t *testing.T) {
 			TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_")},
 			WorkerID:   pulid.MustNew("wrk_"),
 			EventType:  "dash.settlement_paid",
-			Context: documenttemplate.SettlementNotificationContext{
+			Context: notificationtemplate.SettlementNotificationContext{
 				SettlementNumber: "STL-1",
 			},
 		},

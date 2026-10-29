@@ -7,9 +7,10 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -25,18 +26,18 @@ import (
 const maxStaleIDsPerCall = 1000
 
 var (
-	_ agentports.RetrievalIndexer       = (*Service)(nil)
-	_ agentports.RetrievalIndexPipeline = (*Service)(nil)
+	_ retrievalports.RetrievalIndexer       = (*Service)(nil)
+	_ retrievalports.RetrievalIndexPipeline = (*Service)(nil)
 )
 
 type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	Repo       agentports.AIRetrievalRepository
-	Sources    agentports.RetrievalSourceRepository
+	Repo       retrievalports.AIRetrievalRepository
+	Sources    retrievalports.RetrievalSourceRepository
 	Usage      aiusageports.AIUsageRepository
-	Registry   *permission.Registry
+	Registry   *permissioncatalog.Registry
 	Embeddings aiusageports.EmbeddingService     `optional:"true"`
 	Signals    kernelports.WorkflowSignalStarter `optional:"true"`
 	Workflows  kernelports.WorkflowStarter       `optional:"true"`
@@ -44,10 +45,10 @@ type Params struct {
 
 type Service struct {
 	l          *zap.Logger
-	repo       agentports.AIRetrievalRepository
-	sources    agentports.RetrievalSourceRepository
+	repo       retrievalports.AIRetrievalRepository
+	sources    retrievalports.RetrievalSourceRepository
 	usage      aiusageports.AIUsageRepository
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	embeddings aiusageports.EmbeddingService
 	signals    kernelports.WorkflowSignalStarter
 	workflows  kernelports.WorkflowStarter
@@ -57,7 +58,7 @@ type Service struct {
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	registry := p.Registry
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	return &Service{
@@ -73,9 +74,9 @@ func New(p Params) *Service { //nolint:gocritic // fx param structs are passed b
 	}
 }
 
-func AsIndexer(s *Service) agentports.RetrievalIndexer { return s }
+func AsIndexer(s *Service) retrievalports.RetrievalIndexer { return s }
 
-func AsPipeline(s *Service) agentports.RetrievalIndexPipeline { return s }
+func AsPipeline(s *Service) retrievalports.RetrievalIndexPipeline { return s }
 
 func validateSourceType(sourceType airetrieval.SourceType) error {
 	if sourceType.IsValid() {
@@ -131,7 +132,7 @@ func (s *Service) markStale(
 ) (int, error) {
 	marked := 0
 	for batch := range slices.Chunk(ids, maxStaleIDsPerCall) {
-		count, err := s.repo.MarkStale(ctx, &agentports.MarkAIRetrievalStaleRequest{
+		count, err := s.repo.MarkStale(ctx, &retrievalports.MarkAIRetrievalStaleRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			SourceIDs:  batch,
@@ -185,7 +186,7 @@ func (s *Service) DeleteSource(
 		return nil
 	}
 
-	if _, err := s.repo.DeleteSource(ctx, &agentports.AIRetrievalSourceRef{
+	if _, err := s.repo.DeleteSource(ctx, &retrievalports.AIRetrievalSourceRef{
 		TenantInfo: tenant,
 		SourceType: sourceType,
 		SourceID:   id,
@@ -228,5 +229,5 @@ func (s *Service) Reindex(
 }
 
 func isNoProvider(err error) bool {
-	return errors.Is(err, agentports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err)
+	return errors.Is(err, llmports.ErrNoProviderConfigured) || errortypes.IsBusinessError(err)
 }

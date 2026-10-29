@@ -281,7 +281,7 @@ user. See [agent-runtime.md](agent-runtime.md#who-a-run-acts-as).
 ## Files refused by the malware scanner
 
 Every file Trenova receives passes `contentscanports.Gate` before it is stored or parsed
-(`documentservice`, `documentuploadservice`, `captureservice`, `ediinboundservice`,
+(`documentservice`, `documentuploadservice`, `captureintake`, `ediinboundservice`,
 `rateimportservice`, the fuel card file connector, and the profile picture and logo uploads). When ClamAV flags one,
 `contentscanservice` writes a critical entry against resource `document` with operation
 `reject`, the file's SHA-256 as `resource_id` (the file is never stored, so it has no ID),

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -71,6 +72,10 @@ func TestAgreementValidate(t *testing.T) {
 		"chargeback window too long": {
 			func(a *factoring.Agreement) { a.ChargebackWindowDays = 731 }, "chargebackWindowDays",
 		},
+		"advance and top fee tier over 100%": {
+			func(a *factoring.Agreement) { a.AdvanceRateBP = 9600; a.ReserveRateBP = 400 },
+			"feeTiers[0].rateBp",
+		},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -80,4 +85,78 @@ func TestAgreementValidate(t *testing.T) {
 			assert.Contains(t, errorFields(a), tc.field)
 		})
 	}
+}
+
+func TestAgreementValidateFeesFitAfterAdvance(t *testing.T) {
+	t.Parallel()
+
+	a := validAgreement()
+	a.AdvanceRateBP = 9500
+	a.ReserveRateBP = 500
+	a.FeeTiers[0].FlatMinor = 50_000
+	assert.Empty(t, errorFields(a), "the whole face may go; flat fees are no share of it")
+
+	a.AdvanceRateBP = 9600
+	a.ReserveRateBP = 400
+	assert.Equal(t, []string{"feeTiers[0].rateBp"}, errorFields(a))
+
+	a.AdvanceRateBP = 9800
+	a.ReserveRateBP = 200
+	assert.Equal(t, []string{"feeTiers[0].rateBp", "feeTiers[1].rateBp"}, errorFields(a))
+
+	multiErr := errortypes.NewMultiError()
+	a.Validate(multiErr)
+	assert.Equal(
+		t,
+		"Advance and fee rate together cannot be more than 100% of the invoice",
+		multiErr.Errors[0].Message,
+	)
+
+	a.AdvanceRateBP = factoring.BasisPoints + 1
+	a.ReserveRateBP = 0
+	fields := errorFields(a)
+	assert.Contains(t, fields, "advanceRateBp")
+	assert.NotContains(t, fields, "feeTiers[0].rateBp", "an invalid advance is reported once")
+}
+
+func TestAgreementPostingAccounts(t *testing.T) {
+	t.Parallel()
+
+	defaultAR := pulid.MustNew("gla_")
+	defaultCash := pulid.MustNew("gla_")
+	agreement := &factoring.Agreement{}
+
+	accounts := agreement.PostingAccounts(defaultAR, defaultCash)
+	assert.Equal(t, defaultCash, accounts.Cash)
+	fields := func(missing []factoring.MissingAccount) []string {
+		out := make([]string, 0, len(missing))
+		for _, m := range missing {
+			out = append(out, m.Field)
+		}
+		return out
+	}
+	assert.Equal(
+		t,
+		[]string{"feeExpenseAccountId", "dueFromFactorAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
+	)
+	assert.Equal(
+		t,
+		[]string{"feeExpenseAccountId", "liabilityAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSecuredBorrowing)),
+	)
+
+	agreement.CashAccountID = pulid.MustNew("gla_")
+	agreement.FeeExpenseAccountID = pulid.MustNew("gla_")
+	agreement.DueFromFactorAccountID = pulid.MustNew("gla_")
+	accounts = agreement.PostingAccounts(pulid.Nil, pulid.Nil)
+	assert.Equal(t, agreement.CashAccountID, accounts.Cash)
+	assert.Equal(
+		t,
+		[]string{"defaultArAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
+	)
+
+	agreement.ChargebackWindowDays = 90
+	assert.Equal(t, now+90*86_400, agreement.ChargebackDeadline(now))
 }

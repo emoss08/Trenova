@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"hash"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/smime"
 )
 
 const (
@@ -18,7 +20,7 @@ const (
 )
 
 func ComputeMIC(content []byte, algorithm string) (string, error) {
-	normalized := normalizeAlgorithm(algorithm, MICAlgorithmSHA256)
+	normalized := smime.NormalizeAlgorithm(algorithm, MICAlgorithmSHA256)
 	digest, err := micHash(normalized)
 	if err != nil {
 		return "", err
@@ -47,6 +49,6 @@ func micHash(algorithm string) (hash.Hash, error) {
 	case MICAlgorithmSHA512:
 		return sha512.New(), nil
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnsupportedSigningAlgorithm, algorithm)
+		return nil, fmt.Errorf("%w: %s", smime.ErrUnsupportedSigningAlgorithm, algorithm)
 	}
 }

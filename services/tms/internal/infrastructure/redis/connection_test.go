@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/cacheconfig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -16,7 +17,7 @@ import (
 
 func unreachableCache(tracing bool) *config.Config {
 	cfg := &config.Config{}
-	cfg.Cache = config.CacheConfig{
+	cfg.Cache = cacheconfig.Config{
 		Host:        "127.0.0.1",
 		Port:        1,
 		DialTimeout: 100 * time.Millisecond,
@@ -28,10 +29,12 @@ func unreachableCache(tracing bool) *config.Config {
 }
 
 func TestNewConnection_TracesCommandsOnceTheTracerStarts(t *testing.T) {
+	cfg := unreachableCache(true)
 	client, err := NewConnection(ConnectionParams{
-		Config: unreachableCache(true),
-		Logger: zap.NewNop(),
-		LC:     fxtest.NewLifecycle(t),
+		CacheConfig:      &cfg.Cache,
+		MonitoringConfig: &cfg.Monitoring,
+		Logger:           zap.NewNop(),
+		LC:               fxtest.NewLifecycle(t),
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = client.Close() })
@@ -57,10 +60,12 @@ func TestNewConnection_LeavesCommandsUntracedWhenTracingIsOff(t *testing.T) {
 	t.Cleanup(func() { _ = provider.Shutdown(t.Context()) })
 	otel.SetTracerProvider(provider)
 
+	cfg := unreachableCache(false)
 	client, err := NewConnection(ConnectionParams{
-		Config: unreachableCache(false),
-		Logger: zap.NewNop(),
-		LC:     fxtest.NewLifecycle(t),
+		CacheConfig:      &cfg.Cache,
+		MonitoringConfig: &cfg.Monitoring,
+		Logger:           zap.NewNop(),
+		LC:               fxtest.NewLifecycle(t),
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = client.Close() })

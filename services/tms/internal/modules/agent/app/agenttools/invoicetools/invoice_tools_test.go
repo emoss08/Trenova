@@ -7,9 +7,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceservice"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -27,7 +29,7 @@ import (
 var errPostedDuringPreview = errors.New("a preview posted an invoice")
 
 type fakeInvoicePoster struct {
-	preview *invoiceservice.PostPreview
+	preview *invoicepostingservice.PostPreview
 	posted  *invoiceports.PostInvoiceRequest
 	locked  bool
 }
@@ -49,11 +51,11 @@ func (f *fakeInvoicePoster) PreviewPost(
 	context.Context,
 	*invoiceports.PostInvoiceRequest,
 	*permissionports.RequestActor,
-) (*invoiceservice.PostPreview, error) {
+) (*invoicepostingservice.PostPreview, error) {
 	return f.preview, nil
 }
 
-func postPreviewFixture() *invoiceservice.PostPreview {
+func postPreviewFixture() *invoicepostingservice.PostPreview {
 	before := &invoice.Invoice{
 		ID:               pulid.MustNew("inv_"),
 		Number:           "INV-7001",
@@ -74,10 +76,10 @@ func postPreviewFixture() *invoiceservice.PostPreview {
 	leg := &shipment.Shipment{
 		ID:        pulid.MustNew("shp_"),
 		ProNumber: "PRO-700",
-		Status:    shipment.StatusReadyToInvoice,
+		Status:    shipmentvocab.StatusReadyToInvoice,
 	}
 	invoicedLeg := *leg
-	invoicedLeg.Status = shipment.StatusInvoiced
+	invoicedLeg.Status = shipmentvocab.StatusInvoiced
 	invoicedLeg.BilledAt = &postedAt
 
 	queueBefore := &billingqueue.BillingQueueItem{
@@ -88,10 +90,10 @@ func postPreviewFixture() *invoiceservice.PostPreview {
 	queueAfter := *queueBefore
 	queueAfter.Status = billingqueue.StatusPosted
 
-	return &invoiceservice.PostPreview{
+	return &invoicepostingservice.PostPreview{
 		Before:      before,
 		After:       &after,
-		Legs:        []invoiceservice.LegChange{{Before: leg, After: &invoicedLeg}},
+		Legs:        []invoicepostingservice.LegChange{{Before: leg, After: &invoicedLeg}},
 		QueueBefore: queueBefore,
 		QueueAfter:  &queueAfter,
 		Journal: &kernelports.JournalPreview{
@@ -120,7 +122,9 @@ func TestPostInvoice_PreviewShowsEverythingThePostWrites(t *testing.T) {
 
 	poster := &fakeInvoicePoster{preview: postPreviewFixture(), locked: true}
 	tool := NewPostInvoiceTool(poster).(*PostInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: poster.preview.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: poster.preview.Before.ID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -144,7 +148,7 @@ func TestPostInvoice_PreviewShowsEverythingThePostWrites(t *testing.T) {
 
 	journal := agenttoolstest.PreviewChange(t, preview, 3)
 	assert.Equal(t, permission.ResourceJournalEntry, journal.Resource)
-	assert.Equal(t, agent.PreviewOperationCreate, journal.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, journal.Operation)
 	require.NotNil(t, agenttoolstest.FieldByPath(t, journal, "debitAccountId").AfterRef)
 	require.NotNil(t, journal.Money)
 	assert.True(t, journal.Money.TotalAfter.Decimal.Equal(decimal.RequireFromString("2100")))
@@ -162,11 +166,13 @@ func TestPostInvoice_ARefusedPostIsAWouldFail(t *testing.T) {
 		"Invoice posting is blocked because the accounting period is locked",
 	)
 	tool := NewPostInvoiceTool(&fakeInvoicePoster{preview: refused, locked: true}).(*PostInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: refused.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: refused.Before.ID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Empty(t, preview.Changes)
 
 	err = tool.Validate(t.Context(), params)
@@ -181,7 +187,9 @@ func TestPostInvoice_PostsOnlyFromAPersonsApproval(t *testing.T) {
 
 	poster := &fakeInvoicePoster{preview: postPreviewFixture()}
 	tool := NewPostInvoiceTool(poster)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: poster.preview.Before.ID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: poster.preview.Before.ID.String()},
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrInvoiceNeedsAPerson)
 	assert.Nil(t, poster.posted)
@@ -248,16 +256,18 @@ func TestSendInvoice_PreviewIsTheEmailPlanSendLaysOut(t *testing.T) {
 
 	sender := &fakeInvoiceSender{plan: sendPlanFixture()}
 	tool := NewSendInvoiceTool(sender).(*SendInvoiceTool)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: sender.plan.InvoiceID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: sender.plan.InvoiceID.String()},
+	)
 
 	preview, err := tool.Preview(t.Context(), params)
 	require.NoError(t, err)
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationSend, change.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationSend, change.Operation)
 	require.NotNil(t, change.Message)
-	assert.Equal(t, agent.MessageChannelEmail, change.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEmail, change.Message.Channel)
 	assert.Equal(t, []string{"ap@acmefoods.test"}, change.Message.To)
 	assert.Equal(t, []string{"billing@acmefoods.test"}, change.Message.Cc)
 	assert.Equal(t, "billing@carrier.test", change.Message.From)
@@ -283,13 +293,15 @@ func TestSendInvoice_RefusesASendThatCannotGo(t *testing.T) {
 
 			sender := &fakeInvoiceSender{plan: plan}
 			tool := NewSendInvoiceTool(sender).(*SendInvoiceTool)
-			params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: plan.InvoiceID.String()})
+			params := agenttoolstest.ExecuteParams(
+				map[string]any{toolparams.ParamInvoiceID: plan.InvoiceID.String()},
+			)
 			params.ProposalID = pulid.MustNew("ap_")
 
 			require.Error(t, tool.Validate(t.Context(), params))
 			preview, err := tool.Preview(t.Context(), params)
 			require.NoError(t, err)
-			agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+			agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 			require.Error(t, tool.Execute(t.Context(), params))
 			assert.Nil(t, sender.sent)
 		})
@@ -301,7 +313,9 @@ func TestSendInvoice_SendsOnlyFromAPersonsApproval(t *testing.T) {
 
 	sender := &fakeInvoiceSender{plan: sendPlanFixture()}
 	tool := NewSendInvoiceTool(sender)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamInvoiceID: sender.plan.InvoiceID.String()})
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamInvoiceID: sender.plan.InvoiceID.String()},
+	)
 
 	require.ErrorIs(t, tool.Execute(t.Context(), params), ErrInvoiceNeedsAPerson)
 

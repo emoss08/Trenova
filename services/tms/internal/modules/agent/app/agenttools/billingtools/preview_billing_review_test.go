@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -96,9 +97,13 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{"billingQueueItemId": item.ID.String()})
 	params.Actor.PrincipalType = permissionports.PrincipalTypeUser
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceBillingQueue, change.Resource)
@@ -113,7 +118,7 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	agenttoolstest.RequireUpdateParity(t, change, &before, item,
 		toolpreview.Only(inReviewFields...), toolpreview.Volatile(inReviewVolatileFields...),
-		toolpreview.WithRefs(decisionRefs))
+		toolpreview.WithRefs(billingqueuepreview.DecisionRefs))
 }
 
 // An unattended run is an agent principal, and moving an item into review is
@@ -134,9 +139,13 @@ func TestTransitionToInReview_AnAgentMovesTheItemIntoReview(t *testing.T) {
 	params := agenttoolstest.ExecuteParams(map[string]any{"billingQueueItemId": item.ID.String()})
 	params.Actor = agenttoolstest.AgentActorFor(params.OrganizationID, params.BusinessUnitID)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	change := agenttoolstest.PreviewChange(t, preview, 0)

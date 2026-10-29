@@ -12,10 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -29,17 +30,16 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator      validationframework.TenantedEntityValidator[*fiscalperiod.FiscalPeriod]
+	validator      tenantedvalidation.EntityValidator[*fiscalperiod.FiscalPeriod]
 	db             *postgres.Connection
 	invoiceRepo    invoiceports.InvoiceRepository
 	accountingRepo tenantports.AccountingControlRepository
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := validationframework.NewKeelChecker(p.DB, fiscalperioddb.FiscalPeriodsSchema())
+	checker := keelcheck.NewChecker(p.DB, fiscalperioddb.FiscalPeriodsSchema())
 	return &Validator{
-		validator: validationframework.
-			NewTenantedValidatorBuilder[*fiscalperiod.FiscalPeriod]().
+		validator: tenantedvalidation.NewBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
 			WithUniquenessChecker(checker).
 			WithReferenceChecker(checker).
@@ -103,7 +103,7 @@ func (v *Validator) ValidateClose(
 	}
 
 	if !control.RequireReconciliationToClose ||
-		control.ReconciliationMode == tenant.ReconciliationModeDisabled {
+		control.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
 		return nil
 	}
 

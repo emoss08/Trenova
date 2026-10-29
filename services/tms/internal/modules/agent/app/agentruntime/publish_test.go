@@ -3,7 +3,12 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -11,14 +16,14 @@ import (
 )
 
 type recordingObserver struct {
-	seen  []agentports.ToolObservation
-	shown *agentports.ShownArtifact
+	seen  []agentruntimeports.ToolObservation
+	shown *agentruntimeports.ShownArtifact
 	err   error
 }
 
 func (o *recordingObserver) observe(
-	observation agentports.ToolObservation,
-) (*agentports.ShownArtifact, error) {
+	observation agentruntimeports.ToolObservation,
+) (*agentruntimeports.ShownArtifact, error) {
 	o.seen = append(o.seen, observation)
 
 	return o.shown, o.err
@@ -35,10 +40,10 @@ func offeredNames(specs []kernelports.ToolSpec) []string {
 
 func runWithObserver(
 	t *testing.T,
-	observer agentports.ToolObserver,
-	tools []agentports.AgentQueryTool,
-	turns ...*agentports.ChatCompletionResult,
-) (*agentports.RunResult, *scriptedCompletion) {
+	observer agentruntimeports.ToolObserver,
+	tools []agenttoolports.AgentQueryTool,
+	turns ...*llmports.ChatCompletionResult,
+) (*agentruntimeports.RunResult, *scriptedCompletion) {
 	t.Helper()
 
 	completion := &scriptedCompletion{Turns: turns}
@@ -48,9 +53,9 @@ func runWithObserver(
 		names = append(names, tool.Name())
 	}
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition:   testDefinition(names...),
-		Actor:        testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition:   runtimetest.Definition(names...),
+		Actor:        runtimetest.Actor(),
 		Input:        "Tell me about SEED-SHP-007 and publish the details in an artifact.",
 		ToolObserver: observer,
 	})
@@ -71,9 +76,9 @@ func TestRun_OffersPublishingWhereArtifactsAreKept(t *testing.T) {
 	t.Parallel()
 
 	observer := &recordingObserver{}
-	_, completion := runWithObserver(t, observer.observe, nil, textTurn("Here it is."))
+	_, completion := runWithObserver(t, observer.observe, nil, runtimetest.TextTurn("Here it is."))
 
-	assert.Contains(t, offeredNames(completion.LastReq.Tools), publishArtifactName)
+	assert.Contains(t, offeredNames(completion.LastReq.Tools), runtimetools.PublishArtifactName)
 	assert.Contains(t, completion.LastReq.System, "## Artifacts")
 	assert.Contains(t, completion.LastReq.System, "publish_artifact")
 }
@@ -83,12 +88,18 @@ func TestRun_OffersPublishingWhereArtifactsAreKept(t *testing.T) {
 func TestRun_DoesNotOfferPublishingWithoutAPane(t *testing.T) {
 	t.Parallel()
 
-	_, completion := runWithObserver(t, nil, nil,
-		toolTurn(publishArtifactName, map[string]any{"title": "Brief", "body": "# Brief"}),
-		textTurn("Here it is."),
+	_, completion := runWithObserver(
+		t,
+		nil,
+		nil,
+		runtimetest.ToolTurn(
+			runtimetools.PublishArtifactName,
+			map[string]any{"title": "Brief", "body": "# Brief"},
+		),
+		runtimetest.TextTurn("Here it is."),
 	)
 
-	assert.NotContains(t, offeredNames(completion.LastReq.Tools), publishArtifactName)
+	assert.NotContains(t, offeredNames(completion.LastReq.Tools), runtimetools.PublishArtifactName)
 	assert.NotContains(t, completion.LastReq.System, "## Artifacts")
 	last := completion.LastReq.Messages[len(completion.LastReq.Messages)-1]
 	assert.True(t, last.IsError)
@@ -107,14 +118,14 @@ would otherwise keep what it publishes.
 func TestRun_InlineTurnWritesItsTablesIntoTheReply(t *testing.T) {
 	t.Parallel()
 
-	completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		textTurn("We have **10 shipment types**."),
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.TextTurn("We have **10 shipment types**."),
 	}}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 
-	_, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition(),
-		Actor:      testActor(),
+	_, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition(),
+		Actor:      runtimetest.Actor(),
 		Input:      "What shipment types do we have?",
 		ThreadID:   pulid.MustNew("athr_"),
 		Publishes:  true,
@@ -123,8 +134,8 @@ func TestRun_InlineTurnWritesItsTablesIntoTheReply(t *testing.T) {
 	require.NoError(t, err)
 
 	offered := offeredNames(completion.LastReq.Tools)
-	assert.NotContains(t, offered, publishArtifactName)
-	assert.NotContains(t, offered, requestDecisionName)
+	assert.NotContains(t, offered, runtimetools.PublishArtifactName)
+	assert.NotContains(t, offered, runtimetools.RequestDecisionName)
 	assert.NotContains(t, completion.LastReq.System, "## Artifacts")
 	assert.Contains(t, completion.LastReq.System, "Nothing is kept beside this reply")
 	assert.NotContains(t, completion.LastReq.System, "point to the table the tool result names")
@@ -136,19 +147,19 @@ func TestRun_PublishesADocumentAndReturnsItsID(t *testing.T) {
 	t.Parallel()
 
 	id := pulid.MustNew("art_")
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: id, Kind: "document", Title: "SEED-SHP-007 brief",
 	}}
 	result, _ := runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{
+		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
 			"title": "SEED-SHP-007 brief",
 			"body":  "# SEED-SHP-007\n\nRange Logistics, Chicago to Denver.",
 		}),
-		textTurn("The brief is open beside the conversation."),
+		runtimetest.TextTurn("The brief is open beside the conversation."),
 	)
 
 	require.Len(t, observer.seen, 1)
-	document, ok := observer.seen[0].Data.(agentports.PublishedDocument)
+	document, ok := observer.seen[0].Data.(agentruntimeports.PublishedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "SEED-SHP-007 brief", document.Title)
 	assert.Contains(t, document.Body, "Range Logistics")
@@ -165,9 +176,15 @@ func TestRun_SaysWhenADocumentCouldNotBeKept(t *testing.T) {
 	t.Parallel()
 
 	observer := &recordingObserver{}
-	result, _ := runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{"title": "Brief", "body": "# Brief"}),
-		textTurn("Here it is."),
+	result, _ := runWithObserver(
+		t,
+		observer.observe,
+		nil,
+		runtimetest.ToolTurn(
+			runtimetools.PublishArtifactName,
+			map[string]any{"title": "Brief", "body": "# Brief"},
+		),
+		runtimetest.TextTurn("Here it is."),
 	)
 
 	assert.True(t, result.Messages[2].ToolFailed)
@@ -180,20 +197,20 @@ func TestRun_PublishesTheAnalysesADocumentNames(t *testing.T) {
 	t.Parallel()
 
 	analysis := pulid.MustNew("art_")
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "document", Title: "Lane brief",
 	}}
 	runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{
+		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
 			"title":    "Lane brief",
 			"body":     "Revenue is spread thin.",
 			"analyses": []any{analysis.String(), analysis.String()},
 		}),
-		textTurn("The brief is beside the conversation."),
+		runtimetest.TextTurn("The brief is beside the conversation."),
 	)
 
 	require.Len(t, observer.seen, 1)
-	document, ok := observer.seen[0].Data.(agentports.PublishedDocument)
+	document, ok := observer.seen[0].Data.(agentruntimeports.PublishedDocument)
 	require.True(t, ok)
 	assert.Equal(t, []pulid.ID{analysis}, document.Analyses)
 }
@@ -205,14 +222,14 @@ func TestRun_RefusesAnAnalysisThatIsNotAnID(t *testing.T) {
 
 	observer := &recordingObserver{}
 	result, _ := runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{
+		runtimetest.ToolTurn(runtimetools.PublishArtifactName, map[string]any{
 			"title": "Brief", "body": "# Brief", "analyses": []any{"lanes"},
 		}),
-		textTurn("Sorry."),
+		runtimetest.TextTurn("Sorry."),
 	)
 
 	for _, seen := range observer.seen {
-		_, kept := seen.Data.(agentports.PublishedDocument)
+		_, kept := seen.Data.(agentruntimeports.PublishedDocument)
 		assert.False(t, kept, "no document is handed over to keep")
 	}
 	assert.True(t, result.Messages[2].ToolFailed)
@@ -225,12 +242,18 @@ func TestRun_RefusesAnAnalysisThatIsNotAnID(t *testing.T) {
 func TestRun_AFixablePublishIsSentAgainNotRetyped(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{err: &agentports.PublishMistake{
+	observer := &recordingObserver{err: &agentruntimeports.PublishMistake{
 		Reason: "an analysis it names is not one this conversation kept",
 	}}
-	result, _ := runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{"title": "Brief", "body": "# Brief"}),
-		textTurn("Sorry."),
+	result, _ := runWithObserver(
+		t,
+		observer.observe,
+		nil,
+		runtimetest.ToolTurn(
+			runtimetools.PublishArtifactName,
+			map[string]any{"title": "Brief", "body": "# Brief"},
+		),
+		runtimetest.TextTurn("Sorry."),
 	)
 
 	content := result.Messages[2].Content
@@ -245,9 +268,15 @@ func TestRun_RefusesAnEmptyDocument(t *testing.T) {
 	t.Parallel()
 
 	observer := &recordingObserver{}
-	result, _ := runWithObserver(t, observer.observe, nil,
-		toolTurn(publishArtifactName, map[string]any{"title": "", "body": ""}),
-		textTurn("Sorry."),
+	result, _ := runWithObserver(
+		t,
+		observer.observe,
+		nil,
+		runtimetest.ToolTurn(
+			runtimetools.PublishArtifactName,
+			map[string]any{"title": "", "body": ""},
+		),
+		runtimetest.TextTurn("Sorry."),
 	)
 
 	assert.True(t, result.Messages[2].ToolFailed)
@@ -265,19 +294,19 @@ carries a note that it is on screen and what to do instead.
 func TestRun_TellsTheModelWhatThePersonAlreadySees(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Shipments", Rows: 25,
 	}}
 	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("shipment_list", map[string]any{"query": ""}),
-		textTurn("Twenty-five shipments; two are delayed."),
+	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn("shipment_list", map[string]any{"query": ""}),
+		runtimetest.TextTurn("Twenty-five shipments; two are delayed."),
 	)
 
 	content := result.Messages[2].Content
 	assert.Contains(t, content, `kept as a table titled "Shipments"`)
 	assert.Contains(t, content, "do not write its rows out as a markdown table")
-	_, payload, fenced := UnfenceToolResult(content)
+	_, payload, fenced := toolresult.Unfence(content)
 	require.True(t, fenced, "the note sits after the fence and does not break reading it back")
 	assert.Contains(t, payload, `"items"`)
 }
@@ -295,13 +324,13 @@ pointer to write.
 func TestRun_ShortListsAreAnsweredInTheReply(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 9,
 	}}
 	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("billing_list_queue_items", map[string]any{"query": ""}),
-		textTurn("Nine items."),
+	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn("billing_list_queue_items", map[string]any{"query": ""}),
+		runtimetest.TextTurn("Nine items."),
 	)
 
 	content := result.Messages[2].Content
@@ -320,14 +349,14 @@ ones selected. Two items answered as a markdown table leave nothing to select.
 func TestRun_AnActionableTableIsPointedToHoweverShort(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Billing queue items", Rows: 2,
 		Actionable: true,
 	}}
 	tool := queryTool("billing_list_queue_items", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("billing_list_queue_items", map[string]any{"query": ""}),
-		textTurn("Two items."),
+	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn("billing_list_queue_items", map[string]any{"query": ""}),
+		runtimetest.TextTurn("Two items."),
 	)
 
 	content := result.Messages[2].Content
@@ -344,14 +373,14 @@ and nothing to price.
 func TestRun_ATableOfRecordsToOpenIsPointedToHoweverShort(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Formula templates", Rows: 3,
 		OpensRecords: true,
 	}}
 	tool := queryTool("formula_list_templates", map[string]any{"items": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("formula_list_templates", map[string]any{"query": ""}),
-		textTurn("Three templates."),
+	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn("formula_list_templates", map[string]any{"query": ""}),
+		runtimetest.TextTurn("Three templates."),
 	)
 
 	content := result.Messages[2].Content
@@ -366,14 +395,20 @@ func TestRun_ATableOfRecordsToOpenIsPointedToHoweverShort(t *testing.T) {
 func TestRun_AViewIsPointedToAsAView(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Late loads", Rows: 3,
 		Actionable: true, Opens: true,
 	}}
 	tool := queryTool("report_compose_table_view", map[string]any{"path": "/shipments"}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("report_compose_table_view", map[string]any{"entity": "shipments", "description": "late"}),
-		textTurn("Three loads are late."),
+	result, _ := runWithObserver(
+		t,
+		observer.observe,
+		[]agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn(
+			"report_compose_table_view",
+			map[string]any{"entity": "shipments", "description": "late"},
+		),
+		runtimetest.TextTurn("Three loads are late."),
 	)
 
 	content := result.Messages[2].Content
@@ -393,14 +428,14 @@ driver did not. A ranked table is now one the model points to by its pick.
 func TestRun_ARankingIsPointedToHoweverShort(t *testing.T) {
 	t.Parallel()
 
-	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+	observer := &recordingObserver{shown: &agentruntimeports.ShownArtifact{
 		ID: pulid.MustNew("art_"), Kind: "table_view", Title: "Drivers ranked for the move",
 		Rows: 5, Ranked: true,
 	}}
 	tool := queryTool("dispatch_rank_candidates", map[string]any{"candidates": []any{}}, nil)
-	result, _ := runWithObserver(t, observer.observe, []agentports.AgentQueryTool{tool},
-		toolTurn("dispatch_rank_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
-		textTurn("Emily Chen is the best fit."),
+	result, _ := runWithObserver(t, observer.observe, []agenttoolports.AgentQueryTool{tool},
+		runtimetest.ToolTurn("dispatch_rank_candidates", map[string]any{"shipmentMoveId": "smv_1"}),
+		runtimetest.TextTurn("Emily Chen is the best fit."),
 	)
 
 	content := result.Messages[2].Content

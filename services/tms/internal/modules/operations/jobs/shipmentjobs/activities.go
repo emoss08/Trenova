@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/shipmentjobs/shipmentcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentinvalidationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -32,8 +33,8 @@ type ActivitiesParams struct {
 	Repo         shipmentports.ShipmentRepository
 	AuditService auditports.AuditService
 	EventService shipmenteventports.ShipmentEventService
-	Invalidator  shipmentports.ShipmentInvalidator
-	AgentEvents  agentports.AgentEventPublisher `optional:"true"`
+	Invalidator  shipmentinvalidationports.ShipmentInvalidator
+	AgentEvents  agenteventports.AgentEventPublisher `optional:"true"`
 	Logger       *zap.Logger
 }
 
@@ -41,8 +42,8 @@ type Activities struct {
 	repo         shipmentports.ShipmentRepository
 	auditService auditports.AuditService
 	eventService shipmenteventports.ShipmentEventService
-	invalidator  shipmentports.ShipmentInvalidator
-	agentEvents  agentports.AgentEventPublisher
+	invalidator  shipmentinvalidationports.ShipmentInvalidator
+	agentEvents  agenteventports.AgentEventPublisher
 	logger       *zap.Logger
 }
 
@@ -117,8 +118,8 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 			}
 		}
 
-		agentports.PublishAgentEvent(ctx, a.agentEvents, agentports.AgentEvent{
-			Kind:      agent.EventShipmentCreated,
+		agenteventports.PublishAgentEvent(ctx, a.agentEvents, agenteventports.AgentEvent{
+			Kind:      agenttrigger.EventShipmentCreated,
 			SubjectID: entity.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
@@ -128,14 +129,18 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}
 
 	if len(duplicated) > 0 {
-		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: payload.OrganizationID,
-			BusinessUnitID: payload.BusinessUnitID,
-			ActorUserID:    payload.RequestedBy,
-			ActorType:      permissionports.PrincipalTypeUser,
-			ActorID:        payload.RequestedBy,
-			Action:         "bulk_created",
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			a.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: payload.OrganizationID,
+				BusinessUnitID: payload.BusinessUnitID,
+				ActorUserID:    payload.RequestedBy,
+				ActorType:      permissionports.PrincipalTypeUser,
+				ActorID:        payload.RequestedBy,
+				Action:         "bulk_created",
+			},
+		)
 	}
 
 	return &BulkDuplicateShipmentsResult{
@@ -172,13 +177,17 @@ func (a *Activities) AutoDelayShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: entity.OrganizationID,
-			BusinessUnitID: entity.BusinessUnitID,
-			Action:         "delayed",
-			RecordID:       entity.ID,
-			Entity:         entity,
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			a.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+				Action:         "delayed",
+				RecordID:       entity.ID,
+				Entity:         entity,
+			},
+		)
 	}
 
 	return &AutoDelayShipmentsResult{
@@ -228,13 +237,17 @@ func (a *Activities) AutoDelayTenantShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: entity.OrganizationID,
-			BusinessUnitID: entity.BusinessUnitID,
-			Action:         "delayed",
-			RecordID:       entity.ID,
-			Entity:         entity,
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			a.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+				Action:         "delayed",
+				RecordID:       entity.ID,
+				Entity:         entity,
+			},
+		)
 	}
 
 	return &AutoDelayShipmentsResult{
@@ -268,10 +281,10 @@ func (a *Activities) AutoCancelShipmentsActivity(
 
 	if len(canceledShipments) > 0 {
 		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			shipmentports.InvalidateShipments(
+			shipmentinvalidationports.InvalidateShipments(
 				ctx,
 				a.invalidator,
-				&shipmentports.ShipmentInvalidation{
+				&shipmentinvalidationports.ShipmentInvalidation{
 					OrganizationID: tenantInfo.OrgID,
 					BusinessUnitID: tenantInfo.BuID,
 					Action:         "bulk_canceled",
@@ -329,11 +342,15 @@ func (a *Activities) AutoCancelTenantShipmentsActivity(
 	}
 
 	if len(canceledShipments) > 0 {
-		shipmentports.InvalidateShipments(ctx, a.invalidator, &shipmentports.ShipmentInvalidation{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			Action:         "bulk_canceled",
-		})
+		shipmentinvalidationports.InvalidateShipments(
+			ctx,
+			a.invalidator,
+			&shipmentinvalidationports.ShipmentInvalidation{
+				OrganizationID: tenantInfo.OrgID,
+				BusinessUnitID: tenantInfo.BuID,
+				Action:         "bulk_canceled",
+			},
+		)
 	}
 
 	return &AutoCancelShipmentsResult{

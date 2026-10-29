@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -31,8 +30,8 @@ func setupTest(t *testing.T) *testDeps {
 	return &testDeps{repo: repo, svc: svc}
 }
 
-func newTestEntity() *permission.UserRoleAssignment {
-	return &permission.UserRoleAssignment{
+func newTestEntity() *rbac.UserRoleAssignment {
+	return &rbac.UserRoleAssignment{
 		ID:             pulid.MustNew("ura_"),
 		UserID:         pulid.MustNew("usr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -47,8 +46,8 @@ func TestList_Success(t *testing.T) {
 	deps := setupTest(t)
 	ctx := t.Context()
 
-	expected := &pagination.ListResult[*permission.UserRoleAssignment]{
-		Items:      []*permission.UserRoleAssignment{newTestEntity()},
+	expected := &pagination.ListResult[*rbac.UserRoleAssignment]{
+		Items:      []*rbac.UserRoleAssignment{newTestEntity()},
 		Total:      1,
 		TotalExact: true,
 	}

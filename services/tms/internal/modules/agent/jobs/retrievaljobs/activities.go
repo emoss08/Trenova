@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -15,12 +15,12 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Pipeline agentports.RetrievalIndexPipeline
+	Pipeline retrievalports.RetrievalIndexPipeline
 	Logger   *zap.Logger
 }
 
 type Activities struct {
-	pipeline agentports.RetrievalIndexPipeline
+	pipeline retrievalports.RetrievalIndexPipeline
 	l        *zap.Logger
 }
 
@@ -34,7 +34,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 func (a *Activities) PlanRetrievalIndexActivity(
 	ctx context.Context,
 	input *PlanInput,
-) (*agentports.RetrievalIndexPlan, error) {
+) (*retrievalports.RetrievalIndexPlan, error) {
 	plan, err := a.pipeline.Plan(ctx, input.TenantInfo())
 	if err != nil {
 		return nil, fmt.Errorf("plan retrieval indexing: %w", err)
@@ -45,8 +45,8 @@ func (a *Activities) PlanRetrievalIndexActivity(
 
 func (a *Activities) IndexRetrievalBatchActivity(
 	ctx context.Context,
-	input *agentports.RetrievalIndexBatchRequest,
-) (*agentports.RetrievalIndexBatchResult, error) {
+	input *retrievalports.RetrievalIndexBatchRequest,
+) (*retrievalports.RetrievalIndexBatchResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -70,7 +70,7 @@ func (a *Activities) IndexRetrievalBatchActivity(
 func (a *Activities) CompleteRetrievalModelChangeActivity(
 	ctx context.Context,
 	input *ModelChangeInput,
-) (*agentports.RetrievalModelChangeResult, error) {
+) (*retrievalports.RetrievalModelChangeResult, error) {
 	result, err := a.pipeline.CompleteModelChange(ctx, input.TenantInfo(), input.PendingModelKey)
 	if err != nil {
 		return nil, fmt.Errorf("complete the embedding model change: %w", err)
@@ -82,7 +82,7 @@ func (a *Activities) CompleteRetrievalModelChangeActivity(
 func (a *Activities) PurgeRetrievalModelActivity(
 	ctx context.Context,
 	input *PurgeInput,
-) (*agentports.RetrievalPurgeResult, error) {
+) (*retrievalports.RetrievalPurgeResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -97,7 +97,7 @@ func (a *Activities) PurgeRetrievalModelActivity(
 func (a *Activities) SweepRetrievalSourcesActivity(
 	ctx context.Context,
 	input *OrganizationSweepInput,
-) (*agentports.RetrievalSweepResult, error) {
+) (*retrievalports.RetrievalSweepResult, error) {
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
@@ -143,8 +143,8 @@ func (a *Activities) ListRetrievalOrganizationsActivity(
 
 func (a *Activities) ReindexRetrievalPageActivity(
 	ctx context.Context,
-	input *agentports.RetrievalReindexPageRequest,
-) (*agentports.RetrievalReindexPage, error) {
+	input *retrievalports.RetrievalReindexPageRequest,
+) (*retrievalports.RetrievalReindexPage, error) {
 	page, err := a.pipeline.ReindexPage(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("re-index a page of %s sources: %w", input.SourceType, err)

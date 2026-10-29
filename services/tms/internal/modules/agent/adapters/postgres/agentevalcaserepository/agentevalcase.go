@@ -7,10 +7,14 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision/agentdecisiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -208,11 +212,11 @@ func (r *repository) ListByAgent(
 	})
 }
 
-func capturedDecisions() []agent.DecisionType {
-	return []agent.DecisionType{
-		agent.DecisionAccepted,
-		agent.DecisionModified,
-		agent.DecisionRejected,
+func capturedDecisions() []agentdecision.DecisionType {
+	return []agentdecision.DecisionType{
+		agentdecision.DecisionAccepted,
+		agentdecision.DecisionModified,
+		agentdecision.DecisionRejected,
 	}
 }
 
@@ -225,7 +229,7 @@ func (r *repository) ListCaptureCandidates(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentqualityports.EvalCaseCaptureCandidate, error) {
-			d := agentdb.AgentDecisions
+			d := agentdecisiondb.AgentDecisions
 			p := agentdb.AgentProposals
 			run := agentdb.AgentRuns
 			captured := agentqualitydb.EvalCases.As("captured")
@@ -371,51 +375,55 @@ func (r *repository) ListAgentsWithActiveCases(
 func (r *repository) ListSamplingCases(
 	ctx context.Context,
 	req agentqualityports.ListEvalCaseSamplingRequest,
-) ([]agentquality.SamplingCase, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentquality.SamplingCase, error) {
-		c := agentqualitydb.EvalCases
-		ev := agentdb.Evaluations
+) ([]agentqualitysuite.SamplingCase, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentqualitysuite.SamplingCase, error) {
+			c := agentqualitydb.EvalCases
+			ev := agentevaluationdb.Evaluations
 
-		lastFailure := keel.Scalar(ev.
-			Pick(keel.CaseInt64().
-				When(
-					keel.Or(
-						ev.Status.Eq(agent.EvaluationStatusFailed),
-						ev.Checks.Text("passed").Eq("false"),
-					),
-					ev.CompletedAt.Coalesce(ev.UpdatedAt),
+			lastFailure := keel.Scalar(ev.
+				Pick(keel.CaseInt64().
+					When(
+						keel.Or(
+							ev.Status.Eq(agentevaluation.EvaluationStatusFailed),
+							ev.Checks.Text("passed").Eq("false"),
+						),
+						ev.CompletedAt.Coalesce(ev.UpdatedAt),
+					).
+					Else(keel.Int64(0))).
+				Where(
+					ev.EvalCaseID.EqCol(c.ID),
+					ev.Status.In(agentevaluation.EvaluationStatusCompleted, agentevaluation.EvaluationStatusFailed),
 				).
-				Else(keel.Int64(0))).
-			Where(
-				ev.EvalCaseID.EqCol(c.ID),
-				ev.Status.In(agent.EvaluationStatusCompleted, agent.EvaluationStatusFailed),
-			).
-			Order(ev.CreatedAt.Desc(), ev.ID.Desc()).
-			Limit(1))
+				Order(ev.CreatedAt.Desc(), ev.ID.Desc()).
+				Limit(1))
 
-		cases, err := keel.Into[agentquality.SamplingCase](ctx, r.db.Keel(ctx), c.
-			Pick(
-				c.ID,
-				c.Source,
-				c.Version,
-				c.Trigger,
-				c.SubjectType.Coalesce(""),
-				c.SubjectID,
-				keel.Int64Of(lastFailure).Coalesce(0),
-			).
-			Where(
-				c.AgentDefinitionID.Eq(req.AgentDefinitionID),
-				c.Status.Eq(agentquality.CaseStatusActive),
-			).
-			Order(c.ID.Asc()).
-			Limit(maxListLimit))
-		if err != nil {
-			return nil, fmt.Errorf("list eval cases to sample: %w", err)
-		}
-		if cases == nil {
-			cases = []agentquality.SamplingCase{}
-		}
+			cases, err := keel.Into[agentqualitysuite.SamplingCase](ctx, r.db.Keel(ctx), c.
+				Pick(
+					c.ID,
+					c.Source,
+					c.Version,
+					c.Trigger,
+					c.SubjectType.Coalesce(""),
+					c.SubjectID,
+					keel.Int64Of(lastFailure).Coalesce(0),
+				).
+				Where(
+					c.AgentDefinitionID.Eq(req.AgentDefinitionID),
+					c.Status.Eq(agentquality.CaseStatusActive),
+				).
+				Order(c.ID.Asc()).
+				Limit(maxListLimit))
+			if err != nil {
+				return nil, fmt.Errorf("list eval cases to sample: %w", err)
+			}
+			if cases == nil {
+				cases = []agentqualitysuite.SamplingCase{}
+			}
 
-		return cases, nil
-	})
+			return cases, nil
+		},
+	)
 }

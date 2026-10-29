@@ -2,7 +2,11 @@ package accountingsyncresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,7 +30,7 @@ func accountingSyncRecordIDs(raw []string) ([]pulid.ID, error) {
 			maxAccountingSyncActionIDs,
 		)
 	}
-	return base.ParseIDs(raw)
+	return gqlid.ParseIDs(raw)
 }
 
 func accountingSyncObjectIDs(raw []string) ([]pulid.ID, error) {
@@ -38,7 +42,7 @@ func accountingSyncObjectIDs(raw []string) ([]pulid.ID, error) {
 			maxAccountingSyncStateIDs,
 		)
 	}
-	return base.ParseIDs(raw)
+	return gqlid.ParseIDs(raw)
 }
 
 func orderedAccountingSyncStates(
@@ -64,7 +68,7 @@ func orderedAccountingSyncStates(
 func accountingSyncRecordConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingSyncRecord],
 ) (*gqlmodel.AccountingSyncRecordConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(node *accountingsync.AccountingSyncRecord, cursor string) *gqlmodel.AccountingSyncRecordEdge {
 			return &gqlmodel.AccountingSyncRecordEdge{Node: node, Cursor: cursor}
@@ -84,12 +88,12 @@ func accountingSyncRecordConnectionToModel(
 }
 
 func accountingInboundConnectionToModel(
-	result *pagination.CursorListResult[*accountingsync.AccountingInboundChange],
+	result *pagination.CursorListResult[*accountinginbound.AccountingInboundChange],
 ) (*gqlmodel.AccountingInboundChangeConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
-			node *accountingsync.AccountingInboundChange,
+			node *accountinginbound.AccountingInboundChange,
 			cursor string,
 		) *gqlmodel.AccountingInboundChangeEdge {
 			return &gqlmodel.AccountingInboundChangeEdge{Node: node, Cursor: cursor}
@@ -109,12 +113,12 @@ func accountingInboundConnectionToModel(
 }
 
 func accountingDriftConnectionToModel(
-	result *pagination.CursorListResult[*accountingsync.AccountingDriftFinding],
+	result *pagination.CursorListResult[*accountingdrift.AccountingDriftFinding],
 ) (*gqlmodel.AccountingDriftFindingConnection, error) {
-	page, err := base.EntityCursorConnection(
+	page, err := gqlconnection.EntityCursorConnection(
 		result,
 		func(
-			node *accountingsync.AccountingDriftFinding,
+			node *accountingdrift.AccountingDriftFinding,
 			cursor string,
 		) *gqlmodel.AccountingDriftFindingEdge {
 			return &gqlmodel.AccountingDriftFindingEdge{Node: node, Cursor: cursor}
@@ -134,8 +138,8 @@ func accountingDriftConnectionToModel(
 }
 
 func inboundPolicyOf(
-	policy *accountingsync.InboundPaymentPolicy,
-) accountingsync.InboundPaymentPolicy {
+	policy *accountingconnection.InboundPaymentPolicy,
+) accountingconnection.InboundPaymentPolicy {
 	if policy == nil {
 		return ""
 	}

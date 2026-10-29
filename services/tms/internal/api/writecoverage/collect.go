@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy/registered"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 type Report struct {
 	Writes    []Write
 	Mapping   Mapping
-	Tools     map[string]agentports.ToolPolicy
+	Tools     map[string]agenttoolports.ToolPolicy
 	ToolOrder []string
 }
 
@@ -53,7 +53,7 @@ func Load(dir string) (Report, error) {
 		return Report{}, err
 	}
 	policies := catalog.All()
-	tools := make(map[string]agentports.ToolPolicy, len(policies))
+	tools := make(map[string]agenttoolports.ToolPolicy, len(policies))
 	order := make([]string, 0, len(policies))
 	for idx := range policies {
 		tools[policies[idx].Name] = policies[idx]

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
 )
 
 // field is one key a struct writes in JSON, as encoding/json names it.
@@ -33,7 +34,7 @@ type typePlan struct {
 var (
 	jsonMarshalerType = reflect.TypeFor[jsonMarshaler]()
 	textMarshalerType = reflect.TypeFor[encoding.TextMarshaler]()
-	withholderType    = reflect.TypeFor[permission.FieldWithholder]()
+	withholderType    = reflect.TypeFor[protectedfield.Withholder]()
 )
 
 type jsonMarshaler interface {

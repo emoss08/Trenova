@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -16,8 +16,8 @@ import (
 
 func (s *Service) ListTypes(
 	ctx context.Context,
-	req *workerports.ListCredentialTypesRequest,
-) (*pagination.CursorListResult[*worker.WorkerCredentialType], error) {
+	req *workercredentialports.ListCredentialTypesRequest,
+) (*pagination.CursorListResult[*workercredential.WorkerCredentialType], error) {
 	if req.Filter != nil {
 		if err := s.ensureSystemTypes(ctx, req.Filter.TenantInfo); err != nil {
 			return nil, err
@@ -28,9 +28,16 @@ func (s *Service) ListTypes(
 
 func (s *Service) GetType(
 	ctx context.Context,
-	req *workerports.GetCredentialTypeByIDRequest,
-) (*worker.WorkerCredentialType, error) {
+	req *workercredentialports.GetCredentialTypeByIDRequest,
+) (*workercredential.WorkerCredentialType, error) {
 	return s.repo.GetTypeByID(ctx, req)
+}
+
+func (s *Service) GetTypesByIDs(
+	ctx context.Context,
+	req *workercredentialports.GetCredentialTypesByIDsRequest,
+) ([]*workercredential.WorkerCredentialType, error) {
+	return s.repo.GetTypesByIDs(ctx, req)
 }
 
 // ActiveTypes returns the catalog a worker can be measured against, seeding the
@@ -39,7 +46,7 @@ func (s *Service) GetType(
 func (s *Service) ActiveTypes(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*worker.WorkerCredentialType, error) {
+) ([]*workercredential.WorkerCredentialType, error) {
 	if err := s.ensureSystemTypes(ctx, tenantInfo); err != nil {
 		return nil, err
 	}
@@ -48,8 +55,8 @@ func (s *Service) ActiveTypes(
 
 func (s *Service) TypeSelectOptions(
 	ctx context.Context,
-	req *workerports.WorkerCredentialTypeSelectOptionsRequest,
-) (*pagination.ListResult[*worker.WorkerCredentialType], error) {
+	req *workercredentialports.WorkerCredentialTypeSelectOptionsRequest,
+) (*pagination.ListResult[*workercredential.WorkerCredentialType], error) {
 	if err := s.ensureSystemTypes(ctx, req.SelectQueryRequest.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -64,7 +71,11 @@ func (s *Service) ensureSystemTypes(ctx context.Context, tenantInfo pagination.T
 	if _, seeded := s.seededTenants.Load(key); seeded {
 		return nil
 	}
-	inserted, err := s.repo.EnsureSystemTypes(ctx, tenantInfo, worker.SystemCredentialTypes())
+	inserted, err := s.repo.EnsureSystemTypes(
+		ctx,
+		tenantInfo,
+		workercredential.SystemCredentialTypes(),
+	)
 	if err != nil {
 		return err
 	}
@@ -77,17 +88,23 @@ func (s *Service) ensureSystemTypes(ctx context.Context, tenantInfo pagination.T
 	return nil
 }
 
-func (s *Service) validateType(ctx context.Context, entity *worker.WorkerCredentialType) error {
+func (s *Service) validateType(
+	ctx context.Context,
+	entity *workercredential.WorkerCredentialType,
+) error {
 	entity.NormalizeCode()
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
 	if entity.Code != "" {
-		exists, err := s.repo.TypeCodeExists(ctx, &workerports.CredentialTypeCodeExistsRequest{
-			TenantInfo: typeTenant(entity),
-			Code:       entity.Code,
-			ExcludeID:  entity.ID,
-		})
+		exists, err := s.repo.TypeCodeExists(
+			ctx,
+			&workercredentialports.CredentialTypeCodeExistsRequest{
+				TenantInfo: typeTenant(entity),
+				Code:       entity.Code,
+				ExcludeID:  entity.ID,
+			},
+		)
 		if err != nil {
 			return err
 		}
@@ -108,13 +125,13 @@ func (s *Service) validateType(ctx context.Context, entity *worker.WorkerCredent
 
 func (s *Service) CreateType(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
+	entity *workercredential.WorkerCredentialType,
 	userID pulid.ID,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	log := s.l.With(zap.String("operation", "CreateType"))
 
 	entity.IsSystem = false
-	entity.ProfileField = worker.CredentialProfileFieldNone
+	entity.ProfileField = workercredential.CredentialProfileFieldNone
 	if err := s.validateType(ctx, entity); err != nil {
 		return nil, err
 	}
@@ -140,12 +157,12 @@ func (s *Service) CreateType(
 
 func (s *Service) UpdateType(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
+	entity *workercredential.WorkerCredentialType,
 	userID pulid.ID,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	log := s.l.With(zap.String("operation", "UpdateType"), zap.String("id", entity.ID.String()))
 
-	original, err := s.repo.GetTypeByID(ctx, &workerports.GetCredentialTypeByIDRequest{
+	original, err := s.repo.GetTypeByID(ctx, &workercredentialports.GetCredentialTypeByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: typeTenant(entity),
 	})
@@ -196,14 +213,14 @@ type TypeStatusChangeRequest struct {
 func (s *Service) ArchiveType(
 	ctx context.Context,
 	req *TypeStatusChangeRequest,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	return s.changeTypeStatus(ctx, req, domaintypes.StatusInactive, permission.OpArchive)
 }
 
 func (s *Service) RestoreType(
 	ctx context.Context,
 	req *TypeStatusChangeRequest,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	return s.changeTypeStatus(ctx, req, domaintypes.StatusActive, permission.OpRestore)
 }
 
@@ -212,10 +229,10 @@ func (s *Service) changeTypeStatus(
 	req *TypeStatusChangeRequest,
 	target domaintypes.Status,
 	operation permission.Operation,
-) (*worker.WorkerCredentialType, error) {
+) (*workercredential.WorkerCredentialType, error) {
 	log := s.l.With(zap.String("operation", string(operation)), zap.String("id", req.ID.String()))
 
-	original, err := s.repo.GetTypeByID(ctx, &workerports.GetCredentialTypeByIDRequest{
+	original, err := s.repo.GetTypeByID(ctx, &workercredentialports.GetCredentialTypeByIDRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -264,7 +281,7 @@ func (s *Service) changeTypeStatus(
 // from being switched off.
 func (s *Service) requireTypeRetirable(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
+	entity *workercredential.WorkerCredentialType,
 ) error {
 	if entity.ProfileField.IsSet() {
 		return errortypes.NewValidationError(
@@ -273,11 +290,14 @@ func (s *Service) requireTypeRetirable(
 			"This credential type mirrors the worker profile and cannot be deactivated",
 		)
 	}
-	count, err := s.repo.CountCredentialsByType(ctx, &workerports.CountCredentialsByTypeRequest{
-		TenantInfo: typeTenant(entity),
-		TypeID:     entity.ID,
-		ActiveOnly: true,
-	})
+	count, err := s.repo.CountCredentialsByType(
+		ctx,
+		&workercredentialports.CountCredentialsByTypeRequest{
+			TenantInfo: typeTenant(entity),
+			TypeID:     entity.ID,
+			ActiveOnly: true,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -296,9 +316,9 @@ func (s *Service) requireTypeRetirable(
 
 func (s *Service) CountActiveCredentials(
 	ctx context.Context,
-	entity *worker.WorkerCredentialType,
+	entity *workercredential.WorkerCredentialType,
 ) (int, error) {
-	return s.repo.CountCredentialsByType(ctx, &workerports.CountCredentialsByTypeRequest{
+	return s.repo.CountCredentialsByType(ctx, &workercredentialports.CountCredentialsByTypeRequest{
 		TenantInfo: typeTenant(entity),
 		TypeID:     entity.ID,
 		ActiveOnly: true,
@@ -310,11 +330,14 @@ func (s *Service) CountActiveCredentialsByTypes(
 	tenantInfo pagination.TenantInfo,
 	typeIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return s.repo.CountCredentialsByTypeIDs(ctx, &workerports.CountCredentialsByTypeIDsRequest{
-		TenantInfo: tenantInfo,
-		TypeIDs:    typeIDs,
-		ActiveOnly: true,
-	})
+	return s.repo.CountCredentialsByTypeIDs(
+		ctx,
+		&workercredentialports.CountCredentialsByTypeIDsRequest{
+			TenantInfo: tenantInfo,
+			TypeIDs:    typeIDs,
+			ActiveOnly: true,
+		},
+	)
 }
 
 func plural(count int, one, many string) string {
@@ -324,6 +347,6 @@ func plural(count int, one, many string) string {
 	return many
 }
 
-func typeTenant(entity *worker.WorkerCredentialType) pagination.TenantInfo {
+func typeTenant(entity *workercredential.WorkerCredentialType) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

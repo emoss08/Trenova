@@ -5,9 +5,9 @@
 package ediportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -41,26 +41,26 @@ func (_m *MockEDICarrierInvoiceRepository) EXPECT() *MockEDICarrierInvoiceReposi
 }
 
 // CreateCarrierInvoice provides a mock function for the type MockEDICarrierInvoiceRepository
-func (_mock *MockEDICarrierInvoiceRepository) CreateCarrierInvoice(ctx context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+func (_mock *MockEDICarrierInvoiceRepository) CreateCarrierInvoice(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCarrierInvoice")
 	}
 
-	var r0 *edi.CarrierInvoice
+	var r0 *edicarrierinvoice.CarrierInvoice
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.CarrierInvoice) (*edi.CarrierInvoice, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.CarrierInvoice) *edi.CarrierInvoice); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edicarrierinvoice.CarrierInvoice) *edicarrierinvoice.CarrierInvoice); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.CarrierInvoice)
+			r0 = ret.Get(0).(*edicarrierinvoice.CarrierInvoice)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.CarrierInvoice) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edicarrierinvoice.CarrierInvoice) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call struct {
 
 // CreateCarrierInvoice is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.CarrierInvoice
+//   - entity *edicarrierinvoice.CarrierInvoice
 func (_e *MockEDICarrierInvoiceRepository_Expecter) CreateCarrierInvoice(ctx any, entity any) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
 	return &MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call{Call: _e.mock.On("CreateCarrierInvoice", ctx, entity)}
 }
 
-func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) Run(run func(ctx context.Context, entity *edi.CarrierInvoice)) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) Run(run func(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice)) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.CarrierInvoice
+		var arg1 *edicarrierinvoice.CarrierInvoice
 		if args[1] != nil {
-			arg1 = args[1].(*edi.CarrierInvoice)
+			arg1 = args[1].(*edicarrierinvoice.CarrierInvoice)
 		}
 		run(
 			arg0,
@@ -98,34 +98,34 @@ func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) Return(carrierInvoice *edi.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) Return(carrierInvoice *edicarrierinvoice.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
 	_c.Call.Return(carrierInvoice, err)
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) RunAndReturn(run func(ctx context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call) RunAndReturn(run func(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_CreateCarrierInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCarrierInvoiceByID provides a mock function for the type MockEDICarrierInvoiceRepository
-func (_mock *MockEDICarrierInvoiceRepository) GetCarrierInvoiceByID(ctx context.Context, req ediports.GetEDICarrierInvoiceByIDRequest) (*edi.CarrierInvoice, error) {
+func (_mock *MockEDICarrierInvoiceRepository) GetCarrierInvoiceByID(ctx context.Context, req ediports.GetEDICarrierInvoiceByIDRequest) (*edicarrierinvoice.CarrierInvoice, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCarrierInvoiceByID")
 	}
 
-	var r0 *edi.CarrierInvoice
+	var r0 *edicarrierinvoice.CarrierInvoice
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDICarrierInvoiceByIDRequest) (*edi.CarrierInvoice, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDICarrierInvoiceByIDRequest) (*edicarrierinvoice.CarrierInvoice, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDICarrierInvoiceByIDRequest) *edi.CarrierInvoice); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ediports.GetEDICarrierInvoiceByIDRequest) *edicarrierinvoice.CarrierInvoice); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.CarrierInvoice)
+			r0 = ret.Get(0).(*edicarrierinvoice.CarrierInvoice)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, ediports.GetEDICarrierInvoiceByIDRequest) error); ok {
@@ -166,34 +166,34 @@ func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) Return(carrierInvoice *edi.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) Return(carrierInvoice *edicarrierinvoice.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
 	_c.Call.Return(carrierInvoice, err)
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetEDICarrierInvoiceByIDRequest) (*edi.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call) RunAndReturn(run func(ctx context.Context, req ediports.GetEDICarrierInvoiceByIDRequest) (*edicarrierinvoice.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCarrierInvoiceByNumber provides a mock function for the type MockEDICarrierInvoiceRepository
-func (_mock *MockEDICarrierInvoiceRepository) GetCarrierInvoiceByNumber(ctx context.Context, req *ediports.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error) {
+func (_mock *MockEDICarrierInvoiceRepository) GetCarrierInvoiceByNumber(ctx context.Context, req *ediports.GetEDICarrierInvoiceByNumberRequest) (*edicarrierinvoice.CarrierInvoice, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCarrierInvoiceByNumber")
 	}
 
-	var r0 *edi.CarrierInvoice
+	var r0 *edicarrierinvoice.CarrierInvoice
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDICarrierInvoiceByNumberRequest) (*edicarrierinvoice.CarrierInvoice, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDICarrierInvoiceByNumberRequest) *edi.CarrierInvoice); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.GetEDICarrierInvoiceByNumberRequest) *edicarrierinvoice.CarrierInvoice); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.CarrierInvoice)
+			r0 = ret.Get(0).(*edicarrierinvoice.CarrierInvoice)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.GetEDICarrierInvoiceByNumberRequest) error); ok {
@@ -234,34 +234,34 @@ func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) Run(ru
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) Return(carrierInvoice *edi.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) Return(carrierInvoice *edicarrierinvoice.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
 	_c.Call.Return(carrierInvoice, err)
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) RunAndReturn(run func(ctx context.Context, req *ediports.GetEDICarrierInvoiceByNumberRequest) (*edi.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
+func (_c *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call) RunAndReturn(run func(ctx context.Context, req *ediports.GetEDICarrierInvoiceByNumberRequest) (*edicarrierinvoice.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_GetCarrierInvoiceByNumber_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListCarrierInvoices provides a mock function for the type MockEDICarrierInvoiceRepository
-func (_mock *MockEDICarrierInvoiceRepository) ListCarrierInvoices(ctx context.Context, req *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edi.CarrierInvoice], error) {
+func (_mock *MockEDICarrierInvoiceRepository) ListCarrierInvoices(ctx context.Context, req *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCarrierInvoices")
 	}
 
-	var r0 *pagination.ListResult[*edi.CarrierInvoice]
+	var r0 *pagination.ListResult[*edicarrierinvoice.CarrierInvoice]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edi.CarrierInvoice], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListEDICarrierInvoicesRequest) *pagination.ListResult[*edi.CarrierInvoice]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ediports.ListEDICarrierInvoicesRequest) *pagination.ListResult[*edicarrierinvoice.CarrierInvoice]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*edi.CarrierInvoice])
+			r0 = ret.Get(0).(*pagination.ListResult[*edicarrierinvoice.CarrierInvoice])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *ediports.ListEDICarrierInvoicesRequest) error); ok {
@@ -302,37 +302,37 @@ func (_c *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call) Run(run func
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call) Return(listResult *pagination.ListResult[*edi.CarrierInvoice], err error) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
+func (_c *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call) Return(listResult *pagination.ListResult[*edicarrierinvoice.CarrierInvoice], err error) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edi.CarrierInvoice], error)) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
+func (_c *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call) RunAndReturn(run func(ctx context.Context, req *ediports.ListEDICarrierInvoicesRequest) (*pagination.ListResult[*edicarrierinvoice.CarrierInvoice], error)) *MockEDICarrierInvoiceRepository_ListCarrierInvoices_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateCarrierInvoice provides a mock function for the type MockEDICarrierInvoiceRepository
-func (_mock *MockEDICarrierInvoiceRepository) UpdateCarrierInvoice(ctx context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error) {
+func (_mock *MockEDICarrierInvoiceRepository) UpdateCarrierInvoice(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCarrierInvoice")
 	}
 
-	var r0 *edi.CarrierInvoice
+	var r0 *edicarrierinvoice.CarrierInvoice
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.CarrierInvoice) (*edi.CarrierInvoice, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.CarrierInvoice) *edi.CarrierInvoice); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edicarrierinvoice.CarrierInvoice) *edicarrierinvoice.CarrierInvoice); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.CarrierInvoice)
+			r0 = ret.Get(0).(*edicarrierinvoice.CarrierInvoice)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.CarrierInvoice) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edicarrierinvoice.CarrierInvoice) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -347,20 +347,20 @@ type MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call struct {
 
 // UpdateCarrierInvoice is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *edi.CarrierInvoice
+//   - entity *edicarrierinvoice.CarrierInvoice
 func (_e *MockEDICarrierInvoiceRepository_Expecter) UpdateCarrierInvoice(ctx any, entity any) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
 	return &MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call{Call: _e.mock.On("UpdateCarrierInvoice", ctx, entity)}
 }
 
-func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) Run(run func(ctx context.Context, entity *edi.CarrierInvoice)) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) Run(run func(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice)) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.CarrierInvoice
+		var arg1 *edicarrierinvoice.CarrierInvoice
 		if args[1] != nil {
-			arg1 = args[1].(*edi.CarrierInvoice)
+			arg1 = args[1].(*edicarrierinvoice.CarrierInvoice)
 		}
 		run(
 			arg0,
@@ -370,12 +370,12 @@ func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) Return(carrierInvoice *edi.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) Return(carrierInvoice *edicarrierinvoice.CarrierInvoice, err error) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
 	_c.Call.Return(carrierInvoice, err)
 	return _c
 }
 
-func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) RunAndReturn(run func(ctx context.Context, entity *edi.CarrierInvoice) (*edi.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
+func (_c *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call) RunAndReturn(run func(ctx context.Context, entity *edicarrierinvoice.CarrierInvoice) (*edicarrierinvoice.CarrierInvoice, error)) *MockEDICarrierInvoiceRepository_UpdateCarrierInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }

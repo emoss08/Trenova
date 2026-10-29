@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,13 +18,13 @@ func TestCheck_LeaveNeedsItsOwnGrant(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		grants  []*permission.ResourcePermission
+		grants  []*rbac.ResourcePermission
 		checks  map[permission.Resource][]permission.Operation
 		allowed map[permission.Resource][]permission.Operation
 	}{
 		{
 			name: "worker read and update reach the worker's family but not their leave",
-			grants: []*permission.ResourcePermission{{
+			grants: []*rbac.ResourcePermission{{
 				Resource:   permission.ResourceWorker.String(),
 				Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
 			}},
@@ -42,7 +43,7 @@ func TestCheck_LeaveNeedsItsOwnGrant(t *testing.T) {
 		},
 		{
 			name: "worker_leave read stands on its own",
-			grants: []*permission.ResourcePermission{{
+			grants: []*rbac.ResourcePermission{{
 				Resource:   permission.ResourceWorkerLeave.String(),
 				Operations: []permission.Operation{permission.OpRead},
 			}},
@@ -56,7 +57,7 @@ func TestCheck_LeaveNeedsItsOwnGrant(t *testing.T) {
 		},
 		{
 			name: "approving leave brings read and update with it",
-			grants: []*permission.ResourcePermission{{
+			grants: []*rbac.ResourcePermission{{
 				Resource:   permission.ResourceWorkerLeave.String(),
 				Operations: []permission.Operation{permission.OpApprove},
 			}},
@@ -97,14 +98,14 @@ func TestCheck_LeaveNeedsItsOwnGrant(t *testing.T) {
 			cacheRepo.On("Set", ctx, allRolesKey(userID, orgID),
 				mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).Return(nil)
 			roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-				Return([]*permission.UserRoleAssignment{{
+				Return([]*rbac.UserRoleAssignment{{
 					ID:             pulid.MustNew("ura_"),
 					RoleID:         roleID,
 					UserID:         userID,
 					OrganizationID: orgID,
 				}}, nil)
 			roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).
-				Return([]*permission.Role{{
+				Return([]*rbac.Role{{
 					ID:             roleID,
 					Name:           "Role under test",
 					MaxSensitivity: permission.SensitivityRestricted,
@@ -138,11 +139,12 @@ func TestGetResourcePermissions_LeaveReportsItsOwnGrant(t *testing.T) {
 		ctx := t.Context()
 		userID := pulid.MustNew("usr_")
 		orgID := pulid.MustNew("org_")
-		cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(&permissionports.CachedPermissions{
-			MaxSensitivity: string(permission.SensitivityRestricted),
-			ExpiresAt:      1 << 62,
-			Resources:      resources,
-		}, nil)
+		cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).
+			Return(&permissionports.CachedPermissions{
+				MaxSensitivity: string(permission.SensitivityRestricted),
+				ExpiresAt:      1 << 62,
+				Resources:      resources,
+			}, nil)
 
 		out, err := eng.GetResourcePermissions(ctx, userID, orgID,
 			permission.ResourceWorkerLeave.String())

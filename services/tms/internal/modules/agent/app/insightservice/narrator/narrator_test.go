@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,17 +19,17 @@ import (
 )
 
 type stubCompletion struct {
-	result   *agentports.StructuredCompletionResult
+	result   *llmports.StructuredCompletionResult
 	err      error
 	calls    int
-	lastReq  *agentports.StructuredCompletionRequest
-	requests []*agentports.StructuredCompletionRequest
+	lastReq  *llmports.StructuredCompletionRequest
+	requests []*llmports.StructuredCompletionRequest
 }
 
 func (c *stubCompletion) CompleteStructured(
 	_ context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.StructuredCompletionResult, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.StructuredCompletionResult, error) {
 	c.calls++
 	c.lastReq = req
 	c.requests = append(c.requests, req)
@@ -39,20 +39,20 @@ func (c *stubCompletion) CompleteStructured(
 
 func (c *stubCompletion) CompleteChat(
 	context.Context,
-	*agentports.ChatCompletionRequest,
-) (*agentports.ChatCompletionResult, error) {
+	*llmports.ChatCompletionRequest,
+) (*llmports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
 func (c *stubCompletion) StreamChat(
 	context.Context,
-	*agentports.ChatCompletionRequest,
-	agentports.ChatStreamSink,
-) (*agentports.ChatCompletionResult, error) {
+	*llmports.ChatCompletionRequest,
+	llmports.ChatStreamSink,
+) (*llmports.ChatCompletionResult, error) {
 	return nil, errors.New("not used")
 }
 
-func newNarrator(completion agentports.CompletionService) *Service {
+func newNarrator(completion llmports.CompletionService) *Service {
 	return &Service{l: zap.NewNop(), completion: completion}
 }
 
@@ -92,7 +92,7 @@ func completionReturning(insights ...map[string]string) *stubCompletion {
 		panic(err)
 	}
 
-	return &stubCompletion{result: &agentports.StructuredCompletionResult{
+	return &stubCompletion{result: &llmports.StructuredCompletionResult{
 		Text:            encoded,
 		ModelIdentifier: "test-model",
 		ProviderID:      pulid.MustNew("aip_"),
@@ -186,7 +186,7 @@ func TestNarrate_FallsBackWhenNoProviderIsConfigured(t *testing.T) {
 	t.Parallel()
 
 	finding := testFinding()
-	completion := &stubCompletion{err: agentports.ErrNoProviderConfigured}
+	completion := &stubCompletion{err: llmports.ErrNoProviderConfigured}
 
 	result := newNarrator(completion).Narrate(t.Context(), &NarrateRequest{
 		Findings: []detector.Finding{finding},
@@ -215,7 +215,7 @@ func TestNarrate_FallsBackWhenTheModelReturnsUnparseableOutput(t *testing.T) {
 	t.Parallel()
 
 	finding := testFinding()
-	completion := &stubCompletion{result: &agentports.StructuredCompletionResult{
+	completion := &stubCompletion{result: &llmports.StructuredCompletionResult{
 		Text:            "I'm afraid I can't help with that.",
 		ModelIdentifier: "test-model",
 	}}
@@ -310,7 +310,7 @@ func TestNarrate_RoutesToTheInsightsTask(t *testing.T) {
 	})
 
 	require.NotNil(t, completion.lastReq)
-	assert.Equal(t, aiprovider.TaskOperationalInsights, completion.lastReq.Task)
+	assert.Equal(t, aitask.TaskOperationalInsights, completion.lastReq.Task)
 }
 
 // Subject names are customer-supplied text passing through a prompt. Marking the
@@ -392,19 +392,19 @@ func TestNarrate_KeepsTheDetectorHeadlineWhenTheModelReturnsNone(t *testing.T) {
 // to poll.
 func (c *stubCompletion) SubmitBackground(
 	ctx context.Context,
-	req *agentports.StructuredCompletionRequest,
-) (*agentports.BackgroundSubmission, error) {
+	req *llmports.StructuredCompletionRequest,
+) (*llmports.BackgroundSubmission, error) {
 	result, err := c.CompleteStructured(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return &agentports.BackgroundSubmission{Result: result}, nil
+	return &llmports.BackgroundSubmission{Result: result}, nil
 }
 
 func (c *stubCompletion) PollBackground(
 	context.Context,
-	*agentports.BackgroundPollRequest,
-) (*agentports.BackgroundOutcome, error) {
+	*llmports.BackgroundPollRequest,
+) (*llmports.BackgroundOutcome, error) {
 	return nil, errors.New("this completion runs inline and issues no handle to poll")
 }

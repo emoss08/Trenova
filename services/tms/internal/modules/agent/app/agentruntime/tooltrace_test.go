@@ -7,9 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,7 +37,7 @@ type versionSequence struct {
 func (v *versionSequence) Version(
 	context.Context,
 	pagination.TenantInfo,
-	agentports.ToolTarget,
+	agenttoolports.ToolTarget,
 ) (int64, error) {
 	v.mu.Lock()
 	defer v.mu.Unlock()
@@ -45,10 +50,10 @@ func (v *versionSequence) Version(
 
 type tracedDispatch struct {
 	rt         *Service
-	req        *agentports.RunRequest
-	ledger     *keyedLedger
+	req        *agentruntimeports.RunRequest
+	ledger     *runtimetest.KeyedLedger
 	shipmentID pulid.ID
-	call       DispatchCall
+	call       toolcall.Call
 }
 
 func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDispatch {
@@ -57,34 +62,34 @@ func newTracedDispatch(t *testing.T, tier, ceiling agent.AutonomyTier) *tracedDi
 
 	tool := &targetedStubTool{actionTool("shipment_place_hold", tier, nil)}
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{
-		Tools: []agentports.AgentTool{tool},
+		Tools: []agenttoolports.AgentTool{tool},
 	}, nil)
-	rt.versions = &versionSequence{versions: []int64{7, 8}}
+	rewire(rt, func(p *Params) { p.Versions = &versionSequence{versions: []int64{7, 8}} })
 
-	definition := testDefinition("shipment_place_hold")
+	definition := runtimetest.Definition("shipment_place_hold")
 	definition.ID = pulid.MustNew("agdef_")
 	definition.Version = 3
 	definition.AutonomyCeiling = ceiling
-	ledger := newKeyedLedger()
+	ledger := runtimetest.NewKeyedLedger()
 	shipmentID := pulid.MustNew("shp_")
 
 	return &tracedDispatch{
 		rt: rt,
-		req: &agentports.RunRequest{
+		req: &agentruntimeports.RunRequest{
 			Definition: definition,
-			Actor:      testActor(),
+			Actor:      runtimetest.Actor(),
 			Input:      "Hold the shipment",
 			Steps:      ledger,
-			StepOwner: agentports.RunStepOwner{
-				Kind: agentports.RunStepOwnerAssistantTurn,
+			StepOwner: agentruntimeports.RunStepOwner{
+				Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 				ID:   pulid.MustNew("atrn_"),
 			},
 			Attempt: 1,
 		},
 		ledger:     ledger,
 		shipmentID: shipmentID,
-		call: DispatchCall{
-			Call: agentports.ToolCall{
+		call: toolcall.Call{
+			Call: llmports.ToolCall{
 				ID:        "call_hold",
 				Name:      "shipment_place_hold",
 				Arguments: map[string]any{"shipmentId": shipmentID.String()},
@@ -97,15 +102,15 @@ func (d *tracedDispatch) anchor() aitrace.Anchor {
 	return aitrace.ForRun(d.req.StepOwner, d.req.Delegation)
 }
 
-func (d *tracedDispatch) settled(t *testing.T) agentports.RunStep {
+func (d *tracedDispatch) settled(t *testing.T) agentruntimeports.RunStep {
 	t.Helper()
 
-	require.Len(t, d.ledger.steps, 1)
-	for _, step := range d.ledger.steps {
+	require.Len(t, d.ledger.Steps, 1)
+	for _, step := range d.ledger.Steps {
 		return step
 	}
 
-	return agentports.RunStep{}
+	return agentruntimeports.RunStep{}
 }
 
 func stringAttr(t *testing.T, span tracetest.SpanStub, key attribute.Key) string {
@@ -121,7 +126,7 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, outcome.Action)
 	action := outcome.Action
@@ -135,11 +140,15 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	assert.Equal(t, string(agent.TierPropose), stringAttr(t, span, aitrace.AITier))
 	assert.Equal(
 		t,
-		string(agent.TierSourcePolicyDefault),
+		string(agenttooltrust.TierSourcePolicyDefault),
 		stringAttr(t, span, aitrace.AITierSource),
 	)
 	assert.Equal(t, "call_hold", stringAttr(t, span, aitrace.GenAIToolCallID))
-	assert.Equal(t, string(agent.ToolEffectChange), stringAttr(t, span, aitrace.AIToolEffect))
+	assert.Equal(
+		t,
+		string(agenttooltrust.ToolEffectChange),
+		stringAttr(t, span, aitrace.AIToolEffect),
+	)
 	assert.Contains(t, span.Attributes, aitrace.AIHeldBy.StringSlice(action.HeldBy))
 	assert.Contains(t, span.Attributes, aitrace.AITainted.Bool(false))
 	assert.Equal(t, codes.Unset, span.Status.Code)
@@ -149,7 +158,7 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	assert.Equal(t, action.ProposalID.String(), stringAttr(t, span, aitrace.AIProposalID))
 	assert.Equal(t, span.SpanContext.TraceID().String(), action.TraceID)
 	assert.Equal(t, span.SpanContext.SpanID().String(), action.SpanID)
-	assert.Equal(t, agent.TierSourcePolicyDefault, action.TierSource)
+	assert.Equal(t, agenttooltrust.TierSourcePolicyDefault, action.TierSource)
 	assert.Equal(t, step.Key, action.StepKey)
 	require.NotNil(t, action.Target)
 	assert.Equal(t, int64(7), action.Target.Version)
@@ -168,9 +177,9 @@ func TestDispatchStep_AReplayedCallKeepsItsProposalAndSaysSo(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	first := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	first := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 	d.req.Attempt = 2
-	second := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	second := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, first.Action)
 	require.NotNil(t, second.Action)
@@ -189,11 +198,13 @@ func TestDispatchStep_RecordsWhyACallWasRefused(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	d.rt.permissions = &stubPermissions{Denied: map[string]bool{
-		permission.ResourceShipmentMove.String() + ":" + string(permission.OpUpdate): true,
-	}}
+	rewire(d.rt, func(p *Params) {
+		p.Permissions = &stubPermissions{Denied: map[string]bool{
+			permission.ResourceShipmentMove.String() + ":" + string(permission.OpUpdate): true,
+		}}
+	})
 
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	assert.True(t, outcome.Failed)
 	assert.Nil(t, outcome.Action)
@@ -211,7 +222,7 @@ func TestDispatchStep_WrapsAnAutomaticWriteAndItsVersions(t *testing.T) {
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierAutoExecute, agent.TierAutoExecute)
-	outcome := d.rt.DispatchStep(t.Context(), d.req, d.call)
+	outcome := d.rt.DispatchStep(t.Context(), d.req, &d.call)
 
 	require.NotNil(t, outcome.Action)
 	action := outcome.Action
@@ -243,12 +254,12 @@ func TestDispatchStep_ADelegatesCallIsTracedUnderItsTaskAndLinked(t *testing.T) 
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	d.req.Delegation = &agentports.Delegation{CallID: "call_task_1", StepScope: "scope-1"}
+	d.req.Delegation = &agentruntimeports.Delegation{CallID: "call_task_1", StepScope: "scope-1"}
 	turn := aitrace.ForRun(d.req.StepOwner, nil)
 	ctx, activity := otel.Tracer("agentruntime-test").
 		Start(aitrace.ContextWithAnchor(t.Context(), turn), "RunActivity:shipment_place_hold")
 
-	outcome := d.rt.DispatchStep(ctx, d.req, d.call)
+	outcome := d.rt.DispatchStep(ctx, d.req, &d.call)
 	activity.End()
 
 	require.NotNil(t, outcome.Action)
@@ -270,12 +281,12 @@ func TestCompletionRequest_AttributesTheTurnItsTaskAndTheAgentsVersion(t *testin
 	t.Parallel()
 
 	d := newTracedDispatch(t, agent.TierPropose, agent.TierPropose)
-	d.req.Delegation = &agentports.Delegation{CallID: "call_task_2"}
+	d.req.Delegation = &agentruntimeports.Delegation{CallID: "call_task_2"}
 	d.req.ThreadID = pulid.MustNew("athr_")
 
 	attribution := d.rt.OpenTurn(t.Context(), d.req).completionRequest().Attribution
 
-	assert.Equal(t, agentports.RunStepOwnerAssistantTurn, attribution.OwnerKind)
+	assert.Equal(t, agentruntimeports.RunStepOwnerAssistantTurn, attribution.OwnerKind)
 	assert.Equal(t, d.req.StepOwner.ID, attribution.OwnerID)
 	assert.Equal(t, "call_task_2", attribution.DelegateCallID)
 	require.NotNil(t, attribution.DefinitionVersion)
@@ -288,20 +299,20 @@ func TestStreamCompletion_OpensTheCompletionSpanUnderTheTurn(t *testing.T) {
 	t.Parallel()
 	aitracetest.Install()
 
-	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-		textTurn("Load 12345 is in Memphis."),
+	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.TextTurn("Load 12345 is in Memphis."),
 	}}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	turnID := pulid.MustNew("atrn_")
-	req := &agentports.ChatCompletionRequest{
+	req := &llmports.ChatCompletionRequest{
 		Attribution: aiusageports.AIUsageAttribution{
-			OwnerKind: agentports.RunStepOwnerAssistantTurn,
+			OwnerKind: agentruntimeports.RunStepOwnerAssistantTurn,
 			OwnerID:   turnID,
 			Feature:   "AgentTurn",
 		},
 	}
 	ctx := aitrace.WithCallOrigin(t.Context(), aitrace.CallOrigin{ActivityAttempt: 2, Stream: true})
 
-	reply, err := rt.StreamCompletion(ctx, req, func(kernelports.StreamEvent) {})
+	reply, err := rt.streamer.StreamCompletion(ctx, req, func(kernelports.StreamEvent) {})
 	require.NoError(t, err)
 	assert.False(t, reply.Looped)
 
@@ -324,19 +335,19 @@ func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
 
 	first := decimal.RequireFromString("0.010")
 	second := decimal.RequireFromString("0.025")
-	read := toolTurn("shipment_get", map[string]any{"proNumber": "12345"})
+	read := runtimetest.ToolTurn("shipment_get", map[string]any{"proNumber": "12345"})
 	read.InputTokens, read.OutputTokens, read.CostUSD = 1000, 40, &first
-	answer := textTurn("It is in Memphis.")
+	answer := runtimetest.TextTurn("It is in Memphis.")
 	answer.InputTokens, answer.OutputTokens, answer.CostUSD = 1200, 12, &second
 
-	rt := newRuntime(&scriptedCompletion{Turns: []*agentports.ChatCompletionResult{read, answer}},
-		&stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+	rt := newRuntime(&scriptedCompletion{Turns: []*llmports.ChatCompletionResult{read, answer}},
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{
 			queryTool("shipment_get", map[string]any{"city": "Memphis"}, nil),
 		}}, &stubActionRegistry{}, nil)
 
-	result, err := rt.Run(t.Context(), &agentports.RunRequest{
-		Definition: testDefinition("shipment_get"),
-		Actor:      testActor(),
+	result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("shipment_get"),
+		Actor:      runtimetest.Actor(),
 		Input:      "Where is 12345?",
 	})
 	require.NoError(t, err)
@@ -353,9 +364,9 @@ func TestRunUsage_AddsWithoutSharingItsCost(t *testing.T) {
 	t.Parallel()
 
 	cost := decimal.RequireFromString("0.5")
-	var total *agentports.RunUsage
-	total = total.Add(&agentports.RunUsage{ModelCalls: 1, InputTokens: 10, CostUSD: &cost})
-	total = total.Add(&agentports.RunUsage{ModelCalls: 2, OutputTokens: 5})
+	var total *agentruntimeports.RunUsage
+	total = total.Add(&agentruntimeports.RunUsage{ModelCalls: 1, InputTokens: 10, CostUSD: &cost})
+	total = total.Add(&agentruntimeports.RunUsage{ModelCalls: 2, OutputTokens: 5})
 	total = total.Add(nil)
 	cost = decimal.RequireFromString("9")
 
@@ -363,5 +374,5 @@ func TestRunUsage_AddsWithoutSharingItsCost(t *testing.T) {
 	assert.Equal(t, int64(10), total.InputTokens)
 	assert.Equal(t, int64(5), total.OutputTokens)
 	assert.True(t, decimal.RequireFromString("0.5").Equal(*total.CostUSD))
-	assert.Nil(t, (*agentports.RunUsage)(nil).Clone())
+	assert.Nil(t, (*agentruntimeports.RunUsage)(nil).Clone())
 }

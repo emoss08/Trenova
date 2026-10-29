@@ -9,13 +9,17 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerleaveservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgstructureports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -45,7 +49,7 @@ func (g *teamLeaveGrant) Check(
 
 // teamStructure is a reporting line: the manager answers for members.
 type teamStructure struct {
-	workerports.OrgStructureRepository
+	orgstructureports.OrgStructureRepository
 
 	manager pulid.ID
 	members map[pulid.ID]bool
@@ -53,8 +57,8 @@ type teamStructure struct {
 
 func (s *teamStructure) ListDelegations(
 	context.Context,
-	*workerports.ListApprovalDelegationsRequest,
-) ([]*worker.ApprovalDelegation, error) {
+	*orgstructureports.ListApprovalDelegationsRequest,
+) ([]*approvaldelegation.ApprovalDelegation, error) {
 	return nil, nil
 }
 
@@ -70,9 +74,9 @@ func (s *teamStructure) ManagesWorker(
 // teamLeaveCases holds one case per worker and narrows to the team the way
 // the repository's workerteam filter does.
 type teamLeaveCases struct {
-	workerports.WorkerLeaveRepository
+	workerleaveports.WorkerLeaveRepository
 
-	cases   []*worker.WorkerLeaveCase
+	cases   []*workerleave.WorkerLeaveCase
 	team    *teamStructure
 	mu      sync.Mutex
 	scopes  [][]pulid.ID
@@ -81,14 +85,14 @@ type teamLeaveCases struct {
 
 func (r *teamLeaveCases) ListCases(
 	_ context.Context,
-	req *workerports.ListLeaveCasesRequest,
-) ([]*worker.WorkerLeaveCase, error) {
+	req *workerleaveports.ListLeaveCasesRequest,
+) ([]*workerleave.WorkerLeaveCase, error) {
 	r.mu.Lock()
 	r.scopes = append(r.scopes, req.ManagerIDs)
 	r.workers = append(r.workers, req.WorkerID)
 	r.mu.Unlock()
 
-	out := make([]*worker.WorkerLeaveCase, 0, len(r.cases))
+	out := make([]*workerleave.WorkerLeaveCase, 0, len(r.cases))
 	for _, leave := range r.cases {
 		if req.WorkerID.IsNotNil() && leave.WorkerID != req.WorkerID {
 			continue
@@ -110,15 +114,15 @@ func (r *teamLeaveCases) reads() int {
 	return len(r.scopes)
 }
 
-func leaveCaseFor(workerID pulid.ID) *worker.WorkerLeaveCase {
-	return &worker.WorkerLeaveCase{
+func leaveCaseFor(workerID pulid.ID) *workerleave.WorkerLeaveCase {
+	return &workerleave.WorkerLeaveCase{
 		ID:        pulid.MustNew("wlc_"),
 		WorkerID:  workerID,
 		LeaveType: worker.LeaveTypeFMLA,
-		Status:    worker.LeaveCaseApproved,
-		Frequency: worker.LeaveContinuous,
+		Status:    workerleave.LeaveCaseApproved,
+		Frequency: workerleave.LeaveContinuous,
 		StartsAt:  1_788_000_000,
-		Entries:   []*worker.WorkerLeaveEntry{},
+		Entries:   []*workerleave.WorkerLeaveEntry{},
 	}
 }
 
@@ -132,19 +136,23 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 	member, stranger := pulid.MustNew("wrk_"), pulid.MustNew("wrk_")
 	team := &teamStructure{manager: person.UserID, members: map[pulid.ID]bool{member: true}}
 	mine, theirs := leaveCaseFor(member), leaveCaseFor(stranger)
-	repo := &teamLeaveCases{cases: []*worker.WorkerLeaveCase{mine, theirs}, team: team}
+	repo := &teamLeaveCases{cases: []*workerleave.WorkerLeaveCase{mine, theirs}, team: team}
 	engine := &teamLeaveGrant{}
 	reader := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: engine,
 		Resolvers: agentread.ResolverParams{
-			WorkerLeaveService:  workerleaveservice.NewWithDeps(workerleaveservice.Deps{Repo: repo}),
-			OrgStructureService: orgstructureservice.NewWithDeps(orgstructureservice.Deps{Repo: team}),
+			WorkerLeaveService: workerleaveservice.NewWithDeps(
+				workerleaveservice.Deps{Repo: repo},
+			),
+			OrgStructureService: orgstructureservice.NewWithDeps(
+				orgstructureservice.Deps{Repo: team},
+			),
 		},
 	})
 	tool, err := agentquerytoolservice.ConvertedListTool("worker_list_leave_cases", reader, engine)
 	require.NoError(t, err)
 	call := func(actor *permissionports.RequestActor, args map[string]any) (any, error) {
-		return tool.Query(readscope.With(t.Context(), nil), &agentports.QueryToolParams{
+		return tool.Query(readscope.With(t.Context(), nil), &agenttoolports.QueryToolParams{
 			OrganizationID: actor.OrganizationID,
 			BusinessUnitID: actor.BusinessUnitID,
 			Actor:          actor,
@@ -166,7 +174,7 @@ func TestLeaveCases_ATeamGrantReadsOnlyTheTeamThroughGraphQL(t *testing.T) {
 
 	before := repo.reads()
 	_, err = call(person, map[string]any{"workerId": stranger.String()})
-	var refused *agentports.ReadRefusedError
+	var refused *graphqlreadports.ReadRefusedError
 	require.ErrorAs(t, err, &refused, "a worker off the team is refused")
 	assert.Equal(t, before, repo.reads(), "nothing is read for a worker off the team")
 

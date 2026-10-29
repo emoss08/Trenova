@@ -8,7 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/mailtext"
 )
 
 const providerErrorBodyLimit = 2048
@@ -38,7 +38,7 @@ func (e *SenderRejectedError) Error() string {
 	if address == "" {
 		address = "the configured sender address"
 	}
-	domain := stringutils.EmailDomain(address)
+	domain := mailtext.EmailDomain(address)
 	if domain == "" {
 		domain = "the sender's domain"
 	}

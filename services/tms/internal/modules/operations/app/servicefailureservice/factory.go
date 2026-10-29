@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,7 +55,7 @@ func (s *service) activeReasonCode(
 func (s *service) defaultReasonCode(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 ) (*servicefailure.ReasonCode, error) {
 	reason, err := s.reasonCodeRepo.FindDefault(
 		ctx,

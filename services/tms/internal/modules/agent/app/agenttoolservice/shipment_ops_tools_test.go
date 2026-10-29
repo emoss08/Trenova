@@ -5,15 +5,25 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/movetools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmentopstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/shipmenttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmenthold"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentdistanceports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentholdports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,7 +40,7 @@ type fakeShipmentOperator struct {
 	existing   *shipment.Shipment
 	uncanceled *shipmentports.UncancelShipmentRequest
 	owner      *shipmentports.TransferOwnershipRequest
-	rerated    *shipmentports.AutoRateShipmentRequest
+	rerated    *shipmentserviceports.AutoRateShipmentRequest
 	unpriced   bool
 	measured   pulid.ID
 	duplicated *shipmentports.BulkDuplicateShipmentRequest
@@ -41,7 +51,7 @@ func (f *fakeShipmentOperator) shipment() *shipment.Shipment {
 		f.existing = &shipment.Shipment{
 			ID:                  pulid.MustNew("shp_"),
 			ProNumber:           "PRO-7001",
-			Status:              shipment.StatusCanceled,
+			Status:              shipmentvocab.StatusCanceled,
 			CancelReason:        "Customer pulled the load",
 			OwnerID:             pulid.MustNew("usr_"),
 			CustomerID:          pulid.MustNew("cus_"),
@@ -70,7 +80,7 @@ func (f *fakeShipmentOperator) Uncancel(
 func (f *fakeShipmentOperator) PreviewUncancel(
 	context.Context,
 	*shipmentports.UncancelShipmentRequest,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -78,7 +88,7 @@ func (f *fakeShipmentOperator) PreviewUncancel(
 	after := *before
 	after.ApplyUncancel()
 
-	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) TransferOwnership(
@@ -98,48 +108,53 @@ func (f *fakeShipmentOperator) PreviewTransferOwnership(
 	_ context.Context,
 	req *shipmentports.TransferOwnershipRequest,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentChangePreview, error) {
+) (*shipmentserviceports.ShipmentChangePreview, error) {
 	before := f.shipment()
 	after := *before
 	after.OwnerID = req.OwnerID
 
-	return &shipmentports.ShipmentChangePreview{Before: before, After: &after}, nil
+	return &shipmentserviceports.ShipmentChangePreview{Before: before, After: &after}, nil
 }
 
 func (f *fakeShipmentOperator) AutoRate(
 	_ context.Context,
-	req *shipmentports.AutoRateShipmentRequest,
+	req *shipmentserviceports.AutoRateShipmentRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.Shipment, *shipmentports.ContractRateApplication, error) {
+) (*shipment.Shipment, *shipmentserviceports.ContractRateApplication, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, nil, err
 	}
 	f.rerated = req
 
-	return f.shipment(), &shipmentports.ContractRateApplication{Applied: !f.unpriced}, nil
+	return f.shipment(), &shipmentserviceports.ContractRateApplication{Applied: !f.unpriced}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewAutoRate(
 	context.Context,
-	*shipmentports.AutoRateShipmentRequest,
+	*shipmentserviceports.AutoRateShipmentRequest,
 	*permissionports.RequestActor,
-) (*shipmentports.ShipmentAutoRatePreview, error) {
+) (*shipmentserviceports.ShipmentAutoRatePreview, error) {
 	before := f.shipment()
 	if f.unpriced {
-		return &shipmentports.ShipmentAutoRatePreview{
-			Before:      before,
-			After:       before,
-			Application: &shipmentports.ContractRateApplication{Outcome: ratequote.Outcome("NoMatch")},
+		return &shipmentserviceports.ShipmentAutoRatePreview{
+			Before: before,
+			After:  before,
+			Application: &shipmentserviceports.ContractRateApplication{
+				Outcome: ratequote.Outcome("NoMatch"),
+			},
 		}, nil
 	}
 	after := *before
 	after.FreightChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 	after.TotalChargeAmount = decimal.NewNullDecimal(decimal.RequireFromString("1250"))
 
-	return &shipmentports.ShipmentAutoRatePreview{
-		Before:      before,
-		After:       &after,
-		Application: &shipmentports.ContractRateApplication{Applied: true, AgreementName: "Acme 2026"},
+	return &shipmentserviceports.ShipmentAutoRatePreview{
+		Before: before,
+		After:  &after,
+		Application: &shipmentserviceports.ContractRateApplication{
+			Applied:       true,
+			AgreementName: "Acme 2026",
+		},
 	}, nil
 }
 
@@ -147,20 +162,20 @@ func (f *fakeShipmentOperator) RecalculateDistance(
 	_ context.Context,
 	shipmentID pulid.ID,
 	_ pagination.TenantInfo,
-) (*shipmentports.DistanceCalculationResponse, error) {
+) (*shipmentdistanceports.DistanceCalculationResponse, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.measured = shipmentID
 
-	return &shipmentports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
+	return &shipmentdistanceports.DistanceCalculationResponse{TotalDistance: 412.5}, nil
 }
 
 func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
-) (*shipmentports.ShipmentDistancePreview, error) {
+) (*shipmentdistanceports.ShipmentDistancePreview, error) {
 	oldMiles, newMiles := 300.0, 412.5
 	moveID := pulid.MustNew("sm_")
 	before := *f.shipment()
@@ -168,10 +183,10 @@ func (f *fakeShipmentOperator) PreviewRecalculateDistance(
 	after := before
 	after.Moves = []*shipment.ShipmentMove{{ID: moveID, Distance: &newMiles, Version: 2}}
 
-	return &shipmentports.ShipmentDistancePreview{
+	return &shipmentdistanceports.ShipmentDistancePreview{
 		Before:   &before,
 		After:    &after,
-		Distance: &shipmentports.DistanceCalculationResponse{TotalDistance: newMiles},
+		Distance: &shipmentdistanceports.DistanceCalculationResponse{TotalDistance: newMiles},
 	}, nil
 }
 
@@ -190,7 +205,7 @@ func (f *fakeShipmentOperator) Duplicate(
 func (f *fakeShipmentOperator) PreviewDuplicate(
 	_ context.Context,
 	req *shipmentports.BulkDuplicateShipmentRequest,
-) (*shipmentports.ShipmentDuplicatePreview, error) {
+) (*shipmentserviceports.ShipmentDuplicatePreview, error) {
 	source := f.shipment()
 	copies := make([]*shipment.Shipment, 0, req.Count)
 	for range req.Count {
@@ -205,21 +220,27 @@ func (f *fakeShipmentOperator) PreviewDuplicate(
 		copies = append(copies, copied)
 	}
 
-	return &shipmentports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
+	return &shipmentserviceports.ShipmentDuplicatePreview{Source: source, Copies: copies}, nil
 }
 
 func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewUncancelShipmentTool(shipments)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: shipments.shipment().ID.String()})
+	tool := shipmentopstools.NewUncancelShipmentTool(shipments)
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, change, common.FieldStatus).After)
+	assert.Equal(t, "New", agenttoolstest.FieldByPath(t, change, changepreview.FieldStatus).After)
 	assert.Contains(t, preview.Summary, "PRO-7001")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -230,7 +251,7 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipment, policy.Resource)
 	assert.Equal(t, permission.OpUpdate, policy.Operation)
 	assert.Equal(t, agent.TierActWithApproval, policy.MaxTier)
-	target, ok := tool.(agentports.TargetedTool).Target(params.Params)
+	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
 	assert.Equal(t, permission.ResourceShipment, target.Resource)
 }
@@ -238,52 +259,70 @@ func TestUncancelShipment_PreviewsTheReopenedShipmentAndWrites(t *testing.T) {
 func TestUncancelShipment_AShipmentThatIsNotCanceledIsAWouldFail(t *testing.T) {
 	t.Parallel()
 
-	shipments := &fakeShipmentOperator{refusal: errortypes.NewBusinessError("shipment is not canceled")}
-	tool := shipmenttools.NewUncancelShipmentTool(shipments)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: pulid.MustNew("shp_").String()})
+	shipments := &fakeShipmentOperator{
+		refusal: errortypes.NewBusinessError("shipment is not canceled"),
+	}
+	tool := shipmentopstools.NewUncancelShipmentTool(shipments)
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamShipmentID: pulid.MustNew("shp_").String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(), params))
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: "not-an-id"})))
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{toolparams.ParamShipmentID: "not-an-id"})))
 }
 
 func TestTransferShipmentOwnership_NamesTheNewOwner(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewTransferShipmentOwnershipTool(shipments)
+	tool := shipmentopstools.NewTransferShipmentOwnershipTool(shipments)
 	owner := pulid.MustNew("usr_")
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID: shipments.shipment().ID.String(),
-		common.ParamOwnerID:    owner.String(),
+		toolparams.ParamShipmentID: shipments.shipment().ID.String(),
+		toolparams.ParamOwnerID:    owner.String(),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
-	field := agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.ParamOwnerID)
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
+	field := agenttoolstest.FieldByPath(
+		t,
+		agenttoolstest.PreviewChange(t, preview, 0),
+		toolparams.ParamOwnerID,
+	)
 	require.NotNil(t, field.AfterRef)
 	assert.Equal(t, permission.ResourceUser, field.AfterRef.Resource)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, owner, shipments.owner.OwnerID)
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
-		agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: owner.String()})))
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
+		agenttoolstest.ExecuteParams(map[string]any{toolparams.ParamShipmentID: owner.String()})))
 }
 
 func TestRerateShipment_ShowsTheMoneyAndIsAMoneyWrite(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewRerateShipmentTool(shipments)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: shipments.shipment().ID.String()})
+	tool := shipmentopstools.NewRerateShipmentTool(shipments)
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	assert.Contains(t, preview.Summary, "Acme 2026")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Money)
@@ -297,15 +336,17 @@ func TestRerateShipment_NoContractChangesNothing(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{unpriced: true}
-	tool := shipmenttools.NewRerateShipmentTool(shipments)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: shipments.shipment().ID.String()})
+	tool := shipmentopstools.NewRerateShipmentTool(shipments)
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
+	)
 
-	preview, err := tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
+	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
 	assert.Empty(t, preview.Changes)
 	assert.Contains(t, preview.Summary, "NoMatch")
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	assert.Contains(t, result.Action, "left unchanged")
 }
@@ -314,12 +355,18 @@ func TestRecalculateShipmentDistance_ShowsEachMoveThatChanges(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewRecalculateShipmentDistanceTool(shipments)
-	params := agenttoolstest.ExecuteParams(map[string]any{common.ParamShipmentID: shipments.shipment().ID.String()})
+	tool := shipmentopstools.NewRecalculateShipmentDistanceTool(shipments)
+	params := agenttoolstest.ExecuteParams(
+		map[string]any{toolparams.ParamShipmentID: shipments.shipment().ID.String()},
+	)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, permission.ResourceShipmentMove, change.Resource)
 	assert.Contains(t, preview.Summary, "412.5")
@@ -333,24 +380,34 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentOperator{guard: &agenttoolstest.WriteGuard{}}
-	tool := shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{Shipments: shipments})
+	tool := shipmentopstools.NewDuplicateShipmentTool(
+		shipmentopstools.DuplicateShipmentDeps{Shipments: shipments},
+	)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID:           shipments.shipment().ID.String(),
-		shipmenttools.ParamCopyCount:     float64(2),
-		shipmenttools.ParamFirstPickupAt: "2030-03-17T12:46:40",
+		toolparams.ParamShipmentID:          shipments.shipment().ID.String(),
+		shipmentopstools.ParamCopyCount:     float64(2),
+		shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40",
 	})
 	params.Timezone = "America/Chicago"
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
-	assert.Equal(t, "BOL-COPY-01", agenttoolstest.FieldByPath(t, created, common.FieldBol).After)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
+	assert.Equal(
+		t,
+		"BOL-COPY-01",
+		agenttoolstest.FieldByPath(t, created, changepreview.FieldBol).After,
+	)
 	assert.Contains(t, preview.Summary, "2 new shipments")
 
-	result, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	result, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 	require.NotNil(t, shipments.duplicated)
 	assert.Equal(t, 2, shipments.duplicated.Count)
@@ -363,19 +420,21 @@ func TestDuplicateShipment_CopiesServerSideWithTheNewDates(t *testing.T) {
 func TestDuplicateShipment_RefusesBadArguments(t *testing.T) {
 	t.Parallel()
 
-	tool := shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{Shipments: &fakeShipmentOperator{}})
+	tool := shipmentopstools.NewDuplicateShipmentTool(
+		shipmentopstools.DuplicateShipmentDeps{Shipments: &fakeShipmentOperator{}},
+	)
 	id := pulid.MustNew("shp_").String()
 	for name, raw := range map[string]map[string]any{
-		"too many copies":     {common.ParamShipmentID: id, shipmenttools.ParamCopyCount: float64(21)},
-		"unix seconds":        {common.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: float64(1_900_000_000)},
-		"unix seconds text":   {common.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "1900000000"},
-		"a utc offset":        {common.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "2030-03-17T12:46:40Z"},
-		"a date without time": {common.ParamShipmentID: id, shipmenttools.ParamFirstPickupAt: "2030-03-17"},
-		"no shipment":         {shipmenttools.ParamCopyCount: float64(1)},
+		"too many copies":     {toolparams.ParamShipmentID: id, shipmentopstools.ParamCopyCount: float64(21)},
+		"unix seconds":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: float64(1_900_000_000)},
+		"unix seconds text":   {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "1900000000"},
+		"a utc offset":        {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17T12:46:40Z"},
+		"a date without time": {toolparams.ParamShipmentID: id, shipmentopstools.ParamFirstPickupAt: "2030-03-17"},
+		"no shipment":         {shipmentopstools.ParamCopyCount: float64(1)},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+			require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 				agenttoolstest.ExecuteParams(raw)))
 		})
 	}
@@ -407,7 +466,7 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 			{LocationID: pickup, Sequence: 0},
 		},
 	}}}}
-	tool := shipmenttools.NewDuplicateShipmentTool(shipmenttools.DuplicateShipmentDeps{
+	tool := shipmentopstools.NewDuplicateShipmentTool(shipmentopstools.DuplicateShipmentDeps{
 		Shipments: shipments,
 		Sources:   sources,
 		Locations: agenttoolstest.FakeLocationZones{Zones: map[pulid.ID]string{
@@ -416,12 +475,12 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 		}},
 	})
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID:           shipments.shipment().ID.String(),
-		shipmenttools.ParamFirstPickupAt: "2030-03-17T10:46:40",
+		toolparams.ParamShipmentID:          shipments.shipment().ID.String(),
+		shipmentopstools.ParamFirstPickupAt: "2030-03-17T10:46:40",
 	})
 	params.Timezone = "America/Chicago"
 
-	_, err := tool.(agentports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
+	_, err := tool.(agenttoolports.ToolResultReporter).ExecuteWithResult(t.Context(), params)
 	require.NoError(t, err)
 
 	require.NotNil(t, shipments.duplicated.FirstPickupAt)
@@ -433,20 +492,22 @@ func TestDuplicateShipment_ReadsTheFirstPickupWhereItIs(t *testing.T) {
 
 type fakeHoldUpdater struct {
 	guard   *agenttoolstest.WriteGuard
-	current *shipment.ShipmentHold
-	updated *shipmentports.UpdateShipmentHoldRequest
+	current *shipmenthold.ShipmentHold
+	updated *shipmentholdports.UpdateShipmentHoldRequest
 }
 
 func (f *fakeHoldUpdater) GetByID(
 	context.Context,
-	*shipmentports.GetShipmentHoldByIDRequest,
-) (*shipment.ShipmentHold, error) {
+	*shipmentholdports.GetShipmentHoldByIDRequest,
+) (*shipmenthold.ShipmentHold, error) {
 	copied := *f.current
 
 	return &copied, nil
 }
 
-func (f *fakeHoldUpdater) apply(req *shipmentports.UpdateShipmentHoldRequest) *shipment.ShipmentHold {
+func (f *fakeHoldUpdater) apply(
+	req *shipmentholdports.UpdateShipmentHoldRequest,
+) *shipmenthold.ShipmentHold {
 	next := *f.current
 	next.Severity = req.Severity
 	next.Notes = req.Notes
@@ -460,9 +521,9 @@ func (f *fakeHoldUpdater) apply(req *shipmentports.UpdateShipmentHoldRequest) *s
 
 func (f *fakeHoldUpdater) Update(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -473,14 +534,14 @@ func (f *fakeHoldUpdater) Update(
 
 func (f *fakeHoldUpdater) PreviewUpdate(
 	_ context.Context,
-	req *shipmentports.UpdateShipmentHoldRequest,
+	req *shipmentholdports.UpdateShipmentHoldRequest,
 	_ *permissionports.RequestActor,
-) (*shipment.ShipmentHold, error) {
+) (*shipmenthold.ShipmentHold, error) {
 	return f.apply(req), nil
 }
 
-func activeHold() *shipment.ShipmentHold {
-	return &shipment.ShipmentHold{
+func activeHold() *shipmenthold.ShipmentHold {
+	return &shipmenthold.ShipmentHold{
 		ID:             pulid.MustNew("shh_"),
 		ShipmentID:     pulid.MustNew("shp_"),
 		Type:           holdreason.HoldType("Compliance"),
@@ -499,20 +560,32 @@ func TestUpdateShipmentHold_ChangesOnlyWhatIsSentAndKeepsTheVersion(t *testing.T
 	holds := &fakeHoldUpdater{guard: &agenttoolstest.WriteGuard{}, current: activeHold()}
 	tool := shipmenttools.NewUpdateShipmentHoldTool(holds)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		common.ParamShipmentID:            holds.current.ShipmentID.String(),
+		toolparams.ParamShipmentID:        holds.current.ShipmentID.String(),
 		shipmenttools.ParamHoldID:         holds.current.ID.String(),
 		shipmenttools.ParamBlocksBilling:  true,
 		shipmenttools.ParamHoldSeverity:   "Blocking",
-		common.ParamNote:                  " BOL received, billing waits on the POD ",
+		toolparams.ParamNote:              " BOL received, billing waits on the POD ",
 		shipmenttools.ParamBlocksDelivery: false,
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, holds.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		holds.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, true, agenttoolstest.FieldByPath(t, change, shipmenttools.ParamBlocksBilling).After)
-	assert.Equal(t, "Blocking", agenttoolstest.FieldByPath(t, change, common.FieldSeverity).After)
+	assert.Equal(
+		t,
+		true,
+		agenttoolstest.FieldByPath(t, change, shipmenttools.ParamBlocksBilling).After,
+	)
+	assert.Equal(
+		t,
+		"Blocking",
+		agenttoolstest.FieldByPath(t, change, changepreview.FieldSeverity).After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, holds.updated)
@@ -529,58 +602,79 @@ func TestUpdateShipmentHold_ShowingItToTheCustomerIsCustomerVisible(t *testing.T
 	tool := shipmenttools.NewUpdateShipmentHoldTool(&fakeHoldUpdater{current: activeHold()})
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceShipmentHold, policy.Resource)
-	assert.Equal(t, agent.EgressCustomerVisible, policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
-		shipmenttools.ParamVisibleToCustomer: true,
-	})).Egress)
-	assert.Equal(t, agent.EgressInternal, policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
-		shipmenttools.ParamBlocksBilling: true,
-	})).Egress)
+	assert.Equal(
+		t,
+		agent.EgressCustomerVisible,
+		policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
+			shipmenttools.ParamVisibleToCustomer: true,
+		})).Egress,
+	)
+	assert.Equal(
+		t,
+		agent.EgressInternal,
+		policy.Classify(agenttoolstest.ExecuteParams(map[string]any{
+			shipmenttools.ParamBlocksBilling: true,
+		})).Egress,
+	)
 
-	require.ErrorIs(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.ErrorIs(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			common.ParamShipmentID:    pulid.MustNew("shp_").String(),
-			shipmenttools.ParamHoldID: pulid.MustNew("shh_").String(),
-		})), common.ErrNothingToChange)
+			toolparams.ParamShipmentID: pulid.MustNew("shp_").String(),
+			shipmenttools.ParamHoldID:  pulid.MustNew("shh_").String(),
+		})), toolparams.ErrNothingToChange)
 }
 
 type fakeMoveSplitter struct {
 	guard *agenttoolstest.WriteGuard
-	split *shipmentports.SplitMoveRequest
+	split *shipmentmoveports.SplitMoveRequest
 }
 
 func splitSourceMove() *shipment.ShipmentMove {
 	return &shipment.ShipmentMove{
 		ID:       pulid.MustNew("sm_"),
 		Sequence: 0,
-		Status:   shipment.MoveStatusAssigned,
+		Status:   shipmentvocab.MoveStatusAssigned,
 		Version:  5,
 		Stops: []*shipment.Stop{
-			{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup, LocationID: pulid.MustNew("loc_")},
-			{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeDelivery, LocationID: pulid.MustNew("loc_")},
+			{
+				ID:         pulid.MustNew("stp_"),
+				Type:       shipmentvocab.StopTypePickup,
+				LocationID: pulid.MustNew("loc_"),
+			},
+			{
+				ID:         pulid.MustNew("stp_"),
+				Type:       shipmentvocab.StopTypeDelivery,
+				LocationID: pulid.MustNew("loc_"),
+			},
 		},
 	}
 }
 
 func (f *fakeMoveSplitter) SplitMove(
 	_ context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.SplitMoveResponse, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.SplitMoveResponse, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.split = req
 
-	return &shipmentports.SplitMoveResponse{NewMove: &shipment.ShipmentMove{ID: pulid.MustNew("sm_")}}, nil
+	return &shipmentmoveports.SplitMoveResponse{
+		NewMove: &shipment.ShipmentMove{ID: pulid.MustNew("sm_")},
+	}, nil
 }
 
 func (f *fakeMoveSplitter) PreviewSplitMove(
 	_ context.Context,
-	req *shipmentports.SplitMoveRequest,
-) (*shipmentports.MoveSplitPlan, error) {
+	req *shipmentmoveports.SplitMoveRequest,
+) (*shipmentmoveports.MoveSplitPlan, error) {
 	move := splitSourceMove()
 	move.ID = req.MoveID
 
-	return &shipmentports.MoveSplitPlan{Move: move, Split: shipment.PlanMoveSplit(move, req.Spec())}, nil
+	return &shipmentmoveports.MoveSplitPlan{
+		Move:  move,
+		Split: movesplit.PlanMoveSplit(move, req.Spec()),
+	}, nil
 }
 
 func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
@@ -594,17 +688,28 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 		movetools.ParamNewDeliveryLocationID: destination.String(),
 		movetools.ParamRelayPickupStart:      "2030-03-17T17:46:40Z",
 		movetools.ParamNewDeliveryStart:      "2030-03-18T07:40:00Z",
-		common.FieldWeight:                   float64(42000),
+		changepreview.FieldWeight:            float64(42000),
 	})
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, moves.guard, func() (*agent.ToolPreview, error) {
-		return tool.(agentports.ToolPreviewer).Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		moves.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
+		},
+	)
 	require.Len(t, preview.Changes, 2)
-	assert.Equal(t, string(shipment.StopTypeSplitDelivery),
-		agenttoolstest.FieldByPath(t, agenttoolstest.PreviewChange(t, preview, 0), common.FieldType).After)
+	assert.Equal(
+		t,
+		string(shipmentvocab.StopTypeSplitDelivery),
+		agenttoolstest.FieldByPath(
+			t,
+			agenttoolstest.PreviewChange(t, preview, 0),
+			changepreview.FieldType,
+		).After,
+	)
 	created := agenttoolstest.PreviewChange(t, preview, 1)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, moves.split)
@@ -613,7 +718,7 @@ func TestSplitMoveAtRelay_AlwaysProposesAndShowsTheNewMove(t *testing.T) {
 	assert.Equal(t, int64(1_900_000_000), moves.split.SplitPickupTimes.ScheduledWindowStart)
 	assert.Equal(t, agent.TierPropose, tool.Policy().MaxTier)
 
-	require.Error(t, tool.(agentports.ToolValidator).Validate(t.Context(),
+	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
 			movetools.ParamMoveID:                pulid.MustNew("sm_").String(),
 			movetools.ParamNewDeliveryLocationID: destination.String(),

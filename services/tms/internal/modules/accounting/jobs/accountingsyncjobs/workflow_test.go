@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -47,7 +47,11 @@ type finishRecorder struct {
 	failures []string
 }
 
-func (r *finishRecorder) record(_ context.Context, _ *RefreshReferencePayload, failure string) error {
+func (r *finishRecorder) record(
+	_ context.Context,
+	_ *RefreshReferencePayload,
+	failure string,
+) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.failures = append(r.failures, failure)
@@ -59,7 +63,8 @@ func (s *WorkflowTestSuite) expectMarks(recorder *finishRecorder) {
 	s.env.OnActivity(a.MarkAccountingReferenceRefreshStartedActivity, mock.Anything, mock.Anything).
 		Return(nil).Once()
 	s.env.OnActivity(a.MarkAccountingReferenceRefreshFinishedActivity, mock.Anything, mock.Anything, mock.Anything).
-		Return(recorder.record).Once()
+		Return(recorder.record).
+		Once()
 }
 
 func (s *WorkflowTestSuite) TestRefreshPullsEveryKindThenRescoresAndAsksTheModel() {
@@ -67,16 +72,17 @@ func (s *WorkflowTestSuite) TestRefreshPullsEveryKindThenRescoresAndAsksTheModel
 	recorder := &finishRecorder{}
 	s.expectMarks(recorder)
 
-	pulled := make([]accountingsync.ReferenceKind, 0)
+	pulled := make([]accountingprovider.ReferenceKind, 0)
 	var mu sync.Mutex
-	s.env.OnActivity(a.PullAccountingReferenceActivity, mock.Anything, mock.Anything, mock.Anything).Return(
-		func(_ context.Context, _ *RefreshReferencePayload, kind accountingsync.ReferenceKind) (*ReferenceKindResult, error) {
-			mu.Lock()
-			defer mu.Unlock()
-			pulled = append(pulled, kind)
-			return &ReferenceKindResult{Kind: string(kind), Fetched: 2}, nil
-		},
-	)
+	s.env.OnActivity(a.PullAccountingReferenceActivity, mock.Anything, mock.Anything, mock.Anything).
+		Return(
+			func(_ context.Context, _ *RefreshReferencePayload, kind accountingprovider.ReferenceKind) (*ReferenceKindResult, error) {
+				mu.Lock()
+				defer mu.Unlock()
+				pulled = append(pulled, kind)
+				return &ReferenceKindResult{Kind: string(kind), Fetched: 2}, nil
+			},
+		)
 	needs := []pulid.ID{pulid.MustNew("acctm_"), pulid.MustNew("acctm_")}
 	s.env.OnActivity(a.RescoreAccountingMappingsActivity, mock.Anything, mock.Anything).
 		Return(&RescoreReferenceResult{Targets: 20, Created: 20, Updated: 9, Proposed: 7, NeedsModel: needs}, nil).
@@ -90,8 +96,8 @@ func (s *WorkflowTestSuite) TestRefreshPullsEveryKindThenRescoresAndAsksTheModel
 	s.Require().NoError(s.env.GetWorkflowError())
 	var result RefreshReferenceResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
-	s.Equal(accountingsync.AllReferenceKinds(), pulled)
-	s.Len(result.Kinds, len(accountingsync.AllReferenceKinds()))
+	s.Equal(accountingprovider.AllReferenceKinds(), pulled)
+	s.Len(result.Kinds, len(accountingprovider.AllReferenceKinds()))
 	s.Equal(9, result.Proposed)
 	s.Equal(2, result.ModelProposed)
 	s.Equal([]string{""}, recorder.failures)
@@ -135,7 +141,8 @@ func (s *WorkflowTestSuite) TestRefreshKeepsDeterministicProposalsWhenTheModelFa
 	s.env.OnActivity(a.PullAccountingReferenceActivity, mock.Anything, mock.Anything, mock.Anything).
 		Return(&ReferenceKindResult{}, nil)
 	s.env.OnActivity(a.RescoreAccountingMappingsActivity, mock.Anything, mock.Anything).
-		Return(&RescoreReferenceResult{Proposed: 4, NeedsModel: []pulid.ID{pulid.MustNew("acctm_")}}, nil).Once()
+		Return(&RescoreReferenceResult{Proposed: 4, NeedsModel: []pulid.ID{pulid.MustNew("acctm_")}}, nil).
+		Once()
 	s.env.OnActivity(a.AccountingMappingModelPassActivity, mock.Anything, mock.Anything, mock.Anything).
 		Return(0, temporal.NewNonRetryableApplicationError("model rejected", "ModelRejected", nil))
 
@@ -179,14 +186,18 @@ func (s *WorkflowTestSuite) TestSweepStartsARefreshPerConnection() {
 	var result ReferenceSweepResult
 	s.Require().NoError(s.env.GetWorkflowResult(&result))
 	s.Equal(3, result.Started)
-	s.ElementsMatch([]pulid.ID{page[0].ConnectionID, page[1].ConnectionID, page[2].ConnectionID}, started)
+	s.ElementsMatch(
+		[]pulid.ID{page[0].ConnectionID, page[1].ConnectionID, page[2].ConnectionID},
+		started,
+	)
 }
 
 func (s *WorkflowTestSuite) TestSweepContinuesAsNewWhenThereIsAnotherPage() {
 	var a *Activities
 	page := connections(2)
 	s.env.OnActivity(a.ListAccountingReferenceConnectionsActivity, mock.Anything, pulid.Nil).
-		Return(&ReferenceSweepPage{Connections: page, LastID: page[1].ConnectionID, More: true}, nil).Once()
+		Return(&ReferenceSweepPage{Connections: page, LastID: page[1].ConnectionID, More: true}, nil).
+		Once()
 	s.env.OnWorkflow(RefreshAccountingReferenceWorkflow, mock.Anything, mock.Anything).
 		Return(&RefreshReferenceResult{}, nil)
 

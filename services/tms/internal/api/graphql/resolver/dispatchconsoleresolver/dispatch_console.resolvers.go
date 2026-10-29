@@ -10,12 +10,15 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,7 +44,7 @@ func (r *MutationResolver) DispatchAssignMoves(ctx context.Context, input []*gql
 		).WithParam("limit", strconv.Itoa(maxBulkAssignBatch))
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	results := make([]*gqlmodel.DispatchAssignResult, 0, len(input))
 
 	for _, item := range input {
@@ -67,7 +70,7 @@ func (r *MutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 		).WithParam("limit", strconv.Itoa(maxBulkAssignBatch))
 	}
 
-	tenant := base.TenantInfo(authCtx)
+	tenant := resolvercore.TenantInfo(authCtx)
 	results := make([]*gqlmodel.DispatchAssignResult, 0, len(moveIds))
 
 	for _, rawID := range moveIds {
@@ -89,7 +92,7 @@ func (r *MutationResolver) DispatchUnassignMoves(ctx context.Context, moveIds []
 
 		unassignErr := r.AssignmentService.Unassign(
 			ctx,
-			&shipmentports.UnassignShipmentMoveRequest{
+			&assignmentports.UnassignShipmentMoveRequest{
 				TenantInfo:     tenant,
 				ShipmentMoveID: moveID,
 			},
@@ -119,7 +122,7 @@ func (r *MutationResolver) DispatchAssignMoveToCarrier(ctx context.Context, inpu
 		return nil, err
 	}
 
-	req, err := assignMoveToCarrierRequestFromInput(&input, base.TenantInfo(authCtx))
+	req, err := assignMoveToCarrierRequestFromInput(&input, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +149,8 @@ func (r *MutationResolver) DispatchCancelCarrierAssignment(ctx context.Context, 
 		return false, err
 	}
 
-	if err = r.CarrierAssignmentService.Cancel(ctx, &shipmentports.CancelCarrierAssignmentRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+	if err = r.CarrierAssignmentService.Cancel(ctx, &carrierassignmentports.CancelCarrierAssignmentRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ShipmentMoveID: parsedMoveID,
 		Reason:         reason,
 	}); err != nil {
@@ -167,17 +170,17 @@ func (r *MutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := &agentports.DispatchPlanRequest{
-		TenantInfo:  base.TenantInfo(authCtx),
-		WindowStart: int64(base.IntValue(input.WindowStart)),
-		WindowEnd:   int64(base.IntValue(input.WindowEnd)),
+	req := &dispatchconsoleports.DispatchPlanRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		WindowStart: int64(gqlscalar.IntValue(input.WindowStart)),
+		WindowEnd:   int64(gqlscalar.IntValue(input.WindowEnd)),
 		Apply:       input.Apply != nil && *input.Apply,
 	}
 
-	if req.FleetCodeIDs, err = base.ParseIDs(input.FleetCodeIds); err != nil {
+	if req.FleetCodeIDs, err = gqlid.ParseIDs(input.FleetCodeIds); err != nil {
 		return nil, err
 	}
-	if req.MoveIDs, err = base.ParseIDs(input.MoveIds); err != nil {
+	if req.MoveIDs, err = gqlid.ParseIDs(input.MoveIds); err != nil {
 		return nil, err
 	}
 
@@ -203,24 +206,24 @@ func (r *QueryResolver) DispatchBoard(ctx context.Context, input gqlmodel.Dispat
 	}
 
 	req := &dispatchconsoleservice.GetBoardRequest{
-		TenantInfo: base.TenantInfo(authCtx),
-		Query:      base.StringValue(input.Query),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Query:      gqlscalar.StringValue(input.Query),
 	}
-	req.WindowStart = int64(base.IntValue(input.WindowStart))
-	req.WindowEnd = int64(base.IntValue(input.WindowEnd))
+	req.WindowStart = int64(gqlscalar.IntValue(input.WindowStart))
+	req.WindowEnd = int64(gqlscalar.IntValue(input.WindowEnd))
 	req.IncludeCovered = input.IncludeCovered != nil && *input.IncludeCovered
-	req.Limit = base.IntValue(input.Limit)
+	req.Limit = gqlscalar.IntValue(input.Limit)
 
-	if req.FleetCodeIDs, err = base.ParseIDs(input.FleetCodeIds); err != nil {
+	if req.FleetCodeIDs, err = gqlid.ParseIDs(input.FleetCodeIds); err != nil {
 		return nil, err
 	}
-	if req.CustomerIDs, err = base.ParseIDs(input.CustomerIds); err != nil {
+	if req.CustomerIDs, err = gqlid.ParseIDs(input.CustomerIds); err != nil {
 		return nil, err
 	}
-	if req.ServiceTypeIDs, err = base.ParseIDs(input.ServiceTypeIds); err != nil {
+	if req.ServiceTypeIDs, err = gqlid.ParseIDs(input.ServiceTypeIds); err != nil {
 		return nil, err
 	}
-	if req.WorkerIDs, err = base.ParseIDs(input.WorkerIds); err != nil {
+	if req.WorkerIDs, err = gqlid.ParseIDs(input.WorkerIds); err != nil {
 		return nil, err
 	}
 
@@ -247,7 +250,7 @@ func (r *QueryResolver) DispatchMoveCandidates(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	fleetCodeIDs, err := base.ParseIDs(input.FleetCodeIds)
+	fleetCodeIDs, err := gqlid.ParseIDs(input.FleetCodeIds)
 	if err != nil {
 		return nil, err
 	}
@@ -255,10 +258,10 @@ func (r *QueryResolver) DispatchMoveCandidates(ctx context.Context, input gqlmod
 	scores, err := r.DispatchConsoleService.GetMoveCandidates(
 		ctx,
 		&dispatchconsoleservice.MoveCandidatesRequest{
-			TenantInfo:     base.TenantInfo(authCtx),
+			TenantInfo:     resolvercore.TenantInfo(authCtx),
 			MoveID:         moveID,
 			FleetCodeIDs:   fleetCodeIDs,
-			Limit:          base.IntValue(input.Limit),
+			Limit:          gqlscalar.IntValue(input.Limit),
 			IncludeBlocked: input.IncludeBlocked != nil && *input.IncludeBlocked,
 		},
 	)
@@ -295,11 +298,11 @@ func (r *QueryResolver) DispatchDriverMoves(ctx context.Context, input gqlmodel.
 	matches, err := r.DispatchConsoleService.GetDriverMoves(
 		ctx,
 		&dispatchconsoleservice.DriverMovesRequest{
-			TenantInfo:  base.TenantInfo(authCtx),
+			TenantInfo:  resolvercore.TenantInfo(authCtx),
 			WorkerID:    workerID,
-			WindowStart: int64(base.IntValue(input.WindowStart)),
-			WindowEnd:   int64(base.IntValue(input.WindowEnd)),
-			Limit:       base.IntValue(input.Limit),
+			WindowStart: int64(gqlscalar.IntValue(input.WindowStart)),
+			WindowEnd:   int64(gqlscalar.IntValue(input.WindowEnd)),
+			Limit:       gqlscalar.IntValue(input.Limit),
 		},
 	)
 	if err != nil {
@@ -337,17 +340,17 @@ func (r *QueryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 	}
 
 	req := &dispatchconsoleservice.PreviewAssignmentRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		MoveID:     moveID,
 		WorkerID:   workerID,
 	}
 
-	if tractorID, parseErr := base.OptionalPulid(input.TractorID); parseErr != nil {
+	if tractorID, parseErr := gqlid.OptionalPulid(input.TractorID); parseErr != nil {
 		return nil, parseErr
 	} else if tractorID != nil {
 		req.TractorID = *tractorID
 	}
-	if trailerID, parseErr := base.OptionalPulid(input.TrailerID); parseErr != nil {
+	if trailerID, parseErr := gqlid.OptionalPulid(input.TrailerID); parseErr != nil {
 		return nil, parseErr
 	} else if trailerID != nil {
 		req.TrailerID = *trailerID
@@ -361,8 +364,8 @@ func (r *QueryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 	return &gqlmodel.DispatchAssignmentPreview{
 		MoveID:           preview.MoveID.String(),
 		WorkerID:         preview.WorkerID.String(),
-		TractorID:        base.IDPtr(preview.TractorID),
-		TrailerID:        base.IDPtr(preview.TrailerID),
+		TractorID:        gqlid.IDPtr(preview.TractorID),
+		TrailerID:        gqlid.IDPtr(preview.TrailerID),
 		Blocked:          preview.Blocked,
 		RequiresOverride: preview.RequiresOverride,
 		Score:            mapDispatchCandidate(preview.Score),
@@ -390,7 +393,7 @@ func (r *QueryResolver) DispatchCarrierAssignmentPreview(ctx context.Context, in
 
 	result, err := r.CarrierAssignmentService.PreviewEligibility(
 		ctx,
-		base.TenantInfo(authCtx),
+		resolvercore.TenantInfo(authCtx),
 		carrierID,
 	)
 	if err != nil {

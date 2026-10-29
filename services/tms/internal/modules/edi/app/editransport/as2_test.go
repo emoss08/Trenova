@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editransportports"
 	"github.com/emoss08/trenova/shared/as2"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/stretchr/testify/require"
@@ -128,7 +128,7 @@ func TestAS2TransportDeliverSyncMDN(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := newLoopbackAS2Transport()
-	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+	result, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -155,7 +155,7 @@ func TestAS2TransportDeliverAsyncMDNIsPending(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeAsync)
 	transport := newLoopbackAS2Transport()
-	result, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+	result, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -187,7 +187,7 @@ func TestAS2TransportDeliverFailsOnRejectedMDN(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := newLoopbackAS2Transport()
-	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -210,7 +210,7 @@ func TestAS2TransportDeliverFailsOnHTTPRejection(t *testing.T) {
 
 	profile, secrets := as2TestProfile(local, partner, server.URL, MDNModeSync)
 	transport := newLoopbackAS2Transport()
-	_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+	_, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",
@@ -245,7 +245,7 @@ func TestAS2TransportRefusesPrivateEndpointsByDefault(t *testing.T) {
 		"file:///etc/passwd",
 	} {
 		profile, secrets := as2TestProfile(local, partner, endpoint, MDNModeSync)
-		_, err := transport.Deliver(t.Context(), &ediports.EDITransportRequest{
+		_, err := transport.Deliver(t.Context(), &editransportports.EDITransportRequest{
 			Profile:  profile,
 			Secrets:  secrets,
 			FileName: "shipment.edi",
@@ -254,13 +254,13 @@ func TestAS2TransportRefusesPrivateEndpointsByDefault(t *testing.T) {
 		require.Error(t, err, endpoint)
 		require.Contains(t, err.Error(), "not permitted", endpoint)
 
-		checks := transport.TestConnection(t.Context(), &ediports.EDITransportRequest{
+		checks := transport.TestConnection(t.Context(), &editransportports.EDITransportRequest{
 			Profile: profile,
 			Secrets: secrets,
 		})
 		endpointCheck := checks[len(checks)-1]
 		require.Equal(t, "endpoint", endpointCheck.Name, endpoint)
-		require.Equal(t, ediports.EDIConnectionCheckFailed, endpointCheck.Status, endpoint)
+		require.Equal(t, editransportports.EDIConnectionCheckFailed, endpointCheck.Status, endpoint)
 	}
 	require.Zero(t, hits.Load())
 }
@@ -276,7 +276,7 @@ func TestAS2TransportRefusesMetadataEvenWhenPrivateNetworksAreAllowed(t *testing
 		"http://169.254.169.254/latest/meta-data/",
 		MDNModeSync,
 	)
-	_, err := newLoopbackAS2Transport().Deliver(t.Context(), &ediports.EDITransportRequest{
+	_, err := newLoopbackAS2Transport().Deliver(t.Context(), &editransportports.EDITransportRequest{
 		Profile:  profile,
 		Secrets:  secrets,
 		FileName: "shipment.edi",

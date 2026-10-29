@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -30,12 +30,12 @@ type TelematicsEvent struct {
 	Payload        map[string]any `json:"payload"        keel:"payload,jsonb,nullzero"`
 	CreatedAt      int64          `json:"createdAt"      keel:"created_at"`
 
-	StopOutcome       StopOutcome        `json:"stopOutcome"       keel:"stop_outcome,nullzero"`
-	StopVisit         shipment.VisitKind `json:"stopVisit"         keel:"stop_visit,nullzero"`
-	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId"    keel:"shipment_move_id,nullzero"`
-	StopID            pulid.ID           `json:"stopId"            keel:"stop_id,nullzero"`
-	StopOutcomeReason string             `json:"stopOutcomeReason" keel:"stop_outcome_reason,nullzero"`
-	MoveShipmentID    pulid.ID           `json:"-"                 keel:"move_shipment_id,computed,nullzero"`
+	StopOutcome       StopOutcome             `json:"stopOutcome"       keel:"stop_outcome,nullzero"`
+	StopVisit         shipmentvocab.VisitKind `json:"stopVisit"         keel:"stop_visit,nullzero"`
+	ShipmentMoveID    pulid.ID                `json:"shipmentMoveId"    keel:"shipment_move_id,nullzero"`
+	StopID            pulid.ID                `json:"stopId"            keel:"stop_id,nullzero"`
+	StopOutcomeReason string                  `json:"stopOutcomeReason" keel:"stop_outcome_reason,nullzero"`
+	MoveShipmentID    pulid.ID                `json:"-"                 keel:"move_shipment_id,computed,nullzero"`
 }
 
 func (e *TelematicsEvent) BeforeCreate(_ context.Context) error {

@@ -5,16 +5,21 @@ package accountingsyncrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
-	"github.com/emoss08/trenova/pkg/dbscope"
-
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountinginboundrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -26,11 +31,11 @@ import (
 func driftMinor(v int64) *int64 { return &v }
 
 func (f *syncFixture) driftFinding(
-	kind accountingsync.DriftKind,
+	kind accountingdrift.DriftKind,
 	objectID pulid.ID,
 	at int64,
-) *accountingsync.AccountingDriftFinding {
-	return accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+) *accountingdrift.AccountingDriftFinding {
+	return accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 		TenantInfo:    f.tenant,
 		ConnectionID:  f.connection.ID,
 		ObjectType:    accountingsync.SyncObjectInvoice,
@@ -47,21 +52,35 @@ func (f *syncFixture) driftFinding(
 
 func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	f := setupSyncFixture(t)
-	repo := NewDriftFindingRepository(DriftFindingParams{DB: f.conn, Logger: zap.NewNop()})
+	repo := accountingdriftrepository.NewDriftFindingRepository(
+		accountingdriftrepository.DriftFindingParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 	invoiceID := pulid.MustNew("inv_")
 
-	first, err := repo.Create(f.ctx, f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now))
+	first, err := repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now),
+	)
 	require.NoError(t, err)
-	_, err = repo.Create(f.ctx, f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now))
+	_, err = repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now),
+	)
 	require.Error(t, err, "a second open finding for the same document and kind is refused")
 
-	_, err = repo.Create(f.ctx, f.driftFinding(accountingsync.DriftVoidedInProvider, invoiceID, f.now))
+	_, err = repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftVoidedInProvider, invoiceID, f.now),
+	)
 	require.NoError(t, err, "another kind on the same document is its own finding")
 
 	require.True(t, first.Clear(f.now+10))
 	_, err = repo.Update(f.ctx, first)
 	require.NoError(t, err)
-	reopened, err := repo.Create(f.ctx, f.driftFinding(accountingsync.DriftAmountMismatch, invoiceID, f.now+20))
+	reopened, err := repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftAmountMismatch, invoiceID, f.now+20),
+	)
 	require.NoError(t, err, "once resolved, the document may drift again")
 
 	stale := *first
@@ -69,7 +88,7 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	_, err = repo.Update(f.ctx, &stale)
 	require.Error(t, err, "a stale version is refused")
 
-	open, err := repo.ListOpen(f.ctx, &accountingsyncports.ListOpenAccountingDriftFindingsRequest{
+	open, err := repo.ListOpen(f.ctx, &accountingdriftports.ListOpenAccountingDriftFindingsRequest{
 		TenantInfo:   f.tenant,
 		ConnectionID: f.connection.ID,
 		ObjectIDs:    []pulid.ID{invoiceID},
@@ -83,7 +102,7 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	assert.Contains(t, ids, reopened.ID)
 	assert.NotContains(t, ids, first.ID)
 
-	got, err := repo.GetByID(f.ctx, accountingsyncports.GetAccountingDriftFindingQuery{
+	got, err := repo.GetByID(f.ctx, accountingdriftports.GetAccountingDriftFindingQuery{
 		TenantInfo: f.tenant,
 		ID:         reopened.ID,
 	})
@@ -92,64 +111,87 @@ func TestDriftFindingRepository_OneOpenFindingPerDocumentAndKind(t *testing.T) {
 	assert.Equal(t, int64(-1_000), *got.DifferenceMinor)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = repo.GetByID(dbscope.WithTenant(f.ctx, other.DBTenant()), accountingsyncports.GetAccountingDriftFindingQuery{
-		TenantInfo: other,
-		ID:         reopened.ID,
-	})
+	_, err = repo.GetByID(
+		dbscope.WithTenant(f.ctx, other.DBTenant()),
+		accountingdriftports.GetAccountingDriftFindingQuery{
+			TenantInfo: other,
+			ID:         reopened.ID,
+		},
+	)
 	require.Error(t, err, "another tenant cannot read it")
 }
 
 func TestDriftFindingRepository_SummaryAttentionAndTable(t *testing.T) {
 	f := setupSyncFixture(t)
-	repo := NewDriftFindingRepository(DriftFindingParams{DB: f.conn, Logger: zap.NewNop()})
+	repo := accountingdriftrepository.NewDriftFindingRepository(
+		accountingdriftrepository.DriftFindingParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 
 	day := int64(86_400)
-	amountOld, err := repo.Create(f.ctx, f.driftFinding(accountingsync.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-2*day))
+	amountOld, err := repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-2*day),
+	)
 	require.NoError(t, err)
-	_, err = repo.Create(f.ctx, f.driftFinding(accountingsync.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-3*day))
+	_, err = repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftAmountMismatch, pulid.MustNew("inv_"), f.now-3*day),
+	)
 	require.NoError(t, err)
-	_, err = repo.Create(f.ctx, f.driftFinding(accountingsync.DriftDeletedInProvider, pulid.MustNew("inv_"), f.now))
+	_, err = repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftDeletedInProvider, pulid.MustNew("inv_"), f.now),
+	)
 	require.NoError(t, err)
-	resolved, err := repo.Create(f.ctx, f.driftFinding(accountingsync.DriftStatusMismatch, pulid.MustNew("inv_"), f.now-day))
+	resolved, err := repo.Create(
+		f.ctx,
+		f.driftFinding(accountingdrift.DriftStatusMismatch, pulid.MustNew("inv_"), f.now-day),
+	)
 	require.NoError(t, err)
 	require.True(t, resolved.Clear(f.now))
 	_, err = repo.Update(f.ctx, resolved)
 	require.NoError(t, err)
 
-	summary, err := repo.Summarize(f.ctx, &accountingsyncports.SummarizeAccountingDriftRequest{
+	summary, err := repo.Summarize(f.ctx, &accountingdriftports.SummarizeAccountingDriftRequest{
 		TenantInfo:    f.tenant,
 		ConnectionID:  f.connection.ID,
 		ResolvedSince: f.now - day,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, accountingsyncports.AccountingDriftSummary{
+	assert.Equal(t, accountingdriftports.AccountingDriftSummary{
 		Open:          3,
 		AmountOpen:    2,
 		GoneOpen:      1,
 		ResolvedSince: 1,
 	}, *summary)
 
-	groups, err := repo.ListAttention(f.ctx, &accountingsyncports.ListAccountingDriftAttentionRequest{
-		TenantInfo:     f.tenant,
-		ConnectionID:   f.connection.ID,
-		DetectedBefore: f.now - day,
-	})
+	groups, err := repo.ListAttention(
+		f.ctx,
+		&accountingdriftports.ListAccountingDriftAttentionRequest{
+			TenantInfo:     f.tenant,
+			ConnectionID:   f.connection.ID,
+			DetectedBefore: f.now - day,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, groups, 1, "only findings older than a day, and only open ones")
-	assert.Equal(t, accountingsync.DriftAmountMismatch, groups[0].Kind)
+	assert.Equal(t, accountingdrift.DriftAmountMismatch, groups[0].Kind)
 	assert.Equal(t, 2, groups[0].Count)
 	assert.Equal(t, f.now-3*day, groups[0].OldestDetectedAt)
 
 	cursor, err := pagination.NewCursorInfo(10, "")
 	require.NoError(t, err)
 	cursor.IncludeTotalCount = true
-	page, err := repo.ListConnection(f.ctx, &accountingsyncports.ListAccountingDriftFindingsConnectionRequest{
-		Filter:       &pagination.QueryOptions{TenantInfo: f.tenant},
-		Cursor:       cursor,
-		ConnectionID: f.connection.ID,
-		Statuses:     []accountingsync.DriftStatus{accountingsync.DriftStatusOpen},
-		Kinds:        []accountingsync.DriftKind{accountingsync.DriftAmountMismatch},
-	})
+	page, err := repo.ListConnection(
+		f.ctx,
+		&accountingdriftports.ListAccountingDriftFindingsConnectionRequest{
+			Filter:       &pagination.QueryOptions{TenantInfo: f.tenant},
+			Cursor:       cursor,
+			ConnectionID: f.connection.ID,
+			Statuses:     []accountingdrift.DriftStatus{accountingdrift.DriftStatusOpen},
+			Kinds:        []accountingdrift.DriftKind{accountingdrift.DriftAmountMismatch},
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, page.TotalCount)
 	assert.Equal(t, 2, *page.TotalCount)
@@ -166,9 +208,11 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	logger := zap.NewNop()
 	invoices := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	records := NewSyncRecordRepository(SyncRecordParams{DB: conn, Logger: logger})
-	source := NewDriftSource(DriftSourceParams{DB: conn, Logger: logger})
-	connection, err := NewConnectionRepository(ConnectionParams{DB: conn, Logger: logger}).
-		Create(ctx, newConnection(tenant, userID, realm, 1_000))
+	source := accountingdriftrepository.NewDriftSource(
+		accountingdriftrepository.DriftSourceParams{DB: conn, Logger: logger},
+	)
+	connection, err := accountingconnectionrepository.NewConnectionRepository(accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}).
+		Create(ctx, accountingtest.NewConnection(tenant, userID, accountingtest.Realm, 1_000))
 	require.NoError(t, err)
 
 	const dated = int64(1_790_000_000)
@@ -251,13 +295,55 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		return inserted.Inserted[0]
 	}
 
-	open := createDoc(0, "INV-DRIFT-1", billingqueue.BillTypeInvoice, invoice.StatusPosted, 50_000, 10_000, pulid.Nil)
-	voided := createDoc(1, "INV-DRIFT-2", billingqueue.BillTypeInvoice, invoice.StatusVoided, 20_000, 0, pulid.Nil)
-	memo := createDoc(2, "CM-DRIFT-1", billingqueue.BillTypeCreditMemo, invoice.StatusPosted, -5_000, 0, open.ID)
+	open := createDoc(
+		0,
+		"INV-DRIFT-1",
+		billingqueue.BillTypeInvoice,
+		invoice.StatusPosted,
+		50_000,
+		10_000,
+		pulid.Nil,
+	)
+	voided := createDoc(
+		1,
+		"INV-DRIFT-2",
+		billingqueue.BillTypeInvoice,
+		invoice.StatusVoided,
+		20_000,
+		0,
+		pulid.Nil,
+	)
+	memo := createDoc(
+		2,
+		"CM-DRIFT-1",
+		billingqueue.BillTypeCreditMemo,
+		invoice.StatusPosted,
+		-5_000,
+		0,
+		open.ID,
+	)
 
-	openCreate := synced(accountingsync.SyncObjectInvoice, open.ID, accountingsync.SyncOperationCreate, 1, "145")
-	synced(accountingsync.SyncObjectInvoice, voided.ID, accountingsync.SyncOperationCreate, 1, "146")
-	recreated := synced(accountingsync.SyncObjectInvoice, voided.ID, accountingsync.SyncOperationRecreate, 2, "147")
+	openCreate := synced(
+		accountingsync.SyncObjectInvoice,
+		open.ID,
+		accountingsync.SyncOperationCreate,
+		1,
+		"145",
+	)
+	synced(
+		accountingsync.SyncObjectInvoice,
+		voided.ID,
+		accountingsync.SyncOperationCreate,
+		1,
+		"146",
+	)
+	recreated := synced(
+		accountingsync.SyncObjectInvoice,
+		voided.ID,
+		accountingsync.SyncOperationRecreate,
+		2,
+		"147",
+	)
 
 	memoRecord := accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
 		TenantInfo:   tenant,
@@ -275,7 +361,15 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	_, err = records.Enqueue(ctx, []*accountingsync.AccountingSyncRecord{memoRecord})
 	require.NoError(t, err)
 
-	sentMemo := createDoc(2, "DM-DRIFT-1", billingqueue.BillTypeDebitMemo, invoice.StatusPosted, 7_000, 0, open.ID)
+	sentMemo := createDoc(
+		2,
+		"DM-DRIFT-1",
+		billingqueue.BillTypeDebitMemo,
+		invoice.StatusPosted,
+		7_000,
+		0,
+		open.ID,
+	)
 	sentMemoRecord := accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
@@ -293,7 +387,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	_, err = records.Enqueue(ctx, []*accountingsync.AccountingSyncRecord{sentMemoRecord})
 	require.NoError(t, err)
 
-	listed, err := source.ListRecords(ctx, &accountingsyncports.ListAccountingDriftRecordsRequest{
+	listed, err := source.ListRecords(ctx, &accountingdriftports.ListAccountingDriftRecordsRequest{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
 		DatedFrom:    dated,
@@ -307,7 +401,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{openCreate.ID, recreated.ID, sentMemoRecord.ID}, listedIDs,
 		"the latest synced create per document, never a skipped memo or a superseded create")
 
-	later, err := source.ListRecords(ctx, &accountingsyncports.ListAccountingDriftRecordsRequest{
+	later, err := source.ListRecords(ctx, &accountingdriftports.ListAccountingDriftRecordsRequest{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
 		DatedFrom:    dated + 1,
@@ -316,14 +410,14 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, later, "documents dated before the scope are left out")
 
-	states, err := source.ListStates(ctx, &accountingsyncports.ListAccountingDriftStatesRequest{
+	states, err := source.ListStates(ctx, &accountingdriftports.ListAccountingDriftStatesRequest{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
 		ObjectType:   accountingsync.SyncObjectInvoice,
 		ObjectIDs:    []pulid.ID{open.ID, voided.ID},
 	})
 	require.NoError(t, err)
-	byID := make(map[pulid.ID]*accountingsyncports.AccountingDriftState, len(states))
+	byID := make(map[pulid.ID]*accountingdriftports.AccountingDriftState, len(states))
 	for _, state := range states {
 		byID[state.ObjectID] = state
 	}
@@ -333,42 +427,57 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	assert.NotEmpty(t, byID[open.ID].PartyName)
 	assert.Equal(t, int64(50_000), byID[open.ID].AmountMinor)
 	assert.Equal(t, int64(40_000), byID[open.ID].OpenMinor)
-	assert.Equal(t, int64(-5_000), byID[open.ID].ReflectedMinor,
-		"the reflected credit memo lowers what the provider should hold; a memo that was sent is its own document")
+	assert.Equal(
+		t,
+		int64(-5_000),
+		byID[open.ID].ReflectedMinor,
+		"the reflected credit memo lowers what the provider should hold; a memo that was sent is its own document",
+	)
 	assert.False(t, byID[open.ID].Voided)
 	assert.True(t, byID[voided.ID].Voided)
 	assert.Equal(t, "Voided", byID[voided.ID].State)
 	assert.Zero(t, byID[voided.ID].ReflectedMinor)
 
-	memoStates, err := source.ListStates(ctx, &accountingsyncports.ListAccountingDriftStatesRequest{
-		TenantInfo:   tenant,
-		ConnectionID: connection.ID,
-		ObjectType:   accountingsync.SyncObjectCreditMemo,
-		ObjectIDs:    []pulid.ID{memo.ID},
-	})
+	memoStates, err := source.ListStates(
+		ctx,
+		&accountingdriftports.ListAccountingDriftStatesRequest{
+			TenantInfo:   tenant,
+			ConnectionID: connection.ID,
+			ObjectType:   accountingsync.SyncObjectCreditMemo,
+			ObjectIDs:    []pulid.ID{memo.ID},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, memoStates, 1)
 	assert.Equal(t, int64(5_000), memoStates[0].AmountMinor, "a credit memo compares by its size")
 
-	for _, objectType := range accountingsync.DriftObjectTypes() {
-		none, stateErr := source.ListStates(ctx, &accountingsyncports.ListAccountingDriftStatesRequest{
-			TenantInfo:   tenant,
-			ConnectionID: connection.ID,
-			ObjectType:   objectType,
-			ObjectIDs:    []pulid.ID{pulid.MustNew("obj_")},
-		})
+	for _, objectType := range accountingdrift.DriftObjectTypes() {
+		none, stateErr := source.ListStates(
+			ctx,
+			&accountingdriftports.ListAccountingDriftStatesRequest{
+				TenantInfo:   tenant,
+				ConnectionID: connection.ID,
+				ObjectType:   objectType,
+				ObjectIDs:    []pulid.ID{pulid.MustNew("obj_")},
+			},
+		)
 		require.NoError(t, stateErr, "%s states read", objectType)
 		assert.Empty(t, none)
 	}
 
-	lines, err := source.ListBalances(ctx, &accountingsyncports.ListAccountingDriftBalancesRequest{
+	lines, err := source.ListBalances(ctx, &accountingdriftports.ListAccountingDriftBalancesRequest{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
 		DatedFrom:    dated,
 		Customers:    10,
 	})
 	require.NoError(t, err)
-	require.Len(t, lines, 3, "the open and the voided invoice and the sent debit memo, all synced, for one customer")
+	require.Len(
+		t,
+		lines,
+		3,
+		"the open and the voided invoice and the sent debit memo, all synced, for one customer",
+	)
 	for _, line := range lines {
 		assert.Equal(t, shipments[0].CustomerID, line.CustomerID)
 		switch line.ObjectID {
@@ -384,7 +493,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 			t.Fatalf("unexpected balance line %s", line.ObjectID)
 		}
 	}
-	after, err := source.ListBalances(ctx, &accountingsyncports.ListAccountingDriftBalancesRequest{
+	after, err := source.ListBalances(ctx, &accountingdriftports.ListAccountingDriftBalancesRequest{
 		TenantInfo:      tenant,
 		ConnectionID:    connection.ID,
 		DatedFrom:       dated,
@@ -394,11 +503,14 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, after)
 
-	pending, err := source.ListPendingCustomers(ctx, &accountingsyncports.ListAccountingDriftPendingCustomersRequest{
-		TenantInfo:   tenant,
-		ConnectionID: connection.ID,
-		CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
-	})
+	pending, err := source.ListPendingCustomers(
+		ctx,
+		&accountingdriftports.ListAccountingDriftPendingCustomersRequest{
+			TenantInfo:   tenant,
+			ConnectionID: connection.ID,
+			CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, pending)
 
@@ -406,7 +518,7 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		t.Helper()
 		found, pendingErr := source.ListPendingCustomers(
 			ctx,
-			&accountingsyncports.ListAccountingDriftPendingCustomersRequest{
+			&accountingdriftports.ListAccountingDriftPendingCustomersRequest{
 				TenantInfo:   tenant,
 				ConnectionID: connection.ID,
 				CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
@@ -478,10 +590,10 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	require.NoError(t, err)
 	waitingOn(accountingsync.SyncObjectCreditApplication, application.ID)
 
-	change := accountingsync.NewAccountingInboundChange(&accountingsync.InboundObservation{
+	change := accountinginbound.NewAccountingInboundChange(&accountinginbound.InboundObservation{
 		TenantInfo:   tenant,
 		ConnectionID: connection.ID,
-		Kind:         accountingsync.InboundCustomerPayment,
+		Kind:         accountinginbound.InboundCustomerPayment,
 		ExternalID:   "301",
 		TxnDate:      dated,
 		AmountMinor:  1_000,
@@ -489,13 +601,18 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 		At:           posted,
 	})
 	change.PartyObjectID = shipments[0].CustomerID
-	_, err = NewInboundChangeRepository(InboundChangeParams{DB: conn, Logger: logger}).Create(ctx, change)
+	_, err = accountinginboundrepository.NewInboundChangeRepository(
+		accountinginboundrepository.InboundChangeParams{DB: conn, Logger: logger},
+	).Create(ctx, change)
 	require.NoError(t, err)
-	pending, err = source.ListPendingCustomers(ctx, &accountingsyncports.ListAccountingDriftPendingCustomersRequest{
-		TenantInfo:   tenant,
-		ConnectionID: connection.ID,
-		CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
-	})
+	pending, err = source.ListPendingCustomers(
+		ctx,
+		&accountingdriftports.ListAccountingDriftPendingCustomersRequest{
+			TenantInfo:   tenant,
+			ConnectionID: connection.ID,
+			CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{shipments[0].CustomerID}, pending)
 

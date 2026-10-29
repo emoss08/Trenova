@@ -7,13 +7,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -72,7 +77,7 @@ func runEvaluationWorkflow(
 			if err != nil || opened.Done {
 				return opened, err
 			}
-			req := &agentports.RunRequest{
+			req := &agentruntimeports.RunRequest{
 				Definition: replayDefinition(),
 				Actor: &permissionports.RequestActor{
 					PrincipalType: permissionports.PrincipalTypeUser,
@@ -80,7 +85,7 @@ func runEvaluationWorkflow(
 					UserID:        pulid.MustNew("usr_"),
 				},
 				Input:        "Rate S-100",
-				RunID:        pulid.MustNew(agent.EvaluationIDPrefix),
+				RunID:        pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 				Unattended:   true,
 				UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
 			}
@@ -88,9 +93,10 @@ func runEvaluationWorkflow(
 			opened.Turn = runtime.OpenTurn(ctx, req).State()
 
 			return opened, nil
-		}).Once()
+		}).
+		Once()
 	env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).
-		Return(&agentruntime.ModelReply{Completion: &agentports.ChatCompletionResult{
+		Return(&modelstream.Reply{Completion: &llmports.ChatCompletionResult{
 			Text:            "The rate stays at 1,350.",
 			ModelIdentifier: "test-model",
 		}}, nil).Maybe()
@@ -105,13 +111,16 @@ func runEvaluationWorkflow(
 			return nil
 		}).Maybe()
 
-	env.ExecuteWorkflow(agentcontract.AgentEvaluationWorkflowName, &agentcontract.AgentEvaluationPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: pulid.MustNew("org_"),
-			BusinessUnitID: pulid.MustNew("bu_"),
+	env.ExecuteWorkflow(
+		agentcontract.AgentEvaluationWorkflowName,
+		&agentcontract.AgentEvaluationPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: pulid.MustNew("org_"),
+				BusinessUnitID: pulid.MustNew("bu_"),
+			},
+			EvaluationID: pulid.MustNew(agentevaluation.EvaluationIDPrefix),
 		},
-		EvaluationID: pulid.MustNew(agent.EvaluationIDPrefix),
-	})
+	)
 	require.True(t, env.IsWorkflowCompleted())
 	result.err = env.GetWorkflowError()
 
@@ -136,21 +145,21 @@ func TestAgentEvaluationWorkflow_ACaseReplayIssuesTheSameCommandsAsARunReplay(t 
 	t.Parallel()
 
 	runReplay := runEvaluationWorkflow(t, func(context.Context) (*OpenReplayResult, error) {
-		return &OpenReplayResult{Originals: []agent.OriginalProposal{{
+		return &OpenReplayResult{Originals: []agentreplay.OriginalProposal{{
 			ID:       pulid.MustNew("aprop_"),
 			ToolName: "update_rate",
 			Params:   map[string]any{"rate": float64(1200)},
 			CorrectedParams: map[string]any{
 				"rate": float64(1350),
 			},
-			Decision: agent.DecisionModified,
+			Decision: agentdecision.DecisionModified,
 		}}}, nil
 	})
 	caseReplay := runEvaluationWorkflow(t, func(context.Context) (*OpenReplayResult, error) {
-		return &OpenReplayResult{Originals: []agent.OriginalProposal{{
+		return &OpenReplayResult{Originals: []agentreplay.OriginalProposal{{
 			ToolName: "update_rate",
 			Params:   map[string]any{"rate": float64(1350)},
-			Decision: agent.DecisionAccepted,
+			Decision: agentdecision.DecisionAccepted,
 		}}}, nil
 	})
 

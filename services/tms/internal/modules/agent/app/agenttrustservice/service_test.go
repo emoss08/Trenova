@@ -5,11 +5,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -27,10 +30,10 @@ import (
 // bumps its version, a tier change is made only against the version it was
 // decided from, and a reader is handed a copy of the row as it stood.
 type fakeTrustRepo struct {
-	agentports.AgentToolTrustRepository
-	row      *agent.ToolTrust
-	recorded []agent.TrustOutcome
-	marks    []agentports.MarkToolTierChangeRequest
+	agenttoolports.AgentToolTrustRepository
+	row      *agenttooltrust.ToolTrust
+	recorded []agenttooltrust.TrustOutcome
+	marks    []agenttoolports.MarkToolTierChangeRequest
 	// beforeMark runs once, as the first tier change is about to be made, so
 	// a test can land another decision in between.
 	beforeMark func()
@@ -38,22 +41,22 @@ type fakeTrustRepo struct {
 
 func (f *fakeTrustRepo) Record(
 	_ context.Context,
-	req agentports.RecordToolTrustRequest,
-) (*agent.ToolTrust, error) {
+	req *agenttoolports.RecordToolTrustRequest,
+) (*agenttooltrust.ToolTrust, error) {
 	f.recorded = append(f.recorded, req.Outcome)
 	f.row.ToolName = req.ToolName
 	f.row.AgentDefinitionID = req.AgentDefinitionID
 	switch req.Outcome {
-	case agent.TrustOutcomeApproved:
+	case agenttooltrust.TrustOutcomeApproved:
 		f.row.Streak++
 		f.row.Approvals++
-	case agent.TrustOutcomeModified:
+	case agenttooltrust.TrustOutcomeModified:
 		f.row.Streak = 0
 		f.row.Modifications++
-	case agent.TrustOutcomeRejected:
+	case agenttooltrust.TrustOutcomeRejected:
 		f.row.Streak = 0
 		f.row.Rejections++
-	case agent.TrustOutcomeExecutionFailed:
+	case agenttooltrust.TrustOutcomeExecutionFailed:
 		f.row.Streak = 0
 		f.row.ExecutionFailures++
 	}
@@ -66,8 +69,8 @@ func (f *fakeTrustRepo) Record(
 
 func (f *fakeTrustRepo) MarkTierChange(
 	_ context.Context,
-	req agentports.MarkToolTierChangeRequest,
-) (*agent.ToolTrust, error) {
+	req *agenttoolports.MarkToolTierChangeRequest,
+) (*agenttooltrust.ToolTrust, error) {
 	if hook := f.beforeMark; hook != nil {
 		f.beforeMark = nil
 		hook()
@@ -76,7 +79,7 @@ func (f *fakeTrustRepo) MarkTierChange(
 		return nil, dberror.CreateVersionMismatchError("AgentToolTrust", req.ID.String())
 	}
 
-	f.marks = append(f.marks, req)
+	f.marks = append(f.marks, *req)
 	f.row.Streak = 0
 	f.row.Version++
 	if req.Promoted {
@@ -129,62 +132,62 @@ func (f *fakeDefinitions) SetToolTier(
 
 type fakeControls struct {
 	tenantports.AgentControlRepository
-	control *tenant.AgentControl
+	control *agentcontrol.AgentControl
 }
 
 func (f fakeControls) GetOrCreate(
 	context.Context,
 	pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+) (*agentcontrol.AgentControl, error) {
 	return f.control, nil
 }
 
 type fakeRuns struct {
-	agentports.AgentRunRepository
+	agentruntimeports.AgentRunRepository
 	run *agent.AgentRun
 }
 
 func (f fakeRuns) GetByID(
 	context.Context,
-	agentports.GetAgentRunByIDRequest,
+	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return f.run, nil
 }
 
 type fakeTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 	tier agent.AutonomyTier
 }
 
-func (f fakeTool) Policy() agentports.ToolPolicy {
+func (f fakeTool) Policy() agenttoolports.ToolPolicy {
 	return trustPolicy(f.tier, agent.TierAutoExecute, agent.EgressInternal)
 }
 
 func trustPolicy(
 	tier, maxTier agent.AutonomyTier,
 	egress agent.EgressClass,
-) agentports.ToolPolicy {
-	return agentports.ToolPolicy{
+) agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
 		Name:          "dispatch_assign_move",
-		Kind:          agent.ToolKindAction,
+		Kind:          agenttooltrust.ToolKindAction,
 		Resource:      permission.ResourceShipmentMove,
 		Operation:     permission.OpUpdate,
-		Scope:         agent.ToolScopeTenant,
+		Scope:         agenttooltrust.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       maxTier,
 		Egress:        []agent.EgressClass{egress},
-		Effect:        agent.ToolEffectChange,
-		ReadsExternal: agent.ExternalReadNever,
+		Effect:        agenttooltrust.ToolEffectChange,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
 		Rationale:     "A trust stub.",
 	}
 }
 
-func boundedMoneyPolicy() agentports.ToolPolicy {
+func boundedMoneyPolicy() agenttoolports.ToolPolicy {
 	policy := trustPolicy(agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney)
-	policy.Condition = &agentports.TierCondition{
+	policy.Condition = &agenttoolports.TierCondition{
 		Description: "Runs on its own only within bounds.",
-		Bounds: func(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-			return agentports.WithinMoneyBound(1, "USD")
+		Bounds: func(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+			return agenttoolports.WithinMoneyBound(1, "USD")
 		},
 	}
 
@@ -192,11 +195,11 @@ func boundedMoneyPolicy() agentports.ToolPolicy {
 }
 
 type fakeRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 	tools map[string]agent.AutonomyTier
 }
 
-func (f fakeRegistry) Get(name string) (agentports.AgentTool, bool) {
+func (f fakeRegistry) Get(name string) (agenttoolports.AgentTool, bool) {
 	tier, ok := f.tools[name]
 	if !ok {
 		return nil, false
@@ -239,7 +242,7 @@ type harnessOptions struct {
 	threshold int
 	ceiling   agent.AutonomyTier
 	toolTiers map[string]agent.AutonomyTier
-	row       *agent.ToolTrust
+	row       *agenttooltrust.ToolTrust
 }
 
 func newHarness(t *testing.T, opts harnessOptions) *harness {
@@ -252,7 +255,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 
 	row := opts.row
 	if row == nil {
-		row = &agent.ToolTrust{}
+		row = &agenttooltrust.ToolTrust{}
 	}
 	row.ID = pulid.MustNew("att_")
 	if opts.ceiling == "" {
@@ -289,7 +292,7 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 		db:          h.db,
 		trust:       h.trust,
 		definitions: h.definitions,
-		controls: fakeControls{control: &tenant.AgentControl{
+		controls: fakeControls{control: &agentcontrol.AgentControl{
 			EarnedAutonomy:     opts.earned,
 			PromotionThreshold: opts.threshold,
 		}},
@@ -304,9 +307,9 @@ func newHarness(t *testing.T, opts harnessOptions) *harness {
 	return h
 }
 
-func accepted(mods map[string]any) *agent.AgentDecision {
-	return &agent.AgentDecision{
-		Decision:        agent.DecisionAccepted,
+func accepted(mods map[string]any) *agentdecision.AgentDecision {
+	return &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionAccepted,
 		Modifications:   mods,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}
@@ -350,8 +353,12 @@ func TestRecordDecision_NeverPromotesWhenTheOrganizationHasNotOptedIn(t *testing
 
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
-	assert.Equal(t, []agent.TrustOutcome{agent.TrustOutcomeApproved}, h.trust.recorded,
-		"the ledger still counts so the switch can be turned on later with history")
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{agenttooltrust.TrustOutcomeApproved},
+		h.trust.recorded,
+		"the ledger still counts so the switch can be turned on later with history",
+	)
 	assert.Empty(t, h.definitions.tiers)
 	assert.Empty(t, h.notifier.created)
 }
@@ -377,7 +384,7 @@ func TestRecordDecision_ModificationResetsWithoutDemoting(t *testing.T) {
 		earned:    true,
 		threshold: 5,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{Streak: 4, EarnedTier: agent.TierAutoExecute},
 	})
 
 	require.NoError(
@@ -402,11 +409,11 @@ func TestRecordDecision_RejectionTakesBackAnEarnedTier(t *testing.T) {
 		// the ledger granted is still the ledger's to take back.
 		earned:    false,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
-	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-		Decision:        agent.DecisionRejected,
+	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionRejected,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}))
 
@@ -426,11 +433,11 @@ func TestRecordDecision_RejectionLeavesAChosenTierAlone(t *testing.T) {
 		earned:    true,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
 		// Nothing was earned: a person set automatic by hand.
-		row: &agent.ToolTrust{},
+		row: &agenttooltrust.ToolTrust{},
 	})
 
-	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-		Decision:        agent.DecisionRejected,
+	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionRejected,
 		DecidedByUserID: pulid.MustNew("usr_"),
 	}))
 
@@ -444,12 +451,16 @@ func TestRecordExecutionFailure_DemotesWithoutAPerson(t *testing.T) {
 	h := newHarness(t, harnessOptions{
 		earned:    true,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierAutoExecute},
-		row:       &agent.ToolTrust{EarnedTier: agent.TierAutoExecute},
+		row:       &agenttooltrust.ToolTrust{EarnedTier: agent.TierAutoExecute},
 	})
 
 	require.NoError(t, h.svc.RecordExecutionFailure(t.Context(), h.proposal))
 
-	assert.Equal(t, []agent.TrustOutcome{agent.TrustOutcomeExecutionFailed}, h.trust.recorded)
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{agenttooltrust.TrustOutcomeExecutionFailed},
+		h.trust.recorded,
+	)
 	require.Len(t, h.definitions.tiers, 1)
 	assert.Equal(t, agent.TierActWithApproval, h.definitions.tiers[0].Tier)
 	require.Len(t, h.audit.entries, 1)
@@ -481,14 +492,14 @@ func TestRecordDecision_NilInputsAreNoOps(t *testing.T) {
 }
 
 type cappedRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 }
 
 type cappedTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 }
 
-func (cappedTool) Policy() agentports.ToolPolicy {
+func (cappedTool) Policy() agenttoolports.ToolPolicy {
 	return trustPolicy(
 		agent.TierActWithApproval,
 		agent.TierActWithApproval,
@@ -496,7 +507,7 @@ func (cappedTool) Policy() agentports.ToolPolicy {
 	)
 }
 
-func (cappedRegistry) Get(string) (agentports.AgentTool, bool) { return cappedTool{}, true }
+func (cappedRegistry) Get(string) (agenttoolports.AgentTool, bool) { return cappedTool{}, true }
 
 // A tool that sends work outside the organization is never earned past a
 // person's approval: the streak keeps counting, and nothing is promoted.
@@ -531,7 +542,7 @@ func TestRecordDecision_ConcurrentApprovalsPromoteOnce(t *testing.T) {
 		earned:    true,
 		threshold: 3,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
-		row:       &agent.ToolTrust{Streak: 2},
+		row:       &agenttooltrust.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
 		require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
@@ -556,19 +567,26 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 		earned:    true,
 		threshold: 3,
 		toolTiers: map[string]agent.AutonomyTier{"dispatch_assign_move": agent.TierPropose},
-		row:       &agent.ToolTrust{Streak: 2},
+		row:       &agenttooltrust.ToolTrust{Streak: 2},
 	})
 	h.trust.beforeMark = func() {
-		require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, &agent.AgentDecision{
-			Decision:        agent.DecisionRejected,
-			DecidedByUserID: pulid.MustNew("usr_"),
-		}))
+		require.NoError(
+			t,
+			h.svc.RecordDecision(t.Context(), h.proposal, &agentdecision.AgentDecision{
+				Decision:        agentdecision.DecisionRejected,
+				DecidedByUserID: pulid.MustNew("usr_"),
+			}),
+		)
 	}
 
 	require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
 
-	assert.Equal(t,
-		[]agent.TrustOutcome{agent.TrustOutcomeApproved, agent.TrustOutcomeRejected},
+	assert.Equal(
+		t,
+		[]agenttooltrust.TrustOutcome{
+			agenttooltrust.TrustOutcomeApproved,
+			agenttooltrust.TrustOutcomeRejected,
+		},
 		h.trust.recorded,
 	)
 	assert.Empty(t, h.definitions.tiers, "the streak the promotion was decided from is gone")
@@ -577,20 +595,20 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 }
 
 type policyTool struct {
-	agentports.AgentTool
+	agenttoolports.AgentTool
 
-	policy agentports.ToolPolicy
+	policy agenttoolports.ToolPolicy
 }
 
-func (p policyTool) Policy() agentports.ToolPolicy { return p.policy }
+func (p policyTool) Policy() agenttoolports.ToolPolicy { return p.policy }
 
 type policyRegistry struct {
-	agentports.AgentToolRegistry
+	agenttoolports.AgentToolRegistry
 
 	tool policyTool
 }
 
-func (r policyRegistry) Get(string) (agentports.AgentTool, bool) { return r.tool, true }
+func (r policyRegistry) Get(string) (agenttoolports.AgentTool, bool) { return r.tool, true }
 
 /*
 Promotion stops where the tool's policy says a call may run alone, and not one
@@ -603,7 +621,7 @@ func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
 
 	cases := []struct {
 		name     string
-		policy   agentports.ToolPolicy
+		policy   agenttoolports.ToolPolicy
 		promoted bool
 	}{
 		{

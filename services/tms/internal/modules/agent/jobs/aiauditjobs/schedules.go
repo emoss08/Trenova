@@ -3,7 +3,7 @@ package aiauditjobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiauditconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,8 +25,8 @@ type ScheduleProvider struct {
 	projectorInterval time.Duration
 }
 
-func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
-	return &ScheduleProvider{projectorInterval: cfg.AIAudit.Projector.GetInterval()}
+func NewScheduleProvider(cfg *aiauditconfig.Config) *ScheduleProvider {
+	return &ScheduleProvider{projectorInterval: cfg.Projector.GetInterval()}
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {

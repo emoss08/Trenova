@@ -7,8 +7,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
@@ -19,14 +20,14 @@ const (
 )
 
 type AssessInput struct {
-	Policy     agentports.ToolPolicy
+	Policy     agenttoolports.ToolPolicy
 	Definition *agentdefinition.Definition
-	Trust      *agent.ToolTrust
-	Control    *tenant.AgentControl
+	Trust      *agenttooltrust.ToolTrust
+	Control    *agentcontrol.AgentControl
 	Tainted    bool
 }
 
-func Assess(ctx context.Context, in *AssessInput) agentports.ToolAutonomy {
+func Assess(ctx context.Context, in *AssessInput) agenttoolports.ToolAutonomy {
 	definition := in.Definition
 	if definition == nil {
 		definition = &agentdefinition.Definition{AutonomyCeiling: agent.TierAutoExecute}
@@ -36,25 +37,25 @@ func Assess(ctx context.Context, in *AssessInput) agentports.ToolAutonomy {
 	best := bestCase(ctx, in, definition, taint)
 	worst := worstCase(ctx, in, definition, taint)
 
-	out := agentports.ToolAutonomy{
+	out := agenttoolports.ToolAutonomy{
 		Tier:   best.Tier,
 		HeldBy: mergeHeld(best.HeldBy, worst.HeldBy),
 	}
 	if best.Tier == agent.TierAutoExecute && worst.Tier != agent.TierAutoExecute {
-		out.Answer = agent.AutonomyConditional
+		out.Answer = agenttooltrust.AutonomyConditional
 	} else {
-		out.Answer = agent.AnswerForTier(best.Tier)
+		out.Answer = agenttooltrust.AnswerForTier(best.Tier)
 	}
 
-	shadow := in.Policy.Kind == agent.ToolKindAction &&
+	shadow := in.Policy.Kind == agenttooltrust.ToolKindAction &&
 		definition.EffectiveShadow(in.Control != nil && in.Control.ShadowMode)
-	if in.Policy.Kind == agent.ToolKindAction {
+	if in.Policy.Kind == agenttooltrust.ToolKindAction {
 		if shadow {
-			out.Answer = agent.AutonomySimulated
+			out.Answer = agenttooltrust.AutonomySimulated
 			out.HeldBy = mergeHeld(out.HeldBy, []string{HeldByShadowMode})
 		}
 		if definition.SimulationMode {
-			out.Answer = agent.AutonomySimulated
+			out.Answer = agenttooltrust.AutonomySimulated
 			out.HeldBy = mergeHeld(out.HeldBy, []string{HeldBySimulationMode})
 		}
 	}
@@ -79,7 +80,7 @@ func bestCase(
 	policy := in.Policy
 	policy.Condition = nil
 	if in.Policy.Bounded() {
-		policy.Condition = &agentports.TierCondition{
+		policy.Condition = &agenttoolports.TierCondition{
 			Description: in.Policy.Condition.Description,
 			Bounds:      withinBounds,
 			Vouches:     in.Policy.Condition.Vouches,
@@ -121,7 +122,7 @@ func worstCase(
 	policy := in.Policy
 	policy.Classify = fixedCall(in.Policy.HighestEgress())
 	if condition := in.Policy.Condition; condition != nil {
-		policy.Condition = &agentports.TierCondition{Description: condition.Description}
+		policy.Condition = &agenttoolports.TierCondition{Description: condition.Description}
 		if condition.Limit != nil {
 			policy.Condition.Limit = heldToProposal
 		}
@@ -130,7 +131,7 @@ func worstCase(
 		}
 	}
 	if in.Policy.TaintHold != nil {
-		policy.TaintHold = &agentports.TaintHold{
+		policy.TaintHold = &agenttoolports.TaintHold{
 			Description: in.Policy.TaintHold.Description,
 			Applies:     alwaysHeld,
 		}
@@ -148,14 +149,15 @@ func worstCase(
 
 func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *int {
 	control := in.Control
-	if in.Policy.Kind != agent.ToolKindAction || control == nil || !control.EarnedAutonomy ||
+	if in.Policy.Kind != agenttooltrust.ToolKindAction || control == nil ||
+		!control.EarnedAutonomy ||
 		control.PromotionThreshold <= 0 {
 		return nil
 	}
 
 	current := definition.EffectiveTier(in.Policy.Name, in.Policy.DefaultTier)
 	next, ok := current.Next()
-	if !ok || !definition.WithinCeiling(next) || next.Above(Promotable(in.Policy)) {
+	if !ok || !definition.WithinCeiling(next) || next.Above(Promotable(&in.Policy)) {
 		return nil
 	}
 
@@ -168,32 +170,32 @@ func approvalsToNext(in *AssessInput, definition *agentdefinition.Definition) *i
 	return &remaining
 }
 
-type classifier = func(agentports.ToolExecuteParams) agentports.CallPolicy
+type classifier = func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy
 
 func fixedCall(class agent.EgressClass) classifier {
-	return func(agentports.ToolExecuteParams) agentports.CallPolicy {
-		return agentports.CallPolicy{Egress: class}
+	return func(*agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+		return agenttoolports.CallPolicy{Egress: class}
 	}
 }
 
-func heldToProposal(context.Context, agentports.ToolExecuteParams) agent.AutonomyTier {
+func heldToProposal(context.Context, *agenttoolports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
 }
 
 const representativeCurrency = "USD"
 
-func withinBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return agentports.WithinMoneyBound(0, representativeCurrency)
+func withinBounds(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return agenttoolports.WithinMoneyBound(0, representativeCurrency)
 }
 
-func outsideBounds(context.Context, agentports.ToolExecuteParams) agentports.MoneyBound {
-	return agentports.OutsideMoneyBound(agent.HeldByMoneyUnproven)
+func outsideBounds(context.Context, *agenttoolports.ToolExecuteParams) agenttoolports.MoneyBound {
+	return agenttoolports.OutsideMoneyBound(agenttooltrust.HeldByMoneyUnproven)
 }
 
-func unspentAllowance(context.Context) (agent.MoneyAllowance, error) {
-	return agent.MoneyAllowance{
+func unspentAllowance(context.Context) (agenttooltrust.MoneyAllowance, error) {
+	return agenttooltrust.MoneyAllowance{
 		Currency: representativeCurrency,
-		Limits: agent.MoneyLimits{
+		Limits: agenttooltrust.MoneyLimits{
 			CallCeilingMinor: math.MaxInt64,
 			RunCalls:         math.MaxInt,
 			RunAmountMinor:   math.MaxInt64,
@@ -203,16 +205,16 @@ func unspentAllowance(context.Context) (agent.MoneyAllowance, error) {
 	}, nil
 }
 
-func alwaysHeld(agentports.ToolExecuteParams) bool {
+func alwaysHeld(*agenttoolports.ToolExecuteParams) bool {
 	return true
 }
 
-func representativeParams(attended bool) agentports.ToolExecuteParams {
+func representativeParams(attended bool) *agenttoolports.ToolExecuteParams {
 	if !attended {
-		return agentports.ToolExecuteParams{}
+		return &agenttoolports.ToolExecuteParams{}
 	}
 
-	return agentports.ToolExecuteParams{
+	return &agenttoolports.ToolExecuteParams{
 		Actor: &permissionports.RequestActor{PrincipalType: permissionports.PrincipalTypeUser},
 	}
 }

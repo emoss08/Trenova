@@ -3,12 +3,12 @@
 package tenantresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	OrganizationService tenantports.OrganizationService
 }
 

@@ -4,10 +4,13 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreementmatch"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -25,10 +28,10 @@ import (
 // buySideResult is what a carrier's contract said this move is worth, in the
 // shape the assignment request already takes.
 type buySideResult struct {
-	RateMethod    shipment.CarrierRateMethod
+	RateMethod    shipmentvocab.CarrierRateMethod
 	BaseRate      decimal.Decimal
 	FuelSurcharge decimal.Decimal
-	Accessorials  []shipmentports.CarrierAccessorialInput
+	Accessorials  []carrierassignmentports.CarrierAccessorialInput
 	RateQuoteID   *pulid.ID
 	Margin        ratetypes.MarginVerdict
 }
@@ -38,7 +41,7 @@ type buySideResult struct {
 // A rate somebody typed is a decision, and auto-rating over the top of it would
 // be the system overruling a negotiated number. That is precisely what makes
 // people switch auto-rating off, so a typed rate always wins.
-func shouldAutoRate(req *shipmentports.AssignMoveToCarrierRequest) bool {
+func shouldAutoRate(req *carrierassignmentports.AssignMoveToCarrierRequest) bool {
 	return req != nil && req.AutoRate && req.BaseRate.IsZero()
 }
 
@@ -68,10 +71,10 @@ func (s *Service) buySideRating(
 	}
 
 	result := &buySideResult{
-		RateMethod:   shipment.CarrierRateMethodFlat,
+		RateMethod:   shipmentvocab.CarrierRateMethodFlat,
 		BaseRate:     rated.Amount,
 		RateQuoteID:  quoteIDOf(rated),
-		Accessorials: []shipmentports.CarrierAccessorialInput{},
+		Accessorials: []carrierassignmentports.CarrierAccessorialInput{},
 	}
 	billed, err := s.applyTariffCharges(ctx, tenantInfo, result, rated, catalog)
 	if err != nil {
@@ -192,11 +195,14 @@ func (s *Service) applyTariffCharges(
 		if description == "" {
 			description = accessorialDescription(definition)
 		}
-		result.Accessorials = append(result.Accessorials, shipmentports.CarrierAccessorialInput{
-			AccessorialChargeID: &chargeID,
-			Description:         description,
-			Amount:              line.Amount,
-		})
+		result.Accessorials = append(
+			result.Accessorials,
+			carrierassignmentports.CarrierAccessorialInput{
+				AccessorialChargeID: &chargeID,
+				Description:         description,
+				Amount:              line.Amount,
+			},
+		)
 	}
 	return billed, nil
 }
@@ -227,15 +233,19 @@ func contractAccessorials(
 	parts *buySideParts,
 	catalog *buySideCatalog,
 	billed map[string]struct{},
-) ([]shipmentports.CarrierAccessorialInput, error) {
+) ([]carrierassignmentports.CarrierAccessorialInput, error) {
 	if parts.agreement == nil {
 		return nil, nil
 	}
-	scoped := parts.agreement.AutoApplyAccessorials(rateagreement.AccessorialFacts{
-		At:             parts.at,
-		ServiceTypeID:  parts.entity.ServiceTypeID,
-		ShipmentTypeID: parts.entity.ShipmentTypeID,
-	})
+	scoped := rateagreementmatch.AutoApplyAccessorials(
+		parts.agreement,
+		rateagreementmatch.AccessorialFacts{
+			At:             parts.at,
+			ServiceTypeID:  parts.entity.ServiceTypeID,
+			ShipmentTypeID: parts.entity.ShipmentTypeID,
+		},
+	)
+
 	applicable := make([]*rateagreement.RateAgreementAccessorial, 0, len(scoped))
 	for _, row := range scoped {
 		if strings.TrimSpace(row.Condition) != "" && !parts.rated.Conditions[row.ID] {
@@ -247,23 +257,23 @@ func contractAccessorials(
 		applicable = append(applicable, row)
 	}
 
-	priced, err := shipment.PriceAgreementAccessorials(
+	priced, err := shipmentrating.PriceAgreementAccessorials(
 		ctx,
-		parts.entity.AccessorialMeasures(),
+		shipmentrating.AccessorialMeasures(parts.entity),
 		applicable,
 		parts.rated.Amount,
 	)
 	if err != nil {
 		return nil, err
 	}
-	out := make([]shipmentports.CarrierAccessorialInput, 0, len(priced))
+	out := make([]carrierassignmentports.CarrierAccessorialInput, 0, len(priced))
 	for _, entry := range priced {
 		chargeID := entry.Accessorial.AccessorialChargeID
 		definition := entry.Accessorial.AccessorialCharge
 		if definition == nil && catalog != nil {
 			definition = catalog.byCode[catalog.code(chargeID)]
 		}
-		out = append(out, shipmentports.CarrierAccessorialInput{
+		out = append(out, carrierassignmentports.CarrierAccessorialInput{
 			AccessorialChargeID: &chargeID,
 			Description:         accessorialDescription(definition),
 			Amount:              entry.Charge.Amount,
@@ -378,7 +388,7 @@ func valueOf(value decimal.NullDecimal) decimal.Decimal {
 // downstream — validation, totals, the rate confirmation — then runs on one
 // path whether a person typed the numbers or a contract produced them.
 func applyBuySideRating(
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 	rating *buySideResult,
 ) {
 	if req == nil || rating == nil {
@@ -429,7 +439,7 @@ func enforceMarginFloor(
 // invoiced.
 func (s *Service) rateBuySide(
 	ctx context.Context,
-	req *shipmentports.AssignMoveToCarrierRequest,
+	req *carrierassignmentports.AssignMoveToCarrierRequest,
 	entity *shipment.Shipment,
 ) error {
 	if !shouldAutoRate(req) || s.rateEngine == nil {
@@ -546,7 +556,7 @@ func agreementFrom(rated *ratequoteports.RatedShipment) *rateagreement.RateAgree
 func (s *Service) billingControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) *tenant.BillingControl {
+) *billingcontrol.BillingControl {
 	if s.billingCtrlRepo == nil {
 		return nil
 	}

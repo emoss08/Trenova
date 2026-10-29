@@ -7,7 +7,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/rateconfirmationtemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templateregistry"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/tendertemplate"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +36,7 @@ func newEngine(t *testing.T) *templateengine.Engine {
 // pass the same validation an administrator's own template has to pass, including
 // the required-variable and sample-render checks.
 func TestEveryStarterPublishesCleanly(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -80,7 +86,7 @@ func TestEveryStarterPublishesCleanly(t *testing.T) {
 // that puts a text field somewhere its value gets neutralized would render a
 // placeholder the first time a customer name contained an apostrophe.
 func TestStartersSurviveHostileData(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -126,7 +132,7 @@ func TestStartersSurviveHostileData(t *testing.T) {
 // be clean on its own and still interpolate hostile data into a position that
 // matters, which is what the render-time pass exists to catch.
 func TestRenderedStartersAreSanitary(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -157,11 +163,11 @@ func TestRenderedStartersAreSanitary(t *testing.T) {
 				out, renderErr := engine.Render(t.Context(), compiled, probe)
 				require.NoError(t, renderErr)
 
-				opts := templateengine.DocumentSanitizeOptions()
+				opts := templatesanitize.DocumentOptions()
 				if channel == documenttemplate.ChannelEmailHTML {
-					opts = templateengine.EmailSanitizeOptions()
+					opts = templatesanitize.EmailOptions()
 				}
-				outputDiags := templateengine.SanitizeHTML(channel.Field(), out, opts)
+				outputDiags := templatesanitize.HTML(channel.Field(), out, opts)
 				assert.False(t, outputDiags.HasErrors(),
 					"%s/%s renders unsafe output from hostile data: %s",
 					starter.Kind, channel, outputDiags.Summary())
@@ -179,7 +185,7 @@ func TestRenderedStartersAreSanitary(t *testing.T) {
 // email is stripped by a large share of clients, so a starter relying on one ships a
 // message that looks broken in those inboxes.
 func TestEmailStartersUseInlineStyles(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starters, err := All()
 	require.NoError(t, err)
@@ -201,7 +207,7 @@ func TestEmailStartersUseInlineStyles(t *testing.T) {
 }
 
 func TestDocumentStartersHaveAStylesheet(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starters, err := All()
 	require.NoError(t, err)
@@ -216,7 +222,7 @@ func TestDocumentStartersHaveAStylesheet(t *testing.T) {
 		t.Run(string(starter.Kind), func(t *testing.T) {
 			assert.NotEmpty(t, starter.CSS)
 
-			cssDiags := templateengine.SanitizeCSS("cssContent", starter.CSS)
+			cssDiags := templatesanitize.CSS("cssContent", starter.CSS)
 			assert.False(t, cssDiags.HasErrors(),
 				"%s stylesheet is not acceptable: %s", starter.Kind, cssDiags.Summary())
 		})
@@ -227,7 +233,7 @@ func TestDocumentStartersHaveAStylesheet(t *testing.T) {
 // fixed-coordinate renderer could not express. Without them a charge row or an
 // address block can be split across a page boundary.
 func TestDocumentStartersAvoidPageBreakHazards(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starters, err := All()
 	require.NoError(t, err)
@@ -250,7 +256,7 @@ func TestDocumentStartersAvoidPageBreakHazards(t *testing.T) {
 // supply: a browser repeats <thead> on every page a table spills onto, and styled
 // divs get no such treatment.
 func TestDocumentStartersUseRealTableMarkup(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starters, err := All()
 	require.NoError(t, err)
@@ -319,7 +325,7 @@ func TestSubjectsAreSingleLine(t *testing.T) {
 // TestNoOrphanedAssets keeps the directory honest in both directions: a stale file
 // is dead weight, and a missing one breaks a kind.
 func TestNoOrphanedAssets(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	names, err := AssetNames()
 	require.NoError(t, err)
@@ -373,7 +379,7 @@ func TestForUnknownKind(t *testing.T) {
 // usable starting point: an administrator who duplicates one and edits it must not
 // be blocked at publish by a required field the built-in never had.
 func TestStartersReferenceEveryRequiredPath(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -432,7 +438,7 @@ func TestStartersReferenceEveryRequiredPath(t *testing.T) {
 // administrator editing the template.
 func TestDecisionNotificationsSayWhichWayItWent(t *testing.T) {
 	engine := newEngine(t)
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	cases := []struct {
 		kind     documenttemplate.Kind
@@ -490,7 +496,7 @@ func withApproved(t *testing.T, sample any, approved bool) any {
 func renderChannel(
 	t *testing.T,
 	engine *templateengine.Engine,
-	registry *documenttemplate.Registry,
+	registry *templatecatalog.Registry,
 	starter *Starter,
 	channel documenttemplate.Channel,
 	data any,
@@ -516,7 +522,7 @@ func renderChannel(
 // A kind whose key does not match its event type renders nothing, and the
 // notification is dropped rather than sent unstyled.
 func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	emitted := []string{
 		"shipment_comment_mention",
@@ -569,13 +575,13 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 // schedule is off will wait for a report that is never coming.
 func TestScheduleSkippedSaysWhenTheScheduleWasDisabled(t *testing.T) {
 	engine := newEngine(t)
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starter, err := For(documenttemplate.KindNotificationReportScheduleSkipped)
 	require.NoError(t, err)
 
 	render := func(disabled bool) (title, body string) {
-		data := documenttemplate.ReportNotificationContext{
+		data := notificationtemplate.ReportNotificationContext{
 			ReportName:          "Revenue by Customer",
 			Reason:              "The report timed out.",
 			Disabled:            disabled,
@@ -603,7 +609,7 @@ func TestScheduleSkippedSaysWhenTheScheduleWasDisabled(t *testing.T) {
 // that actually carry a link: a revision sent without one (no public base URL,
 // or the executed record copy) must not render a dead "Review & sign" button.
 func TestRateConfirmationEmailSignLinkIsConditional(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -614,7 +620,7 @@ func TestRateConfirmationEmailSignLinkIsConditional(t *testing.T) {
 	require.GreaterOrEqual(t, idx, 0)
 	starter := starters[idx]
 
-	data := documenttemplate.RateConfirmationContext{
+	data := rateconfirmationtemplate.RateConfirmationContext{
 		CarrierName:       "Eastline Transport",
 		ShipmentProNumber: "PRO-1001",
 		RevisionLabel:     "Revision 1",
@@ -645,7 +651,7 @@ func TestRateConfirmationEmailSignLinkIsConditional(t *testing.T) {
 // lanes only: a move without resolvable stops must not email a carrier a
 // subject reading "Load offer PRO123:  to  — $1,500.00".
 func TestTenderOfferSubjectDropsEmptyLane(t *testing.T) {
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 	engine := newEngine(t)
 
 	starters, err := All()
@@ -656,7 +662,7 @@ func TestTenderOfferSubjectDropsEmptyLane(t *testing.T) {
 	require.GreaterOrEqual(t, idx, 0)
 	starter := starters[idx]
 
-	data := documenttemplate.TenderOfferEmailContext{
+	data := tendertemplate.TenderOfferEmailContext{
 		CarrierName:       "Knight Swift",
 		ShipmentProNumber: "PRO123",
 		RateAmount:        "$1,500.00",
@@ -681,13 +687,13 @@ func TestTenderOfferSubjectDropsEmptyLane(t *testing.T) {
 // the wording has to hold for one report and for many.
 func TestNeedsAttentionNamesTheReportAndCountsTheRest(t *testing.T) {
 	engine := newEngine(t)
-	registry := documenttemplate.NewRegistry()
+	registry := templateregistry.NewRegistry()
 
 	starter, err := For(documenttemplate.KindNotificationReportNeedsAttention)
 	require.NoError(t, err)
 
 	render := func(count int) (title, body string) {
-		data := documenttemplate.ReportNotificationContext{
+		data := notificationtemplate.ReportNotificationContext{
 			ReportName:   "Revenue by Customer",
 			ReportCount:  count,
 			OtherReports: count - 1,

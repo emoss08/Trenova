@@ -9,9 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/boardparse"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -44,21 +49,21 @@ func (f *fakePermissions) Check(
 }
 
 type fakeSummaries struct {
-	asked agentports.RecordSummaries
+	asked recordsummaryports.RecordSummaries
 	refs  []map[permission.Resource][]pulid.ID
 }
 
 func (f *fakeSummaries) Summaries(
 	_ context.Context,
-	req *agentports.RecordSummaryRequest,
-) (agentports.RecordSummaries, error) {
+	req *recordsummaryports.RecordSummaryRequest,
+) (recordsummaryports.RecordSummaries, error) {
 	f.refs = append(f.refs, req.Refs)
-	out := agentports.RecordSummaries{}
+	out := recordsummaryports.RecordSummaries{}
 	for resource, ids := range req.Refs {
 		for _, id := range ids {
 			if summary, ok := f.asked[resource][id]; ok {
 				if out[resource] == nil {
-					out[resource] = map[pulid.ID]board.Summary{}
+					out[resource] = map[pulid.ID]boardassemble.Summary{}
 				}
 				out[resource][id] = summary
 			}
@@ -98,7 +103,7 @@ type fakeThreads struct{ refuse bool }
 
 func (f *fakeThreads) GetThread(
 	context.Context,
-	agentports.GetThreadRequest,
+	*conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
 	if f.refuse {
 		return nil, errortypes.NewNotFoundError("Thread not found")
@@ -174,7 +179,7 @@ func newFixture() *fixture {
 		permissions: &fakePermissions{allowed: map[permission.Resource]bool{
 			permission.ResourceShipment: true,
 		}},
-		summaries:   &fakeSummaries{asked: agentports.RecordSummaries{}},
+		summaries:   &fakeSummaries{asked: recordsummaryports.RecordSummaries{}},
 		artifacts:   &fakeArtifacts{byID: map[pulid.ID]*assistantartifact.Artifact{}},
 		threads:     &fakeThreads{},
 		analytics:   &fakeAnalytics{},
@@ -205,13 +210,13 @@ func newFixture() *fixture {
 	return f
 }
 
-func (f *fixture) request(shown *board.Board) *agentports.BoardFillRequest {
-	return &agentports.BoardFillRequest{Actor: f.actor, ThreadID: f.thread, Board: shown}
+func (f *fixture) request(shown *board.Board) *assistantports.BoardFillRequest {
+	return &assistantports.BoardFillRequest{Actor: f.actor, ThreadID: f.thread, Board: shown}
 }
 
 func parsed(t *testing.T, args map[string]any) *board.Board {
 	t.Helper()
-	shown, problems := board.Parse(args)
+	shown, problems := boardparse.Parse(args)
 	require.Empty(t, problems)
 
 	return shown
@@ -234,7 +239,7 @@ func TestFillReadsOnlyTheRecordsTheReaderMayRead(t *testing.T) {
 
 	f := newFixture()
 	shipment, invoice := pulid.MustNew("shp_"), pulid.MustNew("inv_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412", Status: "InTransit"},
 	}
 	shown := parsed(t, map[string]any{
@@ -311,7 +316,7 @@ func TestFillReadsARecordsHistoryOldestFirst(t *testing.T) {
 	f := newFixture()
 	f.permissions.allowed[permission.ResourceAuditLog] = true
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412"},
 	}
 	f.activity.entries = []*audit.Entry{
@@ -349,7 +354,7 @@ func TestFillDrawsTheTimelineUnreadableWithoutTheAuditLog(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412"},
 	}
 	shown := parsed(t, map[string]any{
@@ -376,7 +381,7 @@ func TestCheckRefusesWhatTheReaderMayNotRead(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "may not read invoices")
 }
@@ -395,7 +400,7 @@ func TestCheckRefusesAnAnalysisFromAnotherConversation(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "not one an analysis_run result kept in this conversation")
 }
@@ -412,7 +417,7 @@ func TestCheckRefusesAChartTheAnalysisNeverDrew(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Equal(t, "block 1 asks for chart 2 of an analysis that drew 1", mistake.Reason)
 }
@@ -437,7 +442,7 @@ func TestCheckRefusesAComparisonByAColumnTheTableLacks(t *testing.T) {
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Equal(t,
 		`block 1: the table has no "claims" column; its columns are carrier_id, on_time`,
@@ -450,12 +455,14 @@ func TestCheckRefusesATimelineWithoutTheAuditLog(t *testing.T) {
 	f := newFixture()
 	shown := parsed(t, map[string]any{
 		"title": "One load", "verdict": "Stuck [here][1].",
-		"blocks": []any{map[string]any{"type": "timeline", "record": pulid.MustNew("shp_").String()}},
+		"blocks": []any{
+			map[string]any{"type": "timeline", "record": pulid.MustNew("shp_").String()},
+		},
 	})
 
 	err := f.svc.Check(t.Context(), f.request(shown))
 
-	var mistake *agentports.PublishMistake
+	var mistake *agentruntimeports.PublishMistake
 	require.ErrorAs(t, err, &mistake)
 	assert.Contains(t, mistake.Reason, "leave the timeline out")
 }
@@ -486,7 +493,7 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 
 	f := newFixture()
 	shipment := pulid.MustNew("shp_")
-	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]board.Summary{
+	f.summaries.asked[permission.ResourceShipment] = map[pulid.ID]boardassemble.Summary{
 		shipment: {Label: "S2610-0412", Measures: map[board.Measure]board.RowMeasure{
 			board.MeasureLateness: {
 				Measure: board.MeasureLateness,
@@ -502,8 +509,8 @@ func TestCardComparesTheBoardWithWhatItShowedWhenAnswered(t *testing.T) {
 		f.artifacts.questions[artifact.MessageID] = "Why are these late?"
 	}
 
-	card, err := f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: f.thread},
+	card, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     conversationports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
@@ -524,16 +531,16 @@ func TestCardRefusesWhatIsNotABoardOfThisConversation(t *testing.T) {
 	f := newFixture()
 	id := f.board(t, pulid.MustNew("shp_"), board.Snapshot{})
 
-	_, err := f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: pulid.MustNew("thr_")},
+	_, err := f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     conversationports.GetThreadRequest{ID: pulid.MustNew("thr_")},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
 	f.threads.refuse = true
-	_, err = f.svc.Card(t.Context(), &agentports.BoardCardRequest{
-		Thread:     agentports.GetThreadRequest{ID: f.thread},
+	_, err = f.svc.Card(t.Context(), &assistantports.BoardCardRequest{
+		Thread:     conversationports.GetThreadRequest{ID: f.thread},
 		ArtifactID: id,
 		Actor:      f.actor,
 	})

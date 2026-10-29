@@ -3,10 +3,16 @@ package agentruntime
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,10 +22,10 @@ const directedStep = "Mark shipment SEED-PAY-001 ready to invoice."
 
 // directedRequest is a turn in a conversation with an agent that lists no
 // other agent, on which the person handed a step to the Report Builder.
-func directedRequest(delegate agentdefinition.RuntimeDelegate) *agentports.RunRequest {
+func directedRequest(delegate agentturn.RuntimeDelegate) *agentruntimeports.RunRequest {
 	req := delegatingRequest()
 	req.Input = directedStep
-	req.Directed = &agentports.DirectedTask{Delegate: delegate, Task: directedStep}
+	req.Directed = &agentruntimeports.DirectedTask{Delegate: delegate, Task: directedStep}
 
 	return req
 }
@@ -34,7 +40,7 @@ over, and the conversation's own model is never asked.
 func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	completion := &scriptedCompletion{}
 	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
@@ -59,7 +65,7 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	require.Len(t, opening.ToolCalls, 1)
 	callID := opening.ToolCalls[0].ID
 	assert.Equal(t, call.Call.ID, callID)
-	assert.Equal(t, delegateTaskName, opening.ToolCalls[0].Name)
+	assert.Equal(t, runtimetools.DelegateTaskName, opening.ToolCalls[0].Name)
 	assert.Equal(t, delegate.ID.String(), opening.ToolCalls[0].Arguments["agentId"],
 		"a later turn and the thread both read who was asked")
 	assert.Equal(t, directedStep, opening.ToolCalls[0].Arguments["task"])
@@ -91,14 +97,14 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 	assert.Equal(t, 1, result.ToolCallsUsed)
 
 	assert.Equal(t, []string{
-		agentports.AssistantEventMessage,
-		agentports.AssistantEventToolStarted,
-		agentports.AssistantEventDelegateStarted,
-		agentports.AssistantEventDelegateFinished,
-		agentports.AssistantEventToolFinished,
-		agentports.AssistantEventDelta,
+		assistantstreamports.AssistantEventMessage,
+		assistantstreamports.AssistantEventToolStarted,
+		assistantstreamports.AssistantEventDelegateStarted,
+		assistantstreamports.AssistantEventDelegateFinished,
+		assistantstreamports.AssistantEventToolFinished,
+		assistantstreamports.AssistantEventDelta,
 	}, fx.eventNames(), "the stream shows it as any hand-off, then the answer")
-	started, ok := fx.events[2].Data.(agentports.AssistantDelegateStartedEvent)
+	started, ok := fx.events[2].Data.(assistantstreamports.AssistantDelegateStartedEvent)
 	require.True(t, ok)
 	assert.Equal(t, callID, started.DelegateCallID)
 	assert.Equal(t, directedStep, started.Task)
@@ -109,7 +115,7 @@ func TestDriveDirected_RunsTheChosenAgentWithoutAskingTheConversationsModel(t *t
 func TestDriveDirected_TakesACallIDTheConversationDoesNotHold(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
@@ -139,9 +145,9 @@ func TestDriveDirected_TakesACallIDTheConversationDoesNotHold(t *testing.T) {
 func TestDriveDirected_ADeclinedTaskRepliesWithTheReason(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
-	fx := &delegateRecorder{run: DelegateRun{
+	fx := &delegateRecorder{run: delegation.Run{
 		Declined: "The person may not use Report Builder, so it cannot be asked.",
 	}}
 
@@ -162,25 +168,25 @@ func TestDriveDirected_ADeclinedTaskRepliesWithTheReason(t *testing.T) {
 func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 	t.Parallel()
 
-	tests := map[string]func(*agentports.RunRequest){
-		"a delegate's turn": func(req *agentports.RunRequest) {
-			req.Delegation = &agentports.Delegation{
+	tests := map[string]func(*agentruntimeports.RunRequest){
+		"a delegate's turn": func(req *agentruntimeports.RunRequest) {
+			req.Delegation = &agentruntimeports.Delegation{
 				ParentAgentID: pulid.MustNew("agdef_"),
 				CallID:        "call_parent",
 				StepScope:     "scope",
 			}
 		},
-		"an unattended run": func(req *agentports.RunRequest) { req.Unattended = true },
-		"no conversation":   func(req *agentports.RunRequest) { req.ThreadID = pulid.Nil },
+		"an unattended run": func(req *agentruntimeports.RunRequest) { req.Unattended = true },
+		"no conversation":   func(req *agentruntimeports.RunRequest) { req.ThreadID = pulid.Nil },
 	}
 
 	for name, change := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			delegate := reportBuilder()
-			completion := &scriptedCompletion{Turns: []*agentports.ChatCompletionResult{
-				textTurn("Done."),
+			delegate := runtimetest.ReportBuilder()
+			completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+				runtimetest.TextTurn("Done."),
 			}}
 			rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 			fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
@@ -201,7 +207,7 @@ func TestDriveDirected_IsIgnoredWhereNoPersonHandsOverATask(t *testing.T) {
 func TestDriveDirected_TheTaskSurvivesTheTurnsState(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := directedRequest(delegate)
 
@@ -210,62 +216,12 @@ func TestDriveDirected_TheTaskSurvivesTheTurnsState(t *testing.T) {
 	assert.Equal(t, delegate.ID, state.Directed.Delegate.ID)
 	assert.Equal(t, directedStep, state.Directed.Task)
 
-	restored := rt.RestoreTurn(req, state)
+	restored := rt.RestoreTurn(req, &state)
 	require.NotNil(t, restored.directed)
 	assert.Equal(t, delegate.ID, restored.directed.Delegate.ID)
 
 	req.Directed = nil
 	assert.Nil(t, rt.OpenTurn(t.Context(), req).State().Directed)
-}
-
-func TestDirectedReply_SaysWhatCameOfTheTask(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		report agentports.AssistantDelegateFinishedEvent
-		want   string
-	}{
-		"completed": {
-			report: agentports.AssistantDelegateFinishedEvent{
-				Status: agentports.DelegateStatusCompleted, Reply: "  Marked ready.  ",
-			},
-			want: "Marked ready.",
-		},
-		"completed in silence": {
-			report: agentports.AssistantDelegateFinishedEvent{
-				Status: agentports.DelegateStatusCompleted, AgentName: "Billing Assistant",
-			},
-			want: "Billing Assistant finished without saying anything more.",
-		},
-		"out of tool calls": {
-			report: agentports.AssistantDelegateFinishedEvent{
-				Status: agentports.DelegateStatusExhausted,
-				Reply:  "I checked the paperwork.",
-				Reason: "It used every tool call.",
-			},
-			want: "I checked the paperwork.\n\nIt used every tool call.",
-		},
-		"failed": {
-			report: agentports.AssistantDelegateFinishedEvent{
-				Status: agentports.DelegateStatusFailed, Reason: "The model stopped answering.",
-			},
-			want: "The model stopped answering.",
-		},
-		"failed without a reason": {
-			report: agentports.AssistantDelegateFinishedEvent{
-				Status: agentports.DelegateStatusFailed, AgentName: "Billing Assistant",
-			},
-			want: "Billing Assistant did not report back.",
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, directedReply(&tt.report))
-		})
-	}
 }
 
 /*
@@ -276,12 +232,14 @@ conversation's subject and the records it has been working on go with the task.
 func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	fx := &delegateRecorder{run: scriptedDelegateRun(delegate)}
 	req := directedRequest(delegate)
-	req.Records = []agent.EntityRef{{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"}}
-	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+	req.Records = []agentpagecontext.EntityRef{
+		{Type: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
+	}
+	req.Context.Anchors = []agentturn.RuntimeAnchor{
 		{Kind: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 		{Kind: "worker", ID: "wrk_01M4HYAB7FKYM27B5JC48Q68MD", Note: "withheld"},
 	}
@@ -290,11 +248,11 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 
 	require.Len(t, fx.calls, 1)
 	require.NotNil(t, fx.calls[0].Context)
-	assert.Equal(t, []agent.RecordRef{
+	assert.Equal(t, []agentrecord.RecordRef{
 		{EntityType: "shipment", ID: "shp_01M4HYAB7FKYM27B5JC48Q68MB"},
 		{EntityType: "invoice", ID: "inv_01M4HYAB7FKYM27B5JC48Q68MC"},
 	}, fx.calls[0].Context.Records, "a record the person may not read is not handed over")
-	assert.Contains(t, DelegateInput(directedStep, fx.calls[0].Context),
+	assert.Contains(t, delegation.Input(directedStep, fx.calls[0].Context),
 		"shipment shp_01M4HYAB7FKYM27B5JC48Q68MB")
 }
 
@@ -305,20 +263,23 @@ func TestDriveDirected_HandsOverTheRecordsInPlay(t *testing.T) {
 func TestDriveDirected_TheRecordsInPlaySurviveTheTurnsState(t *testing.T) {
 	t.Parallel()
 
-	delegate := reportBuilder()
+	delegate := runtimetest.ReportBuilder()
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
 	req := directedRequest(delegate)
-	req.Context.Anchors = []agentdefinition.RuntimeAnchor{
+	req.Context.Anchors = []agentturn.RuntimeAnchor{
 		{Kind: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"},
 	}
 
 	state := rt.OpenTurn(t.Context(), req).State()
 	require.NotNil(t, state.Directed)
-	assert.Equal(t, []agent.RecordRef{{EntityType: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"}},
-		state.Directed.Records)
+	assert.Equal(
+		t,
+		[]agentrecord.RecordRef{{EntityType: "shipment", ID: "shp_01M4J2YG6896P8QFJPH2DB8PBA"}},
+		state.Directed.Records,
+	)
 
 	bare := directedRequest(delegate)
-	restored := rt.RestoreTurn(bare, state)
+	restored := rt.RestoreTurn(bare, &state)
 	require.NotNil(t, restored.directed)
 	assert.Equal(t, state.Directed.Records, restored.directed.Records)
 }

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -24,7 +24,10 @@ func (s *Snapshot) Facts() []Fact {
 	}
 	facts = append(facts, Fact{Name: "status", Value: status})
 	if s.Canceled != nil {
-		facts = append(facts, Fact{Name: "canceled", Value: s.Canceled.text(), SeenAt: s.Canceled.At})
+		facts = append(
+			facts,
+			Fact{Name: "canceled", Value: s.Canceled.text(), SeenAt: s.Canceled.At},
+		)
 	}
 	if s.Freight != "" {
 		facts = append(facts, Fact{Name: "freight", Value: s.Freight})
@@ -119,8 +122,8 @@ func (s *Snapshot) coverageText() string {
 			return move.Driver + " on " + move.Tractor
 		case move.Driver != "":
 			return move.Driver
-		case move.Status == string(shipment.MoveStatusCompleted),
-			move.Status == string(shipment.MoveStatusCanceled):
+		case move.Status == string(shipmentvocab.MoveStatusCompleted),
+			move.Status == string(shipmentvocab.MoveStatusCanceled):
 			return "nobody on record"
 		default:
 			return "nobody: the move needs a driver or carrier"

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/ratelimit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -71,10 +72,10 @@ func (f *fakeService) PostByToken(
 
 func newRouter(service *fakeService) *gin.Engine {
 	cfg := &config.Config{
-		Security: config.SecurityConfig{
-			RateLimit: config.RateLimitConfig{
+		Security: securityconfig.Config{
+			RateLimit: securityconfig.RateLimitConfig{
 				Enabled: true,
-				PublicToken: config.RateLimitScopeConfig{
+				PublicToken: securityconfig.RateLimitScopeConfig{
 					RequestsPerMinute: 10,
 					BurstSize:         throttleBurst,
 				},
@@ -82,17 +83,17 @@ func newRouter(service *fakeService) *gin.Engine {
 		},
 	}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: cfg,
+		Logger:    zap.NewNop(),
+		AppConfig: &cfg.App,
 	})
 	handler := New(Params{
 		Service:      service,
 		ErrorHandler: errorHandler,
 		RateLimiter: middleware.NewRateLimiter(middleware.RateLimiterParams{
-			Config:       cfg,
-			Store:        ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
-			ErrorHandler: errorHandler,
-			Logger:       zap.NewNop(),
+			SecurityConfig: &cfg.Security,
+			Store:          ratelimit.NewMemoryStore(ratelimit.MemoryStoreOptions{}),
+			ErrorHandler:   errorHandler,
+			Logger:         zap.NewNop(),
 		}),
 	})
 	gin.SetMode(gin.TestMode)

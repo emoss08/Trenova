@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -81,8 +81,8 @@ func TestRequireCurrentPassword_BlocksAnUnrelatedRequest(t *testing.T) {
 	_, engine := gin.CreateTestContext(recorder)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
 	})
 
 	reached := false
@@ -112,8 +112,8 @@ func TestRequireCurrentPassword_AllowsTheChangePasswordEndpoint(t *testing.T) {
 	_, engine := gin.CreateTestContext(recorder)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
 	})
 
 	reached := false
@@ -145,8 +145,8 @@ func TestRequireCurrentPassword_LetsACleanSessionThrough(t *testing.T) {
 	_, engine := gin.CreateTestContext(recorder)
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
-		Logger: zap.NewNop(),
-		Config: &config.Config{},
+		Logger:    zap.NewNop(),
+		AppConfig: &appconfig.Config{},
 	})
 
 	reached := false

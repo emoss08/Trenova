@@ -2,9 +2,10 @@ package selfserviceresolver
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/selfserviceservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -12,10 +13,10 @@ import (
 func workerPolicyFromInput(
 	input gqlmodel.WorkerPolicyInput,
 	tenant pagination.TenantInfo,
-) (*worker.WorkerPolicy, error) {
-	documentID, err := base.OptionalID(input.DocumentID)
+) (*workerpolicy.WorkerPolicy, error) {
+	documentID, err := gqlid.OptionalID(input.DocumentID)
 	if err != nil {
-		return nil, base.InvalidIDError("documentId", "Document is invalid")
+		return nil, gqlid.InvalidIDError("documentId", "Document is invalid")
 	}
 
 	status := domaintypes.StatusActive
@@ -23,19 +24,19 @@ func workerPolicyFromInput(
 		status = *input.Status
 	}
 
-	return &worker.WorkerPolicy{
+	return &workerpolicy.WorkerPolicy{
 		OrganizationID:    tenant.OrgID,
 		BusinessUnitID:    tenant.BuID,
 		Status:            status,
 		Code:              input.Code,
 		Title:             input.Title,
-		Summary:           base.StringValue(input.Summary),
-		Body:              base.StringValue(input.Body),
+		Summary:           gqlscalar.StringValue(input.Summary),
+		Body:              gqlscalar.StringValue(input.Body),
 		DocumentID:        documentID,
 		VersionLabel:      input.VersionLabel,
 		RequiresSignature: input.RequiresSignature,
 		AppliesTo:         input.AppliesTo,
-		EffectiveFrom:     base.Int64Value(input.EffectiveFrom),
+		EffectiveFrom:     gqlscalar.Int64Value(input.EffectiveFrom),
 	}, nil
 }
 
@@ -59,7 +60,7 @@ func policyComplianceToGQL(
 			signedAt := int(row.AcknowledgedAt)
 			item.AcknowledgedAt = &signedAt
 		}
-		item.SignatureName = base.EmptyToNil(row.SignatureName)
+		item.SignatureName = gqlscalar.EmptyToNil(row.SignatureName)
 		out.Rows = append(out.Rows, item)
 	}
 

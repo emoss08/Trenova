@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 func ContainsAny(corpus string, needles ...string) bool {
@@ -43,7 +45,7 @@ func SearchableKey(key string) string {
 		return ""
 	}
 
-	return ConvertCamelToSnake(key) + " " + key
+	return textcase.ConvertCamelToSnake(key) + " " + key
 }
 
 // MatchesWordPrefixes reports whether every word begins some word of the

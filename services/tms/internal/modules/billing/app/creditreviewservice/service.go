@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -73,8 +73,8 @@ type Params struct {
 
 	Ledger        customerledgerports.CustomerLedgerProjectionRepository `name:"customerLedgerStore"`
 	Customers     customerports.CustomerRepository
-	Notifications *notificationservice.Service `                           optional:"true"`
-	Realtime      agentports.RealtimeService   `                           optional:"true"`
+	Notifications *notificationservice.Service  `                           optional:"true"`
+	Realtime      realtimeports.RealtimeService `                           optional:"true"`
 	Logger        *zap.Logger
 }
 
@@ -82,7 +82,7 @@ type Service struct {
 	ledger    ledgerBalances
 	customers creditStandings
 	notifier  permittedNotifier
-	realtime  agentports.RealtimeService
+	realtime  realtimeports.RealtimeService
 	l         *zap.Logger
 }
 

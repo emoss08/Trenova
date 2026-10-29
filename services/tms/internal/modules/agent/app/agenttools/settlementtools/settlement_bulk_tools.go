@@ -3,9 +3,12 @@ package settlementtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/recordbatch"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -25,7 +28,7 @@ type settlementGetter[E any] func(
 ) (*E, error)
 
 type settlementBulkSpec[E any] struct {
-	ledger common.SettlementLedger[E]
+	ledger settlementpreview.SettlementLedger[E]
 	text   *lifecycleText
 	book   SettlementBook[E]
 	get    settlementGetter[E]
@@ -41,8 +44,8 @@ type settlementBulk struct {
 
 var approveSettlements = settlementBulk{
 	decision: approveDecision,
-	verb:     common.VerbApprove,
-	past:     common.PastApproved,
+	verb:     changepreview.VerbApprove,
+	past:     changepreview.PastApproved,
 	description: func(text *lifecycleText) string {
 		return "Propose approving pending " + text.noun + "s, one or up to 50 in one " +
 			"proposal the person decides together. Approving commits the organization to " +
@@ -61,7 +64,7 @@ var approveSettlements = settlementBulk{
 var postSettlements = settlementBulk{
 	decision: postDecision,
 	verb:     "post",
-	past:     common.PastPosted,
+	past:     changepreview.PastPosted,
 	description: func(text *lifecycleText) string {
 		return "Propose posting approved " + text.noun + "s to the general ledger, one or " +
 			"up to 50 in one proposal the person decides together. Each is " + text.postEach +
@@ -81,12 +84,12 @@ var postSettlements = settlementBulk{
 // payments as well.
 var settlementBulkRecipes = map[string][]string{
 	"settlement_approve_driver": {
-		toolListDriverSettlements,
+		settlementpreview.ToolListDriverSettlements,
 		"settlement_get_driver",
 		"settlement_approve_driver",
 	},
 	"settlement_post_driver": {
-		toolListDriverSettlements,
+		settlementpreview.ToolListDriverSettlements,
 		"settlement_post_driver",
 	},
 	"settlement_approve_carrier": {
@@ -101,13 +104,13 @@ type SettlementBulkTool[E any] struct {
 	description string
 	rationale   string
 	single      *SettlementDecisionTool[E]
-	batch       *common.RecordBatch
+	batch       *recordbatch.RecordBatch
 }
 
 func newSettlementBulkTool[E any](
 	spec settlementBulkSpec[E],
 	bulk *settlementBulk,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	single := &SettlementDecisionTool[E]{
 		decision: *bulk.decision(spec.text),
 		ledger:   spec.ledger,
@@ -118,9 +121,9 @@ func newSettlementBulkTool[E any](
 		description: bulk.description(spec.text),
 		rationale:   bulk.rationale(spec.text),
 		single:      single,
-		batch: &common.RecordBatch{
+		batch: &recordbatch.RecordBatch{
 			Param:       paramSettlementIDs,
-			SingleParam: common.ParamSettlementID,
+			SingleParam: settlementpreview.ParamSettlementID,
 			Resource:    spec.ledger.Resource,
 			Noun:        spec.ledger.Noun,
 			Nouns:       spec.ledger.Noun + "s",
@@ -128,7 +131,7 @@ func newSettlementBulkTool[E any](
 			Past:        bulk.past,
 			Unchanged:   "is already " + bulk.past,
 			Single:      single,
-			NeedsPerson: common.ErrSettlementNeedsAPerson,
+			NeedsPerson: settlementpreview.ErrSettlementNeedsAPerson,
 			Labels:      settlementNumbers(spec.get, spec.ledger.Facts),
 		},
 	}
@@ -136,8 +139,8 @@ func newSettlementBulkTool[E any](
 
 func settlementNumbers[E any](
 	get settlementGetter[E],
-	facts func(*E) *common.SettlementFacts,
-) common.RecordLabels {
+	facts func(*E) *settlementpreview.SettlementFacts,
+) recordbatch.RecordLabels {
 	return func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -162,7 +165,7 @@ func (t *SettlementBulkTool[E]) Name() string { return t.name }
 
 func (t *SettlementBulkTool[E]) Recipe() []string { return settlementBulkRecipes[t.name] }
 
-func (t *SettlementBulkTool[E]) Target(params map[string]any) (agentports.ToolTarget, bool) {
+func (t *SettlementBulkTool[E]) Target(params map[string]any) (agenttoolports.ToolTarget, bool) {
 	return t.batch.Target(params)
 }
 
@@ -171,13 +174,13 @@ func (t *SettlementBulkTool[E]) Description() string { return t.description }
 func (t *SettlementBulkTool[E]) SearchTerms() []string { return t.single.SearchTerms() }
 
 func (t *SettlementBulkTool[E]) ParamSchema() map[string]any {
-	return common.BulkIDsSchema(t.batch,
+	return recordbatch.BulkIDsSchema(t.batch,
 		"The "+t.batch.Nouns+", by id from "+t.single.ledger.Sources+" or the proposals "+
 			"that made them. Never guess one.",
 		nil)
 }
 
-func (t *SettlementBulkTool[E]) Policy() agentports.ToolPolicy {
+func (t *SettlementBulkTool[E]) Policy() agenttoolports.ToolPolicy {
 	policy := t.single.Policy()
 	policy.Name = t.Name()
 	policy.Artifact = t.single.ledger.Artifact
@@ -188,9 +191,9 @@ func (t *SettlementBulkTool[E]) Policy() agentports.ToolPolicy {
 
 func (t *SettlementBulkTool[E]) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	return t.batch.Preview(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	return t.batch.Preview(ctx, t, params)
 }
 
 func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[string]any, error) {
@@ -199,14 +202,14 @@ func (t *SettlementBulkTool[E]) SplitRecords(params map[string]any) ([]map[strin
 
 func (t *SettlementBulkTool[E]) Validate(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
-	return t.batch.Validate(ctx, t, &params)
+	return t.batch.Validate(ctx, t, params)
 }
 
 func (t *SettlementBulkTool[E]) Execute(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+	params *agenttoolports.ToolExecuteParams,
 ) error {
 	_, err := t.ExecuteWithResult(ctx, params)
 
@@ -215,16 +218,16 @@ func (t *SettlementBulkTool[E]) Execute(
 
 func (t *SettlementBulkTool[E]) ExecuteWithResult(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolResultReporter interface passes params by value
-) (*agent.ToolExecutionResult, error) {
-	return t.batch.Execute(ctx, t, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentrecord.ToolExecutionResult, error) {
+	return t.batch.Execute(ctx, t, params)
 }
 
 func driverBulkSpec(
 	s *driversettlementservice.Service,
 ) settlementBulkSpec[driversettlement.Settlement] {
 	spec := settlementBulkSpec[driversettlement.Settlement]{
-		ledger: common.DriverSettlementLedger(),
+		ledger: settlementpreview.DriverSettlementLedger(),
 		text:   driverLifecycle(),
 		book:   s,
 	}
@@ -248,7 +251,7 @@ func carrierBulkSpec(
 	s *carriersettlementservice.Service,
 ) settlementBulkSpec[carriersettlement.CarrierSettlement] {
 	spec := settlementBulkSpec[carriersettlement.CarrierSettlement]{
-		ledger: carrierSettlementLedger(),
+		ledger: settlementpreview.CarrierSettlementLedger(),
 		text:   carrierLifecycle(),
 		book:   s,
 	}
@@ -270,23 +273,23 @@ func carrierBulkSpec(
 
 func provideApproveDriverSettlementsTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &approveSettlements)
 }
 
-func providePostDriverSettlementsTool(s *driversettlementservice.Service) agentports.AgentTool {
+func providePostDriverSettlementsTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return newSettlementBulkTool(driverBulkSpec(s), &postSettlements)
 }
 
 func provideApproveCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &approveSettlements)
 }
 
 func providePostCarrierSettlementsTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementBulkTool(carrierBulkSpec(s), &postSettlements)
 }
 

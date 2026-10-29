@@ -8,10 +8,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingdriftrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingmappingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingsyncrepository"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingservice"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingmappingreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/accountingsyncreads"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountingdriftservice"
@@ -43,10 +53,10 @@ type accountingTenant struct {
 }
 
 type accountingRepos struct {
-	connections accountingsyncports.AccountingConnectionRepository
+	connections accountingconnectionports.AccountingConnectionRepository
 	records     accountingsyncports.AccountingSyncRecordRepository
-	findings    accountingsyncports.AccountingDriftFindingRepository
-	mappings    accountingsyncports.AccountingMappingRepository
+	findings    accountingdriftports.AccountingDriftFindingRepository
+	mappings    accountingmappingports.AccountingMappingRepository
 }
 
 func writeAccountingRows(
@@ -63,22 +73,22 @@ func writeAccountingRows(
 		UserID: tenant.Actor.UserID,
 	}
 	now := timeutils.NowUnix()
-	conn := &accountingsync.AccountingConnection{
+	conn := &accountingconnection.AccountingConnection{
 		OrganizationID:  info.OrgID,
 		BusinessUnitID:  info.BuID,
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ExternalRealmID: "realm-" + label + pulid.MustNew("x_").String()[2:10],
 	}
-	conn.Connect(info.UserID, accountingsync.TokenGrant{
+	conn.Connect(info.UserID, accountingconnection.TokenGrant{
 		AccessTokenCiphertext:  "cipher-access",
 		AccessTokenExpiresAt:   now + 3600,
 		RefreshTokenCiphertext: "cipher-refresh",
 		RefreshTokenExpiresAt:  now + 8_640_000,
 	}, now)
-	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{
+	conn.ApplyCompanyFacts(&accountingconnection.CompanyFacts{
 		CompanyName: "Acme " + label, HomeCurrency: "USD",
 	})
-	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.SetupStep = accountingconnection.SetupStepComplete
 	conn.SyncStartDate, conn.SyncEnabledAt = &now, &now
 	created, err := repos.connections.Create(ctx, conn)
 	require.NoError(t, err)
@@ -90,18 +100,21 @@ func writeAccountingRows(
 		accountingsync.SyncObjectCustomerPayment,
 	} {
 		objectID := pulid.MustNew("inv_")
-		queued = append(queued, accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
-			TenantInfo:   info,
-			ConnectionID: created.ID,
-			Key: accountingsync.SyncRecordKey{
-				ObjectType: objectType,
-				ObjectID:   objectID,
-				Operation:  accountingsync.SyncOperationCreate,
-			},
-			ObjectNumber: label + "-" + string(rune('1'+idx)),
-			SourceEvent:  accountingsync.SyncSourceInvoicePosted,
-			At:           now + int64(idx),
-		}))
+		queued = append(
+			queued,
+			accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
+				TenantInfo:   info,
+				ConnectionID: created.ID,
+				Key: accountingsync.SyncRecordKey{
+					ObjectType: objectType,
+					ObjectID:   objectID,
+					Operation:  accountingsync.SyncOperationCreate,
+				},
+				ObjectNumber: label + "-" + string(rune('1'+idx)),
+				SourceEvent:  accountingsync.SyncSourceInvoicePosted,
+				At:           now + int64(idx),
+			}),
+		)
 		if objectType == accountingsync.SyncObjectInvoice {
 			out.invoices = append(out.invoices, objectID.String())
 		}
@@ -115,14 +128,14 @@ func writeAccountingRows(
 	trenova, provider := int64(10_000), int64(9_000)
 	for idx := range 3 {
 		finding, findErr := repos.findings.Create(ctx,
-			accountingsync.NewAccountingDriftFinding(&accountingsync.DriftObservation{
+			accountingdrift.NewAccountingDriftFinding(&accountingdrift.DriftObservation{
 				TenantInfo:    info,
 				ConnectionID:  created.ID,
 				ObjectType:    accountingsync.SyncObjectInvoice,
 				ObjectID:      pulid.MustNew("inv_"),
 				ObjectNumber:  label + "-INV-" + string(rune('1'+idx)),
 				PartyName:     "Acme Foods " + label,
-				Kind:          accountingsync.DriftAmountMismatch,
+				Kind:          accountingdrift.DriftAmountMismatch,
 				CurrencyCode:  "USD",
 				TrenovaMinor:  &trenova,
 				ProviderMinor: &provider,
@@ -132,9 +145,9 @@ func writeAccountingRows(
 		out.drift = append(out.drift, finding.ID.String())
 	}
 
-	var mappings []*accountingsync.AccountingMapping
+	var mappings []*accountingmapping.AccountingMapping
 	for _, key := range []string{"ARAccount", "RevenueAccount", "APAccount"} {
-		mappings = append(mappings, &accountingsync.AccountingMapping{
+		mappings = append(mappings, &accountingmapping.AccountingMapping{
 			ID:             pulid.MustNew("acctm_"),
 			OrganizationID: info.OrgID,
 			BusinessUnitID: info.BuID,
@@ -143,8 +156,8 @@ func writeAccountingRows(
 			TrenovaKey:     key,
 			TargetLabel:    key + " " + label,
 			SearchLabel:    key,
-			ProviderKind:   accountingsync.ReferenceKindAccount,
-			State:          accountingsync.MappingStateUnmatched,
+			ProviderKind:   accountingprovider.ReferenceKindAccount,
+			State:          accountingmapping.MappingStateUnmatched,
 		})
 	}
 	_, err = repos.mappings.CreateMissing(ctx, mappings)
@@ -167,32 +180,34 @@ func TestConvertedLists_AccountingReadsUnderRowLevelSecurity(t *testing.T) {
 	conn := dbtest.NewRLSConnection(t, admin, dsn)
 	logger := zap.NewNop()
 	repos := &accountingRepos{
-		connections: accountingsyncrepository.NewConnectionRepository(
-			accountingsyncrepository.ConnectionParams{DB: conn, Logger: logger}),
+		connections: accountingconnectionrepository.NewConnectionRepository(
+			accountingconnectionrepository.ConnectionParams{DB: conn, Logger: logger}),
 		records: accountingsyncrepository.NewSyncRecordRepository(
 			accountingsyncrepository.SyncRecordParams{DB: conn, Logger: logger}),
-		findings: accountingsyncrepository.NewDriftFindingRepository(
-			accountingsyncrepository.DriftFindingParams{DB: conn, Logger: logger}),
-		mappings: accountingsyncrepository.NewMappingRepository(
-			accountingsyncrepository.MappingParams{DB: conn, Logger: logger}),
+		findings: accountingdriftrepository.NewDriftFindingRepository(
+			accountingdriftrepository.DriftFindingParams{DB: conn, Logger: logger}),
+		mappings: accountingmappingrepository.NewMappingRepository(
+			accountingmappingrepository.MappingParams{DB: conn, Logger: logger}),
 	}
-	references := accountingsyncrepository.NewReferenceRepository(
-		accountingsyncrepository.ReferenceParams{DB: conn, Logger: logger})
+	references := accountingmappingrepository.NewReferenceRepository(
+		accountingmappingrepository.ReferenceParams{DB: conn, Logger: logger})
 	resolvers := agentread.ResolverParams{
 		AccountingDriftService: accountingdriftservice.New(accountingdriftservice.Params{
 			Logger: logger, Connections: repos.connections, Findings: repos.findings,
 			Records: repos.records,
 		}),
-		AccountingSyncService: accountingsyncservice.New(accountingsyncservice.Params{
-			Logger: logger, Connections: repos.connections, Records: repos.records,
+		AccountingSyncReader: accountingsyncreads.New(accountingsyncreads.Params{
+			Connections: repos.connections, Records: repos.records,
 		}),
-		AccountingMappingService: accountingmappingservice.New(accountingmappingservice.Params{
-			Logger: logger, Connections: repos.connections, Mappings: repos.mappings,
-			References: references,
+		AccountingMappingReader: accountingmappingreads.New(accountingmappingreads.Params{
+			Connections: repos.connections, Mappings: repos.mappings, References: references,
 		}),
 	}
 	engine := &mocks.DenyResourcesPermissionEngine{}
-	reader := agentreadtest.NewReader(t, agentreadtest.Options{Engine: engine, Resolvers: resolvers})
+	reader := agentreadtest.NewReader(
+		t,
+		agentreadtest.Options{Engine: engine, Resolvers: resolvers},
+	)
 	public := agentreadtest.NewReader(t, agentreadtest.Options{
 		Engine: &publicRole{}, Resolvers: resolvers,
 	})

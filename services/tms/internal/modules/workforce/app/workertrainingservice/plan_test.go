@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +19,7 @@ func TestPlanAssign_OpensNothing(t *testing.T) {
 		TenantInfo: h.tenant, WorkerID: h.wrk.ID, CourseID: course.ID, UserID: h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusAssigned, planned.Status)
+	assert.Equal(t, workertraining.TrainingStatusAssigned, planned.Status)
 	assert.Equal(t, course.Name, planned.Course.Name)
 	require.NotNil(t, planned.DueAt)
 	assert.Empty(t, h.repo.records)
@@ -61,7 +61,7 @@ func TestPlanBulkAssign_SortsEachPair(t *testing.T) {
 
 func TestPlanCompleteWaiveCancelAttach(t *testing.T) {
 	h := newHarness(t)
-	scored := h.course("SCORED", true, func(c *worker.TrainingCourse) {
+	scored := h.course("SCORED", true, func(c *workertraining.TrainingCourse) {
 		c.PassingScore = decimal.NewNullDecimal(decimal.NewFromInt(80))
 	})
 	record, err := h.svc.Assign(t.Context(), &workertrainingservice.AssignRequest{
@@ -76,9 +76,9 @@ func TestPlanCompleteWaiveCancelAttach(t *testing.T) {
 		UserID:     h.userID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusFailed, failed.After.Status)
+	assert.Equal(t, workertraining.TrainingStatusFailed, failed.After.Status)
 	require.NotNil(t, failed.Before)
-	assert.Equal(t, worker.TrainingStatusAssigned, h.repo.records[0].Status)
+	assert.Equal(t, workertraining.TrainingStatusAssigned, h.repo.records[0].Status)
 
 	_, err = h.svc.PlanWaive(t.Context(), &workertrainingservice.StatusRequest{
 		TenantInfo: h.tenant, ID: record.ID,
@@ -88,13 +88,13 @@ func TestPlanCompleteWaiveCancelAttach(t *testing.T) {
 		TenantInfo: h.tenant, ID: record.ID, Reason: "Certificate from last employer",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusWaived, waived.After.Status)
+	assert.Equal(t, workertraining.TrainingStatusWaived, waived.After.Status)
 
 	cancelled, err := h.svc.PlanCancel(t.Context(), &workertrainingservice.StatusRequest{
 		TenantInfo: h.tenant, ID: record.ID, Reason: "Assigned twice",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, worker.TrainingStatusCancelled, cancelled.After.Status)
+	assert.Equal(t, workertraining.TrainingStatusCancelled, cancelled.After.Status)
 	assert.Equal(t, "Assigned twice", cancelled.After.Notes)
-	assert.Equal(t, worker.TrainingStatusAssigned, h.repo.records[0].Status)
+	assert.Equal(t, workertraining.TrainingStatusAssigned, h.repo.records[0].Status)
 }

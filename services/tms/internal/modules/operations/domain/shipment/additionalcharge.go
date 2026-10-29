@@ -1,15 +1,13 @@
 package shipment
 
 import (
-	"context"
 	"errors"
-	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
@@ -84,144 +82,21 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-type ChargeTotals struct {
-	Each []decimal.Decimal
-	Sum  decimal.Decimal
-}
-
-func AdditionalChargeTotals(
-	ctx context.Context,
-	charges []*AdditionalCharge,
-	baseCharge decimal.Decimal,
-) (*ChargeTotals, error) {
-	if len(charges) == 0 {
-		return &ChargeTotals{Sum: decimal.Zero}, nil
-	}
-
-	req := &rules.AllocationChargesRequest{
-		Base:    baseCharge,
-		Charges: make([]rules.AllocationCharge, 0, len(charges)),
-	}
-	for _, charge := range charges {
-		req.Charges = append(req.Charges, accessorialCharge(charge, nil))
-	}
-
-	totals, err := rules.ChargeTotals(ctx, req)
-	if err != nil {
-		return nil, fmt.Errorf("price additional charges: %w", err)
-	}
-	if len(totals.Totals) != len(charges) {
-		return nil, fmt.Errorf(
-			"%w: %d totals came back for %d charges",
-			errSplitShape,
-			len(totals.Totals),
-			len(charges),
-		)
-	}
-
-	return &ChargeTotals{Each: totals.Totals, Sum: totals.Sum}, nil
-}
-
-func ChargeTotalsByCharge(
-	ctx context.Context,
-	shp *Shipment,
-) (map[*AdditionalCharge]decimal.Decimal, error) {
-	if shp == nil {
-		return map[*AdditionalCharge]decimal.Decimal{}, nil
-	}
-
-	totals, err := AdditionalChargeTotals(
-		ctx,
-		shp.AdditionalCharges,
-		shp.FreightChargeAmount.Decimal,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	byCharge := make(map[*AdditionalCharge]decimal.Decimal, len(shp.AdditionalCharges))
-	for i, charge := range shp.AdditionalCharges {
-		if charge != nil {
-			byCharge[charge] = totals.Each[i]
-		}
-	}
-
-	return byCharge, nil
-}
-
-// RestoreSystemOwnedCharges re-seats the fields of an inbound charge set that
-// the rating engines own rather than the caller: whether a charge was machine
-// generated, and which engine owns it.
-//
-// No caller may claim any of them. A payload that drops the detention marker —
-// an older client, an integration, any editor that rebuilds the list from the
-// fields it cares about — would otherwise turn a detention charge into a manual
-// one and leave the next recalculation free to bill the same dwell twice. The
-// same is true of the agreement link: a contract accessorial that lost its
-// owner would stop being reconciled and would be added again on every save.
-//
-// Exactly one owner column is set on any system charge, which the database
-// enforces. That is what keeps three engines writing charges from ever billing
-// the same thing twice.
-func RestoreSystemOwnedCharges(original, updated []*AdditionalCharge) {
-	originals := make(map[pulid.ID]*AdditionalCharge, len(original))
-	for _, charge := range original {
-		if charge == nil || charge.ID.IsNil() {
-			continue
-		}
-		originals[charge.ID] = charge
-	}
-
-	for _, charge := range updated {
-		if charge == nil {
-			continue
-		}
-
-		source := originals[charge.ID]
-		if charge.ID.IsNil() || source == nil {
-			charge.IsSystemGenerated = false
-			charge.IsDetention = false
-			charge.IsTariff = false
-			charge.RateAgreementAccessorialID = nil
-			charge.FuelSurchargeProgramID = nil
-			continue
-		}
-
-		charge.IsSystemGenerated = source.IsSystemGenerated
-		charge.IsDetention = source.IsDetention
-		charge.IsTariff = source.IsTariff
-		charge.RateAgreementAccessorialID = source.RateAgreementAccessorialID
-		charge.FuelSurchargeProgramID = source.FuelSurchargeProgramID
-	}
-}
-
-// SystemOwner names the engine that owns a machine generated charge, which is
-// how the reconciliation passes tell their own rows apart from each other's.
-type SystemOwner string
-
-const (
-	SystemOwnerNone      = SystemOwner("")
-	SystemOwnerFuel      = SystemOwner("FuelSurcharge")
-	SystemOwnerDetention = SystemOwner("Detention")
-	SystemOwnerTariff    = SystemOwner("Tariff")
-	SystemOwnerAgreement = SystemOwner("RateAgreement")
-)
-
 // Owner reports which engine, if any, owns this charge.
-func (a *AdditionalCharge) Owner() SystemOwner {
+func (a *AdditionalCharge) Owner() shipmentvocab.SystemOwner {
 	switch {
 	case !a.IsSystemGenerated:
-		return SystemOwnerNone
+		return shipmentvocab.SystemOwnerNone
 	case a.FuelSurchargeProgramID != nil:
-		return SystemOwnerFuel
+		return shipmentvocab.SystemOwnerFuel
 	case a.IsDetention:
-		return SystemOwnerDetention
+		return shipmentvocab.SystemOwnerDetention
 	case a.IsTariff:
-		return SystemOwnerTariff
+		return shipmentvocab.SystemOwnerTariff
 	case a.RateAgreementAccessorialID != nil:
-		return SystemOwnerAgreement
+		return shipmentvocab.SystemOwnerAgreement
 	default:
-		return SystemOwnerNone
+		return shipmentvocab.SystemOwnerNone
 	}
 }
 

@@ -6,9 +6,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,7 +25,7 @@ type fakeRuns struct {
 
 func (f *fakeRuns) GetByID(
 	_ context.Context,
-	req agentports.GetAgentRunByIDRequest,
+	req agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	if other, ok := f.others[req.ID]; ok {
 		return other, nil
@@ -38,14 +40,14 @@ func (f *fakeRuns) GetByID(
 type fakeThreads struct {
 	owner  pulid.ID
 	thread pulid.ID
-	asked  []agentports.GetThreadRequest
+	asked  []conversationports.GetThreadRequest
 }
 
 func (f *fakeThreads) GetThread(
 	_ context.Context,
-	req agentports.GetThreadRequest,
+	req *conversationports.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 	if req.ID != f.thread || req.UserID != f.owner {
 		return nil, errortypes.NewNotFoundError("Thread not found")
 	}
@@ -143,7 +145,7 @@ func TestDecideOwn_ApprovesAPlanFromTheCallersOwnConversation(t *testing.T) {
 	plan, err := f.svc.DecideOwn(t.Context(), f.req, f.actor)
 
 	require.NoError(t, err)
-	assert.Equal(t, agent.PlanStatusCompleted, plan.Status)
+	assert.Equal(t, agentplan.PlanStatusCompleted, plan.Status)
 	require.Len(t, f.decider.decided, 2, "every step goes through the decision service")
 	for _, decided := range f.decider.decided {
 		assert.True(t, decided.WithinPlan)

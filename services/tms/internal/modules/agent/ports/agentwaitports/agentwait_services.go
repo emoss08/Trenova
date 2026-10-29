@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -69,7 +69,7 @@ type AgentWaitService interface {
 // AgentWaitNotifier hands what happened in the world to the waits watching
 // for it. It never fails the work that reported it.
 type AgentWaitNotifier interface {
-	NotifyEvent(ctx context.Context, event *agentports.AgentEvent)
+	NotifyEvent(ctx context.Context, event *agenteventports.AgentEvent)
 	NotifyHOS(
 		ctx context.Context,
 		tenant pagination.TenantInfo,

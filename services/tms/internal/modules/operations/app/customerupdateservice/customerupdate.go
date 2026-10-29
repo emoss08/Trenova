@@ -7,15 +7,16 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
@@ -34,7 +35,7 @@ var ErrAlreadyTold = errors.New(
 
 func AlreadyTold(
 	ctx context.Context,
-	comments shipmentports.ShipmentCommentService,
+	comments shipmentcommentports.ShipmentCommentService,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 	now int64,
@@ -43,15 +44,15 @@ func AlreadyTold(
 		return false, nil
 	}
 
-	page, err := comments.ListByShipmentID(ctx, &shipmentports.ListShipmentCommentsRequest{
+	page, err := comments.ListByShipmentID(ctx, &shipmentcommentports.ListShipmentCommentsRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenant,
 			Pagination: pagination.Info{Limit: recentPageSize},
 		},
 		Cursor:     pagination.CursorInfo{Limit: recentPageSize},
 		ShipmentID: shipmentID,
-		Filters: shipmentports.ShipmentCommentListFilters{
-			Types: []shipment.CommentType{shipment.CommentTypeCustomerUpdate},
+		Filters: shipmentcommentports.ShipmentCommentListFilters{
+			Types: []shipmentvocab.CommentType{shipmentvocab.CommentTypeCustomerUpdate},
 		},
 	})
 	if err != nil {
@@ -99,7 +100,7 @@ func Recipients(
 	}
 
 	if entity.EmailProfile != nil {
-		recipients = stringutils.SplitEmailList(entity.EmailProfile.ToRecipients)
+		recipients = mailtext.SplitEmailList(entity.EmailProfile.ToRecipients)
 	}
 	if len(recipients) == 0 {
 		return nil, "", fmt.Errorf(
@@ -117,7 +118,7 @@ func Brand(
 	orgRepo tenantports.OrganizationRepository,
 	inliner documenttemplateports.AssetInliner,
 	tenantInfo pagination.TenantInfo,
-	out *documenttemplate.AgentEmailContext,
+	out *portaltemplate.AgentEmailContext,
 ) {
 	if orgRepo == nil {
 		return
@@ -152,7 +153,7 @@ type CommentParams struct {
 	Extra      map[string]any
 }
 
-func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest {
+func Comment(p *CommentParams) *shipmentcommentports.CreateSystemShipmentCommentRequest {
 	metadata := map[string]any{
 		shipment.CommentMetadataOrigin: p.Origin,
 		metadataSource:                 p.Source,
@@ -163,7 +164,7 @@ func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest
 		metadata[key] = value
 	}
 
-	return &shipmentports.CreateSystemShipmentCommentRequest{
+	return &shipmentcommentports.CreateSystemShipmentCommentRequest{
 		TenantInfo: p.Tenant,
 		ShipmentID: p.ShipmentID,
 		Comment: fmt.Sprintf(
@@ -172,9 +173,9 @@ func Comment(p *CommentParams) *shipmentports.CreateSystemShipmentCommentRequest
 			p.Subject,
 			p.Body,
 		),
-		Type:       shipment.CommentTypeCustomerUpdate,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityNormal,
+		Type:       shipmentvocab.CommentTypeCustomerUpdate,
+		Visibility: shipmentvocab.CommentVisibilityOperations,
+		Priority:   shipmentvocab.CommentPriorityNormal,
 		Metadata:   metadata,
 	}
 }

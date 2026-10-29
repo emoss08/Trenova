@@ -29,3 +29,10 @@ func TestLooksLikeResource(t *testing.T) {
 		})
 	}
 }
+
+func TestResource_Noun(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "worker credential", ResourceWorkerCredential.Noun())
+	assert.Equal(t, "shipment", ResourceShipment.Noun())
+}

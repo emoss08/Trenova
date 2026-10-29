@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplatereviewservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -32,7 +32,7 @@ func (h *Handler) handleApprovalAction(
 	c *gin.Context,
 	action func(
 		ctx context.Context,
-		req *formulatemplateservice.ApprovalActionRequest,
+		req *formulatemplatereviewservice.ApprovalActionRequest,
 	) (*formulatemplate.FormulaTemplate, error),
 ) {
 	authCtx := authctx.GetAuthContext(c)
@@ -49,11 +49,14 @@ func (h *Handler) handleApprovalAction(
 		return
 	}
 
-	template, err := action(c.Request.Context(), &formulatemplateservice.ApprovalActionRequest{
-		TenantInfo: pagination.FromAuthAsUser(authCtx),
-		EntityID:   templateID,
-		Comment:    req.Comment,
-	})
+	template, err := action(
+		c.Request.Context(),
+		&formulatemplatereviewservice.ApprovalActionRequest{
+			TenantInfo: pagination.FromAuthAsUser(authCtx),
+			EntityID:   templateID,
+			Comment:    req.Comment,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -110,15 +113,18 @@ func (h *Handler) submit(c *gin.Context) {
 		}
 	}
 
-	template, err := h.service.Submit(c.Request.Context(), &formulatemplateservice.SubmitRequest{
-		ApprovalActionRequest: formulatemplateservice.ApprovalActionRequest{
-			TenantInfo: pagination.FromAuthAsUser(authCtx),
-			EntityID:   templateID,
-			Comment:    req.Comment,
+	template, err := h.reviews.Submit(
+		c.Request.Context(),
+		&formulatemplatereviewservice.SubmitRequest{
+			ApprovalActionRequest: formulatemplatereviewservice.ApprovalActionRequest{
+				TenantInfo: pagination.FromAuthAsUser(authCtx),
+				EntityID:   templateID,
+				Comment:    req.Comment,
+			},
+			ReviewerID:   reviewerID,
+			ReviewerNote: req.ReviewerNote,
 		},
-		ReviewerID:   reviewerID,
-		ReviewerNote: req.ReviewerNote,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -167,10 +173,10 @@ func (h *Handler) approve(c *gin.Context) {
 		return
 	}
 
-	template, err := h.service.ApproveFrom(
+	template, err := h.reviews.ApproveFrom(
 		c.Request.Context(),
-		&formulatemplateservice.ApproveRequest{
-			ApprovalActionRequest: formulatemplateservice.ApprovalActionRequest{
+		&formulatemplatereviewservice.ApproveRequest{
+			ApprovalActionRequest: formulatemplatereviewservice.ApprovalActionRequest{
 				TenantInfo:    pagination.FromAuthAsUser(authCtx),
 				EntityID:      templateID,
 				Comment:       req.Comment,
@@ -202,7 +208,7 @@ func (h *Handler) approve(c *gin.Context) {
 // @Security BearerAuth
 // @Router /formula-templates/{templateID}/reject [post]
 func (h *Handler) reject(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.Reject)
+	h.handleApprovalAction(c, h.reviews.Reject)
 }
 
 // @Summary Request changes on a formula template under review
@@ -220,7 +226,7 @@ func (h *Handler) reject(c *gin.Context) {
 // @Security BearerAuth
 // @Router /formula-templates/{templateID}/request-changes [post]
 func (h *Handler) requestChanges(c *gin.Context) {
-	h.handleApprovalAction(c, h.service.RequestChanges)
+	h.handleApprovalAction(c, h.reviews.RequestChanges)
 }
 
 // @Summary List the review history of a formula template
@@ -243,9 +249,9 @@ func (h *Handler) listReviews(c *gin.Context) {
 		return
 	}
 
-	reviews, err := h.service.ListReviews(
+	reviews, err := h.reviews.ListReviews(
 		c.Request.Context(),
-		&formulatemplateservice.ListReviewsRequest{
+		&formulatemplatereviewservice.ListReviewsRequest{
 			TenantInfo: pagination.FromAuthAsUser(authCtx),
 			TemplateID: templateID,
 		},

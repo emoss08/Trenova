@@ -43,8 +43,8 @@ internal/modules/<module>/
 | Overlay import rewriter | `scripts/buildbench/rewrite-imports` |
 | Build benchmark | `scripts/buildbench`, `task build-bench` |
 
-Package names did not change when packages moved: `shipmentservice` is still
-`shipmentservice`, now at `internal/modules/operations/app/shipmentservice`. Domain package
+Package names did not change when packages moved: `shipmentwrite` is still
+`shipmentwrite`, now at `internal/modules/operations/app/shipmentwrite`. Domain package
 names must stay unique across modules, because `keel gen` names its output after the package's
 base name (`domain/shipment` becomes `domain/shipment/shipmentdb`).
 
@@ -183,7 +183,7 @@ with any typed query, so no SQL is written by hand.
 | `kernelports.VisibleRecordSources` | `recordvisibilityrepository` | id of each database-scoped kind |
 | `orderports.OrderReferences` | `orderrepository.DeleteIfEmpty` | every `order_id` outside operations |
 | `formulatemplateports.TemplateConsumers` | `formulatemplaterepository` | `shipments.formula_template_id` |
-| `workerports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
+| `workerscheduleports.RotaAssignments` | `schedulingrepository` (rota) | assignment worker, created and archived |
 | `equipmentcontinuityports.LocationColumns` | tractor and trailer last-known location | location id, name, coordinates |
 | `equipmentcontinuityports.MoveColumns` | tractor and trailer move in progress (`inprogressmove`) | assignment unit and move, move status, shipment PRO, stop windows |
 
@@ -388,8 +388,8 @@ These designs did this at scale before they were changed:
 | Source | What every importer compiled | Fix |
 |---|---|---|
 | `twilio-go` | about 15,000 functions per package that reached its client | replaced with a direct call to Twilio's Messages API (`internal/infrastructure/sms`) |
-| `loaders.Loaders` | about 1,000 functions in each of 40 resolver packages | loaders reached through typed accessors; the set and its builders are unexported (`loaders/access.go`) |
-| service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `validationframework.TenantedEntityValidator[T]` / `ScopedEntityValidator[T]` |
+| `loaders.Loaders` | about 1,000 functions in each of 40 resolver packages | loaders reached through typed accessors in per-module packages (`loaders/<module>loaders`), built lazily per request by `loaders/loadercore`; no exported type holds a loader |
+| service `Validator` structs | the generic validator of every entity a package could see: 1,400 to 1,700 functions in each GraphQL and bootstrap package | fields typed `tenantedvalidation.EntityValidator[T]` / `scopedvalidation.EntityValidator[T]` |
 | `pagination.EncodeCursorFromEntity*`, `ExtractCursorValues` | four generic encoders, called by `CursorListResult[T].NextCursor`, in each of the 707 packages that mention a `CursorListResult` | the encoders take `any`; they only ever used reflection and type assertions on the item |
 | `auditservice.SensitiveDataManager`, the RLS scope reporter behind `postgres.Connection` | `sync.Map`'s generic internals in every package that reaches a service or a repository | mutex-guarded maps |
 | `*lru.Cache` / `*expirable.LRU` fields in the template engine, the rate table cache and six other packages | golang-lru's cache, list and entry methods, about 17 KB in each of 30 packages | fields typed `lrucache.Cache[K, V]` from `shared/lrucache`, built with `lrucache.New` or `lrucache.NewExpirable` |
@@ -430,7 +430,7 @@ to a real file, rebuilds, and restores the file byte for byte, once per scenario
 |---|---|
 | `cold` / `warm` | first build, from an empty (`--cold`) or existing benchmark cache |
 | S1 | none (no-op rebuild) |
-| S2 | unexported func added to `shipmentservice` |
+| S2 | unexported func added to `shipmentwrite` (measured on `shipmentservice` before the shipment use cases split) |
 | S3 | unexported func added to `shipmentresolver` |
 | S4 | exported func added to `domain/shipment` |
 | S5 | exported type added to the package that declares `ShipmentRepository` |
@@ -468,16 +468,22 @@ its backup on exit.
 ## Agent tools
 
 The action tools live in one package per family under
-`internal/modules/agent/app/agenttools/<family>tools` (`invoicetools`, `workforcetools`,
-`masterdatatools`, ...), named with a `tools` suffix so they never collide with the domain
-package of the same name. Code that several families use is in `agenttools/common`; test
+`internal/modules/agent/app/agenttools/<family>tools` (`invoicetools`, `safetytools`,
+`partytools`, ...), named with a `tools` suffix so they never collide with the domain
+package of the same name. Code that several families use is in a small package named for what
+it provides: `toolparams` (parameter keys, schema properties and parsing), `toolguard` (the
+preview and execute guards), `toolspec` (the spec-built tool), `changepreview` (preview
+fields, labels and planned changes), `recordbatch` (bulk tools over single-record tools),
+`masterdatakit` (the field kit the master-data create, update and status tools are built
+from), `workforcekit` (the spec, record and field keys the worker tools share), and a preview package per domain (`shipmentpreview`, `invoicepreview`, `settlementpreview`, ...); test
 helpers that several families' tests share are in `agenttools/agenttoolstest`, a test-only
 package. `agenttoolservice` keeps the public API: `Module`, `ToolProviders()` and the registry,
 which collects every tool from the `agent_tools` fx value group. `ToolProviders()` lists the
 providers in their original order, because the order of the group is the order of the
 catalog the model is shown.
 
-A family package may import `common` and other families as long as the graph stays acyclic;
+A family package may import those shared packages and other families as long as the graph
+stays acyclic;
 nothing imports `agenttoolservice` except its callers outside the tools. A test file lives in
 the package it tests unless a package it imports depends on that package, in which case it
 lives in `agenttoolservice`. Fields that had to be exported across packages carry
@@ -486,6 +492,32 @@ lives in `agenttoolservice`. Fields that had to be exported across packages carr
 To add a tool: put it in its family package, export its provider, and add the provider to
 the family's place in `ToolProviders()` (or the family's own provider list, such as
 `operationsToolProviders()`).
+
+## Agent query tools
+
+The read-only tools the assistant runs without asking live in one package per domain under
+`internal/modules/agent/app/querytools/<domain>querytools` (`workerquerytools`,
+`shipmentquerytools`, `reportquerytools`, ...). What they share is in packages named for what
+they provide: `querytool` (argument reading, parameter schemas, the read policy, paging and the
+search outcome), `fieldgate` (the field-level access gate and the gated outcome), `readspec`
+(what a person writes for a read: `readspec.List`, `readspec.Get`, `readspec.Reference`),
+`listtool` (the repository-backed list tool), `graphqlread` (the read model of a persisted
+GraphQL operation and the generated `graphqlreads_gen.go`), and `graphqllisttool` and
+`gettool` (the tools built from specs). Test helpers several packages' tests share are in
+`querytooltest` and `fieldgatetest`. `agentquerytoolservice` keeps the public API: `Module`,
+`ToolProviders()`, the registry and `FilterCatalog`, and it collects each domain's
+`ReadSpecs()` and `GetSpecs()` into the GraphQL list and get tools. `ToolProviders()` lists the
+providers in their original order.
+
+A domain package imports the shared packages and, while the graph stays acyclic, another
+domain's (`shipmentreadquerytools` imports `shipmentquerytools`; `shipmentrecordquerytools`
+composes the master-data lists). A test file lives in the package it tests; tests that walk
+every registered spec, and the external tests that read through the real GraphQL reader, live
+in `agentquerytoolservice`. Fields exported across packages that a tool result carries are
+tagged `json:"-"`, so no tool's output changed.
+
+To add a read tool: put it in its domain package, export its provider or spec, and add it to
+that package's provider or spec list (or to `coreToolProviders()` in `agentquerytoolservice`).
 
 ## Measured results
 

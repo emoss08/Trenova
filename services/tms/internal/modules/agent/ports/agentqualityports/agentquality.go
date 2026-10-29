@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -26,7 +27,7 @@ type GetAgentSuiteRunBySweepKeyRequest struct {
 type LastAgentSuiteRunRequest struct {
 	AgentDefinitionID pulid.ID
 	TenantInfo        pagination.TenantInfo
-	Statuses          []agentquality.SuiteRunStatus
+	Statuses          []agentqualitysuite.SuiteRunStatus
 	Before            int64
 	ExcludeID         pulid.ID
 }
@@ -47,7 +48,7 @@ type AgentSuiteRunHistoryRequest struct {
 type LatestAgentSuiteRunsRequest struct {
 	TenantInfo         pagination.TenantInfo
 	AgentDefinitionIDs []pulid.ID
-	Statuses           []agentquality.SuiteRunStatus
+	Statuses           []agentqualitysuite.SuiteRunStatus
 	Limit              int
 }
 
@@ -82,26 +83,32 @@ type AgentQualityAgentRows struct {
 }
 
 type AgentSuiteRunRepository interface {
-	Create(ctx context.Context, entity *agentquality.SuiteRun) (*agentquality.SuiteRun, error)
-	Update(ctx context.Context, entity *agentquality.SuiteRun) (*agentquality.SuiteRun, error)
-	GetByID(ctx context.Context, req GetAgentSuiteRunRequest) (*agentquality.SuiteRun, error)
+	Create(
+		ctx context.Context,
+		entity *agentqualitysuite.SuiteRun,
+	) (*agentqualitysuite.SuiteRun, error)
+	Update(
+		ctx context.Context,
+		entity *agentqualitysuite.SuiteRun,
+	) (*agentqualitysuite.SuiteRun, error)
+	GetByID(ctx context.Context, req GetAgentSuiteRunRequest) (*agentqualitysuite.SuiteRun, error)
 	GetBySweepKey(
 		ctx context.Context,
 		req GetAgentSuiteRunBySweepKeyRequest,
-	) (*agentquality.SuiteRun, error)
-	Last(ctx context.Context, req LastAgentSuiteRunRequest) (*agentquality.SuiteRun, error)
+	) (*agentqualitysuite.SuiteRun, error)
+	Last(ctx context.Context, req LastAgentSuiteRunRequest) (*agentqualitysuite.SuiteRun, error)
 	ListConnection(
 		ctx context.Context,
 		req *ListAgentSuiteRunConnectionRequest,
-	) (*pagination.CursorListResult[*agentquality.SuiteRun], error)
+	) (*pagination.CursorListResult[*agentqualitysuite.SuiteRun], error)
 	History(
 		ctx context.Context,
 		req AgentSuiteRunHistoryRequest,
-	) ([]*agentquality.SuiteRun, error)
+	) ([]*agentqualitysuite.SuiteRun, error)
 	Latest(
 		ctx context.Context,
 		req LatestAgentSuiteRunsRequest,
-	) ([]*agentquality.SuiteRun, error)
+	) ([]*agentqualitysuite.SuiteRun, error)
 	Overview(ctx context.Context, req AgentSuiteRunOverviewRequest) (*AgentSuiteRunOverview, error)
 	ListAgents(
 		ctx context.Context,
@@ -115,7 +122,7 @@ type QualityScheduleTarget struct {
 	OrganizationName     string
 	OrganizationTimezone string
 	HasActiveCases       bool
-	Control              *agentquality.Control
+	Control              *agentqualitycontrol.Control
 }
 
 func (t *QualityScheduleTarget) TenantInfo() pagination.TenantInfo {
@@ -128,8 +135,11 @@ type ListQualityScheduleTargetsRequest struct {
 }
 
 type AgentQualityControlRepository interface {
-	Get(ctx context.Context, tenant pagination.TenantInfo) (*agentquality.Control, error)
-	Upsert(ctx context.Context, entity *agentquality.Control) (*agentquality.Control, error)
+	Get(ctx context.Context, tenant pagination.TenantInfo) (*agentqualitycontrol.Control, error)
+	Upsert(
+		ctx context.Context,
+		entity *agentqualitycontrol.Control,
+	) (*agentqualitycontrol.Control, error)
 	ScheduleTarget(
 		ctx context.Context,
 		tenant pagination.TenantInfo,

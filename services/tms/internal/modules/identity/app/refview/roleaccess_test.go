@@ -5,23 +5,34 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
 	"github.com/stretchr/testify/assert"
 )
 
-func role(max permission.FieldSensitivity, grants ...*permission.ResourcePermission) *permission.Role {
-	return &permission.Role{MaxSensitivity: max, Permissions: grants}
+func role(
+	max permission.FieldSensitivity,
+	grants ...*rbac.ResourcePermission,
+) *rbac.Role {
+	return &rbac.Role{MaxSensitivity: max, Permissions: grants}
 }
 
-func grant(resource permission.Resource, ops ...permission.Operation) *permission.ResourcePermission {
-	return &permission.ResourcePermission{Resource: resource.String(), Operations: ops}
+func grant(
+	resource permission.Resource,
+	ops ...permission.Operation,
+) *rbac.ResourcePermission {
+	return &rbac.ResourcePermission{Resource: resource.String(), Operations: ops}
 }
 
 func TestRoleAccess_ReadsWhatItsGrantsImply(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
-	access := refview.NewRoleAccess(registry, permission.GrantsOf(
-		role(permission.SensitivityInternal, grant(permission.ResourceCustomer, permission.OpUpdate)),
+	registry := permissioncatalog.NewRegistry()
+	access := refview.NewRoleAccess(registry, permissioncatalog.GrantsOf(
+		role(
+			permission.SensitivityInternal,
+			grant(permission.ResourceCustomer, permission.OpUpdate),
+		),
 	))
 
 	assert.True(t, access.Reads(t.Context(), permission.ResourceCustomer), "update brings read")
@@ -33,9 +44,12 @@ func TestRoleAccess_ReadsWhatItsGrantsImply(t *testing.T) {
 func TestRoleAccess_HoldsALinkedRecordsViewToTheRolesCeiling(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
-	public := refview.NewRoleAccess(nil, permission.GrantsOf(role(permission.SensitivityPublic)))
-	internal := refview.NewRoleAccess(nil, permission.GrantsOf(
+	views := refview.New(permissioncatalog.NewRegistry())
+	public := refview.NewRoleAccess(
+		nil,
+		permissioncatalog.GrantsOf(role(permission.SensitivityPublic)),
+	)
+	internal := refview.NewRoleAccess(nil, permissioncatalog.GrantsOf(
 		role(permission.SensitivityPublic),
 		role(permission.SensitivityInternal),
 	))
@@ -53,17 +67,38 @@ func TestRoleAccess_HoldsALinkedRecordsViewToTheRolesCeiling(t *testing.T) {
 func TestDecidePart_APartOfALinkedRecordNeedsItsKindsRead(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
-	none := refview.NewRoleAccess(nil, permission.GrantsOf(role(permission.SensitivityInternal)))
-	reader := refview.NewRoleAccess(nil, permission.GrantsOf(
+	views := refview.New(permissioncatalog.NewRegistry())
+	none := refview.NewRoleAccess(
+		nil,
+		permissioncatalog.GrantsOf(role(permission.SensitivityInternal)),
+	)
+	reader := refview.NewRoleAccess(nil, permissioncatalog.GrantsOf(
 		role(permission.SensitivityInternal, grant(permission.ResourceShipment, permission.OpRead)),
 	))
 
-	assert.Equal(t, refview.WithheldKind,
-		views.DecidePart(t.Context(), none, permission.ResourceShipment, "proNumber", refview.Nested),
-		"a part has no view, even for a field named like one in its carrier's")
-	assert.Equal(t, refview.Visible,
-		views.DecidePart(t.Context(), reader, permission.ResourceShipment, "status", refview.Nested))
+	assert.Equal(
+		t,
+		refview.WithheldKind,
+		views.DecidePart(
+			t.Context(),
+			none,
+			permission.ResourceShipment,
+			"proNumber",
+			refview.Nested,
+		),
+		"a part has no view, even for a field named like one in its carrier's",
+	)
+	assert.Equal(
+		t,
+		refview.Visible,
+		views.DecidePart(
+			t.Context(),
+			reader,
+			permission.ResourceShipment,
+			"status",
+			refview.Nested,
+		),
+	)
 	assert.Equal(t, refview.Visible,
 		views.DecidePart(t.Context(), none, permission.ResourceShipment, "status", refview.Root))
 }

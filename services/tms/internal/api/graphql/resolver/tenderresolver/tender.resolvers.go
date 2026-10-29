@@ -8,8 +8,11 @@ package tenderresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/api/graphql/loaders"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/loadercore"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders/operationsloaders"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
@@ -27,8 +30,8 @@ func (r *QueryResolver) Tender(ctx context.Context, id string) (*tender.Tender, 
 		return nil, err
 	}
 
-	return r.TenderService.Get(ctx, tenderports.GetTenderByIDRequest{
-		TenantInfo:    base.TenantInfo(authCtx),
+	return r.TenderRepo.GetByID(ctx, tenderports.GetTenderByIDRequest{
+		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		TenderID:      tenderID,
 		IncludeOffers: true,
 	})
@@ -45,13 +48,13 @@ func (r *QueryResolver) TendersByShipment(ctx context.Context, shipmentID string
 		return nil, err
 	}
 
-	parsedMoveID, err := base.ParseOptionalIDField("shipmentMoveId", shipmentMoveID)
+	parsedMoveID, err := gqlid.ParseOptionalIDField("shipmentMoveId", shipmentMoveID)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.TenderService.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
-		TenantInfo:     base.TenantInfo(authCtx),
+	return r.TenderRepo.ListByShipment(ctx, tenderports.ListTendersByShipmentRequest{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
 		ShipmentID:     parsedShipmentID,
 		ShipmentMoveID: parsedMoveID,
 	})
@@ -68,8 +71,8 @@ func (r *QueryResolver) LiveTenderByMove(ctx context.Context, moveID string) (*t
 		return nil, err
 	}
 
-	return r.TenderService.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
-		TenantInfo: base.TenantInfo(authCtx),
+	return r.TenderRepo.GetLiveByMoveID(ctx, tenderports.GetLiveTenderByMoveRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		MoveID:     parsedMoveID,
 	})
 }
@@ -90,13 +93,13 @@ func (r *TenderResolver) RoutingGuide(ctx context.Context, obj *tender.Tender) (
 		return obj.RoutingGuide, nil
 	}
 
-	if loaders.Available(ctx) {
-		return loaders.RoutingGuideWithEntriesByID(ctx, obj.RoutingGuideID.String())
+	if loadercore.Available(ctx) {
+		return operationsloaders.RoutingGuideWithEntriesByID(ctx, obj.RoutingGuideID.String())
 	}
 
 	return r.RoutingGuideService.Get(ctx, tenderports.GetRoutingGuideByIDRequest{
 		ID:         *obj.RoutingGuideID,
-		TenantInfo: base.TenantInfo(authCtx),
+		TenantInfo: resolvercore.TenantInfo(authCtx),
 		RoutingGuideFilterOptions: tenderports.RoutingGuideFilterOptions{
 			IncludeEntries: true,
 		},
@@ -117,11 +120,11 @@ func (r *TenderOfferResolver) ResponseSource(ctx context.Context, obj *tender.Te
 }
 
 func (r *TenderOfferResolver) CounterRate(ctx context.Context, obj *tender.TenderOffer) (*string, error) {
-	return base.NullDecimalStringPtr(obj.CounterRate), nil
+	return gqldecimal.NullDecimalStringPtr(obj.CounterRate), nil
 }
 
 func (r *TenderOfferResolver) CounterMarginPercent(ctx context.Context, obj *tender.TenderOffer) (*string, error) {
-	return base.NullDecimalStringPtr(obj.CounterMargin), nil
+	return gqldecimal.NullDecimalStringPtr(obj.CounterMargin), nil
 }
 
 func (r *TenderOfferResolver) AgreedRate(ctx context.Context, obj *tender.TenderOffer) (string, error) {

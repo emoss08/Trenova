@@ -5,9 +5,9 @@
 package tenantportsmock
 
 import (
+	"github.com/emoss08/trenova/internal/modules/identity/domain/provisioning"
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -39,26 +39,26 @@ func (_m *MockTenantProvisioningRepository) EXPECT() *MockTenantProvisioningRepo
 }
 
 // UpsertProvisioningSnapshot provides a mock function for the type MockTenantProvisioningRepository
-func (_mock *MockTenantProvisioningRepository) UpsertProvisioningSnapshot(ctx context.Context, req *tenant.ProvisioningRequest) (*tenant.ProvisioningResult, error) {
+func (_mock *MockTenantProvisioningRepository) UpsertProvisioningSnapshot(ctx context.Context, req *provisioning.ProvisioningRequest) (*provisioning.ProvisioningResult, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpsertProvisioningSnapshot")
 	}
 
-	var r0 *tenant.ProvisioningResult
+	var r0 *provisioning.ProvisioningResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.ProvisioningRequest) (*tenant.ProvisioningResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *provisioning.ProvisioningRequest) (*provisioning.ProvisioningResult, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.ProvisioningRequest) *tenant.ProvisioningResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *provisioning.ProvisioningRequest) *provisioning.ProvisioningResult); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*tenant.ProvisioningResult)
+			r0 = ret.Get(0).(*provisioning.ProvisioningResult)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.ProvisioningRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *provisioning.ProvisioningRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -73,20 +73,20 @@ type MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call struct {
 
 // UpsertProvisioningSnapshot is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *tenant.ProvisioningRequest
+//   - req *provisioning.ProvisioningRequest
 func (_e *MockTenantProvisioningRepository_Expecter) UpsertProvisioningSnapshot(ctx any, req any) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
 	return &MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call{Call: _e.mock.On("UpsertProvisioningSnapshot", ctx, req)}
 }
 
-func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) Run(run func(ctx context.Context, req *tenant.ProvisioningRequest)) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
+func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) Run(run func(ctx context.Context, req *provisioning.ProvisioningRequest)) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *tenant.ProvisioningRequest
+		var arg1 *provisioning.ProvisioningRequest
 		if args[1] != nil {
-			arg1 = args[1].(*tenant.ProvisioningRequest)
+			arg1 = args[1].(*provisioning.ProvisioningRequest)
 		}
 		run(
 			arg0,
@@ -96,12 +96,12 @@ func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) Run(
 	return _c
 }
 
-func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) Return(provisioningResult *tenant.ProvisioningResult, err error) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
+func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) Return(provisioningResult *provisioning.ProvisioningResult, err error) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
 	_c.Call.Return(provisioningResult, err)
 	return _c
 }
 
-func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) RunAndReturn(run func(ctx context.Context, req *tenant.ProvisioningRequest) (*tenant.ProvisioningResult, error)) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
+func (_c *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call) RunAndReturn(run func(ctx context.Context, req *provisioning.ProvisioningRequest) (*provisioning.ProvisioningResult, error)) *MockTenantProvisioningRepository_UpsertProvisioningSnapshot_Call {
 	_c.Call.Return(run)
 	return _c
 }

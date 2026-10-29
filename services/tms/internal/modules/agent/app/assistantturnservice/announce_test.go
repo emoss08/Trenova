@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -20,13 +22,13 @@ import (
 // to.
 type recordingRealtime struct {
 	mu        sync.Mutex
-	published []*agentports.PublishResourceInvalidationRequest
+	published []*realtimeports.PublishResourceInvalidationRequest
 	err       error
 }
 
 func (r *recordingRealtime) PublishResourceInvalidation(
 	_ context.Context,
-	req *agentports.PublishResourceInvalidationRequest,
+	req *realtimeports.PublishResourceInvalidationRequest,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -48,13 +50,16 @@ func (r *recordingRealtime) actions() []string {
 	return out
 }
 
-func announcing(turns agentports.AssistantTurnRepository) (*Service, *recordingRealtime) {
+func announcing(turns assistantturnports.AssistantTurnRepository) (*Service, *recordingRealtime) {
 	realtime := &recordingRealtime{}
 
 	return &Service{l: zap.NewNop(), turns: turns, realtime: realtime}, realtime
 }
 
-func announced(t *testing.T, req *agentports.PublishResourceInvalidationRequest) TurnAnnouncement {
+func announced(
+	t *testing.T,
+	req *realtimeports.PublishResourceInvalidationRequest,
+) TurnAnnouncement {
 	t.Helper()
 
 	entity, ok := req.Entity.(TurnAnnouncement)
@@ -73,7 +78,7 @@ func TestStartTurn_AnnouncesTheTurnOnceItsWorkflowIsRecorded(t *testing.T) {
 	req := startRequest()
 
 	turn, err := svc.StartTurn(t.Context(), req,
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "assistant-turn:atrn_1", nil
 		},
 	)
@@ -103,7 +108,7 @@ func TestStartTurn_AnnouncesATurnThatCouldNotStartAsFinished(t *testing.T) {
 	svc, realtime := announcing(&recordingTurns{})
 
 	_, err := svc.StartTurn(t.Context(), startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "", errors.New("temporal is unreachable")
 		},
 	)
@@ -124,7 +129,7 @@ func TestStartTurn_StartsWhenTheAnnouncementFails(t *testing.T) {
 	realtime.err = errors.New("realtime is down")
 
 	turn, err := svc.StartTurn(t.Context(), startRequest(),
-		func(*conversation.AssistantTurn) (string, error) {
+		func(*conversationturn.AssistantTurn) (string, error) {
 			return "assistant-turn:atrn_1", nil
 		},
 	)
@@ -157,7 +162,10 @@ type failingTurns struct {
 	recordingTurns
 }
 
-func (f *failingTurns) Complete(context.Context, agentports.CompleteAssistantTurnRequest) error {
+func (f *failingTurns) Complete(
+	context.Context,
+	*assistantturnports.CompleteAssistantTurnRequest,
+) error {
 	return errors.New("database is down")
 }
 
@@ -180,7 +188,7 @@ func TestStop_AnnouncesATurnItClosedItself(t *testing.T) {
 	t.Parallel()
 
 	svc, realtime := announcing(&recordingTurns{})
-	svc.canceller = agentports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(context.Context, string) error { return ErrNoExecution },
 	)
 
@@ -196,7 +204,7 @@ func TestStop_LeavesTheAnnouncementToAnExecutionItCancelled(t *testing.T) {
 	t.Parallel()
 
 	svc, realtime := announcing(&recordingTurns{})
-	svc.canceller = agentports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(context.Context, string) error { return nil },
 	)
 
@@ -209,24 +217,24 @@ func TestStop_LeavesTheAnnouncementToAnExecutionItCancelled(t *testing.T) {
 type liveTurns struct {
 	recordingTurns
 
-	live  []*agentports.LiveAssistantTurn
-	asked agentports.ListLiveAssistantTurnsRequest
+	live  []*assistantturnports.LiveAssistantTurn
+	asked assistantturnports.ListLiveAssistantTurnsRequest
 }
 
 func (l *liveTurns) ListLive(
 	_ context.Context,
-	req agentports.ListLiveAssistantTurnsRequest,
-) ([]*agentports.LiveAssistantTurn, error) {
-	l.asked = req
+	req *assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
+	l.asked = *req
 
 	return l.live, nil
 }
 
-func liveTurn() *agentports.LiveAssistantTurn {
+func liveTurn() *assistantturnports.LiveAssistantTurn {
 	turn := runningTurn()
-	turn.WorkflowID = conversation.AssistantTurnWorkflowID(turn.ID)
+	turn.WorkflowID = conversationturn.AssistantTurnWorkflowID(turn.ID)
 
-	return &agentports.LiveAssistantTurn{AssistantTurn: *turn}
+	return &assistantturnports.LiveAssistantTurn{AssistantTurn: *turn}
 }
 
 /*
@@ -238,11 +246,11 @@ func TestStopAllForUser_StopsEveryReplyAndReportsTheOnesItCouldNot(t *testing.T)
 	t.Parallel()
 
 	cancelled, gone, stuck := liveTurn(), liveTurn(), liveTurn()
-	turns := &liveTurns{live: []*agentports.LiveAssistantTurn{cancelled, gone, stuck}}
+	turns := &liveTurns{live: []*assistantturnports.LiveAssistantTurn{cancelled, gone, stuck}}
 	svc := &Service{l: zap.NewNop(), turns: turns}
 
 	var asked []string
-	svc.canceller = agentports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(_ context.Context, workflowID string) error {
 			asked = append(asked, workflowID)
 			switch workflowID {
@@ -256,7 +264,7 @@ func TestStopAllForUser_StopsEveryReplyAndReportsTheOnesItCouldNot(t *testing.T)
 		},
 	)
 
-	req := agentports.StopUserTurnsRequest{
+	req := assistantturnports.StopUserTurnsRequest{
 		UserID: pulid.MustNew("usr_"),
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
@@ -283,7 +291,7 @@ func TestStopAllForUser_HasNothingToDoForSomeoneWithNoReplies(t *testing.T) {
 	t.Parallel()
 
 	svc := &Service{l: zap.NewNop(), turns: &liveTurns{}}
-	svc.canceller = agentports.AssistantTurnCancellerFunc(
+	svc.canceller = assistantturnports.AssistantTurnCancellerFunc(
 		func(context.Context, string) error {
 			t.Fatal("nothing is in progress, so nothing is cancelled")
 
@@ -291,7 +299,7 @@ func TestStopAllForUser_HasNothingToDoForSomeoneWithNoReplies(t *testing.T) {
 		},
 	)
 
-	require.NoError(t, svc.StopAllForUser(t.Context(), agentports.StopUserTurnsRequest{
+	require.NoError(t, svc.StopAllForUser(t.Context(), assistantturnports.StopUserTurnsRequest{
 		UserID: pulid.MustNew("usr_"),
 	}))
 }

@@ -7,6 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissionspec"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -19,14 +21,14 @@ type Params struct {
 	fx.In
 
 	PermissionEngine permissionports.PermissionEngine
-	Registry         *permission.Registry
+	Registry         *permissioncatalog.Registry
 	Scopes           permissionports.ScopePolicy
 	ErrorHandler     *helpers.ErrorHandler
 }
 
 type Handler struct {
 	permEngine permissionports.PermissionEngine
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	scopes     permissionports.ScopePolicy
 	eh         *helpers.ErrorHandler
 }
@@ -206,7 +208,7 @@ type resourceCategoryResponse struct {
 }
 
 type resourceResponse struct {
-	*permission.ResourceDefinition
+	*permissionspec.ResourceDefinition
 	EnforceableScopes []permission.DataScope `json:"enforceableScopes"`
 }
 
@@ -257,7 +259,7 @@ func (h *Handler) getAvailableResources(c *gin.Context) {
 // @Security BearerAuth
 // @Router /permissions/operations [get]
 func (h *Handler) getAvailableOperations(c *gin.Context) {
-	helpers.JSON(c, http.StatusOK, permission.GetAllOperations())
+	helpers.JSON(c, http.StatusOK, permissioncatalog.GetAllOperations())
 }
 
 type bundleGrantResponse struct {
@@ -301,8 +303,8 @@ type bundlesResponse struct {
 // @Router /permissions/bundles [get]
 func (h *Handler) getBundles(c *gin.Context) {
 	ctx := c.Request.Context()
-	bundles := permission.Bundles()
-	templates := permission.JobTemplates()
+	bundles := permissioncatalog.Bundles()
+	templates := permissioncatalog.JobTemplates()
 
 	resp := bundlesResponse{
 		Bundles:   make([]bundleResponse, 0, len(bundles)),
@@ -327,7 +329,7 @@ func (h *Handler) getBundles(c *gin.Context) {
 		})
 	}
 	for _, template := range templates {
-		composed := h.registry.TemplateGrants(template)
+		composed := h.registry.TemplateGrants(&template)
 		grants := make([]bundleGrantResponse, 0, len(composed))
 		for _, rp := range composed {
 			grants = append(grants, h.bundleGrant(ctx, rp.Resource, rp.Operations, rp.DataScope))
@@ -368,13 +370,13 @@ func (h *Handler) bundleGrant(
 
 func translatedDefinition(
 	ctx context.Context,
-	def *permission.ResourceDefinition,
-) *permission.ResourceDefinition {
+	def *permissionspec.ResourceDefinition,
+) *permissionspec.ResourceDefinition {
 	translated := *def
 	translated.DisplayName = i18n.T(ctx, def.DisplayName)
 	translated.Description = i18n.T(ctx, def.Description)
 	translated.Category = i18n.T(ctx, def.Category)
-	translated.Operations = make([]permission.OperationDefinition, len(def.Operations))
+	translated.Operations = make([]permissionspec.OperationDefinition, len(def.Operations))
 	for i, op := range def.Operations {
 		op.DisplayName = i18n.T(ctx, op.DisplayName)
 		op.Description = i18n.T(ctx, op.Description)

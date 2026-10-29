@@ -10,10 +10,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerleaveports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -39,18 +40,18 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.WorkerLeaveRepository
+	Repo         workerleaveports.WorkerLeaveRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
-	Realtime     agentports.RealtimeService `optional:"true"`
+	Realtime     realtimeports.RealtimeService `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.WorkerLeaveRepository
+	repo         workerleaveports.WorkerLeaveRepository
 	workerRepo   workerports.WorkerRepository
 	auditService auditports.AuditService
-	realtime     agentports.RealtimeService
+	realtime     realtimeports.RealtimeService
 }
 
 func New(p Params) *Service {
@@ -66,7 +67,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.WorkerLeaveRepository
+	Repo         workerleaveports.WorkerLeaveRepository
 	WorkerRepo   workerports.WorkerRepository
 	AuditService auditports.AuditService
 }
@@ -147,7 +148,7 @@ func (s *Service) publish(
 func (s *Service) GetControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*worker.LeaveControl, error) {
+) (*workerleave.LeaveControl, error) {
 	return s.repo.GetControl(ctx, tenantInfo)
 }
 
@@ -155,7 +156,7 @@ func (s *Service) GetControl(
 // is optional so a caller can change one without restating the rest.
 type UpdateControlRequest struct {
 	TenantInfo             pagination.TenantInfo
-	MeasurementMethod      *worker.LeaveMeasurementMethod
+	MeasurementMethod      *workerleave.LeaveMeasurementMethod
 	EntitlementWeeks       *decimal.Decimal
 	MilitaryCaregiverWeeks *decimal.Decimal
 	WorkweekHours          *decimal.Decimal
@@ -168,7 +169,7 @@ type UpdateControlRequest struct {
 func (s *Service) UpdateControl(
 	ctx context.Context,
 	req *UpdateControlRequest,
-) (*worker.LeaveControl, error) {
+) (*workerleave.LeaveControl, error) {
 	entity, err := s.repo.GetControl(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
@@ -203,7 +204,7 @@ func (s *Service) UpdateControl(
 	return updated, nil
 }
 
-func applyControlUpdate(entity *worker.LeaveControl, req *UpdateControlRequest) {
+func applyControlUpdate(entity *workerleave.LeaveControl, req *UpdateControlRequest) {
 	if req.MeasurementMethod != nil {
 		entity.MeasurementMethod = *req.MeasurementMethod
 	}
@@ -234,7 +235,7 @@ func (s *Service) Entitlement(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	asOf int64,
-) (worker.LeaveEntitlement, error) {
+) (workerleave.LeaveEntitlement, error) {
 	if asOf <= 0 {
 		asOf = timeutils.NowUnix()
 	}
@@ -245,34 +246,34 @@ func (s *Service) Entitlement(
 		IncludeProfile: true,
 	})
 	if err != nil {
-		return worker.LeaveEntitlement{}, err
+		return workerleave.LeaveEntitlement{}, err
 	}
 
 	control, err := s.repo.GetControl(ctx, tenantInfo)
 	if err != nil {
-		return worker.LeaveEntitlement{}, err
+		return workerleave.LeaveEntitlement{}, err
 	}
 
-	cases, err := s.repo.ListCases(ctx, &workerports.ListLeaveCasesRequest{
+	cases, err := s.repo.ListCases(ctx, &workerleaveports.ListLeaveCasesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.LeaveEntitlement{}, err
+		return workerleave.LeaveEntitlement{}, err
 	}
 
 	// The forward method needs the first day ever taken to know where the
 	// period starts, so the entries cannot be trimmed to a window that has not
 	// been worked out yet.
-	entries, err := s.repo.ListEntries(ctx, &workerports.ListLeaveEntriesRequest{
+	entries, err := s.repo.ListEntries(ctx, &workerleaveports.ListLeaveEntriesRequest{
 		TenantInfo: tenantInfo,
 		WorkerID:   workerID,
 	})
 	if err != nil {
-		return worker.LeaveEntitlement{}, err
+		return workerleave.LeaveEntitlement{}, err
 	}
 
-	in := worker.LeaveEntitlementInput{
+	in := workerleave.LeaveEntitlementInput{
 		Control: control,
 		Cases:   cases,
 		Entries: entries,
@@ -282,9 +283,9 @@ func (s *Service) Entitlement(
 		in.HireDate = wrk.Profile.HireDate
 	}
 
-	return worker.BuildLeaveEntitlement(in), nil
+	return workerleave.BuildLeaveEntitlement(in), nil
 }
 
-func caseTenant(entity *worker.WorkerLeaveCase) pagination.TenantInfo {
+func caseTenant(entity *workerleave.WorkerLeaveCase) pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 }

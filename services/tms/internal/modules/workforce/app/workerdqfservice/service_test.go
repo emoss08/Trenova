@@ -4,14 +4,17 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
-
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/workerportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,20 +29,20 @@ func ptrInt64(v int64) *int64 { return &v }
 // fakeDQFRepo holds rows so the follow-up and status behaviour can be
 // exercised for real rather than asserted against canned returns.
 type fakeDQFRepo struct {
-	verifications map[pulid.ID]*worker.WorkerEmploymentVerification
-	candidates    []workerports.DQFRetentionCandidate
-	lastRetention *workerports.ListDQFRetentionCandidatesRequest
+	verifications map[pulid.ID]*employment.WorkerEmploymentVerification
+	candidates    []workerdqfports.DQFRetentionCandidate
+	lastRetention *workerdqfports.ListDQFRetentionCandidatesRequest
 }
 
 func newFakeRepo() *fakeDQFRepo {
-	return &fakeDQFRepo{verifications: map[pulid.ID]*worker.WorkerEmploymentVerification{}}
+	return &fakeDQFRepo{verifications: map[pulid.ID]*employment.WorkerEmploymentVerification{}}
 }
 
 func (f *fakeDQFRepo) ListVerifications(
 	_ context.Context,
-	req *workerports.ListEmploymentVerificationsRequest,
-) ([]*worker.WorkerEmploymentVerification, error) {
-	out := make([]*worker.WorkerEmploymentVerification, 0, len(f.verifications))
+	req *workerdqfports.ListEmploymentVerificationsRequest,
+) ([]*employment.WorkerEmploymentVerification, error) {
+	out := make([]*employment.WorkerEmploymentVerification, 0, len(f.verifications))
 	for _, entity := range f.verifications {
 		if !req.WorkerID.IsNil() && entity.WorkerID != req.WorkerID {
 			continue
@@ -54,27 +57,27 @@ func (f *fakeDQFRepo) ListVerifications(
 
 func (f *fakeDQFRepo) ListVerificationsByWorkerIDs(
 	_ context.Context,
-	req *workerports.ListEmploymentVerificationsByWorkerIDsRequest,
-) (map[pulid.ID][]*worker.WorkerEmploymentVerification, error) {
+	req *workerdqfports.ListEmploymentVerificationsByWorkerIDsRequest,
+) (map[pulid.ID][]*employment.WorkerEmploymentVerification, error) {
 	wanted := make(map[pulid.ID]struct{}, len(req.WorkerIDs))
 	for _, id := range req.WorkerIDs {
 		wanted[id] = struct{}{}
 	}
-	matched := make([]*worker.WorkerEmploymentVerification, 0, len(f.verifications))
+	matched := make([]*employment.WorkerEmploymentVerification, 0, len(f.verifications))
 	for _, entity := range f.verifications {
 		if _, ok := wanted[entity.WorkerID]; ok {
 			matched = append(matched, entity)
 		}
 	}
-	return sliceutils.GroupBy(matched, func(v *worker.WorkerEmploymentVerification) pulid.ID {
+	return sliceutils.GroupBy(matched, func(v *employment.WorkerEmploymentVerification) pulid.ID {
 		return v.WorkerID
 	}), nil
 }
 
 func (f *fakeDQFRepo) GetVerificationByID(
 	_ context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
-) (*worker.WorkerEmploymentVerification, error) {
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
+) (*employment.WorkerEmploymentVerification, error) {
 	entity, ok := f.verifications[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("verification not found")
@@ -84,8 +87,8 @@ func (f *fakeDQFRepo) GetVerificationByID(
 
 func (f *fakeDQFRepo) CreateVerification(
 	_ context.Context,
-	entity *worker.WorkerEmploymentVerification,
-) (*worker.WorkerEmploymentVerification, error) {
+	entity *employment.WorkerEmploymentVerification,
+) (*employment.WorkerEmploymentVerification, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("wemv_")
 	}
@@ -95,15 +98,15 @@ func (f *fakeDQFRepo) CreateVerification(
 
 func (f *fakeDQFRepo) UpdateVerification(
 	_ context.Context,
-	entity *worker.WorkerEmploymentVerification,
-) (*worker.WorkerEmploymentVerification, error) {
+	entity *employment.WorkerEmploymentVerification,
+) (*employment.WorkerEmploymentVerification, error) {
 	f.verifications[entity.ID] = entity
 	return entity, nil
 }
 
 func (f *fakeDQFRepo) DeleteVerification(
 	_ context.Context,
-	req *workerports.GetEmploymentVerificationByIDRequest,
+	req *workerdqfports.GetEmploymentVerificationByIDRequest,
 ) error {
 	delete(f.verifications, req.ID)
 	return nil
@@ -111,21 +114,21 @@ func (f *fakeDQFRepo) DeleteVerification(
 
 func (f *fakeDQFRepo) ListRetentionCandidates(
 	_ context.Context,
-	req *workerports.ListDQFRetentionCandidatesRequest,
-) ([]workerports.DQFRetentionCandidate, error) {
+	req *workerdqfports.ListDQFRetentionCandidatesRequest,
+) ([]workerdqfports.DQFRetentionCandidate, error) {
 	f.lastRetention = req
 	return f.candidates, nil
 }
 
 type fakeCredentials struct {
-	summary *worker.WorkerCredentialSummary
+	summary *workercredential.WorkerCredentialSummary
 }
 
 func (f *fakeCredentials) Summary(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-) (*worker.WorkerCredentialSummary, error) {
+) (*workercredential.WorkerCredentialSummary, error) {
 	return f.summary, nil
 }
 
@@ -147,46 +150,46 @@ func (f *fakeDocuments) GetPacketSummary(
 }
 
 type fakeStanding struct {
-	standing worker.DrugAlcoholStanding
+	standing workerdot.DrugAlcoholStanding
 }
 
 func (f *fakeStanding) Standing(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	_ pulid.ID,
-) (worker.DrugAlcoholStanding, error) {
+) (workerdot.DrugAlcoholStanding, error) {
 	return f.standing, nil
 }
 
 type fakeRetention struct {
-	row *tenant.DataRetention
+	row *dataretention.DataRetention
 	err error
 }
 
 func (f *fakeRetention) List(
 	_ context.Context,
-) (*pagination.ListResult[*tenant.DataRetention], error) {
+) (*pagination.ListResult[*dataretention.DataRetention], error) {
 	return nil, nil
 }
 
 func (f *fakeRetention) Get(
 	_ context.Context,
 	_ tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return f.row, f.err
 }
 
 func (f *fakeRetention) Update(
 	_ context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	return entity, nil
 }
 
 func (f *fakeRetention) Upsert(
 	_ context.Context,
-	entity *tenant.DataRetention,
-) (*tenant.DataRetention, error) {
+	entity *dataretention.DataRetention,
+) (*dataretention.DataRetention, error) {
 	return entity, nil
 }
 
@@ -228,11 +231,11 @@ func newHarness(t *testing.T, profile *worker.WorkerProfile) *harness {
 			WorkerRepo:    workerRepo,
 			RetentionRepo: retention,
 			Credentials: &fakeCredentials{
-				summary: &worker.WorkerCredentialSummary{},
+				summary: &workercredential.WorkerCredentialSummary{},
 			},
 			Documents: documents,
 			DrugAlcohol: &fakeStanding{
-				standing: worker.DrugAlcoholStanding{
+				standing: workerdot.DrugAlcoholStanding{
 					Status:                worker.DrugAlcoholClear,
 					HasPreEmploymentTest:  true,
 					HasPreEmploymentQuery: true,
@@ -252,15 +255,15 @@ func employedProfile() *worker.WorkerProfile {
 	return &worker.WorkerProfile{HireDate: 1_700_000_000}
 }
 
-func (h *harness) settled(t *testing.T) *worker.WorkerEmploymentVerification {
+func (h *harness) settled(t *testing.T) *employment.WorkerEmploymentVerification {
 	t.Helper()
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID:     h.tenant.OrgID,
 		BusinessUnitID:     h.tenant.BuID,
 		WorkerID:           h.workerID,
 		EmployerName:       "Prior Carrier",
 		WasDOTRegulated:    true,
-		Status:             worker.VerificationReceived,
+		Status:             employment.VerificationReceived,
 		RequestedAt:        ptrInt64(1_700_000_000),
 		ResponseReceivedAt: ptrInt64(1_700_100_000),
 	}, h.userID)
@@ -301,7 +304,11 @@ func TestFile_RetentionFallsBackToTheRegulation(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NotNil(t, file.RetentionExpiresAt)
-	assert.Equal(t, terminated+worker.DefaultDQFRetentionDays*86400, *file.RetentionExpiresAt)
+	assert.Equal(
+		t,
+		terminated+workercompliance.DefaultDQFRetentionDays*86400,
+		*file.RetentionExpiresAt,
+	)
 }
 
 func TestFile_RetentionUsesTheOrganisationSetting(t *testing.T) {
@@ -311,7 +318,7 @@ func TestFile_RetentionUsesTheOrganisationSetting(t *testing.T) {
 		HireDate:        1_600_000_000,
 		TerminationDate: &terminated,
 	})
-	h.retention.row = &tenant.DataRetention{DriverQualificationRetentionPeriod: 1800}
+	h.retention.row = &dataretention.DataRetention{DriverQualificationRetentionPeriod: 1800}
 	h.settled(t)
 
 	file, err := h.svc.File(t.Context(), h.tenant, h.workerID)
@@ -325,7 +332,7 @@ func TestRecordVerification_Defaults(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
 
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
@@ -334,8 +341,8 @@ func TestRecordVerification_Defaults(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "Prior Carrier", created.EmployerName)
-	assert.Equal(t, worker.VerificationPending, created.Status)
-	assert.Equal(t, worker.VerificationByEmail, created.Method)
+	assert.Equal(t, employment.VerificationPending, created.Status)
+	assert.Equal(t, employment.VerificationByEmail, created.Method)
 	assert.Equal(t, h.userID, created.RequestedByID)
 }
 
@@ -345,7 +352,7 @@ func TestRecordVerification_ClearsDrugAlcoholForNonRegulatedEmployment(t *testin
 	t.Parallel()
 	h := newHarness(t, employedProfile())
 
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID:                h.tenant.OrgID,
 		BusinessUnitID:                h.tenant.BuID,
 		WorkerID:                      h.workerID,
@@ -365,7 +372,7 @@ func TestMarkRequested_StampsTheDate(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
 
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
@@ -376,7 +383,7 @@ func TestMarkRequested_StampsTheDate(t *testing.T) {
 	updated, err := h.svc.MarkRequested(t.Context(), h.tenant, created.ID, h.userID)
 	require.NoError(t, err)
 
-	assert.Equal(t, worker.VerificationRequested, updated.Status)
+	assert.Equal(t, employment.VerificationRequested, updated.Status)
 	require.NotNil(t, updated.RequestedAt)
 	assert.Positive(t, *updated.RequestedAt)
 }
@@ -387,12 +394,12 @@ func TestRecordFollowUp_CountsEachChase(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
 
-	created, err := h.svc.RecordVerification(t.Context(), &worker.WorkerEmploymentVerification{
+	created, err := h.svc.RecordVerification(t.Context(), &employment.WorkerEmploymentVerification{
 		OrganizationID: h.tenant.OrgID,
 		BusinessUnitID: h.tenant.BuID,
 		WorkerID:       h.workerID,
 		EmployerName:   "Prior Carrier",
-		Status:         worker.VerificationRequested,
+		Status:         employment.VerificationRequested,
 		RequestedAt:    ptrInt64(1_700_000_000),
 	}, h.userID)
 	require.NoError(t, err)
@@ -423,7 +430,7 @@ func TestRecordFollowUp_OnlyWhileAwaitingAResponse(t *testing.T) {
 func TestRetentionCandidates_UsesTheConfiguredWindow(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t, employedProfile())
-	h.retention.row = &tenant.DataRetention{DriverQualificationRetentionPeriod: 1800}
+	h.retention.row = &dataretention.DataRetention{DriverQualificationRetentionPeriod: 1800}
 
 	_, err := h.svc.RetentionCandidates(t.Context(), h.tenant, 0)
 	require.NoError(t, err)

@@ -3,12 +3,14 @@ package gqlext
 import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/protectedfield"
+	"github.com/emoss08/trenova/internal/modules/operations/app/detentionsimulation"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/shopspring/decimal"
 )
 
@@ -25,7 +27,7 @@ import (
 // graphQLOnly says why no REST response carries the type, when none does.
 type protectedType struct {
 	resource    permission.Resource
-	entity      func() permission.FieldWithholder
+	entity      func() protectedfield.Withholder
 	jsonNames   map[string]string
 	graphQLOnly string
 }
@@ -38,7 +40,7 @@ func protectedTypes() map[string]protectedType {
 	return map[string]protectedType{
 		"WorkerProfile": {
 			resource: permission.ResourceWorker,
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &worker.WorkerProfile{
 					DOB:            315532800,
 					LicenseNumber:  "D1234567",
@@ -49,13 +51,13 @@ func protectedTypes() map[string]protectedType {
 		},
 		"WorkerCredential": {
 			resource: permission.ResourceWorkerCredential,
-			entity: func() permission.FieldWithholder {
-				return &worker.WorkerCredential{Number: "CDL-445566"}
+			entity: func() protectedfield.Withholder {
+				return &workercredential.WorkerCredential{Number: "CDL-445566"}
 			},
 		},
 		"RateAgreement": {
 			resource: permission.ResourceRateAgreement,
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &rateagreement.RateAgreement{
 					MarginFloorPercent:  amount("12.5"),
 					MaxPayPercentOfSell: amount("85"),
@@ -64,13 +66,13 @@ func protectedTypes() map[string]protectedType {
 		},
 		"CostingControl": {
 			resource: permission.ResourceCostingControl,
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &costingcontrol.CostingControl{TargetMarginPercent: amount("15")}
 			},
 		},
 		"TenderOffer": {
 			resource: permission.ResourceTender,
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &tender.TenderOffer{CounterMargin: amount("8.25")}
 			},
 			jsonNames: map[string]string{"counterMarginPercent": "counterMargin"},
@@ -81,7 +83,7 @@ func protectedTypes() map[string]protectedType {
 				"shipment carries it",
 		},
 		"DetentionOccurrence": {
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &detention.DetentionOccurrence{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
@@ -89,7 +91,7 @@ func protectedTypes() map[string]protectedType {
 			},
 		},
 		"FacilityDetentionStat": {
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &detentionports.FacilityDetentionStat{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
@@ -97,7 +99,7 @@ func protectedTypes() map[string]protectedType {
 			},
 		},
 		"CustomerDetentionStat": {
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				return &detentionports.CustomerDetentionStat{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
@@ -105,25 +107,25 @@ func protectedTypes() map[string]protectedType {
 			},
 		},
 		"DetentionPreviewResult": {
-			entity: func() permission.FieldWithholder {
-				return &detentionservice.PreviewResult{
+			entity: func() protectedfield.Withholder {
+				return &detentionsimulation.PreviewResult{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
 				}
 			},
 		},
 		"DetentionBacktestBucket": {
-			entity: func() permission.FieldWithholder {
-				return &detentionservice.BacktestBucket{
+			entity: func() protectedfield.Withholder {
+				return &detentionsimulation.BacktestBucket{
 					DriverPayAmount: amount("75"),
 					NetMargin:       amount("150"),
 				}
 			},
 		},
 		"DetentionBacktestResult": {
-			entity: func() permission.FieldWithholder {
+			entity: func() protectedfield.Withholder {
 				stops := 2
-				return &detentionservice.BacktestResult{
+				return &detentionsimulation.BacktestResult{
 					ProposedDriverPay:   amount("75"),
 					ProposedNetMargin:   amount("150"),
 					NegativeMarginStops: &stops,

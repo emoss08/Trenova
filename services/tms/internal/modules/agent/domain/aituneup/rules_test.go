@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,7 @@ const (
 	day = int64(24 * 60 * 60)
 )
 
-func provider(id string, priority int, tasks ...aiprovider.Task) *aiprovider.Provider {
+func provider(id string, priority int, tasks ...aitask.Task) *aiprovider.Provider {
 	return &aiprovider.Provider{
 		ID:       pulid.ID(id),
 		Name:     id,
@@ -67,7 +68,9 @@ func TestRaiseToolTierOnlyWhileEarnedAutonomyIsOff(t *testing.T) {
 		Since:             now - 4*7*day,
 	}}
 
-	off := aituneup.Suggest(&aituneup.Inputs{Now: now, Agents: []*agentdefinition.Definition{dispatch}, Ready: ready})
+	off := aituneup.Suggest(
+		&aituneup.Inputs{Now: now, Agents: []*agentdefinition.Definition{dispatch}, Ready: ready},
+	)
 	raised := ofKind(off, aituneup.KindRaiseToolTier)
 	require.Len(t, raised, 1)
 	assert.Equal(t, "assign_driver", raised[0].ToolName)
@@ -80,7 +83,11 @@ func TestRaiseToolTierOnlyWhileEarnedAutonomyIsOff(t *testing.T) {
 	on := aituneup.Suggest(&aituneup.Inputs{
 		Now: now, EarnedAutonomy: true, Agents: []*agentdefinition.Definition{dispatch}, Ready: ready,
 	})
-	assert.Empty(t, ofKind(on, aituneup.KindRaiseToolTier), "earned autonomy promotes it without a suggestion")
+	assert.Empty(
+		t,
+		ofKind(on, aituneup.KindRaiseToolTier),
+		"earned autonomy promotes it without a suggestion",
+	)
 }
 
 func TestRaiseToolTierSkipsAnAgentThatIsOff(t *testing.T) {
@@ -91,7 +98,14 @@ func TestRaiseToolTierSkipsAnAgentThatIsOff(t *testing.T) {
 	got := aituneup.Suggest(&aituneup.Inputs{
 		Now:    now,
 		Agents: []*agentdefinition.Definition{dispatch},
-		Ready:  []aituneup.ReadyTool{{AgentDefinitionID: dispatch.ID, ToolName: "assign_driver", Streak: 12, Since: now - day}},
+		Ready: []aituneup.ReadyTool{
+			{
+				AgentDefinitionID: dispatch.ID,
+				ToolName:          "assign_driver",
+				Streak:            12,
+				Since:             now - day,
+			},
+		},
 	})
 	assert.Empty(t, ofKind(got, aituneup.KindRaiseToolTier))
 }
@@ -99,15 +113,27 @@ func TestRaiseToolTierSkipsAnAgentThatIsOff(t *testing.T) {
 func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 	t.Parallel()
 
-	vllm := provider("aip_vllm", 10, aiprovider.TaskAssistantChat, aiprovider.TaskGeneral, aiprovider.TaskDailyBriefing)
-	local := provider("aip_local", 20, aiprovider.TaskAssistantChat, aiprovider.TaskGeneral, aiprovider.TaskDailyBriefing)
+	vllm := provider(
+		"aip_vllm",
+		10,
+		aitask.TaskAssistantChat,
+		aitask.TaskGeneral,
+		aitask.TaskDailyBriefing,
+	)
+	local := provider(
+		"aip_local",
+		20,
+		aitask.TaskAssistantChat,
+		aitask.TaskGeneral,
+		aitask.TaskDailyBriefing,
+	)
 	usage := []aituneup.ProviderTaskUsage{
-		{ProviderID: vllm.ID, Task: aiprovider.TaskAssistantChat, Calls: 100, Failed: 24},
-		{ProviderID: local.ID, Task: aiprovider.TaskAssistantChat, Calls: 60, Failed: 0, Rescued: 24},
-		{ProviderID: vllm.ID, Task: aiprovider.TaskGeneral, Calls: 50, Failed: 10},
-		{ProviderID: local.ID, Task: aiprovider.TaskGeneral, Calls: 40, Failed: 1, Rescued: 10},
-		{ProviderID: vllm.ID, Task: aiprovider.TaskDailyBriefing, Calls: 100, Failed: 9},
-		{ProviderID: local.ID, Task: aiprovider.TaskDailyBriefing, Calls: 10, Rescued: 9},
+		{ProviderID: vllm.ID, Task: aitask.TaskAssistantChat, Calls: 100, Failed: 24},
+		{ProviderID: local.ID, Task: aitask.TaskAssistantChat, Calls: 60, Failed: 0, Rescued: 24},
+		{ProviderID: vllm.ID, Task: aitask.TaskGeneral, Calls: 50, Failed: 10},
+		{ProviderID: local.ID, Task: aitask.TaskGeneral, Calls: 40, Failed: 1, Rescued: 10},
+		{ProviderID: vllm.ID, Task: aitask.TaskDailyBriefing, Calls: 100, Failed: 9},
+		{ProviderID: local.ID, Task: aitask.TaskDailyBriefing, Calls: 10, Rescued: 9},
 	}
 
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
@@ -117,8 +143,12 @@ func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 	require.Len(t, got, 1, "one suggestion per pair, however many tasks it covers")
 	assert.Equal(t, local.ID, got[0].ProviderID)
 	assert.Equal(t, vllm.ID, got[0].OtherProviderID)
-	assert.Equal(t, []aiprovider.Task{aiprovider.TaskAssistantChat, aiprovider.TaskGeneral}, got[0].Evidence.Tasks,
-		"daily briefing failed 9 times, under the floor of 10")
+	assert.Equal(
+		t,
+		[]aitask.Task{aitask.TaskAssistantChat, aitask.TaskGeneral},
+		got[0].Evidence.Tasks,
+		"daily briefing failed 9 times, under the floor of 10",
+	)
 	assert.Equal(t, 34, got[0].Evidence.Failed)
 	assert.Equal(t, 34, got[0].Evidence.Rescued)
 }
@@ -126,14 +156,20 @@ func TestReorderWhenTheFirstProviderFailsAndTheNextCatchesIt(t *testing.T) {
 func TestReorderNeedsARescuerThatDoesNotFailItself(t *testing.T) {
 	t.Parallel()
 
-	first := provider("aip_a", 10, aiprovider.TaskAssistantChat)
-	second := provider("aip_b", 20, aiprovider.TaskAssistantChat)
+	first := provider("aip_a", 10, aitask.TaskAssistantChat)
+	second := provider("aip_b", 20, aitask.TaskAssistantChat)
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
 		Now:     now,
 		Enabled: []*aiprovider.Provider{first, second},
 		Usage: []aituneup.ProviderTaskUsage{
-			{ProviderID: first.ID, Task: aiprovider.TaskAssistantChat, Calls: 40, Failed: 20},
-			{ProviderID: second.ID, Task: aiprovider.TaskAssistantChat, Calls: 40, Failed: 8, Rescued: 20},
+			{ProviderID: first.ID, Task: aitask.TaskAssistantChat, Calls: 40, Failed: 20},
+			{
+				ProviderID: second.ID,
+				Task:       aitask.TaskAssistantChat,
+				Calls:      40,
+				Failed:     8,
+				Rescued:    20,
+			},
 		},
 	}), aituneup.KindReorderProviders)
 	assert.Empty(t, got)
@@ -171,22 +207,27 @@ func TestLeaveShadowAtTheMatchRateAndVolume(t *testing.T) {
 func TestAssignTaskToAProviderThatCanTakeIt(t *testing.T) {
 	t.Parallel()
 
-	local := provider("aip_local", 10, aiprovider.TaskAssistantChat)
-	trusted := provider("aip_trusted", 20, aiprovider.TaskGeneral)
+	local := provider("aip_local", 10, aitask.TaskAssistantChat)
+	trusted := provider("aip_trusted", 20, aitask.TaskGeneral)
 	trusted.Trusted = true
 
 	got := ofKind(aituneup.Suggest(&aituneup.Inputs{
 		Now: now, Enabled: []*aiprovider.Provider{local, trusted},
 	}), aituneup.KindAssignTask)
 
-	byTask := map[aiprovider.Task]pulid.ID{}
+	byTask := map[aitask.Task]pulid.ID{}
 	for _, tuneUp := range got {
 		byTask[tuneUp.Task] = tuneUp.ProviderID
 	}
-	assert.Equal(t, local.ID, byTask[aiprovider.TaskDocumentExtraction], "first in line takes it")
-	assert.Equal(t, trusted.ID, byTask[aiprovider.TaskBillingDiagnosis], "only a trusted provider may diagnose billing")
-	assert.NotContains(t, byTask, aiprovider.TaskAssistantChat, "already covered")
-	assert.NotContains(t, byTask, aiprovider.TaskEmbedding, "neither protocol embeds")
+	assert.Equal(t, local.ID, byTask[aitask.TaskDocumentExtraction], "first in line takes it")
+	assert.Equal(
+		t,
+		trusted.ID,
+		byTask[aitask.TaskBillingDiagnosis],
+		"only a trusted provider may diagnose billing",
+	)
+	assert.NotContains(t, byTask, aitask.TaskAssistantChat, "already covered")
+	assert.NotContains(t, byTask, aitask.TaskEmbedding, "neither protocol embeds")
 	assert.Equal(t, "model-aip_local", got[0].Evidence.Model)
 }
 

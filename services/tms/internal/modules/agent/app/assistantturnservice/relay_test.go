@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationturn"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantturnports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -17,20 +19,20 @@ import (
 // stubTurns is the turn's record. Status is what a re-read returns, which is
 // how the relay learns a turn ended without saying so.
 type stubTurns struct {
-	turn *conversation.AssistantTurn
+	turn *conversationturn.AssistantTurn
 	err  error
 	gets int
 }
 
 func (s *stubTurns) Start(
-	context.Context, *conversation.AssistantTurn,
-) (*conversation.AssistantTurn, error) {
+	context.Context, *conversationturn.AssistantTurn,
+) (*conversationturn.AssistantTurn, error) {
 	return s.turn, nil
 }
 
 func (s *stubTurns) GetByID(
-	context.Context, agentports.GetAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+	context.Context, *assistantturnports.GetAssistantTurnRequest,
+) (*conversationturn.AssistantTurn, error) {
 	s.gets++
 	if s.err != nil {
 		return nil, s.err
@@ -40,18 +42,21 @@ func (s *stubTurns) GetByID(
 }
 
 func (s *stubTurns) Active(
-	context.Context, agentports.ActiveAssistantTurnRequest,
-) (*conversation.AssistantTurn, error) {
+	context.Context, *assistantturnports.ActiveAssistantTurnRequest,
+) (*conversationturn.AssistantTurn, error) {
 	return nil, nil
 }
 
 func (s *stubTurns) ListLive(
-	context.Context, agentports.ListLiveAssistantTurnsRequest,
-) ([]*agentports.LiveAssistantTurn, error) {
+	context.Context, *assistantturnports.ListLiveAssistantTurnsRequest,
+) ([]*assistantturnports.LiveAssistantTurn, error) {
 	return nil, nil
 }
 
-func (s *stubTurns) Complete(context.Context, agentports.CompleteAssistantTurnRequest) error {
+func (s *stubTurns) Complete(
+	context.Context,
+	*assistantturnports.CompleteAssistantTurnRequest,
+) error {
 	return nil
 }
 
@@ -64,16 +69,16 @@ func (s *stubTurns) MarkWorkflow(
 // stubReader stands in for the turn's workflow stream. After the frames it
 // returns nil, which is what a stream does when the workflow has closed.
 type stubReader struct {
-	frames []agentports.TurnStreamFrame
+	frames []assistantstreamports.TurnStreamFrame
 	err    error
 	reads  int
-	ref    agentports.TurnStreamRef
+	ref    assistantstreamports.TurnStreamRef
 	cursor string
 }
 
 func (s *stubReader) Read(
 	_ context.Context,
-	req agentports.ReadTurnStreamRequest,
+	req *assistantstreamports.ReadTurnStreamRequest,
 ) error {
 	s.reads++
 	s.ref = req.Ref
@@ -94,8 +99,8 @@ func newRelay(turns *stubTurns, reader *stubReader) *Service {
 	return &Service{l: zap.NewNop(), turns: turns, reader: reader}
 }
 
-func runningTurn() *conversation.AssistantTurn {
-	return &conversation.AssistantTurn{
+func runningTurn() *conversationturn.AssistantTurn {
+	return &conversationturn.AssistantTurn{
 		ID:             pulid.MustNew("atrn_"),
 		ThreadID:       pulid.MustNew("athr_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -108,15 +113,15 @@ func runningTurn() *conversation.AssistantTurn {
 func collect(
 	t *testing.T,
 	svc *Service,
-	turn *conversation.AssistantTurn,
-) []agentports.TurnStreamFrame {
+	turn *conversationturn.AssistantTurn,
+) []assistantstreamports.TurnStreamFrame {
 	t.Helper()
 
-	seen := make([]agentports.TurnStreamFrame, 0, 4)
+	seen := make([]assistantstreamports.TurnStreamFrame, 0, 4)
 	err := svc.Relay(
 		t.Context(),
 		RelayRequest{Turn: turn},
-		func(f agentports.TurnStreamFrame) error {
+		func(f assistantstreamports.TurnStreamFrame) error {
 			seen = append(seen, f)
 
 			return nil
@@ -132,9 +137,13 @@ func TestRelay_ForwardsTheTurnsOwnEnding(t *testing.T) {
 
 	turn := runningTurn()
 	reader := &stubReader{
-		frames: []agentports.TurnStreamFrame{
-			{ID: "0", Event: agentports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
-			{ID: "1", Event: agentports.AssistantEventDone, Data: []byte(`{}`)},
+		frames: []assistantstreamports.TurnStreamFrame{
+			{
+				ID:    "0",
+				Event: assistantstreamports.AssistantEventDelta,
+				Data:  []byte(`{"text":"hi"}`),
+			},
+			{ID: "1", Event: assistantstreamports.AssistantEventDone, Data: []byte(`{}`)},
 		},
 	}
 	svc := newRelay(&stubTurns{turn: turn}, reader)
@@ -157,21 +166,25 @@ func TestRelay_ClosesAReaderWhoseTurnClosedBeforeTheyCaughtUp(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	record := &conversation.AssistantTurn{
+	record := &conversationturn.AssistantTurn{
 		ID:       turn.ID,
 		ThreadID: turn.ThreadID,
 		Status:   conversation.AssistantTurnStatusCompleted,
 	}
 	svc := newRelay(&stubTurns{turn: record}, &stubReader{
-		frames: []agentports.TurnStreamFrame{
-			{ID: "0", Event: agentports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
+		frames: []assistantstreamports.TurnStreamFrame{
+			{
+				ID:    "0",
+				Event: assistantstreamports.AssistantEventDelta,
+				Data:  []byte(`{"text":"hi"}`),
+			},
 		},
 	})
 
 	seen := collect(t, svc, turn)
 
 	require.Len(t, seen, 2)
-	assert.Equal(t, agentports.AssistantEventDone, seen[1].Event)
+	assert.Equal(t, assistantstreamports.AssistantEventDone, seen[1].Event)
 	assert.Contains(t, string(seen[1].Data), `"replay":true`,
 		"the client is told this ending was reconstructed, so it refetches the thread")
 	assert.Empty(t, seen[1].ID, "an invented frame has no position to resume from")
@@ -181,13 +194,13 @@ func TestRelay_ResumesFromTheReadersCursor(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	reader := &stubReader{frames: []agentports.TurnStreamFrame{
-		{ID: "8", Event: agentports.AssistantEventDone, Data: []byte(`{}`)},
+	reader := &stubReader{frames: []assistantstreamports.TurnStreamFrame{
+		{ID: "8", Event: assistantstreamports.AssistantEventDone, Data: []byte(`{}`)},
 	}}
 	svc := newRelay(&stubTurns{turn: turn}, reader)
 
 	err := svc.Relay(t.Context(), RelayRequest{Turn: turn, Cursor: "7"},
-		func(agentports.TurnStreamFrame) error { return nil })
+		func(assistantstreamports.TurnStreamFrame) error { return nil })
 	require.NoError(t, err)
 
 	assert.Equal(t, "7", reader.cursor)
@@ -201,7 +214,7 @@ func TestRelay_IsQuietWhenTheReaderLeaves(t *testing.T) {
 	svc := newRelay(&stubTurns{turn: turn}, &stubReader{err: context.Canceled})
 
 	err := svc.Relay(t.Context(), RelayRequest{Turn: turn},
-		func(agentports.TurnStreamFrame) error { return nil })
+		func(assistantstreamports.TurnStreamFrame) error { return nil })
 
 	assert.NoError(t, err)
 }
@@ -213,7 +226,7 @@ func TestRelay_ReportsAStreamThatCouldNotBeRead(t *testing.T) {
 	svc := newRelay(&stubTurns{turn: turn}, &stubReader{err: errors.New("temporal is down")})
 
 	err := svc.Relay(t.Context(), RelayRequest{Turn: turn},
-		func(agentports.TurnStreamFrame) error { return nil })
+		func(assistantstreamports.TurnStreamFrame) error { return nil })
 
 	assert.Error(t, err)
 }
@@ -230,7 +243,7 @@ func TestRelay_SaysAFailedTurnDidNotFinish(t *testing.T) {
 	seen := collect(t, svc, turn)
 
 	require.Len(t, seen, 1)
-	assert.Equal(t, agentports.AssistantEventError, seen[0].Event)
+	assert.Equal(t, assistantstreamports.AssistantEventError, seen[0].Event)
 }
 
 // A turn already over before anybody attached needs no stream at all.
@@ -256,16 +269,16 @@ func TestRelay_FollowsATurnWhoseStartWasNotRecorded(t *testing.T) {
 
 	turn := runningTurn()
 	turn.WorkflowID = ""
-	reader := &stubReader{frames: []agentports.TurnStreamFrame{
-		{ID: "0", Event: agentports.AssistantEventDelta},
-		{ID: "1", Event: agentports.AssistantEventDone},
+	reader := &stubReader{frames: []assistantstreamports.TurnStreamFrame{
+		{ID: "0", Event: assistantstreamports.AssistantEventDelta},
+		{ID: "1", Event: assistantstreamports.AssistantEventDone},
 	}}
 	svc := newRelay(&stubTurns{turn: turn}, reader)
 
 	seen := collect(t, svc, turn)
 
 	assert.Equal(t, 1, reader.reads)
-	assert.Equal(t, conversation.AssistantTurnWorkflowID(turn.ID), reader.ref.WorkflowID)
+	assert.Equal(t, conversationturn.AssistantTurnWorkflowID(turn.ID), reader.ref.WorkflowID)
 	require.Len(t, seen, 2)
 }
 
@@ -287,7 +300,7 @@ func TestRelay_ClosesWhenTheStreamIsGoneButTheRecordSaysItEnded(t *testing.T) {
 
 func (s *stubTurns) RecordFingerprint(
 	context.Context,
-	agentports.RecordAssistantTurnFingerprintRequest,
+	assistantturnports.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
 }

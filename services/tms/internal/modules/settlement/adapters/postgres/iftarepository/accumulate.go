@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -38,7 +38,7 @@ type accumulationSource struct {
 func inMiles(distance keel.Float64Col, units keel.StringCol) keel.Float64Expr {
 	return keel.CaseFloat64().
 		When(
-			units.Eq(shipment.JurisdictionDistanceUnitsKilometers),
+			units.Eq(shipmentvocab.JurisdictionDistanceUnitsKilometers),
 			distance.Div(keel.Float64(kilometersPerMile)),
 		).
 		Else(distance)
@@ -62,7 +62,7 @@ func newAccumulationSource(req *iftaports.AccumulateMilesRequest) accumulationSo
 		[]string{"id", "loaded", "distance", "completed_at"},
 		sm.LeftJoin(stp, stp.ShipmentMoveID.EqCol(sm.ID)).
 			Pick(sm.ID, sm.Loaded, inMiles(sm.Distance, sm.DistanceUnits), completedAt).
-			Where(sm.Status.Eq(shipment.MoveStatusCompleted)).
+			Where(sm.Status.Eq(shipmentvocab.MoveStatusCompleted)).
 			Group(sm.ID, sm.Loaded, sm.Distance, sm.DistanceUnits, sm.UpdatedAt).
 			Having(completedAt.Gte(req.Start), completedAt.Lt(req.End)),
 	)

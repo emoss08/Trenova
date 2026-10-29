@@ -5,14 +5,24 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -34,52 +44,53 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	DecisionRepo agentports.AgentDecisionRepository
-	ProposalRepo agentports.AgentProposalRepository
-	RunRepo      agentports.AgentRunRepository
+	DecisionRepo agentdecisionports.AgentDecisionRepository
+	ProposalRepo agentproposalports.AgentProposalRepository
+	RunRepo      agentruntimeports.AgentRunRepository
 	// Conversations says whose conversation raised a proposal, for a person
 	// deciding their own.
-	Conversations agentports.ConversationRepository `optional:"true"`
+	Conversations conversationports.ConversationRepository `optional:"true"`
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
 	Executor      *proposalexecutor.Service
 	AuditService  auditports.AuditService
-	Trust         agentports.AgentTrustService
-	Memories      agentports.AgentMemoryService     `optional:"true"`
-	Activity      agentports.AgentActivityPublisher `optional:"true"`
+	Trust         agenttrustports.AgentTrustService
+	Memories      agentmemoryports.AgentMemoryService       `optional:"true"`
+	Activity      agentactivityports.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided proposal off the feed.
 	Watchtower watchtowerports.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised a proposal report what came
 	// of deciding it.
-	FollowUps agentports.DecisionFollowUps `optional:"true"`
+	FollowUps assistantports.DecisionFollowUps `optional:"true"`
 	// Previews says what an approval would do, as the decider sees it, so
 	// the decision records what was approved and refuses what moved on.
-	Previews agentports.ProposalPreviewService `optional:"true"`
-	Metrics  *metrics.Registry                 `optional:"true"`
+	Previews agentruntimeports.ProposalPreviewService `optional:"true"`
+	Metrics  *metrics.Registry                        `optional:"true"`
 }
 
 type Service struct {
 	l            *zap.Logger
-	decisionRepo agentports.AgentDecisionRepository
-	proposalRepo agentports.AgentProposalRepository
-	runRepo      agentports.AgentRunRepository
-	threads      agentports.ConversationRepository
+	decisionRepo agentdecisionports.AgentDecisionRepository
+	proposalRepo agentproposalports.AgentProposalRepository
+	runRepo      agentruntimeports.AgentRunRepository
+	threads      conversationports.ConversationRepository
 	shadow       *agentshadow.Resolver
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
 	executor     *proposalexecutor.Service
 	audit        auditports.AuditService
-	trust        agentports.AgentTrustService
-	memories     agentports.AgentMemoryService
-	activity     agentports.AgentActivityPublisher
+	trust        agenttrustports.AgentTrustService
+	memories     agentmemoryports.AgentMemoryService
+	activity     agentactivityports.AgentActivityPublisher
 	watchtower   watchtowerports.WatchtowerProjector
-	followUps    agentports.DecisionFollowUps
-	previews     agentports.ProposalPreviewService
-	metrics      *metrics.ProposalPreview
+	followUps    assistantports.DecisionFollowUps
+	previews     agentruntimeports.ProposalPreviewService
+	metrics      *aimetrics.ProposalPreview
 }
 
-func New(p Params) agentports.AgentDecisionService {
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
+func New(p Params) agentdecisionports.AgentDecisionService {
 	return &Service{
 		l:            p.Logger.Named("service.agentdecision"),
 		decisionRepo: p.DecisionRepo,
@@ -101,7 +112,7 @@ func New(p Params) agentports.AgentDecisionService {
 	}
 }
 
-func previewMetrics(registry *metrics.Registry) *metrics.ProposalPreview {
+func previewMetrics(registry *metrics.Registry) *aimetrics.ProposalPreview {
 	if registry == nil {
 		return nil
 	}
@@ -111,9 +122,9 @@ func previewMetrics(registry *metrics.Registry) *metrics.ProposalPreview {
 
 func (s *Service) DecideOwn(
 	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	if err := s.AssertOwnProposal(ctx, req.ProposalID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
@@ -122,7 +133,11 @@ func (s *Service) DecideOwn(
 	// window; nothing it approved runs until the window closes. One refused
 	// because its record moved on is refused at once, and says so.
 	if s.Defers(req.Decision) {
-		results, err := s.ApproveDeferred(ctx, []*agentports.DecideAgentProposalRequest{req}, actor)
+		results, err := s.ApproveDeferred(
+			ctx,
+			[]*agentdecisionports.DecideAgentProposalRequest{req},
+			actor,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +145,7 @@ func (s *Service) DecideOwn(
 			return nil, results[0].Err
 		}
 
-		return &agentports.DecisionOutcome{
+		return &agentdecisionports.DecisionOutcome{
 			Decision:       results[0].Decision,
 			ExecutionError: results[0].ExecutionError,
 		}, nil
@@ -155,7 +170,7 @@ func (s *Service) AssertOwnProposal(
 		return notYours
 	}
 
-	proposal, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	proposal, err := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         proposalID,
 		TenantInfo: &tenant,
 	})
@@ -163,7 +178,7 @@ func (s *Service) AssertOwnProposal(
 		return err
 	}
 
-	run, err := s.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
 		TenantInfo: &tenant,
 	})
@@ -178,7 +193,7 @@ func (s *Service) AssertOwnProposal(
 		return notYours
 	}
 
-	if _, err = s.threads.GetThread(ctx, agentports.GetThreadRequest{
+	if _, err = s.threads.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
 		TenantInfo: tenant,
@@ -195,9 +210,9 @@ func (s *Service) AssertOwnProposal(
 
 func (s *Service) DecideWithOutcome(
 	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DecisionOutcome, error) {
+) (*agentdecisionports.DecisionOutcome, error) {
 	ctx, rec, span, err := s.record(ctx, req, actor, nil)
 	if span != nil {
 		defer span.End()
@@ -213,10 +228,10 @@ func (s *Service) DecideWithOutcome(
 // Pending, before anything it decided has run.
 type recorded struct {
 	proposal *agent.AgentProposal
-	decision *agent.AgentDecision
+	decision *agentdecision.AgentDecision
 	// req is the request as settled: an approval with nothing changed is
 	// an approval as proposed.
-	req     *agentports.DecideAgentProposalRequest
+	req     *agentdecisionports.DecideAgentProposalRequest
 	refusal error
 }
 
@@ -226,7 +241,7 @@ type recorded struct {
 // workflow commits it; nothing it approved runs until then.
 func (s *Service) record(
 	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
 	window *undoWindow,
 ) (context.Context, *recorded, trace.Span, error) {
@@ -245,7 +260,7 @@ func (s *Service) record(
 		)
 	}
 
-	proposal, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	proposal, err := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         req.ProposalID,
 		TenantInfo: &req.TenantInfo,
 	})
@@ -300,7 +315,7 @@ func (s *Service) record(
 		aitrace.MarkFailed(span, previewRefusalStale)
 	}
 
-	decision := &agent.AgentDecision{
+	decision := &agentdecision.AgentDecision{
 		OrganizationID:       req.TenantInfo.OrgID,
 		BusinessUnitID:       req.TenantInfo.BuID,
 		ProposalID:           &proposal.ID,
@@ -308,7 +323,7 @@ func (s *Service) record(
 		Decision:             req.Decision,
 		Modifications:        req.Modifications,
 		ReasonCode:           reasonCodeFor(req.Decision, req.ReasonCode),
-		Note:                 agent.NormalizeDecisionNote(req.Note),
+		Note:                 agentdecision.NormalizeDecisionNote(req.Note),
 		Preview:              shown.preview,
 		PreviewDigest:        shown.digest,
 		PreviewReviewed:      shown.reviewed,
@@ -340,12 +355,15 @@ func (s *Service) record(
 	// snapshot; two decisions racing each other both pass it, and without this
 	// guard both would execute the tool. The loser now fails on the update
 	// instead, with a conflict rather than a second write.
-	if _, err = s.proposalRepo.UpdateStatus(ctx, agentports.UpdateAgentProposalStatusRequest{
-		ID:         proposal.ID,
-		Status:     status,
-		FromStatus: agent.ProposalStatusPending,
-		TenantInfo: req.TenantInfo,
-	}); err != nil {
+	if _, err = s.proposalRepo.UpdateStatus(
+		ctx,
+		&agentproposalports.UpdateAgentProposalStatusRequest{
+			ID:         proposal.ID,
+			Status:     status,
+			FromStatus: agent.ProposalStatusPending,
+			TenantInfo: req.TenantInfo,
+		},
+	); err != nil {
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
 		return ctx, nil, span, err
@@ -366,7 +384,7 @@ func (s *Service) carryOut(
 	ctx context.Context,
 	rec *recorded,
 	actor *permissionports.RequestActor,
-) *agentports.DecisionOutcome {
+) *agentdecisionports.DecisionOutcome {
 	proposal, created, req := rec.proposal, rec.decision, rec.req
 
 	s.clearFromWatchtower(ctx, proposal, req.TenantInfo)
@@ -409,23 +427,23 @@ func (s *Service) carryOut(
 		s.l.Error("failed to log agent decision audit", zap.Error(err))
 	}
 
-	action := agentports.ActivityUpdated
+	action := agentactivityports.ActivityUpdated
 	if created.CommitsAt != nil {
-		action = agentports.ActivityCommitted
+		action = agentactivityports.ActivityCommitted
 	}
 	s.announce(ctx, proposal, req.TenantInfo, auditActor, action)
 
 	// Last, once the change has run or failed: the report is of the outcome,
 	// not of the click. A plan's steps are reported once, by the plan.
 	if !req.WithinPlan && s.followUps != nil {
-		s.followUps.FollowUp(ctx, agentports.DecisionFollowUpRequest{
+		s.followUps.FollowUp(ctx, &assistantports.DecisionFollowUpRequest{
 			TenantInfo: req.TenantInfo,
 			RunID:      proposal.RunID,
 			ProposalID: proposal.ID,
 		})
 	}
 
-	return &agentports.DecisionOutcome{
+	return &agentdecisionports.DecisionOutcome{
 		Decision:              created,
 		ExecutionError:        execErr,
 		ExecutedTargetVersion: executed,
@@ -442,17 +460,17 @@ func (s *Service) carryOut(
 func (s *Service) settleModifications(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	req *agentports.DecideAgentProposalRequest,
+	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agentports.DecideAgentProposalRequest, error) {
-	if req.Decision != agent.DecisionModified {
+) (*agentdecisionports.DecideAgentProposalRequest, error) {
+	if req.Decision != agentdecision.DecisionModified {
 		return req, nil
 	}
 
 	settled := *req
 	settled.Modifications = toolschema.Changed(proposal.ToolParams, req.Modifications)
 	if len(settled.Modifications) == 0 {
-		settled.Decision = agent.DecisionAccepted
+		settled.Decision = agentdecision.DecisionAccepted
 		settled.Modifications = nil
 
 		return &settled, nil
@@ -476,8 +494,8 @@ func (s *Service) settleModifications(
 // plan service calls it once after deciding every step.
 func (s *Service) SignalRun(
 	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
-	decision *agent.AgentDecision,
+	req *agentdecisionports.DecideAgentProposalRequest,
+	decision *agentdecision.AgentDecision,
 	runID pulid.ID,
 ) error {
 	return s.signalWorkflow(ctx, runID, req, decision)
@@ -545,7 +563,8 @@ func (s *Service) executeIfApproved(
 	actor *permissionports.RequestActor,
 ) (*int64, error) {
 	proposal, req := rec.proposal, rec.req
-	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+	if req.Decision != agentdecision.DecisionAccepted &&
+		req.Decision != agentdecision.DecisionModified {
 		return nil, nil //nolint:nilnil // a rejection runs nothing and leaves no version
 	}
 	if rec.refusal != nil {
@@ -579,12 +598,15 @@ func (s *Service) recordRefusal(
 	tenant pagination.TenantInfo,
 	refusal error,
 ) {
-	if _, err := s.proposalRepo.RecordExecution(ctx, agentports.RecordAgentProposalExecutionRequest{
-		ID:             proposal.ID,
-		Status:         agent.ProposalStatusExecutionFailed,
-		ExecutionError: refusal.Error(),
-		TenantInfo:     tenant,
-	}); err != nil {
+	if _, err := s.proposalRepo.RecordExecution(
+		ctx,
+		&agentproposalports.RecordAgentProposalExecutionRequest{
+			ID:             proposal.ID,
+			Status:         agent.ProposalStatusExecutionFailed,
+			ExecutionError: refusal.Error(),
+			TenantInfo:     tenant,
+		},
+	); err != nil {
 		s.l.Error("an approval refused over a changed record could not be recorded",
 			zap.String("proposal", proposal.ID.String()),
 			zap.Error(err),
@@ -605,10 +627,10 @@ func decisionAuditComment(rec *recorded) string {
 func (s *Service) recordTrust(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 	execErr error,
 ) {
-	if s.trust == nil || errors.Is(execErr, agent.ErrTargetChanged) {
+	if s.trust == nil || errors.Is(execErr, agentplan.ErrTargetChanged) {
 		return
 	}
 
@@ -630,7 +652,7 @@ func (s *Service) recordTrust(
 func (s *Service) recordCorrection(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	decision *agent.AgentDecision,
+	decision *agentdecision.AgentDecision,
 ) {
 	if s.memories == nil {
 		return
@@ -648,10 +670,10 @@ func (s *Service) recordCorrection(
 func (s *Service) signalWorkflow(
 	ctx context.Context,
 	runID pulid.ID,
-	req *agentports.DecideAgentProposalRequest,
-	decision *agent.AgentDecision,
+	req *agentdecisionports.DecideAgentProposalRequest,
+	decision *agentdecision.AgentDecision,
 ) error {
-	run, err := s.runRepo.GetByID(ctx, agentports.GetAgentRunByIDRequest{
+	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
 		ID:         runID,
 		TenantInfo: &req.TenantInfo,
 	})
@@ -681,28 +703,28 @@ func (s *Service) signalWorkflow(
 // chat card asks for a click, not a reason, and a decision refused for the
 // lack of a reason nobody was asked for is a button that does nothing. A
 // filled-in code is a code, not a reason: memory ignores it as such.
-func reasonCodeFor(decision agent.DecisionType, reason string) string {
+func reasonCodeFor(decision agentdecision.DecisionType, reason string) string {
 	if trimmed := strings.TrimSpace(reason); trimmed != "" {
 		return trimmed
 	}
 
 	switch decision {
-	case agent.DecisionAccepted:
+	case agentdecision.DecisionAccepted:
 		return "approved_without_reason"
-	case agent.DecisionModified:
+	case agentdecision.DecisionModified:
 		return "modified_without_reason"
 	default:
 		return "rejected_without_reason"
 	}
 }
 
-func proposalStatusFor(decision agent.DecisionType) agent.ProposalStatus {
+func proposalStatusFor(decision agentdecision.DecisionType) agent.ProposalStatus {
 	switch decision {
-	case agent.DecisionAccepted:
+	case agentdecision.DecisionAccepted:
 		return agent.ProposalStatusAccepted
-	case agent.DecisionModified:
+	case agentdecision.DecisionModified:
 		return agent.ProposalStatusModified
-	case agent.DecisionRejected:
+	case agentdecision.DecisionRejected:
 		return agent.ProposalStatusRejected
 	default:
 		return agent.ProposalStatusRejected
@@ -723,7 +745,7 @@ func (s *Service) announce(
 		return
 	}
 
-	current, err := s.proposalRepo.GetByID(ctx, agentports.GetAgentProposalByIDRequest{
+	current, err := s.proposalRepo.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
 		ID:         proposal.ID,
 		TenantInfo: &tenant,
 	})

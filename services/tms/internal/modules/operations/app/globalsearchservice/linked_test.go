@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -149,17 +150,25 @@ func TestEveryHitMetadataKeyIsClassified(t *testing.T) {
 		attributes[definition.entityType] = definition.attributes
 	}
 	svc.searchRepo = pagesRepo(t, map[string]*customerports.SearchPage{
-		"shipments": page(documentFrom(attributes[search.EntityTypeShipment], shipmentID.String(), nil)),
-		"customers": page(documentFrom(attributes[search.EntityTypeCustomer], customerID.String(), map[string]any{
-			"state_id": pulid.MustNew("ust_").String(),
-		})),
-		"workers": page(documentFrom(attributes[search.EntityTypeWorker], workerID.String(), map[string]any{
-			"state_id": pulid.MustNew("ust_").String(),
-		})),
-		"documents": page(documentFrom(attributes[search.EntityTypeDocument], "doc_1", map[string]any{
-			"resource_type": "shipment",
-			"resource_id":   shipmentID.String(),
-		})),
+		"shipments": page(
+			documentFrom(attributes[search.EntityTypeShipment], shipmentID.String(), nil),
+		),
+		"customers": page(
+			documentFrom(attributes[search.EntityTypeCustomer], customerID.String(), map[string]any{
+				"state_id": pulid.MustNew("ust_").String(),
+			}),
+		),
+		"workers": page(
+			documentFrom(attributes[search.EntityTypeWorker], workerID.String(), map[string]any{
+				"state_id": pulid.MustNew("ust_").String(),
+			}),
+		),
+		"documents": page(
+			documentFrom(attributes[search.EntityTypeDocument], "doc_1", map[string]any{
+				"resource_type": "shipment",
+				"resource_id":   shipmentID.String(),
+			}),
+		),
 	})
 	svc.shipmentRead = &fakeCardReader{
 		cards: map[pulid.ID]*shipmentports.ShipmentSearchCard{
@@ -216,14 +225,21 @@ func TestEveryHitMetadataKeyIsClassified(t *testing.T) {
 }
 
 func TestEveryClassifiedFieldIsInItsKindsRegistry(t *testing.T) {
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for entityType, sources := range hitMetadata {
 		for key, source := range sources {
 			if source.kind == "" {
 				continue
 			}
 			_, ok := registry.Get(source.kind.String())
-			require.Truef(t, ok, "%s %q names kind %q, which is not registered", entityType, key, source.kind)
+			require.Truef(
+				t,
+				ok,
+				"%s %q names kind %q, which is not registered",
+				entityType,
+				key,
+				source.kind,
+			)
 			require.Truef(t, source.figure || len(source.fields) > 0,
 				"%s %q names kind %q but no field of it", entityType, key, source.kind)
 		}
@@ -261,7 +277,7 @@ func shipmentSearchWithViews(
 		}},
 		permissions: engine,
 		visibility:  everyRecordVisible{},
-		views:       refview.NewPort(refview.New(permission.NewRegistry()), engine),
+		views:       refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine),
 	}
 
 	result, err := svc.Search(t.Context(), &kernelports.GlobalSearchRequest{
@@ -315,7 +331,12 @@ func TestSearchHoldsAViewFieldToThePersonsCeiling(t *testing.T) {
 	require.NotContains(t, metadata, "customerName")
 	require.NotContains(t, metadata, "customerCode")
 	require.NotEmpty(t, metadata["customerId"], "an id carries nothing about the record")
-	require.Equal(t, "Leon Park", metadata["driverName"], "the ceiling applies only without the kind's read")
+	require.Equal(
+		t,
+		"Leon Park",
+		metadata["driverName"],
+		"the ceiling applies only without the kind's read",
+	)
 }
 
 func TestSearchDropsMetadataWithNoClassification(t *testing.T) {
@@ -325,9 +346,11 @@ func TestSearchDropsMetadataWithNoClassification(t *testing.T) {
 		Metadata:   map[string]string{"proNumber": "S-1", "customerCreditLimit": "50000"},
 	}
 	enricher := &hitEnricher{
-		access: &searchAccess{linked: readsOnly{check: func(context.Context, permission.Resource) (bool, error) {
-			return true, nil
-		}}},
+		access: &searchAccess{
+			linked: readsOnly{check: func(context.Context, permission.Resource) (bool, error) {
+				return true, nil
+			}},
+		},
 		results: []*indexResult{{
 			definition: entitySearchDefinition{entityType: search.EntityTypeShipment},
 			hits:       []*kernelports.GlobalSearchHit{hit},

@@ -3,7 +3,7 @@ package portaljobs
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionportal"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs/portalcontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
@@ -62,7 +62,7 @@ func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) er
 		if err != nil {
 			return stop(ctx, pollCtx, notifyCtx, &portalcontract.StopInput{
 				Payload: payload,
-				Status:  agentextension.PortalRunStatusFailed,
+				Status:  extensionportal.PortalRunStatusFailed,
 				Reason:  unreachableNote,
 			})
 		}
@@ -76,7 +76,7 @@ func PortalRunWorkflow(ctx workflow.Context, payload *portalcontract.Payload) er
 		if !workflow.Now(ctx).Before(deadline) {
 			return stop(ctx, pollCtx, notifyCtx, &portalcontract.StopInput{
 				Payload: payload,
-				Status:  agentextension.PortalRunStatusTimedOut,
+				Status:  extensionportal.PortalRunStatusTimedOut,
 				Reason:  timedOutNote,
 			})
 		}

@@ -3,8 +3,8 @@ package airetrievalresolver
 import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -32,9 +32,9 @@ func omittableValue[T any](
 func aiRetrievalSettingsPatchFromInput(
 	tenant pagination.TenantInfo,
 	input *gqlmodel.AIRetrievalSettingsPatchInput,
-) (*agentports.UpdateAIRetrievalSettingsRequest, error) {
+) (*retrievalports.UpdateAIRetrievalSettingsRequest, error) {
 	multiErr := errortypes.NewMultiError()
-	req := &agentports.UpdateAIRetrievalSettingsRequest{
+	req := &retrievalports.UpdateAIRetrievalSettingsRequest{
 		TenantInfo: tenant,
 		MemoryEnabled: omittableValue(
 			multiErr, "memoryEnabled", "Memory indexing", input.MemoryEnabled,
@@ -73,7 +73,7 @@ func aiRetrievalSettingsPatchFromInput(
 }
 
 func aiRetrievalFailedEntriesToModel(
-	page *agentports.AIRetrievalFailedEntryPage,
+	page *retrievalports.AIRetrievalFailedEntryPage,
 ) *gqlmodel.AIRetrievalFailedEntryConnection {
 	out := &gqlmodel.AIRetrievalFailedEntryConnection{
 		Edges:           make([]*gqlmodel.AIRetrievalFailedEntryEdge, 0, len(page.Edges)),
@@ -88,7 +88,7 @@ func aiRetrievalFailedEntriesToModel(
 		})
 		last = edge.Cursor
 	}
-	out.PageInfo = base.PageInfoFor(page.HasNextPage, last)
+	out.PageInfo = gqlconnection.PageInfoFor(page.HasNextPage, last)
 
 	return out
 }

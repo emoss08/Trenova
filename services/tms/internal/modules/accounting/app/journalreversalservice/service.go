@@ -8,8 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -149,7 +149,7 @@ func (s *Service) PlanCreate(
 	if err != nil {
 		return nil, err
 	}
-	if control.JournalReversalPolicy == tenant.JournalReversalPolicyDisallow {
+	if control.JournalReversalPolicy == accountingcontrol.JournalReversalPolicyDisallow {
 		return nil, errortypes.NewBusinessError(
 			"Journal reversals are disabled by accounting policy",
 		)

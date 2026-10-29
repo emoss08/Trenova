@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -29,7 +29,7 @@ const minorUnitsPerMajor = 100
 func (s *Service) reconcileSubledgers(
 	ctx context.Context,
 	fy *fiscalyear.FiscalYear,
-	control *tenant.AccountingControl,
+	control *accountingcontrol.AccountingControl,
 	balances []*glbalanceports.GLPeriodAccountBalance,
 ) ([]*fiscalclose.SubledgerCheck, error) {
 	checks := make([]*fiscalclose.SubledgerCheck, 0, 1)
@@ -100,9 +100,9 @@ func newSubledgerCheck(in subledgerCheckInput) *fiscalclose.SubledgerCheck {
 
 // reconciliationEnforced mirrors the gate the fiscal period close already uses,
 // so a carrier that turned reconciliation off does not meet it again at year end.
-func reconciliationEnforced(control *tenant.AccountingControl) bool {
+func reconciliationEnforced(control *accountingcontrol.AccountingControl) bool {
 	return control.RequireReconciliationToClose &&
-		control.ReconciliationMode != tenant.ReconciliationModeDisabled
+		control.ReconciliationMode != accountingcontrol.ReconciliationModeDisabled
 }
 
 // toleranceMinor converts the configured tolerance, which is held in major

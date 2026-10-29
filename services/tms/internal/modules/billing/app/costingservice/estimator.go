@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
@@ -234,7 +235,7 @@ func (s *Service) estimateFromShipment(
 	input := &shipmentMilesInput{shipmentID: entity.ID}
 
 	for _, move := range entity.Moves {
-		if move == nil || move.Status == shipment.MoveStatusCanceled {
+		if move == nil || move.Status == shipmentvocab.MoveStatusCanceled {
 			continue
 		}
 		if move.Distance == nil {

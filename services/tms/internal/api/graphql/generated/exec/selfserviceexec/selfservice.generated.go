@@ -9,7 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -38,7 +40,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").CreateWorkerPolicy(ctx, fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "updateWorkerPolicy",
@@ -51,7 +53,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").UpdateWorkerPolicy(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.WorkerPolicyInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "decideProfileChange",
@@ -64,7 +66,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideProfileChange(ctx, fc.Args["input"].(gqlmodel.DecideProfileChangeInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest),
+				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest),
 			},
 		}},
 		{Object: "PolicyCompliance", Fields: []*gqlexec.Field{
@@ -77,7 +79,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.PolicyCompliance)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:     "signed",
@@ -216,7 +218,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicies(ctx, fc.Args["activeOnly"].(*bool), fc.Args["limit"].(*int))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyᚄ),
 			},
 			{
 				Name:       "workerPolicy",
@@ -230,7 +232,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicy(ctx, fc.Args["id"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 			{
 				Name:       "workerPolicyCompliance",
@@ -258,7 +260,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPolicyAcknowledgements(ctx, fc.Args["workerId"].(string))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgementᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ),
 			},
 			{
 				Name:       "profileChangeRequests",
@@ -272,7 +274,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ProfileChangeRequests(ctx, fc.Args["filter"].(*gqlmodel.ProfileChangeFilterInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequestᚄ),
+				Marshal: gqlexec.Marshal(marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ),
 			},
 		}},
 		{Object: "WorkerPolicy", Fields: []*gqlexec.Field{
@@ -281,7 +283,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -291,7 +293,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -301,7 +303,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -311,7 +313,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Status, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus),
@@ -321,7 +323,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -331,7 +333,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Title, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -340,7 +342,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "summary",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -349,7 +351,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "body",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Body, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -358,7 +360,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "documentId",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.DocumentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -368,7 +370,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.VersionLabel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -378,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.RequiresSignature, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -388,17 +390,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.AppliesTo, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience),
+				Marshal: gqlexec.Marshal(marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience),
 			},
 			{
 				Name:     "effectiveFrom",
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.EffectiveFrom, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -407,7 +409,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "createdById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.CreatedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -417,7 +419,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -427,7 +429,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.CreatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -437,7 +439,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicy)
+					obj := o.(*workerpolicy.WorkerPolicy)
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -449,7 +451,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -459,7 +461,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -469,7 +471,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -479,7 +481,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.PolicyID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -489,7 +491,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -499,7 +501,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.VersionLabel, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -509,7 +511,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.AcknowledgedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -518,7 +520,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "signatureName",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.SignatureName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -527,7 +529,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "signatureIp",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.SignatureIP, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -536,7 +538,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "signatureUserAgent",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.SignatureUserAgent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -545,7 +547,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "documentChecksum",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.DocumentChecksum, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -555,7 +557,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -565,7 +567,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -575,10 +577,10 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WorkerPolicy",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerPolicyAcknowledgement)
+					obj := o.(*workerpolicy.WorkerPolicyAcknowledgement)
 					return obj.Policy, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy),
+				Marshal: gqlexec.Marshal(marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy),
 			},
 		}},
 		{Object: "WorkerProfileChangeRequest", Fields: []*gqlexec.Field{
@@ -587,7 +589,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.ID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -597,7 +599,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.OrganizationID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -607,7 +609,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.BusinessUnitID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -617,7 +619,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.WorkerID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -627,10 +629,10 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus),
+				Marshal: gqlexec.Marshal(marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus),
 			},
 			{
 				Name:       "changes",
@@ -640,7 +642,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "ProfileFieldChange",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return gqlexec.Resolver[resolverWorkerProfileChangeRequest](ec, "WorkerProfileChangeRequest").Changes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNProfileFieldChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐProfileFieldChangeᚄ),
@@ -649,7 +651,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "note",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -659,7 +661,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.SubmittedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -668,7 +670,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decidedAt",
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.DecidedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
@@ -677,7 +679,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decidedById",
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.DecidedByID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -686,7 +688,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "decisionNote",
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.DecisionNote, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOString2string),
@@ -696,7 +698,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.Version, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -706,7 +708,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "Worker",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*worker.WorkerProfileChangeRequest)
+					obj := o.(*profilechange.WorkerProfileChangeRequest)
 					return obj.Worker, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorker),
@@ -726,21 +728,21 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverMutation interface {
-	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error)
-	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error)
-	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*worker.WorkerProfileChangeRequest, error)
+	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
+	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
+	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
 }
 
 type resolverQuery interface {
-	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.WorkerPolicy, error)
-	WorkerPolicy(ctx context.Context, id string) (*worker.WorkerPolicy, error)
+	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error)
+	WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error)
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
-	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error)
-	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error)
+	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
+	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
 }
 
 type resolverWorkerProfileChangeRequest interface {
-	Changes(ctx context.Context, obj *worker.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
+	Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
 }
 
 var (
@@ -945,7 +947,7 @@ func unmarshalInputProfileChangeFilterInput(ctx context.Context, ec *gqlexec.Exe
 			it.WorkerID = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
-			data, err := unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatusᚄ(ctx, ec, v)
+			data, err := unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatusᚄ(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1038,7 +1040,7 @@ func unmarshalInputWorkerPolicyInput(ctx context.Context, ec *gqlexec.Exec, obj 
 			it.RequiresSignature = data
 		case "appliesTo":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("appliesTo"))
-			data, err := unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx, ec, v)
+			data, err := unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -1077,15 +1079,15 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, v any) (worker.PolicyAudience, error) {
+func unmarshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, v any) (workerpolicy.PolicyAudience, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.PolicyAudience(tmp)
+	res := workerpolicy.PolicyAudience(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, v any) (worker.ProfileChangeStatus, error) {
+func unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, v any) (profilechange.ProfileChangeStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := worker.ProfileChangeStatus(tmp)
+	res := profilechange.ProfileChangeStatus(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1140,11 +1142,11 @@ func unmarshalOProfileChangeFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]worker.ProfileChangeStatus, error) {
+func unmarshalOProfileChangeStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatusᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]profilechange.ProfileChangeStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus)
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus)
 }
 
 func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
@@ -1211,7 +1213,7 @@ func marshalNInt2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionS
 	return res
 }
 
-func marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.PolicyAudience) graphql.Marshaler {
+func marshalNPolicyAudience2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐPolicyAudience(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v workerpolicy.PolicyAudience) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1243,7 +1245,7 @@ func marshalNPolicyComplianceRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "PolicyComplianceRow", v)
 }
 
-func marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v worker.ProfileChangeStatus) graphql.Marshaler {
+func marshalNProfileChangeStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐProfileChangeStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v profilechange.ProfileChangeStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -1283,15 +1285,15 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerPolicy) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerPolicy]{
-		Elem:        marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy,
+func marshalNWorkerPolicy2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicy) graphql.Marshaler {
+	return gqlexec.List[*workerpolicy.WorkerPolicy]{
+		Elem:        marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPolicy) graphql.Marshaler {
+func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1299,15 +1301,15 @@ func marshalNWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "WorkerPolicy", v)
 }
 
-func marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerPolicyAcknowledgement) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerPolicyAcknowledgement]{
-		Elem:        marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgement,
+func marshalNWorkerPolicyAcknowledgement2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgementᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
+	return gqlexec.List[*workerpolicy.WorkerPolicyAcknowledgement]{
+		Elem:        marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicyAcknowledgement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPolicyAcknowledgement) graphql.Marshaler {
+func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicyAcknowledgement(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicyAcknowledgement) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1315,15 +1317,15 @@ func marshalNWorkerPolicyAcknowledgement2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 	return ec.MarshalType(ctx, sel, "WorkerPolicyAcknowledgement", v)
 }
 
-func marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*worker.WorkerProfileChangeRequest) graphql.Marshaler {
-	return gqlexec.List[*worker.WorkerProfileChangeRequest]{
-		Elem:        marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest,
+func marshalNWorkerProfileChangeRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequestᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
+	return gqlexec.List[*profilechange.WorkerProfileChangeRequest]{
+		Elem:        marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerProfileChangeRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerProfileChangeRequest) graphql.Marshaler {
+func marshalNWorkerProfileChangeRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋprofilechangeᚐWorkerProfileChangeRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *profilechange.WorkerProfileChangeRequest) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -1372,7 +1374,7 @@ func marshalOWorker2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋw
 	return ec.MarshalType(ctx, sel, "Worker", v)
 }
 
-func marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *worker.WorkerPolicy) graphql.Marshaler {
+func marshalOWorkerPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋdomainᚋworkerpolicyᚐWorkerPolicy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerpolicy.WorkerPolicy) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

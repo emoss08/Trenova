@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
@@ -194,7 +197,7 @@ func VendorSyncRequest(
 
 type AccountingSyncDispatcher interface {
 	Kick(ctx context.Context, tenantInfo pagination.TenantInfo, connectionID pulid.ID) error
-	StartBackfill(ctx context.Context, backfill *accountingsync.AccountingBackfill) error
+	StartBackfill(ctx context.Context, backfill *accountingbackfill.AccountingBackfill) error
 }
 
 type AccountingSyncConnectionRef struct {
@@ -249,8 +252,8 @@ type ChooseAccountingSyncModeRequest struct {
 	TenantInfo      pagination.TenantInfo
 	UserID          pulid.ID
 	IntegrationType integration.Type
-	Mode            accountingsync.SyncMode
-	Granularity     accountingsync.LedgerGranularity
+	Mode            accountingprovider.SyncMode
+	Granularity     accountingconnection.LedgerGranularity
 }
 
 type UpdateAccountingSyncSettingsRequest struct {
@@ -259,7 +262,7 @@ type UpdateAccountingSyncSettingsRequest struct {
 	IntegrationType   integration.Type
 	AutoSync          bool
 	DriverSettlements bool
-	InboundPayments   accountingsync.InboundPaymentPolicy
+	InboundPayments   accountingconnection.InboundPaymentPolicy
 }
 
 type PauseAccountingSyncRequest struct {
@@ -298,7 +301,7 @@ type RedateAccountingSyncRequest struct {
 }
 
 type AccountingSyncRedatePlan struct {
-	Connection *accountingsync.AccountingConnection
+	Connection *accountingconnection.AccountingConnection
 	Before     *accountingsync.AccountingSyncRecord
 	After      *accountingsync.AccountingSyncRecord
 	SentDate   int64
@@ -352,10 +355,10 @@ type ListAccountingSyncRecordsRequest struct {
 type AccountingSyncSummary struct {
 	IntegrationType integration.Type
 	ProviderName    string
-	Connection      *accountingsync.AccountingConnection
+	Connection      *accountingconnection.AccountingConnection
 	Counts          []AccountingSyncStatusCount
 	Attention       []AccountingSyncAttentionGroup
-	ActiveBackfill  *accountingsync.AccountingBackfill
+	ActiveBackfill  *accountingbackfill.AccountingBackfill
 }
 
 type AccountingSyncObjectStatesRequest struct {
@@ -371,7 +374,7 @@ type AccountingSyncObjectState struct {
 	Record       *accountingsync.AccountingSyncRecord
 }
 
-type AccountingSyncService interface {
+type AccountingSyncReader interface {
 	Summary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -399,27 +402,33 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
-	) ([]*accountingsync.AccountingBackfill, error)
+	) ([]*accountingbackfill.AccountingBackfill, error)
+}
+
+type AccountingSyncSetupService interface {
 	EnableSync(
 		ctx context.Context,
 		req *EnableAccountingSyncRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	ChooseMode(
 		ctx context.Context,
 		req *ChooseAccountingSyncModeRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	UpdateSettings(
 		ctx context.Context,
 		req *UpdateAccountingSyncSettingsRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Pause(
 		ctx context.Context,
 		req *PauseAccountingSyncRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
 	Resume(
 		ctx context.Context,
 		req *PauseAccountingSyncRequest,
-	) (*accountingsync.AccountingConnection, error)
+	) (*accountingconnection.AccountingConnection, error)
+}
+
+type AccountingSyncActionService interface {
 	Retry(ctx context.Context, req *RetryAccountingSyncRequest) (int64, error)
 	Release(ctx context.Context, req *ReleaseAccountingSyncRequest) (int64, error)
 	Skip(
@@ -434,18 +443,32 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		req *RedateAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
+}
+
+type AccountingBackfillService interface {
 	RequestBackfill(
 		ctx context.Context,
 		req *RequestAccountingBackfillRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
 	ChangeBackfill(
 		ctx context.Context,
 		req *ChangeAccountingBackfillRequest,
-	) (*accountingsync.AccountingBackfill, error)
+	) (*accountingbackfill.AccountingBackfill, error)
+	BackfillStep(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		backfillID pulid.ID,
+	) (*AccountingBackfillStepResult, error)
+}
+
+type AccountingSyncDrainer interface {
 	Drain(
 		ctx context.Context,
 		req *DrainAccountingSyncRequest,
 	) (*AccountingSyncDrainResult, error)
+}
+
+type AccountingSyncSweeper interface {
 	ListDueConnections(
 		ctx context.Context,
 		limit int,
@@ -454,11 +477,6 @@ type AccountingSyncService interface {
 		ctx context.Context,
 		ref AccountingSyncConnectionRef,
 	) (*AccountingSafetyNetResult, error)
-	BackfillStep(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		backfillID pulid.ID,
-	) (*AccountingBackfillStepResult, error)
 	PurgeHistory(ctx context.Context) (*PurgeAccountingSyncHistoryResult, error)
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -15,7 +16,7 @@ type AnalyticsRequest struct {
 	Window            aianalytics.Window
 	CompareBy         aianalytics.CompareBy
 	AgentDefinitionID pulid.ID
-	Task              aiprovider.Task
+	Task              aitask.Task
 	Timezone          string
 }
 
@@ -158,7 +159,7 @@ type RouteSuggestion struct {
 }
 
 type TaskRow struct {
-	Task             aiprovider.Task
+	Task             aitask.Task
 	Current          *ProviderRef
 	CurrentSeriesKey string
 	BestSeriesKey    string

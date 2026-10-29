@@ -8,11 +8,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/starters"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/templatediag"
 	"github.com/emoss08/trenova/pkg/templateengine"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 	"github.com/emoss08/trenova/shared/i18n"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -27,7 +31,7 @@ type Params struct {
 	VersionRepo    documenttemplateports.DocumentTemplateVersionRepository
 	AssignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
 	GeneratedRepo  documenttemplateports.GeneratedDocumentRepository
-	Registry       *documenttemplate.Registry
+	Registry       *templatecatalog.Registry
 	Engine         *templateengine.Engine
 	Inliner        documenttemplateports.AssetInliner
 	PDFRenderer    documenttemplateports.PDFRenderer
@@ -44,7 +48,7 @@ type Service struct {
 	versionRepo    documenttemplateports.DocumentTemplateVersionRepository
 	assignmentRepo documenttemplateports.DocumentTemplateAssignmentRepository
 	generatedRepo  documenttemplateports.GeneratedDocumentRepository
-	registry       *documenttemplate.Registry
+	registry       *templatecatalog.Registry
 	engine         *templateengine.Engine
 	inliner        documenttemplateports.AssetInliner
 	pdf            documenttemplateports.PDFRenderer
@@ -88,7 +92,7 @@ func New(p Params) *Service {
 
 // Registry exposes the kind catalog, which the admin variable picker reads and
 // the GraphQL layer publishes.
-func (s *Service) Registry() *documenttemplate.Registry { return s.registry }
+func (s *Service) Registry() *templatecatalog.Registry { return s.registry }
 
 // Resolve walks assigned → organization default → built-in.
 //
@@ -252,7 +256,7 @@ func contentHashOr(stored string, content *documenttemplateports.TemplateContent
 type compiledVersion struct {
 	compiled map[documenttemplate.Channel]*templateengine.Compiled
 	paths    []string
-	diags    templateengine.Diagnostics
+	diags    templatediag.Diagnostics
 }
 
 func (c *compiledVersion) compiledFor(
@@ -278,7 +282,7 @@ type compileOptions struct {
 
 // compile parses every channel a kind declares and collects the union of paths.
 func (s *Service) compile(
-	def *documenttemplate.KindDefinition,
+	def *templatecatalog.KindDefinition,
 	content *documenttemplateports.TemplateContent,
 	opts compileOptions,
 ) *compiledVersion {
@@ -341,16 +345,16 @@ func (s *Service) compile(
 // unchecked.
 func printedSourceDiagnostics(
 	content *documenttemplateports.TemplateContent,
-) templateengine.Diagnostics {
-	opts := templateengine.DocumentSanitizeOptions()
-	diags := templateengine.SanitizeCSS("cssContent", content.CSSContent)
-	diags = append(diags, templateengine.SanitizeHTML("headerHtml", content.HeaderHTML, opts)...)
-	return append(diags, templateengine.SanitizeHTML("footerHtml", content.FooterHTML, opts)...)
+) templatediag.Diagnostics {
+	opts := templatesanitize.DocumentOptions()
+	diags := templatesanitize.CSS("cssContent", content.CSSContent)
+	diags = append(diags, templatesanitize.HTML("headerHtml", content.HeaderHTML, opts)...)
+	return append(diags, templatesanitize.HTML("footerHtml", content.FooterHTML, opts)...)
 }
 
 // diagnosticsToMultiError turns engine findings into the field errors a form can
 // show, so a bad template reads as a validation failure rather than a 500.
-func diagnosticsToMultiError(diags templateengine.Diagnostics) *errortypes.MultiError {
+func diagnosticsToMultiError(diags templatediag.Diagnostics) *errortypes.MultiError {
 	errs := diags.Errors()
 	if len(errs) == 0 {
 		return nil
@@ -376,15 +380,15 @@ func diagnosticsToMultiError(diags templateengine.Diagnostics) *errortypes.Multi
 
 // warningsFrom converts advisory diagnostics into the record a generated
 // document carries, so an author can see later what a render quietly dropped.
-func warningsFrom(diags templateengine.Diagnostics) []documenttemplate.GeneratedDocumentWarning {
+func warningsFrom(diags templatediag.Diagnostics) []generateddocument.GeneratedDocumentWarning {
 	warnings := diags.Warnings()
 	if len(warnings) == 0 {
 		return nil
 	}
 
-	out := make([]documenttemplate.GeneratedDocumentWarning, 0, len(warnings))
+	out := make([]generateddocument.GeneratedDocumentWarning, 0, len(warnings))
 	for _, diag := range warnings {
-		out = append(out, documenttemplate.GeneratedDocumentWarning{
+		out = append(out, generateddocument.GeneratedDocumentWarning{
 			Code:    diag.Code,
 			Field:   diag.Field,
 			Message: diag.Message,

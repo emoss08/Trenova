@@ -6,11 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionrollout"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
@@ -208,7 +209,8 @@ func (f *correctionStore) TotalsByProvider(
 	var candidate, production aicorrectionports.AICorrectionProviderTotal
 	candidate.Candidate = true
 	for _, item := range f.items {
-		if item.Task != req.Task || item.CapturedAt < req.Since || item.ExtractionProviderID == nil {
+		if item.Task != req.Task || item.CapturedAt < req.Since ||
+			item.ExtractionProviderID == nil {
 			continue
 		}
 		side := &production
@@ -235,14 +237,14 @@ func (f *correctionStore) ListForAccuracy(
 }
 
 type providerStore struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 	providers map[pulid.ID]*aiprovider.Provider
 	err       error
 }
 
 func (f *providerStore) GetByID(
 	_ context.Context,
-	req agentports.GetAIProviderByIDRequest,
+	req aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
 	if f.err != nil {
 		return nil, f.err
@@ -261,7 +263,7 @@ type retentionStore struct {
 func (retentionStore) Get(
 	context.Context,
 	tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return nil, errortypes.NewNotFoundError("retention not found")
 }
 
@@ -293,13 +295,13 @@ func newWorld() *world {
 		ID:      pulid.MustNew("aip_"),
 		Name:    "Fine-tuned Qwen",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	production := &aiprovider.Provider{
 		ID:      pulid.MustNew("aip_"),
 		Name:    "Frontier",
 		Enabled: true,
-		Tasks:   []aiprovider.Task{aiprovider.TaskDocumentExtraction},
+		Tasks:   []aitask.Task{aitask.TaskDocumentExtraction},
 	}
 	w := &world{
 		rollouts:    &rolloutStore{},

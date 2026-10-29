@@ -22,9 +22,11 @@ import (
 	texttemplate "text/template"
 	"text/template/parse"
 
-	"github.com/emoss08/trenova/shared/lrucache"
-
+	"github.com/emoss08/trenova/pkg/templatediag"
+	"github.com/emoss08/trenova/pkg/templatefuncs"
+	"github.com/emoss08/trenova/pkg/templatesanitize"
 	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/lrucache"
 )
 
 // Defaults applied when a Config field is zero.
@@ -135,7 +137,7 @@ type ParseRequest struct {
 //
 // It returns a nil *Compiled whenever the diagnostics contain an error, so a
 // caller cannot accidentally render something that failed validation.
-func (e *Engine) Parse(req *ParseRequest) (*Compiled, Diagnostics) {
+func (e *Engine) Parse(req *ParseRequest) (*Compiled, templatediag.Diagnostics) {
 	if req.CacheKey != "" {
 		if cached, ok := e.cache.Get(req.CacheKey); ok {
 			return cached, nil
@@ -148,22 +150,24 @@ func (e *Engine) Parse(req *ParseRequest) (*Compiled, Diagnostics) {
 	}
 
 	if int64(len(req.Source)) > e.cfg.MaxSourceBytes {
-		return nil, Diagnostics{errorDiag(CodeTemplateTooLarge, field, fmt.Sprintf(
-			"template is %d bytes; the limit is %d",
-			len(req.Source), e.cfg.MaxSourceBytes,
-		))}
+		return nil, templatediag.Diagnostics{
+			templatediag.Error(templatediag.CodeTemplateTooLarge, field, fmt.Sprintf(
+				"template is %d bytes; the limit is %d",
+				len(req.Source), e.cfg.MaxSourceBytes,
+			)),
+		}
 	}
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 
 	// Sanitize before parsing. A refusal here names a line the author can see,
 	// where a parse failure on the same markup would not.
 	if req.Channel.IsHTML() {
-		opts := DocumentSanitizeOptions()
+		opts := templatesanitize.DocumentOptions()
 		if req.Channel == ChannelEmailHTML {
-			opts = EmailSanitizeOptions()
+			opts = templatesanitize.EmailOptions()
 		}
-		diags = append(diags, SanitizeHTML(field, req.Source, opts)...)
+		diags = append(diags, templatesanitize.HTML(field, req.Source, opts)...)
 	}
 
 	compiled, parseDiags := e.compile(req, field)
@@ -180,7 +184,7 @@ func (e *Engine) Parse(req *ParseRequest) (*Compiled, Diagnostics) {
 }
 
 // compile parses the source, then analyzes the resulting tree.
-func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostics) {
+func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, templatediag.Diagnostics) {
 	name := req.Kind + ":" + string(req.Channel)
 
 	compiled := &Compiled{
@@ -189,17 +193,17 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 		maxRangeIterations: e.cfg.MaxRangeIterations,
 	}
 
-	var diags Diagnostics
+	var diags templatediag.Diagnostics
 	var rootTree *parse.Tree
 	var associatedCount int
 
 	if req.Channel.IsHTML() {
 		tmpl, err := template.New(name).
-			Funcs(FuncMapFor(req.Locale)).
+			Funcs(templatefuncs.FuncMapFor(req.Locale)).
 			Option("missingkey=error").
 			Parse(req.Source)
 		if err != nil {
-			return nil, Diagnostics{parseErrorDiag(field, err)}
+			return nil, templatediag.Diagnostics{parseErrorDiag(field, err)}
 		}
 		compiled.htmlTmpl = tmpl
 		// Read the tree before the first Execute: html/template rewrites it in
@@ -209,11 +213,11 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 		associatedCount = len(tmpl.Templates())
 	} else {
 		tmpl, err := texttemplate.New(name).
-			Funcs(TextFuncMapFor(req.Locale)).
+			Funcs(templatefuncs.TextFuncMapFor(req.Locale)).
 			Option("missingkey=error").
 			Parse(req.Source)
 		if err != nil {
-			return nil, Diagnostics{parseErrorDiag(field, err)}
+			return nil, templatediag.Diagnostics{parseErrorDiag(field, err)}
 		}
 		compiled.textTmpl = tmpl
 		rootTree = tmpl.Tree
@@ -228,12 +232,15 @@ func (e *Engine) compile(req *ParseRequest, field string) (*Compiled, Diagnostic
 	// version reach into another, which breaks the promise that the bytes a
 	// version renders are reproducible from that version alone.
 	for _, nested := range result.nestedTemplates {
-		diags = append(diags, errorDiag(CodeNestedTemplateForbidden, field, fmt.Sprintf(
-			"{{template %q}} is not allowed; a template version must be self-contained", nested,
-		)))
+		diags = append(
+			diags,
+			templatediag.Error(templatediag.CodeNestedTemplateForbidden, field, fmt.Sprintf(
+				"{{template %q}} is not allowed; a template version must be self-contained", nested,
+			)),
+		)
 	}
 	if associatedCount > 1 {
-		diags = append(diags, errorDiag(CodeNestedTemplateForbidden, field,
+		diags = append(diags, templatediag.Error(templatediag.CodeNestedTemplateForbidden, field,
 			"{{define}} and {{block}} are not allowed; a template version must be self-contained"))
 	}
 
@@ -272,29 +279,33 @@ const zgotmplZ = "ZgotmplZ"
 // This is the last gate before a version goes live, and the reason an author
 // cannot publish a template that only fails on real data: the sample context
 // exercises every declared variable, including the ones a hand-test would miss.
-func (e *Engine) Verify(ctx context.Context, req VerifyRequest) Diagnostics {
+func (e *Engine) Verify(ctx context.Context, req VerifyRequest) templatediag.Diagnostics {
 	if req.Compiled == nil {
-		return Diagnostics{errorDiag(CodeSampleRenderFailed, req.Field,
-			"template did not compile, so it cannot be verified")}
+		return templatediag.Diagnostics{
+			templatediag.Error(templatediag.CodeSampleRenderFailed, req.Field,
+				"template did not compile, so it cannot be verified"),
+		}
 	}
 
 	output, err := req.Compiled.Render(ctx, req.Sample, e.MaxOutputBytes(req.Channel))
 	if err != nil {
-		code := CodeSampleRenderFailed
+		code := templatediag.CodeSampleRenderFailed
 		if errors.Is(err, ErrOutputTooLarge) {
-			code = CodeOutputTooLarge
+			code = templatediag.CodeOutputTooLarge
 		}
-		return Diagnostics{errorDiag(code, req.Field, fmt.Sprintf(
+		return templatediag.Diagnostics{templatediag.Error(code, req.Field, fmt.Sprintf(
 			"rendering against sample data failed: %s", err.Error(),
 		))}
 	}
 
 	if strings.Contains(output, zgotmplZ) {
-		return Diagnostics{errorDiag(CodeUnsafeInterpolationContext, req.Field,
-			"a variable is placed where its value cannot be safely escaped, so it was "+
-				"replaced with a placeholder. This happens when a text field is used as a "+
-				"URL or as a CSS value. Move the value into the document body, or use a "+
-				"field that holds a data: URI")}
+		return templatediag.Diagnostics{
+			templatediag.Error(templatediag.CodeUnsafeInterpolationContext, req.Field,
+				"a variable is placed where its value cannot be safely escaped, so it was "+
+					"replaced with a placeholder. This happens when a text field is used as a "+
+					"URL or as a CSS value. Move the value into the document body, or use a "+
+					"field that holds a data: URI"),
+		}
 	}
 
 	return nil
@@ -309,7 +320,10 @@ func (e *Engine) Verify(ctx context.Context, req VerifyRequest) Diagnostics {
 //
 // This is what stops an organization from publishing an invoice that no longer
 // prints its total or its remit-to address.
-func CheckRequiredPaths(field string, referencedAcrossChannels, required []string) Diagnostics {
+func CheckRequiredPaths(
+	field string,
+	referencedAcrossChannels, required []string,
+) templatediag.Diagnostics {
 	return checkRequiredPaths(field, referencedAcrossChannels, required)
 }
 
@@ -348,20 +362,20 @@ var undefinedFunctionPattern = regexp.MustCompile(`function "([^"]+)" not define
 // Undefined-function failures get their own code rather than being reported as
 // generic syntax errors, so the editor can answer the author's actual question —
 // which functions can I call — instead of leaving them to guess.
-func parseErrorDiag(field string, err error) Diagnostic {
+func parseErrorDiag(field string, err error) templatediag.Diagnostic {
 	message := err.Error()
 	line, column, cleaned := extractTemplatePosition(message)
 
 	if match := undefinedFunctionPattern.FindStringSubmatch(message); match != nil {
-		return positionedError(
-			CodeUnknownFunction, field,
+		return templatediag.ErrorAt(
+			templatediag.CodeUnknownFunction, field,
 			fmt.Sprintf(
 				"%q is not a function you can call in a template. Available functions: %s",
-				match[1], strings.Join(AllowedFunctionNames(), ", "),
+				match[1], strings.Join(templatefuncs.AllowedFunctionNames(), ", "),
 			),
 			line, column,
 		)
 	}
 
-	return positionedError(CodeSyntaxError, field, cleaned, line, column)
+	return templatediag.ErrorAt(templatediag.CodeSyntaxError, field, cleaned, line, column)
 }

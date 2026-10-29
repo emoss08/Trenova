@@ -9,15 +9,20 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentgraph"
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -47,9 +52,9 @@ type Params struct {
 	DB                         *postgres.Connection
 	Logger                     *zap.Logger
 	Generator                  seqgen.Generator
-	MoveRepository             shipmentports.ShipmentMoveRepository
+	MoveRepository             shipmentmoveports.ShipmentMoveRepository
 	AdditionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
-	ChargeAllocationRepository shipmentports.ChargeAllocationRepository
+	ChargeAllocationRepository chargeallocationports.ChargeAllocationRepository
 	CommodityRepository        shipmentports.ShipmentCommodityRepository
 	OrderRepository            orderports.OrderRepository
 	Quota                      platformplanports.QuotaGuard `optional:"true"`
@@ -59,9 +64,9 @@ type repository struct {
 	db                         *postgres.Connection
 	l                          *zap.Logger
 	generator                  seqgen.Generator
-	moveRepository             shipmentports.ShipmentMoveRepository
+	moveRepository             shipmentmoveports.ShipmentMoveRepository
 	additionalChargeRepository shipmentports.ShipmentAdditionalChargeRepository
-	chargeAllocationRepository shipmentports.ChargeAllocationRepository
+	chargeAllocationRepository chargeallocationports.ChargeAllocationRepository
 	commodityRepository        shipmentports.ShipmentCommodityRepository
 	orderRepository            orderports.OrderRepository
 	quota                      platformplanports.QuotaGuard
@@ -101,7 +106,7 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*shipment.Shipment], error) {
-			quick, err := QuickFilterConditions(&req.ShipmentOptions)
+			quick, err := shipmentpredicate.QuickFilterConditions(&req.ShipmentOptions)
 			if err != nil {
 				return nil, err
 			}
@@ -112,7 +117,7 @@ func (r *repository) List(
 				ctx,
 				r.db.Keel(ctx),
 				shipmentdb.Shipments.
-					Where(shipmentOptionPredicates(&req.ShipmentOptions)...).
+					Where(shipmentpredicate.OptionPredicates(&req.ShipmentOptions)...).
 					Where(quick...),
 				&listquery.Request[shipment.Shipment]{
 					Filter: req.Filter,
@@ -217,7 +222,9 @@ func (r *repository) SelectOptions(
 				q = q.Where(sp.CustomerID.Eq(req.CustomerID))
 			}
 			if req.AttachableOnly {
-				q = q.Where(sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced))
+				q = q.Where(
+					sp.Status.NotIn(shipmentvocab.StatusCanceled, shipmentvocab.StatusInvoiced),
+				)
 			}
 			if !req.ExcludeOrderID.IsNil() {
 				q = q.Where(sp.OrderID.Ne(req.ExcludeOrderID))
@@ -253,7 +260,10 @@ func (r *repository) GetUnassigned(
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				sp.Where(sp.Status.Eq(shipment.StatusNew), unassignedShipmentPredicate()),
+				sp.Where(
+					sp.Status.Eq(shipmentvocab.StatusNew),
+					shipmentpredicate.UnassignedPredicate(),
+				),
 				&listquery.Request[shipment.Shipment]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,
@@ -278,7 +288,7 @@ func (r *repository) GetPreviousRates(
 			q := sp.Where(
 				sp.ShipmentTypeID.Eq(req.ShipmentTypeID),
 				sp.ServiceTypeID.Eq(req.ServiceTypeID),
-				sp.Status.Eq(shipment.StatusInvoiced),
+				sp.Status.Eq(shipmentvocab.StatusInvoiced),
 				sp.ID.InQuery(previousRateOrigins(req.OriginLocationID)),
 				sp.ID.InQuery(previousRateDestinations(req.DestinationLocationID)),
 			)
@@ -604,9 +614,9 @@ func (r *repository) Cancel(
 			sp.Where(
 				sp.ID.Eq(req.ShipmentID),
 				sp.Version.Eq(req.ExpectedVersion),
-				sp.Status.NotIn(shipment.StatusCanceled, shipment.StatusInvoiced),
+				sp.Status.NotIn(shipmentvocab.StatusCanceled, shipmentvocab.StatusInvoiced),
 			),
-			sp.Status.To(shipment.StatusCanceled),
+			sp.Status.To(shipmentvocab.StatusCanceled),
 			sp.CanceledAt.To(req.CanceledAt),
 			sp.CanceledByID.To(req.CanceledByID),
 			sp.CancelReason.To(req.CancelReason),
@@ -634,7 +644,7 @@ func (r *repository) Uncancel(
 			sp.Where(
 				sp.ID.Eq(req.ShipmentID),
 				sp.Version.Eq(req.ExpectedVersion),
-				sp.Status.Eq(shipment.StatusCanceled),
+				sp.Status.Eq(shipmentvocab.StatusCanceled),
 			),
 			sp.Status.To(restoredShipmentStatus(req)),
 			sp.CanceledAt.ToNull(),
@@ -683,7 +693,7 @@ func (r *repository) FindByExternalReference(
 			q := sp.Pick(sp.ID, sp.ProNumber).Where(
 				sp.CustomerID.Eq(req.CustomerID),
 				sp.ExternalReference.Lower().Eq(strings.ToLower(reference)),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 			)
 			if req.ShipmentID.IsNotNil() {
 				q = q.Where(sp.ID.Ne(req.ShipmentID))
@@ -742,7 +752,7 @@ func (r *repository) CheckForDuplicateBOLs(
 			sp := shipmentdb.Shipments
 			q := sp.Pick(sp.ID, sp.ProNumber).Where(
 				sp.BOL.Eq(req.BOL),
-				sp.Status.Ne(shipment.StatusCanceled),
+				sp.Status.Ne(shipmentvocab.StatusCanceled),
 			)
 			if req.ShipmentID != nil {
 				q = q.Where(sp.ID.Ne(pulid.ConvertFromPtr(req.ShipmentID)))
@@ -781,7 +791,7 @@ func (r *repository) BulkDuplicate(
 			return nil, err
 		}
 
-		source, err := LoadShipmentGraphSource(ctx, r.db.Keel(ctx), req.TenantInfo, req.ShipmentID)
+		source, err := LoadGraphSource(ctx, r.db.Keel(ctx), req.TenantInfo, req.ShipmentID)
 		if err != nil {
 			return nil, err
 		}
@@ -792,7 +802,7 @@ func (r *repository) BulkDuplicate(
 		}
 
 		proNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-			Type:             tenant.SequenceTypeProNumber,
+			Type:             sequenceconfig.SequenceTypeProNumber,
 			OrgID:            req.TenantInfo.OrgID,
 			BuID:             req.TenantInfo.BuID,
 			Count:            req.Count,
@@ -803,7 +813,7 @@ func (r *repository) BulkDuplicate(
 			return nil, err
 		}
 
-		graph := buildDuplicatedShipmentGraph(
+		graph := shipmentgraph.BuildBatch(
 			source,
 			proNumbers,
 			req.DateAnchor(timeutils.NowUnix()),
@@ -811,38 +821,38 @@ func (r *repository) BulkDuplicate(
 		)
 
 		orderNumbers, err := r.generator.GenerateBatch(ctx, &seqgen.GenerateRequest{
-			Type:             tenant.SequenceTypeOrder,
+			Type:             sequenceconfig.SequenceTypeOrder,
 			OrgID:            req.TenantInfo.OrgID,
 			BuID:             req.TenantInfo.BuID,
-			Count:            len(graph.shipments),
+			Count:            len(graph.Shipments),
 			LocationCode:     locationCode,
 			BusinessUnitCode: businessUnitCode,
 		})
 		if err != nil {
 			return nil, err
 		}
-		autoOrders := make([]*order.Order, 0, len(graph.shipments))
-		for idx, duplicated := range graph.shipments {
+		autoOrders := make([]*order.Order, 0, len(graph.Shipments))
+		for idx, duplicated := range graph.Shipments {
 			if duplicated == nil || idx >= len(orderNumbers) {
 				continue
 			}
-			autoOrder := BuildAutoOrder(duplicated, orderNumbers[idx])
+			autoOrder := shipmentgraph.BuildAutoOrder(duplicated, orderNumbers[idx])
 			duplicated.OrderID = autoOrder.ID
 			autoOrders = append(autoOrders, autoOrder)
 		}
 
-		quotaReq.Quantity = int64(len(graph.shipments))
+		quotaReq.Quantity = int64(len(graph.Shipments))
 		if err = r.insertGraph(ctx, graph, autoOrders, quotaReq); err != nil {
 			return nil, busy(err, req.ShipmentID)
 		}
 
-		return graph.shipments, nil
+		return graph.Shipments, nil
 	})
 }
 
 func (r *repository) insertGraph(
 	ctx context.Context,
-	graph *duplicatedShipmentGraph,
+	graph *shipmentgraph.Batch,
 	autoOrders []*order.Order,
 	quotaReq platformplanports.QuotaRequest,
 ) error {
@@ -854,31 +864,31 @@ func (r *repository) insertGraph(
 	if err := orderdb.Orders.CreateMany(ctx, db, autoOrders); err != nil {
 		return err
 	}
-	if err := shipmentdb.Shipments.CreateMany(ctx, db, graph.shipments); err != nil {
+	if err := shipmentdb.Shipments.CreateMany(ctx, db, graph.Shipments); err != nil {
 		return err
 	}
-	if err := shipmentdb.ShipmentMoves.CreateMany(ctx, db, graph.moves); err != nil {
+	if err := shipmentdb.ShipmentMoves.CreateMany(ctx, db, graph.Moves); err != nil {
 		return err
 	}
-	if err := shipmentdb.Stops.CreateMany(ctx, db, graph.stops); err != nil {
+	if err := shipmentdb.Stops.CreateMany(ctx, db, graph.Stops); err != nil {
 		return err
 	}
 	if err := shipmentdb.AdditionalCharges.CreateMany(
 		ctx,
 		db,
-		graph.additionalCharges,
+		graph.AdditionalCharges,
 	); err != nil {
 		return err
 	}
 	if err := shipmentdb.ChargeAllocations.CreateMany(
 		ctx,
 		db,
-		graph.chargeAllocations,
+		graph.ChargeAllocations,
 	); err != nil {
 		return err
 	}
 
-	return shipmentdb.ShipmentCommodities.CreateMany(ctx, db, graph.commodities)
+	return shipmentdb.ShipmentCommodities.CreateMany(ctx, db, graph.Commodities)
 }
 
 func (r *repository) PlanDuplicate(
@@ -889,7 +899,7 @@ func (r *repository) PlanDuplicate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.ShipmentDuplicatePlan, error) {
-			source, err := LoadShipmentGraphSource(
+			source, err := LoadGraphSource(
 				ctx,
 				r.db.Keel(ctx),
 				req.TenantInfo,
@@ -899,7 +909,7 @@ func (r *repository) PlanDuplicate(
 				return nil, err
 			}
 
-			graph := buildDuplicatedShipmentGraph(
+			graph := shipmentgraph.BuildBatch(
 				source,
 				make([]string, req.Count),
 				req.DateAnchor(timeutils.NowUnix()),
@@ -908,7 +918,7 @@ func (r *repository) PlanDuplicate(
 
 			return &shipmentports.ShipmentDuplicatePlan{
 				Source: source,
-				Copies: graph.shipments,
+				Copies: graph.Shipments,
 			}, nil
 		},
 	)

@@ -9,11 +9,11 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory/agentmemorydb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
@@ -41,7 +41,7 @@ func anyWord(config string) []keel.SearchOption {
 	return []keel.SearchOption{keel.SearchConfig(config), keel.SearchModes(keel.AnyWebSearch)}
 }
 
-var _ agentports.RetrievalSourceRepository = (*repository)(nil)
+var _ retrievalports.RetrievalSourceRepository = (*repository)(nil)
 
 type Params struct {
 	fx.In
@@ -55,7 +55,7 @@ type repository struct {
 	l  *zap.Logger
 }
 
-func New(p Params) agentports.RetrievalSourceRepository {
+func New(p Params) retrievalports.RetrievalSourceRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.retrieval-source-repository"),
@@ -98,21 +98,21 @@ func sourceIDs(tenantInfo pagination.TenantInfo, ids []pulid.ID) ([]pulid.ID, er
 
 func (r *repository) GetMemories(
 	ctx context.Context,
-	req agentports.RetrievalSourcesRequest,
-) ([]*agent.Memory, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
+	req retrievalports.RetrievalSourcesRequest,
+) ([]*agentmemory.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentmemory.Memory, error) {
 		ids, err := sourceIDs(req.TenantInfo, req.IDs)
 		if err != nil || len(ids) == 0 {
-			return []*agent.Memory{}, err
+			return []*agentmemory.Memory{}, err
 		}
 
-		m := agentdb.Memories
+		m := agentmemorydb.Memories
 		memories, err := m.Where(m.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read memories to index: %w", err)
 		}
 		if memories == nil {
-			memories = []*agent.Memory{}
+			memories = []*agentmemory.Memory{}
 		}
 
 		return memories, nil
@@ -121,15 +121,15 @@ func (r *repository) GetMemories(
 
 func (r *repository) GetDocuments(
 	ctx context.Context,
-	req *agentports.RetrievalDocumentsRequest,
-) ([]*agentports.RetrievalDocumentSource, error) {
+	req *retrievalports.RetrievalDocumentsRequest,
+) ([]*retrievalports.RetrievalDocumentSource, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]*agentports.RetrievalDocumentSource, error) {
+		func(ctx context.Context) ([]*retrievalports.RetrievalDocumentSource, error) {
 			ids, err := sourceIDs(req.TenantInfo, req.IDs)
 			if err != nil || len(ids) == 0 {
-				return []*agentports.RetrievalDocumentSource{}, err
+				return []*retrievalports.RetrievalDocumentSource{}, err
 			}
 
 			db := r.db.Keel(ctx)
@@ -139,14 +139,14 @@ func (r *repository) GetDocuments(
 				return nil, fmt.Errorf("read documents: %w", err)
 			}
 			if len(docs) == 0 {
-				return []*agentports.RetrievalDocumentSource{}, nil
+				return []*retrievalports.RetrievalDocumentSource{}, nil
 			}
 
 			found := make([]pulid.ID, 0, len(docs))
-			sources := make(map[pulid.ID]*agentports.RetrievalDocumentSource, len(docs))
+			sources := make(map[pulid.ID]*retrievalports.RetrievalDocumentSource, len(docs))
 			for _, doc := range docs {
 				found = append(found, doc.ID)
-				sources[doc.ID] = &agentports.RetrievalDocumentSource{Document: doc}
+				sources[doc.ID] = &retrievalports.RetrievalDocumentSource{Document: doc}
 			}
 
 			dc := documentcontentdb.Contents
@@ -166,7 +166,7 @@ func (r *repository) GetDocuments(
 				}
 			}
 
-			ordered := make([]*agentports.RetrievalDocumentSource, 0, len(docs))
+			ordered := make([]*retrievalports.RetrievalDocumentSource, 0, len(docs))
 			for _, doc := range docs {
 				ordered = append(ordered, sources[doc.ID])
 			}
@@ -180,7 +180,7 @@ func attachPages(
 	ctx context.Context,
 	db *keel.DB,
 	documentIDs []pulid.ID,
-	sources map[pulid.ID]*agentports.RetrievalDocumentSource,
+	sources map[pulid.ID]*retrievalports.RetrievalDocumentSource,
 ) error {
 	p := documentcontentdb.Pages
 	pages, err := p.Where(p.DocumentID.In(documentIDs...)).
@@ -206,7 +206,7 @@ func attachPages(
 
 func (r *repository) GetInboundMessages(
 	ctx context.Context,
-	req agentports.RetrievalSourcesRequest,
+	req retrievalports.RetrievalSourcesRequest,
 ) ([]*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(
 		ctx,
@@ -233,7 +233,7 @@ func (r *repository) GetInboundMessages(
 
 func (r *repository) ListModelKeys(
 	ctx context.Context,
-	req agentports.ListRetrievalModelKeysRequest,
+	req retrievalports.ListRetrievalModelKeysRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -268,7 +268,7 @@ func (r *repository) ListModelKeys(
 
 func (r *repository) ListSourceIDs(
 	ctx context.Context,
-	req *agentports.ListRetrievalSourceIDsRequest,
+	req *retrievalports.ListRetrievalSourceIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
 		if err := validateTenant(req.TenantInfo); err != nil {
@@ -303,7 +303,9 @@ type keywordPlan struct {
 	limit int
 }
 
-func planKeywordSearch(req agentports.RetrievalKeywordSearchRequest) (keywordPlan, bool, error) {
+func planKeywordSearch(
+	req *retrievalports.RetrievalKeywordSearchRequest,
+) (keywordPlan, bool, error) {
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return keywordPlan{}, false, err
 	}
@@ -323,18 +325,18 @@ func planKeywordSearch(req agentports.RetrievalKeywordSearchRequest) (keywordPla
 
 func (r *repository) SearchDocuments(
 	ctx context.Context,
-	req agentports.RetrievalKeywordSearchRequest,
-) ([]agentports.RetrievalKeywordHit, error) {
+	req *retrievalports.RetrievalKeywordSearchRequest,
+) ([]retrievalports.RetrievalKeywordHit, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
+		func(ctx context.Context) ([]retrievalports.RetrievalKeywordHit, error) {
 			plan, ok, err := planKeywordSearch(req)
 			if err != nil || !ok {
-				return []agentports.RetrievalKeywordHit{}, err
+				return []retrievalports.RetrievalKeywordHit{}, err
 			}
 
-			hits, err := keel.Into[agentports.RetrievalKeywordHit](
+			hits, err := keel.Into[retrievalports.RetrievalKeywordHit](
 				ctx,
 				r.db.Keel(ctx),
 				searchDocumentsQuery(plan),
@@ -343,7 +345,7 @@ func (r *repository) SearchDocuments(
 				return nil, fmt.Errorf("search documents by keyword: %w", err)
 			}
 			if hits == nil {
-				hits = []agentports.RetrievalKeywordHit{}
+				hits = []retrievalports.RetrievalKeywordHit{}
 			}
 
 			return hits, nil
@@ -375,18 +377,18 @@ func searchDocumentsQuery(plan keywordPlan) *keel.Query[*document.Document] {
 
 func (r *repository) SearchInboundMessages(
 	ctx context.Context,
-	req agentports.RetrievalKeywordSearchRequest,
-) ([]agentports.RetrievalKeywordHit, error) {
+	req *retrievalports.RetrievalKeywordSearchRequest,
+) ([]retrievalports.RetrievalKeywordHit, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
-		func(ctx context.Context) ([]agentports.RetrievalKeywordHit, error) {
+		func(ctx context.Context) ([]retrievalports.RetrievalKeywordHit, error) {
 			plan, ok, err := planKeywordSearch(req)
 			if err != nil || !ok {
-				return []agentports.RetrievalKeywordHit{}, err
+				return []retrievalports.RetrievalKeywordHit{}, err
 			}
 
-			hits, err := keel.Into[agentports.RetrievalKeywordHit](
+			hits, err := keel.Into[retrievalports.RetrievalKeywordHit](
 				ctx,
 				r.db.Keel(ctx),
 				searchMessagesQuery(plan, req.Messages),
@@ -395,7 +397,7 @@ func (r *repository) SearchInboundMessages(
 				return nil, fmt.Errorf("search inbound messages by keyword: %w", err)
 			}
 			if hits == nil {
-				hits = []agentports.RetrievalKeywordHit{}
+				hits = []retrievalports.RetrievalKeywordHit{}
 			}
 
 			return hits, nil
@@ -405,7 +407,7 @@ func (r *repository) SearchInboundMessages(
 
 func searchMessagesQuery(
 	plan keywordPlan,
-	filter agentports.InboundMessageFilter,
+	filter retrievalports.InboundMessageFilter,
 ) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
 	english := anyWord("english")

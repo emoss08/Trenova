@@ -4,15 +4,19 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcdocsync"
+	"github.com/emoss08/trenova/internal/infrastructure/accounting/bcsession"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectorports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func findRequest(kind accountingsync.SyncObjectType) *accountingsyncports.AccountingFindDocumentRequest {
-	return &accountingsyncports.AccountingFindDocumentRequest{
+func findRequest(
+	kind accountingsync.SyncObjectType,
+) *accountingconnectorports.AccountingFindDocumentRequest {
+	return &accountingconnectorports.AccountingFindDocumentRequest{
 		Auth:                   testAuth(),
 		Kind:                   kind,
 		DocNumber:              "TRN-1001",
@@ -86,7 +90,11 @@ func TestFindDocumentForBillsReturnsThePurchaseRefs(t *testing.T) {
 	assert.Equal(t, "true", found.Refs[accountingsync.ExternalRefCreditDocument])
 	assert.Contains(t, found.Refs[accountingsync.ExternalRefURL], "page=140")
 	call, _ := fake.find(http.MethodGet, "/purchaseCreditMemos")
-	assert.Equal(t, "vendorCreditMemoNumber eq 'TRN-1001' and vendorId eq "+testVendor, call.filter())
+	assert.Equal(
+		t,
+		"vendorCreditMemoNumber eq 'TRN-1001' and vendorId eq "+testVendor,
+		call.filter(),
+	)
 }
 
 func TestFindDocumentForPaymentsReadsTheLedgerByDocumentNumber(t *testing.T) {
@@ -104,19 +112,33 @@ func TestFindDocumentForPaymentsReadsTheLedgerByDocumentNumber(t *testing.T) {
 	}}
 	conn := testConnector(t, fake)
 
-	found, ok, err := conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectCustomerPayment))
+	found, ok, err := conn.FindDocument(
+		t.Context(),
+		findRequest(accountingsync.SyncObjectCustomerPayment),
+	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	number := requestReference(testRequestID)
+	number := bcdocsync.RequestReference(testRequestID)
 	assert.Equal(t, number, found.ExternalID)
-	assert.Equal(t, docTypeCustomerPayment, found.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeCustomerPayment,
+		found.Refs[accountingsync.ExternalRefDocumentType],
+	)
 	call, _ := fake.find(http.MethodGet, "/generalLedgerEntries")
 	assert.Equal(t, "documentNumber eq '"+number+"'", call.filter())
 
-	billPay, ok, err := conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectDriverBillPay))
+	billPay, ok, err := conn.FindDocument(
+		t.Context(),
+		findRequest(accountingsync.SyncObjectDriverBillPay),
+	)
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, docTypeVendorPayment, billPay.Refs[accountingsync.ExternalRefDocumentType])
+	assert.Equal(
+		t,
+		bcdocsync.DocTypeVendorPayment,
+		billPay.Refs[accountingsync.ExternalRefDocumentType],
+	)
 
 	noRequest := findRequest(accountingsync.SyncObjectCustomerPayment)
 	noRequest.RequestID = ""
@@ -130,10 +152,13 @@ func TestFindDocumentRefusesOtherKinds(t *testing.T) {
 
 	fake := &fakeBC{}
 	conn := testConnector(t, fake)
-	_, ok, err := conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectCreditApplication))
+	_, ok, err := conn.FindDocument(
+		t.Context(),
+		findRequest(accountingsync.SyncObjectCreditApplication),
+	)
 	require.NoError(t, err)
 	assert.False(t, ok)
 	_, _, err = conn.FindDocument(t.Context(), findRequest(accountingsync.SyncObjectCustomer))
-	require.ErrorIs(t, err, errDocumentKind)
+	require.ErrorIs(t, err, bcsession.ErrDocumentKind)
 	assert.Empty(t, fake.all())
 }

@@ -4,9 +4,11 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -15,19 +17,19 @@ func ptoPolicyFromInput(
 	input *gqlmodel.PTOPolicyInput,
 	id pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*worker.PTOPolicy, error) {
-	floor, err := base.ParseNullDecimalField("negativeFloorDays", input.NegativeFloorDays)
+) (*pto.PTOPolicy, error) {
+	floor, err := gqldecimal.ParseNullDecimalField("negativeFloorDays", input.NegativeFloorDays)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &worker.PTOPolicy{
+	entity := &pto.PTOPolicy{
 		ID:                id,
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		Name:              input.Name,
 		Code:              input.Code,
-		Description:       base.StringValue(input.Description),
+		Description:       gqlscalar.StringValue(input.Description),
 		Status:            input.Status,
 		IsDefault:         input.IsDefault,
 		YearBasis:         input.YearBasis,
@@ -37,8 +39,8 @@ func ptoPolicyFromInput(
 		EnforceBalance:    input.EnforceBalance,
 		AllowNegative:     input.AllowNegative,
 		NegativeFloorDays: floor.Decimal,
-		Version:           int64(base.IntValue(input.Version)),
-		Rules:             make([]*worker.PTOPolicyRule, 0, len(input.Rules)),
+		Version:           int64(gqlscalar.IntValue(input.Version)),
+		Rules:             make([]*pto.PTOPolicyRule, 0, len(input.Rules)),
 	}
 
 	for i, ruleInput := range input.Rules {
@@ -46,7 +48,7 @@ func ptoPolicyFromInput(
 			continue
 		}
 		prefix := "rules[" + strconv.Itoa(i) + "]."
-		amount, aErr := base.ParseDecimalField(
+		amount, aErr := gqldecimal.ParseDecimalField(
 			prefix+"accrualAmountDays",
 			ruleInput.AccrualAmountDays,
 			false,
@@ -54,14 +56,14 @@ func ptoPolicyFromInput(
 		if aErr != nil {
 			return nil, aErr
 		}
-		maxBalance, mErr := base.ParseNullDecimalField(
+		maxBalance, mErr := gqldecimal.ParseNullDecimalField(
 			prefix+"maxBalanceDays",
 			ruleInput.MaxBalanceDays,
 		)
 		if mErr != nil {
 			return nil, mErr
 		}
-		carryCap, cErr := base.ParseNullDecimalField(
+		carryCap, cErr := gqldecimal.ParseNullDecimalField(
 			prefix+"carryoverCapDays",
 			ruleInput.CarryoverCapDays,
 		)
@@ -72,11 +74,11 @@ func ptoPolicyFromInput(
 		if tErr != nil {
 			return nil, tErr
 		}
-		onTermination := worker.PTOTerminationForfeit
+		onTermination := pto.PTOTerminationForfeit
 		if ruleInput.OnTermination != nil {
 			onTermination = *ruleInput.OnTermination
 		}
-		entity.Rules = append(entity.Rules, &worker.PTOPolicyRule{
+		entity.Rules = append(entity.Rules, &pto.PTOPolicyRule{
 			OrganizationID:    tenantInfo.OrgID,
 			BusinessUnitID:    tenantInfo.BuID,
 			PTOPolicyID:       id,
@@ -86,7 +88,7 @@ func ptoPolicyFromInput(
 			MaxBalanceDays:    maxBalance,
 			CarryoverCapDays:  carryCap,
 			CarryoverExpiryDays: int32(
-				base.IntValue(ruleInput.CarryoverExpiryDays),
+				gqlscalar.IntValue(ruleInput.CarryoverExpiryDays),
 			), //nolint:gosec // bounded by validation
 			Tiers:         tiers,
 			OnTermination: onTermination,
@@ -102,14 +104,14 @@ func ptoPolicyFromInput(
 func ptoTiersFromInput(
 	prefix string,
 	inputs []*gqlmodel.PTOAccrualTierInput,
-) ([]worker.PTOAccrualTier, error) {
-	tiers := make([]worker.PTOAccrualTier, 0, len(inputs))
+) ([]pto.PTOAccrualTier, error) {
+	tiers := make([]pto.PTOAccrualTier, 0, len(inputs))
 	for i, tierInput := range inputs {
 		if tierInput == nil {
 			continue
 		}
 		tierPrefix := prefix + "tiers[" + strconv.Itoa(i) + "]."
-		amount, err := base.ParseDecimalField(
+		amount, err := gqldecimal.ParseDecimalField(
 			tierPrefix+"accrualAmountDays",
 			tierInput.AccrualAmountDays,
 			true,
@@ -117,14 +119,14 @@ func ptoTiersFromInput(
 		if err != nil {
 			return nil, err
 		}
-		maxBalance, err := base.ParseNullDecimalField(
+		maxBalance, err := gqldecimal.ParseNullDecimalField(
 			tierPrefix+"maxBalanceDays",
 			tierInput.MaxBalanceDays,
 		)
 		if err != nil {
 			return nil, err
 		}
-		tiers = append(tiers, worker.PTOAccrualTier{
+		tiers = append(tiers, pto.PTOAccrualTier{
 			MinMonths:         int32(tierInput.MinMonths), //nolint:gosec // bounded by validation
 			AccrualAmountDays: amount,
 			MaxBalanceDays:    maxBalance,
@@ -134,12 +136,12 @@ func ptoTiersFromInput(
 }
 
 func ptoPolicyCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.PTOPolicy],
+	result *pagination.CursorListResult[*pto.PTOPolicy],
 ) (*gqlmodel.PTOPolicyConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
+		func(node *pto.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
 			return &gqlmodel.PTOPolicyEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -149,9 +151,9 @@ func ptoPolicyCursorConnectionToModel(
 
 	return &gqlmodel.PTOPolicyConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.PTOPolicyEdge) string { return edge.Cursor },
 			),
@@ -162,12 +164,12 @@ func ptoPolicyCursorConnectionToModel(
 }
 
 func ptoLedgerCursorConnectionToModel(
-	result *pagination.CursorListResult[*worker.WorkerPTOLedgerEntry],
+	result *pagination.CursorListResult[*pto.WorkerPTOLedgerEntry],
 ) (*gqlmodel.WorkerPTOLedgerConnection, error) {
-	edges, err := base.EntityCursorEdges(
+	edges, err := gqlconnection.EntityCursorEdges(
 		result.Items,
 		result,
-		func(node *worker.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
+		func(node *pto.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
 			return &gqlmodel.WorkerPTOLedgerEdge{Node: node, Cursor: cursor}
 		},
 	)
@@ -177,9 +179,9 @@ func ptoLedgerCursorConnectionToModel(
 
 	return &gqlmodel.WorkerPTOLedgerConnection{
 		Edges: edges,
-		PageInfo: base.PageInfo(
+		PageInfo: gqlconnection.PageInfo(
 			result.HasNextPage,
-			base.LastEdgeCursor(
+			gqlconnection.LastEdgeCursor(
 				edges,
 				func(edge *gqlmodel.WorkerPTOLedgerEdge) string { return edge.Cursor },
 			),
@@ -199,14 +201,14 @@ func plannedEntriesToPointers(
 	return out
 }
 
-func ptoPolicyStatusString(status *worker.PTOPolicyStatus) string {
+func ptoPolicyStatusString(status *pto.PTOPolicyStatus) string {
 	if status == nil {
 		return ""
 	}
 	return string(*status)
 }
 
-func ptoLedgerEntryTypeString(entryType *worker.PTOLedgerEntryType) string {
+func ptoLedgerEntryTypeString(entryType *pto.PTOLedgerEntryType) string {
 	if entryType == nil {
 		return ""
 	}
@@ -221,7 +223,7 @@ func openingBalancesFromInput(
 		if input == nil {
 			continue
 		}
-		days, err := base.ParseDecimalField("openingBalances", input.Days, true)
+		days, err := gqldecimal.ParseDecimalField("openingBalances", input.Days, true)
 		if err != nil {
 			return nil, err
 		}

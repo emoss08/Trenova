@@ -3,6 +3,7 @@ package tariff
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/rating/app/tarifftables"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -14,13 +15,13 @@ var _ tariffports.ContextSource = (*Contexts)(nil)
 type ContextsParams struct {
 	fx.In
 
-	Tables   *Tables
+	Tables   *tarifftables.Tables
 	Codes    *Codes
 	Settings *Settings
 }
 
 type Contexts struct {
-	tables   *Tables
+	tables   *tarifftables.Tables
 	codes    *Codes
 	settings *Settings
 }

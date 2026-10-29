@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/infrastructure/config/realtimeconfig"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
@@ -24,8 +24,8 @@ const (
 type ChangeFeedParams struct {
 	fx.In
 
-	Client *redis.Client
-	Config *config.Config
+	Client         *redis.Client
+	RealtimeConfig *realtimeconfig.Config
 }
 
 type ChangeFeed struct {
@@ -33,10 +33,10 @@ type ChangeFeed struct {
 	shards int
 }
 
-func NewChangeFeed(p ChangeFeedParams) agentports.RecordChangeFeed {
+func NewChangeFeed(p ChangeFeedParams) realtimeports.RecordChangeFeed {
 	return &ChangeFeed{
 		client: p.Client,
-		shards: p.Config.GetRealtimeConfig().GetShardCount(),
+		shards: p.RealtimeConfig.GetShardCount(),
 	}
 }
 
@@ -79,8 +79,8 @@ func (f *ChangeFeed) head(ctx context.Context, shard int) (string, error) {
 
 func (f *ChangeFeed) Since(
 	ctx context.Context,
-	req *agentports.RecordChangesRequest,
-) (*agentports.RecordChanges, error) {
+	req *realtimeports.RecordChangesRequest,
+) (*realtimeports.RecordChanges, error) {
 	tenant := tenantKey(req.OrganizationID, req.BusinessUnitID)
 	shard := shardFor(tenant, f.shards)
 
@@ -90,7 +90,7 @@ func (f *ChangeFeed) Since(
 		if err != nil {
 			return nil, err
 		}
-		return &agentports.RecordChanges{Cursor: head}, nil
+		return &realtimeports.RecordChanges{Cursor: head}, nil
 	}
 
 	watched := make(map[string]struct{}, len(req.Records))
@@ -133,14 +133,14 @@ func (f *ChangeFeed) Since(
 		}
 	}
 
-	return &agentports.RecordChanges{
+	return &realtimeports.RecordChanges{
 		Cursor:  formatCursor(shard, from.String()),
 		Changes: merged.changes(),
 	}, nil
 }
 
 func relevant(e *entry, tenant string, needles [][]byte) bool {
-	if e.tenant != tenant || e.event != agentports.RealtimeEventInvalidation ||
+	if e.tenant != tenant || e.event != realtimeports.RealtimeEventInvalidation ||
 		e.ephemeral || e.audience != "" || e.scope != "" {
 		return false
 	}
@@ -152,11 +152,11 @@ func relevant(e *entry, tenant string, needles [][]byte) bool {
 
 type changeSet struct {
 	order []string
-	byID  map[string]*agentports.WatchedRecordChange
+	byID  map[string]*realtimeports.WatchedRecordChange
 }
 
 func newChangeSet() *changeSet {
-	return &changeSet{byID: make(map[string]*agentports.WatchedRecordChange)}
+	return &changeSet{byID: make(map[string]*realtimeports.WatchedRecordChange)}
 }
 
 func (s *changeSet) add(change *changedRecord) {
@@ -165,7 +165,7 @@ func (s *changeSet) add(change *changedRecord) {
 	current, seen := s.byID[id]
 	if !seen {
 		s.order = append(s.order, id)
-		s.byID[id] = &agentports.WatchedRecordChange{
+		s.byID[id] = &realtimeports.WatchedRecordChange{
 			RecordID:    id,
 			Resource:    change.Resource,
 			Action:      change.Action,
@@ -192,11 +192,11 @@ func (s *changeSet) add(change *changedRecord) {
 	}
 }
 
-func (s *changeSet) changes() []agentports.WatchedRecordChange {
+func (s *changeSet) changes() []realtimeports.WatchedRecordChange {
 	if len(s.order) == 0 {
 		return nil
 	}
-	out := make([]agentports.WatchedRecordChange, 0, len(s.order))
+	out := make([]realtimeports.WatchedRecordChange, 0, len(s.order))
 	for _, id := range s.order {
 		out = append(out, *s.byID[id])
 	}

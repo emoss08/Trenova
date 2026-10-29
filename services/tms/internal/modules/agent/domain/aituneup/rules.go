@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,7 +31,7 @@ type ReadyTool struct {
 
 type ProviderTaskUsage struct {
 	ProviderID pulid.ID
-	Task       aiprovider.Task
+	Task       aitask.Task
 	Calls      int
 	Failed     int
 	Rescued    int
@@ -108,17 +110,17 @@ type providerPair struct {
 }
 
 func reorderProviders(in *Inputs) []*TuneUp {
-	usage := make(map[pulid.ID]map[aiprovider.Task]ProviderTaskUsage, len(in.Enabled))
+	usage := make(map[pulid.ID]map[aitask.Task]ProviderTaskUsage, len(in.Enabled))
 	for _, row := range in.Usage {
 		if usage[row.ProviderID] == nil {
-			usage[row.ProviderID] = map[aiprovider.Task]ProviderTaskUsage{}
+			usage[row.ProviderID] = map[aitask.Task]ProviderTaskUsage{}
 		}
 		usage[row.ProviderID][row.Task] = row
 	}
 
 	evidence := map[providerPair]*Evidence{}
 	order := make([]providerPair, 0)
-	for _, task := range aiprovider.AllTasks() {
+	for _, task := range aitask.AllTasks() {
 		chain := chainFor(in.Enabled, task)
 		if len(chain) < 2 {
 			continue
@@ -162,7 +164,7 @@ func reorderProviders(in *Inputs) []*TuneUp {
 	return out
 }
 
-func chainFor(enabled []*aiprovider.Provider, task aiprovider.Task) []*aiprovider.Provider {
+func chainFor(enabled []*aiprovider.Provider, task aitask.Task) []*aiprovider.Provider {
 	chain := make([]*aiprovider.Provider, 0, len(enabled))
 	for _, provider := range enabled {
 		if ok, _ := provider.CanServeTask(task); ok {
@@ -224,8 +226,8 @@ func assignTasks(in *Inputs) []*TuneUp {
 		return nil
 	}
 	out := make([]*TuneUp, 0)
-	for _, task := range aiprovider.AllTasks() {
-		if aiprovider.RouteFor(in.Enabled, task) != nil {
+	for _, task := range aitask.AllTasks() {
+		if airouting.RouteFor(in.Enabled, task) != nil {
 			continue
 		}
 		assignee := firstAbleTo(in.Enabled, task)
@@ -243,7 +245,7 @@ func assignTasks(in *Inputs) []*TuneUp {
 	return out
 }
 
-func firstAbleTo(enabled []*aiprovider.Provider, task aiprovider.Task) *aiprovider.Provider {
+func firstAbleTo(enabled []*aiprovider.Provider, task aitask.Task) *aiprovider.Provider {
 	for _, provider := range enabled {
 		candidate := *provider
 		candidate.Tasks = append(slices.Clone(provider.Tasks), task)

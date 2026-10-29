@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,7 +62,9 @@ func TestDefinition_AcceptsTiersAndLimitsOnACoreTool(t *testing.T) {
 	definition := validDefinition()
 	definition.ToolNames = nil
 	definition.AutonomyCeiling = agent.TierAutoExecute
-	definition.ToolTiers = map[string]agent.AutonomyTier{"agent_create_memory": agent.TierAutoExecute}
+	definition.ToolTiers = map[string]agent.AutonomyTier{
+		"agent_create_memory": agent.TierAutoExecute,
+	}
 	definition.ToolDailyLimits = map[string]int{"agent_raise_exception": 5}
 
 	multiErr := errortypes.NewMultiError()
@@ -90,8 +94,8 @@ func TestWithoutCoreTools_KeepsOnlyTheSelection(t *testing.T) {
 func TestTemplates_ListNoCoreTool(t *testing.T) {
 	t.Parallel()
 
-	for _, template := range agentdefinition.AllTemplates() {
-		for _, tool := range template.StarterTools() {
+	for _, template := range agenttemplate.AllTemplates() {
+		for _, tool := range agentpreset.StarterTools(template) {
 			assert.Falsef(t, agentdefinition.IsCoreTool(tool),
 				"%s lists the core tool %s", template.Label(), tool)
 		}
@@ -114,7 +118,11 @@ func TestHoldingReads_AddsEveryReadButOnesTheAgentSwitchedOff(t *testing.T) {
 		"customer_get",
 	})
 
-	assert.Equal(t, []string{"shipment_get", "dispatch_assign_move", "customer_get"}, reading.ToolNames)
+	assert.Equal(
+		t,
+		[]string{"shipment_get", "dispatch_assign_move", "customer_get"},
+		reading.ToolNames,
+	)
 	assert.Equal(
 		t,
 		[]string{"shipment_get", "dispatch_assign_move"},

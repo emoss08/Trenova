@@ -48,7 +48,7 @@ func (s *Service) Prepare(ctx context.Context, p *PrepareParams) (*Prepared, err
 
 	timezone := p.Timezone
 	if timezone == "" {
-		timezone = s.orgTimezone(ctx, p.Tenant)
+		timezone = s.OrgTimezone(ctx, p.Tenant)
 	}
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {

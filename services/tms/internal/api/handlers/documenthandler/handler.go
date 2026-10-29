@@ -7,10 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentservice"
 	"github.com/emoss08/trenova/internal/modules/documents/app/documentuploadservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,11 +41,11 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService documentports.DocumentContentService
 	ExtractionStatus       documentports.ExtractionStatusReader
-	ImportAssistant        shipmentports.ShipmentImportAssistantService
-	PageAssistant          agentports.PageAssistant `optional:"true"`
+	ImportAssistant        shipmentimportassistantports.ShipmentImportAssistantService
+	PageAssistant          assistantports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
-	Config                 *config.Config `optional:"true"`
+	StorageConfig          *storageconfig.Config `optional:"true"`
 	Logger                 *zap.Logger
 }
 
@@ -54,11 +54,11 @@ type Handler struct {
 	uploadService   *documentuploadservice.Service
 	contentService  documentports.DocumentContentService
 	extraction      documentports.ExtractionStatusReader
-	importAssistant shipmentports.ShipmentImportAssistantService
-	pageAssistant   agentports.PageAssistant
+	importAssistant shipmentimportassistantports.ShipmentImportAssistantService
+	pageAssistant   assistantports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
-	storageConfig   config.StorageConfig
+	storageConfig   storageconfig.Config
 	logger          *zap.Logger
 }
 
@@ -76,9 +76,9 @@ func requestActorFromAuthContext(authCtx *authctx.AuthContext) permissionports.R
 const multipartFormOverheadBytes int64 = 1 << 20
 
 func New(p Params) *Handler {
-	storageConfig := config.StorageConfig{}
-	if p.Config != nil {
-		storageConfig = p.Config.Storage
+	storageConfig := storageconfig.Config{}
+	if p.StorageConfig != nil {
+		storageConfig = *p.StorageConfig
 	}
 
 	return &Handler{
@@ -123,26 +123,26 @@ func NewTestHandler(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
-	importAssistant ...shipmentports.ShipmentImportAssistantService,
+	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
-	return NewTestHandlerWithConfig(service, eh, pm, &config.Config{}, importAssistant...)
+	return NewTestHandlerWithConfig(service, eh, pm, &storageconfig.Config{}, importAssistant...)
 }
 
 func NewTestHandlerWithConfig(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
-	cfg *config.Config,
-	importAssistant ...shipmentports.ShipmentImportAssistantService,
+	cfg *storageconfig.Config,
+	importAssistant ...shipmentimportassistantports.ShipmentImportAssistantService,
 ) *Handler {
-	var assistant shipmentports.ShipmentImportAssistantService
+	var assistant shipmentimportassistantports.ShipmentImportAssistantService
 	if len(importAssistant) > 0 {
 		assistant = importAssistant[0]
 	}
 
-	storageConfig := config.StorageConfig{}
+	storageConfig := storageconfig.Config{}
 	if cfg != nil {
-		storageConfig = cfg.Storage
+		storageConfig = *cfg
 	}
 
 	return &Handler{
@@ -1555,7 +1555,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	actor := requestActorFromAuthContext(authCtx)
 	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
-		&agentports.OpenPageThreadRequest{
+		&assistantports.OpenPageThreadRequest{
 			TenantInfo:  pagination.FromAuthAsUser(authCtx),
 			Origin:      conversation.ThreadOriginImport,
 			SubjectType: agent.SubjectDocument,

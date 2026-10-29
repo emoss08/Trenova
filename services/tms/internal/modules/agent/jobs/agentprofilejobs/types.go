@@ -7,8 +7,8 @@ package agentprofilejobs
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -53,8 +53,8 @@ type ActiveUsersInput struct {
 // ModelReply is the model step's answer. NoProvider means the organization has
 // no AI provider for the task: nothing is written and nothing failed.
 type ModelReply struct {
-	Result     *agentports.StructuredCompletionResult `json:"result,omitempty"`
-	NoProvider bool                                   `json:"noProvider,omitempty"`
+	Result     *llmports.StructuredCompletionResult `json:"result,omitempty"`
+	NoProvider bool                                 `json:"noProvider,omitempty"`
 }
 
 type ProfileResult struct {

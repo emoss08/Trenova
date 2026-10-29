@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -35,10 +36,9 @@ var (
 )
 
 var (
-	recordIDPattern = regexp.MustCompile(`(?i)\b[a-z]{2,8}_[0-9a-hjkmnp-tv-z]{26}\b`)
-	emailPattern    = regexp.MustCompile(`(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`)
-	phonePattern    = regexp.MustCompile(`\+?\(?\d[\d\s().\-]{8,}\d`)
-	officialSuffix  = []string{".gov", ".mil", ".gc.ca", ".gob.mx"}
+	emailPattern   = regexp.MustCompile(`(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}`)
+	phonePattern   = regexp.MustCompile(`\+?\(?\d[\d\s().\-]{8,}\d`)
+	officialSuffix = []string{".gov", ".mil", ".gc.ca", ".gob.mx"}
 )
 
 func CheckSearchQuery(query string) error {
@@ -49,7 +49,7 @@ func CheckSearchQuery(query string) error {
 		return ErrQueryTooShort
 	case length > MaxSearchQueryLength:
 		return ErrQueryTooLong
-	case recordIDPattern.MatchString(trimmed):
+	case recordids.Mentioned(trimmed):
 		return ErrQueryHasRecordID
 	case emailPattern.MatchString(trimmed):
 		return ErrQueryHasEmail

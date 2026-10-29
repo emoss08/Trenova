@@ -7,8 +7,8 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -42,9 +42,9 @@ func New(p Params) tenantports.BillingControlRepository {
 func (r *repository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
-) (*tenant.BillingControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.BillingControl, error) {
-		bc := tenantdb.BillingControls
+) (*billingcontrol.BillingControl, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingcontrol.BillingControl, error) {
+		bc := billingcontroldb.BillingControls
 		entity, err := bc.Where(bc.OrganizationID.Eq(orgID)).
 			Cache(resultcache.Settings()...).
 			One(ctx, r.db.Keel(ctx))
@@ -61,34 +61,40 @@ func (r *repository) GetByOrgID(
 	})
 }
 
-func (r *repository) ListAutomaticTransfer(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (r *repository) ListAutomaticTransfer(
+	ctx context.Context,
+) ([]*billingcontrol.BillingControl, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
 		"list organizations that transfer freight to billing automatically",
 	)
-	bc := tenantdb.BillingControls
+	bc := billingcontroldb.BillingControls
 	return r.listAll(
 		ctx,
 		"list automatic transfer billing controls",
-		bc.BillingQueueTransferMode.Eq(tenant.BillingQueueTransferModeAutomaticWhenReady),
+		bc.BillingQueueTransferMode.Eq(billingcontrol.BillingQueueTransferModeAutomaticWhenReady),
 	)
 }
 
-func (r *repository) ListPaymentReminders(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (r *repository) ListPaymentReminders(
+	ctx context.Context,
+) ([]*billingcontrol.BillingControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that email customers payment reminders")
 	return r.listAll(
 		ctx,
 		"list payment reminder billing controls",
-		tenantdb.BillingControls.PaymentRemindersEnabled.IsTrue(),
+		billingcontroldb.BillingControls.PaymentRemindersEnabled.IsTrue(),
 	)
 }
 
-func (r *repository) ListMonthlyStatements(ctx context.Context) ([]*tenant.BillingControl, error) {
+func (r *repository) ListMonthlyStatements(
+	ctx context.Context,
+) ([]*billingcontrol.BillingControl, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations that email customers monthly statements")
 	return r.listAll(
 		ctx,
 		"list monthly statement billing controls",
-		tenantdb.BillingControls.MonthlyStatementsEnabled.IsTrue(),
+		billingcontroldb.BillingControls.MonthlyStatementsEnabled.IsTrue(),
 	)
 }
 
@@ -96,25 +102,29 @@ func (r *repository) listAll(
 	ctx context.Context,
 	operation string,
 	filter keel.Pred,
-) ([]*tenant.BillingControl, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.BillingControl, error) {
-		items, err := tenantdb.BillingControls.AllTenants().
-			Where(filter).
-			All(ctx, r.db.Keel(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", operation, err)
-		}
+) ([]*billingcontrol.BillingControl, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]*billingcontrol.BillingControl, error) {
+			items, err := billingcontroldb.BillingControls.AllTenants().
+				Where(filter).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", operation, err)
+			}
 
-		return items, nil
-	})
+			return items, nil
+		},
+	)
 }
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *tenant.BillingControl,
-) (*tenant.BillingControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.BillingControl, error) {
-		if err := tenantdb.BillingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+	entity *billingcontrol.BillingControl,
+) (*billingcontrol.BillingControl, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingcontrol.BillingControl, error) {
+		if err := billingcontroldb.BillingControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error(
 				"failed to update billing control",
 				zap.String("orgID", entity.OrganizationID.String()),

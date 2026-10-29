@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerstatementports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/statementtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -112,7 +115,10 @@ type fakeEmail struct {
 	sent []*emailports.SendEmailRequest
 }
 
-func (f *fakeEmail) Send(_ context.Context, req *emailports.SendEmailRequest) (*email.Message, error) {
+func (f *fakeEmail) Send(
+	_ context.Context,
+	req *emailports.SendEmailRequest,
+) (*email.Message, error) {
 	f.sent = append(f.sent, req)
 	return &email.Message{}, nil
 }
@@ -130,10 +136,10 @@ type fixture struct {
 	statements  *fakeStatements
 	collections *fakeCollections
 	email       *fakeEmail
-	pdfs        []*documenttemplate.CustomerStatementContext
-	messages    []*documenttemplate.CustomerStatementEmailContext
+	pdfs        []*statementtemplate.CustomerStatementContext
+	messages    []*statementtemplate.CustomerStatementEmailContext
 	recorded    []*documenttemplateports.RecordGeneratedDocumentRequest
-	control     *tenant.BillingControl
+	control     *billingcontrol.BillingControl
 	customers   map[pulid.ID]*customer.Customer
 	tenant      pagination.TenantInfo
 }
@@ -193,7 +199,7 @@ func newFixture(t *testing.T) *fixture {
 				},
 			},
 		}},
-		control: &tenant.BillingControl{
+		control: &billingcontrol.BillingControl{
 			OrganizationID:           pulid.MustNew("org_"),
 			BusinessUnitID:           pulid.MustNew("bu_"),
 			MonthlyStatementsEnabled: true,
@@ -218,7 +224,8 @@ func newFixture(t *testing.T) *fixture {
 				}
 			}
 			return out, nil
-		}).Maybe()
+		}).
+		Maybe()
 
 	orgs := tenantportsmock.NewMockOrganizationRepository(t)
 	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&tenant.Organization{
@@ -240,7 +247,7 @@ func newFixture(t *testing.T) *fixture {
 			_ context.Context,
 			req *documenttemplateports.RenderDocumentRequest,
 		) (*documenttemplateports.RenderedDocument, error) {
-			f.pdfs = append(f.pdfs, req.Data.(*documenttemplate.CustomerStatementContext))
+			f.pdfs = append(f.pdfs, req.Data.(*statementtemplate.CustomerStatementContext))
 			return &documenttemplateports.RenderedDocument{PDF: pdfBytes}, nil
 		}).Maybe()
 	templates.EXPECT().RenderMessage(mock.Anything, mock.Anything).RunAndReturn(
@@ -248,16 +255,23 @@ func newFixture(t *testing.T) *fixture {
 			_ context.Context,
 			req *documenttemplateports.RenderMessageRequest,
 		) (*documenttemplateports.RenderedMessage, error) {
-			f.messages = append(f.messages, req.Data.(*documenttemplate.CustomerStatementEmailContext))
-			return &documenttemplateports.RenderedMessage{Subject: "Statement", HTML: "<p/>", Text: "text"}, nil
+			f.messages = append(
+				f.messages,
+				req.Data.(*statementtemplate.CustomerStatementEmailContext),
+			)
+			return &documenttemplateports.RenderedMessage{
+				Subject: "Statement",
+				HTML:    "<p/>",
+				Text:    "text",
+			}, nil
 		}).Maybe()
 	templates.EXPECT().RecordGeneratedDocument(mock.Anything, mock.Anything).RunAndReturn(
 		func(
 			_ context.Context,
 			req *documenttemplateports.RecordGeneratedDocumentRequest,
-		) (*documenttemplate.GeneratedDocument, error) {
+		) (*generateddocument.GeneratedDocument, error) {
 			f.recorded = append(f.recorded, req)
-			return &documenttemplate.GeneratedDocument{}, nil
+			return &generateddocument.GeneratedDocument{}, nil
 		}).Maybe()
 
 	f.svc = &Service{
@@ -278,20 +292,27 @@ func newFixture(t *testing.T) *fixture {
 
 func (f *fixture) customer(code, to string) *customer.Customer {
 	cus := &customer.Customer{
-		ID:             pulid.MustNew("cus_"),
-		Code:           code,
-		Name:           "Halstead Grocery",
-		AddressLine1:   "410 Market Ave",
-		City:           "Fort Worth",
-		PostalCode:     "76102",
-		BillingProfile: &customer.CustomerBillingProfile{SendStatements: true, BillingCurrency: "USD"},
-		EmailProfile:   &customer.CustomerEmailProfile{ToRecipients: to},
+		ID:           pulid.MustNew("cus_"),
+		Code:         code,
+		Name:         "Halstead Grocery",
+		AddressLine1: "410 Market Ave",
+		City:         "Fort Worth",
+		PostalCode:   "76102",
+		BillingProfile: &customer.CustomerBillingProfile{
+			SendStatements:  true,
+			BillingCurrency: "USD",
+		},
+		EmailProfile: &customer.CustomerEmailProfile{ToRecipients: to},
 	}
 	f.customers[cus.ID] = cus
 	return cus
 }
 
-func (f *fixture) sendRequest(cus *customer.Customer, start, end int64, note string) *customerstatementports.SendRequest {
+func (f *fixture) sendRequest(
+	cus *customer.Customer,
+	start, end int64,
+	note string,
+) *customerstatementports.SendRequest {
 	return &customerstatementports.SendRequest{
 		StatementRequest: customerstatementports.StatementRequest{
 			TenantInfo: f.tenant,
@@ -312,7 +333,11 @@ func TestSend_EmailsThePDFAndRecordsIt(t *testing.T) {
 	end := time.Date(2026, 8, 31, 23, 59, 59, 0, time.UTC).Unix()
 	actor := &permissionports.RequestActor{UserID: f.tenant.UserID}
 
-	result, err := f.svc.Send(t.Context(), f.sendRequest(cus, start, end, "  As requested  "), actor)
+	result, err := f.svc.Send(
+		t.Context(),
+		f.sendRequest(cus, start, end, "  As requested  "),
+		actor,
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"ap@halstead.test", "controller@halstead.test"}, result.SentTo)
@@ -399,7 +424,11 @@ func TestSend_ChecksTheDates(t *testing.T) {
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "startDate", validation.Field)
 
-	_, err = f.svc.Send(t.Context(), f.sendRequest(cus, 0, 0, strings.Repeat("x", maxNoteLength+1)), nil)
+	_, err = f.svc.Send(
+		t.Context(),
+		f.sendRequest(cus, 0, 0, strings.Repeat("x", maxNoteLength+1)),
+		nil,
+	)
 	require.ErrorAs(t, err, &validation)
 	assert.Equal(t, "note", validation.Field)
 
@@ -497,7 +526,13 @@ func TestSendMonthly_SendsLastMonthOnceToEachCustomer(t *testing.T) {
 	assert.Equal(t, wantPeriod.End, f.repo.inserted[0].PeriodEnd)
 	assert.True(t, f.repo.inserted[0].SentByID.IsNil())
 	require.Len(t, f.collections.activities, 1)
-	assert.True(t, strings.HasPrefix(f.collections.activities[0].Summary, "Monthly statement as of 2026-08-31"))
+	assert.True(
+		t,
+		strings.HasPrefix(
+			f.collections.activities[0].Summary,
+			"Monthly statement as of 2026-08-31",
+		),
+	)
 }
 
 func TestSendMonthly_DoesNothingWhileOff(t *testing.T) {

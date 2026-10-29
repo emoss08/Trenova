@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/shared/xero"
+	"github.com/emoss08/trenova/shared/xeroerrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -61,11 +62,11 @@ func TestNewOAuthClientRequiresConfig(t *testing.T) {
 	t.Parallel()
 
 	_, err := xero.NewOAuthClient(xero.OAuthConfig{ClientSecret: "s", RedirectURL: "r"})
-	require.ErrorIs(t, err, xero.ErrClientIDRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrClientIDRequired)
 	_, err = xero.NewOAuthClient(xero.OAuthConfig{ClientID: "c", RedirectURL: "r"})
-	require.ErrorIs(t, err, xero.ErrClientSecretRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrClientSecretRequired)
 	_, err = xero.NewOAuthClient(xero.OAuthConfig{ClientID: "c", ClientSecret: "s"})
-	require.ErrorIs(t, err, xero.ErrRedirectURLRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrRedirectURLRequired)
 }
 
 func TestAuthorizeURLCarriesDefaultScopesStateAndRedirect(t *testing.T) {
@@ -86,11 +87,16 @@ func TestAuthorizeURLCarriesDefaultScopesStateAndRedirect(t *testing.T) {
 	assert.Equal(t, testRedirect, query.Get("redirect_uri"))
 	assert.Equal(t, "state-123", query.Get("state"))
 	assert.Equal(t, strings.Join(xero.DefaultScopes(), " "), query.Get("scope"))
-	assert.Contains(t, raw, "openid%20profile%20email%20offline_access", "spaces are percent encoded")
+	assert.Contains(
+		t,
+		raw,
+		"openid%20profile%20email%20offline_access",
+		"spaces are percent encoded",
+	)
 	assert.NotContains(t, raw, testClientSecret)
 
 	_, err = client.AuthorizeURL(" ")
-	require.ErrorIs(t, err, xero.ErrStateRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrStateRequired)
 }
 
 func TestAuthorizeURLUsesConfiguredScopesAndLoginHost(t *testing.T) {
@@ -148,7 +154,7 @@ func TestExchangeCodePostsFormWithBasicAuth(t *testing.T) {
 	assert.Equal(t, 30*time.Minute, token.ExpiresIn)
 
 	_, err = client.ExchangeCode(t.Context(), " ")
-	require.ErrorIs(t, err, xero.ErrCodeRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrCodeRequired)
 }
 
 func TestRefreshPostsTheRotatingToken(t *testing.T) {
@@ -169,7 +175,7 @@ func TestRefreshPostsTheRotatingToken(t *testing.T) {
 	assert.Equal(t, "f9a1b2c3d4e5.refresh", token.RefreshToken)
 
 	_, err = client.Refresh(t.Context(), "")
-	require.ErrorIs(t, err, xero.ErrTokenRequired)
+	require.ErrorIs(t, err, xeroerrors.ErrTokenRequired)
 }
 
 func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
@@ -182,10 +188,10 @@ func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
 
 	_, err := client.Refresh(t.Context(), "old-refresh")
 	require.Error(t, err)
-	assert.True(t, xero.IsInvalidGrant(err))
-	assert.False(t, xero.IsInvalidClient(err))
-	assert.False(t, xero.IsTransient(err))
-	var oauthErr *xero.OAuthError
+	assert.True(t, xeroerrors.IsInvalidGrant(err))
+	assert.False(t, xeroerrors.IsInvalidClient(err))
+	assert.False(t, xeroerrors.IsTransient(err))
+	var oauthErr *xeroerrors.OAuthError
 	require.ErrorAs(t, err, &oauthErr)
 	assert.Equal(t, http.StatusBadRequest, oauthErr.Status)
 	assert.Equal(t, "invalid_grant", oauthErr.Code)
@@ -202,8 +208,8 @@ func TestRefreshRejectedAsInvalidClient(t *testing.T) {
 
 	_, err := client.Refresh(t.Context(), "refresh")
 	require.Error(t, err)
-	assert.True(t, xero.IsInvalidClient(err))
-	assert.False(t, xero.IsInvalidGrant(err))
+	assert.True(t, xeroerrors.IsInvalidClient(err))
+	assert.False(t, xeroerrors.IsInvalidGrant(err))
 	assert.NotContains(t, err.Error(), testClientSecret)
 }
 
@@ -216,7 +222,7 @@ func TestUnauthorizedClientIsAnInvalidClient(t *testing.T) {
 	})
 
 	_, err := client.ExchangeCode(t.Context(), "code")
-	assert.True(t, xero.IsInvalidClient(err))
+	assert.True(t, xeroerrors.IsInvalidClient(err))
 }
 
 func TestTokenCallsAreNeverRetried(t *testing.T) {
@@ -230,7 +236,7 @@ func TestTokenCallsAreNeverRetried(t *testing.T) {
 
 	_, err := client.Refresh(t.Context(), "refresh")
 	require.Error(t, err)
-	assert.True(t, xero.IsTransient(err))
+	assert.True(t, xeroerrors.IsTransient(err))
 	assert.Equal(t, int32(1), calls.Load(), "a rotated refresh token must not be sent twice")
 }
 
@@ -242,7 +248,7 @@ func TestTokenResponseWithoutTokensIsRejected(t *testing.T) {
 	})
 
 	_, err := client.ExchangeCode(t.Context(), "code")
-	require.ErrorIs(t, err, xero.ErrUnexpectedPayload)
+	require.ErrorIs(t, err, xeroerrors.ErrUnexpectedPayload)
 }
 
 func TestRevokeSendsTheRefreshTokenAsAForm(t *testing.T) {
@@ -259,7 +265,7 @@ func TestRevokeSendsTheRefreshTokenAsAForm(t *testing.T) {
 
 	require.NoError(t, client.Revoke(t.Context(), "refresh-to-revoke"))
 	assert.Equal(t, "refresh-to-revoke", form.Get("token"))
-	require.ErrorIs(t, client.Revoke(t.Context(), ""), xero.ErrTokenRequired)
+	require.ErrorIs(t, client.Revoke(t.Context(), ""), xeroerrors.ErrTokenRequired)
 }
 
 func TestAuthEventIDReadsTheClaimWithoutVerifying(t *testing.T) {
@@ -283,13 +289,15 @@ func TestAuthEventIDRejectsWhatIsNotAnXeroAccessToken(t *testing.T) {
 	t.Parallel()
 
 	_, err := xero.AuthEventID("")
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
 	_, err = xero.AuthEventID("only.two")
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
 	_, err = xero.AuthEventID("a.!!!.c")
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
-	_, err = xero.AuthEventID("a." + base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".c")
-	require.ErrorIs(t, err, xero.ErrMalformedToken)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
+	_, err = xero.AuthEventID(
+		"a." + base64.RawURLEncoding.EncodeToString([]byte("not json")) + ".c",
+	)
+	require.ErrorIs(t, err, xeroerrors.ErrMalformedToken)
 	_, err = xero.AuthEventID(jwt(t, `{"sub":"x"}`))
-	require.ErrorIs(t, err, xero.ErrAuthEventMissing)
+	require.ErrorIs(t, err, xeroerrors.ErrAuthEventMissing)
 }

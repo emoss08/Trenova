@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/intaketools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,7 +22,7 @@ import (
 )
 
 type pricingShipments struct {
-	rating    *shipmentports.ShipmentRatingOutcome
+	rating    *shipmentserviceports.ShipmentRatingOutcome
 	duplicate bool
 	refusal   error
 	saved     *shipment.Shipment
@@ -43,7 +44,7 @@ func (f *pricingShipments) prepare(entity *shipment.Shipment) error {
 	entity.FreightChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(1_850))
 	entity.OtherChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(150))
 	entity.TotalChargeAmount = decimal.NewNullDecimal(decimal.NewFromInt(2_000))
-	entity.FreightTerms = shipment.FreightTermsPrepaid
+	entity.FreightTerms = shipmentvocab.FreightTermsPrepaid
 
 	return nil
 }
@@ -52,12 +53,12 @@ func (f *pricingShipments) PreviewCreate(
 	_ context.Context,
 	entity *shipment.Shipment,
 	_ *permissionports.RequestActor,
-) (*shipmentports.ShipmentCreatePlan, error) {
+) (*shipmentserviceports.ShipmentCreatePlan, error) {
 	if err := f.prepare(entity); err != nil {
 		return nil, err
 	}
 
-	return &shipmentports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
+	return &shipmentserviceports.ShipmentCreatePlan{Shipment: entity, Rating: f.rating}, nil
 }
 
 func (f *pricingShipments) Create(
@@ -78,7 +79,7 @@ func (f *pricingShipments) Create(
 	return entity, nil
 }
 
-func createShipmentParams() agentports.ToolExecuteParams {
+func createShipmentParams() *agenttoolports.ToolExecuteParams {
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"shipment": shipmentPayload(
 			pulid.MustNew("cust_"),
@@ -95,19 +96,23 @@ func createShipmentParams() agentports.ToolExecuteParams {
 func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentserviceports.ShipmentRatingOutcome{
 		Adopted:       true,
 		Amount:        decimal.NewFromInt(1_850),
 		Currency:      "USD",
 		AgreementName: "Acme 2026 lanes",
 		Explanation:   "Priced by the Acme 2026 lanes agreement.",
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 	params := createShipmentParams()
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), params)
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), params)
+		},
+	)
 
 	assert.Empty(t, preview.Warnings)
 	assert.Contains(t, preview.Summary, "2 stops under BOL BOL-778")
@@ -117,7 +122,7 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 	require.Len(t, preview.Changes, 3)
 
 	created := agenttoolstest.PreviewChange(t, preview, 0)
-	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, agentpreview.PreviewOperationCreate, created.Operation)
 	assert.Equal(t, "Shipment with BOL BOL-778", created.Label)
 	customer := agenttoolstest.FieldByPath(t, created, "customerId")
 	require.NotNil(t, customer.AfterRef)
@@ -136,22 +141,34 @@ func TestCreateShipment_PreviewMatchesWhatIsSaved(t *testing.T) {
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, shipments.saved)
-	agenttoolstest.RequireCreateParity(t, created, shipments.saved, operationstools.EnteredShipmentOptions()...)
-	agenttoolstest.RequireCreateParity(t, delivery, shipments.saved.Moves[0].Stops[1], operationstools.EnteredStopOptions()...)
+	agenttoolstest.RequireCreateParity(
+		t,
+		created,
+		shipments.saved,
+		intaketools.EnteredShipmentOptions()...)
+	agenttoolstest.RequireCreateParity(
+		t,
+		delivery,
+		shipments.saved.Moves[0].Stops[1],
+		intaketools.EnteredStopOptions()...)
 }
 
 func TestCreateShipment_PreviewNamesADepartureFromTheContract(t *testing.T) {
 	t.Parallel()
 
-	shipments := &pricingShipments{rating: &shipmentports.ShipmentRatingOutcome{
+	shipments := &pricingShipments{rating: &shipmentserviceports.ShipmentRatingOutcome{
 		Amount:   decimal.NewFromInt(1_700),
 		Currency: "USD",
 	}}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), createShipmentParams())
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), createShipmentParams())
+		},
+	)
 
 	assert.Contains(t, preview.Summary, "would charge 1700.00 USD for the linehaul")
 }
@@ -160,14 +177,18 @@ func TestCreateShipment_PreviewWarnsWhenTheShipmentWouldBeRefused(t *testing.T) 
 	t.Parallel()
 
 	shipments := &pricingShipments{duplicate: true}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), createShipmentParams())
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), createShipmentParams())
+		},
+	)
 
 	assert.Empty(t, preview.Changes)
-	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
+	agenttoolstest.RequireWarning(t, preview, agentpreview.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "BOL")
 }
 
@@ -184,11 +205,15 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 		"SEED-DET-009",
 	)
 	shipments := &pricingShipments{refusal: duplicate}
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: shipments}).(*operationstools.CreateShipmentTool)
+	tool := intaketools.NewCreateShipmentTool(intaketools.CreateShipmentDeps{Shipments: shipments}).(*intaketools.CreateShipmentTool)
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, &shipments.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), createShipmentParams())
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		&shipments.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), createShipmentParams())
+		},
+	)
 	toolpreview.LocateReasons(preview.Warnings, tool.ParamSchema())
 
 	refusal := preview.Refusal()
@@ -199,7 +224,7 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 		refusal.Message,
 	)
 	require.Len(t, refusal.Reasons, 1)
-	assert.Equal(t, agent.PreviewReason{
+	assert.Equal(t, agentpreview.PreviewReason{
 		Field:   "bol",
 		Label:   "BOL",
 		Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
@@ -210,7 +235,9 @@ func TestCreateShipment_ARefusedBOLIsAReasonAPersonCanChange(t *testing.T) {
 func TestCreateShipment_SaysABOLMustBeUniqueAndIsOptional(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewCreateShipmentTool(operationstools.CreateShipmentDeps{Shipments: &pricingShipments{}})
+	tool := intaketools.NewCreateShipmentTool(
+		intaketools.CreateShipmentDeps{Shipments: &pricingShipments{}},
+	)
 	properties := tool.ParamSchema()["properties"].(map[string]any)
 	shipmentSchema := properties["shipment"].(map[string]any)
 	bol := shipmentSchema["properties"].(map[string]any)["bol"].(map[string]any)

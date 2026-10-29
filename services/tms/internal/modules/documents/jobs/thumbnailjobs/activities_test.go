@@ -11,12 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/imagingconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/imaging/imagingfake"
-	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/zap"
-
 	"github.com/emoss08/trenova/internal/modules/documents/app/pagerender"
 	"github.com/emoss08/trenova/internal/modules/documents/app/thumbnailservice"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -24,10 +20,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/testsuite"
+	"go.uber.org/zap"
 )
 
 type thumbnailStorage struct {
@@ -208,11 +207,11 @@ func TestPrerenderPagesActivityStoresEveryPageViewEncrypted(t *testing.T) {
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,
 		PageRenders: pagerender.New(pagerender.Params{
-			Storage:    storageClient,
-			Encryption: enc,
-			Generator:  generator,
-			Config:     &config.Config{},
-			Logger:     zap.NewNop(),
+			Storage:       storageClient,
+			Encryption:    enc,
+			Generator:     generator,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        zap.NewNop(),
 		}),
 		Encryption: enc,
 	})
@@ -343,11 +342,11 @@ func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,
 		PageRenders: pagerender.New(pagerender.Params{
-			Storage:    storageClient,
-			Encryption: enc,
-			Generator:  generator,
-			Config:     &config.Config{},
-			Logger:     zap.NewNop(),
+			Storage:       storageClient,
+			Encryption:    enc,
+			Generator:     generator,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        zap.NewNop(),
 		}),
 		Encryption: enc,
 	})
@@ -376,7 +375,12 @@ func TestPrerenderPagesActivityHeartbeatsAfterEveryStoredPage(t *testing.T) {
 	assert.Equal(t, 3, stored)
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Equal(t, []int{0, 1, 2, 3, 3}, heartbeats, "one to start, one per stored page, then the count")
+	assert.Equal(
+		t,
+		[]int{0, 1, 2, 3, 3},
+		heartbeats,
+		"one to start, one per stored page, then the count",
+	)
 }
 
 func TestPrerenderPagesActivityRetryDoesNotResendAFinishedDocument(t *testing.T) {
@@ -411,11 +415,11 @@ func TestPrerenderPagesActivityRetryDoesNotResendAFinishedDocument(t *testing.T)
 		Storage:            storageClient,
 		ThumbnailGenerator: generator,
 		PageRenders: pagerender.New(pagerender.Params{
-			Storage:    storageClient,
-			Encryption: enc,
-			Generator:  generator,
-			Config:     &config.Config{},
-			Logger:     zap.NewNop(),
+			Storage:       storageClient,
+			Encryption:    enc,
+			Generator:     generator,
+			ImagingConfig: &imagingconfig.Config{},
+			Logger:        zap.NewNop(),
 		}),
 		Encryption: enc,
 	})

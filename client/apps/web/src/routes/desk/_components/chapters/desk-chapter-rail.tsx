@@ -82,8 +82,9 @@ export function DeskChapterRail({
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape" && open) {
       event.stopPropagation();
-      setOpen(false);
+      // Focus reaching the toggle opens the list, so focus moves first and the fold lands last.
       toggleRef.current?.focus();
+      setOpen(false);
     }
   };
 

@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdotports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -18,8 +19,8 @@ func (s *Service) ListViolations(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) ([]*worker.WorkerDOTViolation, error) {
-	return s.repo.ListViolations(ctx, &workerports.ListWorkerDOTViolationsRequest{
+) ([]*workerdot.WorkerDOTViolation, error) {
+	return s.repo.ListViolations(ctx, &workerdotports.ListWorkerDOTViolationsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     workerID,
 		IncludeTests: true,
@@ -30,7 +31,7 @@ func (s *Service) GetOpenViolation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	return s.repo.GetOpenViolation(ctx, tenantInfo, workerID)
 }
 
@@ -40,9 +41,9 @@ func (s *Service) GetOpenViolation(
 // applyTestOutcome.
 func (s *Service) RecordViolation(
 	ctx context.Context,
-	entity *worker.WorkerDOTViolation,
+	entity *workerdot.WorkerDOTViolation,
 	userID pulid.ID,
-) (*worker.WorkerDOTViolation, error) {
+) (*workerdot.WorkerDOTViolation, error) {
 	tenantInfo := violationTenant(entity)
 
 	if _, err := s.workerRepo.GetByID(ctx, workerports.GetWorkerByIDRequest{
@@ -118,8 +119,8 @@ type UpdateViolationRequest struct {
 func (s *Service) UpdateViolation(
 	ctx context.Context,
 	req *UpdateViolationRequest,
-) (*worker.WorkerDOTViolation, error) {
-	entity, err := s.repo.GetViolationByID(ctx, &workerports.GetWorkerDOTViolationByIDRequest{
+) (*workerdot.WorkerDOTViolation, error) {
+	entity, err := s.repo.GetViolationByID(ctx, &workerdotports.GetWorkerDOTViolationByIDRequest{
 		ID:         req.ViolationID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -189,7 +190,7 @@ func (s *Service) UpdateViolation(
 // recorded against the one that is open.
 func (s *Service) openViolationFor(
 	ctx context.Context,
-	test *worker.WorkerDOTTest,
+	test *workerdot.WorkerDOTTest,
 	userID pulid.ID,
 	log *zap.Logger,
 ) error {
@@ -205,12 +206,12 @@ func (s *Service) openViolationFor(
 		return nil
 	}
 
-	violation := &worker.WorkerDOTViolation{
+	violation := &workerdot.WorkerDOTViolation{
 		OrganizationID: test.OrganizationID,
 		BusinessUnitID: test.BusinessUnitID,
 		WorkerID:       test.WorkerID,
 		ViolationType:  test.ViolationTypeFor(),
-		Status:         worker.DOTViolationStatusOpen,
+		Status:         workerdot.DOTViolationStatusOpen,
 		OccurredAt:     test.EffectiveAt(),
 		SourceTestID:   test.ID,
 		RecordedByID:   userID,
@@ -243,8 +244,8 @@ func (s *Service) openViolationFor(
 // written, so by here it holds.
 func (s *Service) applyReturnToDuty(
 	ctx context.Context,
-	violation *worker.WorkerDOTViolation,
-	test *worker.WorkerDOTTest,
+	violation *workerdot.WorkerDOTViolation,
+	test *workerdot.WorkerDOTTest,
 	userID pulid.ID,
 ) error {
 	if violation.SAPEvaluationCompletedAt == nil || violation.RTDCompletedAt != nil {
@@ -256,7 +257,7 @@ func (s *Service) applyReturnToDuty(
 	violation.RTDCompletedAt = &completedAt
 	violation.RTDTestID = test.ID
 	if violation.FollowUpTestCount == 0 {
-		violation.FollowUpTestCount = worker.MinimumFollowUpTests
+		violation.FollowUpTestCount = workerdot.MinimumFollowUpTests
 	}
 	violation.ApplyDerivedStatus(timeutils.NowUnix())
 
@@ -286,7 +287,7 @@ func (s *Service) applyReturnToDuty(
 // remember to close it.
 func (s *Service) applyFollowUp(
 	ctx context.Context,
-	violation *worker.WorkerDOTViolation,
+	violation *workerdot.WorkerDOTViolation,
 	userID pulid.ID,
 ) error {
 	if violation.RTDCompletedAt == nil ||

@@ -3,10 +3,12 @@ package settlementtools
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/settlementpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
@@ -27,8 +29,6 @@ const paramAdjustmentRate = "rate"
 const paramLineID = "lineId"
 
 const settlementNamespace = "settlement"
-
-const toolListDriverSettlements = "settlement_list_driver"
 
 const fieldSubmittedAt = "submittedAt"
 
@@ -74,7 +74,7 @@ func submitDecision(text *lifecycleText) *settlementDecision {
 		reversible: true,
 		rationale: "Moves a draft into the approval queue inside Trenova; nothing is paid and " +
 			"a reviewer sends it back to draft.",
-		fields:      []string{common.FieldStatus, fieldSubmittedAt},
+		fields:      []string{changepreview.FieldStatus, fieldSubmittedAt},
 		volatile:    []string{fieldSubmittedAt},
 		searchTerms: []string{"send for approval", "ready for approval"},
 	}
@@ -82,7 +82,7 @@ func submitDecision(text *lifecycleText) *settlementDecision {
 
 func approveDecision(text *lifecycleText) *settlementDecision {
 	return &settlementDecision{
-		name: text.name(common.VerbApprove),
+		name: text.name(changepreview.VerbApprove),
 		description: "Propose approving a " + text.noun + " that is pending approval, " +
 			"which commits the organization to paying the " + text.payee + " what it comes to. " +
 			"A person always decides. Propose it only when " + text.getTool + " shows no " +
@@ -95,7 +95,7 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 		maxTier:    agent.TierPropose,
 		rationale: "Commits the organization to what the " + text.payee + " is paid; only " +
 			"a person approves, and hands-off approval is the settlement control's rule.",
-		fields:      []string{common.FieldStatus, fieldApprovedAt},
+		fields:      []string{changepreview.FieldStatus, fieldApprovedAt},
 		volatile:    []string{fieldApprovedAt},
 		searchTerms: []string{"approve payout", "approve pay period"},
 	}
@@ -103,7 +103,7 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 
 func rejectDecision(text *lifecycleText) *settlementDecision {
 	return &settlementDecision{
-		name: text.name(common.VerbReject),
+		name: text.name(changepreview.VerbReject),
 		description: "Send a " + text.noun + " that is pending approval back to draft, " +
 			"with the reason. Use it when a line, a rate or a deduction is wrong and " +
 			"someone must fix it before it is approved; the reason is added to its notes.",
@@ -122,7 +122,7 @@ func rejectDecision(text *lifecycleText) *settlementDecision {
 		},
 		required:    []string{paramSettlementReason},
 		fill:        fillSettlementReason,
-		fields:      []string{common.FieldStatus, common.FieldNotes},
+		fields:      []string{changepreview.FieldStatus, changepreview.FieldNotes},
 		searchTerms: []string{"return to draft"},
 	}
 }
@@ -141,13 +141,13 @@ func postDecision(text *lifecycleText) *settlementDecision {
 		maxTier:    agent.TierPropose,
 		rationale: "Books the settlement's payable to the ledger and queues it for the " +
 			"accounting system; only a person posts.",
-		fields:   []string{common.FieldStatus, fieldPostedAt},
+		fields:   []string{changepreview.FieldStatus, fieldPostedAt},
 		volatile: []string{fieldPostedAt},
 	}
 }
 
 func markPaidDecision(text *lifecycleText) *settlementDecision {
-	properties := common.SettlementPaymentProperties(text.methods)
+	properties := settlementpreview.SettlementPaymentProperties(text.methods)
 
 	return &settlementDecision{
 		name: text.name("record", "payment"),
@@ -163,13 +163,13 @@ func markPaidDecision(text *lifecycleText) *settlementDecision {
 		rationale: "Records a payment to the " + text.payee + " and queues it for the " +
 			"accounting system; only a person says money went out.",
 		properties: properties,
-		required:   []string{common.ParamPaymentMethod},
-		fill:       common.FillSettlementPayment(text.methods),
+		required:   []string{settlementpreview.ParamPaymentMethod},
+		fill:       settlementpreview.FillSettlementPayment(text.methods),
 		fields: []string{
-			common.FieldStatus,
+			changepreview.FieldStatus,
 			fieldPaidAt,
-			common.ParamPaymentMethod,
-			common.ParamPaymentReference,
+			settlementpreview.ParamPaymentMethod,
+			settlementpreview.ParamPaymentReference,
 		},
 		volatile: []string{fieldPaidAt},
 	}
@@ -195,8 +195,12 @@ func voidDecision(text *lifecycleText) *settlementDecision {
 		},
 		required: []string{paramSettlementReason},
 		fill:     fillSettlementReason,
-		fields:   []string{common.FieldStatus, common.FieldVoidedAt, common.FieldVoidReason},
-		volatile: []string{common.FieldVoidedAt},
+		fields: []string{
+			changepreview.FieldStatus,
+			changepreview.FieldVoidedAt,
+			changepreview.FieldVoidReason,
+		},
+		volatile: []string{changepreview.FieldVoidedAt},
 	}
 }
 
@@ -214,7 +218,10 @@ func recalculateDecision(text *lifecycleText) *settlementDecision {
 		rationale: "Rebuilds a draft from the records it is computed from inside Trenova; " +
 			"nothing is paid until a person approves it.",
 		fields: []string{
-			common.FieldHasExceptions, "shipmentCount", "payProfileName", "classification",
+			settlementpreview.FieldHasExceptions,
+			"shipmentCount",
+			"payProfileName",
+			"classification",
 		},
 		searchTerms: []string{"rerun totals", "recompute", "refresh totals"},
 	}
@@ -245,7 +252,7 @@ func addAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		properties:    properties,
 		required:      required,
 		fill:          text.fillAdjust,
-		fields:        []string{common.FieldHasExceptions},
+		fields:        []string{settlementpreview.FieldHasExceptions},
 		prerequisites: []string{text.listTool, text.getTool, text.adjustFrom},
 	}
 }
@@ -274,13 +281,13 @@ func removeAdjustmentDecision(text *lifecycleText) *settlementDecision {
 		},
 		required:    []string{paramLineID},
 		fill:        fillAdjustmentLine,
-		fields:      []string{common.FieldHasExceptions},
+		fields:      []string{settlementpreview.FieldHasExceptions},
 		searchTerms: []string{"delete adjustment", "undo adjustment", "drop adjustment line"},
 	}
 }
 
 func fillAdjustmentLine(params map[string]any, req *settlementshared.ActionRequest) error {
-	lineID, err := common.RequirePulid(params, paramLineID)
+	lineID, err := toolparams.RequirePulid(params, paramLineID)
 	if err != nil {
 		return err
 	}
@@ -291,8 +298,8 @@ func fillAdjustmentLine(params map[string]any, req *settlementshared.ActionReque
 
 func adjustmentBase(payee string) map[string]any {
 	return map[string]any{
-		paramAdjustmentDescription: common.StringProperty("What the adjustment is for, as the "+
-			payee+" and payroll will read it on the statement.", common.MaxAdjustmentDescription),
+		paramAdjustmentDescription: toolparams.StringProperty("What the adjustment is for, as the "+
+			payee+" and payroll will read it on the statement.", toolparams.MaxAdjustmentDescription),
 		paramAdjustmentAmount: map[string]any{
 			toolschema.KeyType: toolschema.TypeString,
 			toolschema.KeyDescription: "The amount as a decimal such as 125.00; negative " +
@@ -305,16 +312,16 @@ func fillAdjustmentBase(
 	params map[string]any,
 	req *settlementshared.ActionRequest,
 ) (*settlementshared.AdjustmentInput, error) {
-	description, err := common.BoundedString(
+	description, err := toolparams.BoundedString(
 		params,
 		paramAdjustmentDescription,
-		common.MaxAdjustmentDescription,
+		toolparams.MaxAdjustmentDescription,
 		true,
 	)
 	if err != nil {
 		return nil, err
 	}
-	amount, err := common.RequireSignedMoney(params, paramAdjustmentAmount)
+	amount, err := toolparams.RequireSignedMoney(params, paramAdjustmentAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -338,9 +345,11 @@ func driverAdjustmentSchema() (properties map[string]any, required []string) {
 		toolschema.KeyType:        toolschema.TypeString,
 		toolschema.KeyDescription: "The rate per unit, when it is a rate times a quantity.",
 	}
-	properties[common.ParamPayCodeID] = agenttoolschema.RecordIDText(permission.ResourcePayCode,
+	properties[toolparams.ParamPayCodeID] = agenttoolschema.RecordIDText(
+		permission.ResourcePayCode,
 		"The pay code it posts under, from settlement_list_pay_codes, so it reaches that code's GL "+
-			"account. Leave it out for the default account.")
+			"account. Leave it out for the default account.",
+	)
 
 	return properties, []string{paramAdjustmentDescription, paramAdjustmentAmount}
 }
@@ -350,16 +359,16 @@ func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionReq
 	if err != nil {
 		return err
 	}
-	if input.Quantity, _, err = common.OptionalDecimal(
+	if input.Quantity, _, err = toolparams.OptionalDecimal(
 		params,
 		paramAdjustmentQuantity,
 	); err != nil {
 		return err
 	}
-	if input.Rate, _, err = common.OptionalDecimal(params, paramAdjustmentRate); err != nil {
+	if input.Rate, _, err = toolparams.OptionalDecimal(params, paramAdjustmentRate); err != nil {
 		return err
 	}
-	payCodeID, err := common.OptionalPulidParam(params, common.ParamPayCodeID)
+	payCodeID, err := toolparams.OptionalPulidParam(params, toolparams.ParamPayCodeID)
 	if err != nil {
 		return err
 	}
@@ -370,7 +379,7 @@ func fillDriverAdjustment(params map[string]any, req *settlementshared.ActionReq
 
 func carrierAdjustmentSchema() (properties map[string]any, required []string) {
 	properties = adjustmentBase("carrier")
-	properties[common.ParamGLAccountID] = agenttoolschema.RecordIDText(
+	properties[toolparams.ParamGLAccountID] = agenttoolschema.RecordIDText(
 		permission.ResourceGeneralLedgerAccount,
 		"The expense account it posts to, from ledger_list_accounts, when it is not the "+
 			"default purchased transportation account.",
@@ -384,7 +393,7 @@ func fillCarrierAdjustment(params map[string]any, req *settlementshared.ActionRe
 	if err != nil {
 		return err
 	}
-	glAccountID, err := common.OptionalPulidParam(params, common.ParamGLAccountID)
+	glAccountID, err := toolparams.OptionalPulidParam(params, toolparams.ParamGLAccountID)
 	if err != nil {
 		return err
 	}
@@ -395,13 +404,13 @@ func fillCarrierAdjustment(params map[string]any, req *settlementshared.ActionRe
 
 func driverLifecycle() *lifecycleText {
 	return &lifecycleText{
-		noun:       common.NounDriverSettlement,
+		noun:       settlementpreview.NounDriverSettlement,
 		qualifier:  "driver",
 		payee:      "driver",
-		listTool:   toolListDriverSettlements,
+		listTool:   settlementpreview.ToolListDriverSettlements,
 		getTool:    "settlement_get_driver",
 		adjustFrom: "settlement_list_pay_codes",
-		methods:    common.DriverPaymentMethods,
+		methods:    settlementpreview.DriverPaymentMethods,
 		postEgress: []agent.EgressClass{
 			agent.EgressDriverVisible,
 			agent.EgressMoney,
@@ -422,13 +431,13 @@ func driverLifecycle() *lifecycleText {
 
 func carrierLifecycle() *lifecycleText {
 	return &lifecycleText{
-		noun:       nounCarrierSettlement,
+		noun:       settlementpreview.NounCarrierSettlement,
 		qualifier:  "carrier",
 		payee:      "carrier",
 		listTool:   "settlement_list_carrier",
 		getTool:    "settlement_get_carrier",
 		adjustFrom: "ledger_list_accounts",
-		methods:    carrierPaymentMethods,
+		methods:    settlementpreview.CarrierPaymentMethods,
 		postEgress: []agent.EgressClass{agent.EgressMoney},
 		paidEgress: []agent.EgressClass{agent.EgressMoney},
 		postMeaning: "Posting books purchased transportation against accounts payable, " +
@@ -442,19 +451,19 @@ func carrierLifecycle() *lifecycleText {
 }
 
 func newSettlementDecisionTool[E any](
-	ledger common.SettlementLedger[E],
+	ledger settlementpreview.SettlementLedger[E],
 	decision *settlementDecision,
 	book SettlementBook[E],
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return &SettlementDecisionTool[E]{decision: *decision, ledger: ledger, book: book}
 }
 
 func driverDecisionTool(
 	decision func(*lifecycleText) *settlementDecision,
 	book SettlementBook[driversettlement.Settlement],
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementDecisionTool(
-		common.DriverSettlementLedger(),
+		settlementpreview.DriverSettlementLedger(),
 		decision(driverLifecycle()),
 		book,
 	)
@@ -463,87 +472,93 @@ func driverDecisionTool(
 func carrierDecisionTool(
 	decision func(*lifecycleText) *settlementDecision,
 	book SettlementBook[carriersettlement.CarrierSettlement],
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return newSettlementDecisionTool(
-		carrierSettlementLedger(),
+		settlementpreview.CarrierSettlementLedger(),
 		decision(carrierLifecycle()),
 		book,
 	)
 }
 
-func provideSubmitDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
+func provideSubmitDriverSettlementTool(
+	s *driversettlementservice.Service,
+) agenttoolports.AgentTool {
 	return driverDecisionTool(submitDecision, s)
 }
 
-func provideRejectDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
+func provideRejectDriverSettlementTool(
+	s *driversettlementservice.Service,
+) agenttoolports.AgentTool {
 	return driverDecisionTool(rejectDecision, s)
 }
 
 func provideMarkDriverSettlementPaidTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return driverDecisionTool(markPaidDecision, s)
 }
 
-func provideVoidDriverSettlementTool(s *driversettlementservice.Service) agentports.AgentTool {
+func provideVoidDriverSettlementTool(s *driversettlementservice.Service) agenttoolports.AgentTool {
 	return driverDecisionTool(voidDecision, s)
 }
 
 func provideRecalculateDriverSettlementTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return driverDecisionTool(recalculateDecision, s)
 }
 
 func provideAddDriverSettlementAdjustmentTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return driverDecisionTool(addAdjustmentDecision, s)
 }
 
 func provideRemoveDriverSettlementAdjustmentTool(
 	s *driversettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return driverDecisionTool(removeAdjustmentDecision, s)
 }
 
 func provideSubmitCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(submitDecision, s)
 }
 
 func provideRejectCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(rejectDecision, s)
 }
 
 func provideMarkCarrierSettlementPaidTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(markPaidDecision, s)
 }
 
-func provideVoidCarrierSettlementTool(s *carriersettlementservice.Service) agentports.AgentTool {
+func provideVoidCarrierSettlementTool(
+	s *carriersettlementservice.Service,
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(voidDecision, s)
 }
 
 func provideRecalculateCarrierSettlementTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(recalculateDecision, s)
 }
 
 func provideAddCarrierSettlementAdjustmentTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(addAdjustmentDecision, s)
 }
 
 func provideRemoveCarrierSettlementAdjustmentTool(
 	s *carriersettlementservice.Service,
-) agentports.AgentTool {
+) agenttoolports.AgentTool {
 	return carrierDecisionTool(removeAdjustmentDecision, s)
 }
 

@@ -7,19 +7,20 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/aicorrectionports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dataretention"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -113,14 +114,14 @@ func (f *fakeExtractions) GetByDocumentExtractedAt(
 }
 
 type fakeRetention struct {
-	settings *tenant.DataRetention
+	settings *dataretention.DataRetention
 	err      error
 }
 
 func (f *fakeRetention) Get(
 	_ context.Context,
 	_ tenantports.GetDataRetentionRequest,
-) (*tenant.DataRetention, error) {
+) (*dataretention.DataRetention, error) {
 	return f.settings, f.err
 }
 
@@ -214,15 +215,15 @@ func rateConfirmationDraft() *documentshipmentdraft.DocumentShipmentDraft {
 }
 
 func stopAt(
-	stopType shipment.StopType,
+	stopType shipmentvocab.StopType,
 	seq int64,
 	loc *location.Location,
 	at time.Time,
 	appointment bool,
 ) *shipment.Stop {
-	scheduleType := shipment.StopScheduleTypeOpen
+	scheduleType := shipmentvocab.StopScheduleTypeOpen
 	if appointment {
-		scheduleType = shipment.StopScheduleTypeAppointment
+		scheduleType = shipmentvocab.StopScheduleTypeAppointment
 	}
 	return &shipment.Stop{
 		Type:                 stopType,
@@ -250,12 +251,12 @@ func confirmedShipment() *shipment.Shipment {
 			{
 				Sequence: 0,
 				Stops: []*shipment.Stop{
-					stopAt(shipment.StopTypeDelivery, 1, &location.Location{
+					stopAt(shipmentvocab.StopTypeDelivery, 1, &location.Location{
 						Name: "Contoso Grocery DC", AddressLine1: "9 Market Street",
 						City: "Tulsa", PostalCode: "74103-2201",
 						State: &usstate.UsState{Abbreviation: "OK"},
 					}, time.Date(2026, time.March, 18, 9, 0, 0, 0, chicago), false),
-					stopAt(shipment.StopTypePickup, 0, &location.Location{
+					stopAt(shipmentvocab.StopTypePickup, 0, &location.Location{
 						Name: "Northwind Foods", AddressLine1: "100 Industrial Pkwy",
 						City: "Dallas", PostalCode: "75201",
 						State:    &usstate.UsState{Abbreviation: "TX"},
@@ -285,14 +286,21 @@ func resultsByKey(results []aicorrection.FieldResult) map[string]aicorrection.Fi
 	return out
 }
 
-func capture(t *testing.T, h *harness, draft *documentshipmentdraft.DocumentShipmentDraft) *aicorrection.Correction {
+func capture(
+	t *testing.T,
+	h *harness,
+	draft *documentshipmentdraft.DocumentShipmentDraft,
+) *aicorrection.Correction {
 	t.Helper()
-	got, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        draft,
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	got, err := h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        draft,
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	return got
@@ -386,7 +394,7 @@ func TestCaptureShipmentDraft_MissedAndUnconfirmedFields(t *testing.T) {
 	shp := confirmedShipment()
 	shp.BOL = ""
 	shp.Moves[0].Stops = append(shp.Moves[0].Stops, stopAt(
-		shipment.StopTypeDelivery, 2,
+		shipmentvocab.StopTypeDelivery, 2,
 		&location.Location{Name: "Second Drop", City: "Wichita"},
 		time.Date(2026, time.March, 19, 9, 0, 0, 0, time.UTC), false,
 	))
@@ -450,12 +458,15 @@ func TestCaptureShipmentDraft_SkipsADraftWithNothingPredicted(t *testing.T) {
 	draft := rateConfirmationDraft()
 	draft.DraftData = map[string]any{"fields": map[string]any{"rate": field("  ", "ai", 0.1)}}
 
-	got, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        draft,
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	got, err := h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        draft,
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.ErrorIs(t, err, aicorrection.ErrNothingPredicted)
 	assert.Nil(t, got)
 	assert.Nil(t, h.store.saved)
@@ -469,12 +480,15 @@ func TestCaptureShipmentDraft_RefusesADraftFromAnotherTenant(t *testing.T) {
 	draft := rateConfirmationDraft()
 	draft.OrganizationID = pulid.ID("org_other")
 
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        draft,
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	_, err := h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        draft,
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.Error(t, err)
 	assert.Nil(t, h.store.saved)
 	assert.Nil(t, h.shipments.req)
@@ -488,10 +502,13 @@ func TestCaptureShipmentDraft_RequiresADraftAndAShipment(t *testing.T) {
 	_, err := h.svc.CaptureShipmentDraft(t.Context(), nil)
 	require.Error(t, err)
 
-	_, err = h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:      rateConfirmationDraft(),
-		TenantInfo: tenantInfo(),
-	})
+	_, err = h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:      rateConfirmationDraft(),
+			TenantInfo: tenantInfo(),
+		},
+	)
 	require.Error(t, err)
 }
 
@@ -500,22 +517,28 @@ func TestCaptureShipmentDraft_PropagatesShipmentAndStoreFailures(t *testing.T) {
 
 	h := newHarness(nil)
 	h.shipments.err = errors.New("database unavailable")
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        rateConfirmationDraft(),
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	_, err := h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        rateConfirmationDraft(),
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.ErrorContains(t, err, "database unavailable")
 
 	h = newHarness(confirmedShipment())
 	h.store.upsertErr = errors.New("write failed")
-	_, err = h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        rateConfirmationDraft(),
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	_, err = h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        rateConfirmationDraft(),
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.ErrorContains(t, err, "write failed")
 }
 
@@ -523,7 +546,7 @@ func TestPurgeExpired_UsesTheOrganizationsRetentionInBatches(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(nil)
-	h.retention.settings = &tenant.DataRetention{AICorrectionRetentionPeriod: 60}
+	h.retention.settings = &dataretention.DataRetention{AICorrectionRetentionPeriod: 60}
 	h.store.purgeCounts = []int64{purgeBatchSize, 12}
 
 	purged, err := h.svc.PurgeExpired(t.Context(), kernelports.PurgeExpiredAICorrectionsRequest{
@@ -550,7 +573,7 @@ func TestPurgeExpired_DefaultsWhenNoRetentionIsSaved(t *testing.T) {
 	require.Len(t, h.store.purgeCalls, 1)
 	assert.Equal(
 		t,
-		capturedAt-int64(tenant.DefaultAICorrectionRetentionDays)*86400,
+		capturedAt-int64(dataretention.DefaultAICorrectionRetentionDays)*86400,
 		h.store.purgeCalls[0].Before,
 	)
 
@@ -568,7 +591,10 @@ type fakeShadowScorer struct {
 	err    error
 }
 
-func (f *fakeShadowScorer) ScoreCorrection(_ context.Context, correction *aicorrection.Correction) error {
+func (f *fakeShadowScorer) ScoreCorrection(
+	_ context.Context,
+	correction *aicorrection.Correction,
+) error {
 	f.scored = append(f.scored, correction)
 	return f.err
 }
@@ -583,7 +609,12 @@ func TestCaptureShipmentDraft_ScoresShadowExtractionsOfTheDocument(t *testing.T)
 	got := capture(t, h, rateConfirmationDraft())
 
 	require.Len(t, scorer.scored, 1)
-	assert.Same(t, got, scorer.scored[0], "the saved correction is what the shadow is scored against")
+	assert.Same(
+		t,
+		got,
+		scorer.scored[0],
+		"the saved correction is what the shadow is scored against",
+	)
 }
 
 func TestCaptureShipmentDraft_AShadowThatCannotBeScoredDoesNotFailTheCapture(t *testing.T) {
@@ -604,12 +635,15 @@ func TestCaptureShipmentDraft_ShadowsAreNotScoredWhenTheCaptureFails(t *testing.
 	h.svc.shadows = scorer
 	h.store.upsertErr = errors.New("write failed")
 
-	_, err := h.svc.CaptureShipmentDraft(t.Context(), &aicorrectionports.CaptureShipmentDraftCorrectionRequest{
-		Draft:        rateConfirmationDraft(),
-		ShipmentID:   testShipment,
-		CapturedByID: testUser,
-		TenantInfo:   tenantInfo(),
-	})
+	_, err := h.svc.CaptureShipmentDraft(
+		t.Context(),
+		&aicorrectionports.CaptureShipmentDraftCorrectionRequest{
+			Draft:        rateConfirmationDraft(),
+			ShipmentID:   testShipment,
+			CapturedByID: testUser,
+			TenantInfo:   tenantInfo(),
+		},
+	)
 	require.Error(t, err)
 	assert.Empty(t, scorer.scored)
 }
@@ -619,7 +653,10 @@ type fakeRolloutGuard struct {
 	err      error
 }
 
-func (f *fakeRolloutGuard) ObserveCorrection(_ context.Context, correction *aicorrection.Correction) error {
+func (f *fakeRolloutGuard) ObserveCorrection(
+	_ context.Context,
+	correction *aicorrection.Correction,
+) error {
 	f.observed = append(f.observed, correction)
 	return f.err
 }

@@ -7,7 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerchecklistports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,8 +31,8 @@ func (s *Service) ListForWorker(
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
 	includeClosed bool,
-) ([]*worker.WorkerChecklist, error) {
-	checklists, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
+) ([]*workerchecklist.WorkerChecklist, error) {
+	checklists, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
 		TenantInfo:    tenantInfo,
 		WorkerID:      workerID,
 		IncludeClosed: includeClosed,
@@ -37,7 +42,7 @@ func (s *Service) ListForWorker(
 		return nil, err
 	}
 
-	open := make([]*worker.WorkerChecklist, 0, len(checklists))
+	open := make([]*workerchecklist.WorkerChecklist, 0, len(checklists))
 	for _, checklist := range checklists {
 		if checklist.IsOpen() {
 			open = append(open, checklist)
@@ -59,8 +64,8 @@ func (s *Service) Get(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerChecklist, error) {
-	checklist, err := s.repo.GetByID(ctx, &workerports.GetWorkerChecklistByIDRequest{
+) (*workerchecklist.WorkerChecklist, error) {
+	checklist, err := s.repo.GetByID(ctx, &workerchecklistports.GetWorkerChecklistByIDRequest{
 		ID:           id,
 		TenantInfo:   tenantInfo,
 		IncludeItems: true,
@@ -73,7 +78,7 @@ func (s *Service) Get(
 			ctx,
 			tenantInfo,
 			checklist.WorkerID,
-			[]*worker.WorkerChecklist{checklist},
+			[]*workerchecklist.WorkerChecklist{checklist},
 		); err != nil {
 			s.l.Warn("failed to refresh checklist", zap.String("id", id.String()), zap.Error(err))
 		}
@@ -95,7 +100,10 @@ type StartRequest struct {
 // only be started with a source event, once per event, so a worker is
 // onboarded once per hire rather than whenever somebody presses a button.
 // Templates started by hand never run twice at once; the open one is returned.
-func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerChecklist, error) {
+func (s *Service) Start(
+	ctx context.Context,
+	req *StartRequest,
+) (*workerchecklist.WorkerChecklist, error) {
 	log := s.l.With(
 		zap.String("operation", "Start"),
 		zap.String("workerId", req.WorkerID.String()),
@@ -121,7 +129,7 @@ func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerC
 		ctx,
 		req.TenantInfo,
 		req.WorkerID,
-		[]*worker.WorkerChecklist{created},
+		[]*workerchecklist.WorkerChecklist{created},
 	); err != nil {
 		log.Warn("failed to auto-satisfy new checklist", zap.Error(err))
 	}
@@ -145,21 +153,21 @@ func (s *Service) Start(ctx context.Context, req *StartRequest) (*worker.WorkerC
 // template for the trigger the event maps to, if the organisation has one.
 func (s *Service) SpawnForEvent(
 	ctx context.Context,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 	wrk *worker.Worker,
 	userID pulid.ID,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	if event == nil || wrk == nil {
 		return nil, nil //nolint:nilnil // nothing to spawn
 	}
-	trigger, ok := worker.ChecklistTriggerForEvent(event.Kind)
+	trigger, ok := workerchecklist.ChecklistTriggerForEvent(event.Kind)
 	if !ok {
 		return nil, nil //nolint:nilnil // informational events spawn nothing
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
 	template, err := s.repo.GetDefaultTemplate(
 		ctx,
-		&workerports.GetDefaultChecklistTemplateRequest{
+		&workerchecklistports.GetDefaultChecklistTemplateRequest{
 			TenantInfo: tenantInfo,
 			Trigger:    trigger,
 		},
@@ -186,19 +194,19 @@ func (s *Service) SpawnForEvent(
 // not keep being offboarded.
 func (s *Service) CloseForEvent(
 	ctx context.Context,
-	event *worker.WorkerEmploymentEvent,
+	event *employment.WorkerEmploymentEvent,
 	wrk *worker.Worker,
 	userID pulid.ID,
 ) (int, error) {
 	if event == nil || wrk == nil {
 		return 0, nil
 	}
-	kind, ok := worker.ChecklistKindClosedByEvent(event.Kind)
+	kind, ok := workerchecklist.ChecklistKindClosedByEvent(event.Kind)
 	if !ok {
 		return 0, nil
 	}
 	tenantInfo := pagination.TenantInfo{OrgID: wrk.OrganizationID, BuID: wrk.BusinessUnitID}
-	open, err := s.repo.ListForWorker(ctx, &workerports.ListWorkerChecklistsRequest{
+	open, err := s.repo.ListForWorker(ctx, &workerchecklistports.ListWorkerChecklistsRequest{
 		TenantInfo:   tenantInfo,
 		WorkerID:     wrk.ID,
 		IncludeItems: true,
@@ -237,22 +245,25 @@ type ItemRequest struct {
 func (s *Service) CompleteItem(
 	ctx context.Context,
 	req *ItemRequest,
-) (*worker.WorkerChecklist, error) {
-	return s.settleItem(ctx, req, worker.ChecklistItemDone, "Checklist item completed")
+) (*workerchecklist.WorkerChecklist, error) {
+	return s.settleItem(ctx, req, workerchecklist.ChecklistItemDone, "Checklist item completed")
 }
 
-func (s *Service) SkipItem(ctx context.Context, req *ItemRequest) (*worker.WorkerChecklist, error) {
-	return s.settleItem(ctx, req, worker.ChecklistItemSkipped, "Checklist item skipped")
+func (s *Service) SkipItem(
+	ctx context.Context,
+	req *ItemRequest,
+) (*workerchecklist.WorkerChecklist, error) {
+	return s.settleItem(ctx, req, workerchecklist.ChecklistItemSkipped, "Checklist item skipped")
 }
 
 func (s *Service) MarkItemNotApplicable(
 	ctx context.Context,
 	req *ItemRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	return s.settleItem(
 		ctx,
 		req,
-		worker.ChecklistItemNotApplicable,
+		workerchecklist.ChecklistItemNotApplicable,
 		"Checklist item marked not applicable",
 	)
 }
@@ -260,9 +271,9 @@ func (s *Service) MarkItemNotApplicable(
 func (s *Service) settleItem(
 	ctx context.Context,
 	req *ItemRequest,
-	status worker.ChecklistItemStatus,
+	status workerchecklist.ChecklistItemStatus,
 	comment string,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "SettleItem"), zap.String("itemId", req.ID.String()))
 
 	plan, err := s.planSettleItem(ctx, req, status)
@@ -272,7 +283,7 @@ func (s *Service) settleItem(
 	*plan.Item.Before = *plan.Item.After
 	item, checklist := plan.Item.Before, plan.Checklist
 
-	if err = s.repo.UpdateItems(ctx, []*worker.WorkerChecklistItem{item}); err != nil {
+	if err = s.repo.UpdateItems(ctx, []*workerchecklist.WorkerChecklistItem{item}); err != nil {
 		log.Error("failed to settle checklist item", zap.Error(err))
 		return nil, err
 	}
@@ -304,7 +315,7 @@ type ReopenItemRequest struct {
 func (s *Service) ReopenItem(
 	ctx context.Context,
 	req *ReopenItemRequest,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "ReopenItem"), zap.String("itemId", req.ID.String()))
 
 	plan, err := s.PlanReopenItem(ctx, req)
@@ -318,13 +329,13 @@ func (s *Service) ReopenItem(
 	*plan.Item.Before = *plan.Item.After
 	item := plan.Item.Before
 
-	if err = s.repo.UpdateItems(ctx, []*worker.WorkerChecklistItem{item}); err != nil {
+	if err = s.repo.UpdateItems(ctx, []*workerchecklist.WorkerChecklistItem{item}); err != nil {
 		log.Error("failed to reopen checklist item", zap.Error(err))
 		return nil, err
 	}
 
-	if checklist.Status == worker.ChecklistStatusCompleted {
-		checklist.Status = worker.ChecklistStatusOpen
+	if checklist.Status == workerchecklist.ChecklistStatusCompleted {
+		checklist.Status = workerchecklist.ChecklistStatusOpen
 		checklist.CompletedAt = nil
 		if _, err = s.repo.Update(ctx, checklist); err != nil {
 			log.Error("failed to reopen checklist", zap.Error(err))
@@ -355,7 +366,10 @@ type CancelRequest struct {
 	UserID     pulid.ID
 }
 
-func (s *Service) Cancel(ctx context.Context, req *CancelRequest) (*worker.WorkerChecklist, error) {
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *CancelRequest,
+) (*workerchecklist.WorkerChecklist, error) {
 	log := s.l.With(zap.String("operation", "Cancel"), zap.String("id", req.ID.String()))
 
 	change, err := s.PlanCancel(ctx, req)
@@ -372,14 +386,14 @@ func (s *Service) Cancel(ctx context.Context, req *CancelRequest) (*worker.Worke
 
 func (s *Service) cancelChecklist(
 	ctx context.Context,
-	checklist *worker.WorkerChecklist,
+	checklist *workerchecklist.WorkerChecklist,
 	reason string,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 	log *zap.Logger,
-) (*worker.WorkerChecklist, error) {
+) (*workerchecklist.WorkerChecklist, error) {
 	now := timeutils.NowUnix()
-	checklist.Status = worker.ChecklistStatusCancelled
+	checklist.Status = workerchecklist.ChecklistStatusCancelled
 	checklist.CancelledAt = &now
 	checklist.CancelReason = strings.TrimSpace(reason)
 	items := checklist.Items
@@ -412,7 +426,7 @@ func (s *Service) refreshMany(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-	checklists []*worker.WorkerChecklist,
+	checklists []*workerchecklist.WorkerChecklist,
 ) error {
 	if len(checklists) == 0 {
 		return nil
@@ -456,14 +470,14 @@ func (s *Service) refreshMany(
 func (s *Service) closeIfComplete(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	checklist *worker.WorkerChecklist,
+	checklist *workerchecklist.WorkerChecklist,
 	now int64,
 ) error {
 	if !checklist.IsOpen() || !checklist.Progress(now).Complete() {
 		return nil
 	}
 	items := checklist.Items
-	checklist.Status = worker.ChecklistStatusCompleted
+	checklist.Status = workerchecklist.ChecklistStatusCompleted
 	checklist.CompletedAt = &now
 	saved, err := s.repo.Update(ctx, checklist)
 	if err != nil {
@@ -471,7 +485,7 @@ func (s *Service) closeIfComplete(
 	}
 	saved.Items = items
 
-	if saved.Kind == worker.ChecklistKindOnboarding {
+	if saved.Kind == workerchecklist.ChecklistKindOnboarding {
 		if err = s.workerRepo.UpdateProfileQualification(
 			ctx,
 			&workerports.UpdateProfileQualificationRequest{
@@ -504,9 +518,9 @@ func (s *Service) collectEvidence(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	workerID pulid.ID,
-) (worker.ChecklistEvidence, error) {
-	evidence := worker.ChecklistEvidence{
-		CredentialsByType: map[pulid.ID]*worker.WorkerCredential{},
+) (workerchecklist.ChecklistEvidence, error) {
+	evidence := workerchecklist.ChecklistEvidence{
+		CredentialsByType: map[pulid.ID]*workercredential.WorkerCredential{},
 		DocumentsByType:   map[pulid.ID]*document.Document{},
 	}
 
@@ -521,7 +535,7 @@ func (s *Service) collectEvidence(
 
 	credentials, err := s.credentialRepo.ListForWorker(
 		ctx,
-		&workerports.ListWorkerCredentialsRequest{
+		&workercredentialports.ListWorkerCredentialsRequest{
 			TenantInfo:  tenantInfo,
 			WorkerIDs:   []pulid.ID{workerID},
 			IncludeType: true,

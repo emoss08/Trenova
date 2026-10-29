@@ -3,12 +3,12 @@
 package aianalyticsresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	aianalyticsports "github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AiAnalyticsService aianalyticsports.AnalyticsService
 }
 

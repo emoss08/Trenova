@@ -1,0 +1,210 @@
+package editenderchangeservice
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/modules/edi/app/edialert"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edioutbound"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edipayloadbuild"
+	"github.com/emoss08/trenova/internal/modules/edi/app/ediprofilesecret"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editendermapping"
+	"github.com/emoss08/trenova/internal/modules/edi/app/editenderrecipient"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editenderchange"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/editenderports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/editenderportsmock"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+func TestService_ApplyTenderChange_ApplyFailureSurfacesErrorAndKeepsPendingReview(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderChangeReviewFixture(t)
+	change := fixture.pendingChange()
+	applyErr := errors.New("boom")
+
+	fixture.tenderChangeRepo.EXPECT().
+		GetTenderChangeByID(
+			mock.Anything,
+			editenderports.GetEDITenderChangeByIDRequest{
+				ID:         change.ID,
+				TenantInfo: fixture.tenantInfo(),
+			},
+		).
+		Return(change, nil).
+		Once()
+	fixture.tenderRecipientRepo.EXPECT().
+		GetTenderRecipientByID(
+			mock.Anything,
+			editenderports.GetEDITenderRecipientByIDRequest{
+				ID:         change.RecipientID,
+				TenantInfo: fixture.tenantInfo(),
+			},
+		).
+		Return(nil, applyErr).
+		Once()
+	fixture.tenderChangeRepo.EXPECT().
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusPendingReview &&
+				updated.FailureReason == applyErr.Error() &&
+				updated.ConflictMetadata["reason"] == applyErr.Error()
+		})).
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
+			return updated, nil
+		}).
+		Once()
+
+	result, err := fixture.service.ApplyTenderChange(
+		t.Context(),
+		&TenderChangeActionRequest{
+			TenantInfo: fixture.tenantInfo(),
+			ChangeID:   change.ID,
+		},
+		fixture.actor,
+	)
+
+	require.ErrorIs(t, err, applyErr)
+	require.Nil(t, result)
+}
+
+func TestService_RejectTenderChange_UpdatesStatusWithoutApplying(t *testing.T) {
+	t.Parallel()
+
+	fixture := newTenderChangeReviewFixture(t)
+	change := fixture.pendingChange()
+
+	fixture.tenderChangeRepo.EXPECT().
+		GetTenderChangeByID(
+			mock.Anything,
+			editenderports.GetEDITenderChangeByIDRequest{
+				ID:         change.ID,
+				TenantInfo: fixture.tenantInfo(),
+			},
+		).
+		Return(change, nil).
+		Once()
+	fixture.tenderChangeRepo.EXPECT().
+		UpdateTenderChange(mock.Anything, mock.MatchedBy(func(updated *editenderchange.TenderChange) bool {
+			return updated.Status == editenderchange.TenderChangeStatusRejected &&
+				updated.ReviewedByID == fixture.actor.UserID &&
+				updated.ReviewedAt != nil &&
+				updated.FailureReason == "Not applicable"
+		})).
+		RunAndReturn(func(_ context.Context, updated *editenderchange.TenderChange) (*editenderchange.TenderChange, error) {
+			return updated, nil
+		}).
+		Once()
+
+	result, err := fixture.service.RejectTenderChange(
+		t.Context(),
+		&TenderChangeActionRequest{
+			TenantInfo: fixture.tenantInfo(),
+			ChangeID:   change.ID,
+			Reason:     "Not applicable",
+		},
+		fixture.actor,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, editenderchange.TenderChangeStatusRejected, result.Status)
+}
+
+type tenderChangeReviewFixture struct {
+	service             *Service
+	actor               *permissionports.RequestActor
+	recipientOrgID      pulid.ID
+	buID                pulid.ID
+	tenderChangeRepo    *editenderportsmock.MockEDITenderChangeRepository
+	tenderRecipientRepo *editenderportsmock.MockEDITenderRecipientRepository
+}
+
+func newTenderChangeReviewFixture(t *testing.T) *tenderChangeReviewFixture {
+	t.Helper()
+
+	fixture := &tenderChangeReviewFixture{
+		recipientOrgID:      pulid.MustNew("org_"),
+		buID:                pulid.MustNew("bu_"),
+		tenderChangeRepo:    editenderportsmock.NewMockEDITenderChangeRepository(t),
+		tenderRecipientRepo: editenderportsmock.NewMockEDITenderRecipientRepository(t),
+	}
+	fixture.actor = &permissionports.RequestActor{
+		UserID:         pulid.MustNew("usr_"),
+		PrincipalType:  permissionports.PrincipalTypeUser,
+		OrganizationID: fixture.recipientOrgID,
+		BusinessUnitID: fixture.buID,
+	}
+	fixture.service = &Service{
+		l:                   zap.NewNop(),
+		db:                  dbtest.NopConnection{},
+		tenderChangeRepo:    fixture.tenderChangeRepo,
+		tenderRecipientRepo: fixture.tenderRecipientRepo,
+		delivery: edidelivery.New(edidelivery.Params{
+			Logger: zap.NewNop(),
+			Alert: edialert.New(edialert.Params{
+				Logger: zap.NewNop(),
+			}),
+			Recipient: editenderrecipient.New(editenderrecipient.Params{
+				TenderChangeRepo:    fixture.tenderChangeRepo,
+				TenderRecipientRepo: fixture.tenderRecipientRepo,
+			}),
+			Secret: ediprofilesecret.New(ediprofilesecret.Params{}),
+		}),
+		outbound: edioutbound.New(edioutbound.Params{
+			Logger: zap.NewNop(),
+			Alert: edialert.New(edialert.Params{
+				Logger: zap.NewNop(),
+			}),
+			Delivery: edidelivery.New(edidelivery.Params{
+				Logger: zap.NewNop(),
+				Alert: edialert.New(edialert.Params{
+					Logger: zap.NewNop(),
+				}),
+				Recipient: editenderrecipient.New(editenderrecipient.Params{
+					TenderChangeRepo:    fixture.tenderChangeRepo,
+					TenderRecipientRepo: fixture.tenderRecipientRepo,
+				}),
+				Secret: ediprofilesecret.New(ediprofilesecret.Params{}),
+			}),
+			Payload: edipayloadbuild.New(edipayloadbuild.Params{}),
+			Recipient: editenderrecipient.New(editenderrecipient.Params{
+				TenderChangeRepo:    fixture.tenderChangeRepo,
+				TenderRecipientRepo: fixture.tenderRecipientRepo,
+			}),
+		}),
+		recipient: editenderrecipient.New(editenderrecipient.Params{
+			TenderChangeRepo:    fixture.tenderChangeRepo,
+			TenderRecipientRepo: fixture.tenderRecipientRepo,
+		}),
+		tenderMapping: editendermapping.New(editendermapping.Params{}),
+	}
+	return fixture
+}
+
+func (f *tenderChangeReviewFixture) tenantInfo() pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: f.recipientOrgID, BuID: f.buID}
+}
+
+func (f *tenderChangeReviewFixture) pendingChange() *editenderchange.TenderChange {
+	recipientID := pulid.MustNew("editr_")
+	return &editenderchange.TenderChange{
+		ID:             pulid.MustNew("editch_"),
+		BusinessUnitID: f.buID,
+		RecipientID:    recipientID,
+		RecipientKind:  editenderchange.TenderRecipientKindInternal,
+		Status:         editenderchange.TenderChangeStatusPendingReview,
+		Recipient: &editenderchange.TenderRecipient{
+			ID:                      recipientID,
+			RecipientKind:           editenderchange.TenderRecipientKindInternal,
+			RecipientOrganizationID: f.recipientOrgID,
+			BusinessUnitID:          f.buID,
+		},
+	}
+}

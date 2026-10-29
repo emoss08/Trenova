@@ -10,9 +10,13 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
+	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/accountingconnectionrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -31,7 +35,7 @@ type syncFixture struct {
 	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
-	connection *accountingsync.AccountingConnection
+	connection *accountingconnection.AccountingConnection
 	records    accountingsyncports.AccountingSyncRecordRepository
 	backfills  accountingsyncports.AccountingBackfillRepository
 	userID     pulid.ID
@@ -48,8 +52,13 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
-	connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
-	created, err := connections.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: conn, Logger: zap.NewNop()},
+	)
+	created, err := connections.Create(
+		ctx,
+		accountingtest.NewConnection(tenant, data.User.ID, accountingtest.Realm, now),
+	)
 	require.NoError(t, err)
 
 	return &syncFixture{
@@ -97,10 +106,12 @@ func (f *syncFixture) enqueue(
 
 func (f *syncFixture) updateConnection(
 	t *testing.T,
-	change func(*accountingsync.AccountingConnection),
+	change func(*accountingconnection.AccountingConnection),
 ) {
 	t.Helper()
-	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 	change(f.connection)
 	updated, err := connections.Update(f.ctx, f.connection)
 	require.NoError(t, err)
@@ -109,8 +120,11 @@ func (f *syncFixture) updateConnection(
 
 func (f *syncFixture) enableSync(t *testing.T) {
 	t.Helper()
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
-		c.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400, AutoSync: true}, f.now)
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
+		c.EnableSync(
+			accountingconnection.SyncSettings{StartDate: f.now - 86_400, AutoSync: true},
+			f.now,
+		)
 	})
 }
 
@@ -157,7 +171,12 @@ func TestSyncRecordRepository_EnqueueIsIdempotentPerKey(t *testing.T) {
 		ID:         first.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.SyncSourceInvoicePosted, stored.SourceEvent, "the first record wins")
+	assert.Equal(
+		t,
+		accountingsync.SyncSourceInvoicePosted,
+		stored.SourceEvent,
+		"the first record wins",
+	)
 	assert.Equal(t, first.RequestID, stored.RequestID)
 	assert.Equal(t, map[string]string{}, stored.ExternalRefs)
 	assert.Equal(t, []string{}, stored.MappingIDs)
@@ -215,7 +234,10 @@ func TestSyncRecordRepository_ClaimTakesDueRecordsInDependencyOrderUnderALease(t
 
 	stale := claimed[0]
 	stale.MarkSynced(&accountingsync.SyncResult{ExternalID: "58"}, f.now+62)
-	err := f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{Record: stale})
+	err := f.records.Finish(
+		f.ctx,
+		&accountingsyncports.FinishAccountingSyncRecordRequest{Record: stale},
+	)
 	assert.ErrorIs(t, err, accountingsyncports.ErrAccountingSyncLeaseLost)
 	assert.Equal(t, int64(1), stale.Version, "a lost lease leaves the copy's version alone")
 }
@@ -236,13 +258,16 @@ func TestSyncRecordRepository_ConcurrentClaimsNeverOverlap(t *testing.T) {
 	)
 	for range 4 {
 		wg.Go(func() {
-			claimed, err := f.records.Claim(f.ctx, &accountingsyncports.ClaimAccountingSyncRecordsRequest{
-				TenantInfo:   f.tenant,
-				ConnectionID: f.connection.ID,
-				Now:          f.now,
-				Lease:        time.Minute,
-				Limit:        15,
-			})
+			claimed, err := f.records.Claim(
+				f.ctx,
+				&accountingsyncports.ClaimAccountingSyncRecordsRequest{
+					TenantInfo:   f.tenant,
+					ConnectionID: f.connection.ID,
+					Now:          f.now,
+					Lease:        time.Minute,
+					Limit:        15,
+				},
+			)
 			assert.NoError(t, err)
 			mu.Lock()
 			defer mu.Unlock()
@@ -276,16 +301,19 @@ func TestSyncRecordRepository_FinishStoresTheResultAndTheAttempt(t *testing.T) {
 		Resolution: "Map charge code DET to a QuickBooks Online item",
 	}, f.now+1)
 	started := time.Unix(f.now, 0)
-	require.NoError(t, f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
-		Record: current,
-		Attempt: accountingsync.NewSyncAttempt(&accountingsync.NewSyncAttemptParams{
-			Record:        current,
-			AttemptNumber: attemptNumber,
-			Outcome:       outcome,
-			StartedAt:     started,
-			FinishedAt:    started.Add(time.Second),
+	require.NoError(
+		t,
+		f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
+			Record: current,
+			Attempt: accountingsync.NewSyncAttempt(&accountingsync.NewSyncAttemptParams{
+				Record:        current,
+				AttemptNumber: attemptNumber,
+				Outcome:       outcome,
+				StartedAt:     started,
+				FinishedAt:    started.Add(time.Second),
+			}),
 		}),
-	}))
+	)
 
 	stored, err := f.records.GetByID(f.ctx, accountingsyncports.GetAccountingSyncRecordRequest{
 		TenantInfo: f.tenant,
@@ -298,32 +326,41 @@ func TestSyncRecordRepository_FinishStoresTheResultAndTheAttempt(t *testing.T) {
 	assert.Nil(t, stored.NextAttemptAt)
 	assert.Equal(t, int64(2), stored.Version)
 
-	attempts, err := f.records.ListAttempts(f.ctx, accountingsyncports.ListAccountingSyncAttemptsRequest{
-		TenantInfo:   f.tenant,
-		SyncRecordID: record.ID,
-	})
+	attempts, err := f.records.ListAttempts(
+		f.ctx,
+		accountingsyncports.ListAccountingSyncAttemptsRequest{
+			TenantInfo:   f.tenant,
+			SyncRecordID: record.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, attempts, 1)
 	assert.Equal(t, accountingsync.SyncAttemptBlocked, attempts[0].Outcome)
 	assert.Equal(t, 1, attempts[0].AttemptNumber)
 	assert.Equal(t, 1000, attempts[0].DurationMs)
 
-	attention, err := f.records.ListAttention(f.ctx, accountingsyncports.ListAccountingSyncAttentionRequest{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-	})
+	attention, err := f.records.ListAttention(
+		f.ctx,
+		accountingsyncports.ListAccountingSyncAttentionRequest{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, attention, 1)
 	assert.Equal(t, 1, attention[0].Count)
 	assert.Equal(t, accountingsync.SyncErrorMapping, attention[0].ErrorCategory)
 	assert.Equal(t, record.ID, attention[0].SampleRecordID)
 
-	requeued, err := f.records.Requeue(f.ctx, &accountingsyncports.RequeueAccountingSyncRecordsRequest{
-		TenantInfo:      f.tenant,
-		ConnectionID:    f.connection.ID,
-		ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
-		At:              f.now + 5,
-	})
+	requeued, err := f.records.Requeue(
+		f.ctx,
+		&accountingsyncports.RequeueAccountingSyncRecordsRequest{
+			TenantInfo:      f.tenant,
+			ConnectionID:    f.connection.ID,
+			ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
+			At:              f.now + 5,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), requeued)
 	again := f.claim(t, f.now+5)
@@ -337,22 +374,31 @@ func TestSyncRecordRepository_FinishStoresTheResultAndTheAttempt(t *testing.T) {
 		Payload:     map[string]any{"DocNumber": "INV-1"},
 		MappingIDs:  []string{"acctm_a", "acctm_b"},
 	}, f.now+6)
-	require.NoError(t, f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
-		Record: again[0],
-	}))
+	require.NoError(
+		t,
+		f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
+			Record: again[0],
+		}),
+	)
 
-	usage, err := f.records.MappingUsage(f.ctx, &accountingsyncports.AccountingSyncMappingUsageRequest{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-		MappingIDs:   []pulid.ID{"acctm_a", "acctm_c"},
-	})
+	usage, err := f.records.MappingUsage(
+		f.ctx,
+		&accountingsyncports.AccountingSyncMappingUsageRequest{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+			MappingIDs:   []pulid.ID{"acctm_a", "acctm_c"},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, map[pulid.ID]int{"acctm_a": 1}, usage)
 
-	counts, err := f.records.CountByStatus(f.ctx, accountingsyncports.AccountingSyncConnectionRequest{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-	})
+	counts, err := f.records.CountByStatus(
+		f.ctx,
+		accountingsyncports.AccountingSyncConnectionRequest{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []accountingsyncports.AccountingSyncStatusCount{
 		{Status: accountingsync.SyncStatusSynced, Count: 1},
@@ -380,30 +426,39 @@ func TestSyncRecordRepository_ReleaseSupersedeAndList(t *testing.T) {
 	})
 	f.enqueue(t, held, other, olderUpdate)
 
-	released, err := f.records.Release(f.ctx, &accountingsyncports.ReleaseAccountingSyncRecordsRequest{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-		ActorID:      f.userID,
-		At:           f.now,
-	})
+	released, err := f.records.Release(
+		f.ctx,
+		&accountingsyncports.ReleaseAccountingSyncRecordsRequest{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+			ActorID:      f.userID,
+			At:           f.now,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), released)
 
-	superseded, err := f.records.SupersedeOlder(f.ctx, &accountingsyncports.SupersedeAccountingSyncRecordsRequest{
-		TenantInfo:     f.tenant,
-		ConnectionID:   f.connection.ID,
-		ObjectType:     accountingsync.SyncObjectCustomerPayment,
-		ObjectID:       objectID,
-		Operation:      accountingsync.SyncOperationUpdate,
-		BeforeRevision: 3,
-	})
+	superseded, err := f.records.SupersedeOlder(
+		f.ctx,
+		&accountingsyncports.SupersedeAccountingSyncRecordsRequest{
+			TenantInfo:     f.tenant,
+			ConnectionID:   f.connection.ID,
+			ObjectType:     accountingsync.SyncObjectCustomerPayment,
+			ObjectID:       objectID,
+			Operation:      accountingsync.SyncOperationUpdate,
+			BeforeRevision: 3,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), superseded)
 
-	byObject, err := f.records.ListByObjects(f.ctx, &accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
-		TenantInfo: f.tenant,
-		ObjectIDs:  []pulid.ID{objectID, held.ObjectID},
-	})
+	byObject, err := f.records.ListByObjects(
+		f.ctx,
+		&accountingsyncports.ListAccountingSyncRecordsByObjectsRequest{
+			TenantInfo: f.tenant,
+			ObjectIDs:  []pulid.ID{objectID, held.ObjectID},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, byObject, 2)
 	statuses := map[pulid.ID]accountingsync.SyncStatus{}
@@ -413,13 +468,16 @@ func TestSyncRecordRepository_ReleaseSupersedeAndList(t *testing.T) {
 	assert.Equal(t, accountingsync.SyncStatusQueued, statuses[held.ObjectID])
 	assert.Equal(t, accountingsync.SyncStatusSuperseded, statuses[objectID])
 
-	page, err := f.records.ListConnection(f.ctx, &accountingsyncports.ListAccountingSyncRecordsConnectionRequest{
-		Filter:       &pagination.QueryOptions{TenantInfo: f.tenant},
-		Cursor:       pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
-		ConnectionID: f.connection.ID,
-		Statuses:     []accountingsync.SyncStatus{accountingsync.SyncStatusQueued},
-		Search:       "inv-1",
-	})
+	page, err := f.records.ListConnection(
+		f.ctx,
+		&accountingsyncports.ListAccountingSyncRecordsConnectionRequest{
+			Filter:       &pagination.QueryOptions{TenantInfo: f.tenant},
+			Cursor:       pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
+			ConnectionID: f.connection.ID,
+			Statuses:     []accountingsync.SyncStatus{accountingsync.SyncStatusQueued},
+			Search:       "inv-1",
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, page.Items, 1)
 	assert.Equal(t, held.ID, page.Items[0].ID)
@@ -427,9 +485,12 @@ func TestSyncRecordRepository_ReleaseSupersedeAndList(t *testing.T) {
 	assert.Equal(t, 1, *page.TotalCount)
 
 	f.enableSync(t)
-	due, err := f.records.ListDueConnections(f.ctx, accountingsyncports.ListDueAccountingSyncConnectionsRequest{
-		Now: f.now,
-	})
+	due, err := f.records.ListDueConnections(
+		f.ctx,
+		accountingsyncports.ListDueAccountingSyncConnectionsRequest{
+			Now: f.now,
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, due, 1)
 	assert.Equal(t, f.connection.ID, due[0].ConnectionID)
@@ -454,12 +515,12 @@ func TestSyncRecordRepository_ListDueConnectionsSkipsConnectionsThatCannotSend(t
 	f.enableSync(t)
 	require.Len(t, listDue(), 1)
 
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
 		c.Pause(f.userID, "month-end review", f.now)
 	})
 	assert.Empty(t, listDue(), "a paused connection is not woken")
 
-	f.updateConnection(t, func(c *accountingsync.AccountingConnection) {
+	f.updateConnection(t, func(c *accountingconnection.AccountingConnection) {
 		c.Resume()
 	})
 	due := listDue()
@@ -474,26 +535,35 @@ func TestSyncRecordRepository_IsTenantScoped(t *testing.T) {
 	f.enqueue(t, record)
 	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: f.tenant.BuID}
 
-	_, err := f.records.GetByID(dbscope.WithTenant(f.ctx, stranger.DBTenant()), accountingsyncports.GetAccountingSyncRecordRequest{
-		TenantInfo: stranger,
-		ID:         record.ID,
-	})
+	_, err := f.records.GetByID(
+		dbscope.WithTenant(f.ctx, stranger.DBTenant()),
+		accountingsyncports.GetAccountingSyncRecordRequest{
+			TenantInfo: stranger,
+			ID:         record.ID,
+		},
+	)
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	claimed, err := f.records.Claim(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.ClaimAccountingSyncRecordsRequest{
-		TenantInfo:   stranger,
-		ConnectionID: f.connection.ID,
-		Now:          f.now,
-	})
+	claimed, err := f.records.Claim(
+		dbscope.WithTenant(f.ctx, stranger.DBTenant()),
+		&accountingsyncports.ClaimAccountingSyncRecordsRequest{
+			TenantInfo:   stranger,
+			ConnectionID: f.connection.ID,
+			Now:          f.now,
+		},
+	)
 	require.NoError(t, err)
 	assert.Empty(t, claimed)
 
-	requeued, err := f.records.Requeue(dbscope.WithTenant(f.ctx, stranger.DBTenant()), &accountingsyncports.RequeueAccountingSyncRecordsRequest{
-		TenantInfo:   stranger,
-		ConnectionID: f.connection.ID,
-		IDs:          []pulid.ID{record.ID},
-		At:           f.now,
-	})
+	requeued, err := f.records.Requeue(
+		dbscope.WithTenant(f.ctx, stranger.DBTenant()),
+		&accountingsyncports.RequeueAccountingSyncRecordsRequest{
+			TenantInfo:   stranger,
+			ConnectionID: f.connection.ID,
+			IDs:          []pulid.ID{record.ID},
+			At:           f.now,
+		},
+	)
 	require.NoError(t, err)
 	assert.Zero(t, requeued)
 }
@@ -511,21 +581,27 @@ func TestSyncRecordRepository_PurgeHistoryKeepsTheHash(t *testing.T) {
 		PayloadHash: "hash",
 		Payload:     map[string]any{"Line": []any{}},
 	}, f.now)
-	require.NoError(t, f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
-		Record: claimed[0],
-		Attempt: accountingsync.NewSyncAttempt(&accountingsync.NewSyncAttemptParams{
-			Record:        claimed[0],
-			AttemptNumber: 1,
-			Outcome:       accountingsync.SyncAttemptSynced,
-			StartedAt:     started,
-			FinishedAt:    started,
+	require.NoError(
+		t,
+		f.records.Finish(f.ctx, &accountingsyncports.FinishAccountingSyncRecordRequest{
+			Record: claimed[0],
+			Attempt: accountingsync.NewSyncAttempt(&accountingsync.NewSyncAttemptParams{
+				Record:        claimed[0],
+				AttemptNumber: 1,
+				Outcome:       accountingsync.SyncAttemptSynced,
+				StartedAt:     started,
+				FinishedAt:    started,
+			}),
 		}),
-	}))
+	)
 
-	result, err := f.records.PurgeHistory(f.ctx, accountingsyncports.PurgeAccountingSyncHistoryRequest{
-		PayloadsSyncedBefore: f.now + 1,
-		AttemptsBefore:       timeutils.NowUnix() + 1,
-	})
+	result, err := f.records.PurgeHistory(
+		f.ctx,
+		accountingsyncports.PurgeAccountingSyncHistoryRequest{
+			PayloadsSyncedBefore: f.now + 1,
+			AttemptsBefore:       timeutils.NowUnix() + 1,
+		},
+	)
 	require.NoError(t, err)
 	assert.GreaterOrEqual(t, result.PayloadsCleared, int64(1))
 	assert.GreaterOrEqual(t, result.AttemptsDeleted, int64(1))
@@ -542,21 +618,27 @@ func TestSyncRecordRepository_PurgeHistoryKeepsTheHash(t *testing.T) {
 func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 	f := setupSyncFixture(t)
 
-	first, err := f.backfills.Create(f.ctx, accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:    f.tenant,
-		ConnectionID:  f.connection.ID,
-		RangeStart:    f.now - 86_400,
-		RangeEnd:      f.now,
-		RequestedByID: f.userID,
-	}))
+	first, err := f.backfills.Create(
+		f.ctx,
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
+			TenantInfo:    f.tenant,
+			ConnectionID:  f.connection.ID,
+			RangeStart:    f.now - 86_400,
+			RangeEnd:      f.now,
+			RequestedByID: f.userID,
+		}),
+	)
 	require.NoError(t, err)
 
-	_, err = f.backfills.Create(f.ctx, accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-		RangeStart:   f.now - 86_400,
-		RangeEnd:     f.now,
-	}))
+	_, err = f.backfills.Create(
+		f.ctx,
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+			RangeStart:   f.now - 86_400,
+			RangeEnd:     f.now,
+		}),
+	)
 	require.ErrorIs(t, err, accountingsyncports.ErrAccountingBackfillActive)
 
 	active, err := f.backfills.GetActive(f.ctx, accountingsyncports.AccountingSyncConnectionRequest{
@@ -565,10 +647,10 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, first.ID, active.ID)
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), active.ObjectTypes)
+	assert.Equal(t, accountingbackfill.BackfillObjectTypes(), active.ObjectTypes)
 
 	require.True(t, active.Start(f.now))
-	active.Advance(accountingsync.BackfillCursor{
+	active.Advance(accountingbackfill.BackfillCursor{
 		ObjectType: accountingsync.SyncObjectInvoice,
 		AfterAt:    f.now - 10,
 		AfterID:    "inv_1",
@@ -582,7 +664,7 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 		ID:         first.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.BackfillStatusCompleted, stored.Status)
+	assert.Equal(t, accountingbackfill.BackfillStatusCompleted, stored.Status)
 	assert.Equal(t, pulid.ID("inv_1"), stored.Cursor.AfterID)
 	assert.Equal(t, 12, stored.EnqueuedCount)
 
@@ -592,36 +674,47 @@ func TestBackfillRepository_OneActivePerConnection(t *testing.T) {
 	})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	_, err = f.backfills.Create(f.ctx, accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-		RangeStart:   f.now - 86_400,
-		RangeEnd:     f.now,
-	}))
+	_, err = f.backfills.Create(
+		f.ctx,
+		accountingbackfill.NewAccountingBackfill(&accountingbackfill.NewBackfillParams{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+			RangeStart:   f.now - 86_400,
+			RangeEnd:     f.now,
+		}),
+	)
 	require.NoError(t, err, "a finished backfill frees the connection")
 
-	listed, err := f.backfills.ListByConnection(f.ctx, accountingsyncports.ListAccountingBackfillsRequest{
-		TenantInfo:   f.tenant,
-		ConnectionID: f.connection.ID,
-	})
+	listed, err := f.backfills.ListByConnection(
+		f.ctx,
+		accountingsyncports.ListAccountingBackfillsRequest{
+			TenantInfo:   f.tenant,
+			ConnectionID: f.connection.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.Len(t, listed, 2)
 }
 
 func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	f := setupSyncFixture(t)
-	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
+	connections := accountingconnectionrepository.NewConnectionRepository(
+		accountingconnectionrepository.ConnectionParams{DB: f.conn, Logger: zap.NewNop()},
+	)
 
-	f.connection.SetupStep = accountingsync.SetupStepStartDate
-	f.connection.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400}, f.now)
+	f.connection.SetupStep = accountingconnection.SetupStepStartDate
+	f.connection.EnableSync(accountingconnection.SyncSettings{StartDate: f.now - 86_400}, f.now)
 	f.connection.Pause(f.userID, "Month-end close", f.now+1)
 	_, err := connections.Update(f.ctx, f.connection)
 	require.NoError(t, err)
 
-	stored, err := connections.GetByID(f.ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
-		TenantInfo: f.tenant,
-		ID:         f.connection.ID,
-	})
+	stored, err := connections.GetByID(
+		f.ctx,
+		accountingconnectionports.GetAccountingConnectionByIDRequest{
+			TenantInfo: f.tenant,
+			ID:         f.connection.ID,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, stored.IsSyncing())
 	assert.False(t, stored.CanDispatch())
@@ -631,7 +724,7 @@ func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	assert.Equal(t, f.userID, stored.PausedByID)
 
 	stored.Resume()
-	stored.SetupStep = accountingsync.SetupStepComplete
+	stored.SetupStep = accountingconnection.SetupStepComplete
 	stored.SyncStartDate = nil
 	_, err = connections.Update(f.ctx, stored)
 	require.Error(t, err, "the database refuses a finished setup without a start date")

@@ -3,12 +3,16 @@ package inboundtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
@@ -24,26 +28,26 @@ import (
 // letterhead.
 type composedReply struct {
 	reply     *inboundReply
-	data      documenttemplate.AgentEmailContext
+	data      portaltemplate.AgentEmailContext
 	send      *emailports.SendEmailRequest
 	versionID *pulid.ID
 }
 
 func (t *ReplyToInboundMessageTool) compose(
 	ctx context.Context,
-	params *agentports.ToolExecuteParams,
+	params *agenttoolports.ToolExecuteParams,
 ) (*composedReply, error) {
-	if err := common.GuardExecute(t, *params); err != nil {
+	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
 
-	reply, err := t.prepare(ctx, *params)
+	reply, err := t.prepare(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := common.TenantFrom(*params)
-	data := documenttemplate.AgentEmailContext{
+	tenant := toolparams.TenantFrom(params)
+	data := portaltemplate.AgentEmailContext{
 		AgentSubject: reply.subject,
 		AgentBody:    reply.body,
 	}
@@ -91,15 +95,15 @@ func replyReviewNote(reply *inboundReply) string {
 
 func (t *ReplyToInboundMessageTool) Preview(
 	ctx context.Context,
-	params agentports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
-) (*agent.ToolPreview, error) {
-	composed, err := t.compose(ctx, &params)
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 	message := composed.reply.message
 
-	sender, err := common.ResolveEmailSender(ctx, t.deps.senders, composed.send)
+	sender, err := outboundpreview.ResolveEmailSender(ctx, t.deps.senders, composed.send)
 	if err != nil {
 		return nil, err
 	}
@@ -110,9 +114,9 @@ func (t *ReplyToInboundMessageTool) Preview(
 			ID:       message.ID,
 			Label:    message.FromAddress,
 		},
-		common.EmailMessagePreview(
+		outboundpreview.EmailMessagePreview(
 			sender,
-			common.RenderedEmailPreview(composed.send, composed.versionID),
+			outboundpreview.RenderedEmailPreview(composed.send, composed.versionID),
 		),
 	)
 
@@ -120,8 +124,8 @@ func (t *ReplyToInboundMessageTool) Preview(
 		toolpreview.Record{
 			Resource: permission.ResourceInboundMessage,
 			ID:       message.ID,
-			Label:    describeInboundMessage(message),
-			Version:  common.PinnedVersion(message.Version),
+			Label:    DescribeMessage(message),
+			Version:  changepreview.PinnedVersion(message.Version),
 		},
 		message,
 		func(after *inboundmessage.InboundMessage) error {
@@ -144,12 +148,12 @@ func (t *ReplyToInboundMessageTool) Preview(
 
 	preview := toolpreview.Build(
 		"Would reply to "+message.FromAddress+" in the thread "+
-			describeInboundMessage(message)+", and mark the message actioned.",
+			DescribeMessage(message)+", and mark the message actioned.",
 		send,
 		settled,
 	)
-	common.WarnSuppressedRecipients(preview, sender)
-	common.WarnSensitiveContent(preview, composed.reply.body)
+	outboundpreview.WarnSuppressedRecipients(preview, sender)
+	outboundpreview.WarnSensitiveContent(preview, composed.reply.body)
 
 	return preview, nil
 }

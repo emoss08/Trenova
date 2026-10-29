@@ -115,7 +115,7 @@ func runProbes(ctx context.Context, args []string) error {
 }
 
 func (r *probeResolver) resolve() ([]probe, error) {
-	service, err := r.uniqueSuffix("/shipmentservice")
+	service, err := r.uniqueSuffix("/shipmentwrite")
 	if err != nil {
 		return nil, err
 	}

@@ -17123,7 +17123,7 @@ export type TrainingCourseReferenceFragment = { id: string, code: string, name: 
 
 export type UserReferenceFragment = { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'UserReferenceFragment' };
 
-export type WorkerReferenceFragment = { id: string, fleetCodeId: string | null, status: EntityStatus, type: WorkerType, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeReferenceFragment': FleetCodeReferenceFragment } } | null } & { ' $fragmentName'?: 'WorkerReferenceFragment' };
+export type WorkerReferenceFragment = { id: string, fleetCodeId: string | null, status: EntityStatus, type: WorkerType, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, assignmentBlocked: string, canBeAssigned: boolean, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeReferenceFragment': FleetCodeReferenceFragment } } | null } & { ' $fragmentName'?: 'WorkerReferenceFragment' };
 
 export type WorkerChecklistReferenceFragment = { id: string, name: string, kind: WorkerChecklistKind, status: WorkerChecklistStatus, dueAt: number | null } & { ' $fragmentName'?: 'WorkerChecklistReferenceFragment' };
 
@@ -19028,6 +19028,11 @@ export type AttachWorkerCredentialDocumentMutationVariables = Exact<{
 
 export type AttachWorkerCredentialDocumentMutation = { attachWorkerCredentialDocument: { ' $fragmentRefs'?: { 'WorkerCredentialFieldsFragment': WorkerCredentialFieldsFragment } } };
 
+export type WorkerCredentialTypeChoicesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WorkerCredentialTypeChoicesQuery = { activeWorkerCredentialTypes: Array<{ id: string, code: string, name: string, isRequired: boolean }> };
+
 export type DeskWorkerCardQueryVariables = Exact<{
   id: string | number;
 }>;
@@ -19743,6 +19748,7 @@ export type WorkerDataTablePageInfoFieldsFragment = { hasNextPage: boolean, endC
 export type WorkerTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
+  withoutCredential?: string | null | undefined;
 }>;
 
 
@@ -20058,7 +20064,7 @@ export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, Watc
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { DeskWorkerCredentialDocument, DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";
-export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument } from "./documents/worker-credential/operations";
+export { WorkerCredentialTypeFieldsFragmentDoc, WorkerCredentialFieldsFragmentDoc, WorkerCredentialTypeTableDocument, WorkerCredentialsDocument, WorkerCredentialSummaryDocument, CredentialExpiryForecastDocument, CreateWorkerCredentialTypeDocument, UpdateWorkerCredentialTypeDocument, ArchiveWorkerCredentialTypeDocument, RestoreWorkerCredentialTypeDocument, CreateWorkerCredentialDocument, UpdateWorkerCredentialDocument, VerifyWorkerCredentialDocument, ArchiveWorkerCredentialDocument, AttachWorkerCredentialDocumentDocument, WorkerCredentialTypeChoicesDocument } from "./documents/worker-credential/operations";
 export { DeskWorkerCardDocument, DeskWorkerHosDocument, DeskWorkerStandingDocument, DeskWorkerCredentialsDocument, DeskWorkersDocument } from "./documents/worker-desk/desk";
 export { DeskWorkerEmploymentVerificationsDocument } from "./documents/worker-dqf/desk";
 export { DriverQualificationFileDocument, OutstandingEmploymentVerificationsDocument, DqfRetentionCandidatesDocument, RecordEmploymentVerificationDocument, UpdateEmploymentVerificationDocument, MarkEmploymentVerificationRequestedDocument, RecordEmploymentVerificationFollowUpDocument, DeleteEmploymentVerificationDocument } from "./documents/worker-dqf/operations";

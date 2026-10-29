@@ -7,8 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,13 +21,16 @@ import (
 type fakeRepo struct {
 	mu sync.Mutex
 
-	appended  []*agent.AgentRunEvent
+	appended  []*agentrunevent.AgentRunEvent
 	next      int
 	appendErr error
 	seqErr    error
 }
 
-func (f *fakeRepo) Append(_ context.Context, req agentports.AppendAgentRunEventsRequest) error {
+func (f *fakeRepo) Append(
+	_ context.Context,
+	req agentruntimeports.AppendAgentRunEventsRequest,
+) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -56,41 +60,41 @@ func (f *fakeRepo) NextSequence(
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ agentports.ListAgentRunEventsRequest,
-) ([]*agent.AgentRunEvent, error) {
+	_ *agentruntimeports.ListAgentRunEventsRequest,
+) ([]*agentrunevent.AgentRunEvent, error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) ListConnection(
 	_ context.Context,
-	_ *agentports.ListAgentRunEventConnectionRequest,
-) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
+	_ *agentruntimeports.ListAgentRunEventConnectionRequest,
+) (*pagination.CursorListResult[*agentrunevent.AgentRunEvent], error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) Prune(
 	_ context.Context,
-	_ agentports.PruneAgentRunEventsRequest,
+	_ agentruntimeports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return 0, nil
 }
 
-func (f *fakeRepo) rows() []*agent.AgentRunEvent {
+func (f *fakeRepo) rows() []*agentrunevent.AgentRunEvent {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	return append([]*agent.AgentRunEvent(nil), f.appended...)
+	return append([]*agentrunevent.AgentRunEvent(nil), f.appended...)
 }
 
-func newRecorder(t *testing.T, repo *fakeRepo) agentports.AgentRunEventRecorder {
+func newRecorder(t *testing.T, repo *fakeRepo) agentruntimeports.AgentRunEventRecorder {
 	t.Helper()
 
 	return New(Params{Logger: zap.NewNop(), Repo: repo})
 }
 
-func owner() agentports.RunStepOwner {
-	return agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAgentRun,
+func owner() agentruntimeports.RunStepOwner {
+	return agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAgentRun,
 		ID:   pulid.MustNew("ar_"),
 	}
 }
@@ -198,7 +202,10 @@ func TestRecorder_LiftsTheCallIDOutOfAToolEvent(t *testing.T) {
 
 	writer.Record(t.Context(), kernelports.StreamEvent{
 		Event: "tool_started",
-		Data:  agentports.AssistantToolStartedEvent{CallID: "call_42", Name: "assign_worker"},
+		Data: assistantstreamports.AssistantToolStartedEvent{
+			CallID: "call_42",
+			Name:   "assign_worker",
+		},
 	})
 	writer.Flush(t.Context())
 
@@ -212,8 +219,8 @@ func TestRecorder_RecordsAConversationTurnToo(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeRepo{}
-	turn := agentports.RunStepOwner{
-		Kind: agentports.RunStepOwnerAssistantTurn,
+	turn := agentruntimeports.RunStepOwner{
+		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   pulid.MustNew("at_"),
 	}
 	writer := newRecorder(t, repo).Recorder(t.Context(), tenant(), turn)
@@ -246,8 +253,8 @@ func TestRecordTrajectory_IsSafeWithoutARecorder(t *testing.T) {
 	t.Parallel()
 
 	assert.NotPanics(t, func() {
-		agentports.RecordTrajectory(nil, t.Context(), kernelports.StreamEvent{Event: "done"})
-		agentports.FlushTrajectory(nil, t.Context())
+		agentruntimeports.RecordTrajectory(nil, t.Context(), kernelports.StreamEvent{Event: "done"})
+		agentruntimeports.FlushTrajectory(nil, t.Context())
 	})
 }
 
@@ -256,23 +263,26 @@ func TestRecord_KeepsWhenTheEventHappened(t *testing.T) {
 
 	repo := &fakeRepo{}
 	writer := newRecorder(t, repo).Recorder(t.Context(), pagination.TenantInfo{},
-		agentports.RunStepOwner{
-			Kind: agentports.RunStepOwnerAgentRun,
+		agentruntimeports.RunStepOwner{
+			Kind: agentruntimeports.RunStepOwnerAgentRun,
 			ID:   pulid.MustNew("ar_"),
 		})
 
 	started := int64(1_790_000_000)
 	writer.Record(t.Context(), kernelports.StreamEvent{
-		Event: agentports.AssistantEventToolStarted,
-		Data:  agentports.AssistantToolStartedEvent{CallID: "call_1"},
+		Event: assistantstreamports.AssistantEventToolStarted,
+		Data:  assistantstreamports.AssistantToolStartedEvent{CallID: "call_1"},
 		At:    started,
 	})
 	writer.Record(t.Context(), kernelports.StreamEvent{
-		Event: agentports.AssistantEventToolFinished,
-		Data:  agentports.AssistantToolFinishedEvent{CallID: "call_1"},
+		Event: assistantstreamports.AssistantEventToolFinished,
+		Data:  assistantstreamports.AssistantToolFinishedEvent{CallID: "call_1"},
 		At:    started + 95,
 	})
-	writer.Record(t.Context(), kernelports.StreamEvent{Event: agentports.AssistantEventDone})
+	writer.Record(
+		t.Context(),
+		kernelports.StreamEvent{Event: assistantstreamports.AssistantEventDone},
+	)
 	writer.Flush(t.Context())
 
 	rows := repo.rows()

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -41,17 +41,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "BulkWorkerPTOActionResult",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionPayload)
+					obj := o.(*workerptoports.PTOBulkActionPayload)
 					return obj.Results, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBulkWorkerPTOActionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionResultᚄ),
+				Marshal: gqlexec.Marshal(marshalNBulkWorkerPTOActionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionResultᚄ),
 			},
 			{
 				Name:     "successCount",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionPayload)
+					obj := o.(*workerptoports.PTOBulkActionPayload)
 					return obj.SuccessCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -61,7 +61,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionPayload)
+					obj := o.(*workerptoports.PTOBulkActionPayload)
 					return obj.FailureCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -73,7 +73,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionResult)
+					obj := o.(*workerptoports.PTOBulkActionResult)
 					return obj.PTOID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -83,7 +83,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionResult)
+					obj := o.(*workerptoports.PTOBulkActionResult)
 					return obj.Success, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -93,7 +93,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOBulkActionResult)
+					obj := o.(*workerptoports.PTOBulkActionResult)
 					return obj.Error, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -189,7 +189,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").BulkWorkerPTOAction(ctx, fc.Args["input"].(gqlmodel.BulkWorkerPTOActionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionPayload),
+				Marshal: gqlexec.Marshal(marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionPayload),
 			},
 		}},
 		{Object: "PTOChartDataPoint", Fields: []*gqlexec.Field{
@@ -198,7 +198,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Date, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -208,7 +208,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Vacation, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -218,7 +218,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Sick, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -228,7 +228,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Holiday, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -238,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Bereavement, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -248,7 +248,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Maternity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -258,7 +258,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Paternity, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -268,7 +268,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return obj.Personal, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -280,7 +280,7 @@ var Shard = &gqlexec.Shard{
 				Concurrent: true,
 				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*workerports.PTOChartDataPoint)
+					obj := o.(*workerptoports.PTOChartDataPoint)
 					return gqlexec.Resolver[resolverPTOChartDataPoint](ec, "PTOChartDataPoint").Workers(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalNJSON2map),
@@ -354,7 +354,7 @@ var Shard = &gqlexec.Shard{
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverQuery](ec, "Query").WorkerPTOChartData(ctx, fc.Args["input"].(gqlmodel.WorkerPTOChartInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOChartDataPointᚄ),
+				Marshal: gqlexec.Marshal(marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOChartDataPointᚄ),
 			},
 		}},
 		{Object: "Worker", Fields: []*gqlexec.Field{
@@ -1538,11 +1538,11 @@ type resolverMutation interface {
 	ApproveWorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPTO(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 	CancelWorkerPTO(ctx context.Context, id string, reason *string) (*worker.WorkerPTO, error)
-	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error)
+	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerptoports.PTOBulkActionPayload, error)
 }
 
 type resolverPTOChartDataPoint interface {
-	Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error)
+	Workers(ctx context.Context, obj *workerptoports.PTOChartDataPoint) (map[string]any, error)
 }
 
 type resolverQuery interface {
@@ -1550,7 +1550,7 @@ type resolverQuery interface {
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
-	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
+	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error)
 }
 
 type resolverWorker interface {
@@ -1810,7 +1810,7 @@ func unmarshalInputBulkWorkerPTOActionInput(ctx context.Context, ec *gqlexec.Exe
 			it.PTOIds = data
 		case "action":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("action"))
-			data, err := unmarshalNWorkerPTOBulkAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionType(ctx, ec, v)
+			data, err := unmarshalNWorkerPTOBulkAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionType(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -2350,9 +2350,9 @@ func unmarshalNUpdateWorkerPTOInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalNWorkerPTOBulkAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionType(ctx context.Context, ec *gqlexec.Exec, v any) (workerports.PTOBulkActionType, error) {
+func unmarshalNWorkerPTOBulkAction2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionType(ctx context.Context, ec *gqlexec.Exec, v any) (workerptoports.PTOBulkActionType, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := workerports.PTOBulkActionType(tmp)
+	res := workerptoports.PTOBulkActionType(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -2485,7 +2485,7 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 	return res
 }
 
-func marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionPayload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerports.PTOBulkActionPayload) graphql.Marshaler {
+func marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionPayload(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerptoports.PTOBulkActionPayload) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2493,15 +2493,15 @@ func marshalNBulkWorkerPTOActionPayload2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋin
 	return ec.MarshalType(ctx, sel, "BulkWorkerPTOActionPayload", v)
 }
 
-func marshalNBulkWorkerPTOActionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerports.PTOBulkActionResult) graphql.Marshaler {
-	return gqlexec.List[*workerports.PTOBulkActionResult]{
-		Elem:        marshalNBulkWorkerPTOActionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionResult,
+func marshalNBulkWorkerPTOActionResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionResultᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerptoports.PTOBulkActionResult) graphql.Marshaler {
+	return gqlexec.List[*workerptoports.PTOBulkActionResult]{
+		Elem:        marshalNBulkWorkerPTOActionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionResult,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNBulkWorkerPTOActionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOBulkActionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerports.PTOBulkActionResult) graphql.Marshaler {
+func marshalNBulkWorkerPTOActionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOBulkActionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerptoports.PTOBulkActionResult) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
@@ -2609,15 +2609,15 @@ func marshalNJSON2map(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSe
 	return res
 }
 
-func marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOChartDataPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerports.PTOChartDataPoint) graphql.Marshaler {
-	return gqlexec.List[*workerports.PTOChartDataPoint]{
-		Elem:        marshalNPTOChartDataPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOChartDataPoint,
+func marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOChartDataPointᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*workerptoports.PTOChartDataPoint) graphql.Marshaler {
+	return gqlexec.List[*workerptoports.PTOChartDataPoint]{
+		Elem:        marshalNPTOChartDataPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOChartDataPoint,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNPTOChartDataPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerportsᚐPTOChartDataPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerports.PTOChartDataPoint) graphql.Marshaler {
+func marshalNPTOChartDataPoint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkforceᚋportsᚋworkerptoportsᚐPTOChartDataPoint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *workerptoports.PTOChartDataPoint) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null

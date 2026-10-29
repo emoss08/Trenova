@@ -4,24 +4,24 @@ import (
 	"context"
 	"sync"
 
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 )
 
 type Recorder struct {
 	mu     sync.Mutex
-	Events []agentports.AgentEvent
+	Events []agenteventports.AgentEvent
 }
 
-func (r *Recorder) Publish(_ context.Context, event agentports.AgentEvent) {
+func (r *Recorder) Publish(_ context.Context, event *agenteventports.AgentEvent) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.Events = append(r.Events, event)
+	r.Events = append(r.Events, *event)
 }
 
-func (r *Recorder) Published() []agentports.AgentEvent {
+func (r *Recorder) Published() []agenteventports.AgentEvent {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	out := make([]agentports.AgentEvent, len(r.Events))
+	out := make([]agenteventports.AgentEvent, len(r.Events))
 	copy(out, r.Events)
 
 	return out

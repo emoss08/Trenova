@@ -9,9 +9,10 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
-	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -36,9 +37,12 @@ func TestMyProposalPreview_ServesEachReasonOfARefusal(t *testing.T) {
 	proposalID := pulid.MustNew("ap_")
 	previews := &resolvertest.PreviewService{}
 	root := FromServices(&Services{
-		Core: &base.Core{L: zap.NewNop(), PermissionEngine: &resolvertest.PreviewPermissions{Granted: map[string]bool{
-			permission.ResourceAssistant.String() + "|" + string(permission.OpRead): true,
-		}}},
+		Core: &resolvercore.Core{
+			L: zap.NewNop(),
+			PermissionEngine: &resolvertest.PreviewPermissions{Granted: map[string]bool{
+				permission.ResourceAssistant.String() + "|" + string(permission.OpRead): true,
+			}},
+		},
 		AgentProposalService: &resolvertest.PreviewProposals{
 			Proposal: &agent.AgentProposal{ID: proposalID},
 		},
@@ -47,11 +51,11 @@ func TestMyProposalPreview_ServesEachReasonOfARefusal(t *testing.T) {
 		ProposalPreviewService: previews,
 	})
 	ctx := gqlctx.WithAuthContext(t.Context(), auth)
-	previews.Warnings = []agent.PreviewWarning{{
-		Code:    agent.PreviewWarningWouldFail,
+	previews.Warnings = []agentpreview.PreviewWarning{{
+		Code:    agentpreview.PreviewWarningWouldFail,
 		Args:    []string{"validation failed"},
 		Message: "This would be refused as it stands: validation failed",
-		Reasons: []agent.PreviewReason{{
+		Reasons: []agentpreview.PreviewReason{{
 			Field:   "bol",
 			Label:   "BOL",
 			Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
@@ -60,7 +64,7 @@ func TestMyProposalPreview_ServesEachReasonOfARefusal(t *testing.T) {
 			Message: "The customer is on credit hold",
 		}},
 	}, {
-		Code:    agent.PreviewWarningWithheld,
+		Code:    agentpreview.PreviewWarningWithheld,
 		Message: "Some of it is hidden.",
 	}}
 

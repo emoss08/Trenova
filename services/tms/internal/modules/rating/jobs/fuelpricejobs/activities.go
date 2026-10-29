@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -198,7 +198,7 @@ func (a *Activities) reRateShipment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
-	control *tenant.ShipmentControl,
+	control *shipmentcontrol.ShipmentControl,
 ) error {
 	entity, err := a.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         shipmentID,

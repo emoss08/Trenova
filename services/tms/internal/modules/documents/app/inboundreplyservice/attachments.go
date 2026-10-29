@@ -7,7 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/triageworkports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -96,7 +97,7 @@ func (s *Service) currentDraft(
 ) (*triage.Reply, bool, error) {
 	drafts, err := s.replies.DraftsByMessageIDs(
 		ctx,
-		inboundmessageports.InboundRepliesByMessagesRequest{
+		inboundreplyports.InboundRepliesByMessagesRequest{
 			TenantInfo: tenantOf(message),
 			MessageIDs: []pulid.ID{message.ID},
 		},
@@ -170,7 +171,7 @@ func (s *Service) detentionEvidence(
 	log := s.l.With(zap.String("messageId", message.ID.String()))
 	evidence, err := s.evidence.DetentionEvidence(
 		ctx,
-		&inboundmessageports.TriageDetentionEvidenceRequest{
+		&triageworkports.TriageDetentionEvidenceRequest{
 			TenantInfo: tenantOf(message),
 			ShipmentID: message.MatchedShipmentID,
 		},

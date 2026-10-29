@@ -6,11 +6,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workercredentialports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workertrainingports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,7 +46,7 @@ type digestState struct {
 	// controls caches each organisation's Dash settings. The sweep walks rows
 	// across every tenant, so without it the same control would be read once
 	// per credential.
-	controls map[pagination.TenantInfo]*tenant.DashControl
+	controls map[pagination.TenantInfo]*dashcontrol.DashControl
 	// items collects one bucket per driver. The obligations are gathered first
 	// and sent once, which is the whole point of a digest.
 	items  map[pulid.ID]*digestBucket
@@ -54,8 +55,8 @@ type digestState struct {
 
 type digestBucket struct {
 	tenantInfo pagination.TenantInfo
-	cadence    tenant.DriverDigestCadence
-	items      []documenttemplate.DriverObligation
+	cadence    dashcontrol.DriverDigestCadence
+	items      []notificationtemplate.DriverObligation
 }
 
 // DriverDigestActivity bundles everything a driver owes into one notice, for
@@ -72,7 +73,7 @@ func (a *Activities) DriverDigestActivity(
 ) (*DriverDigestSweepResult, error) {
 	state := &digestState{
 		now:      timeutils.NowUnix(),
-		controls: make(map[pagination.TenantInfo]*tenant.DashControl),
+		controls: make(map[pagination.TenantInfo]*dashcontrol.DashControl),
 		items:    make(map[pulid.ID]*digestBucket),
 		result:   new(DriverDigestSweepResult),
 	}
@@ -95,7 +96,7 @@ func (a *Activities) digestControl(
 	ctx context.Context,
 	state *digestState,
 	tenantInfo pagination.TenantInfo,
-) (*tenant.DashControl, bool, error) {
+) (*dashcontrol.DashControl, bool, error) {
 	control, ok := state.controls[tenantInfo]
 	if !ok {
 		loaded, err := a.dashControlRepo.GetOrCreate(ctx, tenantInfo)
@@ -113,16 +114,16 @@ func (a *Activities) digestControl(
 
 // digestDueToday says whether tonight is a night this organisation's digest
 // goes out. A weekly digest that fired every night would not be a weekly one.
-func digestDueToday(control *tenant.DashControl, now int64) bool {
+func digestDueToday(control *dashcontrol.DashControl, now int64) bool {
 	if control == nil || !control.SendCredentialReminders {
 		return false
 	}
 	switch control.DriverDigestCadence {
-	case tenant.DigestDaily:
+	case dashcontrol.DigestDaily:
 		return true
-	case tenant.DigestWeekly:
+	case dashcontrol.DigestWeekly:
 		return int16(time.Unix(now, 0).UTC().Weekday()) == control.DriverDigestWeekday
-	case tenant.DigestImmediate:
+	case dashcontrol.DigestImmediate:
 		return false
 	default:
 		return false
@@ -131,8 +132,8 @@ func digestDueToday(control *tenant.DashControl, now int64) bool {
 
 // digestHorizon is how far ahead a cadence looks. A weekly notice covers the
 // fortnight so nothing falls due in the gap between two of them.
-func digestHorizon(cadence tenant.DriverDigestCadence) int64 {
-	if cadence == tenant.DigestWeekly {
+func digestHorizon(cadence dashcontrol.DriverDigestCadence) int64 {
+	if cadence == dashcontrol.DigestWeekly {
 		return weeklyDigestHorizonDays
 	}
 	return dailyDigestHorizonDays
@@ -146,7 +147,7 @@ func (a *Activities) collectCredentialObligations(
 	for {
 		page, err := a.credentialRepo.ListExpiring(
 			ctx,
-			&workerports.ListExpiringWorkerCredentialsRequest{
+			&workercredentialports.ListExpiringWorkerCredentialsRequest{
 				HorizonDays: sweepHorizonDays,
 				GraceDays:   sweepGraceDays,
 				AfterID:     after,
@@ -172,11 +173,11 @@ func (a *Activities) collectCredentialObligations(
 			if !due || cred.Worker.UserID.IsNil() {
 				continue
 			}
-			daysLeft := worker.DaysUntil(*cred.ExpiresAt, state.now)
+			daysLeft := workercredential.DaysUntil(*cred.ExpiresAt, state.now)
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}
-			state.add(tenantInfo, control, cred.WorkerID, documenttemplate.DriverObligation{
+			state.add(tenantInfo, control, cred.WorkerID, notificationtemplate.DriverObligation{
 				What:      cred.CredentialType.Name,
 				Kind:      "credential",
 				DueAt:     credentialExpiryDate(cred),
@@ -209,7 +210,7 @@ func (a *Activities) collectTrainingList(
 ) error {
 	var after pulid.ID
 	for {
-		page, err := list(ctx, &workerports.ListTrainingRemindersRequest{
+		page, err := list(ctx, &workertrainingports.ListTrainingRemindersRequest{
 			HorizonDays: sweepHorizonDays,
 			GraceDays:   sweepGraceDays,
 			AfterID:     after,
@@ -243,11 +244,11 @@ func (a *Activities) collectTrainingList(
 			if !due || record.Worker.UserID.IsNil() {
 				continue
 			}
-			daysLeft := worker.DaysUntil(*at, state.now)
+			daysLeft := workercredential.DaysUntil(*at, state.now)
 			if daysLeft > digestHorizon(control.DriverDigestCadence) {
 				continue
 			}
-			state.add(tenantInfo, control, record.WorkerID, documenttemplate.DriverObligation{
+			state.add(tenantInfo, control, record.WorkerID, notificationtemplate.DriverObligation{
 				What:      record.Course.Name,
 				Kind:      "training",
 				DueAt:     trainingDate(at),
@@ -265,9 +266,9 @@ func (a *Activities) collectTrainingList(
 
 func (s *digestState) add(
 	tenantInfo pagination.TenantInfo,
-	control *tenant.DashControl,
+	control *dashcontrol.DashControl,
 	workerID pulid.ID,
-	item documenttemplate.DriverObligation,
+	item notificationtemplate.DriverObligation,
 ) {
 	bucket, ok := s.items[workerID]
 	if !ok {
@@ -338,7 +339,7 @@ func (a *Activities) sendDigest(
 		WorkerID:   workerID,
 		EventType:  eventDriverDigest,
 		Priority:   digestPriority(items),
-		Context: documenttemplate.DriverNotificationContext{
+		Context: notificationtemplate.DriverNotificationContext{
 			Digest:       items,
 			DigestPeriod: digestPeriodLabel(bucket.cadence),
 		},
@@ -350,7 +351,7 @@ func (a *Activities) sendDigest(
 // digestPriority lifts the notice when something has already lapsed. A
 // round-up of things due next week is not the same message as one saying a
 // licence expired on Tuesday.
-func digestPriority(items []documenttemplate.DriverObligation) notification.Priority {
+func digestPriority(items []notificationtemplate.DriverObligation) notification.Priority {
 	for _, item := range items {
 		if item.Overdue {
 			return notification.PriorityHigh
@@ -359,17 +360,17 @@ func digestPriority(items []documenttemplate.DriverObligation) notification.Prio
 	return notification.PriorityMedium
 }
 
-func digestPeriodKey(cadence tenant.DriverDigestCadence, now int64) string {
+func digestPeriodKey(cadence dashcontrol.DriverDigestCadence, now int64) string {
 	at := time.Unix(now, 0).UTC()
-	if cadence == tenant.DigestWeekly {
+	if cadence == dashcontrol.DigestWeekly {
 		year, week := at.ISOWeek()
 		return fmt.Sprintf("%dW%02d", year, week)
 	}
 	return at.Format("2006-01-02")
 }
 
-func digestPeriodLabel(cadence tenant.DriverDigestCadence) string {
-	if cadence == tenant.DigestWeekly {
+func digestPeriodLabel(cadence dashcontrol.DriverDigestCadence) string {
+	if cadence == dashcontrol.DigestWeekly {
 		return "this week"
 	}
 	return "today"

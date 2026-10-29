@@ -6,11 +6,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edibulk"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edidelivery"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -20,13 +25,13 @@ import (
 )
 
 type fakeDeliveries struct {
-	messages map[pulid.ID]*edi.EDIMessage
+	messages map[pulid.ID]*edimessage.EDIMessage
 	guard    *agenttoolstest.WriteGuard
-	retried  *ediservice.BulkRetryMessageDeliveryRequest
-	replayed *ediservice.RetryMessageDeliveryRequest
+	retried  *edidelivery.BulkRetryMessageDeliveryRequest
+	replayed *edidelivery.RetryMessageDeliveryRequest
 }
 
-func (f *fakeDeliveries) message(id pulid.ID) (*edi.EDIMessage, error) {
+func (f *fakeDeliveries) message(id pulid.ID) (*edimessage.EDIMessage, error) {
 	message, ok := f.messages[id]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("EDIMessage not found")
@@ -37,8 +42,8 @@ func (f *fakeDeliveries) message(id pulid.ID) (*edi.EDIMessage, error) {
 
 func (f *fakeDeliveries) PlanRetryMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
-) (*ediservice.DeliveryPlan, error) {
+	req *edidelivery.RetryMessageDeliveryRequest,
+) (*edidelivery.DeliveryPlan, error) {
 	message, err := f.message(req.MessageID)
 	if err != nil {
 		return nil, err
@@ -50,7 +55,7 @@ func (f *fakeDeliveries) PlanRetryMessageDelivery(
 		)
 	}
 
-	return &ediservice.DeliveryPlan{
+	return &edidelivery.DeliveryPlan{
 		Message: message,
 		Profile: &edi.EDICommunicationProfile{Name: "Acme SFTP", Method: edi.ConnectionMethodSFTP},
 	}, nil
@@ -58,38 +63,38 @@ func (f *fakeDeliveries) PlanRetryMessageDelivery(
 
 func (f *fakeDeliveries) PlanReplayMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
-) (*ediservice.DeliveryPlan, error) {
+	req *edidelivery.RetryMessageDeliveryRequest,
+) (*edidelivery.DeliveryPlan, error) {
 	message, err := f.message(req.MessageID)
 	if err != nil {
 		return nil, err
 	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusSent {
+	if message.DeliveryStatus != edimessage.MessageDeliveryStatusSent {
 		return nil, errortypes.NewValidationError(
 			"deliveryStatus", errortypes.ErrInvalidOperation,
 			"Only delivered EDI messages can be replayed; use retry for failed messages",
 		)
 	}
 
-	return &ediservice.DeliveryPlan{Message: message}, nil
+	return &edidelivery.DeliveryPlan{Message: message}, nil
 }
 
 func (f *fakeDeliveries) BulkRetryMessageDelivery(
 	_ context.Context,
-	req *ediservice.BulkRetryMessageDeliveryRequest,
-) (*ediservice.BulkEDIActionResult, error) {
+	req *edidelivery.BulkRetryMessageDeliveryRequest,
+) (*edibulk.Result, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.retried = req
 
-	return &ediservice.BulkEDIActionResult{Succeeded: req.MessageIDs}, nil
+	return &edibulk.Result{Succeeded: req.MessageIDs}, nil
 }
 
 func (f *fakeDeliveries) ReplayMessageDelivery(
 	_ context.Context,
-	req *ediservice.RetryMessageDeliveryRequest,
-) (*edi.EDIMessage, error) {
+	req *edidelivery.RetryMessageDeliveryRequest,
+) (*edimessage.EDIMessage, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
@@ -98,11 +103,11 @@ func (f *fakeDeliveries) ReplayMessageDelivery(
 	return f.messages[req.MessageID], nil
 }
 
-func outboundMessage(status edi.MessageDeliveryStatus) *edi.EDIMessage {
-	return &edi.EDIMessage{
+func outboundMessage(status edimessage.MessageDeliveryStatus) *edimessage.EDIMessage {
+	return &edimessage.EDIMessage{
 		ID:                       pulid.MustNew("edimsg_"),
-		Direction:                edi.DocumentDirectionOutbound,
-		TransactionSet:           edi.TransactionSet214,
+		Direction:                edidocument.DocumentDirectionOutbound,
+		TransactionSet:           edidocument.TransactionSet214,
 		InterchangeControlNumber: "000000042",
 		DeliveryStatus:           status,
 		DeliveryLastError:        "connection refused",
@@ -115,7 +120,7 @@ func outboundMessage(status edi.MessageDeliveryStatus) *edi.EDIMessage {
 func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range []agentports.AgentTool{
+	for _, tool := range []agenttoolports.AgentTool{
 		NewRetryEDIMessageDeliveryTool(nil),
 		NewReplayEDIMessageTool(nil),
 		NewReprocessEDIInboundFilesTool(nil),
@@ -141,10 +146,10 @@ func TestEDIDeliveryTools_ArePersonOnlyProposals(t *testing.T) {
 func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(t *testing.T) {
 	t.Parallel()
 
-	failed := outboundMessage(edi.MessageDeliveryStatusFailed)
-	sent := outboundMessage(edi.MessageDeliveryStatusSent)
+	failed := outboundMessage(edimessage.MessageDeliveryStatusFailed)
+	sent := outboundMessage(edimessage.MessageDeliveryStatusSent)
 	deliveries := &fakeDeliveries{
-		messages: map[pulid.ID]*edi.EDIMessage{failed.ID: failed, sent.ID: sent},
+		messages: map[pulid.ID]*edimessage.EDIMessage{failed.ID: failed, sent.ID: sent},
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewRetryEDIMessageDeliveryTool(deliveries).(*RetryEDIMessageDeliveryTool)
@@ -152,22 +157,34 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 		paramEDIMessageIDs: []any{failed.ID.String(), sent.ID.String(), failed.ID.String()},
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, deliveries.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		deliveries.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	require.Len(t, preview.Changes, 2, "a message named twice is sent once")
 	refused := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, sent.ID, refused.EntityID, "refusals come first")
-	assert.Contains(t, agenttoolstest.FieldByPath(t, refused, "outcome").After, "Only queued, failed")
+	assert.Contains(
+		t,
+		agenttoolstest.FieldByPath(t, refused, "outcome").After,
+		"Only queued, failed",
+	)
 	queued := agenttoolstest.PreviewChange(t, preview, 1)
 	assert.Equal(t, "Queued", agenttoolstest.FieldByPath(t, queued, "deliveryStatus").After)
 	require.NotNil(t, queued.Message)
-	assert.Equal(t, agent.MessageChannelEDI, queued.Message.Channel)
+	assert.Equal(t, agentpreview.MessageChannelEDI, queued.Message.Channel)
 	assert.NotContains(t, queued.Message.Body, "SECRET-RATE", "the document's content stays out")
 	assert.Contains(t, preview.Summary, "1 of 2")
 
 	require.NoError(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(args)))
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ApprovedParams(args))
 	require.NoError(t, err)
@@ -179,22 +196,30 @@ func TestRetryEDIMessageDelivery_PreviewsEachMessageAndRefusalWithoutItsContent(
 func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testing.T) {
 	t.Parallel()
 
-	sent := outboundMessage(edi.MessageDeliveryStatusSent)
-	failed := outboundMessage(edi.MessageDeliveryStatusFailed)
+	sent := outboundMessage(edimessage.MessageDeliveryStatusSent)
+	failed := outboundMessage(edimessage.MessageDeliveryStatusFailed)
 	deliveries := &fakeDeliveries{
-		messages: map[pulid.ID]*edi.EDIMessage{sent.ID: sent, failed.ID: failed},
+		messages: map[pulid.ID]*edimessage.EDIMessage{sent.ID: sent, failed.ID: failed},
 		guard:    &agenttoolstest.WriteGuard{},
 	}
 	tool := NewReplayEDIMessageTool(deliveries).(*ReplayEDIMessageTool)
 
 	target, ok := tool.Target(map[string]any{paramEDIMessageID: sent.ID.String()})
 	require.True(t, ok)
-	assert.Equal(t, agentports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID}, target)
+	assert.Equal(
+		t,
+		agenttoolports.ToolTarget{Resource: permission.ResourceEDI, ID: sent.ID},
+		target,
+	)
 
 	args := map[string]any{paramEDIMessageID: sent.ID.String()}
-	preview := agenttoolstest.PreviewWithoutWrites(t, deliveries.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		deliveries.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Version)
 	assert.Equal(t, int64(3), *change.Version)
@@ -203,22 +228,26 @@ func TestReplayEDIMessage_SendsADeliveredDocumentAgainOnlyWhenApproved(t *testin
 	refused := map[string]any{paramEDIMessageID: failed.ID.String()}
 	require.Error(t, tool.Validate(t.Context(), agenttoolstest.AgentParamsFor(refused)))
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ApprovedParams(args)))
 	require.NotNil(t, deliveries.replayed)
 	assert.Equal(t, sent.ID, deliveries.replayed.MessageID)
 }
 
 type fakeReprocessor struct {
-	files       map[pulid.ID]*edi.EDIInboundFile
+	files       map[pulid.ID]*ediinboundfile.EDIInboundFile
 	guard       *agenttoolstest.WriteGuard
 	reprocessed *ediinboundservice.BulkReprocessInboundFilesRequest
 }
 
 func (f *fakeReprocessor) GetInboundFile(
 	_ context.Context,
-	req ediports.GetEDIInboundFileByIDRequest,
-) (*edi.EDIInboundFile, error) {
+	req edimessageports.GetEDIInboundFileByIDRequest,
+) (*ediinboundfile.EDIInboundFile, error) {
 	file, ok := f.files[req.ID]
 	if !ok {
 		return nil, errortypes.NewNotFoundError("EDIInboundFile not found")
@@ -230,15 +259,15 @@ func (f *fakeReprocessor) GetInboundFile(
 func (f *fakeReprocessor) BulkReprocessInboundFiles(
 	_ context.Context,
 	req *ediinboundservice.BulkReprocessInboundFilesRequest,
-) (*ediservice.BulkEDIActionResult, error) {
+) (*edibulk.Result, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.reprocessed = req
 
-	return &ediservice.BulkEDIActionResult{
+	return &edibulk.Result{
 		Succeeded: req.FileIDs[:1],
-		Failed: []ediservice.BulkEDIActionFailure{{
+		Failed: []edibulk.Failure{{
 			ID: req.FileIDs[len(req.FileIDs)-1], Error: "Only quarantined files",
 		}},
 	}, nil
@@ -247,20 +276,20 @@ func (f *fakeReprocessor) BulkReprocessInboundFiles(
 func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) {
 	t.Parallel()
 
-	quarantined := &edi.EDIInboundFile{
+	quarantined := &ediinboundfile.EDIInboundFile{
 		ID:            pulid.MustNew("ediinf_"),
 		FileName:      "204_0921.x12",
-		Status:        edi.InboundFileStatusQuarantined,
+		Status:        ediinboundfile.InboundFileStatusQuarantined,
 		FailureReason: "partner could not be resolved",
 		Version:       5,
 	}
-	processed := &edi.EDIInboundFile{
+	processed := &ediinboundfile.EDIInboundFile{
 		ID:       pulid.MustNew("ediinf_"),
 		FileName: "214_0921.x12",
-		Status:   edi.InboundFileStatusProcessed,
+		Status:   ediinboundfile.InboundFileStatusProcessed,
 	}
 	files := &fakeReprocessor{
-		files: map[pulid.ID]*edi.EDIInboundFile{
+		files: map[pulid.ID]*ediinboundfile.EDIInboundFile{
 			quarantined.ID: quarantined,
 			processed.ID:   processed,
 		},
@@ -271,9 +300,13 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 		paramEDIInboundFileIDs: []any{quarantined.ID.String(), processed.ID.String()},
 	}
 
-	preview := agenttoolstest.PreviewWithoutWrites(t, files.guard, func() (*agent.ToolPreview, error) {
-		return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
-	})
+	preview := agenttoolstest.PreviewWithoutWrites(
+		t,
+		files.guard,
+		func() (*agentpreview.ToolPreview, error) {
+			return tool.Preview(t.Context(), agenttoolstest.AgentParamsFor(args))
+		},
+	)
 	require.Len(t, preview.Changes, 2)
 	refused := agenttoolstest.PreviewChange(t, preview, 0)
 	assert.Equal(t, processed.ID, refused.EntityID)
@@ -282,7 +315,11 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 	assert.Equal(t, "204_0921.x12", again.Label)
 	assert.True(t, preview.Partial, "what each transaction becomes is decided when it runs")
 
-	require.ErrorIs(t, tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)), ErrEDIDecisionNeedsAPerson)
+	require.ErrorIs(
+		t,
+		tool.Execute(t.Context(), agenttoolstest.AgentParamsFor(args)),
+		ErrEDIDecisionNeedsAPerson,
+	)
 	result, err := tool.ExecuteWithResult(t.Context(), agenttoolstest.ApprovedParams(args))
 	require.NoError(t, err)
 	require.NotNil(t, files.reprocessed)
@@ -293,13 +330,13 @@ func TestReprocessEDIInboundFiles_PreviewsWhichFilesWouldRunAgain(t *testing.T) 
 func TestEDIBulkTools_RefuseMoreThanTheServiceTakes(t *testing.T) {
 	t.Parallel()
 
-	ids := make([]any, 0, ediservice.MaxBulkEDIActionItems+1)
-	for range ediservice.MaxBulkEDIActionItems + 1 {
+	ids := make([]any, 0, edibulk.MaxItems+1)
+	for range edibulk.MaxItems + 1 {
 		ids = append(ids, pulid.MustNew("edimsg_").String())
 	}
 
 	tool := NewRetryEDIMessageDeliveryTool(&fakeDeliveries{})
-	err := tool.(agentports.ToolValidator).Validate(
+	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.AgentParamsFor(map[string]any{paramEDIMessageIDs: ids}),
 	)

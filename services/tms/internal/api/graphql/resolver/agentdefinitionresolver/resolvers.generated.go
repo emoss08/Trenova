@@ -3,20 +3,22 @@
 package agentdefinitionresolver
 
 import (
-	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	agentcapabilityports "github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	agentdefinitionports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	agentdraftports "github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	agentrecommendationports "github.com/emoss08/trenova/internal/modules/agent/ports/agentrecommendationports"
 	agentshadowports "github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 )
 
 type Deps struct {
-	*base.Core
+	*resolvercore.Core
 	AgentDefinitionService agentdefinitionports.AgentDefinitionService
-	AgentCapabilityService agentports.AgentCapabilityService
-	AgentRecommender       agentports.AgentRecommender
+	AgentCapabilityService agentcapabilityports.AgentCapabilityService
+	AgentRecommender       agentrecommendationports.AgentRecommender
 	AgentShadowService     agentshadowports.AgentShadowService
 	AgentTestPromptService agentdefinitionports.AgentTestPromptService
-	AgentDraftingService   agentports.AgentDraftingService
+	AgentDraftingService   agentdraftports.AgentDraftingService
 	AgentAccessService     agentdefinitionports.AgentAccessService
 }
 

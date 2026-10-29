@@ -28,15 +28,52 @@ modules:
   identity:
     level: 1
     domain:
+      - accountingcontrol
+      - accountingperms
+      - adminperms
+      - agentcontrol
+      - agentceiling
+      - agentperms
       - apikey
+      - billingcontrol
+      - billingperms
+      - carrierperms
+      - carriersettlementcontrol
+      - complianceperms
+      - dashcontrol
+      - dataretention
+      - dispatchbundles
+      - documentcontrol
+      - financebundles
+      - fleetperms
       - iam
       - instancebootstrap
+      - invoiceadjustmentcontrol
       - onboarding
+      - operationbits
+      - passwordreset
+      - payrollperms
       - permission
+      - permissioncatalog
+      - permissionspec
+      - platformbundles
       - platformplan
+      - protectedfield
+      - provisioning
+      - rbac
+      - recordkind
+      - reportperms
+      - routeaccess
+      - sequenceconfig
       - session
+      - settlementcontrol
+      - shipmentcontrol
+      - shipmentperms
+      - sso
       - subscription
       - tenant
+      - workerperms
+      - workforcebundles
     service:
       - accountingcontrolpolicyservice
       - accountingcontrolservice
@@ -137,7 +174,11 @@ modules:
       - integrationservice
       - notificationservice
       - pagefavoriteservice
+      - reportdashboardservice
       - reporting
+      - reportingtest
+      - reportscheduleservice
+      - reportviewservice
       - sidebarpreferenceservice
       - tablechangealertservice
       - tableconfigurationservice
@@ -149,7 +190,9 @@ modules:
       - bulkeditjobs
       - emailjobs
       - fuelcardjobs
+      - reportcatalogjobs
       - reportjobs
+      - reportnotify
     repository:
       - auditdlqrepository
       - auditrepository
@@ -272,11 +315,28 @@ modules:
       - carrier
       - carriercapacity
       - carrierintel
+      - carrierintelcontrol
+      - carrierinteldiff
+      - carrierintelenrollment
+      - carrierintelevent
+      - carrierintelmerge
+      - carrierinteloverride
+      - carrierintelrule
+      - carrierintelsnapshot
+      - carrierintelsync
+      - carrierintelusage
+      - carrierintelverification
       - customer
       - factoringcompany
     service:
       - carriercapacityservice
+      - carrierintelenrollmentservice
+      - carrierintelmonitorservice
+      - carrierintelreviewservice
       - carrierintelservice
+      - carrierintelsourcingservice
+      - carrierintelverifyservice
+      - carrierintelvetservice
       - carrierservice
       - customerservice
       - factoringcompanyservice
@@ -291,12 +351,37 @@ modules:
   workforce:
     level: 5
     domain:
+      - approvaldelegation
+      - dotclearinghouse
+      - dotrandom
+      - employment
+      - fleetsafety
       - permit
+      - portalinvitation
+      - profilechange
+      - pto
+      - safetyscorecard
       - telematics
+      - timesheet
       - worker
+      - workerchecklist
+      - workercompliance
+      - workercredential
+      - workerdiscipline
+      - workerdot
+      - workerinjury
+      - workerleave
+      - workerpolicy
+      - workerreview
+      - workersafety
+      - workerschedule
+      - workersyncdrift
+      - workertraining
     service:
       - benefitsservice
       - drivernotificationservice
+      - driverportalinvitationservice
+      - driverportalrecordsservice
       - driverportalservice
       - hosprojection
       - orgholidayservice
@@ -355,16 +440,42 @@ modules:
       - documentcontent
       - documentpacketrule
       - documentsearchprojection
+      - accounttemplate
+      - capturecoversheet
+      - capturepairing
+      - captureprofile
+      - capturerequest
+      - capturesplit
+      - detentiontemplate
       - documenttemplate
       - documentupload
       - extractioneval
       - extractionrollout
       - extractionshadow
+      - factoringtemplate
+      - generateddocument
       - inboundmessage
+      - invoicetemplate
+      - notificationtemplate
+      - portaltemplate
+      - rateconfirmationtemplate
+      - reporttemplate
+      - statementtemplate
+      - templatecatalog
+      - templateregistry
+      - tendertemplate
+      - trackingtemplate
       - triage
     service:
+      - capturedevices
+      - capturefiling
+      - captureintake
+      - capturemaintenance
+      - captureprocessing
+      - captureprofiles
       - capturereleaseservice
-      - captureservice
+      - capturerequests
+      - capturesupport
       - documentextractionservice
       - documentmailservice
       - documentpacketruleservice
@@ -375,7 +486,13 @@ modules:
       - extractionevalservice
       - extractionrolloutservice
       - extractionshadowservice
-      - inboundmessageservice
+      - inboundintake
+      - inboundmailbox
+      - inboundprocessing
+      - inboundqueue
+      - inboundreads
+      - inboundupkeep
+      - inboundviews
       - thumbnailservice
       - triagebriefingservice
       - triageconflictservice
@@ -384,7 +501,10 @@ modules:
       - triagesupport
     job:
       - capturejobs
+      - documentaiextractionjobs
+      - documentanalysis
       - documentextractionjobs
+      - documentextractionsupport
       - documentuploadjobs
       - extractionevaljobs
       - extractionshadowjobs
@@ -415,16 +535,25 @@ modules:
       - formulatemplate
       - fuelsurcharge
       - rateagreement
+      - rateagreementcompare
+      - rateagreementmatch
       - rateconfirmation
       - rateimport
       - ratematrix
+      - ratematrixcell
+      - ratematrixreview
+      - ratematrixversion
       - ratequote
       - ratesimulation
       - ratezone
     service:
       - carrierassignmentservice
       - formulalibraryservice
+      - formulatemplateimportservice
+      - formulatemplatereviewservice
       - formulatemplateservice
+      - formulatemplatestudioservice
+      - formulatemplatetest
       - fuelsurchargeservice
       - rateagreementservice
       - rateconfirmationservice
@@ -436,6 +565,8 @@ modules:
       - ratezoneservice
       - ratinghydration
       - tariff
+      - tarifftables
+      - tariffverdict
     job:
       - formulatemplatejobs
       - fuelpricejobs
@@ -460,29 +591,54 @@ modules:
   operations:
     level: 7
     domain:
+      - boardgrouping
+      - chargeallocation
+      - checkcall
+      - commentbody
+      - customertracking
       - detention
+      - detentioncollectability
+      - detentionevidence
+      - detentionnotice
+      - detentionpolicy
       - dispatchcontrol
       - documentshipmentdraft
+      - movesplit
       - order
+      - pickupwindow
+      - quickfilter
       - recurringshipment
       - servicefailure
       - shipment
+      - shipmentcoverage
+      - shipmentenvelope
       - shipmentevent
+      - shipmentformula
+      - shipmenthold
+      - shipmentnormalize
+      - shipmentrating
       - shipmentstate
       - shipmentsuggestion
+      - shipmentvocab
+      - stopeta
+      - stopvisit
       - tender
       - trackingevent
-      - checkcall
-      - stopeta
-      - customertracking
       - weatheralert
     service:
       - allocationcheck
       - assignmentservice
       - capabilityguard
       - customerupdateservice
+      - detentioneffects
+      - detentionengine
+      - detentionflows
+      - detentionnoticerender
+      - detentionnoticeservice
       - detentionpolicyservice
-      - detentionservice
+      - detentionreview
+      - detentionsimulation
+      - detentionsync
       - dispatchcandidateservice
       - dispatchconsoleservice
       - dispatchcontrolservice
@@ -516,11 +672,31 @@ modules:
       - shipmentmoveservice
       - shipmentquickfilterservice
       - shipmentratingreviewservice
-      - shipmentservice
+      - shipmentautorate
+      - shipmentbillingreadiness
+      - shipmentbillingtransfer
+      - shipmenteffects
+      - shipmentflows
+      - shipmentlifecycle
+      - shipmentloading
+      - shipmentread
+      - shipmentservicetest
+      - shipmenttimeline
+      - shipmentvalidator
+      - shipmentwrite
       - shipmentsuggestionservice
       - shipmenttracking
       - shipmentwatchlistservice
-      - tenderservice
+      - tenderbounce
+      - tendercancel
+      - tendercreate
+      - tenderdispatch
+      - tendereffects
+      - tenderescalation
+      - tenderflows
+      - tenderlifecycle
+      - tendernegotiation
+      - tenderresponse
       - trackingeventservice
       - checkcallservice
       - triagedeliveryrelay
@@ -555,6 +731,12 @@ modules:
       - shipmentmovejurisdictionmilerepository
       - shipmentmoverepository
       - shipmentrepository
+      - ratingreviewrepository
+      - shipmentgraph
+      - shipmentinsightrepository
+      - shipmentlistreadrepository
+      - shipmentpredicate
+      - shipmentsearchcardrepository
       - shipmentsuggestionrepository
       - shipmenttrackingrepository
       - tenderrepository
@@ -568,10 +750,43 @@ modules:
     level: 8
     domain:
       - edi
+      - edicarrierinvoice
+      - edidocument
+      - ediinboundfile
+      - edimessage
+      - edipayload
+      - edisync
+      - editenderchange
+      - editransfer
+      - ladingproject
+      - x12field
     service:
+      - edialert
+      - edibulk
+      - ediconnectiondraft
+      - ediconnectionfield
+      - ediconnectionguide
+      - edidecision
+      - edidelivery
+      - ediinboundapply
+      - ediinboundas2
+      - ediinboundpoll
       - ediinboundservice
-      - ediservice
+      - edimessageview
+      - edioutbound
+      - edioverview
+      - edipayloadbuild
+      - ediprofilesecret
+      - ediservicefailure
+      - edisetup
       - edistarlark
+      - editenderchangeservice
+      - editendermapping
+      - editenderrecipient
+      - editenderservice
+      - editendershipment
+      - editransferchangeservice
+      - editransferservice
       - editransport
       - edix12
       - edix12inspect
@@ -602,6 +817,12 @@ modules:
   accounting:
     level: 8
     domain:
+      - accountingbackfill
+      - accountingconnection
+      - accountingdrift
+      - accountinginbound
+      - accountingmapping
+      - accountingprovider
       - accountingsync
       - accounttype
       - fiscalclose
@@ -614,11 +835,40 @@ modules:
       - journalsource
       - manualjournal
     service:
-      - accountingconnectionservice
+      - accountingconnectionapps
+      - accountingconnectionauth
+      - accountingconnectioncert
+      - accountingconnectionflows
+      - accountingconnectionhealth
+      - accountingconnectionkit
+      - accountingconnectionstatus
+      - accountingconnectionsubscriptions
+      - accountingconnectionwebhook
       - accountingconnlookup
       - accountinginboundservice
-      - accountingmappingservice
-      - accountingsyncservice
+      - accountingmappingcreate
+      - accountingmappingdecisions
+      - accountingmappingflows
+      - accountingmappingkit
+      - accountingmappingreads
+      - accountingmappingscore
+      - accountingmappingscoring
+      - accountingmappingtargets
+      - accountingmappingtest
+      - accountingsyncactions
+      - accountingsyncbackfill
+      - accountingsyncdrain
+      - accountingsynceffects
+      - accountingsyncenqueue
+      - accountingsyncflows
+      - accountingsyncledger
+      - accountingsyncparty
+      - accountingsyncpayables
+      - accountingsyncpush
+      - accountingsyncreads
+      - accountingsyncsales
+      - accountingsyncsetup
+      - accountingsyncsweep
       - accounttypeservice
       - fiscalcloseblockers
       - fiscalcloseservice
@@ -636,6 +886,12 @@ modules:
       - accountingsyncjobs
       - fiscaljobs
     repository:
+      - accountingconnectionrepository
+      - accountingdriftrepository
+      - accountinginboundrepository
+      - accountingledgerrepository
+      - accountingmappingrepository
+      - accountingpayablesrepository
       - accountingsyncrepository
       - accounttyperepository
       - fiscalperiodrepository
@@ -653,17 +909,29 @@ modules:
       - bankreceipt
       - bankreceiptbatch
       - bankreceiptworkitem
+      - billingapprovalrun
+      - billingpayershare
       - billingqueue
+      - billingqueueevent
       - billingqueuefilterpreset
+      - billingqueuereview
       - billingtransfer
       - collection
       - costingcontrol
       - customerledger
       - customerpayment
       - customerstatement
+      - factoringledger
+      - factoringreadiness
+      - factoringremittance
+      - factoringsubmission
       - invoice
       - invoiceadjustment
+      - invoicechargegroup
+      - invoicedispute
+      - invoicerealtime
       - invoicerun
+      - invoiceshare
       - latecharge
       - paymentreminder
     service:
@@ -674,7 +942,10 @@ modules:
       - bankreceiptworkitemservice
       - billingcontrolpolicyservice
       - billingnumber
+      - billingqueueactivity
       - billingqueueapprovalservice
+      - billingqueuereadiness
+      - billingqueuereviewservice
       - billingqueueservice
       - billingtransfercriteria
       - billingtransferservice
@@ -685,14 +956,36 @@ modules:
       - customerstatementservice
       - detentionbillingservice
       - detentioncreditservice
+      - factoringaction
+      - factoringagreementservice
+      - factoringledgerservice
+      - factoringnoaservice
+      - factoringreadinessservice
+      - factoringremittanceservice
+      - factoringsubmissionservice
+      - factoringtransportservice
+      - invoiceaction
+      - invoiceadjustmentdraftservice
+      - invoiceadjustmentengine
       - invoiceadjustmentservice
+      - invoiceassembly
+      - invoicecreationservice
       - invoicedisputeservice
+      - invoicedocument
+      - invoicedraftservice
+      - invoiceediservice
       - invoiceledger
       - invoicelines
+      - invoicememoservice
+      - invoicepdfservice
+      - invoicepostingservice
+      - invoicequeryservice
       - invoicerunservice
-      - invoiceservice
+      - invoicesendservice
       - invoiceshareservice
+      - invoicevalidation
       - invoicevoid
+      - invoicevoidservice
       - latechargeservice
       - paymentreminderservice
     job:
@@ -734,10 +1027,27 @@ modules:
       - driversettlement
       - fuelpurchase
       - ifta
+      - payadvance
+      - payassignment
+      - paybenefit
+      - paycode
+      - payescrow
+      - payexpense
+      - recurringpay
     service:
+      - carriersettlementcostservice
+      - carriersettlementjournal
+      - carriersettlementrealtime
       - carriersettlementservice
+      - carriersettlementworkspaceservice
       - driverpayservice
+      - driversettlementaccrualservice
+      - driversettlementjournal
+      - driversettlementrecurring
+      - driversettlementreviewservice
       - driversettlementservice
+      - driversettlementtransferservice
+      - driversettlementworkspaceservice
       - fuelpurchaseservice
       - iftaservice
       - settlementshared
@@ -759,29 +1069,84 @@ modules:
     domain:
       - accountingbrief
       - agent
+      - agentdecision
       - agentdefinition
       - agentdryrun
+      - agentevaluation
+      - agentevidence
+      - agentexception
       - agentextension
+      - agentfingerprint
+      - agentinstructions
       - agentlint
+      - agentmark
+      - agentmemory
+      - agentmemoryprompt
+      - agentmessage
+      - agentpagecontext
+      - agentpageprompt
+      - agentplan
+      - agentpreset
+      - agentpreview
+      - agentprompt
       - agentquality
+      - agentqualitycontrol
+      - agentqualitysuite
+      - agentreach
+      - agentrecord
+      - agentreflection
+      - agentreplay
       - agentroster
+      - agentrunevent
+      - agentrunstep
       - agentshadow
+      - agentstarter
+      - agenttaskframe
+      - agenttemplate
+      - agenttestprompt
+      - agenttooltrust
+      - agenttrigger
+      - agentturn
+      - agentversion
       - agentwait
       - aianalytics
+      - aianonymizer
       - aiaudit
       - aicontrolsummary
       - aicorrection
       - aifeedback
+      - aimodel
+      - aiplatform
+      - aipricing
       - aiprovider
+      - aiproviderchange
+      - aiproviderdismissal
+      - aiproviderkey
+      - aireasoning
+      - airetraining
       - airetrieval
+      - airouting
+      - aitask
       - aitraining
       - aituneup
       - aiusage
       - assistantartifact
+      - board
+      - boardassemble
+      - boardmarkdown
+      - boardparse
       - briefing
       - conversation
+      - conversationchapter
+      - conversationqueue
+      - conversationreplay
       - conversationschedule
+      - conversationtranscript
+      - conversationturn
+      - conversationworkingset
       - deskcase
+      - extensionportal
+      - extensionwebwatch
       - insight
       - shipmentbrief
       - shipmentimportchat
@@ -804,12 +1169,17 @@ modules:
       - agentevents
       - agentexceptionservice
       - agentextensionservice
+      - agentextensiontest
       - agentguard
+      - agentmemoryrank
       - agentmemoryservice
+      - agentmemorysubjects
       - agentplanservice
       - agentproposalnotifier
       - agentproposalservice
+      - agentqualityengine
       - agentqualityservice
+      - agentqualitysettings
       - agentquerytoolservice
       - agentredteam
       - agentreflectionservice
@@ -834,7 +1204,16 @@ modules:
       - agenttrustservice
       - agentwaitservice
       - aianalyticsservice
+      - aiauditcorrelate
+      - aiauditexport
+      - aiauditheartbeat
+      - aiauditkeyring
+      - aiauditprojector
+      - aiauditredact
+      - aiauditretention
       - aiauditservice
+      - aiaudittest
+      - aiauditverify
       - aicontrolsummaryservice
       - aicorrectionretention
       - aicorrectionservice
@@ -857,12 +1236,16 @@ modules:
       - casechecklistservice
       - conversationscheduleservice
       - dispatchautoassignservice
+      - extensionportalservice
+      - extensionsecrets
+      - extensionwebwatchservice
       - extractionfailure
       - insightservice
       - productguideservice
       - proposalexecutor
       - proposalpreviewservice
       - proposalrecorder
+      - querytools
       - recordanchorservice
       - retrievalquery
       - retrievalservice
@@ -875,7 +1258,11 @@ modules:
       - tablequeryservice
       - toolpreview
       - toolsimulation
+      - watchtoweraccounting
+      - watchtowerfactoring
+      - watchtoweritem
       - watchtowerservice
+      - watchtowershipment
       - watchtowersources
     job:
       - agentflow

@@ -151,6 +151,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingbackfill"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingmapping"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingprovider"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -159,45 +165,87 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingconnectionports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentlint"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrunevent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentstarter"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttestprompt"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentversion"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicontrolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiproviderkey"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airouting"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitraining"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringremittance"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicechargegroup"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringsubmissionports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturedevices"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturefiling"
 	"github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	"github.com/emoss08/trenova/internal/modules/documents/app/capturesupport"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmailbox"
+	"github.com/emoss08/trenova/internal/modules/documents/app/inboundreads"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/captureprofile"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capturerequest"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -211,7 +259,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionrolloutports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundreplyports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edicarrierinvoice"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edidocument"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ediinboundfile"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/editransfer"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
@@ -220,11 +275,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/carriersettlementcontrol"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/dashcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/boardgrouping"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
@@ -234,10 +294,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
+	"github.com/emoss08/trenova/internal/modules/parties/app/carrierintelsourcingservice"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelcontrol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelenrollment"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierinteloverride"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelrule"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsnapshot"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelsync"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelverification"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
@@ -249,7 +317,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixreview"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixversion"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
@@ -259,8 +328,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementworkspaceservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementaccrualservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementworkspaceservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/settlementshared"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
@@ -268,10 +339,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payadvance"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payassignment"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paybenefit"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/paycode"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payescrow"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/recurringpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/settlementload"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/benefitsservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/timesheetservice"
@@ -281,8 +361,31 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workeroverviewservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workersafetyservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/approvaldelegation"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotclearinghouse"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/dotrandom"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/fleetsafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/profilechange"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/safetyscorecard"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/timesheet"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerchecklist"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercompliance"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdiscipline"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerdot"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerinjury"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerleave"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerpolicy"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerreview"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workersafety"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/ptoledgerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerdqfports"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -655,15 +758,15 @@ type AIProviderResolver interface {
 	CacheWriteCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthlyCapUsd(ctx context.Context, obj *aiprovider.Provider) (*string, error)
 	MonthSpendUsd(ctx context.Context, obj *aiprovider.Provider) (string, error)
-	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiprovider.KeyInfo, error)
+	APIKey(ctx context.Context, obj *aiprovider.Provider) (*aiproviderkey.KeyInfo, error)
 }
 
 type AIProviderKeyInfoResolver interface {
-	AddedBy(ctx context.Context, obj *aiprovider.KeyInfo) (*tenant.User, error)
+	AddedBy(ctx context.Context, obj *aiproviderkey.KeyInfo) (*tenant.User, error)
 }
 
 type AIRouteChoiceResolver interface {
-	ProviderID(ctx context.Context, obj *aiprovider.RouteChoice) (*string, error)
+	ProviderID(ctx context.Context, obj *airouting.RouteChoice) (*string, error)
 }
 
 type AITuneUpEvidenceResolver interface {
@@ -677,68 +780,68 @@ type AccessorialChargeResolver interface {
 }
 
 type AccountingAppCredentialResolver interface {
-	HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error)
+	HasWebhookVerifier(ctx context.Context, obj *accountingconnection.AccountingAppCredential) (bool, error)
 }
 
 type AccountingAppSettingsResolver interface {
-	ActiveSource(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppSource, error)
-	InstanceEnvironment(ctx context.Context, obj *accountingsyncports.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+	ActiveSource(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingconnection.AppSource, error)
+	InstanceEnvironment(ctx context.Context, obj *accountingconnectionports.AccountingAppSettings) (*accountingprovider.AppEnvironment, error)
 }
 
 type AccountingConnectionResolver interface {
-	AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error)
-	LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error)
-	LedgerGranularity(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.LedgerGranularity, error)
-	PausedBy(ctx context.Context, obj *accountingsync.AccountingConnection) (*tenant.User, error)
+	AppEnvironment(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingprovider.AppEnvironment, error)
+	LastErrorCategory(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingsync.ErrorCategory, error)
+	LedgerGranularity(ctx context.Context, obj *accountingconnection.AccountingConnection) (*accountingconnection.LedgerGranularity, error)
+	PausedBy(ctx context.Context, obj *accountingconnection.AccountingConnection) (*tenant.User, error)
 }
 
 type AccountingDriftFindingResolver interface {
-	PartyID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	TrenovaMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	ProviderMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	DifferenceMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error)
-	Resolution(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftResolution, error)
-	FixObjectType(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftFixObject, error)
-	FixObjectID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error)
-	Directions(ctx context.Context, obj *accountingsync.AccountingDriftFinding) ([]accountingsync.DriftDirection, error)
-	Pushed(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (bool, error)
-	ResolvedBy(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*tenant.User, error)
+	PartyID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	TrenovaMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	ProviderMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	DifferenceMinor(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*int, error)
+	Resolution(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftResolution, error)
+	FixObjectType(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*accountingdrift.DriftFixObject, error)
+	FixObjectID(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*string, error)
+	Directions(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) ([]accountingdrift.DriftDirection, error)
+	Pushed(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (bool, error)
+	ResolvedBy(ctx context.Context, obj *accountingdrift.AccountingDriftFinding) (*tenant.User, error)
 }
 
 type AccountingDriftFixPreviewResolver interface {
-	Direction(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error)
-	FixObject(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error)
-	Operation(ctx context.Context, obj *accountingsyncports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
+	Direction(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftDirection, error)
+	FixObject(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingdrift.DriftFixObject, error)
+	Operation(ctx context.Context, obj *accountingdriftports.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error)
 }
 
 type AccountingInboundChangeResolver interface {
-	Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error)
-	PartyObjectID(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*string, error)
-	ReferenceNumber(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	MethodName(ctx context.Context, obj *accountingsync.AccountingInboundChange) (string, error)
-	UnappliedMinor(ctx context.Context, obj *accountingsync.AccountingInboundChange) (int, error)
-	Lines(ctx context.Context, obj *accountingsync.AccountingInboundChange) ([]*accountingsync.InboundLine, error)
-	DecidedBy(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*tenant.User, error)
+	Reason(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*accountinginbound.InboundChangeReason, error)
+	PartyObjectID(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*string, error)
+	ReferenceNumber(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	MethodName(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (string, error)
+	UnappliedMinor(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (int, error)
+	Lines(ctx context.Context, obj *accountinginbound.AccountingInboundChange) ([]*accountinginbound.InboundLine, error)
+	DecidedBy(ctx context.Context, obj *accountinginbound.AccountingInboundChange) (*tenant.User, error)
 }
 
 type AccountingInboundLineResolver interface {
-	ObjectType(ctx context.Context, obj *accountingsync.InboundLine) (*accountingsync.SyncObjectType, error)
-	ObjectID(ctx context.Context, obj *accountingsync.InboundLine) (*string, error)
+	ObjectType(ctx context.Context, obj *accountinginbound.InboundLine) (*accountingsync.SyncObjectType, error)
+	ObjectID(ctx context.Context, obj *accountinginbound.InboundLine) (*string, error)
 }
 
 type AccountingMappingResolver interface {
-	TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error)
-	Source(ctx context.Context, obj *accountingsync.AccountingMapping) (*accountingsync.MappingSource, error)
-	Required(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Prechecked(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error)
-	Candidates(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MappingCandidate, error)
-	Matchers(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MatcherSignal, error)
-	ConfirmedBy(ctx context.Context, obj *accountingsync.AccountingMapping) (*tenant.User, error)
+	TrenovaObjectID(ctx context.Context, obj *accountingmapping.AccountingMapping) (*string, error)
+	Source(ctx context.Context, obj *accountingmapping.AccountingMapping) (*accountingmapping.MappingSource, error)
+	Required(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Prechecked(ctx context.Context, obj *accountingmapping.AccountingMapping) (bool, error)
+	Candidates(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MappingCandidate, error)
+	Matchers(ctx context.Context, obj *accountingmapping.AccountingMapping) ([]*accountingmapping.MatcherSignal, error)
+	ConfirmedBy(ctx context.Context, obj *accountingmapping.AccountingMapping) (*tenant.User, error)
 }
 
 type AccountingReferenceObjectResolver interface {
-	Label(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (string, error)
-	Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error)
+	Label(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (string, error)
+	Usable(ctx context.Context, obj *accountingmapping.AccountingReferenceObject) (bool, error)
 }
 
 type AccountingSyncAttemptResolver interface {
@@ -756,32 +859,33 @@ type AccountingSyncRecordResolver interface {
 }
 
 type AgentControlResolver interface {
-	AgentMoneyCallCeiling(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyRunAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyDayAmount(ctx context.Context, obj *tenant.AgentControl) (string, error)
-	AgentMoneyCurrency(ctx context.Context, obj *tenant.AgentControl) (string, error)
+	AgentMoneyCallCeiling(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyRunAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyDayAmount(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
+	AgentMoneyCurrency(ctx context.Context, obj *agentcontrol.AgentControl) (string, error)
 }
 
 type AgentDecisionResolver interface {
-	TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error)
-	Preview(ctx context.Context, obj *agent.AgentDecision) (*agent.ProposalPreview, error)
+	TraceURL(ctx context.Context, obj *agentdecision.AgentDecision) (*string, error)
+	Preview(ctx context.Context, obj *agentdecision.AgentDecision) (*agentpreview.ProposalPreview, error)
 }
 
 type AgentDefinitionResolver interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
 	ToolTiers(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	EventKinds(ctx context.Context, obj *agentdefinition.Definition) ([]string, error)
 	MonthlyBudgetUsd(ctx context.Context, obj *agentdefinition.Definition) (*string, error)
 	ToolDailyLimits(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
-	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error)
+	AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*rbac.Role, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error)
 	PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 	OpenRuns(ctx context.Context, obj *agentdefinition.Definition) (int, error)
 }
 
 type AgentDraftResolver interface {
-	EventKinds(ctx context.Context, obj *agentports.AgentDraft) ([]string, error)
-	ToolTiers(ctx context.Context, obj *agentports.AgentDraft) (map[string]any, error)
+	EventKinds(ctx context.Context, obj *agentdraftports.AgentDraft) ([]string, error)
+	ToolTiers(ctx context.Context, obj *agentdraftports.AgentDraft) (map[string]any, error)
 }
 
 type AgentEvalCaseResolver interface {
@@ -796,12 +900,12 @@ type AgentEvalCaseResolver interface {
 }
 
 type AgentEvaluationResolver interface {
-	SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error)
-	Actions(ctx context.Context, obj *agent.Evaluation) ([]map[string]any, error)
-	Comparison(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
-	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+	SubjectType(ctx context.Context, obj *agentevaluation.Evaluation) (string, error)
+	Actions(ctx context.Context, obj *agentevaluation.Evaluation) ([]map[string]any, error)
+	Comparison(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Checks(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Judge(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
+	Fingerprint(ctx context.Context, obj *agentevaluation.Evaluation) (map[string]any, error)
 }
 
 type AgentInstructionFindingResolver interface {
@@ -810,47 +914,47 @@ type AgentInstructionFindingResolver interface {
 }
 
 type AgentMemoryResolver interface {
-	Supersedes(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
-	ReplacedBy(ctx context.Context, obj *agent.Memory) (*agent.Memory, error)
+	Supersedes(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
+	ReplacedBy(ctx context.Context, obj *agentmemory.Memory) (*agentmemory.Memory, error)
 }
 
 type AgentPlanResolver interface {
-	DecidedBy(ctx context.Context, obj *agent.AgentPlan) (*tenant.User, error)
-	RunMode(ctx context.Context, obj *agent.AgentPlan) (agent.PlanRunMode, error)
-	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
-	Hold(ctx context.Context, obj *agent.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
+	DecidedBy(ctx context.Context, obj *agentplan.AgentPlan) (*tenant.User, error)
+	RunMode(ctx context.Context, obj *agentplan.AgentPlan) (agentplan.PlanRunMode, error)
+	Run(ctx context.Context, obj *agentplan.AgentPlan) (*agent.AgentRun, error)
+	Hold(ctx context.Context, obj *agentplan.AgentPlan) (*gqlmodel.PendingDecisionHold, error)
 }
 
 type AgentPreviewFieldChangeResolver interface {
-	Type(ctx context.Context, obj *agent.PreviewFieldChange) (string, error)
+	Type(ctx context.Context, obj *agentpreview.PreviewFieldChange) (string, error)
 }
 
 type AgentPreviewMessageResolver interface {
-	TemplateVersionID(ctx context.Context, obj *agent.MessagePreview) (*string, error)
+	TemplateVersionID(ctx context.Context, obj *agentpreview.MessagePreview) (*string, error)
 }
 
 type AgentPreviewMoneyResolver interface {
-	TotalBefore(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
-	TotalAfter(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
-	Delta(ctx context.Context, obj *agent.MoneyPreview) (*string, error)
+	TotalBefore(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
+	TotalAfter(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
+	Delta(ctx context.Context, obj *agentpreview.MoneyPreview) (*string, error)
 }
 
 type AgentPreviewMoneyLineResolver interface {
-	Before(ctx context.Context, obj *agent.MoneyLine) (*string, error)
-	After(ctx context.Context, obj *agent.MoneyLine) (*string, error)
+	Before(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
+	After(ctx context.Context, obj *agentpreview.MoneyLine) (*string, error)
 }
 
 type AgentPreviewRecordChangeResolver interface {
-	Resource(ctx context.Context, obj *agent.RecordChange) (string, error)
-	EntityID(ctx context.Context, obj *agent.RecordChange) (*string, error)
+	Resource(ctx context.Context, obj *agentpreview.RecordChange) (string, error)
+	EntityID(ctx context.Context, obj *agentpreview.RecordChange) (*string, error)
 }
 
 type AgentPreviewRefResolver interface {
-	Resource(ctx context.Context, obj *agent.PreviewRef) (string, error)
+	Resource(ctx context.Context, obj *agentpreview.PreviewRef) (string, error)
 }
 
 type AgentPreviewWarningResolver interface {
-	Code(ctx context.Context, obj *agent.PreviewWarning) (string, error)
+	Code(ctx context.Context, obj *agentpreview.PreviewWarning) (string, error)
 }
 
 type AgentProfileGuidanceResolver interface {
@@ -883,13 +987,13 @@ type AgentQualityAgentResolver interface {
 }
 
 type AgentQualityControlResolver interface {
-	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
-	NightlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
-	MonthlyBudgetUsd(ctx context.Context, obj *agentquality.Control) (string, error)
+	ID(ctx context.Context, obj *agentqualitycontrol.Control) (*string, error)
+	NightlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
+	MonthlyBudgetUsd(ctx context.Context, obj *agentqualitycontrol.Control) (string, error)
 }
 
 type AgentReflectionResolver interface {
-	Signals(ctx context.Context, obj *agent.Reflection) ([]*agent.ReflectionSignal, error)
+	Signals(ctx context.Context, obj *agentreflection.Reflection) ([]*agentreflection.ReflectionSignal, error)
 }
 
 type AgentRunResolver interface {
@@ -901,41 +1005,41 @@ type AgentRunResolver interface {
 }
 
 type AgentRunEventResolver interface {
-	OwnerKind(ctx context.Context, obj *agent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error)
+	OwnerKind(ctx context.Context, obj *agentrunevent.AgentRunEvent) (gqlmodel.AgentRunEventOwnerKind, error)
 }
 
 type AgentSafetyResolver interface {
-	AgentID(ctx context.Context, obj *agentports.AgentSafetySubject) (string, error)
-	OrganizationShadow(ctx context.Context, obj *agentports.AgentSafetySubject) (bool, error)
-	Tools(ctx context.Context, obj *agentports.AgentSafetySubject) ([]*agentports.AgentToolSafety, error)
-	Reach(ctx context.Context, obj *agentports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
+	AgentID(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (string, error)
+	OrganizationShadow(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (bool, error)
+	Tools(ctx context.Context, obj *agenttoolports.AgentSafetySubject) ([]*agenttoolports.AgentToolSafety, error)
+	Reach(ctx context.Context, obj *agenttoolports.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 
 type AgentSafetySummaryResolver interface {
-	OpenSensitiveAgentIds(ctx context.Context, obj *agentports.AgentSafetySummary) ([]string, error)
+	OpenSensitiveAgentIds(ctx context.Context, obj *agenttoolports.AgentSafetySummary) ([]string, error)
 }
 
 type AgentSuiteRunResolver interface {
-	AgentName(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	Fingerprint(ctx context.Context, obj *agentquality.SuiteRun) (map[string]any, error)
-	FingerprintChanges(ctx context.Context, obj *agentquality.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
-	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
-	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+	AgentName(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	Fingerprint(ctx context.Context, obj *agentqualitysuite.SuiteRun) (map[string]any, error)
+	FingerprintChanges(ctx context.Context, obj *agentqualitysuite.SuiteRun) ([]*gqlmodel.AgentFingerprintChange, error)
+	ChangeSummary(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
+	CostUsd(ctx context.Context, obj *agentqualitysuite.SuiteRun) (string, error)
 }
 
 type AgentToolHoldersResolver interface {
-	AgentIds(ctx context.Context, obj *agentports.AgentToolHolders) ([]string, error)
+	AgentIds(ctx context.Context, obj *agenttoolports.AgentToolHolders) ([]string, error)
 }
 
 type AgentToolRuleResolver interface {
-	MaxTier(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.AutonomyTier, error)
-	ReadsExternal(ctx context.Context, obj *agent.ToolRuleOverride) (*agent.ExternalRead, error)
-	UpdatedBy(ctx context.Context, obj *agent.ToolRuleOverride) (*tenant.User, error)
+	MaxTier(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agent.AutonomyTier, error)
+	ReadsExternal(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*agenttooltrust.ExternalRead, error)
+	UpdatedBy(ctx context.Context, obj *agenttooltrust.ToolRuleOverride) (*tenant.User, error)
 }
 
 type AgentToolSafetyResolver interface {
-	ID(ctx context.Context, obj *agentports.AgentToolSafety) (string, error)
-	Policy(ctx context.Context, obj *agentports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
+	ID(ctx context.Context, obj *agenttoolports.AgentToolSafety) (string, error)
+	Policy(ctx context.Context, obj *agenttoolports.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
 }
 
 type AgentWorstRatedAnswerResolver interface {
@@ -948,10 +1052,10 @@ type ApiKeyResolver interface {
 }
 
 type ApprovalDelegationResolver interface {
-	EndsAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error)
-	RevokedAt(ctx context.Context, obj *worker.ApprovalDelegation) (*int, error)
-	RevokedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error)
-	CreatedByID(ctx context.Context, obj *worker.ApprovalDelegation) (*string, error)
+	EndsAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
+	RevokedAt(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*int, error)
+	RevokedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
+	CreatedByID(ctx context.Context, obj *approvaldelegation.ApprovalDelegation) (*string, error)
 }
 
 type AuditEntryResolver interface {
@@ -1011,8 +1115,8 @@ type CapturePageResolver interface {
 }
 
 type CaptureRequestResolver interface {
-	FailureCode(ctx context.Context, obj *capture.CaptureRequest) (*capture.RequestFailureCode, error)
-	IsOpen(ctx context.Context, obj *capture.CaptureRequest) (bool, error)
+	FailureCode(ctx context.Context, obj *capturerequest.CaptureRequest) (*capturerequest.RequestFailureCode, error)
+	IsOpen(ctx context.Context, obj *capturerequest.CaptureRequest) (bool, error)
 }
 
 type CaptureSettingsResolver interface {
@@ -1022,9 +1126,9 @@ type CaptureSettingsResolver interface {
 }
 
 type CarrierResolver interface {
-	Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierIntelSnapshot, error)
+	Intelligence(ctx context.Context, obj *carrier.Carrier) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	OpenIntelEventCount(ctx context.Context, obj *carrier.Carrier) (int, error)
-	MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintel.CarrierMonitoringEnrollment, error)
+	MonitoringEnrollment(ctx context.Context, obj *carrier.Carrier) (*carrierintelenrollment.CarrierMonitoringEnrollment, error)
 }
 
 type CarrierAssignmentResolver interface {
@@ -1044,10 +1148,10 @@ type CarrierCapacityPostingResolver interface {
 }
 
 type CarrierEquipmentVerificationResolver interface {
-	ShipmentMoveID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	OverrideByID(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (*string, error)
-	Cleared(ctx context.Context, obj *carrierintel.CarrierEquipmentVerification) (bool, error)
+	ShipmentMoveID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	OverrideByID(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (*string, error)
+	Cleared(ctx context.Context, obj *carrierintelverification.CarrierEquipmentVerification) (bool, error)
 }
 
 type CarrierInsurancePolicyResolver interface {
@@ -1055,10 +1159,10 @@ type CarrierInsurancePolicyResolver interface {
 }
 
 type CarrierIntelControlResolver interface {
-	PrimaryProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
-	FallbackProvider(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
-	Rules(ctx context.Context, obj *carrierintel.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error)
-	MonthlySpendCap(ctx context.Context, obj *carrierintel.CarrierIntelControl) (*string, error)
+	PrimaryProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
+	FallbackProvider(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
+	Rules(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) ([]*gqlmodel.CarrierIntelRuleSetting, error)
+	MonthlySpendCap(ctx context.Context, obj *carrierintelcontrol.CarrierIntelControl) (*string, error)
 }
 
 type CarrierIntelEquipmentResolver interface {
@@ -1066,30 +1170,30 @@ type CarrierIntelEquipmentResolver interface {
 }
 
 type CarrierIntelEventResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (string, error)
-	FieldLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	RuleLabel(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	Action(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.RuleAction, error)
-	PriorValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	CurrentValue(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	AcknowledgedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	AcknowledgedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
-	ResolvedByID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
-	ResolvedBy(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*tenant.User, error)
-	Resolution(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*carrierintel.EventResolution, error)
-	SnapshotID(ctx context.Context, obj *carrierintel.CarrierIntelEvent) (*string, error)
+	CarrierID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (string, error)
+	FieldLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	RuleCode(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	RuleLabel(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	Action(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintel.RuleAction, error)
+	PriorValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	CurrentValue(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	AcknowledgedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	AcknowledgedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error)
+	ResolvedByID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
+	ResolvedBy(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*tenant.User, error)
+	Resolution(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*carrierintelevent.EventResolution, error)
+	SnapshotID(ctx context.Context, obj *carrierintelevent.CarrierIntelEvent) (*string, error)
 }
 
 type CarrierIntelFeedStateResolver interface {
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (string, error)
-	PausedReason(ctx context.Context, obj *carrierintel.CarrierIntelFeedState) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (string, error)
+	PausedReason(ctx context.Context, obj *carrierintelenrollment.CarrierIntelFeedState) (*string, error)
 }
 
 type CarrierIntelFindingResolver interface {
-	Code(ctx context.Context, obj *carrierintel.Finding) (string, error)
-	OverrideID(ctx context.Context, obj *carrierintel.Finding) (*string, error)
+	Code(ctx context.Context, obj *carrierintelrule.Finding) (string, error)
+	OverrideID(ctx context.Context, obj *carrierintelrule.Finding) (*string, error)
 }
 
 type CarrierIntelInsuranceResolver interface {
@@ -1102,9 +1206,9 @@ type CarrierIntelInsuranceResolver interface {
 }
 
 type CarrierIntelInsuranceChangeResolver interface {
-	PolicyID(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
-	CurrentCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
-	ProposedCoverage(ctx context.Context, obj *carrierintel.InsuranceChange) (*string, error)
+	PolicyID(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
+	CurrentCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
+	ProposedCoverage(ctx context.Context, obj *carrierintelsync.InsuranceChange) (*string, error)
 }
 
 type CarrierIntelInsuranceFilingResolver interface {
@@ -1112,13 +1216,13 @@ type CarrierIntelInsuranceFilingResolver interface {
 }
 
 type CarrierIntelOverrideResolver interface {
-	RuleCode(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (string, error)
-	RevokedByID(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (*string, error)
-	Active(ctx context.Context, obj *carrierintel.CarrierIntelOverride) (bool, error)
+	RuleCode(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (string, error)
+	RevokedByID(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (*string, error)
+	Active(ctx context.Context, obj *carrierinteloverride.CarrierIntelOverride) (bool, error)
 }
 
 type CarrierIntelRuleDefinitionResolver interface {
-	Code(ctx context.Context, obj *carrierintel.RuleDefinition) (string, error)
+	Code(ctx context.Context, obj *carrierintelrule.RuleDefinition) (string, error)
 }
 
 type CarrierIntelSafetyResolver interface {
@@ -1127,17 +1231,17 @@ type CarrierIntelSafetyResolver interface {
 }
 
 type CarrierIntelSnapshotResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error)
-	Source(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (string, error)
-	ReviewedByID(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (*string, error)
-	EffectiveAsOf(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (int, error)
-	HasRawPayload(ctx context.Context, obj *carrierintel.CarrierIntelSnapshot) (bool, error)
+	CarrierID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error)
+	Source(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (string, error)
+	ReviewedByID(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (*string, error)
+	EffectiveAsOf(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (int, error)
+	HasRawPayload(ctx context.Context, obj *carrierintelsnapshot.CarrierIntelSnapshot) (bool, error)
 }
 
 type CarrierMonitoringEnrollmentResolver interface {
-	CarrierID(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (*string, error)
-	Provider(ctx context.Context, obj *carrierintel.CarrierMonitoringEnrollment) (string, error)
+	CarrierID(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (*string, error)
+	Provider(ctx context.Context, obj *carrierintelenrollment.CarrierMonitoringEnrollment) (string, error)
 }
 
 type CarrierSettlementResolver interface {
@@ -1154,7 +1258,7 @@ type CarrierSettlementResolver interface {
 }
 
 type CarrierSourcingResultResolver interface {
-	ExistingCarrierID(ctx context.Context, obj *carrierintelservice.SourcingResult) (*string, error)
+	ExistingCarrierID(ctx context.Context, obj *carrierintelsourcingservice.SourcingResult) (*string, error)
 }
 
 type ChargeAllocationResolver interface {
@@ -1167,7 +1271,7 @@ type CommodityResolver interface {
 }
 
 type CustomerResolver interface {
-	BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintel.CarrierIntelSnapshot, error)
+	BrokerIntelligence(ctx context.Context, obj *customer.Customer) (*carrierintelsnapshot.CarrierIntelSnapshot, error)
 }
 
 type CustomerBillingProfileResolver interface {
@@ -1192,30 +1296,30 @@ type CustomerTrackingProfileResolver interface {
 }
 
 type DOTRandomDrawResolver interface {
-	DrawnByID(ctx context.Context, obj *worker.DOTRandomDraw) (*string, error)
-	FinalizedAt(ctx context.Context, obj *worker.DOTRandomDraw) (*int, error)
-	Entries(ctx context.Context, obj *worker.DOTRandomDraw) ([]*worker.DOTRandomDrawEntry, error)
+	DrawnByID(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*string, error)
+	FinalizedAt(ctx context.Context, obj *dotrandom.DOTRandomDraw) (*int, error)
+	Entries(ctx context.Context, obj *dotrandom.DOTRandomDraw) ([]*dotrandom.DOTRandomDrawEntry, error)
 }
 
 type DOTRandomDrawEntryResolver interface {
-	NotifiedAt(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*int, error)
-	CompletedAt(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*int, error)
-	TestID(ctx context.Context, obj *worker.DOTRandomDrawEntry) (*string, error)
+	NotifiedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
+	CompletedAt(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*int, error)
+	TestID(ctx context.Context, obj *dotrandom.DOTRandomDrawEntry) (*string, error)
 }
 
 type DOTRandomPoolResolver interface {
-	MeetsDOTMinimums(ctx context.Context, obj *worker.DOTRandomPool) (bool, error)
+	MeetsDOTMinimums(ctx context.Context, obj *dotrandom.DOTRandomPool) (bool, error)
 }
 
 type DQFFileResolver interface {
-	TerminationDate(ctx context.Context, obj *worker.DQFFile) (*int, error)
-	RetentionExpiresAt(ctx context.Context, obj *worker.DQFFile) (*int, error)
-	Verifications(ctx context.Context, obj *worker.DQFFile) ([]*worker.WorkerEmploymentVerification, error)
+	TerminationDate(ctx context.Context, obj *workercompliance.DQFFile) (*int, error)
+	RetentionExpiresAt(ctx context.Context, obj *workercompliance.DQFFile) (*int, error)
+	Verifications(ctx context.Context, obj *workercompliance.DQFFile) ([]*employment.WorkerEmploymentVerification, error)
 }
 
 type DQFItemResolver interface {
-	Regulation(ctx context.Context, obj *worker.DQFItem) (*string, error)
-	ExpiresAt(ctx context.Context, obj *worker.DQFItem) (*int, error)
+	Regulation(ctx context.Context, obj *workercompliance.DQFItem) (*string, error)
+	ExpiresAt(ctx context.Context, obj *workercompliance.DQFItem) (*int, error)
 }
 
 type DetentionOccurrenceResolver interface {
@@ -1230,7 +1334,7 @@ type DetentionPreviewResultResolver interface {
 }
 
 type DisciplinaryLadderResolver interface {
-	HighestLevel(ctx context.Context, obj *worker.DisciplinaryLadder) (*worker.DisciplinaryLevel, error)
+	HighestLevel(ctx context.Context, obj *workerdiscipline.DisciplinaryLadder) (*workerdiscipline.DisciplinaryLevel, error)
 }
 
 type DistanceProfileResolver interface {
@@ -1280,54 +1384,54 @@ type DriverSettlementLineResolver interface {
 type DriverSettlementLineGroupResolver interface {
 	Rate(ctx context.Context, obj *driversettlement.LineGroup) (*string, error)
 	Quantity(ctx context.Context, obj *driversettlement.LineGroup) (string, error)
-	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.PayAdvance, error)
-	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*driverpay.EscrowAccount, error)
+	Advance(ctx context.Context, obj *driversettlement.LineGroup) (*payadvance.PayAdvance, error)
+	EscrowAccount(ctx context.Context, obj *driversettlement.LineGroup) (*payescrow.EscrowAccount, error)
 }
 
 type DrugAlcoholStandingResolver interface {
-	LastClearinghouseQueryAt(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error)
-	NextClearinghouseQueryDue(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error)
+	LastClearinghouseQueryAt(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error)
+	NextClearinghouseQueryDue(ctx context.Context, obj *workerdot.DrugAlcoholStanding) (*int, error)
 }
 
 type EdiCarrierInvoiceResolver interface {
-	TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	VarianceAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
-	ReconciliationStatus(ctx context.Context, obj *edi.CarrierInvoice) (string, error)
-	SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error)
+	TotalAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ExpectedAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	VarianceAmount(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*string, error)
+	ReconciliationStatus(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (string, error)
+	SuggestedCarrier(ctx context.Context, obj *edicarrierinvoice.CarrierInvoice) (*carrier.Carrier, error)
 }
 
 type EdiFlowInstanceResolver interface {
-	Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error)
+	Reason(ctx context.Context, obj *ladingproject.FlowInstance) (*string, error)
 }
 
 type EdiLadingVersionResolver interface {
-	Interchange(ctx context.Context, obj *edi.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
-	Exchanges(ctx context.Context, obj *edi.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
+	Interchange(ctx context.Context, obj *ladingproject.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
+	Exchanges(ctx context.Context, obj *ladingproject.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
 }
 
 type EdiMessageResolver interface {
-	TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error)
+	TransactionSet(ctx context.Context, obj *edimessage.EDIMessage) (string, error)
 }
 
 type EdiTransferResolver interface {
-	TenderPayload(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	MappingSnapshot(ctx context.Context, obj *edi.EDITransfer) (any, error)
-	Direction(ctx context.Context, obj *edi.EDITransfer) (gqlmodel.EDITransferDirection, error)
-	Counterparty(ctx context.Context, obj *edi.EDITransfer) (*edi.EDIPartner, error)
-	BOL(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	CustomerLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ServiceTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	ShipmentTypeLabel(ctx context.Context, obj *edi.EDITransfer) (*string, error)
-	Pieces(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	Weight(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMin(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	TemperatureMax(ctx context.Context, obj *edi.EDITransfer) (*int, error)
-	StopCount(ctx context.Context, obj *edi.EDITransfer) (int, error)
-	Stops(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
-	Commodities(ctx context.Context, obj *edi.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
-	Charges(ctx context.Context, obj *edi.EDITransfer) (*gqlmodel.EDITenderCharges, error)
-	CanDecide(ctx context.Context, obj *edi.EDITransfer) (bool, error)
+	TenderPayload(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	MappingSnapshot(ctx context.Context, obj *editransfer.EDITransfer) (any, error)
+	Direction(ctx context.Context, obj *editransfer.EDITransfer) (gqlmodel.EDITransferDirection, error)
+	Counterparty(ctx context.Context, obj *editransfer.EDITransfer) (*edi.EDIPartner, error)
+	BOL(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	CustomerLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ServiceTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	ShipmentTypeLabel(ctx context.Context, obj *editransfer.EDITransfer) (*string, error)
+	Pieces(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	Weight(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMin(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	TemperatureMax(ctx context.Context, obj *editransfer.EDITransfer) (*int, error)
+	StopCount(ctx context.Context, obj *editransfer.EDITransfer) (int, error)
+	Stops(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderStop, error)
+	Commodities(ctx context.Context, obj *editransfer.EDITransfer) ([]*gqlmodel.EDITenderCommodity, error)
+	Charges(ctx context.Context, obj *editransfer.EDITransfer) (*gqlmodel.EDITenderCharges, error)
+	CanDecide(ctx context.Context, obj *editransfer.EDITransfer) (bool, error)
 }
 
 type EquipmentContinuityResolver interface {
@@ -1339,7 +1443,7 @@ type EquipmentContinuityResolver interface {
 }
 
 type EscrowAccountResolver interface {
-	AnnualInterestRate(ctx context.Context, obj *driverpay.EscrowAccount) (string, error)
+	AnnualInterestRate(ctx context.Context, obj *payescrow.EscrowAccount) (string, error)
 }
 
 type ExternalIdentityResolver interface {
@@ -1386,9 +1490,9 @@ type FactoringAgreementResolver interface {
 }
 
 type FactoringCheckResolver interface {
-	Fix(ctx context.Context, obj *factoring.Check) (*factoring.FixAction, error)
-	DocumentTypeID(ctx context.Context, obj *factoring.Check) (*string, error)
-	ShipmentID(ctx context.Context, obj *factoring.Check) (*string, error)
+	Fix(ctx context.Context, obj *factoringreadiness.Check) (*factoringreadiness.FixAction, error)
+	DocumentTypeID(ctx context.Context, obj *factoringreadiness.Check) (*string, error)
+	ShipmentID(ctx context.Context, obj *factoringreadiness.Check) (*string, error)
 }
 
 type FactoringCompanyResolver interface {
@@ -1396,19 +1500,19 @@ type FactoringCompanyResolver interface {
 }
 
 type FactoringFundingPlanResolver interface {
-	SubmissionID(ctx context.Context, obj *factoringports.FundingPlan) (string, error)
-	Status(ctx context.Context, obj *factoringports.FundingPlan) (factoring.SubmissionStatus, error)
+	SubmissionID(ctx context.Context, obj *factoringledgerports.FundingPlan) (string, error)
+	Status(ctx context.Context, obj *factoringledgerports.FundingPlan) (factoringsubmission.SubmissionStatus, error)
 }
 
 type FactoringInvoiceStateResolver interface {
-	Invoice(ctx context.Context, obj *factoring.InvoiceState) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.InvoiceState) (*customer.Customer, error)
-	FactoringCompany(ctx context.Context, obj *factoring.InvoiceState) (*factoringcompany.FactoringCompany, error)
-	Submission(ctx context.Context, obj *factoring.InvoiceState) (*factoringports.LiveItem, error)
+	Invoice(ctx context.Context, obj *factoringreadiness.InvoiceState) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringreadiness.InvoiceState) (*customer.Customer, error)
+	FactoringCompany(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringcompany.FactoringCompany, error)
+	Submission(ctx context.Context, obj *factoringreadiness.InvoiceState) (*factoringsubmissionports.LiveItem, error)
 }
 
 type FactoringMovementResolver interface {
-	InvoiceEffect(ctx context.Context, obj *factoring.Movement) (gqlmodel.FactoringInvoiceEffect, error)
+	InvoiceEffect(ctx context.Context, obj *factoringledger.Movement) (gqlmodel.FactoringInvoiceEffect, error)
 }
 
 type FactoringNoaResolver interface {
@@ -1418,72 +1522,72 @@ type FactoringNoaResolver interface {
 }
 
 type FactoringPlannedLineResolver interface {
-	Account(ctx context.Context, obj *factoringports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error)
+	Account(ctx context.Context, obj *factoringledgerports.PlannedLine) (*gqlmodel.JournalEntryLineAccount, error)
 }
 
 type FactoringPlannedMovementResolver interface {
-	FiscalPeriodID(ctx context.Context, obj *factoringports.PlannedMovement) (*string, error)
+	FiscalPeriodID(ctx context.Context, obj *factoringledgerports.PlannedMovement) (*string, error)
 }
 
 type FactoringRemittanceResolver interface {
-	DocumentID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	InboundMessageID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	SourceFormat(ctx context.Context, obj *factoring.Remittance) (*factoring.RemittanceFormat, error)
-	Mapping(ctx context.Context, obj *factoring.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error)
-	AppliedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	CreatedByID(ctx context.Context, obj *factoring.Remittance) (*string, error)
-	FactoringCompany(ctx context.Context, obj *factoring.Remittance) (*factoringcompany.FactoringCompany, error)
-	Lines(ctx context.Context, obj *factoring.Remittance, matchStatuses []factoring.RemittanceMatchStatus) ([]*factoring.RemittanceLine, error)
+	DocumentID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	InboundMessageID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	SourceFormat(ctx context.Context, obj *factoringremittance.Remittance) (*factoringremittance.RemittanceFormat, error)
+	Mapping(ctx context.Context, obj *factoringremittance.Remittance) ([]*gqlmodel.FactoringRemittanceColumn, error)
+	AppliedByID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoringremittance.Remittance) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoringremittance.Remittance) (*factoringcompany.FactoringCompany, error)
+	Lines(ctx context.Context, obj *factoringremittance.Remittance, matchStatuses []factoringremittance.RemittanceMatchStatus) ([]*factoringremittance.RemittanceLine, error)
 }
 
 type FactoringRemittanceLineResolver interface {
-	MatchedBy(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchedBy, error)
-	SubmissionItemID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
-	MatchedSubmissionID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
-	Reason(ctx context.Context, obj *factoring.RemittanceLine) (*factoring.RemittanceMatchReason, error)
-	ReserveEntryID(ctx context.Context, obj *factoring.RemittanceLine) (*string, error)
+	MatchedBy(ctx context.Context, obj *factoringremittance.RemittanceLine) (*factoringremittance.RemittanceMatchedBy, error)
+	SubmissionItemID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
+	MatchedSubmissionID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
+	Reason(ctx context.Context, obj *factoringremittance.RemittanceLine) (*factoringremittance.RemittanceMatchReason, error)
+	ReserveEntryID(ctx context.Context, obj *factoringremittance.RemittanceLine) (*string, error)
 }
 
 type FactoringRemittancePlanResolver interface {
-	RemittanceID(ctx context.Context, obj *factoringports.RemittancePlan) (string, error)
+	RemittanceID(ctx context.Context, obj *factoringremittanceports.RemittancePlan) (string, error)
 }
 
 type FactoringReserveEntryResolver interface {
-	ReversesEntryID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
-	CreatedByID(ctx context.Context, obj *factoring.ReserveEntry) (*string, error)
-	FactoringCompany(ctx context.Context, obj *factoring.ReserveEntry) (*factoringcompany.FactoringCompany, error)
-	Invoice(ctx context.Context, obj *factoring.ReserveEntry) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.ReserveEntry) (*customer.Customer, error)
-	Submission(ctx context.Context, obj *factoring.ReserveEntry) (*factoring.Submission, error)
+	ReversesEntryID(ctx context.Context, obj *factoringledger.ReserveEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *factoringledger.ReserveEntry) (*string, error)
+	FactoringCompany(ctx context.Context, obj *factoringledger.ReserveEntry) (*factoringcompany.FactoringCompany, error)
+	Invoice(ctx context.Context, obj *factoringledger.ReserveEntry) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringledger.ReserveEntry) (*customer.Customer, error)
+	Submission(ctx context.Context, obj *factoringledger.ReserveEntry) (*factoringsubmission.Submission, error)
 }
 
 type FactoringReserveMovementPlanResolver interface {
-	SubmissionID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
-	ItemID(ctx context.Context, obj *factoringports.ReserveMovementPlan) (string, error)
-	ItemStatus(ctx context.Context, obj *factoringports.ReserveMovementPlan) (factoring.SubmissionItemStatus, error)
+	SubmissionID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error)
+	ItemID(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (string, error)
+	ItemStatus(ctx context.Context, obj *factoringledgerports.ReserveMovementPlan) (factoringsubmission.SubmissionItemStatus, error)
 }
 
 type FactoringSubmissionResolver interface {
-	SchedulePDFDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	ScheduleCSVDocumentID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	SubmittedByID(ctx context.Context, obj *factoring.Submission) (*string, error)
-	Items(ctx context.Context, obj *factoring.Submission) ([]*factoring.SubmissionItem, error)
-	FactoringCompany(ctx context.Context, obj *factoring.Submission) (*factoringcompany.FactoringCompany, error)
+	SchedulePDFDocumentID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	ScheduleCSVDocumentID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	SubmittedByID(ctx context.Context, obj *factoringsubmission.Submission) (*string, error)
+	Items(ctx context.Context, obj *factoringsubmission.Submission) ([]*factoringsubmission.SubmissionItem, error)
+	FactoringCompany(ctx context.Context, obj *factoringsubmission.Submission) (*factoringcompany.FactoringCompany, error)
 }
 
 type FactoringSubmissionItemResolver interface {
-	PacketDocumentID(ctx context.Context, obj *factoring.SubmissionItem) (*string, error)
-	Invoice(ctx context.Context, obj *factoring.SubmissionItem) (*invoice.Invoice, error)
-	Customer(ctx context.Context, obj *factoring.SubmissionItem) (*customer.Customer, error)
+	PacketDocumentID(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*string, error)
+	Invoice(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*invoice.Invoice, error)
+	Customer(ctx context.Context, obj *factoringsubmission.SubmissionItem) (*customer.Customer, error)
 }
 
 type FactoringSubmissionPlanResolver interface {
-	AgreementID(ctx context.Context, obj *factoringports.SubmissionPlan) (string, error)
+	AgreementID(ctx context.Context, obj *factoringsubmissionports.SubmissionPlan) (string, error)
 }
 
 type FactoringTransportResolver interface {
-	EmailRecipients(ctx context.Context, obj *factoring.Transport) ([]string, error)
-	SftpSecretSet(ctx context.Context, obj *factoring.Transport) (bool, error)
+	EmailRecipients(ctx context.Context, obj *factoringsubmission.Transport) ([]string, error)
+	SftpSecretSet(ctx context.Context, obj *factoringsubmission.Transport) (bool, error)
 }
 
 type FiscalYearResolver interface {
@@ -1491,11 +1595,11 @@ type FiscalYearResolver interface {
 }
 
 type FleetSafetyRankResolver interface {
-	FleetCodeID(ctx context.Context, obj *worker.FleetSafetyRank) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyRank) (*string, error)
 }
 
 type FleetSafetyTerminalResolver interface {
-	FleetCodeID(ctx context.Context, obj *worker.FleetSafetyTerminal) (*string, error)
+	FleetCodeID(ctx context.Context, obj *fleetsafety.FleetSafetyTerminal) (*string, error)
 }
 
 type FormulaLibraryImportResolver interface {
@@ -1723,7 +1827,7 @@ type InboundMailboxResolver interface {
 }
 
 type InboundMailboxCredentialsResolver interface {
-	WebhookPath(ctx context.Context, obj *inboundmessageservice.MailboxCredentials) (string, error)
+	WebhookPath(ctx context.Context, obj *inboundmailbox.MailboxCredentials) (string, error)
 }
 
 type InboundMessageResolver interface {
@@ -1796,12 +1900,12 @@ type InvoiceResolver interface {
 	PaymentApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.Application, error)
 	CreditApplications(ctx context.Context, obj *invoice.Invoice) ([]*customerpayment.CreditMemoApplication, error)
 	EDISendPlan(ctx context.Context, obj *invoice.Invoice) (*invoiceports.InvoiceEDISendPlan, error)
-	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoice.ChargeGroup, error)
+	ChargeSummary(ctx context.Context, obj *invoice.Invoice) ([]*invoicechargegroup.ChargeGroup, error)
 	VoidedBy(ctx context.Context, obj *invoice.Invoice) (*tenant.User, error)
 	FactoringCompany(ctx context.Context, obj *invoice.Invoice) (*factoringcompany.FactoringCompany, error)
-	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoring.InvoiceState, error)
-	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoice.InvoiceDispute, error)
-	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoice.InvoiceDispute, error)
+	FactoringState(ctx context.Context, obj *invoice.Invoice) (*factoringreadiness.InvoiceState, error)
+	Disputes(ctx context.Context, obj *invoice.Invoice) ([]*invoicedispute.InvoiceDispute, error)
+	OpenDispute(ctx context.Context, obj *invoice.Invoice) (*invoicedispute.InvoiceDispute, error)
 	LateChargeAssessments(ctx context.Context, obj *invoice.Invoice) ([]*latecharge.LateChargeAssessment, error)
 }
 
@@ -1831,22 +1935,22 @@ type InvoiceAdjustmentLineResolver interface {
 }
 
 type InvoiceChargeGroupResolver interface {
-	ChargeCode(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	ChargeMethod(ctx context.Context, obj *invoice.ChargeGroup) (*accessorialcharge.Method, error)
-	RateUnit(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Rate(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	RateBasisAmount(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Quantity(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
-	FormulaTemplateID(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	FormulaTemplateName(ctx context.Context, obj *invoice.ChargeGroup) (*string, error)
-	Amount(ctx context.Context, obj *invoice.ChargeGroup) (string, error)
+	ChargeCode(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	ChargeMethod(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*accessorialcharge.Method, error)
+	RateUnit(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Rate(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	RateBasisAmount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Quantity(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
+	FormulaTemplateID(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	FormulaTemplateName(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (*string, error)
+	Amount(ctx context.Context, obj *invoicechargegroup.ChargeGroup) (string, error)
 }
 
 type InvoiceDisputeResolver interface {
-	DisputedAmount(ctx context.Context, obj *invoice.InvoiceDispute) (*string, error)
-	Resolution(ctx context.Context, obj *invoice.InvoiceDispute) (*invoice.DisputeResolution, error)
-	OpenedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
-	ResolvedBy(ctx context.Context, obj *invoice.InvoiceDispute) (*tenant.User, error)
+	DisputedAmount(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*string, error)
+	Resolution(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*invoicedispute.DisputeResolution, error)
+	OpenedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
+	ResolvedBy(ctx context.Context, obj *invoicedispute.InvoiceDispute) (*tenant.User, error)
 }
 
 type InvoiceLineResolver interface {
@@ -1901,18 +2005,18 @@ type LateChargeLineResolver interface {
 }
 
 type LeaveControlResolver interface {
-	EntitlementWeeks(ctx context.Context, obj *worker.LeaveControl) (string, error)
-	MilitaryCaregiverWeeks(ctx context.Context, obj *worker.LeaveControl) (string, error)
-	WorkweekHours(ctx context.Context, obj *worker.LeaveControl) (string, error)
+	EntitlementWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
+	MilitaryCaregiverWeeks(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
+	WorkweekHours(ctx context.Context, obj *workerleave.LeaveControl) (string, error)
 }
 
 type LeaveEntitlementResolver interface {
-	TotalHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	UsedHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	RemainingHours(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	TotalWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	UsedWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
-	RemainingWeeks(ctx context.Context, obj *worker.LeaveEntitlement) (string, error)
+	TotalHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	UsedHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	RemainingHours(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	TotalWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	UsedWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
+	RemainingWeeks(ctx context.Context, obj *workerleave.LeaveEntitlement) (string, error)
 }
 
 type LocationCategoryResolver interface {
@@ -1930,39 +2034,39 @@ type MutationResolver interface {
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
 	BulkUpdateTrailerStatus(ctx context.Context, input gqlmodel.BulkUpdateTrailerStatusInput) ([]*trailer.Trailer, error)
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
-	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingsyncports.AccountingSyncStatus, error)
-	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
-	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingAuthorizationStart, error)
-	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
-	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingsync.AccountingConnection, error)
-	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingsyncports.AccountingPreparedCertificate, error)
-	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingsyncports.AccountingAuthorizationCompletion, error)
-	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingsync.AccountingConnection, error)
-	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
-	RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error)
-	ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
-	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingsync.AccountingMapping, error)
-	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingsync.AccountingConnection, error)
-	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingsync.AccountingConnection, error)
-	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingsync.AccountingConnection, error)
-	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
+	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*accountingconnectionports.AccountingSyncStatus, error)
+	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
+	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingAuthorizationStart, error)
+	FinishAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
+	ChooseAccountingCompany(ctx context.Context, input gqlmodel.ChooseAccountingCompanyInput) (*accountingconnection.AccountingConnection, error)
+	PrepareAccountingCertificate(ctx context.Context, input gqlmodel.PrepareAccountingCertificateInput) (*accountingconnectionports.AccountingPreparedCertificate, error)
+	ConnectAccountingWithCertificate(ctx context.Context, input gqlmodel.ConnectAccountingWithCertificateInput) (*accountingconnectionports.AccountingAuthorizationCompletion, error)
+	RenewAccountingCertificate(ctx context.Context, input gqlmodel.RenewAccountingCertificateInput) (*accountingconnection.AccountingConnection, error)
+	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingmapping.AccountingMapping, error)
+	RejectAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingmapping.AccountingMapping, error)
+	ClearAccountingMapping(ctx context.Context, id string) (*accountingmapping.AccountingMapping, error)
+	CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingmapping.AccountingMapping, error)
+	RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
+	ChooseAccountingSyncMode(ctx context.Context, input gqlmodel.ChooseAccountingSyncModeInput) (*accountingconnection.AccountingConnection, error)
+	EnableAccountingSync(ctx context.Context, input gqlmodel.EnableAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingconnection.AccountingConnection, error)
+	PauseAccountingSync(ctx context.Context, input gqlmodel.PauseAccountingSyncInput) (*accountingconnection.AccountingConnection, error)
+	ResumeAccountingSync(ctx context.Context, integrationType integration.Type) (*accountingconnection.AccountingConnection, error)
 	RetryAccountingSync(ctx context.Context, input gqlmodel.RetryAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	ReleaseAccountingSync(ctx context.Context, input gqlmodel.ReleaseAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	SkipAccountingSync(ctx context.Context, input gqlmodel.SkipAccountingSyncInput) (*accountingsync.AccountingSyncRecord, error)
 	RedateAccountingSync(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
-	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
-	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountingsync.AccountingInboundChange, error)
-	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
-	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
+	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingbackfill.AccountingBackfill, error)
+	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
+	IgnoreAccountingInboundChange(ctx context.Context, input gqlmodel.IgnoreAccountingInboundChangeInput) (*accountinginbound.AccountingInboundChange, error)
+	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
+	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingdrift.AccountingDriftFinding, error)
+	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
 	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
@@ -1970,15 +2074,15 @@ type MutationResolver interface {
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
-	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
-	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
-	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agent.Memory, error)
-	SetAgentMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*agent.Memory, error)
-	ReviewAgentMemory(ctx context.Context, id string, version int) (*agent.Memory, error)
-	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error)
-	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error)
-	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error)
-	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*tenant.AgentControl, error)
+	ReplayAgentRun(ctx context.Context, runID string) (*agentevaluation.Evaluation, error)
+	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
+	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
+	SetAgentMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*agentmemory.Memory, error)
+	ReviewAgentMemory(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
+	ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agentmemory.Memory, error)
+	DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agentmemory.Memory, error)
+	ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agentexception.AgentException, error)
+	UpdateAgentControl(ctx context.Context, input gqlmodel.AgentControlInput) (*agentcontrol.AgentControl, error)
 	AddAgentOrganizationProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	ApproveAgentOrganizationProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
@@ -1987,20 +2091,20 @@ type MutationResolver interface {
 	AddMyAgentProfileGuidance(ctx context.Context, input gqlmodel.AgentProfileGuidanceInput) (*agentprofile.Guidance, error)
 	RetireMyAgentProfileGuidance(ctx context.Context, id string) (*agentprofile.Guidance, error)
 	RegenerateMyAgentProfile(ctx context.Context) (bool, error)
-	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agentdefinition.TestPrompt, error)
+	KeepAgentTestPrompt(ctx context.Context, agentID string, prompt string) (*agenttestprompt.TestPrompt, error)
 	DeleteAgentTestPrompt(ctx context.Context, agentID string, id string) (bool, error)
 	SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error)
 	SetAgentUnattendedRole(ctx context.Context, agentID string, roleID *string) (*agentdefinition.Definition, error)
-	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error)
-	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentports.AgentCapabilities, error)
-	DraftAgentFromDescription(ctx context.Context, description string) (*agentports.AgentDraft, error)
-	TightenAgentInstructions(ctx context.Context, instructions string) (*agentports.TightenedAgentInstructions, error)
+	SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*rbac.Role, error)
+	UpdateAgentCapabilities(ctx context.Context, agentID string, input gqlmodel.UpdateAgentCapabilitiesInput) (*agentcapabilityports.AgentCapabilities, error)
+	DraftAgentFromDescription(ctx context.Context, description string) (*agentdraftports.AgentDraft, error)
+	TightenAgentInstructions(ctx context.Context, instructions string) (*agentdraftports.TightenedAgentInstructions, error)
 	CreateAgentEvalCase(ctx context.Context, input gqlmodel.CreateAgentEvalCaseInput) (*gqlmodel.AgentEvalCaseCapture, error)
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
-	ReplayAgentEvalCase(ctx context.Context, id string) (*agent.Evaluation, error)
-	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentquality.SuiteRun, error)
-	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentquality.Control, error)
+	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
+	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error)
+	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error)
 	SaveAgentToolRule(ctx context.Context, name string, version int, input gqlmodel.AgentToolRuleInput) (*gqlmodel.AgentToolRuleSaved, error)
 	RecordMyAgentSuggestion(ctx context.Context, input gqlmodel.RecordMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
 	SettleMyAgentSuggestion(ctx context.Context, input gqlmodel.SettleMyAgentSuggestionInput) (*agentsuggestion.Suggestion, error)
@@ -2014,16 +2118,16 @@ type MutationResolver interface {
 	RestoreAITuneUp(ctx context.Context, id string, version int) (*gqlmodel.AITuneUp, error)
 	SetMyAIFeedback(ctx context.Context, input gqlmodel.SetMyAIFeedbackInput) (*aifeedback.Feedback, error)
 	ClearMyAIFeedback(ctx context.Context, input gqlmodel.AIFeedbackTargetInput) (bool, error)
-	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*agentports.TestAIProviderResult, error)
+	TestAIProviderDraft(ctx context.Context, input gqlmodel.AIProviderDraftTestInput) (*aiproviderports.TestAIProviderResult, error)
 	ReorderAIProviders(ctx context.Context, ids []string) ([]*aiprovider.Provider, error)
-	RouteAITask(ctx context.Context, task aiprovider.Task, providerID string) ([]*aiprovider.Provider, error)
+	RouteAITask(ctx context.Context, task aitask.Task, providerID string) ([]*aiprovider.Provider, error)
 	PatchAIProvider(ctx context.Context, id string, version int, input gqlmodel.AIProviderPatchInput) (*aiprovider.Provider, error)
-	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*agentports.AIRetrievalStatus, error)
-	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalStatus, error)
-	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*driverpay.BenefitPlan, error)
-	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*driverpay.BenefitPlan, error)
-	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*driverpay.WorkerBenefitEnrollment, error)
-	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*driverpay.WorkerBenefitEnrollment, error)
+	UpdateAIRetrievalSettings(ctx context.Context, input gqlmodel.AIRetrievalSettingsPatchInput) (*retrievalports.AIRetrievalStatus, error)
+	ReindexAIRetrievalSource(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalStatus, error)
+	CreateBenefitPlan(ctx context.Context, input gqlmodel.BenefitPlanInput) (*paybenefit.BenefitPlan, error)
+	UpdateBenefitPlan(ctx context.Context, input gqlmodel.UpdateBenefitPlanInput) (*paybenefit.BenefitPlan, error)
+	EnrollBenefit(ctx context.Context, input gqlmodel.EnrollBenefitInput) (*paybenefit.WorkerBenefitEnrollment, error)
+	EndBenefitEnrollment(ctx context.Context, input gqlmodel.EndBenefitEnrollmentInput) (*paybenefit.WorkerBenefitEnrollment, error)
 	UpdateBillingQueueStatus(ctx context.Context, id string, input gqlmodel.BillingQueueUpdateStatusInput) (*gqlmodel.BillingQueueItem, error)
 	AssignBillingQueueBiller(ctx context.Context, id string, input gqlmodel.BillingQueueAssignInput) (*gqlmodel.BillingQueueItem, error)
 	PostBillingQueueItem(ctx context.Context, id string) (*gqlmodel.BillingQueuePostResult, error)
@@ -2039,37 +2143,37 @@ type MutationResolver interface {
 	UndoMyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	EditCaptureItems(ctx context.Context, batchID string, input gqlmodel.EditCaptureItemsInput) (*capture.CaptureBatch, error)
 	FileCaptureItem(ctx context.Context, id string, input gqlmodel.FileCaptureItemInput) (*capture.CaptureItem, error)
-	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*captureservice.FileItemsResult, error)
+	FileCaptureItems(ctx context.Context, items []*gqlmodel.FileCaptureItemsEntryInput) (*capturefiling.FileItemsResult, error)
 	DiscardCaptureItem(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
 	DiscardCaptureBatch(ctx context.Context, id string, version int) (*capture.CaptureBatch, error)
-	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capture.CaptureRequest, error)
-	CancelCaptureRequest(ctx context.Context, id string) (*capture.CaptureRequest, error)
+	CreateCaptureRequest(ctx context.Context, input gqlmodel.CreateCaptureRequestInput) (*capturerequest.CaptureRequest, error)
+	CancelCaptureRequest(ctx context.Context, id string) (*capturerequest.CaptureRequest, error)
 	CreateCaptureCoverSheets(ctx context.Context, sheets []*gqlmodel.CaptureCoverSheetInput) ([]*gqlmodel.CaptureCoverSheet, error)
 	ApproveCaptureDevicePairing(ctx context.Context, userCode string, deviceName *string) (bool, error)
 	DenyCaptureDevicePairing(ctx context.Context, userCode string) (bool, error)
 	RevokeMyCaptureDevice(ctx context.Context, id string, reason *string) (*capture.CaptureDevice, error)
 	RevokeCaptureDevice(ctx context.Context, id string, reason *string) (*capture.CaptureDevice, error)
-	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
-	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*capture.CaptureProfile, error)
+	CreateCaptureProfile(ctx context.Context, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
+	UpdateCaptureProfile(ctx context.Context, id string, version int, input gqlmodel.CaptureProfileInput) (*captureprofile.CaptureProfile, error)
 	DeleteCaptureProfile(ctx context.Context, id string) (bool, error)
 	CreateCarrierCapacityPosting(ctx context.Context, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	UpdateCarrierCapacityPosting(ctx context.Context, id string, version int, input gqlmodel.CarrierCapacityPostingInput) (*carriercapacity.Posting, error)
 	DeleteCarrierCapacityPosting(ctx context.Context, id string, version int) (bool, error)
-	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintel.CarrierIntelControl, error)
-	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintel.CarrierIntelControl, error)
+	UpdateCarrierIntelControl(ctx context.Context, input gqlmodel.CarrierIntelControlPatchInput) (*carrierintelcontrol.CarrierIntelControl, error)
+	SwitchCarrierIntelProvider(ctx context.Context, provider string) (*carrierintelcontrol.CarrierIntelControl, error)
 	ResumeCarrierIntelMonitoring(ctx context.Context) (bool, error)
 	VetCarrier(ctx context.Context, carrierID string, depth *carrierintel.LookupDepth, force *bool) (*gqlmodel.CarrierIntelFetchResult, error)
 	VetCustomerBroker(ctx context.Context, customerID string, force *bool) (*gqlmodel.CarrierIntelFetchResult, error)
 	SetCarrierMonitoring(ctx context.Context, carrierIds []string, enabled bool) (int, error)
 	AcknowledgeCarrierIntelEvents(ctx context.Context, ids []string) (int, error)
-	ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintel.CarrierIntelEvent, error)
+	ResolveCarrierIntelEvent(ctx context.Context, input gqlmodel.ResolveCarrierIntelEventInput) (*carrierintelevent.CarrierIntelEvent, error)
 	MarkCarrierIntelReviewed(ctx context.Context, carrierID string, note string) (bool, error)
-	GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierintel.CarrierIntelOverride, error)
-	RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierintel.CarrierIntelOverride, error)
+	GrantCarrierIntelOverride(ctx context.Context, input gqlmodel.GrantCarrierIntelOverrideInput) (*carrierinteloverride.CarrierIntelOverride, error)
+	RevokeCarrierIntelOverride(ctx context.Context, id string, reason string) (*carrierinteloverride.CarrierIntelOverride, error)
 	ApplyCarrierIntelSuggestions(ctx context.Context, input gqlmodel.ApplyCarrierIntelSuggestionsInput) (int, error)
 	ImportSourcedCarrier(ctx context.Context, input gqlmodel.ImportSourcedCarrierInput) (*carrier.Carrier, error)
-	VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintel.CarrierEquipmentVerification, error)
-	OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintel.CarrierEquipmentVerification, error)
+	VerifyCarrierEquipment(ctx context.Context, input gqlmodel.VerifyCarrierEquipmentInput) (*carrierintelverification.CarrierEquipmentVerification, error)
+	OverrideCarrierEquipmentVerification(ctx context.Context, id string, reason string) (*carrierintelverification.CarrierEquipmentVerification, error)
 	GenerateCarrierSettlementBatch(ctx context.Context, input gqlmodel.GenerateCarrierSettlementBatchInput) (*carriersettlement.CarrierSettlementBatch, error)
 	SubmitCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	ApproveCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
@@ -2080,8 +2184,8 @@ type MutationResolver interface {
 	RecalculateCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error)
 	AddCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.AddCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
 	RemoveCarrierSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) (*carriersettlement.CarrierSettlement, error)
-	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*tenant.CarrierSettlementControl, error)
-	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edi.CarrierInvoice, error)
+	UpdateCarrierSettlementControl(ctx context.Context, input gqlmodel.UpdateCarrierSettlementControlInput) (*carriersettlementcontrol.CarrierSettlementControl, error)
+	LinkEDICarrierInvoiceToCarrier(ctx context.Context, invoiceID string, carrierID string) (*edicarrierinvoice.CarrierInvoice, error)
 	CreateCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CreateCarrierInvoiceMatchInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatch(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
 	AcceptCarrierInvoiceMatchWithVariance(ctx context.Context, input gqlmodel.CarrierInvoiceMatchActionInput) (*carriersettlement.InvoiceMatch, error)
@@ -2102,10 +2206,10 @@ type MutationResolver interface {
 	DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
 	CreateDeskMemory(ctx context.Context, input gqlmodel.CreateDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	ReviseDeskMemory(ctx context.Context, id string, input gqlmodel.ReviseDeskMemoryInput) (*gqlmodel.DeskMemory, error)
-	SetDeskMemoryStatus(ctx context.Context, id string, status agent.MemoryStatus) (*gqlmodel.DeskMemory, error)
+	SetDeskMemoryStatus(ctx context.Context, id string, status agentmemory.MemoryStatus) (*gqlmodel.DeskMemory, error)
 	ConfirmDeskMemory(ctx context.Context, id string, input gqlmodel.ConfirmDeskMemoryInput) (*gqlmodel.DeskMemory, error)
 	DismissDeskMemory(ctx context.Context, id string) (*gqlmodel.DeskMemory, error)
-	SetMemorySavingMode(ctx context.Context, mode agent.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
+	SetMemorySavingMode(ctx context.Context, mode agentmemory.MemorySavingMode) (*gqlmodel.DeskMemorySettings, error)
 	CreateDetentionPolicy(ctx context.Context, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	UpdateDetentionPolicy(ctx context.Context, id string, input gqlmodel.DetentionPolicyInput) (*gqlmodel.DetentionPolicy, error)
 	DeleteDetentionPolicy(ctx context.Context, id string) (bool, error)
@@ -2131,7 +2235,7 @@ type MutationResolver interface {
 	AssignDocumentTemplate(ctx context.Context, input gqlmodel.AssignDocumentTemplateInput) (*documenttemplate.DocumentTemplateAssignment, error)
 	UnassignDocumentTemplate(ctx context.Context, input gqlmodel.UnassignDocumentTemplateInput) (bool, error)
 	SendTestMessageTemplate(ctx context.Context, input gqlmodel.SendTestMessageTemplateInput) (bool, error)
-	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalservice.InviteWorkerResult, error)
+	InviteWorkerToPortal(ctx context.Context, input gqlmodel.InviteWorkerToPortalInput) (*driverportalinvitationservice.InviteWorkerResult, error)
 	RevokeWorkerPortalAccess(ctx context.Context, workerID string) (bool, error)
 	UpdateMyContactInfo(ctx context.Context, input gqlmodel.UpdateMyContactInfoInput) (*driverportalservice.PortalComplianceProfile, error)
 	CreateMyLoadComment(ctx context.Context, input gqlmodel.CreateMyLoadCommentInput) (*driverportalservice.PortalComment, error)
@@ -2146,33 +2250,33 @@ type MutationResolver interface {
 	DismissMyNotifications(ctx context.Context, ids []string) (bool, error)
 	RestoreMyNotifications(ctx context.Context, ids []string) (bool, error)
 	RequestMyPTO(ctx context.Context, input gqlmodel.RequestMyPTOInput) (*worker.WorkerPTO, error)
-	AcknowledgeMyPolicy(ctx context.Context, input gqlmodel.AcknowledgeMyPolicyInput) (*worker.WorkerPolicyAcknowledgement, error)
-	WithdrawMyProfileChange(ctx context.Context, id string) (*worker.WorkerProfileChangeRequest, error)
-	SetMyAvailability(ctx context.Context, input gqlmodel.SetMyAvailabilityInput) (*worker.WorkerAvailabilityPreference, error)
-	ProposeMyShiftSwap(ctx context.Context, input gqlmodel.ProposeMyShiftSwapInput) (*worker.ShiftSwapRequest, error)
-	RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*worker.ShiftSwapRequest, error)
+	AcknowledgeMyPolicy(ctx context.Context, input gqlmodel.AcknowledgeMyPolicyInput) (*workerpolicy.WorkerPolicyAcknowledgement, error)
+	WithdrawMyProfileChange(ctx context.Context, id string) (*profilechange.WorkerProfileChangeRequest, error)
+	SetMyAvailability(ctx context.Context, input gqlmodel.SetMyAvailabilityInput) (*workerschedule.WorkerAvailabilityPreference, error)
+	ProposeMyShiftSwap(ctx context.Context, input gqlmodel.ProposeMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
+	RespondToMyShiftSwap(ctx context.Context, input gqlmodel.RespondToMyShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
 	CancelMyPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
-	SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*driverpay.Expense, error)
-	CancelMyExpense(ctx context.Context, id string) (*driverpay.Expense, error)
-	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*driverpay.Expense, error)
+	SubmitMyExpense(ctx context.Context, input gqlmodel.SubmitMyExpenseInput) (*payexpense.Expense, error)
+	CancelMyExpense(ctx context.Context, id string) (*payexpense.Expense, error)
+	ReviewDriverExpense(ctx context.Context, input gqlmodel.ReviewDriverExpenseInput) (*payexpense.Expense, error)
 	RespondToMyAssignment(ctx context.Context, input gqlmodel.RespondToMyAssignmentInput) (bool, error)
-	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*tenant.DashControl, error)
+	UpdateDashControl(ctx context.Context, input gqlmodel.UpdateDashControlInput) (*dashcontrol.DashControl, error)
 	CreatePayProfile(ctx context.Context, input gqlmodel.CreatePayProfileInput) (*driverpay.PayProfile, error)
 	UpdatePayProfile(ctx context.Context, input gqlmodel.UpdatePayProfileInput) (*driverpay.PayProfile, error)
-	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*driverpay.WorkerPayAssignment, error)
-	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*driverpay.WorkerPayAssignment, error)
-	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*driverpay.RecurringDeduction, error)
-	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*driverpay.RecurringEarning, error)
-	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*driverpay.PayCode, error)
-	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*driverpay.PayCode, error)
-	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*driverpay.PayAdvance, error)
-	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*driverpay.PayAdvance, error)
-	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*driverpay.EscrowAccount, error)
-	CloseEscrowAccount(ctx context.Context, accountID string) (*driverpay.EscrowAccount, error)
+	AssignPayProfileToWorker(ctx context.Context, input gqlmodel.AssignPayProfileInput) (*payassignment.WorkerPayAssignment, error)
+	EndWorkerPayAssignment(ctx context.Context, input gqlmodel.EndWorkerPayAssignmentInput) (*payassignment.WorkerPayAssignment, error)
+	CreateRecurringDeduction(ctx context.Context, input gqlmodel.CreateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	UpdateRecurringDeduction(ctx context.Context, input gqlmodel.UpdateRecurringDeductionInput) (*recurringpay.RecurringDeduction, error)
+	CreateRecurringEarning(ctx context.Context, input gqlmodel.CreateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	UpdateRecurringEarning(ctx context.Context, input gqlmodel.UpdateRecurringEarningInput) (*recurringpay.RecurringEarning, error)
+	CreatePayCode(ctx context.Context, input gqlmodel.CreatePayCodeInput) (*paycode.PayCode, error)
+	UpdatePayCode(ctx context.Context, input gqlmodel.UpdatePayCodeInput) (*paycode.PayCode, error)
+	IssuePayAdvance(ctx context.Context, input gqlmodel.IssuePayAdvanceInput) (*payadvance.PayAdvance, error)
+	WriteOffPayAdvance(ctx context.Context, input gqlmodel.WriteOffPayAdvanceInput) (*payadvance.PayAdvance, error)
+	OpenEscrowAccount(ctx context.Context, input gqlmodel.OpenEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	UpdateEscrowAccount(ctx context.Context, input gqlmodel.UpdateEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	AdjustEscrowAccount(ctx context.Context, input gqlmodel.AdjustEscrowAccountInput) (*payescrow.EscrowAccount, error)
+	CloseEscrowAccount(ctx context.Context, accountID string) (*payescrow.EscrowAccount, error)
 	GenerateSettlementBatch(ctx context.Context, input gqlmodel.GenerateSettlementBatchInput) (*driversettlement.SettlementBatch, error)
 	GenerateDriverSettlement(ctx context.Context, input gqlmodel.GenerateDriverSettlementInput) (*driversettlement.Settlement, error)
 	PayWorkerNow(ctx context.Context, input gqlmodel.PayWorkerNowInput) (*driversettlement.Settlement, error)
@@ -2185,12 +2289,12 @@ type MutationResolver interface {
 	RecalculateDriverSettlement(ctx context.Context, input gqlmodel.DriverSettlementActionInput) (*driversettlement.Settlement, error)
 	AddDriverSettlementAdjustment(ctx context.Context, input gqlmodel.AddSettlementAdjustmentInput) (*driversettlement.Settlement, error)
 	RemoveDriverSettlementAdjustment(ctx context.Context, input gqlmodel.RemoveSettlementAdjustmentInput) (*driversettlement.Settlement, error)
-	UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*tenant.SettlementControl, error)
+	UpdateSettlementControl(ctx context.Context, input gqlmodel.UpdateSettlementControlInput) (*settlementcontrol.SettlementControl, error)
 	HoldDriverPayEvent(ctx context.Context, input gqlmodel.HoldPayEventInput) (*driversettlement.PayEvent, error)
 	ReleaseDriverPayEvent(ctx context.Context, payEventID string) (*driversettlement.PayEvent, error)
 	AttachPayEventsToSettlement(ctx context.Context, input gqlmodel.AttachPayEventsInput) (*driversettlement.Settlement, error)
 	DetachPayEventFromSettlement(ctx context.Context, input gqlmodel.DetachPayEventInput) (*driversettlement.Settlement, error)
-	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementservice.BulkActionPayload, error)
+	BulkDriverSettlementAction(ctx context.Context, input gqlmodel.BulkSettlementActionInput) (*driversettlementworkspaceservice.BulkActionPayload, error)
 	CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
@@ -2215,27 +2319,27 @@ type MutationResolver interface {
 	SendFactoringNoa(ctx context.Context, input gqlmodel.SendFactoringNoaInput) (*factoring.Noa, error)
 	AcknowledgeFactoringNoa(ctx context.Context, input gqlmodel.AcknowledgeFactoringNoaInput) (*factoring.Noa, error)
 	ReleaseFactoringNoa(ctx context.Context, input gqlmodel.ReleaseFactoringNoaInput) (*factoring.Noa, error)
-	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoring.InvoiceState, error)
+	SetInvoiceFactoringOverride(ctx context.Context, input gqlmodel.SetInvoiceFactoringOverrideInput) (*factoringreadiness.InvoiceState, error)
 	RequestMissingFactoringDocuments(ctx context.Context, input gqlmodel.RequestMissingFactoringDocumentsInput) (*factoringports.RequestMissingDocumentsResult, error)
-	SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoring.Submission, error)
-	RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoring.Submission, error)
-	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoring.Submission, error)
-	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoring.Transport, error)
-	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringports.TransportTestResult, error)
-	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoring.Submission, error)
-	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoring.Submission, error)
-	CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoring.Remittance, error)
-	StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoring.Remittance, error)
-	RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
-	UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoring.Remittance, error)
-	ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoring.Remittance, error)
-	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoring.Remittance, error)
+	SubmitInvoicesToFactor(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringsubmission.Submission, error)
+	RetryFactoringSubmission(ctx context.Context, input gqlmodel.RetryFactoringSubmissionInput) (*factoringsubmission.Submission, error)
+	CancelFactoringSubmission(ctx context.Context, input gqlmodel.CancelFactoringSubmissionInput) (*factoringsubmission.Submission, error)
+	SaveFactoringTransport(ctx context.Context, input gqlmodel.SaveFactoringTransportInput) (*factoringsubmission.Transport, error)
+	TestFactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringsubmissionports.TransportTestResult, error)
+	RecordFactoringFunding(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringsubmission.Submission, error)
+	ReleaseFactoringReserve(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	RecordFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	ReverseFactoringChargeback(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringsubmission.Submission, error)
+	CreateFactoringRemittance(ctx context.Context, input gqlmodel.CreateFactoringRemittanceInput) (*factoringremittance.Remittance, error)
+	StageFactoringRemittance(ctx context.Context, input gqlmodel.StageFactoringRemittanceInput) (*factoringremittance.Remittance, error)
+	RematchFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittance.Remittance, error)
+	UpdateFactoringRemittanceLine(ctx context.Context, input gqlmodel.UpdateFactoringRemittanceLineInput) (*factoringremittance.Remittance, error)
+	ApplyFactoringRemittance(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittance.Remittance, error)
+	DiscardFactoringRemittance(ctx context.Context, input gqlmodel.DiscardFactoringRemittanceInput) (*factoringremittance.Remittance, error)
 	CreateFactoringCompany(ctx context.Context, input gqlmodel.FactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
 	UpdateFactoringCompany(ctx context.Context, input gqlmodel.UpdateFactoringCompanyInput) (*factoringcompany.FactoringCompany, error)
-	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
-	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*worker.WorkerSafetyViolation, error)
+	RecordSafetyViolation(ctx context.Context, input gqlmodel.RecordSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
+	UpdateSafetyViolation(ctx context.Context, input gqlmodel.UpdateSafetyViolationInput) (*fleetsafety.WorkerSafetyViolation, error)
 	DeleteSafetyViolation(ctx context.Context, id string) (bool, error)
 	CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
 	UpdateFuelCard(ctx context.Context, id string, version int, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error)
@@ -2280,9 +2384,9 @@ type MutationResolver interface {
 	BackfillJurisdictionMiles(ctx context.Context, input gqlmodel.BackfillJurisdictionMilesInput) (*gqlmodel.JurisdictionMilesBackfillResult, error)
 	ReviewInboundMessage(ctx context.Context, id string, input gqlmodel.ReviewInboundMessageInput) (*inboundmessage.InboundMessage, error)
 	LinkInboundMessage(ctx context.Context, id string, input gqlmodel.LinkInboundMessageInput) (*inboundmessage.InboundMessage, error)
-	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmessageservice.MailboxCredentials, error)
+	CreateInboundMailbox(ctx context.Context, input gqlmodel.InboundMailboxInput, signingSecret *string, apiKey *string) (*inboundmailbox.MailboxCredentials, error)
 	UpdateInboundMailbox(ctx context.Context, id string, version int, input gqlmodel.InboundMailboxInput) (*inboundmessage.Mailbox, error)
-	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmessageservice.MailboxCredentials, error)
+	RotateInboundMailboxToken(ctx context.Context, id string) (*inboundmailbox.MailboxCredentials, error)
 	SetInboundMailboxSigningSecret(ctx context.Context, id string, secret string) (*inboundmessage.Mailbox, error)
 	SetInboundMailboxAPIKey(ctx context.Context, id string, apiKey string) (*inboundmessage.Mailbox, error)
 	ReviewInboundMessages(ctx context.Context, selection gqlmodel.TriageSelectionInput, input gqlmodel.BulkReviewInboundMessagesInput) (*inboundmessageports.BulkResult, error)
@@ -2326,9 +2430,9 @@ type MutationResolver interface {
 	SendInvoiceEDI(ctx context.Context, invoiceID string, force *bool) (*invoiceports.InvoiceEDISendResult, error)
 	ApproveInvoiceAdjustment(ctx context.Context, adjustmentID string) (*invoiceadjustment.InvoiceAdjustment, error)
 	RejectInvoiceAdjustment(ctx context.Context, input gqlmodel.RejectInvoiceAdjustmentInput) (*invoiceadjustment.InvoiceAdjustment, error)
-	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
-	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoice.InvoiceDispute, error)
+	OpenInvoiceDispute(ctx context.Context, input gqlmodel.OpenInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
+	ResolveInvoiceDispute(ctx context.Context, input gqlmodel.ResolveInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
+	WithdrawInvoiceDispute(ctx context.Context, input gqlmodel.WithdrawInvoiceDisputeInput) (*invoicedispute.InvoiceDispute, error)
 	ApproveJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	PostJournalEntries(ctx context.Context, input gqlmodel.JournalReviewInput) (*journalentryports.JournalReviewResult, error)
 	AssessLateCharges(ctx context.Context, input *gqlmodel.LateChargeAssessmentInput) (*latechargeports.LateChargeAssessmentResult, error)
@@ -2347,33 +2451,33 @@ type MutationResolver interface {
 	RemoveOrderCharge(ctx context.Context, input gqlmodel.RemoveOrderChargeInput) (*order.Order, error)
 	CloseOrder(ctx context.Context, id string) (*order.Order, error)
 	CancelOrder(ctx context.Context, id string, cancelReason string) (*order.Order, error)
-	CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error)
-	UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*worker.OrgHoliday, error)
+	CreateOrgHoliday(ctx context.Context, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
+	UpdateOrgHoliday(ctx context.Context, id string, input gqlmodel.OrgHolidayInput) (*pto.OrgHoliday, error)
 	DeleteOrgHoliday(ctx context.Context, id string) (bool, error)
 	CreateJobPosition(ctx context.Context, input gqlmodel.JobPositionInput) (*worker.JobPosition, error)
 	UpdateJobPosition(ctx context.Context, input gqlmodel.UpdateJobPositionInput) (*worker.JobPosition, error)
 	AssignWorkerPosition(ctx context.Context, workerID string, positionID *string) (bool, error)
 	AssignUserPosition(ctx context.Context, userID string, positionID *string) (bool, error)
-	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*worker.ApprovalDelegation, error)
-	RevokeApprovalDelegation(ctx context.Context, id string) (*worker.ApprovalDelegation, error)
-	CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*worker.PerformanceReviewTemplate, error)
-	UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*worker.PerformanceReviewTemplate, error)
-	ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*worker.PerformanceReviewTemplate, error)
-	RestorePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*worker.PerformanceReviewTemplate, error)
-	CreatePerformanceReview(ctx context.Context, input gqlmodel.CreatePerformanceReviewInput) (*worker.PerformanceReview, error)
-	UpdatePerformanceReview(ctx context.Context, input gqlmodel.UpdatePerformanceReviewInput) (*worker.PerformanceReview, error)
-	SubmitPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error)
-	ReopenPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error)
-	ClosePerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*worker.PerformanceReview, error)
+	DelegateApproval(ctx context.Context, input gqlmodel.DelegateApprovalInput) (*approvaldelegation.ApprovalDelegation, error)
+	RevokeApprovalDelegation(ctx context.Context, id string) (*approvaldelegation.ApprovalDelegation, error)
+	CreatePerformanceReviewTemplate(ctx context.Context, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
+	UpdatePerformanceReviewTemplate(ctx context.Context, id string, input gqlmodel.PerformanceReviewTemplateInput) (*workerreview.PerformanceReviewTemplate, error)
+	ArchivePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error)
+	RestorePerformanceReviewTemplate(ctx context.Context, id string, version *int) (*workerreview.PerformanceReviewTemplate, error)
+	CreatePerformanceReview(ctx context.Context, input gqlmodel.CreatePerformanceReviewInput) (*workerreview.PerformanceReview, error)
+	UpdatePerformanceReview(ctx context.Context, input gqlmodel.UpdatePerformanceReviewInput) (*workerreview.PerformanceReview, error)
+	SubmitPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error)
+	ReopenPerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error)
+	ClosePerformanceReview(ctx context.Context, input gqlmodel.PerformanceReviewStatusInput) (*workerreview.PerformanceReview, error)
 	DeletePerformanceReview(ctx context.Context, id string) (bool, error)
-	AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*worker.PerformanceReview, error)
-	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error)
-	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*worker.PTOPolicy, error)
-	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error)
-	RestorePTOPolicy(ctx context.Context, id string, version *int) (*worker.PTOPolicy, error)
+	AcknowledgeMyReview(ctx context.Context, id string, comment *string) (*workerreview.PerformanceReview, error)
+	CreatePTOPolicy(ctx context.Context, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
+	UpdatePTOPolicy(ctx context.Context, id string, input gqlmodel.PTOPolicyInput) (*pto.PTOPolicy, error)
+	ArchivePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
+	RestorePTOPolicy(ctx context.Context, id string, version *int) (*pto.PTOPolicy, error)
 	AssignWorkerPTOPolicy(ctx context.Context, input gqlmodel.AssignWorkerPTOPolicyInput) (*ptopolicyservice.AssignWorkersResult, error)
-	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*worker.WorkerPTOPolicyAssignment, error)
-	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*worker.WorkerPTOLedgerEntry, error)
+	EndWorkerPTOPolicyAssignment(ctx context.Context, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) (*pto.WorkerPTOPolicyAssignment, error)
+	AdjustWorkerPTOBalance(ctx context.Context, input gqlmodel.AdjustWorkerPTOBalanceInput) (*pto.WorkerPTOLedgerEntry, error)
 	RunPTOAccrual(ctx context.Context, input gqlmodel.RunPTOAccrualInput) (*gqlmodel.PTOAccrualRunPayload, error)
 	CreateReportDefinition(ctx context.Context, input gqlmodel.SaveReportDefinitionInput) (*gqlmodel.ReportDefinition, error)
 	ExportTableView(ctx context.Context, input gqlmodel.ExportTableViewInput) (*gqlmodel.TableExportResult, error)
@@ -2393,16 +2497,16 @@ type MutationResolver interface {
 	CreateReportDashboard(ctx context.Context, input gqlmodel.SaveReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	UpdateReportDashboard(ctx context.Context, input gqlmodel.UpdateReportDashboardInput) (*gqlmodel.ReportDashboard, error)
 	DeleteReportDashboard(ctx context.Context, id string) (bool, error)
-	CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*worker.ShiftTemplate, error)
-	UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*worker.ShiftTemplate, error)
-	AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*worker.WorkerShiftAssignment, error)
-	EndWorkerShiftAssignment(ctx context.Context, id string, effectiveTo int) (*worker.WorkerShiftAssignment, error)
-	SetWorkerAvailabilityPreference(ctx context.Context, input gqlmodel.SetAvailabilityPreferenceInput) (*worker.WorkerAvailabilityPreference, error)
-	ProposeShiftSwap(ctx context.Context, input gqlmodel.ProposeShiftSwapInput) (*worker.ShiftSwapRequest, error)
-	TransitionShiftSwap(ctx context.Context, input gqlmodel.TransitionShiftSwapInput) (*worker.ShiftSwapRequest, error)
-	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error)
-	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*worker.WorkerPolicy, error)
-	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*worker.WorkerProfileChangeRequest, error)
+	CreateShiftTemplate(ctx context.Context, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
+	UpdateShiftTemplate(ctx context.Context, id string, input gqlmodel.ShiftTemplateInput) (*workerschedule.ShiftTemplate, error)
+	AssignWorkerShift(ctx context.Context, input gqlmodel.AssignShiftInput) (*workerschedule.WorkerShiftAssignment, error)
+	EndWorkerShiftAssignment(ctx context.Context, id string, effectiveTo int) (*workerschedule.WorkerShiftAssignment, error)
+	SetWorkerAvailabilityPreference(ctx context.Context, input gqlmodel.SetAvailabilityPreferenceInput) (*workerschedule.WorkerAvailabilityPreference, error)
+	ProposeShiftSwap(ctx context.Context, input gqlmodel.ProposeShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
+	TransitionShiftSwap(ctx context.Context, input gqlmodel.TransitionShiftSwapInput) (*workerschedule.ShiftSwapRequest, error)
+	CreateWorkerPolicy(ctx context.Context, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
+	UpdateWorkerPolicy(ctx context.Context, id string, input gqlmodel.WorkerPolicyInput) (*workerpolicy.WorkerPolicy, error)
+	DecideProfileChange(ctx context.Context, input gqlmodel.DecideProfileChangeInput) (*profilechange.WorkerProfileChangeRequest, error)
 	CreateShipment(ctx context.Context, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
@@ -2444,13 +2548,13 @@ type MutationResolver interface {
 	SaveTelematicsFormMapping(ctx context.Context, input gqlmodel.SaveTelematicsFormMappingInput) (*gqlmodel.TelematicsFormMapping, error)
 	DeleteTelematicsFormMapping(ctx context.Context, id string) (bool, error)
 	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
-	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error)
-	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*worker.TimeClockEntry, error)
-	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*worker.TimeClockEntry, error)
+	ClockIn(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
+	ClockOut(ctx context.Context, input gqlmodel.ClockInput) (*timesheet.TimeClockEntry, error)
+	RecordTimeEntry(ctx context.Context, input gqlmodel.RecordTimeEntryInput) (*timesheet.TimeClockEntry, error)
 	DeleteTimeEntry(ctx context.Context, input gqlmodel.DeleteTimeEntryInput) (bool, error)
-	TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*worker.Timesheet, error)
-	GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*worker.PayrollExport, error)
-	VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*worker.PayrollExport, error)
+	TransitionTimesheet(ctx context.Context, input gqlmodel.TransitionTimesheetInput) (*timesheet.Timesheet, error)
+	GeneratePayrollExport(ctx context.Context, input gqlmodel.GeneratePayrollExportInput) (*timesheet.PayrollExport, error)
+	VoidPayrollExport(ctx context.Context, input gqlmodel.VoidPayrollExportInput) (*timesheet.PayrollExport, error)
 	CreateTractor(ctx context.Context, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	UpdateTractor(ctx context.Context, id string, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	PatchTractor(ctx context.Context, id string, input gqlmodel.TractorPatchInput) (*tractor.Tractor, error)
@@ -2485,90 +2589,91 @@ type MutationResolver interface {
 	ApproveWorkerPTO(ctx context.Context, id string) (*worker.WorkerPTO, error)
 	RejectWorkerPTO(ctx context.Context, id string, reason string) (*worker.WorkerPTO, error)
 	CancelWorkerPTO(ctx context.Context, id string, reason *string) (*worker.WorkerPTO, error)
-	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerports.PTOBulkActionPayload, error)
-	CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
-	UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*worker.WorkerChecklistTemplate, error)
-	ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error)
-	RestoreWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*worker.WorkerChecklistTemplate, error)
-	StartWorkerChecklist(ctx context.Context, input gqlmodel.StartWorkerChecklistInput) (*worker.WorkerChecklist, error)
-	CompleteWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error)
-	SkipWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error)
-	MarkWorkerChecklistItemNotApplicable(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*worker.WorkerChecklist, error)
-	ReopenWorkerChecklistItem(ctx context.Context, id string, version *int) (*worker.WorkerChecklist, error)
-	CancelWorkerChecklist(ctx context.Context, input gqlmodel.CancelWorkerChecklistInput) (*worker.WorkerChecklist, error)
-	CreateWorkerCredentialType(ctx context.Context, input gqlmodel.WorkerCredentialTypeInput) (*worker.WorkerCredentialType, error)
-	UpdateWorkerCredentialType(ctx context.Context, id string, input gqlmodel.WorkerCredentialTypeInput) (*worker.WorkerCredentialType, error)
-	ArchiveWorkerCredentialType(ctx context.Context, id string, version *int) (*worker.WorkerCredentialType, error)
-	RestoreWorkerCredentialType(ctx context.Context, id string, version *int) (*worker.WorkerCredentialType, error)
-	CreateWorkerCredential(ctx context.Context, input gqlmodel.WorkerCredentialInput) (*worker.WorkerCredential, error)
-	UpdateWorkerCredential(ctx context.Context, input gqlmodel.UpdateWorkerCredentialInput) (*worker.WorkerCredential, error)
-	VerifyWorkerCredential(ctx context.Context, id string, version *int) (*worker.WorkerCredential, error)
-	ArchiveWorkerCredential(ctx context.Context, input gqlmodel.ArchiveWorkerCredentialInput) (*worker.WorkerCredential, error)
-	AttachWorkerCredentialDocument(ctx context.Context, input gqlmodel.AttachWorkerCredentialDocumentInput) (*worker.WorkerCredential, error)
-	RecordEmploymentVerification(ctx context.Context, input gqlmodel.RecordEmploymentVerificationInput) (*worker.WorkerEmploymentVerification, error)
-	UpdateEmploymentVerification(ctx context.Context, input gqlmodel.UpdateEmploymentVerificationInput) (*worker.WorkerEmploymentVerification, error)
-	MarkEmploymentVerificationRequested(ctx context.Context, id string) (*worker.WorkerEmploymentVerification, error)
-	RecordEmploymentVerificationFollowUp(ctx context.Context, id string) (*worker.WorkerEmploymentVerification, error)
+	BulkWorkerPTOAction(ctx context.Context, input gqlmodel.BulkWorkerPTOActionInput) (*workerptoports.PTOBulkActionPayload, error)
+	CreateWorkerChecklistTemplate(ctx context.Context, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error)
+	UpdateWorkerChecklistTemplate(ctx context.Context, id string, input gqlmodel.WorkerChecklistTemplateInput) (*workerchecklist.WorkerChecklistTemplate, error)
+	ArchiveWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklistTemplate, error)
+	RestoreWorkerChecklistTemplate(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklistTemplate, error)
+	StartWorkerChecklist(ctx context.Context, input gqlmodel.StartWorkerChecklistInput) (*workerchecklist.WorkerChecklist, error)
+	CompleteWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error)
+	SkipWorkerChecklistItem(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error)
+	MarkWorkerChecklistItemNotApplicable(ctx context.Context, input gqlmodel.WorkerChecklistItemActionInput) (*workerchecklist.WorkerChecklist, error)
+	ReopenWorkerChecklistItem(ctx context.Context, id string, version *int) (*workerchecklist.WorkerChecklist, error)
+	CancelWorkerChecklist(ctx context.Context, input gqlmodel.CancelWorkerChecklistInput) (*workerchecklist.WorkerChecklist, error)
+	CreateWorkerCredentialType(ctx context.Context, input gqlmodel.WorkerCredentialTypeInput) (*workercredential.WorkerCredentialType, error)
+	UpdateWorkerCredentialType(ctx context.Context, id string, input gqlmodel.WorkerCredentialTypeInput) (*workercredential.WorkerCredentialType, error)
+	ArchiveWorkerCredentialType(ctx context.Context, id string, version *int) (*workercredential.WorkerCredentialType, error)
+	RestoreWorkerCredentialType(ctx context.Context, id string, version *int) (*workercredential.WorkerCredentialType, error)
+	CreateWorkerCredential(ctx context.Context, input gqlmodel.WorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	UpdateWorkerCredential(ctx context.Context, input gqlmodel.UpdateWorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	VerifyWorkerCredential(ctx context.Context, id string, version *int) (*workercredential.WorkerCredential, error)
+	ArchiveWorkerCredential(ctx context.Context, input gqlmodel.ArchiveWorkerCredentialInput) (*workercredential.WorkerCredential, error)
+	AttachWorkerCredentialDocument(ctx context.Context, input gqlmodel.AttachWorkerCredentialDocumentInput) (*workercredential.WorkerCredential, error)
+	RecordEmploymentVerification(ctx context.Context, input gqlmodel.RecordEmploymentVerificationInput) (*employment.WorkerEmploymentVerification, error)
+	UpdateEmploymentVerification(ctx context.Context, input gqlmodel.UpdateEmploymentVerificationInput) (*employment.WorkerEmploymentVerification, error)
+	MarkEmploymentVerificationRequested(ctx context.Context, id string) (*employment.WorkerEmploymentVerification, error)
+	RecordEmploymentVerificationFollowUp(ctx context.Context, id string) (*employment.WorkerEmploymentVerification, error)
 	DeleteEmploymentVerification(ctx context.Context, id string) (bool, error)
-	RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*worker.WorkerDOTTest, error)
-	RecordDOTTestResult(ctx context.Context, input gqlmodel.RecordDOTTestResultInput) (*worker.WorkerDOTTest, error)
-	CancelDOTTest(ctx context.Context, id string, reason string) (*worker.WorkerDOTTest, error)
-	RecordDOTViolation(ctx context.Context, input gqlmodel.RecordDOTViolationInput) (*worker.WorkerDOTViolation, error)
-	UpdateDOTViolation(ctx context.Context, input gqlmodel.UpdateDOTViolationInput) (*worker.WorkerDOTViolation, error)
-	RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*worker.WorkerClearinghouseQuery, error)
-	CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*worker.WorkerClearinghouseQuery, error)
-	CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*worker.DOTRandomPool, error)
-	UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*worker.DOTRandomPool, error)
-	RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*worker.DOTRandomDraw, error)
-	FinalizeDOTRandomDraw(ctx context.Context, id string) (*worker.DOTRandomDraw, error)
-	CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*worker.DOTRandomDraw, error)
-	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*worker.DOTRandomDrawEntry, error)
+	RecordDOTTest(ctx context.Context, input gqlmodel.RecordDOTTestInput) (*workerdot.WorkerDOTTest, error)
+	RecordDOTTestResult(ctx context.Context, input gqlmodel.RecordDOTTestResultInput) (*workerdot.WorkerDOTTest, error)
+	CancelDOTTest(ctx context.Context, id string, reason string) (*workerdot.WorkerDOTTest, error)
+	RecordDOTViolation(ctx context.Context, input gqlmodel.RecordDOTViolationInput) (*workerdot.WorkerDOTViolation, error)
+	UpdateDOTViolation(ctx context.Context, input gqlmodel.UpdateDOTViolationInput) (*workerdot.WorkerDOTViolation, error)
+	RecordClearinghouseQuery(ctx context.Context, input gqlmodel.RecordClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error)
+	CompleteClearinghouseQuery(ctx context.Context, input gqlmodel.CompleteClearinghouseQueryInput) (*dotclearinghouse.WorkerClearinghouseQuery, error)
+	CreateDOTRandomPool(ctx context.Context, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error)
+	UpdateDOTRandomPool(ctx context.Context, id string, version int, input gqlmodel.DOTRandomPoolInput) (*dotrandom.DOTRandomPool, error)
+	RunDOTRandomDraw(ctx context.Context, input gqlmodel.RunDOTRandomDrawInput) (*dotrandom.DOTRandomDraw, error)
+	FinalizeDOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error)
+	CancelDOTRandomDraw(ctx context.Context, id string, reason string) (*dotrandom.DOTRandomDraw, error)
+	UpdateDOTRandomDrawEntry(ctx context.Context, input gqlmodel.UpdateDOTRandomDrawEntryInput) (*dotrandom.DOTRandomDrawEntry, error)
 	RecordWorkerEmploymentEvent(ctx context.Context, input gqlmodel.RecordWorkerEmploymentEventInput) (*workeremploymentservice.RecordResult, error)
-	AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*worker.WorkerEmploymentEvent, error)
-	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*worker.WorkerInjury, error)
-	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*worker.WorkerInjury, error)
+	AmendWorkerEmploymentEvent(ctx context.Context, input gqlmodel.AmendWorkerEmploymentEventInput) (*employment.WorkerEmploymentEvent, error)
+	RecordWorkerInjury(ctx context.Context, input gqlmodel.RecordWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
+	UpdateWorkerInjury(ctx context.Context, input gqlmodel.UpdateWorkerInjuryInput) (*workerinjury.WorkerInjury, error)
 	DeleteWorkerInjury(ctx context.Context, id string) (bool, error)
-	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*worker.OSHAAnnualSummary, error)
-	CertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error)
-	UncertifyOshaSummary(ctx context.Context, year int) (*worker.OSHAAnnualSummary, error)
-	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*worker.WorkerLeaveCase, error)
-	CloseLeaveCase(ctx context.Context, id string) (*worker.WorkerLeaveCase, error)
-	RequestLeaveCertification(ctx context.Context, caseID string, dueAt *int) (*worker.WorkerLeaveCase, error)
-	RecordLeaveCertification(ctx context.Context, input gqlmodel.RecordLeaveCertificationInput) (*worker.WorkerLeaveCase, error)
-	RecordLeaveDay(ctx context.Context, input gqlmodel.RecordLeaveDayInput) (*worker.WorkerLeaveEntry, error)
-	UpdateLeaveDay(ctx context.Context, input gqlmodel.UpdateLeaveDayInput) (*worker.WorkerLeaveEntry, error)
+	SaveOshaSummary(ctx context.Context, input gqlmodel.SaveOSHASummaryInput) (*workerinjury.OSHAAnnualSummary, error)
+	CertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
+	UncertifyOshaSummary(ctx context.Context, year int) (*workerinjury.OSHAAnnualSummary, error)
+	OpenLeaveCase(ctx context.Context, input gqlmodel.OpenLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	UpdateLeaveCase(ctx context.Context, input gqlmodel.UpdateLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	DecideLeaveCase(ctx context.Context, input gqlmodel.DecideLeaveCaseInput) (*workerleave.WorkerLeaveCase, error)
+	CloseLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
+	RequestLeaveCertification(ctx context.Context, caseID string, dueAt *int) (*workerleave.WorkerLeaveCase, error)
+	RecordLeaveCertification(ctx context.Context, input gqlmodel.RecordLeaveCertificationInput) (*workerleave.WorkerLeaveCase, error)
+	RecordLeaveDay(ctx context.Context, input gqlmodel.RecordLeaveDayInput) (*workerleave.WorkerLeaveEntry, error)
+	UpdateLeaveDay(ctx context.Context, input gqlmodel.UpdateLeaveDayInput) (*workerleave.WorkerLeaveEntry, error)
 	DeleteLeaveDay(ctx context.Context, id string) (bool, error)
-	UpdateLeaveControl(ctx context.Context, input gqlmodel.UpdateLeaveControlInput) (*worker.LeaveControl, error)
-	CreateWorkerSafetyEvent(ctx context.Context, input gqlmodel.WorkerSafetyEventInput) (*worker.WorkerSafetyEvent, error)
-	UpdateWorkerSafetyEvent(ctx context.Context, input gqlmodel.UpdateWorkerSafetyEventInput) (*worker.WorkerSafetyEvent, error)
-	CloseWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error)
-	ReviewWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error)
-	ReopenWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*worker.WorkerSafetyEvent, error)
+	UpdateLeaveControl(ctx context.Context, input gqlmodel.UpdateLeaveControlInput) (*workerleave.LeaveControl, error)
+	CreateWorkerSafetyEvent(ctx context.Context, input gqlmodel.WorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error)
+	UpdateWorkerSafetyEvent(ctx context.Context, input gqlmodel.UpdateWorkerSafetyEventInput) (*workersafety.WorkerSafetyEvent, error)
+	CloseWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error)
+	ReviewWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error)
+	ReopenWorkerSafetyEvent(ctx context.Context, input gqlmodel.SafetyEventStatusInput) (*workersafety.WorkerSafetyEvent, error)
 	DeleteWorkerSafetyEvent(ctx context.Context, id string) (bool, error)
 	IssueDisciplinaryAction(ctx context.Context, input gqlmodel.IssueDisciplinaryActionInput) (*workersafetyservice.IssueActionResult, error)
-	RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*worker.WorkerDisciplinaryAction, error)
-	GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*worker.WorkerRecognition, error)
+	RescindDisciplinaryAction(ctx context.Context, input gqlmodel.RescindDisciplinaryActionInput) (*workerdiscipline.WorkerDisciplinaryAction, error)
+	GiveWorkerRecognition(ctx context.Context, input gqlmodel.WorkerRecognitionInput) (*workerdiscipline.WorkerRecognition, error)
 	DeleteWorkerRecognition(ctx context.Context, id string) (bool, error)
-	AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*worker.WorkerDisciplinaryAction, error)
-	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error)
-	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*worker.TrainingCourse, error)
-	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error)
-	RestoreTrainingCourse(ctx context.Context, id string, version *int) (*worker.TrainingCourse, error)
-	AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*worker.WorkerTrainingRecord, error)
-	CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*worker.WorkerTrainingRecord, error)
-	AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*worker.WorkerTrainingRecord, error)
-	StartMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
-	AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalservice.PortalTraining, error)
+	AcknowledgeMyDisciplinaryAction(ctx context.Context, id string, comment *string) (*workerdiscipline.WorkerDisciplinaryAction, error)
+	CreateTrainingCourse(ctx context.Context, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
+	UpdateTrainingCourse(ctx context.Context, id string, input gqlmodel.TrainingCourseInput) (*workertraining.TrainingCourse, error)
+	ArchiveTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
+	RestoreTrainingCourse(ctx context.Context, id string, version *int) (*workertraining.TrainingCourse, error)
+	AssignWorkerTraining(ctx context.Context, input gqlmodel.AssignWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	AssignRequiredWorkerTraining(ctx context.Context, workerID string) ([]*workertraining.WorkerTrainingRecord, error)
+	CompleteWorkerTraining(ctx context.Context, input gqlmodel.CompleteWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	WaiveWorkerTraining(ctx context.Context, input gqlmodel.WaiveWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	CancelWorkerTraining(ctx context.Context, input gqlmodel.CancelWorkerTrainingInput) (*workertraining.WorkerTrainingRecord, error)
+	AttachWorkerTrainingDocument(ctx context.Context, input gqlmodel.AttachWorkerTrainingDocumentInput) (*workertraining.WorkerTrainingRecord, error)
+	StartMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error)
+	AcknowledgeMyTraining(ctx context.Context, id string) (*driverportalrecordsservice.PortalTraining, error)
 	BulkAssignTraining(ctx context.Context, input gqlmodel.BulkAssignTrainingInput) (*workertrainingservice.BulkAssignResult, error)
 }
 
 type MyAgentResolver interface {
-	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+	Template(ctx context.Context, obj *agentdefinition.Definition) (*agenttemplate.Template, error)
+	Starters(ctx context.Context, obj *agentdefinition.Definition) ([]*agentstarter.Starter, error)
 	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 }
 
@@ -2581,12 +2686,12 @@ type MyPTOBalanceResolver interface {
 }
 
 type OSHAAnnualSummaryResolver interface {
-	TotalHoursWorked(ctx context.Context, obj *worker.OSHAAnnualSummary) (int, error)
-	CertifiedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	CertifiedByID(ctx context.Context, obj *worker.OSHAAnnualSummary) (*string, error)
-	PostedFrom(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	PostedThrough(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
-	SubmittedAt(ctx context.Context, obj *worker.OSHAAnnualSummary) (*int, error)
+	TotalHoursWorked(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (int, error)
+	CertifiedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	CertifiedByID(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*string, error)
+	PostedFrom(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	PostedThrough(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
+	SubmittedAt(ctx context.Context, obj *workerinjury.OSHAAnnualSummary) (*int, error)
 }
 
 type OrderResolver interface {
@@ -2598,8 +2703,8 @@ type OrderResolver interface {
 }
 
 type PTOAccrualTierResolver interface {
-	AccrualAmountDays(ctx context.Context, obj *worker.PTOAccrualTier) (string, error)
-	MaxBalanceDays(ctx context.Context, obj *worker.PTOAccrualTier) (*string, error)
+	AccrualAmountDays(ctx context.Context, obj *pto.PTOAccrualTier) (string, error)
+	MaxBalanceDays(ctx context.Context, obj *pto.PTOAccrualTier) (*string, error)
 }
 
 type PTOAvailabilityResolver interface {
@@ -2613,14 +2718,14 @@ type PTOAvailabilityResolver interface {
 }
 
 type PTOBalanceSummaryResolver interface {
-	TotalBalanceDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	TotalPendingDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	AccruedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
-	UsedYtdDays(ctx context.Context, obj *workerports.PTOBalanceSummary) (string, error)
+	TotalBalanceDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	TotalPendingDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	AccruedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
+	UsedYtdDays(ctx context.Context, obj *ptoledgerports.PTOBalanceSummary) (string, error)
 }
 
 type PTOChartDataPointResolver interface {
-	Workers(ctx context.Context, obj *workerports.PTOChartDataPoint) (map[string]any, error)
+	Workers(ctx context.Context, obj *workerptoports.PTOChartDataPoint) (map[string]any, error)
 }
 
 type PTOLiabilityReportResolver interface {
@@ -2637,18 +2742,18 @@ type PTOLiabilityRowResolver interface {
 }
 
 type PTOPolicyResolver interface {
-	NegativeFloorDays(ctx context.Context, obj *worker.PTOPolicy) (string, error)
-	OpenAssignmentCount(ctx context.Context, obj *worker.PTOPolicy) (int, error)
+	NegativeFloorDays(ctx context.Context, obj *pto.PTOPolicy) (string, error)
+	OpenAssignmentCount(ctx context.Context, obj *pto.PTOPolicy) (int, error)
 }
 
 type PTOPolicyRuleResolver interface {
-	AccrualAmountDays(ctx context.Context, obj *worker.PTOPolicyRule) (string, error)
-	MaxBalanceDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error)
-	CarryoverCapDays(ctx context.Context, obj *worker.PTOPolicyRule) (*string, error)
+	AccrualAmountDays(ctx context.Context, obj *pto.PTOPolicyRule) (string, error)
+	MaxBalanceDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
+	CarryoverCapDays(ctx context.Context, obj *pto.PTOPolicyRule) (*string, error)
 }
 
 type PayCodeResolver interface {
-	GlAccount(ctx context.Context, obj *driverpay.PayCode) (*gqlmodel.PayCodeGLAccount, error)
+	GlAccount(ctx context.Context, obj *paycode.PayCode) (*gqlmodel.PayCodeGLAccount, error)
 }
 
 type PayMileageBandResolver interface {
@@ -2665,7 +2770,7 @@ type PayProfileComponentResolver interface {
 }
 
 type PayRateOverrideResolver interface {
-	Rate(ctx context.Context, obj *driverpay.RateOverride) (string, error)
+	Rate(ctx context.Context, obj *payassignment.RateOverride) (string, error)
 }
 
 type PendingDecisionEdgeResolver interface {
@@ -2673,14 +2778,14 @@ type PendingDecisionEdgeResolver interface {
 }
 
 type PerformanceReviewResolver interface {
-	ReviewerID(ctx context.Context, obj *worker.PerformanceReview) (*string, error)
-	OverallScore(ctx context.Context, obj *worker.PerformanceReview) (*string, error)
-	ClosedByID(ctx context.Context, obj *worker.PerformanceReview) (*string, error)
+	ReviewerID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
+	OverallScore(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
+	ClosedByID(ctx context.Context, obj *workerreview.PerformanceReview) (*string, error)
 }
 
 type PerformanceReviewTemplateResolver interface {
-	CadenceMonths(ctx context.Context, obj *worker.PerformanceReviewTemplate) (*int, error)
-	OpenReviewCount(ctx context.Context, obj *worker.PerformanceReviewTemplate) (int, error)
+	CadenceMonths(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (*int, error)
+	OpenReviewCount(ctx context.Context, obj *workerreview.PerformanceReviewTemplate) (int, error)
 }
 
 type PlannedPTOAccrualResolver interface {
@@ -2688,14 +2793,14 @@ type PlannedPTOAccrualResolver interface {
 }
 
 type PortalCredentialResolver interface {
-	ID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
-	DocumentID(ctx context.Context, obj *driverportalservice.PortalCredential) (*string, error)
+	ID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
+	DocumentID(ctx context.Context, obj *driverportalrecordsservice.PortalCredential) (*string, error)
 }
 
 type PortalTrainingResolver interface {
-	ID(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
-	Status(ctx context.Context, obj *driverportalservice.PortalTraining) (*worker.TrainingStatus, error)
-	Score(ctx context.Context, obj *driverportalservice.PortalTraining) (*string, error)
+	ID(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
+	Status(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*workertraining.TrainingStatus, error)
+	Score(ctx context.Context, obj *driverportalrecordsservice.PortalTraining) (*string, error)
 }
 
 type QueryResolver interface {
@@ -2705,8 +2810,8 @@ type QueryResolver interface {
 	AccessorialCharge(ctx context.Context, id string) (*accessorialcharge.AccessorialCharge, error)
 	AccountTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountTypeConnection, error)
 	AccountType(ctx context.Context, id string) (*accounttype.AccountType, error)
-	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
-	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error)
+	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingconnectionports.AccountingSyncStatus, error)
+	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingmappingports.AccountingMappingSummary, error)
 	AccountingMappingDetail(ctx context.Context, integrationType integration.Type, id *string, targetType *accountingsync.MappingTargetType, recordID *string, key *string, optionsQuery *string) (*gqlmodel.AccountingMappingDetail, error)
 	AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error)
 	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error)
@@ -2715,16 +2820,16 @@ type QueryResolver interface {
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
 	AccountingSyncObjectStates(ctx context.Context, objectIds []string, integrationType *integration.Type) ([]*accountingsyncports.AccountingSyncObjectState, error)
-	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
-	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error)
+	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingbackfill.AccountingBackfill, error)
+	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountinginboundports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
-	AccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
-	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountingsyncports.AccountingInboundApplyPreview, error)
-	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
+	AccountingInboundChange(ctx context.Context, id string) (*accountinginbound.AccountingInboundChange, error)
+	AccountingInboundApplyPreview(ctx context.Context, id string) (*accountinginboundports.AccountingInboundApplyPreview, error)
+	AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*accountingdriftports.AccountingDriftOverview, error)
 	AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error)
-	AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error)
-	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsyncports.AccountingDriftFixPreview, error)
-	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error)
+	AccountingDriftFinding(ctx context.Context, id string) (*accountingdrift.AccountingDriftFinding, error)
+	AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingdriftports.AccountingDriftFixPreview, error)
+	AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingprovider.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingmapping.AccountingReferenceObject, error)
 	AccountingBriefing(ctx context.Context) (*accountingbriefports.AccountingBriefing, error)
 	ArAgingSummary(ctx context.Context, asOfDate *int) (*customerledgerports.ARAgingSummary, error)
 	ArOpenItems(ctx context.Context, customerID *string, asOfDate *int) ([]*customerledgerports.AROpenItem, error)
@@ -2743,17 +2848,17 @@ type QueryResolver interface {
 	AgentProposals(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentProposalConnection, error)
 	AgentProposal(ctx context.Context, id string) (*agent.AgentProposal, error)
 	AgentPlans(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentPlanConnection, error)
-	AgentPlan(ctx context.Context, id string) (*agent.AgentPlan, error)
+	AgentPlan(ctx context.Context, id string) (*agentplan.AgentPlan, error)
 	AgentMemories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentMemoryConnection, error)
 	AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error)
-	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
-	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
+	AgentEvaluation(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
+	AgentMemory(ctx context.Context, id string) (*agentmemory.Memory, error)
 	AgentReflections(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentReflectionConnection, error)
-	AgentMemoryUsage(ctx context.Context) (*agentports.AgentMemoryUsage, error)
+	AgentMemoryUsage(ctx context.Context) (*agentmemoryports.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
-	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
-	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
-	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agentports.ToolPromotion, error)
+	AgentException(ctx context.Context, id string) (*agentexception.AgentException, error)
+	AgentControl(ctx context.Context) (*agentcontrol.AgentControl, error)
+	AgentPromotionPreview(ctx context.Context, threshold int) ([]*agenttrustports.ToolPromotion, error)
 	AgentActivitySummary(ctx context.Context, since int) (*gqlmodel.AgentActivitySummary, error)
 	AgentOrganizationProfile(ctx context.Context) (*gqlmodel.AgentProfile, error)
 	AgentOrganizationProfileHistory(ctx context.Context, limit *int) ([]*agentprofile.Profile, error)
@@ -2762,19 +2867,19 @@ type QueryResolver interface {
 	AgentInstructionLint(ctx context.Context, input gqlmodel.AgentInstructionLintInput) ([]*agentlint.Finding, error)
 	AgentShadowReport(ctx context.Context, agentID string, days *int) (*agentshadow.Report, error)
 	AgentDefinition(ctx context.Context, id string) (*agentdefinition.Definition, error)
-	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentdefinition.DefinitionVersion, error)
+	AgentDefinitionVersions(ctx context.Context, agentID string, limit *int) ([]*agentversion.DefinitionVersion, error)
 	AgentDefinitionVersionDraft(ctx context.Context, agentID string, version int) (*agentdefinition.Definition, error)
 	MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error)
 	MyAgentMatch(ctx context.Context, input gqlmodel.MyAgentMatchInput) (*gqlmodel.MyAgentMatch, error)
 	SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error)
 	AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error)
-	AgentTestPrompts(ctx context.Context, agentID string) ([]*agentdefinition.TestPrompt, error)
-	AgentCapabilities(ctx context.Context, agentID string) (*agentports.AgentCapabilities, error)
+	AgentTestPrompts(ctx context.Context, agentID string) ([]*agenttestprompt.TestPrompt, error)
+	AgentCapabilities(ctx context.Context, agentID string) (*agentcapabilityports.AgentCapabilities, error)
 	AgentDraftingAvailable(ctx context.Context) (bool, error)
-	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
-	AgentPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
-	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agent.ProposalPreview, error)
-	MyPlanPreview(ctx context.Context, id string) (*agent.PlanPreview, error)
+	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
+	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
+	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
+	MyPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
 	AgentEvalCases(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvalCaseConnection, error)
 	AgentEvalCase(ctx context.Context, id string) (*agentquality.EvalCase, error)
 	AgentQualityOverview(ctx context.Context, window *int) (*agentqualityports.AgentQualityOverview, error)
@@ -2782,16 +2887,16 @@ type QueryResolver interface {
 	AgentQualityAgentConnection(ctx context.Context, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentQualityAgentConnection, error)
 	AgentWorstRatedAnswerConnection(ctx context.Context, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentWorstRatedAnswerConnection, error)
 	AgentSuiteRunConnection(ctx context.Context, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunConnection, error)
-	AgentSuiteRun(ctx context.Context, id string) (*agentquality.SuiteRun, error)
+	AgentSuiteRun(ctx context.Context, id string) (*agentqualitysuite.SuiteRun, error)
 	AgentSuiteRunCaseConnection(ctx context.Context, suiteRunID string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentSuiteRunCaseConnection, error)
-	AgentQualityControl(ctx context.Context) (*agentquality.Control, error)
+	AgentQualityControl(ctx context.Context) (*agentqualitycontrol.Control, error)
 	AgentRunEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentRunEventConnection, error)
-	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agentports.AgentToolRuleImpact, error)
-	AgentToolHolders(ctx context.Context) ([]*agentports.AgentToolHolders, error)
+	AgentToolRuleImpact(ctx context.Context, name string, input gqlmodel.AgentToolRuleInput) ([]*agenttoolports.AgentToolRuleImpact, error)
+	AgentToolHolders(ctx context.Context) ([]*agenttoolports.AgentToolHolders, error)
 	AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error)
 	AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error)
-	AgentSafetySummary(ctx context.Context) (*agentports.AgentSafetySummary, error)
-	AgentSafety(ctx context.Context, agentIds []string) ([]*agentports.AgentSafetySubject, error)
+	AgentSafetySummary(ctx context.Context) (*agenttoolports.AgentSafetySummary, error)
+	AgentSafety(ctx context.Context, agentIds []string) ([]*agenttoolports.AgentSafetySubject, error)
 	AgentScorecard(ctx context.Context, input gqlmodel.AgentScorecardInput) (*gqlmodel.AgentScorecard, error)
 	AgentAnalytics(ctx context.Context, input gqlmodel.AIAnalyticsInput) (*gqlmodel.AgentAnalytics, error)
 	AgentAnalyticsToolFailures(ctx context.Context, input gqlmodel.AIAnalyticsInput, seriesKey string, toolName string) (*gqlmodel.AgentAnalyticsToolFailures, error)
@@ -2809,9 +2914,9 @@ type QueryResolver interface {
 	AiProviderModels(ctx context.Context, input gqlmodel.AIProviderEndpointInput) ([]*gqlmodel.AIProviderModelOption, error)
 	AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error)
 	AiProvider(ctx context.Context, id string) (*aiprovider.Provider, error)
-	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*aiprovider.TaskRoute, error)
-	AiRetrievalStatus(ctx context.Context) (*agentports.AIRetrievalStatus, error)
-	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*agentports.AIRetrievalReindexEstimate, error)
+	AiRoutePreview(ctx context.Context, draft gqlmodel.AIProviderRoutingDraftInput) ([]*airouting.TaskRoute, error)
+	AiRetrievalStatus(ctx context.Context) (*retrievalports.AIRetrievalStatus, error)
+	AiRetrievalReindexEstimate(ctx context.Context, sourceType airetrieval.SourceType) (*retrievalports.AIRetrievalReindexEstimate, error)
 	AiRetrievalFailedEntryConnection(ctx context.Context, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIRetrievalFailedEntryConnection, error)
 	AiTrainingExportHistory(ctx context.Context) ([]*aitraining.ExportHistoryEntry, error)
 	AiUsageFeatures(ctx context.Context, input gqlmodel.DataTableConnectionInput, days *int) (*gqlmodel.AIUsageFeatureConnection, error)
@@ -2823,10 +2928,10 @@ type QueryResolver interface {
 	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)
-	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*driverpay.BenefitPlan, error)
-	BenefitPlan(ctx context.Context, id string) (*driverpay.BenefitPlan, error)
-	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*driverpay.WorkerBenefitEnrollment, error)
-	BenefitEnrollments(ctx context.Context, planID *string, statuses []driverpay.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*driverpay.WorkerBenefitEnrollment, error)
+	BenefitPlans(ctx context.Context, activeOnly *bool, planYear *int) ([]*paybenefit.BenefitPlan, error)
+	BenefitPlan(ctx context.Context, id string) (*paybenefit.BenefitPlan, error)
+	WorkerBenefitEnrollments(ctx context.Context, workerID string, openOnly *bool) ([]*paybenefit.WorkerBenefitEnrollment, error)
+	BenefitEnrollments(ctx context.Context, planID *string, statuses []paybenefit.BenefitEnrollmentStatus, openOnly *bool, limit *int) ([]*paybenefit.WorkerBenefitEnrollment, error)
 	BenefitCosts(ctx context.Context, planYear *int) ([]*driverpayports.BenefitCostRow, error)
 	WorkerTotalCompensation(ctx context.Context, workerID string, planYear *int) (*benefitsservice.TotalCompensation, error)
 	MyTotalCompensation(ctx context.Context, planYear *int) (*benefitsservice.TotalCompensation, error)
@@ -2840,48 +2945,48 @@ type QueryResolver interface {
 	PreviewBulkEdit(ctx context.Context, input gqlmodel.BulkEditInput) (*gqlmodel.BulkEditPreview, error)
 	MyBulkEdit(ctx context.Context, id string) (*gqlmodel.BulkEditJob, error)
 	MyBulkEdits(ctx context.Context, resource *string, limit *int) ([]*gqlmodel.BulkEditJob, error)
-	MyCaptureAccess(ctx context.Context) (*captureservice.Access, error)
+	MyCaptureAccess(ctx context.Context) (*capturesupport.Access, error)
 	CaptureAgentRelease(ctx context.Context) (*capturereleaseservice.Release, error)
 	CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error)
 	CaptureBatch(ctx context.Context, id string) (*capture.CaptureBatch, error)
 	MyCaptureDevices(ctx context.Context, status *capture.DeviceStatus) ([]*capture.CaptureDevice, error)
 	CaptureDevices(ctx context.Context, status *capture.DeviceStatus, query *string) ([]*capture.CaptureDevice, error)
-	AvailableCaptureProfiles(ctx context.Context) ([]*capture.CaptureProfile, error)
-	CaptureProfiles(ctx context.Context, status *capture.ProfileStatus, query *string) ([]*capture.CaptureProfile, error)
-	CaptureProfile(ctx context.Context, id string) (*capture.CaptureProfile, error)
-	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capture.CaptureRequest, error)
-	CaptureDevicePairing(ctx context.Context, userCode string) (*captureservice.PairingPreview, error)
+	AvailableCaptureProfiles(ctx context.Context) ([]*captureprofile.CaptureProfile, error)
+	CaptureProfiles(ctx context.Context, status *captureprofile.ProfileStatus, query *string) ([]*captureprofile.CaptureProfile, error)
+	CaptureProfile(ctx context.Context, id string) (*captureprofile.CaptureProfile, error)
+	CaptureRequestsForTarget(ctx context.Context, targetType string, targetID string, limit *int) ([]*capturerequest.CaptureRequest, error)
+	CaptureDevicePairing(ctx context.Context, userCode string) (*capturedevices.PairingPreview, error)
 	Carriers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierConnection, error)
 	Carrier(ctx context.Context, id string) (*carrier.Carrier, error)
 	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
 	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
-	CarrierIntelControl(ctx context.Context) (*carrierintel.CarrierIntelControl, error)
+	CarrierIntelControl(ctx context.Context) (*carrierintelcontrol.CarrierIntelControl, error)
 	CarrierIntelProvider(ctx context.Context) (*gqlmodel.CarrierIntelProviderInfo, error)
-	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintel.RuleDefinition, error)
+	CarrierIntelRuleCatalog(ctx context.Context) ([]*carrierintelrule.RuleDefinition, error)
 	CarrierIntelEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierIntelEventFilterInput) (*gqlmodel.CarrierIntelEventConnection, error)
-	CarrierIntelEvent(ctx context.Context, id string) (*carrierintel.CarrierIntelEvent, error)
+	CarrierIntelEvent(ctx context.Context, id string) (*carrierintelevent.CarrierIntelEvent, error)
 	CarrierIntelMonitoringStatus(ctx context.Context) (*gqlmodel.CarrierIntelMonitoringStatus, error)
 	CarrierMonitoringEnrollments(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.CarrierMonitoringEnrollmentFilterInput) (*gqlmodel.CarrierMonitoringEnrollmentConnection, error)
-	CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error)
-	CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintel.CarrierIntelSnapshot, error)
+	CarrierIntelReviewQueue(ctx context.Context, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
+	CarrierIntelSnapshotHistory(ctx context.Context, carrierID string, limit *int) ([]*carrierintelsnapshot.CarrierIntelSnapshot, error)
 	CarrierIntelUsage(ctx context.Context, month *int) (*gqlmodel.CarrierIntelUsageSummary, error)
-	CarrierIntelCostEstimate(ctx context.Context, policy carrierintel.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error)
-	CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintel.SyncPlan, error)
-	CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierintel.CarrierIntelOverride, error)
+	CarrierIntelCostEstimate(ctx context.Context, policy carrierintelcontrol.EnrollmentPolicy, recentUsageDays *int, includeOpenTenders *bool) (*gqlmodel.CarrierIntelCostEstimate, error)
+	CarrierIntelSyncPlan(ctx context.Context, carrierID string) (*carrierintelsync.SyncPlan, error)
+	CarrierIntelOverrides(ctx context.Context, carrierID string) ([]*carrierinteloverride.CarrierIntelOverride, error)
 	CarrierIntelRawPayload(ctx context.Context, carrierID string, snapshotID string) (map[string]any, error)
 	CarrierIntelLookup(ctx context.Context, input gqlmodel.CarrierIntelLookupInput) (*gqlmodel.CarrierIntelProspectLookup, error)
-	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelservice.SourcingPage, error)
+	CarrierSourcingSearch(ctx context.Context, input gqlmodel.CarrierSourcingSearchInput) (*carrierintelsourcingservice.SourcingPage, error)
 	CarrierSourcingAutocomplete(ctx context.Context, query string, limit *int) ([]*carrierintelports.CarrierIntelSuggestion, error)
-	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintel.CarrierEquipmentVerification, error)
+	CarrierEquipmentVerifications(ctx context.Context, carrierAssignmentID string) ([]*carrierintelverification.CarrierEquipmentVerification, error)
 	MyCarrierIntelligence(ctx context.Context, refresh *bool) (*gqlmodel.MyCarrierIntelligence, error)
 	CarrierSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementConnection, error)
 	CarrierSettlement(ctx context.Context, id string) (*carriersettlement.CarrierSettlement, error)
 	CarrierSettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierSettlementBatchConnection, error)
 	CarrierSettlementBatch(ctx context.Context, id string) (*carriersettlement.CarrierSettlementBatch, error)
 	CarrierCostEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.CarrierCostEventConnection, error)
-	CarrierSettlementControl(ctx context.Context) (*tenant.CarrierSettlementControl, error)
+	CarrierSettlementControl(ctx context.Context) (*carriersettlementcontrol.CarrierSettlementControl, error)
 	CurrentCarrierSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
-	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementservice.WorkspaceSummary, error)
+	CarrierSettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*carriersettlementworkspaceservice.WorkspaceSummary, error)
 	CarrierLedgerEntries(ctx context.Context, carrierID string, limit *int) ([]*carriersettlement.LedgerEntry, error)
 	CarrierInvoiceMatches(ctx context.Context, status *carriersettlement.InvoiceMatchStatus, carrierID *string, limit *int, offset *int) (*gqlmodel.CarrierInvoiceMatchList, error)
 	EDICarrierInvoices(ctx context.Context, reconciliationStatus *string, limit *int, offset *int) (*gqlmodel.EDICarrierInvoiceList, error)
@@ -2946,60 +3051,60 @@ type QueryResolver interface {
 	RenderMessageTemplatePreview(ctx context.Context, input gqlmodel.DocumentTemplatePreviewInput) (*gqlmodel.DocumentTemplatePreview, error)
 	DocumentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DocumentTypeConnection, error)
 	DocumentType(ctx context.Context, id string) (*documenttype.DocumentType, error)
-	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalservice.PortalStatus, error)
+	WorkerPortalStatus(ctx context.Context, workerID string) (*driverportalinvitationservice.PortalStatus, error)
 	SettlementDisputes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementDisputeConnection, error)
 	SettlementDispute(ctx context.Context, id string) (*driversettlement.Dispute, error)
 	OpenSettlementDisputeCount(ctx context.Context) (int, error)
 	MyPortalProfile(ctx context.Context) (*driverportalservice.PortalProfile, error)
 	MyLoads(ctx context.Context, scope driverportalservice.LoadScope, limit *int) ([]*driverportalservice.PortalLoad, error)
 	MyComplianceProfile(ctx context.Context) (*driverportalservice.PortalComplianceProfile, error)
-	MyCredentials(ctx context.Context) ([]*driverportalservice.PortalCredential, error)
+	MyCredentials(ctx context.Context) ([]*driverportalrecordsservice.PortalCredential, error)
 	MyLoadComments(ctx context.Context, shipmentID string) ([]*driverportalservice.PortalComment, error)
 	MyPeriodSummary(ctx context.Context) (*driverportalservice.PortalPeriodSummary, error)
 	MyRecentPayEvents(ctx context.Context, limit *int) ([]*driversettlement.PayEvent, error)
 	MySettlements(ctx context.Context, limit *int, offset *int) (*gqlmodel.MySettlementList, error)
 	MySettlement(ctx context.Context, id string) (*driversettlement.Settlement, error)
 	MyEscrow(ctx context.Context) (*driverportalservice.PortalEscrowSummary, error)
-	MyAdvances(ctx context.Context) ([]*driverpay.PayAdvance, error)
+	MyAdvances(ctx context.Context) ([]*payadvance.PayAdvance, error)
 	MyDisputes(ctx context.Context) ([]*driversettlement.Dispute, error)
-	MyPortalFeatures(ctx context.Context) (*driverportalservice.PortalFeatures, error)
-	MyPolicies(ctx context.Context) ([]*driverportalservice.PortalPolicy, error)
+	MyPortalFeatures(ctx context.Context) (*driverportalrecordsservice.PortalFeatures, error)
+	MyPolicies(ctx context.Context) ([]*driverportalrecordsservice.PortalPolicy, error)
 	MyPolicyDocumentURL(ctx context.Context, policyID string) (string, error)
-	MyProfileChangeRequests(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error)
-	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalservice.PortalSchedule, error)
-	MyAvailability(ctx context.Context) ([]*worker.WorkerAvailabilityPreference, error)
-	MyShiftSwaps(ctx context.Context) ([]*driverportalservice.PortalShiftSwap, error)
+	MyProfileChangeRequests(ctx context.Context) ([]*profilechange.WorkerProfileChangeRequest, error)
+	MySchedule(ctx context.Context, at *int, weeks *int) (*driverportalrecordsservice.PortalSchedule, error)
+	MyAvailability(ctx context.Context) ([]*workerschedule.WorkerAvailabilityPreference, error)
+	MyShiftSwaps(ctx context.Context) ([]*driverportalrecordsservice.PortalShiftSwap, error)
 	MyPTO(ctx context.Context) ([]*worker.WorkerPTO, error)
 	MyPTOBalances(ctx context.Context) ([]*ptoledgerservice.BalanceView, error)
-	MyLeave(ctx context.Context) (*driverportalservice.PortalLeave, error)
-	MyExpenses(ctx context.Context) ([]*driverpay.Expense, error)
-	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementservice.MovePayEstimate, error)
-	MyYtdPay(ctx context.Context, year int) (*driversettlementservice.WorkerYTDPaySummary, error)
+	MyLeave(ctx context.Context) (*driverportalrecordsservice.PortalLeave, error)
+	MyExpenses(ctx context.Context) ([]*payexpense.Expense, error)
+	MyLoadPayEstimate(ctx context.Context, shipmentID string, moveID string) (*driversettlementaccrualservice.MovePayEstimate, error)
+	MyYtdPay(ctx context.Context, year int) (*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
 	MyHosState(ctx context.Context) (*gqlmodel.WorkerHosState, error)
 	MyHosDailyLogs(ctx context.Context, startDate string, endDate string) ([]*gqlmodel.WorkerHosDailyLog, error)
 	MyHosViolations(ctx context.Context, since *int) ([]*gqlmodel.WorkerHosViolation, error)
 	MyNotifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
 	MyNotificationUnreadCount(ctx context.Context) (int, error)
 	DriverExpenses(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverExpenseConnection, error)
-	DriverExpense(ctx context.Context, id string) (*driverpay.Expense, error)
+	DriverExpense(ctx context.Context, id string) (*payexpense.Expense, error)
 	PendingDriverExpenseCount(ctx context.Context) (int, error)
-	DashControl(ctx context.Context) (*tenant.DashControl, error)
+	DashControl(ctx context.Context) (*dashcontrol.DashControl, error)
 	PayProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayProfileConnection, error)
 	PayProfile(ctx context.Context, id string) (*driverpay.PayProfile, error)
-	WorkerPayAssignments(ctx context.Context, workerID string) ([]*driverpay.WorkerPayAssignment, error)
-	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*driverpay.WorkerPayAssignment, error)
-	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*driverpay.WorkerPayAssignment, error)
+	WorkerPayAssignments(ctx context.Context, workerID string) ([]*payassignment.WorkerPayAssignment, error)
+	EffectiveWorkerPayAssignment(ctx context.Context, workerID string) (*payassignment.WorkerPayAssignment, error)
+	PayProfileAssignments(ctx context.Context, payProfileID string) ([]*payassignment.WorkerPayAssignment, error)
 	RecurringDeductions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringDeductionConnection, error)
-	RecurringDeduction(ctx context.Context, id string) (*driverpay.RecurringDeduction, error)
+	RecurringDeduction(ctx context.Context, id string) (*recurringpay.RecurringDeduction, error)
 	RecurringEarnings(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringEarningConnection, error)
-	RecurringEarning(ctx context.Context, id string) (*driverpay.RecurringEarning, error)
+	RecurringEarning(ctx context.Context, id string) (*recurringpay.RecurringEarning, error)
 	PayCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayCodeConnection, error)
-	PayCode(ctx context.Context, id string) (*driverpay.PayCode, error)
-	PayCodeOptions(ctx context.Context, direction *driverpay.PayCodeDirection) ([]*driverpay.PayCode, error)
+	PayCode(ctx context.Context, id string) (*paycode.PayCode, error)
+	PayCodeOptions(ctx context.Context, direction *paycode.PayCodeDirection) ([]*paycode.PayCode, error)
 	PayAdvances(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.PayAdvanceConnection, error)
-	PayAdvance(ctx context.Context, id string) (*driverpay.PayAdvance, error)
+	PayAdvance(ctx context.Context, id string) (*payadvance.PayAdvance, error)
 	EscrowAccounts(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EscrowAccountConnection, error)
-	EscrowAccount(ctx context.Context, id string) (*driverpay.EscrowAccount, error)
+	EscrowAccount(ctx context.Context, id string) (*payescrow.EscrowAccount, error)
 	DriverSettlements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverSettlementConnection, error)
 	DriverSettlement(ctx context.Context, id string) (*driversettlement.Settlement, error)
 	SettlementBatches(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SettlementBatchConnection, error)
@@ -3007,10 +3112,10 @@ type QueryResolver interface {
 	DriverPayEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.DriverPayEventConnection, error)
 	UnsettledPayEvents(ctx context.Context, workerID string) ([]*driversettlement.PayEvent, error)
 	WorkerEarningsSummary(ctx context.Context, workerID string) (*driversettlementservice.WorkerEarningsSummary, error)
-	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementservice.WorkerYTDPaySummary, error)
-	SettlementControl(ctx context.Context) (*tenant.SettlementControl, error)
+	WorkerYtdPaySummaries(ctx context.Context, year int, classification *driverpay.PayeeClassification) ([]*driversettlementworkspaceservice.WorkerYTDPaySummary, error)
+	SettlementControl(ctx context.Context) (*settlementcontrol.SettlementControl, error)
 	CurrentSettlementPeriod(ctx context.Context) (*settlementshared.PeriodBounds, error)
-	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementservice.WorkspaceSummary, error)
+	SettlementWorkspaceSummary(ctx context.Context, periodStart *int, periodEnd *int) (*driversettlementworkspaceservice.WorkspaceSummary, error)
 	UnsettledWorkerSummaries(ctx context.Context, periodStart *int, periodEnd *int) ([]*driversettlementports.UnsettledWorkerSummary, error)
 	PreviewDriverSettlement(ctx context.Context, workerID string, periodStart *int, periodEnd *int) (*driversettlement.Settlement, error)
 	ExportSettlementBatchCSV(ctx context.Context, batchID string) (string, error)
@@ -3021,10 +3126,10 @@ type QueryResolver interface {
 	EDIMessage(ctx context.Context, id string) (*gqlmodel.EDIMessageDetail, error)
 	EDIInboundFile(ctx context.Context, id string) (*gqlmodel.EDIInboundFileDetail, error)
 	EDIAckHealth(ctx context.Context, partnerID *string, transactionSet *string, overdueAfterSeconds *int, sinceHours *int) (*gqlmodel.EDIAckHealth, error)
-	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
-	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
+	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edidocument.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
+	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *ediinboundfile.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
 	EDIMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EDIMappingProfileConnection, error)
-	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
+	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []ladingproject.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
 	EDISummary(ctx context.Context, sinceHours *int) (*gqlmodel.EDISummary, error)
 	EDIPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIPartnerScorecard, error)
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)
@@ -3057,23 +3162,23 @@ type QueryResolver interface {
 	FactoringAgreement(ctx context.Context, id string) (*factoring.Agreement, error)
 	FactoringNoas(ctx context.Context, input gqlmodel.FactoringNoaListInput) (*gqlmodel.FactoringNoaConnection, error)
 	FactoringNoa(ctx context.Context, id string) (*factoring.Noa, error)
-	FactoringReadiness(ctx context.Context, invoiceID string) (*factoring.InvoiceState, error)
+	FactoringReadiness(ctx context.Context, invoiceID string) (*factoringreadiness.InvoiceState, error)
 	FactoringInvoiceStates(ctx context.Context, input gqlmodel.FactoringInvoiceStateListInput) (*gqlmodel.FactoringInvoiceStateConnection, error)
 	FactoringSummary(ctx context.Context) (*factoringports.Summary, error)
 	FactoringSubmissions(ctx context.Context, input gqlmodel.FactoringSubmissionListInput) (*gqlmodel.FactoringSubmissionConnection, error)
-	FactoringSubmission(ctx context.Context, id string) (*factoring.Submission, error)
-	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringports.SubmissionPlan, error)
-	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoring.Transport, error)
+	FactoringSubmission(ctx context.Context, id string) (*factoringsubmission.Submission, error)
+	FactoringSubmissionPlan(ctx context.Context, input gqlmodel.FactoringSubmissionPlanInput) (*factoringsubmissionports.SubmissionPlan, error)
+	FactoringTransport(ctx context.Context, factoringCompanyID string) (*factoringsubmission.Transport, error)
 	FactoringReserveEntries(ctx context.Context, input gqlmodel.FactoringReserveEntryListInput) (*gqlmodel.FactoringReserveEntryConnection, error)
-	FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringports.ReserveBalance, error)
-	FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringports.FundingPlan, error)
-	FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
-	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
-	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringports.ReserveMovementPlan, error)
+	FactoringReserveBalance(ctx context.Context, factoringCompanyID string) (*factoringledgerports.ReserveBalance, error)
+	FactoringFundingPlan(ctx context.Context, input gqlmodel.RecordFactoringFundingInput) (*factoringledgerports.FundingPlan, error)
+	FactoringReleasePlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error)
+	FactoringChargebackPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error)
+	FactoringChargebackReversalPlan(ctx context.Context, input gqlmodel.FactoringReserveMovementInput) (*factoringledgerports.ReserveMovementPlan, error)
 	FactoringRemittances(ctx context.Context, input gqlmodel.FactoringRemittanceListInput) (*gqlmodel.FactoringRemittanceConnection, error)
-	FactoringRemittance(ctx context.Context, id string) (*factoring.Remittance, error)
+	FactoringRemittance(ctx context.Context, id string) (*factoringremittance.Remittance, error)
 	FactoringRemittanceLines(ctx context.Context, input gqlmodel.FactoringRemittanceLineListInput) (*gqlmodel.FactoringRemittanceLineConnection, error)
-	FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringports.RemittancePlan, error)
+	FactoringRemittancePlan(ctx context.Context, input gqlmodel.FactoringRemittanceVersionInput) (*factoringremittanceports.RemittancePlan, error)
 	FactoringCompanies(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FactoringCompanyConnection, error)
 	FactoringCompany(ctx context.Context, id string) (*factoringcompany.FactoringCompany, error)
 	FiscalPeriods(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FiscalPeriodConnection, error)
@@ -3081,8 +3186,8 @@ type QueryResolver interface {
 	FiscalYear(ctx context.Context, id string) (*fiscalyear.FiscalYear, error)
 	FleetCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FleetCodeConnection, error)
 	FleetCode(ctx context.Context, id string) (*fleetcode.FleetCode, error)
-	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*worker.FleetSafety, error)
-	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*worker.WorkerSafetyViolation, error)
+	FleetSafety(ctx context.Context, input *gqlmodel.FleetSafetyInput) (*fleetsafety.FleetSafety, error)
+	WorkerSafetyViolations(ctx context.Context, safetyEventID *string, workerID *string) ([]*fleetsafety.WorkerSafetyViolation, error)
 	FormulaLibraries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaLibraryConnection, error)
 	FormulaLibrary(ctx context.Context, id string) (*formulalibrary.FormulaLibrary, error)
 	FormulaLibraryVersions(ctx context.Context, libraryID string, first *int) ([]*formulalibrary.FormulaLibraryVersion, error)
@@ -3129,7 +3234,7 @@ type QueryResolver interface {
 	IFTACurrentPeriod(ctx context.Context) (*ifta.Period, error)
 	InboundMessages(ctx context.Context, input gqlmodel.InboundMessagesInput) (*gqlmodel.InboundMessageConnection, error)
 	InboundMessage(ctx context.Context, id string) (*inboundmessage.InboundMessage, error)
-	InboundMessageCounts(ctx context.Context) (*inboundmessageservice.Counts, error)
+	InboundMessageCounts(ctx context.Context) (*inboundreads.Counts, error)
 	InboundMailboxes(ctx context.Context) ([]*inboundmessage.Mailbox, error)
 	InboundThread(ctx context.Context, threadKey string) ([]*inboundmessage.InboundMessage, error)
 	MyTriageViews(ctx context.Context) ([]*triage.View, error)
@@ -3141,14 +3246,14 @@ type QueryResolver interface {
 	TriageStopTimes(ctx context.Context, messageID string) (*inboundmessageports.StopTimes, error)
 	TriageShipmentPeek(ctx context.Context, shipmentID string) (*inboundmessageports.ShipmentPeek, error)
 	TriageCustomerPeek(ctx context.Context, customerID string) (*inboundmessageports.CustomerPeek, error)
-	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundmessageports.ReplyAttachable, error)
+	InboundReplyAttachables(ctx context.Context, messageID string) ([]*inboundreplyports.ReplyAttachable, error)
 	InboundReplyAttachmentLimit(ctx context.Context) (int, error)
 	Invoices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.InvoiceConnection, error)
 	Invoice(ctx context.Context, id string) (*invoice.Invoice, error)
 	InvoiceAdjustment(ctx context.Context, id string) (*invoiceadjustment.InvoiceAdjustment, error)
 	InvoiceAdjustmentApprovals(ctx context.Context, input gqlmodel.InvoiceAdjustmentApprovalsInput) (*gqlmodel.InvoiceAdjustmentApprovalQueueConnection, error)
 	InvoiceAdjustmentOperationsSummary(ctx context.Context) (*invoiceadjustmentports.InvoiceAdjustmentOperationsSummary, error)
-	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoice.InvoiceDispute, error)
+	InvoiceDisputes(ctx context.Context, invoiceID *string, invoiceIds []string) ([]*invoicedispute.InvoiceDispute, error)
 	JournalEntry(ctx context.Context, id string) (*journalentry.JournalEntry, error)
 	JournalEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.JournalEntryConnection, error)
 	JournalEntriesBySource(ctx context.Context, sourceType string, sourceID string) ([]*journalentry.JournalEntry, error)
@@ -3173,40 +3278,40 @@ type QueryResolver interface {
 	NotificationUnreadCount(ctx context.Context) (int, error)
 	Orders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.OrderConnection, error)
 	Order(ctx context.Context, id string) (*order.Order, error)
-	OrgHolidays(ctx context.Context, year *int) ([]*worker.OrgHoliday, error)
+	OrgHolidays(ctx context.Context, year *int) ([]*pto.OrgHoliday, error)
 	JobPositions(ctx context.Context, activeOnly *bool, drivingOnly *bool) ([]*worker.JobPosition, error)
 	JobPosition(ctx context.Context, id string) (*worker.JobPosition, error)
 	Headcount(ctx context.Context) (*orgstructureservice.Headcount, error)
 	JobPositionHolders(ctx context.Context, id string) ([]*gqlmodel.PositionHolder, error)
 	MyTeam(ctx context.Context, includeInactive *bool) ([]*gqlmodel.TeamMember, error)
-	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*worker.ApprovalDelegation, error)
+	ApprovalDelegations(ctx context.Context, delegatorID *string, delegateID *string, activeOnly *bool) ([]*approvaldelegation.ApprovalDelegation, error)
 	PageAccess(ctx context.Context, location string) (*gqlmodel.PageAccess, error)
 	PageAccessPreview(ctx context.Context, input gqlmodel.PageAccessPreviewInput) (*gqlmodel.PageAccess, error)
 	PageAccessScreens(ctx context.Context) ([]*gqlmodel.PageAccessScreen, error)
 	RoleResourceGuides(ctx context.Context, input gqlmodel.RoleResourceGuideInput) ([]*gqlmodel.RoleResourceGuide, error)
 	PerformanceReviewTemplates(ctx context.Context, input gqlmodel.PerformanceReviewTemplatesInput) (*gqlmodel.PerformanceReviewTemplateConnection, error)
-	PerformanceReviewTemplate(ctx context.Context, id string) (*worker.PerformanceReviewTemplate, error)
-	ActivePerformanceReviewTemplates(ctx context.Context) ([]*worker.PerformanceReviewTemplate, error)
-	WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*worker.PerformanceReview, error)
-	PerformanceReview(ctx context.Context, id string) (*worker.PerformanceReview, error)
-	MyReviews(ctx context.Context) ([]*worker.PerformanceReview, error)
+	PerformanceReviewTemplate(ctx context.Context, id string) (*workerreview.PerformanceReviewTemplate, error)
+	ActivePerformanceReviewTemplates(ctx context.Context) ([]*workerreview.PerformanceReviewTemplate, error)
+	WorkerPerformanceReviews(ctx context.Context, workerID string) ([]*workerreview.PerformanceReview, error)
+	PerformanceReview(ctx context.Context, id string) (*workerreview.PerformanceReview, error)
+	MyReviews(ctx context.Context) ([]*workerreview.PerformanceReview, error)
 	PTOPolicies(ctx context.Context, input gqlmodel.PTOPoliciesInput) (*gqlmodel.PTOPolicyConnection, error)
-	PTOPolicy(ctx context.Context, id string) (*worker.PTOPolicy, error)
-	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*worker.WorkerPTOPolicyAssignment, error)
+	PTOPolicy(ctx context.Context, id string) (*pto.PTOPolicy, error)
+	WorkerPTOPolicyAssignments(ctx context.Context, workerID string) ([]*pto.WorkerPTOPolicyAssignment, error)
 	WorkerPTOBalances(ctx context.Context, workerID string) ([]*ptoledgerservice.BalanceView, error)
 	WorkerPTOLedger(ctx context.Context, input gqlmodel.WorkerPTOLedgerInput) (*gqlmodel.WorkerPTOLedgerConnection, error)
 	WorkerPTOAvailability(ctx context.Context, input gqlmodel.PTOAvailabilityInput) (*ptoledgerservice.AvailabilityResult, error)
 	PreviewWorkerPTOAccrual(ctx context.Context, workerID string, asOf *int) ([]*ptoledgerservice.PlannedEntry, error)
-	PTOBalanceSummary(ctx context.Context) (*workerports.PTOBalanceSummary, error)
+	PTOBalanceSummary(ctx context.Context) (*ptoledgerports.PTOBalanceSummary, error)
 	PTOLiabilityReport(ctx context.Context, asOf *int) (*ptoledgerservice.LiabilityReport, error)
 	RateAgreements(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateAgreementConnection, error)
 	RateAgreement(ctx context.Context, id string) (*gqlmodel.RateAgreement, error)
 	RateZones(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateZoneConnection, error)
 	RateMatrices(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateMatrixConnection, error)
 	RateMatrix(ctx context.Context, id string) (*gqlmodel.RateMatrix, error)
-	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error)
-	RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrix.RateMatrixVersion, error)
-	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrix.RateMatrixReview, error)
+	RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrixversion.RateMatrixVersion, error)
+	RateMatrixVersion(ctx context.Context, rateMatrixID string, versionNumber int) (*ratematrixversion.RateMatrixVersion, error)
+	RateMatrixReviews(ctx context.Context, rateMatrixID string) ([]*ratematrixreview.RateMatrixReview, error)
 	RateMatrixUsages(ctx context.Context, rateMatrixID string, versionNumber *int) ([]*formulatemplateports.MatrixUsage, error)
 	RateQuotes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RateQuoteConnection, error)
 	RecurringShipments(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RecurringShipmentConnection, error)
@@ -3227,16 +3332,16 @@ type QueryResolver interface {
 	ReportDashboards(ctx context.Context) ([]*gqlmodel.ReportDashboard, error)
 	ReportDashboard(ctx context.Context, id string) (*gqlmodel.ReportDashboard, error)
 	Roles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoleConnection, error)
-	Role(ctx context.Context, id string) (*permission.Role, error)
+	Role(ctx context.Context, id string) (*rbac.Role, error)
 	RoutingGuides(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.RoutingGuideConnection, error)
 	RoutingGuide(ctx context.Context, id string) (*tender.RoutingGuide, error)
 	MatchRoutingGuide(ctx context.Context, input gqlmodel.MatchRoutingGuideInput) (*tender.RoutingGuide, error)
-	ShiftTemplates(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.ShiftTemplate, error)
-	ShiftTemplate(ctx context.Context, id string) (*worker.ShiftTemplate, error)
-	WorkerShiftAssignments(ctx context.Context, workerID string, activeOnly *bool) ([]*worker.WorkerShiftAssignment, error)
-	WorkerAvailabilityPreferences(ctx context.Context, workerID string) ([]*worker.WorkerAvailabilityPreference, error)
-	ShiftSwapRequests(ctx context.Context, workerID *string, openOnly *bool, since *int, limit *int) ([]*worker.ShiftSwapRequest, error)
-	ShiftSwapRequest(ctx context.Context, id string) (*worker.ShiftSwapRequest, error)
+	ShiftTemplates(ctx context.Context, activeOnly *bool, limit *int) ([]*workerschedule.ShiftTemplate, error)
+	ShiftTemplate(ctx context.Context, id string) (*workerschedule.ShiftTemplate, error)
+	WorkerShiftAssignments(ctx context.Context, workerID string, activeOnly *bool) ([]*workerschedule.WorkerShiftAssignment, error)
+	WorkerAvailabilityPreferences(ctx context.Context, workerID string) ([]*workerschedule.WorkerAvailabilityPreference, error)
+	ShiftSwapRequests(ctx context.Context, workerID *string, openOnly *bool, since *int, limit *int) ([]*workerschedule.ShiftSwapRequest, error)
+	ShiftSwapRequest(ctx context.Context, id string) (*workerschedule.ShiftSwapRequest, error)
 	Rota(ctx context.Context, filter *gqlmodel.RotaFilterInput) (*gqlmodel.Rota, error)
 	ScimGroupRoleMappings(ctx context.Context, input gqlmodel.DataTableConnectionInput, directoryID string) (*gqlmodel.SCIMGroupRoleMappingConnection, error)
 	AuthEvents(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuthEventConnection, error)
@@ -3245,11 +3350,11 @@ type QueryResolver interface {
 	MfaAuthenticators(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.MFAAuthenticatorConnection, error)
 	ScimDirectories(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.SCIMDirectoryConnection, error)
 	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
-	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*worker.WorkerPolicy, error)
-	WorkerPolicy(ctx context.Context, id string) (*worker.WorkerPolicy, error)
+	WorkerPolicies(ctx context.Context, activeOnly *bool, limit *int) ([]*workerpolicy.WorkerPolicy, error)
+	WorkerPolicy(ctx context.Context, id string) (*workerpolicy.WorkerPolicy, error)
 	WorkerPolicyCompliance(ctx context.Context, id string) (*gqlmodel.PolicyCompliance, error)
-	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*worker.WorkerPolicyAcknowledgement, error)
-	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*worker.WorkerProfileChangeRequest, error)
+	WorkerPolicyAcknowledgements(ctx context.Context, workerID string) ([]*workerpolicy.WorkerPolicyAcknowledgement, error)
+	ProfileChangeRequests(ctx context.Context, filter *gqlmodel.ProfileChangeFilterInput) ([]*profilechange.WorkerProfileChangeRequest, error)
 	ServiceFailures(ctx context.Context, input gqlmodel.DataTableConnectionInput, shipmentID *string, locationID *string) (*gqlmodel.ServiceFailureConnection, error)
 	ServiceFailure(ctx context.Context, id string) (*servicefailure.ServiceFailure, error)
 	ServiceFailureReasonCodes(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ServiceFailureReasonCodeConnection, error)
@@ -3271,7 +3376,7 @@ type QueryResolver interface {
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
 	ShipmentBoardCapabilities(ctx context.Context) (*gqlmodel.ShipmentBoardCapabilities, error)
 	ShipmentStageSummary(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentStageSummary, error)
-	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy shipment.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
+	ShipmentBoardGroups(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput, groupBy boardgrouping.BoardGrouping) ([]*gqlmodel.ShipmentBoardGroup, error)
 	ShipmentQuickFilterCounts(ctx context.Context, input gqlmodel.ShipmentBoardScopeInput) ([]*gqlmodel.ShipmentQuickFilterCount, error)
 	ShipmentBriefing(ctx context.Context, timezone string) (*gqlmodel.ShipmentBriefing, error)
 	ShipmentCapacity(ctx context.Context, kind gqlmodel.CapacityUnitKind) (*gqlmodel.ShipmentCapacity, error)
@@ -3310,13 +3415,13 @@ type QueryResolver interface {
 	Tender(ctx context.Context, id string) (*tender.Tender, error)
 	TendersByShipment(ctx context.Context, shipmentID string, shipmentMoveID *string) ([]*tender.Tender, error)
 	LiveTenderByMove(ctx context.Context, moveID string) (*tender.Tender, error)
-	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*worker.Timesheet, error)
-	Timesheet(ctx context.Context, id string) (*worker.Timesheet, error)
-	TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*worker.TimeClockEntry, error)
-	OpenTimeClockEntry(ctx context.Context, workerID string) (*worker.TimeClockEntry, error)
-	OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*worker.TimeClockEntry, error)
-	PayrollExports(ctx context.Context, limit *int) ([]*worker.PayrollExport, error)
-	PayrollExport(ctx context.Context, id string) (*worker.PayrollExport, error)
+	Timesheets(ctx context.Context, filter *gqlmodel.TimesheetFilterInput) ([]*timesheet.Timesheet, error)
+	Timesheet(ctx context.Context, id string) (*timesheet.Timesheet, error)
+	TimeClockEntries(ctx context.Context, workerID string, from *int, to *int, limit *int) ([]*timesheet.TimeClockEntry, error)
+	OpenTimeClockEntry(ctx context.Context, workerID string) (*timesheet.TimeClockEntry, error)
+	OpenTimeClockEntries(ctx context.Context, teamOnly *bool, limit *int) ([]*timesheet.TimeClockEntry, error)
+	PayrollExports(ctx context.Context, limit *int) ([]*timesheet.PayrollExport, error)
+	PayrollExport(ctx context.Context, id string) (*timesheet.PayrollExport, error)
 	PayrollExportRows(ctx context.Context, id string) ([]*timesheetservice.PayrollExportRow, error)
 	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
@@ -3339,64 +3444,64 @@ type QueryResolver interface {
 	Worker(ctx context.Context, id string) (*worker.Worker, error)
 	WorkerPTOEntries(ctx context.Context, input gqlmodel.WorkerPTOEntriesInput) (*gqlmodel.WorkerPTOConnection, error)
 	UpcomingWorkerPTO(ctx context.Context, input gqlmodel.UpcomingWorkerPTOInput) (*gqlmodel.WorkerPTOConnection, error)
-	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerports.PTOChartDataPoint, error)
+	WorkerPTOChartData(ctx context.Context, input gqlmodel.WorkerPTOChartInput) ([]*workerptoports.PTOChartDataPoint, error)
 	WorkerChecklistTemplates(ctx context.Context, input gqlmodel.WorkerChecklistTemplatesInput) (*gqlmodel.WorkerChecklistTemplateConnection, error)
-	WorkerChecklistTemplate(ctx context.Context, id string) (*worker.WorkerChecklistTemplate, error)
-	ActiveWorkerChecklistTemplates(ctx context.Context) ([]*worker.WorkerChecklistTemplate, error)
-	WorkerChecklists(ctx context.Context, workerID string, includeClosed *bool) ([]*worker.WorkerChecklist, error)
-	WorkerChecklist(ctx context.Context, id string) (*worker.WorkerChecklist, error)
+	WorkerChecklistTemplate(ctx context.Context, id string) (*workerchecklist.WorkerChecklistTemplate, error)
+	ActiveWorkerChecklistTemplates(ctx context.Context) ([]*workerchecklist.WorkerChecklistTemplate, error)
+	WorkerChecklists(ctx context.Context, workerID string, includeClosed *bool) ([]*workerchecklist.WorkerChecklist, error)
+	WorkerChecklist(ctx context.Context, id string) (*workerchecklist.WorkerChecklist, error)
 	WorkerCredentialTypes(ctx context.Context, input gqlmodel.WorkerCredentialTypesInput) (*gqlmodel.WorkerCredentialTypeConnection, error)
-	WorkerCredentialType(ctx context.Context, id string) (*worker.WorkerCredentialType, error)
-	ActiveWorkerCredentialTypes(ctx context.Context) ([]*worker.WorkerCredentialType, error)
-	WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*worker.WorkerCredential, error)
-	WorkerCredential(ctx context.Context, id string) (*worker.WorkerCredential, error)
-	WorkerCredentialSummary(ctx context.Context, workerID string) (*worker.WorkerCredentialSummary, error)
+	WorkerCredentialType(ctx context.Context, id string) (*workercredential.WorkerCredentialType, error)
+	ActiveWorkerCredentialTypes(ctx context.Context) ([]*workercredential.WorkerCredentialType, error)
+	WorkerCredentials(ctx context.Context, workerIds []string, includeArchived *bool, expiringWithinDays *int, includeExpired *bool, credentialTypeCode *string, requiredOnly *bool, limit *int, offset *int) ([]*workercredential.WorkerCredential, error)
+	WorkerCredential(ctx context.Context, id string) (*workercredential.WorkerCredential, error)
+	WorkerCredentialSummary(ctx context.Context, workerID string) (*workercredential.WorkerCredentialSummary, error)
 	CredentialExpiryForecast(ctx context.Context, days *int, limit *int) (*workercredentialservice.ExpiryForecast, error)
-	DriverQualificationFile(ctx context.Context, workerID string) (*worker.DQFFile, error)
-	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*worker.WorkerEmploymentVerification, error)
-	OutstandingEmploymentVerifications(ctx context.Context) ([]*worker.WorkerEmploymentVerification, error)
-	DqfRetentionCandidates(ctx context.Context) ([]*workerports.DQFRetentionCandidate, error)
-	WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerDOTTest, error)
-	WorkerDOTTest(ctx context.Context, id string) (*worker.WorkerDOTTest, error)
-	OpenDOTTests(ctx context.Context) ([]*worker.WorkerDOTTest, error)
-	WorkerDOTViolations(ctx context.Context, workerID string) ([]*worker.WorkerDOTViolation, error)
-	WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*worker.WorkerClearinghouseQuery, error)
-	WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*worker.DrugAlcoholStanding, error)
+	DriverQualificationFile(ctx context.Context, workerID string) (*workercompliance.DQFFile, error)
+	WorkerEmploymentVerifications(ctx context.Context, workerID *string, outstandingOnly *bool, limit *int) ([]*employment.WorkerEmploymentVerification, error)
+	OutstandingEmploymentVerifications(ctx context.Context) ([]*employment.WorkerEmploymentVerification, error)
+	DqfRetentionCandidates(ctx context.Context) ([]*workerdqfports.DQFRetentionCandidate, error)
+	WorkerDOTTests(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workerdot.WorkerDOTTest, error)
+	WorkerDOTTest(ctx context.Context, id string) (*workerdot.WorkerDOTTest, error)
+	OpenDOTTests(ctx context.Context) ([]*workerdot.WorkerDOTTest, error)
+	WorkerDOTViolations(ctx context.Context, workerID string) ([]*workerdot.WorkerDOTViolation, error)
+	WorkerClearinghouseQueries(ctx context.Context, workerID string) ([]*dotclearinghouse.WorkerClearinghouseQuery, error)
+	WorkerDrugAlcoholStanding(ctx context.Context, workerID string) (*workerdot.DrugAlcoholStanding, error)
 	DOTRandomPools(ctx context.Context, input gqlmodel.DOTRandomPoolsInput) (*gqlmodel.DOTRandomPoolConnection, error)
-	DOTRandomPool(ctx context.Context, id string) (*worker.DOTRandomPool, error)
-	DOTRandomDraws(ctx context.Context, poolID *string) ([]*worker.DOTRandomDraw, error)
-	DOTRandomDraw(ctx context.Context, id string) (*worker.DOTRandomDraw, error)
-	WorkerRandomSelections(ctx context.Context, workerID string) ([]*worker.DOTRandomDrawEntry, error)
-	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []worker.EmploymentEventKind) ([]*worker.WorkerEmploymentEvent, error)
-	WorkerEmploymentEvent(ctx context.Context, id string) (*worker.WorkerEmploymentEvent, error)
-	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*worker.WorkerInjury, error)
-	WorkerInjury(ctx context.Context, id string) (*worker.WorkerInjury, error)
+	DOTRandomPool(ctx context.Context, id string) (*dotrandom.DOTRandomPool, error)
+	DOTRandomDraws(ctx context.Context, poolID *string) ([]*dotrandom.DOTRandomDraw, error)
+	DOTRandomDraw(ctx context.Context, id string) (*dotrandom.DOTRandomDraw, error)
+	WorkerRandomSelections(ctx context.Context, workerID string) ([]*dotrandom.DOTRandomDrawEntry, error)
+	WorkerEmploymentEvents(ctx context.Context, workerID string, kinds []employment.EmploymentEventKind) ([]*employment.WorkerEmploymentEvent, error)
+	WorkerEmploymentEvent(ctx context.Context, id string) (*employment.WorkerEmploymentEvent, error)
+	WorkerInjuries(ctx context.Context, workerID *string, caseYear *int, recordableOnly *bool, openOnly *bool, limit *int) ([]*workerinjury.WorkerInjury, error)
+	WorkerInjury(ctx context.Context, id string) (*workerinjury.WorkerInjury, error)
 	OshaLog(ctx context.Context, year *int) (*workerinjuryservice.OSHALog, error)
-	OshaSummaries(ctx context.Context) ([]*worker.OSHAAnnualSummary, error)
-	LeaveControl(ctx context.Context) (*worker.LeaveControl, error)
-	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*worker.WorkerLeaveCase, error)
-	WorkerLeaveCase(ctx context.Context, id string) (*worker.WorkerLeaveCase, error)
-	WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*worker.LeaveEntitlement, error)
-	LeaveCertificationsOutstanding(ctx context.Context) ([]*worker.WorkerLeaveCase, error)
+	OshaSummaries(ctx context.Context) ([]*workerinjury.OSHAAnnualSummary, error)
+	LeaveControl(ctx context.Context) (*workerleave.LeaveControl, error)
+	WorkerLeaveCases(ctx context.Context, workerID *string, openOnly *bool, certificationOutstandingOnly *bool, limit *int) ([]*workerleave.WorkerLeaveCase, error)
+	WorkerLeaveCase(ctx context.Context, id string) (*workerleave.WorkerLeaveCase, error)
+	WorkerLeaveEntitlement(ctx context.Context, workerID string, asOf *int) (*workerleave.LeaveEntitlement, error)
+	LeaveCertificationsOutstanding(ctx context.Context) ([]*workerleave.WorkerLeaveCase, error)
 	WorkerOverview(ctx context.Context, workerID string) (*workeroverviewservice.Overview, error)
 	WorkerRosterAttention(ctx context.Context) (*workeroverviewservice.RosterAttention, error)
-	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*worker.WorkerSafetyEvent, error)
-	WorkerSafetyEvent(ctx context.Context, id string) (*worker.WorkerSafetyEvent, error)
-	WorkerSafetyScorecard(ctx context.Context, workerID string) (*worker.SafetyScorecard, error)
-	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*worker.WorkerDisciplinaryAction, error)
-	WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*worker.DisciplinaryLadder, error)
-	WorkerRecognitions(ctx context.Context, workerID string) ([]*worker.WorkerRecognition, error)
-	DefaultSafetyPoints(ctx context.Context, kind worker.SafetyEventKind, severity worker.SafetySeverity, preventable *bool, inspectionResult *worker.InspectionResult) (int, error)
-	MySafetyScorecard(ctx context.Context) (*worker.SafetyScorecard, error)
-	MyRecognitions(ctx context.Context) ([]*worker.WorkerRecognition, error)
-	MyDisciplinaryActions(ctx context.Context) ([]*worker.WorkerDisciplinaryAction, error)
+	WorkerSafetyEvents(ctx context.Context, workerID *string, openOnly *bool, limit *int) ([]*workersafety.WorkerSafetyEvent, error)
+	WorkerSafetyEvent(ctx context.Context, id string) (*workersafety.WorkerSafetyEvent, error)
+	WorkerSafetyScorecard(ctx context.Context, workerID string) (*safetyscorecard.SafetyScorecard, error)
+	WorkerDisciplinaryActions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
+	WorkerDisciplinaryLadder(ctx context.Context, workerID string) (*workerdiscipline.DisciplinaryLadder, error)
+	WorkerRecognitions(ctx context.Context, workerID string) ([]*workerdiscipline.WorkerRecognition, error)
+	DefaultSafetyPoints(ctx context.Context, kind workersafety.SafetyEventKind, severity workersafety.SafetySeverity, preventable *bool, inspectionResult *workersafety.InspectionResult) (int, error)
+	MySafetyScorecard(ctx context.Context) (*safetyscorecard.SafetyScorecard, error)
+	MyRecognitions(ctx context.Context) ([]*workerdiscipline.WorkerRecognition, error)
+	MyDisciplinaryActions(ctx context.Context) ([]*workerdiscipline.WorkerDisciplinaryAction, error)
 	TrainingCourses(ctx context.Context, input gqlmodel.TrainingCoursesInput) (*gqlmodel.TrainingCourseConnection, error)
-	TrainingCourse(ctx context.Context, id string) (*worker.TrainingCourse, error)
-	ActiveTrainingCourses(ctx context.Context) ([]*worker.TrainingCourse, error)
-	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*worker.WorkerTrainingRecord, error)
-	WorkerTrainingRecord(ctx context.Context, id string) (*worker.WorkerTrainingRecord, error)
-	WorkerTrainingSummary(ctx context.Context, workerID string) (*worker.WorkerTrainingSummary, error)
-	MyTraining(ctx context.Context) ([]*driverportalservice.PortalTraining, error)
+	TrainingCourse(ctx context.Context, id string) (*workertraining.TrainingCourse, error)
+	ActiveTrainingCourses(ctx context.Context) ([]*workertraining.TrainingCourse, error)
+	WorkerTrainingRecords(ctx context.Context, workerID string, includeClosed *bool) ([]*workertraining.WorkerTrainingRecord, error)
+	WorkerTrainingRecord(ctx context.Context, id string) (*workertraining.WorkerTrainingRecord, error)
+	WorkerTrainingSummary(ctx context.Context, workerID string) (*workertraining.WorkerTrainingSummary, error)
+	MyTraining(ctx context.Context) ([]*driverportalrecordsservice.PortalTraining, error)
 }
 
 type RateAgreementResolver interface {
@@ -3410,8 +3515,8 @@ type RateMatrixResolver interface {
 }
 
 type RateMatrixVersionResolver interface {
-	Dimensions(ctx context.Context, obj *ratematrix.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
-	Cells(ctx context.Context, obj *ratematrix.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
+	Dimensions(ctx context.Context, obj *ratematrixversion.RateMatrixVersion) ([]*gqlmodel.RateMatrixDimension, error)
+	Cells(ctx context.Context, obj *ratematrixversion.RateMatrixVersion, offset *int, limit *int) ([]*gqlmodel.RateMatrixCell, error)
 }
 
 type ReportScheduleResolver interface {
@@ -3419,7 +3524,7 @@ type ReportScheduleResolver interface {
 }
 
 type ReviewRatingResolver interface {
-	Score(ctx context.Context, obj *worker.ReviewRating) (*int, error)
+	Score(ctx context.Context, obj *workerreview.ReviewRating) (*int, error)
 }
 
 type RiskDecisionResolver interface {
@@ -3429,9 +3534,9 @@ type RiskDecisionResolver interface {
 }
 
 type RoleResolver interface {
-	CoreResponsibility(ctx context.Context, obj *permission.Role) (*string, error)
-	MaxSensitivity(ctx context.Context, obj *permission.Role) (string, error)
-	Agents(ctx context.Context, obj *permission.Role) ([]*agentdefinition.Definition, error)
+	CoreResponsibility(ctx context.Context, obj *rbac.Role) (*string, error)
+	MaxSensitivity(ctx context.Context, obj *rbac.Role) (string, error)
+	Agents(ctx context.Context, obj *rbac.Role) ([]*agentdefinition.Definition, error)
 }
 
 type RoutingGuideEntryResolver interface {
@@ -3439,8 +3544,8 @@ type RoutingGuideEntryResolver interface {
 }
 
 type SafetyScorecardResolver interface {
-	HighestDiscipline(ctx context.Context, obj *worker.SafetyScorecard) (*worker.DisciplinaryLevel, error)
-	DaysSinceLastEvent(ctx context.Context, obj *worker.SafetyScorecard) (*int, error)
+	HighestDiscipline(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*workerdiscipline.DisciplinaryLevel, error)
+	DaysSinceLastEvent(ctx context.Context, obj *safetyscorecard.SafetyScorecard) (*int, error)
 }
 
 type ServiceFailureResolver interface {
@@ -3460,8 +3565,8 @@ type ServiceFailureStopResolver interface {
 }
 
 type SettlementControlResolver interface {
-	VarianceThresholdPct(ctx context.Context, obj *tenant.SettlementControl) (string, error)
-	DefaultEscrowInterestRate(ctx context.Context, obj *tenant.SettlementControl) (string, error)
+	VarianceThresholdPct(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
+	DefaultEscrowInterestRate(ctx context.Context, obj *settlementcontrol.SettlementControl) (string, error)
 }
 
 type SettlementExceptionResolver interface {
@@ -3470,7 +3575,7 @@ type SettlementExceptionResolver interface {
 }
 
 type ShiftTemplateResolver interface {
-	ActiveAssignmentCount(ctx context.Context, obj *worker.ShiftTemplate) (int, error)
+	ActiveAssignmentCount(ctx context.Context, obj *workerschedule.ShiftTemplate) (int, error)
 }
 
 type ShipmentResolver interface {
@@ -3544,8 +3649,8 @@ type TrailerResolver interface {
 }
 
 type TrainingCourseResolver interface {
-	PassingScore(ctx context.Context, obj *worker.TrainingCourse) (*string, error)
-	OpenRecordCount(ctx context.Context, obj *worker.TrainingCourse) (int, error)
+	PassingScore(ctx context.Context, obj *workertraining.TrainingCourse) (*string, error)
+	OpenRecordCount(ctx context.Context, obj *workertraining.TrainingCourse) (int, error)
 }
 
 type TriageActionResolver interface {
@@ -3669,94 +3774,94 @@ type WorkerResolver interface {
 }
 
 type WorkerBenefitEnrollmentResolver interface {
-	EffectiveTo(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*int, error)
-	RecurringDeductionID(ctx context.Context, obj *driverpay.WorkerBenefitEnrollment) (*string, error)
+	EffectiveTo(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*int, error)
+	RecurringDeductionID(ctx context.Context, obj *paybenefit.WorkerBenefitEnrollment) (*string, error)
 }
 
 type WorkerChecklistResolver interface {
-	TemplateID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error)
-	SourceEventID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error)
-	StartedByID(ctx context.Context, obj *worker.WorkerChecklist) (*string, error)
-	Progress(ctx context.Context, obj *worker.WorkerChecklist) (*worker.ChecklistProgress, error)
+	TemplateID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error)
+	SourceEventID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error)
+	StartedByID(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*string, error)
+	Progress(ctx context.Context, obj *workerchecklist.WorkerChecklist) (*workerchecklist.ChecklistProgress, error)
 }
 
 type WorkerChecklistItemResolver interface {
-	Overdue(ctx context.Context, obj *worker.WorkerChecklistItem) (bool, error)
-	CredentialTypeID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error)
-	DocumentTypeID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error)
-	CompletedByID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error)
-	EvidenceDocumentID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error)
-	EvidenceCredentialID(ctx context.Context, obj *worker.WorkerChecklistItem) (*string, error)
+	Overdue(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (bool, error)
+	CredentialTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error)
+	DocumentTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error)
+	CompletedByID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error)
+	EvidenceDocumentID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error)
+	EvidenceCredentialID(ctx context.Context, obj *workerchecklist.WorkerChecklistItem) (*string, error)
 }
 
 type WorkerChecklistProgressResolver interface {
-	Complete(ctx context.Context, obj *worker.ChecklistProgress) (bool, error)
+	Complete(ctx context.Context, obj *workerchecklist.ChecklistProgress) (bool, error)
 }
 
 type WorkerChecklistTemplateResolver interface {
-	OpenChecklistCount(ctx context.Context, obj *worker.WorkerChecklistTemplate) (int, error)
+	OpenChecklistCount(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplate) (int, error)
 }
 
 type WorkerChecklistTemplateItemResolver interface {
-	CredentialTypeID(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error)
-	DocumentTypeID(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error)
-	DocumentTypeName(ctx context.Context, obj *worker.WorkerChecklistTemplateItem) (*string, error)
+	CredentialTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error)
+	DocumentTypeID(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error)
+	DocumentTypeName(ctx context.Context, obj *workerchecklist.WorkerChecklistTemplateItem) (*string, error)
 }
 
 type WorkerClearinghouseQueryResolver interface {
-	ConsentObtainedAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error)
-	ConsentExpiresAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error)
-	CompletedAt(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*int, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*string, error)
-	PerformedByID(ctx context.Context, obj *worker.WorkerClearinghouseQuery) (*string, error)
+	ConsentObtainedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	ConsentExpiresAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	CompletedAt(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*int, error)
+	DocumentID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error)
+	PerformedByID(ctx context.Context, obj *dotclearinghouse.WorkerClearinghouseQuery) (*string, error)
 }
 
 type WorkerCredentialResolver interface {
-	DocumentID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	VerifiedByID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	ArchivedByID(ctx context.Context, obj *worker.WorkerCredential) (*string, error)
-	Health(ctx context.Context, obj *worker.WorkerCredential) (worker.CredentialHealth, error)
-	DaysUntilExpiry(ctx context.Context, obj *worker.WorkerCredential) (*int, error)
+	DocumentID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	VerifiedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	ArchivedByID(ctx context.Context, obj *workercredential.WorkerCredential) (*string, error)
+	Health(ctx context.Context, obj *workercredential.WorkerCredential) (workercredential.CredentialHealth, error)
+	DaysUntilExpiry(ctx context.Context, obj *workercredential.WorkerCredential) (*int, error)
 }
 
 type WorkerCredentialTypeResolver interface {
-	ProfileField(ctx context.Context, obj *worker.WorkerCredentialType) (*string, error)
-	ActiveCredentialCount(ctx context.Context, obj *worker.WorkerCredentialType) (*int, error)
+	ProfileField(ctx context.Context, obj *workercredential.WorkerCredentialType) (*string, error)
+	ActiveCredentialCount(ctx context.Context, obj *workercredential.WorkerCredentialType) (*int, error)
 }
 
 type WorkerDOTTestResolver interface {
-	ScheduledAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error)
-	CollectedAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error)
-	ResultAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error)
-	MroVerifiedAt(ctx context.Context, obj *worker.WorkerDOTTest) (*int, error)
-	AlcoholConcentration(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
-	SafetyEventID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
-	DrawEntryID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
-	OrderedByID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerDOTTest) (*string, error)
+	ScheduledAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
+	CollectedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
+	ResultAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
+	MroVerifiedAt(ctx context.Context, obj *workerdot.WorkerDOTTest) (*int, error)
+	AlcoholConcentration(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
+	SafetyEventID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
+	DrawEntryID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
+	DocumentID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
+	OrderedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
+	RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTTest) (*string, error)
 }
 
 type WorkerDOTViolationResolver interface {
-	SourceTestID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error)
-	ReportedToClearinghouseAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	SapReferredAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	SapEvaluationCompletedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	RtdTestID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error)
-	RtdCompletedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	FollowUpEndsAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	ResolvedAt(ctx context.Context, obj *worker.WorkerDOTViolation) (*int, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerDOTViolation) (*string, error)
+	SourceTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error)
+	ReportedToClearinghouseAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	SapReferredAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	SapEvaluationCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	RtdTestID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error)
+	RtdCompletedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	FollowUpEndsAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	ResolvedAt(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*int, error)
+	DocumentID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error)
+	RecordedByID(ctx context.Context, obj *workerdot.WorkerDOTViolation) (*string, error)
 }
 
 type WorkerDisciplinaryActionResolver interface {
-	SuspensionDays(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*int, error)
-	SafetyEventID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error)
-	IssuedByID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error)
-	RescindedByID(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (*string, error)
-	Active(ctx context.Context, obj *worker.WorkerDisciplinaryAction) (bool, error)
+	SuspensionDays(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*int, error)
+	SafetyEventID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	DocumentID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	IssuedByID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	RescindedByID(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (*string, error)
+	Active(ctx context.Context, obj *workerdiscipline.WorkerDisciplinaryAction) (bool, error)
 }
 
 type WorkerEmploymentCascadeResolver interface {
@@ -3765,52 +3870,52 @@ type WorkerEmploymentCascadeResolver interface {
 }
 
 type WorkerEmploymentEventResolver interface {
-	FromValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
-	ToValues(ctx context.Context, obj *worker.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error)
-	AmendedByID(ctx context.Context, obj *worker.WorkerEmploymentEvent) (*string, error)
+	FromValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
+	ToValues(ctx context.Context, obj *employment.WorkerEmploymentEvent) ([]*gqlmodel.WorkerEmploymentValue, error)
+	DocumentID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error)
+	RecordedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error)
+	AmendedByID(ctx context.Context, obj *employment.WorkerEmploymentEvent) (*string, error)
 }
 
 type WorkerEmploymentVerificationResolver interface {
-	EmployedFrom(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	EmployedTo(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	RequestedAt(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	ResponseReceivedAt(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	LastFollowUpAt(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	DrugAlcoholResponseReceivedAt(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*int, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerEmploymentVerification) (*string, error)
+	EmployedFrom(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	EmployedTo(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	RequestedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	ResponseReceivedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	LastFollowUpAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	DrugAlcoholResponseReceivedAt(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*int, error)
+	DocumentID(ctx context.Context, obj *employment.WorkerEmploymentVerification) (*string, error)
 }
 
 type WorkerInjuryResolver interface {
-	Recordable(ctx context.Context, obj *worker.WorkerInjury) (bool, error)
-	ReportedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	ReturnedToWorkAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	LogName(ctx context.Context, obj *worker.WorkerInjury) (string, error)
-	ClaimFiledAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	ClaimClosedAt(ctx context.Context, obj *worker.WorkerInjury) (*int, error)
-	SafetyEventID(ctx context.Context, obj *worker.WorkerInjury) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerInjury) (*string, error)
+	Recordable(ctx context.Context, obj *workerinjury.WorkerInjury) (bool, error)
+	ReportedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ReturnedToWorkAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	LogName(ctx context.Context, obj *workerinjury.WorkerInjury) (string, error)
+	ClaimFiledAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	ClaimClosedAt(ctx context.Context, obj *workerinjury.WorkerInjury) (*int, error)
+	SafetyEventID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
+	DocumentID(ctx context.Context, obj *workerinjury.WorkerInjury) (*string, error)
 }
 
 type WorkerLeaveCaseResolver interface {
-	EndsAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	DecidedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	ClosedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationRequestedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationDueAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationReceivedAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	RecertificationDueAt(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	CertificationLate(ctx context.Context, obj *worker.WorkerLeaveCase) (bool, error)
-	EligibilityHoursWorked(ctx context.Context, obj *worker.WorkerLeaveCase) (*int, error)
-	EmploymentEventID(ctx context.Context, obj *worker.WorkerLeaveCase) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerLeaveCase) (*string, error)
-	Entries(ctx context.Context, obj *worker.WorkerLeaveCase) ([]*worker.WorkerLeaveEntry, error)
+	EndsAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	DecidedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	ClosedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationRequestedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationReceivedAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	RecertificationDueAt(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	CertificationLate(ctx context.Context, obj *workerleave.WorkerLeaveCase) (bool, error)
+	EligibilityHoursWorked(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*int, error)
+	EmploymentEventID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error)
+	DocumentID(ctx context.Context, obj *workerleave.WorkerLeaveCase) (*string, error)
+	Entries(ctx context.Context, obj *workerleave.WorkerLeaveCase) ([]*workerleave.WorkerLeaveEntry, error)
 }
 
 type WorkerLeaveEntryResolver interface {
-	Hours(ctx context.Context, obj *worker.WorkerLeaveEntry) (string, error)
-	PTOID(ctx context.Context, obj *worker.WorkerLeaveEntry) (*string, error)
+	Hours(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (string, error)
+	PTOID(ctx context.Context, obj *workerleave.WorkerLeaveEntry) (*string, error)
 }
 
 type WorkerPTOResolver interface {
@@ -3834,23 +3939,23 @@ type WorkerPTOBalanceResolver interface {
 }
 
 type WorkerPTOLedgerEntryResolver interface {
-	AmountDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error)
-	BalanceAfterDays(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (string, error)
-	PeriodKey(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	SourcePTOID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	AssignmentID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	PTOPolicyID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	CreatedByID(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
-	Note(ctx context.Context, obj *worker.WorkerPTOLedgerEntry) (*string, error)
+	AmountDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
+	BalanceAfterDays(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (string, error)
+	PeriodKey(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	SourcePTOID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	AssignmentID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	PTOPolicyID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	CreatedByID(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
+	Note(ctx context.Context, obj *pto.WorkerPTOLedgerEntry) (*string, error)
 }
 
 type WorkerPTOPolicyAssignmentResolver interface {
-	PTOPolicy(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*worker.PTOPolicy, error)
-	AssignedByID(ctx context.Context, obj *worker.WorkerPTOPolicyAssignment) (*string, error)
+	PTOPolicy(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*pto.PTOPolicy, error)
+	AssignedByID(ctx context.Context, obj *pto.WorkerPTOPolicyAssignment) (*string, error)
 }
 
 type WorkerPayAssignmentResolver interface {
-	SplitPercent(ctx context.Context, obj *driverpay.WorkerPayAssignment) (string, error)
+	SplitPercent(ctx context.Context, obj *payassignment.WorkerPayAssignment) (string, error)
 }
 
 type WorkerProfileResolver interface {
@@ -3858,11 +3963,11 @@ type WorkerProfileResolver interface {
 }
 
 type WorkerProfileChangeRequestResolver interface {
-	Changes(ctx context.Context, obj *worker.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
+	Changes(ctx context.Context, obj *profilechange.WorkerProfileChangeRequest) ([]*gqlmodel.ProfileFieldChange, error)
 }
 
 type WorkerRecognitionResolver interface {
-	AwardedByID(ctx context.Context, obj *worker.WorkerRecognition) (*string, error)
+	AwardedByID(ctx context.Context, obj *workerdiscipline.WorkerRecognition) (*string, error)
 }
 
 type WorkerRosterAttentionResolver interface {
@@ -3870,26 +3975,26 @@ type WorkerRosterAttentionResolver interface {
 }
 
 type WorkerSafetyEventResolver interface {
-	ActivePoints(ctx context.Context, obj *worker.WorkerSafetyEvent) (int, error)
-	ShipmentID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	InspectionLevel(ctx context.Context, obj *worker.WorkerSafetyEvent) (*int, error)
-	InspectionResult(ctx context.Context, obj *worker.WorkerSafetyEvent) (*worker.InspectionResult, error)
-	FineAmount(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	CostAmount(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	ClosedByID(ctx context.Context, obj *worker.WorkerSafetyEvent) (*string, error)
-	Violations(ctx context.Context, obj *worker.WorkerSafetyEvent) ([]*worker.WorkerSafetyViolation, error)
+	ActivePoints(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (int, error)
+	ShipmentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	InspectionLevel(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*int, error)
+	InspectionResult(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*workersafety.InspectionResult, error)
+	FineAmount(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	CostAmount(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	DocumentID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	RecordedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	ClosedByID(ctx context.Context, obj *workersafety.WorkerSafetyEvent) (*string, error)
+	Violations(ctx context.Context, obj *workersafety.WorkerSafetyEvent) ([]*fleetsafety.WorkerSafetyViolation, error)
 }
 
 type WorkerTrainingRecordResolver interface {
-	Score(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	DocumentID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	AssignedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	RecordedByID(ctx context.Context, obj *worker.WorkerTrainingRecord) (*string, error)
-	Health(ctx context.Context, obj *worker.WorkerTrainingRecord) (worker.TrainingHealth, error)
-	DaysUntilDue(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error)
-	DaysUntilExpiry(ctx context.Context, obj *worker.WorkerTrainingRecord) (*int, error)
+	Score(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	DocumentID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	AssignedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	RecordedByID(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*string, error)
+	Health(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (worker.TrainingHealth, error)
+	DaysUntilDue(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error)
+	DaysUntilExpiry(ctx context.Context, obj *workertraining.WorkerTrainingRecord) (*int, error)
 }
 
 var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {

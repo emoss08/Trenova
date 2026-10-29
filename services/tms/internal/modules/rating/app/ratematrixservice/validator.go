@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/pkg/keelcheck"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"go.uber.org/fx"
 )
 
@@ -24,7 +26,7 @@ type ValidatorParams struct {
 }
 
 type Validator struct {
-	validator validationframework.TenantedEntityValidator[*ratematrix.RateMatrix]
+	validator tenantedvalidation.EntityValidator[*ratematrix.RateMatrix]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -33,9 +35,8 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func newBuilder(
 	db *postgres.Connection,
-) *validationframework.TenantedValidatorBuilder[*ratematrix.RateMatrix] {
-	builder := validationframework.
-		NewTenantedValidatorBuilder[*ratematrix.RateMatrix]().
+) *tenantedvalidation.Builder[*ratematrix.RateMatrix] {
+	builder := tenantedvalidation.NewBuilder[*ratematrix.RateMatrix]().
 		WithModelName("Rate Matrix")
 
 	if db == nil {
@@ -44,7 +45,7 @@ func newBuilder(
 
 	return builder.
 		WithUniquenessChecker(
-			validationframework.NewKeelChecker(db, ratematrixdb.RateMatrixesSchema()),
+			keelcheck.NewChecker(db, ratematrixdb.RateMatrixesSchema()),
 		).
 		WithUniqueField(
 			"code",
@@ -106,7 +107,7 @@ func (v *Validator) ValidateCells(
 	}
 
 	if !multiErr.HasErrors() {
-		ratematrix.ValidatePostalAxes(dimensions, req.Cells, multiErr)
+		ratematrixcell.ValidatePostalAxes(dimensions, req.Cells, multiErr)
 	}
 
 	if multiErr.HasErrors() {

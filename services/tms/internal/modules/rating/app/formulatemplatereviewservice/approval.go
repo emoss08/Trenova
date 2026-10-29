@@ -1,0 +1,424 @@
+package formulatemplatereviewservice
+
+import (
+	"context"
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/approvalworkflow"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.uber.org/zap"
+)
+
+type ApprovalActionRequest = approvalworkflow.Request
+
+type templateTransition = approvalworkflow.Transition[*formulatemplate.FormulaTemplate, formulatemplate.Status]
+
+type SubmitRequest struct {
+	ApprovalActionRequest
+	ReviewerID   pulid.ID
+	ReviewerNote string
+}
+
+func (s *Service) Submit(
+	ctx context.Context,
+	req *SubmitRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	var submitted *formulatemplate.FormulaTemplate
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		result, txErr := s.approvals(ctx).
+			Apply(txCtx, &req.ApprovalActionRequest, templateTransition{
+				Operation:    "Submit",
+				From:         formulatemplate.StatusDraft,
+				AlsoFrom:     []formulatemplate.Status{formulatemplate.StatusInactive},
+				To:           formulatemplate.StatusInReview,
+				PermissionOp: permission.OpSubmit,
+				AuditComment: "Formula template submitted for review",
+				Validate: func(
+					vCtx context.Context,
+					template *formulatemplate.FormulaTemplate,
+					_ *ApprovalActionRequest,
+				) error {
+					return s.validateSubmission(vCtx, template, req)
+				},
+				Apply: func(
+					template *formulatemplate.FormulaTemplate,
+					r *ApprovalActionRequest,
+					now int64,
+				) {
+					userID := r.TenantInfo.UserID
+					template.SubmittedByID = &userID
+					template.SubmittedAt = &now
+					template.ReviewComment = r.Comment
+				},
+				AfterSave: func(
+					aCtx context.Context,
+					updated *formulatemplate.FormulaTemplate,
+					r *ApprovalActionRequest,
+				) error {
+					return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+						Comment:             r.Comment,
+						Decision:            formulatemplate.ReviewDecisionSubmitted,
+						RequestedReviewerID: req.ReviewerID,
+						ReviewerNote:        req.ReviewerNote,
+					})
+				},
+			})
+		if txErr != nil {
+			return txErr
+		}
+
+		submitted = result
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifySubmitted(ctx, req.TenantInfo, submitted)
+	if req.ReviewerID.IsNotNil() {
+		s.notifyRequestedReviewer(ctx, req.TenantInfo, submitted, req.ReviewerID)
+	}
+
+	return submitted, nil
+}
+
+type ApproveRequest struct {
+	ApprovalActionRequest
+	EffectiveFrom *int64
+}
+
+func (s *Service) Approve(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	return s.ApproveFrom(ctx, &ApproveRequest{ApprovalActionRequest: *req})
+}
+
+func (s *Service) ApproveFrom(
+	ctx context.Context,
+	approveReq *ApproveRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	req := &approveReq.ApprovalActionRequest
+	effectiveFrom := timeutils.NowUnix()
+	if approveReq.EffectiveFrom != nil {
+		if err := formulatemplateservice.ValidateEffectiveFrom(
+			*approveReq.EffectiveFrom,
+		); err != nil {
+			return nil, err
+		}
+		effectiveFrom = max(*approveReq.EffectiveFrom, effectiveFrom)
+	}
+
+	var approved *formulatemplate.FormulaTemplate
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		result, txErr := s.approvals(ctx).Apply(txCtx, req, s.approveTransition(effectiveFrom))
+		if txErr != nil {
+			return txErr
+		}
+
+		approved = result
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:    approved,
+		SubmitterID: approved.SubmittedByID,
+		Decision:    formulatemplate.ReviewDecisionApproved,
+		Comment:     req.Comment,
+	})
+
+	return approved, nil
+}
+
+func (s *Service) approveTransition(effectiveFrom int64) templateTransition {
+	var pinned *formulatemplateservice.ContentCheck
+	return templateTransition{
+		Operation:    "Approve",
+		From:         formulatemplate.StatusInReview,
+		To:           formulatemplate.StatusActive,
+		PermissionOp: permission.OpApprove,
+		AuditComment: "Formula template approved",
+		Validate: func(
+			vCtx context.Context,
+			template *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			content, err := s.validateApproval(vCtx, template, r)
+			if err != nil {
+				return err
+			}
+			pinned = content
+			return nil
+		},
+		Apply: func(
+			template *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+			now int64,
+		) {
+			userID := r.TenantInfo.UserID
+			template.ApprovedByID = &userID
+			template.ApprovedAt = &now
+			template.ReviewComment = r.Comment
+			formulatemplateservice.ApplyContent(template, pinned)
+			template.CurrentVersionNumber++
+		},
+		AfterSave: func(
+			aCtx context.Context,
+			updated *formulatemplate.FormulaTemplate,
+			r *ApprovalActionRequest,
+		) error {
+			if err := s.templates.CreateApprovedSnapshot(
+				aCtx,
+				updated,
+				r.TenantInfo.UserID,
+				effectiveFrom,
+			); err != nil {
+				return err
+			}
+			return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+				Comment:  r.Comment,
+				Decision: formulatemplate.ReviewDecisionApproved,
+			})
+		},
+	}
+}
+
+func (s *Service) validateApproval(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	r *ApprovalActionRequest,
+) (*formulatemplateservice.ContentCheck, error) {
+	if err := r.RefuseOwn(
+		template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID,
+		errortypes.NewValidationError(
+			"approvedById",
+			errortypes.ErrInvalid,
+			"A template cannot be approved by its submitter",
+		),
+	); err != nil {
+		return nil, err
+	}
+
+	if formulatemplate.SubmissionIsStale(template.SubmittedAt, s.approvals(ctx).Clock()) {
+		return nil, staleSubmissionError()
+	}
+
+	if err := s.refuseRevisionAuthor(ctx, template, r); err != nil {
+		return nil, err
+	}
+
+	return s.approvalContent(ctx, template)
+}
+
+func (s *Service) approvalContent(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+) (*formulatemplateservice.ContentCheck, error) {
+	content, err := s.templates.CheckContent(ctx, &formulatemplateservice.ContentRequest{
+		Tenant: formulatemplateservice.TemplateTenant(template),
+		Source: template.Source,
+		Mode:   tariff.LibrariesLatest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if refusal := content.Refusal(); refusal != nil {
+		return nil, refusal
+	}
+
+	gate := newSubmissionGate(ctx, template, content)
+	multiErr := errortypes.NewMultiError()
+	gate.addRefusals(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	dependents, err := s.checkDependents(ctx, template, content)
+	if err != nil {
+		return nil, err
+	}
+	if refusal := dependentsRefusal(i18n.FromContext(ctx), dependents); refusal != nil {
+		return nil, refusal
+	}
+
+	return content, nil
+}
+
+func (s *Service) refuseRevisionAuthor(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	req *ApprovalActionRequest,
+) error {
+	tenantInfo := req.TenantInfo
+	var baseVersion int64
+	latest, err := s.reviewRepo.Latest(ctx, template.ID, tenantInfo)
+	if err != nil {
+		return err
+	}
+	if latest != nil {
+		baseVersion = latest.BaseVersionNumber
+	}
+
+	authors, err := s.versionRepo.ListAuthorIDsSince(
+		ctx,
+		&formulatemplateports.ListVersionAuthorsRequest{
+			TenantInfo:   tenantInfo,
+			TemplateID:   template.ID,
+			AfterVersion: baseVersion,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	return req.RefuseOwn(
+		slices.Contains(authors, tenantInfo.UserID),
+		errortypes.NewValidationError(
+			"approvedById",
+			errortypes.ErrInvalid,
+			"You authored part of this revision, so another reviewer must approve it",
+		),
+	)
+}
+
+func (s *Service) Reject(
+	ctx context.Context,
+	req *ApprovalActionRequest,
+) (*formulatemplate.FormulaTemplate, error) {
+	if err := approvalworkflow.RequireComment(req, "rejecting a formula template"); err != nil {
+		return nil, err
+	}
+
+	billingVersion := s.approvedVersionNumber(ctx, req.EntityID, req.TenantInfo)
+	destination := formulatemplate.StatusInactive
+	if billingVersion > 0 {
+		destination = formulatemplate.StatusDraft
+	}
+
+	var submitterID *pulid.ID
+	var rejected *formulatemplate.FormulaTemplate
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
+			Operation:    "Reject",
+			From:         formulatemplate.StatusInReview,
+			To:           destination,
+			PermissionOp: permission.OpReject,
+			AuditComment: "Formula template rejected",
+			Apply: func(
+				template *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+				_ int64,
+			) {
+				if template.SubmittedByID != nil {
+					captured := *template.SubmittedByID
+					submitterID = &captured
+				}
+				template.SubmittedByID = nil
+				template.SubmittedAt = nil
+				template.ReviewComment = r.Comment
+			},
+			AfterSave: func(
+				aCtx context.Context,
+				updated *formulatemplate.FormulaTemplate,
+				r *ApprovalActionRequest,
+			) error {
+				cleared, clearErr := s.templates.ClearScheduledVersions(aCtx, updated)
+				if clearErr != nil {
+					return clearErr
+				}
+				if cleared > 0 {
+					s.l.Info("rejection cleared scheduled versions",
+						zap.String("templateID", updated.ID.String()),
+						zap.Int64("cleared", cleared),
+					)
+				}
+				return s.recordReview(aCtx, updated, r.TenantInfo, &reviewRecord{
+					Comment:  r.Comment,
+					Decision: formulatemplate.ReviewDecisionRejected,
+				})
+			},
+		})
+		if txErr != nil {
+			return txErr
+		}
+
+		rejected = result
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.notifyReviewOutcome(ctx, req.TenantInfo, &reviewOutcome{
+		Template:       rejected,
+		SubmitterID:    submitterID,
+		Decision:       formulatemplate.ReviewDecisionRejected,
+		Comment:        req.Comment,
+		BillingVersion: billingVersion,
+	})
+
+	return rejected, nil
+}
+
+func (s *Service) approvals(
+	ctx context.Context,
+) approvalworkflow.Engine[*formulatemplate.FormulaTemplate, formulatemplate.Status] {
+	return approvalworkflow.Engine[*formulatemplate.FormulaTemplate, formulatemplate.Status]{
+		Label: "template",
+		Load: func(
+			ctx context.Context,
+			id pulid.ID,
+			tenant pagination.TenantInfo,
+		) (*formulatemplate.FormulaTemplate, error) {
+			return s.templates.GetTemplateByIDWithTenant(ctx, id, tenant)
+		},
+		Save: s.repo.Update,
+		StatusOf: func(t *formulatemplate.FormulaTemplate) formulatemplate.Status {
+			return t.Status
+		},
+		SetStatus: func(t *formulatemplate.FormulaTemplate, status formulatemplate.Status) {
+			t.Status = status
+		},
+		CanTransition: formulatemplate.CanTransition,
+		Snapshot: func(t *formulatemplate.FormulaTemplate) *formulatemplate.FormulaTemplate {
+			snapshot := *t
+			return &snapshot
+		},
+		Audit: func(
+			updated, original *formulatemplate.FormulaTemplate,
+			operation permission.Operation,
+			req *ApprovalActionRequest,
+			comment string,
+		) {
+			opts := make([]auditports.LogOption, 0, 1)
+			if operation == permission.OpApprove || operation == permission.OpReject {
+				opts = append(opts, auditservice.WithCritical())
+			}
+			s.templates.LogAuditAction(
+				ctx,
+				s.l.With(zap.String("operation", string(operation))),
+				updated,
+				operation,
+				req.TenantInfo.UserID,
+				original,
+				comment,
+				opts...,
+			)
+		},
+	}
+}

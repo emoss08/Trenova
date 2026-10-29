@@ -8,10 +8,13 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/adapterregistry"
+	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionengine"
+	"github.com/emoss08/trenova/internal/infrastructure/config/aiconfig"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,32 +24,32 @@ import (
 )
 
 type fakeRepo struct {
-	agentports.AIProviderRepository
+	aiproviderports.AIProviderRepository
 
 	providers []*aiprovider.Provider
 	byID      *aiprovider.Provider
-	err       error
+	Err       error
 }
 
 func (f *fakeRepo) ListForTask(
 	_ context.Context,
-	_ agentports.ListAIProvidersForTaskRequest,
+	_ aiproviderports.ListAIProvidersForTaskRequest,
 ) ([]*aiprovider.Provider, error) {
-	return f.providers, f.err
+	return f.providers, f.Err
 }
 
 func (f *fakeRepo) List(
 	_ context.Context,
-	_ *agentports.ListAIProviderRequest,
+	_ *aiproviderports.ListAIProviderRequest,
 ) (*pagination.ListResult[*aiprovider.Provider], error) {
 	return nil, nil
 }
 
 func (f *fakeRepo) GetByID(
 	_ context.Context,
-	_ agentports.GetAIProviderByIDRequest,
+	_ aiproviderports.GetAIProviderByIDRequest,
 ) (*aiprovider.Provider, error) {
-	return f.byID, f.err
+	return f.byID, f.Err
 }
 
 func (f *fakeRepo) Create(
@@ -63,21 +66,21 @@ func (f *fakeRepo) Update(
 	return e, nil
 }
 
-func (f *fakeRepo) Delete(_ context.Context, _ agentports.DeleteAIProviderRequest) error {
+func (f *fakeRepo) Delete(_ context.Context, _ aiproviderports.DeleteAIProviderRequest) error {
 	return nil
 }
 
 func newTestService(t *testing.T, providers ...*aiprovider.Provider) *Service {
 	t.Helper()
 
-	return &Service{
-		logger:     zap.NewNop(),
-		ai:         &config.AIConfig{MaxRetries: 1},
-		repo:       &fakeRepo{providers: providers},
-		encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
-		adapters:   modeladapter.NewRegistry(),
-		clients:    make(map[bool]*http.Client, 2),
-	}
+	return compose(&completionengine.Engine{
+		Logger:     zap.NewNop(),
+		AI:         &aiconfig.Config{MaxRetries: 1},
+		Repo:       &fakeRepo{providers: providers},
+		Encryption: encryptionservice.NewWithKeyManager(encryptionservice.NewLocalKeyManager("k")),
+		Adapters:   adapterregistry.NewRegistry(),
+		Clients:    make(map[bool]*http.Client, 2),
+	})
 }
 
 // chatServer stands in for any OpenAI-compatible endpoint. It records how many
@@ -124,21 +127,21 @@ func openAIChatProvider(name, baseURL string, priority int) *aiprovider.Provider
 		StructuredOutputMode: aiprovider.StructuredOutputPrompted,
 		MaxTokens:            2048,
 		Priority:             priority,
-		Tasks:                []aiprovider.Task{aiprovider.TaskGeneral},
+		Tasks:                []aitask.Task{aitask.TaskGeneral},
 		Enabled:              true,
 	}
 }
 
-func generalRequest() *agentports.StructuredCompletionRequest {
-	return &agentports.StructuredCompletionRequest{
+func generalRequest() *llmports.StructuredCompletionRequest {
+	return &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskGeneral,
+		Task:   aitask.TaskGeneral,
 		System: "You are a test.",
-		Context: agentports.DelimitedContext{
-			Sections: []agentports.ContextSection{
+		Context: llmports.DelimitedContext{
+			Sections: []llmports.ContextSection{
 				{Title: "Input", Trusted: true, Content: "hello"},
 			},
 		},
@@ -177,7 +180,7 @@ func TestCompleteStructured_SkipsProviderNotServingTask(t *testing.T) {
 
 	server, calls := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	provider := openAIChatProvider("extraction-only", server.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	provider.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, provider)
 
@@ -252,12 +255,12 @@ func TestCompleteStructured_DisabledGlobally(t *testing.T) {
 
 	off := false
 	svc := newTestService(t)
-	svc.ai = &config.AIConfig{Enabled: &off}
+	svc.AI = &aiconfig.Config{Enabled: &off}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "disabled")
-	assert.Contains(t, err.Error(), config.AIEnabledKey,
+	assert.Contains(t, err.Error(), aiconfig.EnabledKey,
 		"a refusal that does not name the key leaves the operator searching")
 }
 
@@ -267,12 +270,12 @@ func TestCompleteStructured_IsNotGatedByDocumentExtraction(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(t)
-	svc.ai = &config.AIConfig{DocumentExtraction: false}
+	svc.AI = &aiconfig.Config{DocumentExtraction: false}
 
 	_, err := svc.CompleteStructured(t.Context(), generalRequest())
 
 	if err != nil {
-		assert.NotContains(t, err.Error(), config.AIEnabledKey,
+		assert.NotContains(t, err.Error(), aiconfig.EnabledKey,
 			"the document-intelligence switch must not report the AI gate")
 	}
 }
@@ -287,24 +290,24 @@ func TestCompleteStructured_FallsThroughOnUnparseableOutput(t *testing.T) {
 			`"evidence":[{"type":"doc","id":"d1"}]}]}`)
 
 	weak := openAIChatProvider("weak-local", garbage.URL, 10)
-	weak.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	weak.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	weak.Trusted = true
 
 	strong := openAIChatProvider("hosted", good.URL, 20)
-	strong.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	strong.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	strong.Trusted = true
 
 	svc := newTestService(t, weak, strong)
 
-	result, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
+	result, err := svc.CompleteStructured(t.Context(), &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskBillingDiagnosis,
+		Task:   aitask.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
-		Context: agentports.DelimitedContext{
-			Sections: []agentports.ContextSection{
+		Context: llmports.DelimitedContext{
+			Sections: []llmports.ContextSection{
 				{Title: "Item", Trusted: true, Content: "blocked"},
 			},
 		},
@@ -334,17 +337,17 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 
 	server, calls := chatServer(t, http.StatusOK, `{"proposals":[],"exceptions":[]}`)
 	provider := openAIChatProvider("untrusted-local", server.URL, 10)
-	provider.Tasks = []aiprovider.Task{aiprovider.TaskBillingDiagnosis}
+	provider.Tasks = []aitask.Task{aitask.TaskBillingDiagnosis}
 	provider.Trusted = false
 
 	svc := newTestService(t, provider)
 
-	_, err := svc.CompleteStructured(t.Context(), &agentports.StructuredCompletionRequest{
+	_, err := svc.CompleteStructured(t.Context(), &llmports.StructuredCompletionRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		Task:   aiprovider.TaskBillingDiagnosis,
+		Task:   aitask.TaskBillingDiagnosis,
 		System: "Diagnose the blocker.",
 	})
 	require.Error(t, err)
@@ -370,7 +373,12 @@ func TestCompleteStructured_RequiredProviderNeverFallsThrough(t *testing.T) {
 	_, err := svc.CompleteStructured(t.Context(), request)
 	require.Error(t, err)
 	assert.Positive(t, failingCalls.Load())
-	assert.Equal(t, int32(0), healthyCalls.Load(), "a required provider is never replaced by another")
+	assert.Equal(
+		t,
+		int32(0),
+		healthyCalls.Load(),
+		"a required provider is never replaced by another",
+	)
 }
 
 func TestCompleteStructured_RequiredProviderServesTheCall(t *testing.T) {
@@ -400,7 +408,7 @@ func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
 	server, calls := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
 	serving := openAIChatProvider("serving", server.URL, 10)
 	notServing := openAIChatProvider("not-serving", server.URL, 20)
-	notServing.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+	notServing.Tasks = []aitask.Task{aitask.TaskDocumentExtraction}
 
 	svc := newTestService(t, serving, notServing)
 
@@ -409,6 +417,6 @@ func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
 	request.RequireProvider = true
 
 	_, err := svc.CompleteStructured(t.Context(), request)
-	require.ErrorIs(t, err, agentports.ErrRequiredProviderUnavailable)
+	require.ErrorIs(t, err, llmports.ErrRequiredProviderUnavailable)
 	assert.Equal(t, int32(0), calls.Load())
 }

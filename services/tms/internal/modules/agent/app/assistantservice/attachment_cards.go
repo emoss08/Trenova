@@ -3,13 +3,18 @@ package assistantservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/extractionartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/toolartifacts"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -21,45 +26,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	// attachmentCallID names the extraction card kept for an attached file.
-	// It is one card per file and thread, so reading the file again after
-	// its extraction changed revises the card rather than adding another.
-	attachmentCallID = "attachment:"
-)
-
-// attachedExtraction keeps what document intelligence read off a file the
-// person attached as its extraction card beside the conversation. It reads
-// the draft through intake_get_draft as the person, so the card shows only
-// what they may read, in the same shape as the card the agent opens. It is
-// nil while nothing has been read off the file, and for a file that does not
-// give a shipment draft.
-func (r *artifactRecorder) attachedExtraction(documentID pulid.ID) *assistantartifact.Artifact {
-	if r == nil || r.svc == nil || r.svc.runtime == nil || documentID.IsNil() {
-		return nil
-	}
-
-	read, ok := r.svc.runtime.ReadRecordWith(
-		r.ctx,
-		r.reader,
-		toolGetShipmentDraft,
-		documentID.String(),
-	)
-	if !ok {
-		return nil
-	}
-	card := r.extraction(attachmentCallID+documentID.String(), read.Data)
-	if card == nil {
-		return nil
-	}
-	saved, err := r.save(card)
-	if err != nil {
-		return nil
-	}
-
-	return saved
-}
-
 // showAttachments puts the extraction of each file attached to this message
 // beside the conversation before the agent answers, and tells the agent
 // where it is so the reply can point to it rather than read it again.
@@ -68,7 +34,7 @@ func (s *Service) showAttachments(
 	thread *conversation.Thread,
 	actor *permissionports.RequestActor,
 	tenant pagination.TenantInfo,
-	attachments []agentdefinition.RuntimeAttachment,
+	attachments []agentturn.RuntimeAttachment,
 ) {
 	if len(attachments) == 0 || thread.Origin.AnswersInline() {
 		return
@@ -83,8 +49,8 @@ func (s *Service) showAttachments(
 		if err != nil {
 			continue
 		}
-		if saved := recorder.attachedExtraction(documentID); saved != nil {
-			attachments[idx].Shown = agentruntime.ArtifactRef(shownArtifact(saved))
+		if saved := recorder.AttachedExtraction(documentID); saved != nil {
+			attachments[idx].Shown = replycheck.ArtifactRef(toolartifacts.ShownArtifact(saved))
 		}
 	}
 }
@@ -109,10 +75,10 @@ func (s *Service) showFinishedAttachments(
 	}
 
 	for idx := range plan.Attachments {
-		recorder.attachedExtraction(plan.Attachments[idx].DocumentID)
+		recorder.AttachedExtraction(plan.Attachments[idx].DocumentID)
 	}
 	for _, documentID := range plan.Readings {
-		recorder.attachedExtraction(documentID)
+		recorder.AttachedExtraction(documentID)
 	}
 }
 
@@ -121,8 +87,8 @@ func (s *Service) showFinishedAttachments(
 // longer than most turns, so this is how the card usually arrives: after the
 // reply, in the conversation the file was sent in, read as the person who
 // sent it. A file uploaded and never sent gets no card.
-func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.AgentEvent) {
-	if event == nil || event.Kind != agent.EventDocumentExtracted ||
+func (s *Service) AttachmentExtracted(ctx context.Context, event *agenteventports.AgentEvent) {
+	if event == nil || event.Kind != agenttrigger.EventDocumentExtracted ||
 		s.documents == nil || s.artifacts == nil {
 		return
 	}
@@ -146,7 +112,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		BuID:   doc.BusinessUnitID,
 		UserID: doc.UploadedByID,
 	}
-	sent, err := s.conversations.CarriesAttachment(ctx, &agentports.CarriesAttachmentRequest{
+	sent, err := s.conversations.CarriesAttachment(ctx, &conversationports.CarriesAttachmentRequest{
 		ThreadID:   threads[0],
 		DocumentID: doc.ID,
 		TenantInfo: tenant,
@@ -159,7 +125,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 		return
 	}
 
-	thread, err := s.conversations.GetThread(ctx, agentports.GetThreadRequest{
+	thread, err := s.conversations.GetThread(ctx, &conversationports.GetThreadRequest{
 		ID:         threads[0],
 		UserID:     doc.UploadedByID,
 		TenantInfo: tenant,
@@ -173,7 +139,7 @@ func (s *Service) AttachmentExtracted(ctx context.Context, event *agentports.Age
 	}
 
 	recorder := s.newArtifactRecorder(ctx, thread, tenant, permissionports.UserActor(tenant), nil)
-	recorder.attachedExtraction(doc.ID)
+	recorder.AttachedExtraction(doc.ID)
 }
 
 // UnreadFileRun is the work a tool call that found a file still being read
@@ -196,19 +162,21 @@ type UnreadFileRun struct {
 func (s *Service) WaitOnUnreadFile(
 	ctx context.Context,
 	run *UnreadFileRun,
-	observation *agentports.ToolObservation,
+	observation *agentruntimeports.ToolObservation,
 ) {
 	if s.readWaits == nil || run == nil || run.Delegated || run.ThreadID.IsNil() ||
 		run.Actor == nil || observation == nil || observation.Failed ||
 		observation.Call.Name != agentdefinition.CoreToolReadAttachment {
 		return
 	}
-	read, ok := toJSONDocument(observation.Data)
+	read, ok := artifactpayload.ToJSONDocument(observation.Data)
 	if !ok {
 		return
 	}
-	reading := typeutils.StringOfTrimmed(read.fields["reading"])
-	documentID, err := pulid.Parse(typeutils.StringOfTrimmed(read.fields[draftDocumentIDParam]))
+	reading := typeutils.StringOfTrimmed(read.Fields["reading"])
+	documentID, err := pulid.Parse(
+		typeutils.StringOfTrimmed(read.Fields[extractionartifact.DraftDocumentIDParam]),
+	)
 	if reading == "" || err != nil {
 		return
 	}
@@ -218,9 +186,9 @@ func (s *Service) WaitOnUnreadFile(
 		DefinitionID: run.DefinitionID,
 		ThreadID:     run.ThreadID,
 		DocumentID:   documentID,
-		FileName:     typeutils.StringOfTrimmed(read.fields["fileName"]),
+		FileName:     typeutils.StringOfTrimmed(read.Fields["fileName"]),
 	}
-	if !typeutils.BoolOf(read.fields["stillBeingRead"]) {
+	if !typeutils.BoolOf(read.Fields["stillBeingRead"]) {
 		if err = s.readWaits.StopWaitingForDocumentRead(ctx, req); err != nil {
 			s.logger.Warn("could not stop waiting on a file the agent has read",
 				zap.String("documentId", documentID.String()), zap.Error(err))
@@ -253,13 +221,15 @@ func (s *Service) showReading(
 	if documentID.IsNil() || thread.Origin.AnswersInline() {
 		return ""
 	}
-	saved := s.newArtifactRecorder(ctx, thread, tenant, actor, nil).attachedExtraction(documentID)
+	saved := s.newArtifactRecorder(ctx, thread, tenant, actor, nil).AttachedExtraction(documentID)
 	if saved == nil {
 		return ""
 	}
 
 	return "\n\nWhat was read off the file is shown beside the conversation as " +
-		agentruntime.ArtifactRef(shownArtifact(saved)) + ". When the reply is about what " +
+		replycheck.ArtifactRef(
+			toolartifacts.ShownArtifact(saved),
+		) + ". When the reply is about what " +
 		"was read, point to it by writing that link, exactly so, inside the sentence; do not " +
 		"publish the reading as a document."
 }

@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerscheduleports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -36,13 +36,13 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
-	Repo         workerports.SchedulingRepository
+	Repo         workerscheduleports.SchedulingRepository
 	AuditService auditports.AuditService
 }
 
 type Service struct {
 	l            *zap.Logger
-	repo         workerports.SchedulingRepository
+	repo         workerscheduleports.SchedulingRepository
 	auditService auditports.AuditService
 }
 
@@ -57,7 +57,7 @@ func New(p Params) *Service {
 // Deps is the constructor shape tests use to swap in fakes.
 type Deps struct {
 	Logger       *zap.Logger
-	Repo         workerports.SchedulingRepository
+	Repo         workerscheduleports.SchedulingRepository
 	AuditService auditports.AuditService
 }
 
@@ -109,8 +109,8 @@ func (s *Service) audit(p auditParams) {
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
-	req *workerports.ListShiftTemplatesRequest,
-) ([]*worker.ShiftTemplate, error) {
+	req *workerscheduleports.ListShiftTemplatesRequest,
+) ([]*workerschedule.ShiftTemplate, error) {
 	return s.repo.ListTemplates(ctx, req)
 }
 
@@ -118,16 +118,27 @@ func (s *Service) GetTemplate(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.ShiftTemplate, error) {
-	return s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+) (*workerschedule.ShiftTemplate, error) {
+	return s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
 }
 
+func (s *Service) GetTemplatesByIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	ids []pulid.ID,
+) ([]*workerschedule.ShiftTemplate, error) {
+	return s.repo.GetTemplatesByIDs(ctx, &workerscheduleports.GetShiftTemplatesByIDsRequest{
+		TenantInfo:  tenantInfo,
+		TemplateIDs: ids,
+	})
+}
+
 // CreateTemplateRequest is a new working pattern.
 type CreateTemplateRequest struct {
-	Entity     *worker.ShiftTemplate
+	Entity     *workerschedule.ShiftTemplate
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -135,7 +146,7 @@ type CreateTemplateRequest struct {
 func (s *Service) CreateTemplate(
 	ctx context.Context,
 	req *CreateTemplateRequest,
-) (*worker.ShiftTemplate, error) {
+) (*workerschedule.ShiftTemplate, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
@@ -167,7 +178,7 @@ func (s *Service) CreateTemplate(
 
 // UpdateTemplateRequest edits a working pattern.
 type UpdateTemplateRequest struct {
-	Entity     *worker.ShiftTemplate
+	Entity     *workerschedule.ShiftTemplate
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -175,7 +186,7 @@ type UpdateTemplateRequest struct {
 func (s *Service) UpdateTemplate(
 	ctx context.Context,
 	req *UpdateTemplateRequest,
-) (*worker.ShiftTemplate, error) {
+) (*workerschedule.ShiftTemplate, error) {
 	entity := req.Entity
 	entity.OrganizationID = req.TenantInfo.OrgID
 	entity.BusinessUnitID = req.TenantInfo.BuID
@@ -187,7 +198,7 @@ func (s *Service) UpdateTemplate(
 		return nil, multiErr
 	}
 
-	original, err := s.repo.GetTemplateByID(ctx, &workerports.GetShiftTemplateByIDRequest{
+	original, err := s.repo.GetTemplateByID(ctx, &workerscheduleports.GetShiftTemplateByIDRequest{
 		ID:         entity.ID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -233,8 +244,8 @@ func (s *Service) UpdateTemplate(
 
 func (s *Service) ListAssignments(
 	ctx context.Context,
-	req *workerports.ListShiftAssignmentsRequest,
-) ([]*worker.WorkerShiftAssignment, error) {
+	req *workerscheduleports.ListShiftAssignmentsRequest,
+) ([]*workerschedule.WorkerShiftAssignment, error) {
 	return s.repo.ListAssignments(ctx, req)
 }
 
@@ -242,8 +253,8 @@ func (s *Service) GetAssignment(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.WorkerShiftAssignment, error) {
-	return s.repo.GetAssignmentByID(ctx, &workerports.GetShiftAssignmentByIDRequest{
+) (*workerschedule.WorkerShiftAssignment, error) {
+	return s.repo.GetAssignmentByID(ctx, &workerscheduleports.GetShiftAssignmentByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -264,7 +275,7 @@ func (s *Service) CountTemplateAssignmentsByIDs(
 ) (map[pulid.ID]int, error) {
 	return s.repo.CountTemplateAssignmentsByIDs(
 		ctx,
-		&workerports.CountShiftTemplateAssignmentsRequest{
+		&workerscheduleports.CountShiftTemplateAssignmentsRequest{
 			TenantInfo:  tenantInfo,
 			TemplateIDs: templateIDs,
 		},
@@ -273,7 +284,7 @@ func (s *Service) CountTemplateAssignmentsByIDs(
 
 // AssignShiftRequest puts a worker on a pattern from a date.
 type AssignShiftRequest struct {
-	Entity     *worker.WorkerShiftAssignment
+	Entity     *workerschedule.WorkerShiftAssignment
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -284,7 +295,7 @@ type AssignShiftRequest struct {
 func (s *Service) AssignShift(
 	ctx context.Context,
 	req *AssignShiftRequest,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	plan, err := s.planAssignShift(ctx, req)
 	if err != nil {
 		return nil, err
@@ -364,7 +375,7 @@ type EndAssignmentRequest struct {
 func (s *Service) EndAssignment(
 	ctx context.Context,
 	req *EndAssignmentRequest,
-) (*worker.WorkerShiftAssignment, error) {
+) (*workerschedule.WorkerShiftAssignment, error) {
 	previous, assignment, err := s.planEndAssignment(ctx, req)
 	if err != nil {
 		return nil, err
@@ -391,14 +402,14 @@ func (s *Service) EndAssignment(
 
 func (s *Service) ListPreferences(
 	ctx context.Context,
-	req *workerports.ListAvailabilityPreferencesRequest,
-) ([]*worker.WorkerAvailabilityPreference, error) {
+	req *workerscheduleports.ListAvailabilityPreferencesRequest,
+) ([]*workerschedule.WorkerAvailabilityPreference, error) {
 	return s.repo.ListPreferences(ctx, req)
 }
 
 // SetPreferenceRequest states what a worker would rather work on one weekday.
 type SetPreferenceRequest struct {
-	Entity     *worker.WorkerAvailabilityPreference
+	Entity     *workerschedule.WorkerAvailabilityPreference
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -406,7 +417,7 @@ type SetPreferenceRequest struct {
 func (s *Service) SetPreference(
 	ctx context.Context,
 	req *SetPreferenceRequest,
-) (*worker.WorkerAvailabilityPreference, error) {
+) (*workerschedule.WorkerAvailabilityPreference, error) {
 	entity, err := s.planSetPreference(req)
 	if err != nil {
 		return nil, err
@@ -432,8 +443,8 @@ func (s *Service) SetPreference(
 
 func (s *Service) ListSwaps(
 	ctx context.Context,
-	req *workerports.ListShiftSwapsRequest,
-) ([]*worker.ShiftSwapRequest, error) {
+	req *workerscheduleports.ListShiftSwapsRequest,
+) ([]*workerschedule.ShiftSwapRequest, error) {
 	return s.repo.ListSwaps(ctx, req)
 }
 
@@ -441,8 +452,8 @@ func (s *Service) GetSwap(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	id pulid.ID,
-) (*worker.ShiftSwapRequest, error) {
-	return s.repo.GetSwapByID(ctx, &workerports.GetShiftSwapByIDRequest{
+) (*workerschedule.ShiftSwapRequest, error) {
+	return s.repo.GetSwapByID(ctx, &workerscheduleports.GetShiftSwapByIDRequest{
 		ID:         id,
 		TenantInfo: tenantInfo,
 	})
@@ -450,7 +461,7 @@ func (s *Service) GetSwap(
 
 // ProposeSwapRequest is one driver asking another to take a day.
 type ProposeSwapRequest struct {
-	Entity     *worker.ShiftSwapRequest
+	Entity     *workerschedule.ShiftSwapRequest
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
 }
@@ -458,7 +469,7 @@ type ProposeSwapRequest struct {
 func (s *Service) ProposeSwap(
 	ctx context.Context,
 	req *ProposeSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	entity, err := s.planProposeSwap(req)
 	if err != nil {
 		return nil, err
@@ -488,7 +499,7 @@ func (s *Service) ProposeSwap(
 // who can withdraw.
 type TransitionSwapRequest struct {
 	ID            pulid.ID
-	Status        worker.ShiftSwapStatus
+	Status        workerschedule.ShiftSwapStatus
 	Note          string
 	ActorWorkerID pulid.ID
 	TenantInfo    pagination.TenantInfo
@@ -501,7 +512,7 @@ type TransitionSwapRequest struct {
 func (s *Service) TransitionSwap(
 	ctx context.Context,
 	req *TransitionSwapRequest,
-) (*worker.ShiftSwapRequest, error) {
+) (*workerschedule.ShiftSwapRequest, error) {
 	previous, swap, err := s.planTransitionSwap(ctx, req)
 	if err != nil {
 		return nil, err
@@ -529,13 +540,13 @@ func (s *Service) TransitionSwap(
 // authoriseSwapActor keeps a driver from answering on somebody else's behalf.
 // The office is not checked here — a manager reaching this code has already
 // been through the permission gate for the decision.
-func authoriseSwapActor(swap *worker.ShiftSwapRequest, req *TransitionSwapRequest) error {
+func authoriseSwapActor(swap *workerschedule.ShiftSwapRequest, req *TransitionSwapRequest) error {
 	if req.ActorWorkerID.IsNil() {
 		return nil
 	}
 
 	switch req.Status {
-	case worker.SwapAccepted, worker.SwapDeclined:
+	case workerschedule.SwapAccepted, workerschedule.SwapDeclined:
 		if swap.CounterpartyWorkerID != req.ActorWorkerID {
 			return errortypes.NewValidationError(
 				"status",
@@ -543,7 +554,7 @@ func authoriseSwapActor(swap *worker.ShiftSwapRequest, req *TransitionSwapReques
 				"Only the driver a swap was offered to can answer it",
 			)
 		}
-	case worker.SwapWithdrawn:
+	case workerschedule.SwapWithdrawn:
 		if swap.RequestingWorkerID != req.ActorWorkerID {
 			return errortypes.NewValidationError(
 				"status",
@@ -551,27 +562,27 @@ func authoriseSwapActor(swap *worker.ShiftSwapRequest, req *TransitionSwapReques
 				"Only the driver who proposed a swap can withdraw it",
 			)
 		}
-	case worker.SwapApproved, worker.SwapRejected:
+	case workerschedule.SwapApproved, workerschedule.SwapRejected:
 		return errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalidOperation,
 			"A swap is decided by the office, not by a driver",
 		)
-	case worker.SwapProposed:
+	case workerschedule.SwapProposed:
 	}
 
 	return nil
 }
 
-func swapOperation(status worker.ShiftSwapStatus) permission.Operation {
+func swapOperation(status workerschedule.ShiftSwapStatus) permission.Operation {
 	switch status {
-	case worker.SwapApproved:
+	case workerschedule.SwapApproved:
 		return permission.OpApprove
-	case worker.SwapRejected, worker.SwapDeclined:
+	case workerschedule.SwapRejected, workerschedule.SwapDeclined:
 		return permission.OpReject
-	case worker.SwapWithdrawn:
+	case workerschedule.SwapWithdrawn:
 		return permission.OpCancel
-	case worker.SwapAccepted, worker.SwapProposed:
+	case workerschedule.SwapAccepted, workerschedule.SwapProposed:
 		return permission.OpUpdate
 	default:
 		return permission.OpUpdate

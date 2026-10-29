@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/responseguard"
-	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	_ "github.com/emoss08/trenova/internal/modules/settlement/domain/payexpense"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalinvitationservice"
+	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalrecordsservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -21,21 +23,27 @@ type Params struct {
 	fx.In
 
 	Service      *driverportalservice.Service
+	Invitations  *driverportalinvitationservice.Service
+	Records      *driverportalrecordsservice.Service
 	Logger       *zap.Logger
 	ErrorHandler *helpers.ErrorHandler
 }
 
 type Handler struct {
-	service *driverportalservice.Service
-	l       *zap.Logger
-	eh      *helpers.ErrorHandler
+	service     *driverportalservice.Service
+	invitations *driverportalinvitationservice.Service
+	records     *driverportalrecordsservice.Service
+	l           *zap.Logger
+	eh          *helpers.ErrorHandler
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		l:       p.Logger.With(zap.String("handler", "driver-portal")),
-		eh:      p.ErrorHandler,
+		service:     p.Service,
+		invitations: p.Invitations,
+		records:     p.Records,
+		l:           p.Logger.With(zap.String("handler", "driver-portal")),
+		eh:          p.ErrorHandler,
 	}
 }
 
@@ -225,7 +233,7 @@ func (h *Handler) uploadLoadDocument(c *gin.Context) {
 // @Produce json
 // @Param expenseID path string true "Expense ID"
 // @Param file formData file true "Receipt image"
-// @Success 200 {object} driverpay.Expense
+// @Success 200 {object} payexpense.Expense
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
 // @Router /portal/expenses/{expenseID}/receipt [post]
@@ -274,11 +282,11 @@ func tenantInfoFrom(authCtx *authctx.AuthContext) pagination.TenantInfo {
 // @Tags DriverPortal
 // @Produce json
 // @Param token query string true "Invitation token"
-// @Success 200 {object} driverportalservice.InvitationPreview
+// @Success 200 {object} driverportalinvitationservice.InvitationPreview
 // @Failure 422 {object} helpers.ProblemDetail
 // @Router /portal/invitations/preview [get]
 func (h *Handler) previewInvitation(c *gin.Context) {
-	preview, err := h.service.GetInvitationPreview(c.Request.Context(), c.Query("token"))
+	preview, err := h.invitations.GetInvitationPreview(c.Request.Context(), c.Query("token"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -299,7 +307,7 @@ type acceptInvitationRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body acceptInvitationRequest true "Invitation acceptance"
-// @Success 200 {object} driverportalservice.AcceptInvitationResult
+// @Success 200 {object} driverportalinvitationservice.AcceptInvitationResult
 // @Failure 422 {object} helpers.ProblemDetail
 // @Router /portal/invitations/accept [post]
 func (h *Handler) acceptInvitation(c *gin.Context) {
@@ -309,9 +317,9 @@ func (h *Handler) acceptInvitation(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.AcceptInvitation(
+	result, err := h.invitations.AcceptInvitation(
 		c.Request.Context(),
-		&driverportalservice.AcceptInvitationRequest{
+		&driverportalinvitationservice.AcceptInvitationRequest{
 			Token:    req.Token,
 			Password: req.Password,
 			Timezone: req.Timezone,
@@ -350,7 +358,7 @@ func (h *Handler) uploadCredentialDocument(c *gin.Context) {
 		return
 	}
 
-	uploaded, err := h.service.UploadMyCredentialDocument(
+	uploaded, err := h.records.UploadMyCredentialDocument(
 		c.Request.Context(),
 		tenantInfoFrom(authCtx),
 		credentialID,
