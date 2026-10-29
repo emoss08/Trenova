@@ -25,7 +25,7 @@ IdempotencyMiddleware ── Claim(scoped key, fingerprint) ──▶ Redis  ide
 |---|---|
 | Header names, key validation, scoping, fingerprint, context carrier | `services/tms/pkg/idempotency` |
 | Store port | `internal/modules/kernel/ports/kernelports/idempotency.go` |
-| Redis store (Lua claim / complete / release) | `internal/infrastructure/redis/repositories/idempotency.go` |
+| Redis store (Lua claim / complete / release) | `internal/infrastructure/redis/idempotencystore/idempotency.go` |
 | Middleware | `internal/api/middleware/idempotency.go`, registered in `Router.protectedGroup` |
 | Shipment create backstop | `shipments.idempotency_key`, `shipmentservice/shipment_idempotency.go` |
 | Configuration and defaults | `security.idempotency` in `config/config.example.yaml`, `securityconfig.IdempotencyConfig` |

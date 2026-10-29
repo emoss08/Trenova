@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	redisrepositories "github.com/emoss08/trenova/internal/infrastructure/redis/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/redis/writebuffer"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
@@ -350,8 +350,8 @@ func redisSecurityAuditor(
 
 	audit := auditservice.New(auditservice.Params{
 		AuditRepository: auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
-		AuditBufferRepository: redisrepositories.NewAuditBufferRepository(
-			redisrepositories.AuditBufferRepositoryParams{Client: client, Logger: logger},
+		AuditBufferRepository: writebuffer.NewAuditBufferRepository(
+			writebuffer.AuditBufferRepositoryParams{Client: client, Logger: logger},
 		),
 		Logger:  logger,
 		Config:  cfg,

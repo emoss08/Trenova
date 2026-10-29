@@ -152,7 +152,7 @@ provider that is down. The count of failures is per process; the rest is
 shared. When a worker opens the breaker it also writes `ai:breaker:{providerID}`
 to Redis with a TTL equal to the cooldown, through the
 `llmports.ProviderBreakerRepository` port
-(`redis/repositories/providerbreaker.go`, provided in `RedisRepositoriesModule`
+(`redis/providerstate/providerbreaker.go`, provided in `RedisRepositoriesModule`
 and injected `optional:"true"`). The key is the provider row's id, so a
 tenant-owned provider is its own breaker, and the value is a marker: nothing
 about the provider or its credentials is stored.

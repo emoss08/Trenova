@@ -24,7 +24,6 @@ debt:
   services/tms/internal/infrastructure/agentcompletion/modeladapter: 6687
   services/tms/internal/infrastructure/observability/metrics: 3261
   services/tms/internal/infrastructure/postgres/tenantbootstrap: 3141
-  services/tms/internal/infrastructure/redis/repositories: 3166
   services/tms/internal/modules/accounting/adapters/postgres/accountingsyncrepository: 5124
   services/tms/internal/modules/accounting/app/accountingconnectionservice: 3903
   services/tms/internal/modules/accounting/app/accountingmappingservice: 3333

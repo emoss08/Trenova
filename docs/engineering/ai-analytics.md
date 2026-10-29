@@ -40,7 +40,7 @@ agent runtime    ─▶ agent_runs / assistant_turns (status, fingerprint.stoppe
 | Ports and views | `agent/ports/aianalyticsports` (`AnalyticsReader`, `AnalyticsRefresher`, `AnalyticsService`, `AnalyticsCache`) |
 | Service | `agent/app/aianalyticsservice` (`service.go`, `assemble.go`, `tasks.go`, `narrative.go`, `refresh.go`) |
 | Repository and SQL | `agent/adapters/postgres/aianalyticsrepository` (`refreshsql.go`, `readsql.go`) |
-| Cache | `infrastructure/redis/repositories/aianalyticscache.go` |
+| Cache | `infrastructure/redis/aicache/aianalyticscache.go` |
 | Refresh workflow | `agent/jobs/aianalyticsjobs` (schedule `ai-analytics-refresh`, `RefreshAIAnalyticsWorkflow`) |
 | Routing change | `airouting.PlanRouteTo`, `AIProviderService.RouteTask`, mutation `routeAITask` |
 | GraphQL | `schema/aianalytics.graphqls`, `resolver/aianalyticsresolver` (permission `AgentRun` Read) |

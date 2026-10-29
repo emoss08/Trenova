@@ -1,0 +1,64 @@
+package entitycache
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/redishelpers"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+const (
+	organizationKeyPrefix = "organization"
+)
+
+type OrganizationRepositoryParams struct {
+	fx.In
+
+	Client *redis.Client
+	Logger *zap.Logger
+}
+
+type organizationRepository struct {
+	client *redis.Client
+	l      *zap.Logger
+}
+
+func NewOrganizationRepository(
+	p OrganizationRepositoryParams,
+) tenantports.OrganizationCacheRepository {
+	return &organizationRepository{
+		client: p.Client,
+		l:      p.Logger,
+	}
+}
+
+func (r *organizationRepository) GetByID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*tenant.Organization, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByID"),
+		zap.String("orgID", orgID.String()),
+	)
+
+	key := fmt.Sprintf("%s:%s", organizationKeyPrefix, orgID.String())
+
+	org := new(tenant.Organization)
+	if err := redishelpers.GetJSON(ctx, r.client, key, org); err != nil {
+		if redishelpers.IsRedisNil(err) {
+			log.Debug("organization cache miss")
+			return nil, err
+		}
+
+		log.Error("failed to get organization from redis", zap.Error(err))
+		return nil, err
+	}
+
+	return org, nil
+}
