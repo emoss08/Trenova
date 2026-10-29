@@ -169,7 +169,11 @@ modules:
       - integrationservice
       - notificationservice
       - pagefavoriteservice
+      - reportdashboardservice
       - reporting
+      - reportingtest
+      - reportscheduleservice
+      - reportviewservice
       - sidebarpreferenceservice
       - tablechangealertservice
       - tableconfigurationservice
@@ -181,7 +185,9 @@ modules:
       - bulkeditjobs
       - emailjobs
       - fuelcardjobs
+      - reportcatalogjobs
       - reportjobs
+      - reportnotify
     repository:
       - auditdlqrepository
       - auditrepository
@@ -319,7 +325,13 @@ modules:
       - factoringcompany
     service:
       - carriercapacityservice
+      - carrierintelenrollmentservice
+      - carrierintelmonitorservice
+      - carrierintelreviewservice
       - carrierintelservice
+      - carrierintelsourcingservice
+      - carrierintelverifyservice
+      - carrierintelvetservice
       - carrierservice
       - customerservice
       - factoringcompanyservice
@@ -363,6 +375,8 @@ modules:
     service:
       - benefitsservice
       - drivernotificationservice
+      - driverportalinvitationservice
+      - driverportalrecordsservice
       - driverportalservice
       - hosprojection
       - orgholidayservice
@@ -527,7 +541,11 @@ modules:
     service:
       - carrierassignmentservice
       - formulalibraryservice
+      - formulatemplateimportservice
+      - formulatemplatereviewservice
       - formulatemplateservice
+      - formulatemplatestudioservice
+      - formulatemplatetest
       - fuelsurchargeservice
       - rateagreementservice
       - rateconfirmationservice
@@ -539,6 +557,8 @@ modules:
       - ratezoneservice
       - ratinghydration
       - tariff
+      - tarifftables
+      - tariffverdict
     job:
       - formulatemplatejobs
       - fuelpricejobs
@@ -1002,9 +1022,19 @@ modules:
       - payexpense
       - recurringpay
     service:
+      - carriersettlementcostservice
+      - carriersettlementjournal
+      - carriersettlementrealtime
       - carriersettlementservice
+      - carriersettlementworkspaceservice
       - driverpayservice
+      - driversettlementaccrualservice
+      - driversettlementjournal
+      - driversettlementrecurring
+      - driversettlementreviewservice
       - driversettlementservice
+      - driversettlementtransferservice
+      - driversettlementworkspaceservice
       - fuelpurchaseservice
       - iftaservice
       - settlementshared
