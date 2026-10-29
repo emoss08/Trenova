@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
+const aiFieldRate = "rate"
+
 func mergeAIAnalysis(
 	fallback *documentanalysis.DocumentIntelligenceAnalysis,
 	aiExtract *documentaiextractionports.AIExtractResult,
@@ -160,9 +162,9 @@ func normalizeAIExtractResult(
 
 	ensureCanonicalAIField(
 		normalized,
-		"rate",
+		aiFieldRate,
 		[]string{
-			"rate",
+			aiFieldRate,
 			"totalrate",
 			"linehaul",
 			"linehaulrate",
@@ -191,8 +193,14 @@ func normalizeAIFieldKey(value string) string {
 	replacer := strings.NewReplacer(" ", "", "_", "", "-", "", "/", "")
 	normalized := replacer.Replace(strings.TrimSpace(strings.ToLower(value)))
 	switch normalized {
-	case "rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue":
-		return "rate"
+	case aiFieldRate,
+		"totalrate",
+		"linehaul",
+		"linehaulrate",
+		"freightcharge",
+		"total",
+		"amountdue":
+		return aiFieldRate
 	case "shipper", "shippername", "shipfrom", "originname":
 		return documentanalysis.StopRoleShipper
 	case "consignee", "receiver", "receivername", "deliveryto", "shipto", "destinationname":
@@ -279,7 +287,7 @@ func validateAIExtract(result *documentaiextractionports.AIExtractResult) string
 	requiredFields := []string{
 		documentanalysis.StopRoleShipper,
 		documentanalysis.StopRoleConsignee,
-		"rate",
+		aiFieldRate,
 	}
 	for _, key := range requiredFields {
 		field, ok := result.Fields[key]
@@ -440,7 +448,7 @@ func HasUsableShipmentDraft(intelligence *documentanalysis.DocumentIntelligenceA
 
 	return hasMeaningfulField(intelligence.Fields, documentanalysis.StopRoleShipper) &&
 		hasMeaningfulField(intelligence.Fields, documentanalysis.StopRoleConsignee) &&
-		hasMeaningfulField(intelligence.Fields, "rate")
+		hasMeaningfulField(intelligence.Fields, aiFieldRate)
 }
 
 func hasMeaningfulStopForRole(stops []*documentanalysis.IntelligenceStop, role string) bool {

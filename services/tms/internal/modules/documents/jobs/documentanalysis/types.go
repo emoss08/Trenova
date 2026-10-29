@@ -26,6 +26,9 @@ const (
 	StopRolePickup    = "pickup"
 	StopRoleDelivery  = "delivery"
 
+	mapKeyEvidenceExcerpt = "evidenceExcerpt"
+	mapKeySource          = "source"
+
 	KindRateConfirmation = "RateConfirmation"
 	KindBillOfLading     = "BillOfLading"
 	KindProofOfDelivery  = "ProofOfDelivery"
@@ -105,6 +108,7 @@ var (
 	phoneLineRegex = regexp.MustCompile(`^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$`)
 )
 
+//nolint:goconst // a vocabulary of label phrases matched in document text, not identifiers
 var Boundaries = []string{
 	"ship from", "ship to", "shipper", "consignee", "receiver", "delivery to", "delivered to",
 	"pickup", "delivery", "received by", "signed by", "receiver signature", "consignee signature",
@@ -254,27 +258,27 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 	fields := make(map[string]any, len(a.Fields))
 	for key, field := range a.Fields {
 		fields[key] = map[string]any{
-			"label":           field.Label,
-			"value":           field.Value,
-			"confidence":      field.Confidence,
-			"excerpt":         field.Excerpt,
-			"evidenceExcerpt": field.EvidenceExcerpt,
-			"pageNumber":      field.PageNumber,
-			"reviewRequired":  field.ReviewRequired,
-			"conflict":        field.Conflict,
-			"source":          field.Source,
+			"label":               field.Label,
+			"value":               field.Value,
+			"confidence":          field.Confidence,
+			"excerpt":             field.Excerpt,
+			mapKeyEvidenceExcerpt: field.EvidenceExcerpt,
+			"pageNumber":          field.PageNumber,
+			"reviewRequired":      field.ReviewRequired,
+			"conflict":            field.Conflict,
+			mapKeySource:          field.Source,
 		}
 	}
 
 	conflicts := make([]map[string]any, 0, len(a.Conflicts))
 	for _, conflict := range a.Conflicts {
 		conflicts = append(conflicts, map[string]any{
-			"key":             conflict.Key,
-			"label":           conflict.Label,
-			"values":          conflict.Values,
-			"pageNumbers":     conflict.PageNumbers,
-			"evidenceExcerpt": conflict.EvidenceExcerpt,
-			"source":          conflict.Source,
+			"key":                 conflict.Key,
+			"label":               conflict.Label,
+			"values":              conflict.Values,
+			"pageNumbers":         conflict.PageNumbers,
+			mapKeyEvidenceExcerpt: conflict.EvidenceExcerpt,
+			mapKeySource:          conflict.Source,
 		})
 	}
 
@@ -293,10 +297,10 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 			"timeWindow":          stop.TimeWindow,
 			"appointmentRequired": stop.AppointmentRequired,
 			"pageNumber":          stop.PageNumber,
-			"evidenceExcerpt":     stop.EvidenceExcerpt,
+			mapKeyEvidenceExcerpt: stop.EvidenceExcerpt,
 			"confidence":          stop.Confidence,
 			"reviewRequired":      stop.ReviewRequired,
-			"source":              stop.Source,
+			mapKeySource:          stop.Source,
 		})
 	}
 
