@@ -62,6 +62,7 @@ type Service struct {
 	wakes         inboundmessageports.TriageWakeScheduler
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	now := p.Now
 	if now == nil {

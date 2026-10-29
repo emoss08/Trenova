@@ -38,6 +38,7 @@ type Activities struct {
 	rollout           extractionrolloutports.ExtractionRolloutRouter
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func NewActivities(p ActivitiesParams) *Activities {
 	aiDocumentService := p.AIDocumentService
 	if aiDocumentService == nil {

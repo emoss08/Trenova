@@ -48,6 +48,7 @@ type Service struct {
 	secret          *ediprofilesecret.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	ediMetrics := documentmetrics.NewEDI(nil, p.Logger, false)
 	if p.Metrics != nil {

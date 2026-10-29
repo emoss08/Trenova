@@ -44,6 +44,7 @@ type Service struct {
 	tenderMapping       *editendermapping.Service
 }
 
+//nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) *Service {
 	return &Service{
 		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
