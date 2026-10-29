@@ -7,7 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/tenderingconfig"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/tendertemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
@@ -419,46 +420,49 @@ func (s *Service) offerResponseURL(token, action string) string {
 }
 
 type Service struct {
-	l            *zap.Logger
-	repo         tenderports.TenderRepository
-	carrierRepo  carrierports.CarrierRepository
-	shipmentRepo shipmentports.ShipmentRepository
-	orgRepo      tenantports.OrganizationRepository
-	cfg          *config.Config
-	templates    documenttemplateports.DocumentTemplateResolver
-	emailService emailports.EmailService
-	ediChannel   tenderports.EDITenderChannel
-	intelGate    carrierintelports.CarrierIntelGate
-	effects      *tendereffects.Effects
+	l               *zap.Logger
+	repo            tenderports.TenderRepository
+	carrierRepo     carrierports.CarrierRepository
+	shipmentRepo    shipmentports.ShipmentRepository
+	orgRepo         tenantports.OrganizationRepository
+	appConfig       *appconfig.Config
+	tenderingConfig *tenderingconfig.Config
+	templates       documenttemplateports.DocumentTemplateResolver
+	emailService    emailports.EmailService
+	ediChannel      tenderports.EDITenderChannel
+	intelGate       carrierintelports.CarrierIntelGate
+	effects         *tendereffects.Effects
 }
 
 type Deps struct {
-	Logger       *zap.Logger
-	Repo         tenderports.TenderRepository
-	CarrierRepo  carrierports.CarrierRepository
-	ShipmentRepo shipmentports.ShipmentRepository
-	OrgRepo      tenantports.OrganizationRepository
-	Config       *config.Config
-	Templates    documenttemplateports.DocumentTemplateResolver
-	EmailService emailports.EmailService
-	EDIChannel   tenderports.EDITenderChannel
-	IntelGate    carrierintelports.CarrierIntelGate
-	Effects      *tendereffects.Effects
+	Logger          *zap.Logger
+	Repo            tenderports.TenderRepository
+	CarrierRepo     carrierports.CarrierRepository
+	ShipmentRepo    shipmentports.ShipmentRepository
+	OrgRepo         tenantports.OrganizationRepository
+	AppConfig       *appconfig.Config
+	TenderingConfig *tenderingconfig.Config
+	Templates       documenttemplateports.DocumentTemplateResolver
+	EmailService    emailports.EmailService
+	EDIChannel      tenderports.EDITenderChannel
+	IntelGate       carrierintelports.CarrierIntelGate
+	Effects         *tendereffects.Effects
 }
 
 func New(d Deps) *Service {
 	return &Service{
-		l:            d.Logger,
-		repo:         d.Repo,
-		carrierRepo:  d.CarrierRepo,
-		shipmentRepo: d.ShipmentRepo,
-		orgRepo:      d.OrgRepo,
-		cfg:          d.Config,
-		templates:    d.Templates,
-		emailService: d.EmailService,
-		ediChannel:   d.EDIChannel,
-		intelGate:    d.IntelGate,
-		effects:      d.Effects,
+		l:               d.Logger,
+		repo:            d.Repo,
+		carrierRepo:     d.CarrierRepo,
+		shipmentRepo:    d.ShipmentRepo,
+		orgRepo:         d.OrgRepo,
+		appConfig:       d.AppConfig,
+		tenderingConfig: d.TenderingConfig,
+		templates:       d.Templates,
+		emailService:    d.EmailService,
+		ediChannel:      d.EDIChannel,
+		intelGate:       d.IntelGate,
+		effects:         d.Effects,
 	}
 }
 
