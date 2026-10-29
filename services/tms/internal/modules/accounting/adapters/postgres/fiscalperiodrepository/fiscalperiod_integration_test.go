@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,6 +102,39 @@ func (f *fiscalPeriodFixture) get(t *testing.T, period *fiscalperiod.FiscalPerio
 	require.NoError(t, err)
 
 	return stored
+}
+
+func TestGetByIDsReadsOnlyTheTenantsPeriods(t *testing.T) {
+	f := newFiscalPeriodFixture(t)
+	foreign := f.createPeriods(t, f.db.B, createYear(t, f.db, f.db.B))[0]
+
+	periods, err := f.repo.GetByIDs(f.db.A.Ctx, fiscalperiodports.GetFiscalPeriodsByIDsRequest{
+		TenantInfo: f.db.A.Info,
+		FiscalPeriodIDs: []pulid.ID{
+			f.periods[2].ID,
+			foreign.ID,
+			f.periods[0].ID,
+			pulid.MustNew("fp_"),
+		},
+	})
+	require.NoError(t, err)
+
+	names := make(map[pulid.ID]string, len(periods))
+	for _, period := range periods {
+		names[period.ID] = period.Name
+	}
+	assert.Equal(
+		t,
+		map[pulid.ID]string{f.periods[0].ID: "Period 1", f.periods[2].ID: "Period 3"},
+		names,
+	)
+
+	none, err := f.repo.GetByIDs(
+		f.db.A.Ctx,
+		fiscalperiodports.GetFiscalPeriodsByIDsRequest{TenantInfo: f.db.A.Info},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, none)
 }
 
 func TestUpdateWritesZeroValuedEditableColumns(t *testing.T) {

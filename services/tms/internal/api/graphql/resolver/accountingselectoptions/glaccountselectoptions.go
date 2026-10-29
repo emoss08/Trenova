@@ -8,7 +8,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
@@ -38,11 +41,12 @@ func (r *Sources) GLAccount(
 			return nil, err
 		}
 
-		items := make([]selectoption.Item, 0, len(entities))
-		for _, entity := range entities {
-			items = append(items, glAccountSelectOptionItem(entity))
-		}
-
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*glaccount.GLAccount).GetID,
+			glAccountSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -85,21 +89,23 @@ func (r *Sources) AccountType(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.AccountTypeService.Get(
-				ctx,
-				accounttypeports.GetAccountTypeByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, accountTypeSelectOptionItem(entity))
+		entities, err := r.AccountTypeService.GetByIDs(
+			ctx,
+			accounttypeports.GetAccountTypesByIDsRequest{
+				TenantInfo:     req.TenantInfo,
+				AccountTypeIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*accounttype.AccountType).GetID,
+			accountTypeSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -146,18 +152,20 @@ func (r *Sources) FiscalYear(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FiscalYearRepo.GetByID(ctx, fiscalyearports.GetFiscalYearByIDRequest{
-				ID:         id,
-				TenantInfo: req.TenantInfo,
-			})
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, fiscalYearSelectOptionItem(entity))
+		entities, err := r.FiscalYearRepo.GetByIDs(ctx, fiscalyearports.GetFiscalYearsByIDsRequest{
+			TenantInfo:    req.TenantInfo,
+			FiscalYearIDs: req.IDs,
+		})
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*fiscalyear.FiscalYear).GetID,
+			fiscalYearSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -183,21 +191,23 @@ func (r *Sources) FiscalPeriod(
 	req *selectoption.Request,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	if len(req.IDs) > 0 {
-		items := make([]selectoption.Item, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.FiscalPeriodRepo.GetByID(
-				ctx,
-				fiscalperiodports.GetFiscalPeriodByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, fiscalPeriodSelectOptionItem(entity))
+		entities, err := r.FiscalPeriodRepo.GetByIDs(
+			ctx,
+			fiscalperiodports.GetFiscalPeriodsByIDsRequest{
+				TenantInfo:      req.TenantInfo,
+				FiscalPeriodIDs: req.IDs,
+			},
+		)
+		if err != nil {
+			return nil, err
 		}
 
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*fiscalperiod.FiscalPeriod).GetID,
+			fiscalPeriodSelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 
@@ -235,11 +245,12 @@ func (r *Sources) JournalEntry(
 			return nil, err
 		}
 
-		items := make([]selectoption.Item, 0, len(entities))
-		for _, entity := range entities {
-			items = append(items, journalEntrySelectOptionItem(entity))
-		}
-
+		items := selectoption.OrderedItems(
+			req.IDs,
+			entities,
+			(*journalentry.JournalEntry).GetID,
+			journalEntrySelectOptionItem,
+		)
 		return selectoption.Connection(items, len(items), 0)
 	}
 

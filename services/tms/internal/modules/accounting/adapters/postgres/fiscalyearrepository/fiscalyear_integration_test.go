@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -209,6 +210,32 @@ func TestFiscalYearsStayInsideTheirTenant(t *testing.T) {
 	require.Len(t, listed.Items, 1)
 	assert.Equal(t, year.ID, listed.Items[0].ID)
 	assert.Equal(t, 1, listed.Total)
+}
+
+func TestGetByIDsReadsOnlyTheTenantsYears(t *testing.T) {
+	f := newFiscalYearFixture(t)
+	first := f.create(t, f.db.A, 2025, fiscalyear.StatusDraft)
+	second := f.create(t, f.db.A, 2026, fiscalyear.StatusDraft)
+	foreign := f.create(t, f.db.B, 2026, fiscalyear.StatusDraft)
+
+	years, err := f.repo.GetByIDs(f.db.A.Ctx, fiscalyearports.GetFiscalYearsByIDsRequest{
+		TenantInfo:    f.db.A.Info,
+		FiscalYearIDs: []pulid.ID{second.ID, foreign.ID, first.ID, pulid.MustNew("fyr_")},
+	})
+	require.NoError(t, err)
+
+	names := make(map[pulid.ID]string, len(years))
+	for _, year := range years {
+		names[year.ID] = year.Name
+	}
+	assert.Equal(t, map[pulid.ID]string{first.ID: "FY 2025", second.ID: "FY 2026"}, names)
+
+	none, err := f.repo.GetByIDs(
+		f.db.A.Ctx,
+		fiscalyearports.GetFiscalYearsByIDsRequest{TenantInfo: f.db.A.Info},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, none)
 }
 
 func TestGetByIDForUpdateFailsFastWhileTheYearIsLocked(t *testing.T) {

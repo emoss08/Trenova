@@ -627,6 +627,74 @@ func (_c *MockFiscalPeriodRepository_GetByIDForUpdate_Call) RunAndReturn(run fun
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockFiscalPeriodRepository
+func (_mock *MockFiscalPeriodRepository) GetByIDs(ctx context.Context, req fiscalperiodports.GetFiscalPeriodsByIDsRequest) ([]*fiscalperiod.FiscalPeriod, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*fiscalperiod.FiscalPeriod
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, fiscalperiodports.GetFiscalPeriodsByIDsRequest) ([]*fiscalperiod.FiscalPeriod, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, fiscalperiodports.GetFiscalPeriodsByIDsRequest) []*fiscalperiod.FiscalPeriod); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*fiscalperiod.FiscalPeriod)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, fiscalperiodports.GetFiscalPeriodsByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFiscalPeriodRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockFiscalPeriodRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req fiscalperiodports.GetFiscalPeriodsByIDsRequest
+func (_e *MockFiscalPeriodRepository_Expecter) GetByIDs(ctx any, req any) *MockFiscalPeriodRepository_GetByIDs_Call {
+	return &MockFiscalPeriodRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockFiscalPeriodRepository_GetByIDs_Call) Run(run func(ctx context.Context, req fiscalperiodports.GetFiscalPeriodsByIDsRequest)) *MockFiscalPeriodRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 fiscalperiodports.GetFiscalPeriodsByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(fiscalperiodports.GetFiscalPeriodsByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_GetByIDs_Call) Return(fiscalPeriods []*fiscalperiod.FiscalPeriod, err error) *MockFiscalPeriodRepository_GetByIDs_Call {
+	_c.Call.Return(fiscalPeriods, err)
+	return _c
+}
+
+func (_c *MockFiscalPeriodRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req fiscalperiodports.GetFiscalPeriodsByIDsRequest) ([]*fiscalperiod.FiscalPeriod, error)) *MockFiscalPeriodRepository_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetExpiredUnclosedPeriods provides a mock function for the type MockFiscalPeriodRepository
 func (_mock *MockFiscalPeriodRepository) GetExpiredUnclosedPeriods(ctx context.Context, req fiscalperiodports.GetExpiredUnclosedPeriodsRequest) ([]*fiscalperiod.FiscalPeriod, error) {
 	ret := _mock.Called(ctx, req)
