@@ -692,7 +692,7 @@ func TestGuardBudget(t *testing.T) {
 		require.ErrorIs(t, h.svc.GuardBudget(t.Context(), full), ErrSpendCapReached)
 
 		lite := *full
-		lite.endpoint = carrierintelusage.EndpointProfileLite
+		lite.Endpoint = carrierintelusage.EndpointProfileLite
 		require.NoError(t, h.svc.GuardBudget(t.Context(), &lite))
 	})
 }

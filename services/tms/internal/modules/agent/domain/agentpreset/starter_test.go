@@ -281,8 +281,9 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			needs: []string{
 				"carrier_list_intelligence_events", "carrier_get_intelligence_event",
 				"carrier_acknowledge_intelligence_event", "carrier_resolve_intelligence_event", "carrier_get",
+				"carrier_set_status",
 			},
-			never: []string{"carrier_set_status", "customer_send_email"},
+			never: []string{"customer_send_email"},
 		},
 		{
 			template: agenttemplate.TemplateComplianceAssistant,

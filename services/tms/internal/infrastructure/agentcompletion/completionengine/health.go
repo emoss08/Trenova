@@ -44,7 +44,7 @@ const (
 type ProviderHealth struct {
 	mu      sync.Mutex
 	clock   func() time.Time
-	Entries map[pulid.ID]*healthEntry
+	entries map[pulid.ID]*healthEntry
 
 	shared      llmports.ProviderBreakerRepository
 	Logger      *zap.Logger
@@ -64,7 +64,7 @@ func NewProviderHealth(clock func() time.Time) *ProviderHealth {
 
 	return &ProviderHealth{
 		clock:   clock,
-		Entries: make(map[pulid.ID]*healthEntry),
+		entries: make(map[pulid.ID]*healthEntry),
 		Logger:  zap.NewNop(),
 	}
 }
@@ -103,14 +103,27 @@ func (h *ProviderHealth) Resting(id pulid.ID) (time.Time, bool) {
 	return h.restingLocked(id, h.clock())
 }
 
+func (h *ProviderHealth) Holds(id pulid.ID) bool {
+	if h == nil {
+		return false
+	}
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	_, ok := h.entries[id]
+
+	return ok
+}
+
 func (h *ProviderHealth) restingLocked(id pulid.ID, now time.Time) (time.Time, bool) {
-	entry, ok := h.Entries[id]
+	entry, ok := h.entries[id]
 	if !ok || entry.openUntil.IsZero() {
 		return time.Time{}, false
 	}
 	if !now.Before(entry.openUntil) {
 		// The rest is over; the next failure starts a fresh count.
-		delete(h.Entries, id)
+		delete(h.entries, id)
 
 		return time.Time{}, false
 	}
@@ -136,7 +149,7 @@ func (h *ProviderHealth) Record(id pulid.ID, err error) bool {
 	defer h.mu.Unlock()
 
 	if err == nil {
-		delete(h.Entries, id)
+		delete(h.entries, id)
 
 		return false
 	}
@@ -144,10 +157,10 @@ func (h *ProviderHealth) Record(id pulid.ID, err error) bool {
 		return false
 	}
 
-	entry, ok := h.Entries[id]
+	entry, ok := h.entries[id]
 	if !ok {
 		entry = &healthEntry{}
-		h.Entries[id] = entry
+		h.entries[id] = entry
 	}
 	entry.failures++
 	if entry.failures < BreakerThreshold {
@@ -196,10 +209,10 @@ func (h *ProviderHealth) consult(ctx context.Context, ids []pulid.ID) {
 			continue
 		}
 		until := now.Add(min(rest, BreakerCooldown))
-		entry, ok := h.Entries[id]
+		entry, ok := h.entries[id]
 		if !ok {
 			entry = &healthEntry{}
-			h.Entries[id] = entry
+			h.entries[id] = entry
 		}
 		if until.After(entry.openUntil) {
 			entry.openUntil = until

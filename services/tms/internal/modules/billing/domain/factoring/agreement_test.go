@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,4 +81,46 @@ func TestAgreementValidate(t *testing.T) {
 			assert.Contains(t, errorFields(a), tc.field)
 		})
 	}
+}
+
+func TestAgreementPostingAccounts(t *testing.T) {
+	t.Parallel()
+
+	defaultAR := pulid.MustNew("gla_")
+	defaultCash := pulid.MustNew("gla_")
+	agreement := &factoring.Agreement{}
+
+	accounts := agreement.PostingAccounts(defaultAR, defaultCash)
+	assert.Equal(t, defaultCash, accounts.Cash)
+	fields := func(missing []factoring.MissingAccount) []string {
+		out := make([]string, 0, len(missing))
+		for _, m := range missing {
+			out = append(out, m.Field)
+		}
+		return out
+	}
+	assert.Equal(
+		t,
+		[]string{"feeExpenseAccountId", "dueFromFactorAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
+	)
+	assert.Equal(
+		t,
+		[]string{"feeExpenseAccountId", "liabilityAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSecuredBorrowing)),
+	)
+
+	agreement.CashAccountID = pulid.MustNew("gla_")
+	agreement.FeeExpenseAccountID = pulid.MustNew("gla_")
+	agreement.DueFromFactorAccountID = pulid.MustNew("gla_")
+	accounts = agreement.PostingAccounts(pulid.Nil, pulid.Nil)
+	assert.Equal(t, agreement.CashAccountID, accounts.Cash)
+	assert.Equal(
+		t,
+		[]string{"defaultArAccountId"},
+		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
+	)
+
+	agreement.ChargebackWindowDays = 90
+	assert.Equal(t, now+90*86_400, agreement.ChargebackDeadline(now))
 }

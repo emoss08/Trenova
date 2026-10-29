@@ -16,7 +16,7 @@ func declaredResources(t *testing.T) []string {
 	t.Helper()
 
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, "resource_gen.go", nil, 0)
+	file, err := parser.ParseFile(fset, "../permission/resource_gen.go", nil, 0)
 	require.NoError(t, err)
 
 	var resources []string

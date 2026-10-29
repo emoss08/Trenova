@@ -56,12 +56,7 @@ func stallingStreamServer(
 
 // charged reports whether the breaker holds any failure against a provider.
 func charged(service *Service, id pulid.ID) bool {
-	service.Health.mu.Lock()
-	defer service.Health.mu.Unlock()
-
-	_, ok := service.Health.Entries[id]
-
-	return ok
+	return service.Health.Holds(id)
 }
 
 // onlyRows waits for n usage rows and then makes sure no more arrive, since

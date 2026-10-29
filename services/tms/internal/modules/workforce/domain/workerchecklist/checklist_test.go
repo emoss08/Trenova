@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const day = int64(86400)
+
 func checklistTemplate() *workerchecklist.WorkerChecklistTemplate {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")

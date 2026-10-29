@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -354,4 +355,33 @@ func TestEvaluateReadinessSubmitted(t *testing.T) {
 		factoringreadiness.VerdictExcluded,
 		factoringreadiness.EvaluateReadiness(in).Verdict,
 	)
+}
+
+func TestEvaluateReadinessFundedAndChargedBack(t *testing.T) {
+	t.Parallel()
+
+	funded := readyInputs()
+	funded.Invoice.OpenBalanceMinor = 0
+	funded.SubmissionNumber = "FS2610000001"
+	funded.SubmissionItemStatus = factoringsubmission.SubmissionItemStatusFunded
+	got := factoringreadiness.EvaluateReadiness(funded)
+	assert.Equal(t, factoringreadiness.VerdictFunded, got.Verdict)
+	assert.Zero(t, got.FailedCount())
+
+	charged := readyInputs()
+	charged.ChargedBack = true
+	got = factoringreadiness.EvaluateReadiness(charged)
+	assert.Equal(t, factoringreadiness.VerdictExcluded, got.Verdict)
+	assert.Equal(
+		t,
+		[]factoringreadiness.CheckCode{factoringreadiness.CheckChargedBack},
+		codes(got.Checks),
+	)
+
+	resubmitted := readyInputs()
+	resubmitted.ChargedBack = true
+	resubmitted.SubmissionNumber = "FS2610000002"
+	resubmitted.SubmissionItemStatus = factoringsubmission.SubmissionItemStatusPending
+	got = factoringreadiness.EvaluateReadiness(resubmitted)
+	assert.Equal(t, factoringreadiness.VerdictSubmitted, got.Verdict)
 }

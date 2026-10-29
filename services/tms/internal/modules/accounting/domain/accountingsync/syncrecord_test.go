@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const now = int64(1_790_000_000)
+
 func queuedRecord(t *testing.T, awaitRelease bool) *accountingsync.AccountingSyncRecord {
 	t.Helper()
 	return accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{

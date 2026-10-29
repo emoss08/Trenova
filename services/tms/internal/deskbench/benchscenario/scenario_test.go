@@ -76,11 +76,7 @@ func TestLoadScenarios_TheEDIScenariosAskTheBenchEDIDeskAndCheckTheToolsTheyExis
 				proposed[proposal.Tool] = true
 			}
 			for _, attachment := range step.Attach {
-				assert.FileExists(
-					t,
-					filepath.Join("../../../deskbench/scenarios", attachment),
-					scenario.Name,
-				)
+				assert.FileExists(t, attachment, scenario.Name)
 			}
 		}
 	}

@@ -51,8 +51,9 @@ func TestProvider_AdvisedCostFor(t *testing.T) {
 		aipricing.AdvisedCostFor(executor, usage, nil),
 		"no advisor, the executor alone",
 	)
-	assert.Nil(t, (&aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}).
-		AdvisedCostFor(usage, advisor), "an unpriced executor stays unpriced")
+	assert.Nil(t, aipricing.AdvisedCostFor(
+		&aiprovider.Provider{Kind: aiprovider.KindAnthropicMessages}, usage, advisor),
+		"an unpriced executor stays unpriced")
 	assert.Nil(t, aipricing.AdvisedCostFor(executor, usage,
 		&aipricing.AdvisorUsage{Model: "house-advisor", Calls: 1}),
 		"an advisor without a list price leaves the call unpriced rather than undercounted")

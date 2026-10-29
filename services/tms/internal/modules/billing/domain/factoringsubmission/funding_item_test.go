@@ -3,8 +3,6 @@ package factoringsubmission_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringsubmission"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -154,75 +152,4 @@ func TestSubmissionResolve(t *testing.T) {
 	cancelled.Resolve(now)
 	assert.Equal(t, factoringsubmission.SubmissionStatusCancelled, cancelled.Status)
 	assert.False(t, cancelled.CanFund())
-}
-
-func TestEvaluateReadinessFundedAndChargedBack(t *testing.T) {
-	t.Parallel()
-
-	funded := readyInputs()
-	funded.Invoice.OpenBalanceMinor = 0
-	funded.SubmissionNumber = "FS2610000001"
-	funded.SubmissionItemStatus = factoringsubmission.SubmissionItemStatusFunded
-	got := factoringreadiness.EvaluateReadiness(funded)
-	assert.Equal(t, factoringreadiness.VerdictFunded, got.Verdict)
-	assert.Zero(t, got.FailedCount())
-
-	charged := readyInputs()
-	charged.ChargedBack = true
-	got = factoringreadiness.EvaluateReadiness(charged)
-	assert.Equal(t, factoringreadiness.VerdictExcluded, got.Verdict)
-	assert.Equal(
-		t,
-		[]factoringreadiness.CheckCode{factoringreadiness.CheckChargedBack},
-		codes(got.Checks),
-	)
-
-	resubmitted := readyInputs()
-	resubmitted.ChargedBack = true
-	resubmitted.SubmissionNumber = "FS2610000002"
-	resubmitted.SubmissionItemStatus = factoringsubmission.SubmissionItemStatusPending
-	got = factoringreadiness.EvaluateReadiness(resubmitted)
-	assert.Equal(t, factoringreadiness.VerdictSubmitted, got.Verdict)
-}
-
-func TestAgreementPostingAccounts(t *testing.T) {
-	t.Parallel()
-
-	defaultAR := pulid.MustNew("gla_")
-	defaultCash := pulid.MustNew("gla_")
-	agreement := &factoring.Agreement{}
-
-	accounts := agreement.PostingAccounts(defaultAR, defaultCash)
-	assert.Equal(t, defaultCash, accounts.Cash)
-	fields := func(missing []factoring.MissingAccount) []string {
-		out := make([]string, 0, len(missing))
-		for _, m := range missing {
-			out = append(out, m.Field)
-		}
-		return out
-	}
-	assert.Equal(
-		t,
-		[]string{"feeExpenseAccountId", "dueFromFactorAccountId"},
-		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
-	)
-	assert.Equal(
-		t,
-		[]string{"feeExpenseAccountId", "liabilityAccountId"},
-		fields(accounts.Missing(factoring.AccountingTreatmentSecuredBorrowing)),
-	)
-
-	agreement.CashAccountID = pulid.MustNew("gla_")
-	agreement.FeeExpenseAccountID = pulid.MustNew("gla_")
-	agreement.DueFromFactorAccountID = pulid.MustNew("gla_")
-	accounts = agreement.PostingAccounts(pulid.Nil, pulid.Nil)
-	assert.Equal(t, agreement.CashAccountID, accounts.Cash)
-	assert.Equal(
-		t,
-		[]string{"defaultArAccountId"},
-		fields(accounts.Missing(factoring.AccountingTreatmentSale)),
-	)
-
-	agreement.ChargebackWindowDays = 90
-	assert.Equal(t, now+90*86_400, agreement.ChargebackDeadline(now))
 }

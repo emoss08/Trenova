@@ -334,15 +334,17 @@ func TestBatchResults_RecordsEachRunItemOnceAtTheBatchRate(t *testing.T) {
 	assert.True(t, judged.Result.CostUSD.Equal(full.Div(decimal.NewFromInt(2))),
 		judged.Result.CostUSD.String())
 
-	assert.False(t, results["aeval_2"].Succeeded())
-	assert.Equal(t, "api_error", results["aeval_2"].FailureCode)
+	failed := results["aeval_2"]
+	assert.False(t, failed.Succeeded())
+	assert.Equal(t, "api_error", failed.FailureCode)
 	assert.Equal(t, "expired", results["aeval_3"].FailureCode)
+	unusable := results["aeval_4"]
 	assert.False(
 		t,
-		results["aeval_4"].Succeeded(),
+		unusable.Succeeded(),
 		"prose where an object was asked for is unusable",
 	)
-	assert.Equal(t, "unusable", results["aeval_4"].FailureCode)
+	assert.Equal(t, "unusable", unusable.FailureCode)
 
 	rows := usage.recorded(t, 3)
 	require.Len(t, rows, 3, "an expired request was never run and costs nothing")

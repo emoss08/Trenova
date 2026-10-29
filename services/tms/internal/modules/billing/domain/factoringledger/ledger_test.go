@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const now = int64(1_800_000_000)
+
 func fundedItem(t *testing.T) *factoringsubmission.SubmissionItem {
 	t.Helper()
 	item := &factoringsubmission.SubmissionItem{
