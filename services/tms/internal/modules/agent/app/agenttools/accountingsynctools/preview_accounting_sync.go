@@ -1,4 +1,4 @@
-package accountingtools
+package accountingsynctools
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -43,7 +44,7 @@ const fieldRedatedTo = "redatedTo"
 
 const fieldRedatedByID = "redatedById"
 
-func syncRecordOptions() []toolpreview.Option {
+func SyncRecordOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
 			changepreview.FieldStatus,
@@ -82,7 +83,7 @@ func syncPauseOptions() []toolpreview.Option {
 	}
 }
 
-func backfillOptions() []toolpreview.Option {
+func BackfillOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(
 			fieldRangeStart,
@@ -103,11 +104,11 @@ func backfillOptions() []toolpreview.Option {
 	}
 }
 
-func syncRecordRecord(record *accountingsync.AccountingSyncRecord) toolpreview.Record {
+func SyncRecordRecord(record *accountingsync.AccountingSyncRecord) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingSync,
 		ID:       record.ID,
-		Label:    syncDocumentLabel(record),
+		Label:    SyncDocumentLabel(record),
 		Version:  changepreview.PreviewVersion(record.Version),
 	}
 }
@@ -121,21 +122,16 @@ func syncConnectionRecord(summary *accountingsyncports.AccountingSyncSummary) to
 	}
 }
 
-func refusedSync(summary string, err error) (*agentpreview.ToolPreview, error) {
-	if changepreview.IsRefusal(err) {
-		return changepreview.WarnWouldFail(toolpreview.Build(summary), err), nil
-	}
-
-	return nil, err
-}
-
 func (t *RetryAccountingSyncTool) Preview(
 	ctx context.Context,
 	params agenttoolports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
-		return refusedSync("Would send documents to the accounting system again.", err)
+		return accountingtools.RefusedSync(
+			"Would send documents to the accounting system again.",
+			err,
+		)
 	}
 
 	if len(plan.req.IDs) == 0 {
@@ -161,15 +157,18 @@ func (t *RetryAccountingSyncTool) Preview(
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.records))
 	for _, record := range plan.records {
 		change, cErr := toolpreview.Update(
-			syncRecordRecord(record),
+			SyncRecordRecord(record),
 			record,
 			func(retried *accountingsync.AccountingSyncRecord) error {
 				return retried.Retry(now)
 			},
-			syncRecordOptions()...,
+			SyncRecordOptions()...,
 		)
 		if cErr != nil {
-			return refusedSync("Would send documents to the accounting system again.", cErr)
+			return accountingtools.RefusedSync(
+				"Would send documents to the accounting system again.",
+				cErr,
+			)
 		}
 		changes = append(changes, change)
 	}
@@ -213,16 +212,19 @@ func (t *SkipAccountingSyncTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	req, record, err := t.request(ctx, &params)
 	if err != nil {
-		return refusedSync("Would keep a document out of the accounting system.", err)
+		return accountingtools.RefusedSync(
+			"Would keep a document out of the accounting system.",
+			err,
+		)
 	}
 
 	plan, err := changepreview.PlanUpdate(
-		syncRecordRecord(record),
+		SyncRecordRecord(record),
 		record,
 		func(skipped *accountingsync.AccountingSyncRecord) error {
 			return skipped.Skip(req.UserID, req.Reason)
 		},
-		syncRecordOptions()...,
+		SyncRecordOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -231,7 +233,7 @@ func (t *SkipAccountingSyncTool) Preview(
 	return plan.PlanPreview(fmt.Sprintf(
 		"Would keep %s out of the accounting system for good: %s. Nothing sends it again, "+
 			"so the books will not have it unless someone enters it there.",
-		syncDocumentLabel(record),
+		SyncDocumentLabel(record),
 		req.Reason,
 	)), nil
 }
@@ -242,7 +244,7 @@ func (t *redateAccountingSyncTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	req, redatePlan, err := t.request(ctx, &params)
 	if err != nil {
-		return refusedSync(
+		return accountingtools.RefusedSync(
 			"Would send a document to the accounting system dated on the first open day.",
 			err,
 		)
@@ -250,12 +252,12 @@ func (t *redateAccountingSyncTool) Preview(
 
 	now := timeutils.NowUnix()
 	plan, err := changepreview.PlanUpdate(
-		syncRecordRecord(redatePlan.Before),
+		SyncRecordRecord(redatePlan.Before),
 		redatePlan.Before,
 		func(redated *accountingsync.AccountingSyncRecord) error {
 			return redated.Redate(req.UserID, redatePlan.SentDate, now)
 		},
-		syncRecordOptions()...,
+		SyncRecordOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -264,7 +266,7 @@ func (t *redateAccountingSyncTool) Preview(
 	return plan.PlanPreview(fmt.Sprintf(
 		"Would send %s to the accounting system dated %s, the first open day after its books "+
 			"closed. Trenova keeps the document's own date, and the note in the books names it.",
-		syncDocumentLabel(redatePlan.Before),
+		SyncDocumentLabel(redatePlan.Before),
 		redatePlan.SentDay,
 	)), nil
 }
@@ -275,7 +277,7 @@ func (t *PauseAccountingSyncTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	req, summary, err := t.request(ctx, &params)
 	if err != nil {
-		return refusedSync("Would pause sending to the accounting system.", err)
+		return accountingtools.RefusedSync("Would pause sending to the accounting system.", err)
 	}
 
 	now := timeutils.NowUnix()
@@ -307,7 +309,7 @@ func (t *ResumeAccountingSyncTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	_, summary, err := t.request(ctx, &params)
 	if err != nil {
-		return refusedSync("Would resume sending to the accounting system.", err)
+		return accountingtools.RefusedSync("Would resume sending to the accounting system.", err)
 	}
 
 	change, err := toolpreview.Update(
@@ -358,13 +360,16 @@ func (t *RequestAccountingBackfillTool) Preview(
 ) (*agentpreview.ToolPreview, error) {
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
-		return refusedSync("Would send earlier documents to the accounting system.", err)
+		return accountingtools.RefusedSync(
+			"Would send earlier documents to the accounting system.",
+			err,
+		)
 	}
 
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		Label:    "Backfill to " + plan.provider,
-	}, plan.backfill(), backfillOptions()...)
+	}, plan.backfill(), BackfillOptions()...)
 	if err != nil {
 		return nil, err
 	}

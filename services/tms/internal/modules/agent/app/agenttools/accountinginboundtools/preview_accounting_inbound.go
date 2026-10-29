@@ -1,4 +1,4 @@
-package accountingtools
+package accountinginboundtools
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -89,7 +90,7 @@ func (t *ApplyAccountingInboundChangeTool) Preview(
 
 	plan, err := t.PlanPreview(ctx, &params)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	now := timeutils.NowUnix()
@@ -107,7 +108,7 @@ func (t *ApplyAccountingInboundChangeTool) Preview(
 		inboundChangeOptions()...,
 	)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	preview := toolpreview.Build(inboundPostingSummary(plan), change)
@@ -124,7 +125,7 @@ func (t *IgnoreAccountingInboundChangeTool) Preview(
 
 	req, change, err := t.request(ctx, &params)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	now := timeutils.NowUnix()

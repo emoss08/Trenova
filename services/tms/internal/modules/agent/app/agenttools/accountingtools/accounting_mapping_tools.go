@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	toolAccountingListMappingGaps = "accounting_list_mapping_gaps"
+	ToolListMappingGaps = "accounting_list_mapping_gaps"
 )
 
 const maxMappingReasonRunes = 500
@@ -79,7 +79,7 @@ type accountingMappingWriter interface {
 	) (int, error)
 }
 
-func accountingSystemSchema() map[string]any {
+func SystemSchema() map[string]any {
 	return agenttoolschema.Enum(
 		"The accounting system, such as \"QuickBooksOnline\" or \"Xero\".",
 		agenttoolschema.AccountingSystems,
@@ -88,7 +88,7 @@ func accountingSystemSchema() map[string]any {
 
 func mappingTargetProperties() map[string]any {
 	return map[string]any{
-		ParamAccountingSystem: accountingSystemSchema(),
+		ParamAccountingSystem: SystemSchema(),
 		ParamMappingID: agenttoolschema.KindID(
 			"The mapping's id from accounting_list_mapping_gaps or "+
 				"accounting_get_mapping. Never guess one.",
@@ -115,7 +115,7 @@ func mappingTargetProperties() map[string]any {
 	}
 }
 
-func accountingSystemFrom(params map[string]any) (integration.Type, error) {
+func SystemFrom(params map[string]any) (integration.Type, error) {
 	system, err := toolparams.RequireString(params, ParamAccountingSystem)
 	if err != nil {
 		return "", err
@@ -130,7 +130,7 @@ func accountingSystemFrom(params map[string]any) (integration.Type, error) {
 func mappingRequestFrom(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingmappingports.SetAccountingMappingRequest, error) {
-	system, err := accountingSystemFrom(params.Params)
+	system, err := SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func findMapping(
 	return req, row, nil
 }
 
-func mappedLabel(row *accountingmapping.AccountingMapping) string {
+func MappedLabel(row *accountingmapping.AccountingMapping) string {
 	if row.ExternalName == "" {
 		return "nothing"
 	}
@@ -226,7 +226,7 @@ func (t *SetAccountingMappingTool) Name() string { return "accounting_set_mappin
 
 func (t *SetAccountingMappingTool) Recipe() []string {
 	return []string{
-		toolAccountingListMappingGaps,
+		ToolListMappingGaps,
 		"accounting_get_mapping",
 		"accounting_set_mapping",
 	}
@@ -245,7 +245,7 @@ func (t *SetAccountingMappingTool) SearchTerms() []string {
 }
 
 func (t *SetAccountingMappingTool) Prerequisites() []string {
-	return []string{toolAccountingListMappingGaps, toolGetAccountingMapping}
+	return []string{ToolListMappingGaps, toolGetAccountingMapping}
 }
 
 func (t *SetAccountingMappingTool) ParamSchema() map[string]any {
@@ -538,7 +538,7 @@ func (t *RefreshAccountingReferenceDataTool) Name() string {
 }
 
 func (t *RefreshAccountingReferenceDataTool) Recipe() []string {
-	return []string{"accounting_refresh_reference_data", toolAccountingListMappingGaps}
+	return []string{"accounting_refresh_reference_data", ToolListMappingGaps}
 }
 
 func (t *RefreshAccountingReferenceDataTool) Description() string {
@@ -555,7 +555,7 @@ func (t *RefreshAccountingReferenceDataTool) SearchTerms() []string {
 
 func (t *RefreshAccountingReferenceDataTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{ParamAccountingSystem: accountingSystemSchema()},
+		map[string]any{ParamAccountingSystem: SystemSchema()},
 		ParamAccountingSystem,
 	)
 }
@@ -585,7 +585,7 @@ func (t *RefreshAccountingReferenceDataTool) setup(
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := SystemFrom(params.Params)
 	if err != nil {
 		return nil, nil, err
 	}

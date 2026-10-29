@@ -1,4 +1,4 @@
-package accountingtools
+package accountinginboundtools
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +44,9 @@ func TestApplyAccountingInboundChange_PreviewShowsWhatItPosts(t *testing.T) {
 		}},
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
+	params := agenttoolstest.AccountingSyncParams(
+		map[string]any{"inboundChangeId": change.ID.String()},
+	)
 
 	previewer, ok := tool.(agenttoolports.ToolPreviewer)
 	require.True(t, ok)
@@ -70,7 +73,9 @@ func TestApplyAccountingInboundChange_PreviewWarnsWhenItNoLongerMatches(t *testi
 		Blocker: "INV-1001 was paid in Trenova after the payment was read.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
+	params := agenttoolstest.AccountingSyncParams(
+		map[string]any{"inboundChangeId": change.ID.String()},
+	)
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
@@ -85,7 +90,7 @@ func TestIgnoreAccountingInboundChange_PreviewShowsTheNote(t *testing.T) {
 	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "Keyed in Trenova by the AR team.",
 	})
@@ -108,7 +113,7 @@ func TestIgnoreAccountingInboundChange_PreviewWarnsOnAClosedPayment(t *testing.T
 	change := proposedPayment(accountinginbound.InboundStatusApplied)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "duplicate",
 	})

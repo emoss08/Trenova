@@ -1,10 +1,11 @@
-package accountingtools
+package accountingdrifttools
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -267,7 +268,7 @@ func (t *DismissAccountingDriftTool) ParamSchema() map[string]any {
 }
 
 func (t *DismissAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
 		tier:      agent.TierActWithApproval,
@@ -366,13 +367,13 @@ func (t *CheckAccountingDriftTool) SearchTerms() []string {
 
 func (t *CheckAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{ParamAccountingSystem: accountingSystemSchema()},
-		ParamAccountingSystem,
+		map[string]any{accountingtools.ParamAccountingSystem: accountingtools.SystemSchema()},
+		accountingtools.ParamAccountingSystem,
 	)
 }
 
 func (t *CheckAccountingDriftTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
 		tier:       agent.TierActWithApproval,
@@ -389,7 +390,7 @@ func (t *CheckAccountingDriftTool) setup(
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return "", nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return "", nil, err
 	}

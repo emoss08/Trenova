@@ -1,4 +1,4 @@
-package accountingtools
+package accountingdrifttools
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -152,7 +153,7 @@ func TestResolveAccountingDrift_PreviewsThenFixesAsTheApprover(t *testing.T) {
 	finding := openDriftFinding()
 	operator := newDriftOperator(finding)
 	tool := newResolveAccountingDriftTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"findingId": finding.ID.String(),
 		"direction": "AdjustTrenova",
 	})
@@ -185,14 +186,14 @@ func TestResolveAccountingDrift_RefusesAnUnknownDirectionOrARefusedFix(t *testin
 	operator := newDriftOperator(finding)
 	tool := newResolveAccountingDriftTool(operator)
 
-	err := tool.Execute(t.Context(), syncParams(map[string]any{
+	err := tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(map[string]any{
 		"findingId": finding.ID.String(),
 		"direction": "Sideways",
 	}))
 	require.Error(t, err)
 
 	operator.refuse = errortypes.NewBusinessError("INV-1001 already has a change on its way")
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"findingId": finding.ID.String(),
 		"direction": "PushTrenovaValue",
 	})
@@ -209,7 +210,7 @@ func TestDismissAccountingDrift_DismissesWithTheNoteAsTheAgent(t *testing.T) {
 	finding := openDriftFinding()
 	operator := newDriftOperator(finding)
 	tool := newDismissAccountingDriftTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"findingId": finding.ID.String(),
 		"note":      "  Rounding on the\n customer's side.  ",
 	})
@@ -228,7 +229,7 @@ func TestDismissAccountingDrift_DismissesWithTheNoteAsTheAgent(t *testing.T) {
 		"the service decides what an agent may dismiss",
 	)
 
-	require.Error(t, tool.Execute(t.Context(), syncParams(map[string]any{
+	require.Error(t, tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(map[string]any{
 		"findingId": finding.ID.String(),
 	})))
 }
@@ -239,7 +240,7 @@ func TestCheckAccountingDrift_StartsTheCheck(t *testing.T) {
 	finding := openDriftFinding()
 	operator := newDriftOperator(finding)
 	tool := newCheckAccountingDriftTool(operator)
-	params := syncParams(map[string]any{"system": "QuickBooksOnline"})
+	params := agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"})
 
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)

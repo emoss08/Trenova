@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingreviewtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingsynctools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
@@ -274,16 +276,16 @@ func TestConfirmAccountingMappingProposals_ConfirmsWhatWasShownAsTheAgent(t *tes
 	fuel := proposedMapping("Fuel surcharge", "91", "Fuel Surcharge")
 	reviewer := &fakeMappingReviewer{rows: []*accountingmapping.AccountingMapping{ar, fuel},
 		guard: &agenttoolstest.WriteGuard{}}
-	tool := accountingtools.NewConfirmAccountingMappingProposalsTool(reviewer)
+	tool := accountingreviewtools.NewConfirmAccountingMappingProposalsTool(reviewer)
 	params := agenttoolstest.ExecuteParams(
-		map[string]any{accountingtools.ParamMappingProposals: []any{
+		map[string]any{accountingreviewtools.ParamMappingProposals: []any{
 			map[string]any{
-				accountingtools.ParamMappingID:  ar.ID.String(),
-				accountingtools.ParamExternalID: "1",
+				accountingtools.ParamMappingID:        ar.ID.String(),
+				accountingreviewtools.ParamExternalID: "1",
 			},
 			map[string]any{
-				accountingtools.ParamMappingID:  fuel.ID.String(),
-				accountingtools.ParamExternalID: "91",
+				accountingtools.ParamMappingID:        fuel.ID.String(),
+				accountingreviewtools.ParamExternalID: "91",
 			},
 		}},
 	)
@@ -319,21 +321,21 @@ func TestConfirmAccountingMappingProposals_RefusesARepeatedMapping(t *testing.T)
 	t.Parallel()
 
 	ar := proposedMapping("Accounts receivable", "1", "A/R")
-	tool := accountingtools.NewConfirmAccountingMappingProposalsTool(&fakeMappingReviewer{
+	tool := accountingreviewtools.NewConfirmAccountingMappingProposalsTool(&fakeMappingReviewer{
 		rows: []*accountingmapping.AccountingMapping{ar},
 	})
 
 	require.Error(
 		t,
 		tool.(agenttoolports.ToolValidator).Validate(t.Context(), agenttoolstest.ExecuteParams(
-			map[string]any{accountingtools.ParamMappingProposals: []any{
+			map[string]any{accountingreviewtools.ParamMappingProposals: []any{
 				map[string]any{
-					accountingtools.ParamMappingID:  ar.ID.String(),
-					accountingtools.ParamExternalID: "1",
+					accountingtools.ParamMappingID:        ar.ID.String(),
+					accountingreviewtools.ParamExternalID: "1",
 				},
 				map[string]any{
-					accountingtools.ParamMappingID:  ar.ID.String(),
-					accountingtools.ParamExternalID: "1",
+					accountingtools.ParamMappingID:        ar.ID.String(),
+					accountingreviewtools.ParamExternalID: "1",
 				},
 			}},
 		)),
@@ -346,7 +348,7 @@ func TestRejectAccountingMappingProposal_UnmatchesItAsTheAgent(t *testing.T) {
 	customer := proposedMapping("Acme Freight", "50", "Acme Freight LLC")
 	reviewer := &fakeMappingReviewer{rows: []*accountingmapping.AccountingMapping{customer},
 		guard: &agenttoolstest.WriteGuard{}}
-	tool := accountingtools.NewRejectAccountingMappingProposalTool(reviewer)
+	tool := accountingreviewtools.NewRejectAccountingMappingProposalTool(reviewer)
 	params := agenttoolstest.ExecuteParams(
 		map[string]any{accountingtools.ParamMappingID: customer.ID.String()},
 	)
@@ -453,10 +455,10 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{held.ID: held},
 		guard:   &agenttoolstest.WriteGuard{},
 	}
-	tool := accountingtools.NewReleaseAccountingSyncTool(sync)
+	tool := accountingreviewtools.NewReleaseAccountingSyncTool(sync)
 	params := agenttoolstest.ExecuteParams(map[string]any{
-		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingtools.ParamSyncRecordIDs:    []any{held.ID.String()},
+		accountingtools.ParamAccountingSystem:  string(integration.TypeQuickBooksOnline),
+		accountingsynctools.ParamSyncRecordIDs: []any{held.ID.String()},
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -483,7 +485,7 @@ func TestReleaseAccountingSync_OnlyAPersonReleasesHeldDocuments(t *testing.T) {
 	assert.Equal(t, permission.ResourceAccountingSync, policy.Resource)
 	assert.Equal(t, agent.TierPropose, policy.MaxTier)
 	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
-	subset := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[accountingtools.ParamSyncRecordIDs]
+	subset := tool.ParamSchema()[toolschema.KeyProperties].(map[string]any)[accountingsynctools.ParamSyncRecordIDs]
 	assert.Equal(t, permission.ResourceAccountingSync.String(),
 		toolschema.SubsetResource(subset.(map[string]any)))
 }
@@ -492,15 +494,15 @@ func TestReleaseAccountingSync_RefusesADocumentThatIsNotHeld(t *testing.T) {
 	t.Parallel()
 
 	failed := heldRecord(accountingsync.SyncStatusDeadLettered)
-	tool := accountingtools.NewReleaseAccountingSyncTool(&fakeSyncReleaser{
+	tool := accountingreviewtools.NewReleaseAccountingSyncTool(&fakeSyncReleaser{
 		records: map[pulid.ID]*accountingsync.AccountingSyncRecord{failed.ID: failed},
 	})
 
 	err := tool.(agenttoolports.ToolValidator).Validate(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{
-			accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-			accountingtools.ParamSyncRecordIDs:    []any{failed.ID.String()},
+			accountingtools.ParamAccountingSystem:  string(integration.TypeQuickBooksOnline),
+			accountingsynctools.ParamSyncRecordIDs: []any{failed.ID.String()},
 		}),
 	)
 	require.Error(t, err)
@@ -515,10 +517,12 @@ func TestChangeAccountingBackfill_ActsOnTheBackfillInProgress(t *testing.T) {
 		Status: accountingbackfill.BackfillStatusRunning,
 	}
 	sync := &fakeSyncReleaser{backfill: backfill, guard: &agenttoolstest.WriteGuard{}}
-	tool := accountingtools.NewChangeAccountingBackfillTool(sync)
+	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync)
 	params := agenttoolstest.PersonParams(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillPause),
+		accountingreviewtools.ParamBackfillAction: string(
+			accountingsyncports.AccountingBackfillPause,
+		),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -548,17 +552,21 @@ func TestChangeAccountingBackfill_RefusesAMoveTheBackfillCannotMake(t *testing.T
 		ID:     pulid.MustNew("acctbf_"),
 		Status: accountingbackfill.BackfillStatusRunning,
 	}}
-	tool := accountingtools.NewChangeAccountingBackfillTool(sync)
+	tool := accountingreviewtools.NewChangeAccountingBackfillTool(sync)
 
 	resume := agenttoolstest.PersonParams(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillResume),
+		accountingreviewtools.ParamBackfillAction: string(
+			accountingsyncports.AccountingBackfillResume,
+		),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), resume))
 
 	agentCall := agenttoolstest.AgentParamsFor(map[string]any{
 		accountingtools.ParamAccountingSystem: string(integration.TypeQuickBooksOnline),
-		accountingtools.ParamBackfillAction:   string(accountingsyncports.AccountingBackfillCancel),
+		accountingreviewtools.ParamBackfillAction: string(
+			accountingsyncports.AccountingBackfillCancel,
+		),
 	})
 	require.Error(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), agentCall))
 }

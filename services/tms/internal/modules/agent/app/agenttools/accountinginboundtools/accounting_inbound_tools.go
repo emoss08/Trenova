@@ -1,4 +1,4 @@
-package accountingtools
+package accountinginboundtools
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -252,7 +253,7 @@ func (t *IgnoreAccountingInboundChangeTool) ParamSchema() map[string]any {
 }
 
 func (t *IgnoreAccountingInboundChangeTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
 		tier:      agent.TierActWithApproval,

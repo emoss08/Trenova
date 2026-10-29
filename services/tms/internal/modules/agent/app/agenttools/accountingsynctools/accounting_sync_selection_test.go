@@ -1,4 +1,4 @@
-package accountingtools
+package accountingsynctools
 
 import (
 	"testing"
@@ -75,7 +75,7 @@ func TestRetryAccountingSync_PinsTheRecordsItsCategoriesNameWhenProposed(t *test
 	synced := failedSyncRecord(accountingsync.SyncStatusSynced, accountingsync.SyncErrorTransient)
 	operator := newSyncOperator(dead, limited, retrying, mapping, synced)
 	tool := newRetryAccountingSyncTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient", "RateLimited"},
 	})
@@ -122,12 +122,12 @@ func TestRetryAccountingSync_PreviewShowsThePinnedRecordsAndRunsOnlyThose(t *tes
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(
+		agenttoolstest.AccountingSyncParams(
 			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
 		),
 	)
 	require.NoError(t, err)
-	approved := approvedFrom(syncParams(pinned))
+	approved := approvedFrom(agenttoolstest.AccountingSyncParams(pinned))
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -175,7 +175,7 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 
 	pinned, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(
+		agenttoolstest.AccountingSyncParams(
 			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
 		),
 	)
@@ -183,7 +183,10 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 	require.Len(t, pinnedIDs(t, pinned), maxSyncRetryIDs)
 	require.NoError(
 		t,
-		tool.(agenttoolports.ToolValidator).Validate(t.Context(), syncParams(pinned)),
+		tool.(agenttoolports.ToolValidator).Validate(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(pinned),
+		),
 		"a pinned selection is a call the tool takes",
 	)
 
@@ -191,7 +194,10 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 		t,
 		&operator.guard,
 		func() (*agentpreview.ToolPreview, error) {
-			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), syncParams(pinned))
+			return tool.(agenttoolports.ToolPreviewer).Preview(
+				t.Context(),
+				agenttoolstest.AccountingSyncParams(pinned),
+			)
 		},
 	)
 	assert.True(t, preview.Partial, "the selection was cut to what one retry takes")
@@ -211,7 +217,7 @@ func TestRetryAccountingSync_RefusesToPinASelectionOfNothing(t *testing.T) {
 
 	_, err := retryPinner(t, tool).ResolveProposalSelection(
 		t.Context(),
-		syncParams(
+		agenttoolstest.AccountingSyncParams(
 			map[string]any{"system": "QuickBooksOnline", "errorCategories": []any{"Transient"}},
 		),
 	)
@@ -238,18 +244,25 @@ func TestRetryAccountingSync_LeavesNamedRecordsAndUnpinnableCallsAsTheyAre(t *te
 		},
 		{"system": "QuickBooksOnline"},
 	} {
-		pinned, err := pinner.ResolveProposalSelection(t.Context(), syncParams(params))
+		pinned, err := pinner.ResolveProposalSelection(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(params),
+		)
 		require.NoError(t, err, params)
 		assert.Equal(t, params, pinned, "only criteria alone are resolved")
 	}
 	assert.Empty(t, operator.listed)
 
-	require.Error(t,
-		validator.Validate(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+	require.Error(
+		t,
+		validator.Validate(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 		"naming neither records nor categories is refused, as before",
 	)
 	require.NoError(t,
-		validator.Validate(t.Context(), syncParams(map[string]any{
+		validator.Validate(t.Context(), agenttoolstest.AccountingSyncParams(map[string]any{
 			"system":          "QuickBooksOnline",
 			"syncRecordIds":   []any{blocked.ID.String()},
 			"errorCategories": []any{"Transient"},
@@ -267,7 +280,7 @@ func TestRetryAccountingSync_AnApprovalRunsOnlyOnRecordsItNames(t *testing.T) {
 	)
 	operator := newSyncOperator(dead)
 	tool := newRetryAccountingSyncTool(operator)
-	unpinned := approvedFrom(syncParams(map[string]any{
+	unpinned := approvedFrom(agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient"},
 	}))
@@ -293,7 +306,7 @@ func TestRetryAccountingSync_ANamedRecordThatNoLongerFailedThatWayIsNotShown(t *
 	moved := failedSyncRecord(accountingsync.SyncStatusBlocked, accountingsync.SyncErrorMapping)
 	operator := newSyncOperator(transient, moved)
 	tool := newRetryAccountingSyncTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"syncRecordIds":   []any{transient.ID.String(), moved.ID.String()},
 		"errorCategories": []any{"Transient"},

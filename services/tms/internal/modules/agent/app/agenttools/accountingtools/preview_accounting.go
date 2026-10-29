@@ -54,7 +54,7 @@ func accountingConnectionRecord(
 	}
 }
 
-func mappingRecord(row *accountingmapping.AccountingMapping) toolpreview.Record {
+func MappingRecord(row *accountingmapping.AccountingMapping) toolpreview.Record {
 	return toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		ID:       row.ID,
@@ -63,7 +63,7 @@ func mappingRecord(row *accountingmapping.AccountingMapping) toolpreview.Record 
 	}
 }
 
-func mappingOptions() []toolpreview.Option {
+func MappingOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(mappingFields...),
 		toolpreview.Labels(mappingLabels),
@@ -154,14 +154,14 @@ func (t *SetAccountingMappingTool) Preview(
 
 	choice := accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix())
 	change, err := toolpreview.Update(
-		mappingRecord(row),
+		MappingRecord(row),
 		row,
 		func(mapped *accountingmapping.AccountingMapping) error {
 			mapped.Confirm(choice)
 
 			return nil
 		},
-		mappingOptions()...,
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -189,8 +189,8 @@ func (t *ClearAccountingMappingTool) Preview(
 	summary := fmt.Sprintf(
 		"Would unmatch %s from %s, and never propose %s for it again.",
 		row.TargetLabel,
-		mappedLabel(row),
-		mappedLabel(row),
+		MappedLabel(row),
+		MappedLabel(row),
 	)
 	if _, err = t.mappings.GuardHistory(ctx, toolparams.TenantFrom(params), row, false); err != nil {
 		if changepreview.IsRefusal(err) {
@@ -201,10 +201,10 @@ func (t *ClearAccountingMappingTool) Preview(
 	}
 
 	plan, err := changepreview.PlanUpdate(
-		mappingRecord(row),
+		MappingRecord(row),
 		row,
 		func(cleared *accountingmapping.AccountingMapping) error { return cleared.Clear() },
-		mappingOptions()...,
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -234,7 +234,7 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	system, err := accountingSystemFrom(params.Params)
+	system, err := SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -258,14 +258,14 @@ func (t *CreateAccountingReferenceRecordTool) Preview(
 		},
 	)
 	mapped, err := toolpreview.Update(
-		mappingRecord(row),
+		MappingRecord(row),
 		row,
 		func(confirmed *accountingmapping.AccountingMapping) error {
 			confirmed.Confirm(choice)
 
 			return nil
 		},
-		mappingOptions()...,
+		MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err

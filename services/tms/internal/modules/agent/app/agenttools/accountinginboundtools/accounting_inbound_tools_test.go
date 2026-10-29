@@ -1,4 +1,4 @@
-package accountingtools
+package accountinginboundtools
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountinginbound"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountinginboundports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -114,7 +115,9 @@ func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 		}},
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
+	params := agenttoolstest.AccountingSyncParams(
+		map[string]any{"inboundChangeId": change.ID.String()},
+	)
 
 	require.NoError(t, tool.(agenttoolports.ToolValidator).Validate(t.Context(), params))
 	assert.Nil(t, operator.applied, "validating posts nothing")
@@ -141,7 +144,9 @@ func TestApplyAccountingInboundChange_RefusesWhatNoLongerMatches(t *testing.T) {
 		Blocker: "Pays 1500.25 USD on INV-1001, which has 0.00 USD open in Trenova.",
 	})
 	tool := newApplyAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
+	params := agenttoolstest.AccountingSyncParams(
+		map[string]any{"inboundChangeId": change.ID.String()},
+	)
 
 	err := tool.(agenttoolports.ToolValidator).Validate(t.Context(), params)
 	require.Error(t, err)
@@ -156,7 +161,7 @@ func TestIgnoreAccountingInboundChange_IgnoresWithTheNote(t *testing.T) {
 	change := proposedPayment(accountinginbound.InboundStatusProposed)
 	operator := newInboundOperator(change, &accountinginboundports.AccountingInboundApplyPreview{})
 	tool := newIgnoreAccountingInboundChangeTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"inboundChangeId": change.ID.String(),
 		"note":            "  Keyed in Trenova\n by the AR team.  ",
 	})
@@ -181,7 +186,11 @@ func TestIgnoreAccountingInboundChange_NeedsANoteAndAnOpenPayment(t *testing.T) 
 		{"inboundChangeId": "nope", "note": "duplicate"},
 		{"inboundChangeId": applied.ID.String(), "note": "duplicate"},
 	} {
-		require.Error(t, tool.Execute(t.Context(), syncParams(params)), params)
+		require.Error(
+			t,
+			tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(params)),
+			params,
+		)
 	}
 	assert.Nil(t, operator.ignored)
 }

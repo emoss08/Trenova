@@ -1,4 +1,4 @@
-package accountingtools
+package accountingreviewtools
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingmappingports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingsynctools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
@@ -115,13 +117,16 @@ func mappingProposalsProperty() map[string]any {
 		toolschema.KeyItems: map[string]any{
 			toolschema.KeyType: toolschema.TypeObject,
 			toolschema.KeyProperties: map[string]any{
-				ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
+				accountingtools.ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
 					"accounting_list_mapping_gaps or accounting_get_mapping.",
 					permission.KindAccountingMapping),
 				ParamExternalID: toolparams.StringProperty("The proposed record's externalId, as "+
 					"accounting_list_mapping_gaps shows it under mappedTo.", 0),
 			},
-			toolschema.KeyRequired:             []string{ParamMappingID, ParamExternalID},
+			toolschema.KeyRequired: []string{
+				accountingtools.ParamMappingID,
+				ParamExternalID,
+			},
 			toolschema.KeyAdditionalProperties: false,
 		},
 	}
@@ -151,7 +156,7 @@ func confirmMappingsRequest(
 		if !isObject {
 			return nil, fmt.Errorf("%s[%d] must be an object", ParamMappingProposals, idx)
 		}
-		id, err := toolparams.RequirePulid(fields, ParamMappingID)
+		id, err := toolparams.RequirePulid(fields, accountingtools.ParamMappingID)
 		if err != nil {
 			return nil, fmt.Errorf("%s[%d]: %w", ParamMappingProposals, idx, err)
 		}
@@ -193,7 +198,7 @@ func NewConfirmAccountingMappingProposalsTool(
 ) agenttoolports.AgentTool {
 	return toolspec.NewReceivableTool(mappingReviewSpec(&toolspec.ReceivableSpec{
 		Name:   "accounting_confirm_mapping",
-		Recipe: []string{toolAccountingListMappingGaps, "accounting_confirm_mapping"},
+		Recipe: []string{accountingtools.ToolListMappingGaps, "accounting_confirm_mapping"},
 		Description: "Confirm Trenova's proposed accounting system matches exactly as " +
 			"accounting_list_mapping_gaps shows them, several at once, so sync can use them. " +
 			"A proposal that changed since it was read is refused; to choose a different " +
@@ -239,16 +244,16 @@ func NewRejectAccountingMappingProposalTool(
 		Rationale: "Unmatches a proposal so it is not used; choosing a record for the mapping " +
 			"undoes it.",
 		Properties: map[string]any{
-			ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
+			accountingtools.ParamMappingID: agenttoolschema.KindID("The mapping's id, from "+
 				"accounting_list_mapping_gaps or accounting_get_mapping. Never guess one.",
 				permission.KindAccountingMapping),
 		},
-		Required: []string{ParamMappingID},
+		Required: []string{accountingtools.ParamMappingID},
 	}), toolspec.ReceivablePlan[*accountingmappingports.AccountingMappingActionRequest, *accountingmappingports.AccountingMappingChange]{
 		Request: func(
 			params *agenttoolports.ToolExecuteParams,
 		) (*accountingmappingports.AccountingMappingActionRequest, error) {
-			id, err := toolparams.RequirePulid(params.Params, ParamMappingID)
+			id, err := toolparams.RequirePulid(params.Params, accountingtools.ParamMappingID)
 			if err != nil {
 				return nil, err
 			}
@@ -286,11 +291,15 @@ func NewRejectAccountingMappingProposalTool(
 func releaseRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.ReleaseAccountingSyncRequest, error) {
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
-	ids, err := toolparams.RequirePulidSlice(params.Params, ParamSyncRecordIDs, maxSyncReleaseIDs)
+	ids, err := toolparams.RequirePulidSlice(
+		params.Params,
+		accountingsynctools.ParamSyncRecordIDs,
+		maxSyncReleaseIDs,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +317,12 @@ func planRelease(
 	sync accountingSyncReleaser,
 	req *accountingsyncports.ReleaseAccountingSyncRequest,
 ) (*releasePlan, error) {
-	summary, err := syncingConnectionFor(ctx, sync, req.TenantInfo, req.IntegrationType)
+	summary, err := accountingsynctools.SyncingConnectionFor(
+		ctx,
+		sync,
+		req.TenantInfo,
+		req.IntegrationType,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +336,7 @@ func planRelease(
 		if record.Status != accountingsync.SyncStatusAwaitingApproval {
 			return nil, errortypes.NewBusinessError(
 				"{0} is {1}; only a document awaiting approval is released",
-				syncDocumentLabel(record),
+				accountingsynctools.SyncDocumentLabel(record),
 				string(record.Status),
 			)
 		}
@@ -353,8 +367,8 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 		Rationale: "Sends documents a review policy held for a person to the organization's " +
 			"books; only a person releases them.",
 		Properties: map[string]any{
-			ParamAccountingSystem: accountingSystemSchema(),
-			ParamSyncRecordIDs: toolschema.RecordSubset(
+			accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
+			accountingsynctools.ParamSyncRecordIDs: toolschema.RecordSubset(
 				permission.ResourceAccountingSync.String(),
 				agenttoolschema.KindIDs(fmt.Sprintf(
 					"Up to %d sync records awaiting approval, from "+
@@ -363,7 +377,10 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 				), maxSyncReleaseIDs, permission.KindAccountingSyncRecord),
 			),
 		},
-		Required: []string{ParamAccountingSystem, ParamSyncRecordIDs},
+		Required: []string{
+			accountingtools.ParamAccountingSystem,
+			accountingsynctools.ParamSyncRecordIDs,
+		},
 	}, toolspec.ReceivablePlan[*accountingsyncports.ReleaseAccountingSyncRequest, *releasePlan]{
 		Request: releaseRequest,
 		Plan: func(
@@ -396,7 +413,7 @@ func NewReleaseAccountingSyncTool(sync accountingSyncReleaser) agenttoolports.Ag
 func backfillChangeRequest(
 	params *agenttoolports.ToolExecuteParams,
 ) (*accountingsyncports.ChangeAccountingBackfillRequest, error) {
-	if _, err := accountingSystemFrom(params.Params); err != nil {
+	if _, err := accountingtools.SystemFrom(params.Params); err != nil {
 		return nil, err
 	}
 	action, err := toolparams.RequireEnum(
@@ -426,7 +443,7 @@ func planBackfillChange(
 			"A backfill is changed by a person who manages the accounting integration",
 		)
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -485,11 +502,11 @@ func NewChangeAccountingBackfillTool(sync accountingBackfillChanger) agenttoolpo
 		Rationale: "Changes how much history reaches the organization's books; a person who " +
 			"manages the integration approves it, and pausing or cancelling sends nothing.",
 		Properties: map[string]any{
-			ParamAccountingSystem: accountingSystemSchema(),
+			accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
 			ParamBackfillAction: agenttoolschema.Enum("Pause holds what is left, Resume "+
 				"carries on from where it stopped, Cancel ends it for good.", backfillActions),
 		},
-		Required: []string{ParamAccountingSystem, ParamBackfillAction},
+		Required: []string{accountingtools.ParamAccountingSystem, ParamBackfillAction},
 	}, toolspec.ReceivablePlan[*accountingsyncports.ChangeAccountingBackfillRequest, *backfillChange]{
 		Request: backfillChangeRequest,
 		Plan: func(
@@ -527,10 +544,10 @@ func renderMappingConfirmations(
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.Changes))
 	for _, change := range plan.Changes {
 		recorded, err := toolpreview.Changed(
-			mappingRecord(change.Before),
+			accountingtools.MappingRecord(change.Before),
 			change.Before,
 			change.After,
-			mappingOptions()...,
+			accountingtools.MappingOptions()...,
 		)
 		if err != nil {
 			return nil, err
@@ -554,10 +571,10 @@ func renderMappingRejection(
 	change *accountingmappingports.AccountingMappingChange,
 ) (*agentpreview.ToolPreview, error) {
 	recorded, err := toolpreview.Changed(
-		mappingRecord(change.Before),
+		accountingtools.MappingRecord(change.Before),
 		change.Before,
 		change.After,
-		mappingOptions()...,
+		accountingtools.MappingOptions()...,
 	)
 	if err != nil {
 		return nil, err
@@ -566,9 +583,9 @@ func renderMappingRejection(
 	return toolpreview.Build(fmt.Sprintf(
 		"Would turn down %s for %s; it is unmatched again and %s is never proposed for it "+
 			"again.",
-		mappedLabel(change.Before),
+		accountingtools.MappedLabel(change.Before),
 		change.Before.TargetLabel,
-		mappedLabel(change.Before),
+		accountingtools.MappedLabel(change.Before),
 	), recorded), nil
 }
 
@@ -579,13 +596,13 @@ func renderRelease(
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.records))
 	for _, record := range plan.records {
 		change, err := toolpreview.Update(
-			syncRecordRecord(record),
+			accountingsynctools.SyncRecordRecord(record),
 			record,
 			func(released *accountingsync.AccountingSyncRecord) error {
 				released.Status = accountingsync.SyncStatusQueued
 				return nil
 			},
-			syncRecordOptions()...,
+			accountingsynctools.SyncRecordOptions()...,
 		)
 		if err != nil {
 			return nil, err
@@ -613,7 +630,7 @@ func renderBackfillChange(
 		},
 		change.before,
 		change.after,
-		backfillOptions()...,
+		accountingsynctools.BackfillOptions()...,
 	)
 	if err != nil {
 		return nil, err

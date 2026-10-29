@@ -1,4 +1,4 @@
-package accountingtools
+package accountingsynctools
 
 import (
 	"context"
@@ -153,7 +153,7 @@ func (f *fakeSyncOperator) PlanRedate(
 	if err := after.Redate(req.UserID, f.redateDay, timeutils.NowUnix()); err != nil {
 		return nil, errortypes.NewBusinessError(
 			"{0} is not held by a closed period, so it keeps its date",
-			syncDocumentLabel(record),
+			SyncDocumentLabel(record),
 		).WithInternal(err)
 	}
 	return &accountingsyncports.AccountingSyncRedatePlan{
@@ -283,13 +283,6 @@ func newSyncOperator(records ...*accountingsync.AccountingSyncRecord) *fakeSyncO
 	return operator
 }
 
-func syncParams(params map[string]any) agenttoolports.ToolExecuteParams {
-	out := agenttoolstest.ExecuteParams(params)
-	out.IdempotencyKey = "call-1"
-	out.Actor.PrincipalType = permissionports.PrincipalTypeUser
-	return out
-}
-
 func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	t.Parallel()
 
@@ -297,7 +290,7 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 	dead := syncRecord(accountingsync.SyncStatusDeadLettered)
 	operator := newSyncOperator(blocked, dead)
 	tool := newRetryAccountingSyncTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"syncRecordIds": []any{blocked.ID.String(), dead.ID.String(), blocked.ID.String()},
 	})
@@ -329,13 +322,13 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 		first,
 		blocked,
 		operator.savedRecords[0],
-		syncRecordOptions()...)
+		SyncRecordOptions()...)
 	agenttoolstest.RequireUpdateParity(
 		t,
 		agenttoolstest.PreviewChange(t, preview, 1),
 		dead,
 		operator.savedRecords[1],
-		syncRecordOptions()...,
+		SyncRecordOptions()...,
 	)
 }
 
@@ -344,7 +337,7 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 
 	operator := newSyncOperator()
 	tool := newRetryAccountingSyncTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient", "RateLimited"},
 	})
@@ -394,13 +387,16 @@ func TestRetryAccountingSync_RefusesWhatItCannotRetry(t *testing.T) {
 	} {
 		require.Error(
 			t,
-			tool.(agenttoolports.ToolValidator).Validate(t.Context(), syncParams(params)),
+			tool.(agenttoolports.ToolValidator).Validate(
+				t.Context(),
+				agenttoolstest.AccountingSyncParams(params),
+			),
 			params,
 		)
 	}
 
 	operator.summary.Connection.SyncEnabledAt = nil
-	require.Error(t, tool.Execute(t.Context(), syncParams(map[string]any{
+	require.Error(t, tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":          "QuickBooksOnline",
 		"errorCategories": []any{"Transient"},
 	})), "nothing is retried before sending has started")
@@ -419,7 +415,7 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	blocked := syncRecord(accountingsync.SyncStatusBlocked)
 	operator := newSyncOperator(blocked)
 	tool := newSkipAccountingSyncTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"syncRecordId": blocked.ID.String(),
 		"reason":       "  Entered by hand in QuickBooks\n on the 3rd.  ",
 	})
@@ -452,7 +448,7 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 		change,
 		blocked,
 		operator.savedRecords[0],
-		syncRecordOptions()...)
+		SyncRecordOptions()...)
 
 	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
@@ -478,7 +474,11 @@ func TestSkipAccountingSync_NeedsAReasonAndAnUnsentRecord(t *testing.T) {
 		{"syncRecordId": synced.ID.String(), "reason": "duplicate"},
 		{"syncRecordId": sending.ID.String(), "reason": "duplicate"},
 	} {
-		require.Error(t, tool.Execute(t.Context(), syncParams(params)), params)
+		require.Error(
+			t,
+			tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(params)),
+			params,
+		)
 	}
 	assert.Nil(t, operator.skipped)
 }
@@ -491,7 +491,7 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 	operator := newSyncOperator(held)
 	operator.redateDay = syncEnabledDay
 	tool := newRedateAccountingSyncTool(operator)
-	params := syncParams(map[string]any{"syncRecordId": held.ID.String()})
+	params := agenttoolstest.AccountingSyncParams(map[string]any{"syncRecordId": held.ID.String()})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
 		t,
@@ -521,7 +521,7 @@ func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing
 		change,
 		held,
 		operator.savedRecords[0],
-		syncRecordOptions()...)
+		SyncRecordOptions()...)
 
 	target, ok := tool.(agenttoolports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
@@ -546,7 +546,7 @@ func TestRedateAccountingSync_RefusesARecordNotHeldByAClosedPeriod(t *testing.T)
 		{"syncRecordId": synced.ID.String()},
 		{"syncRecordId": "nope"},
 	} {
-		err := tool.Execute(t.Context(), syncParams(params))
+		err := tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(params))
 		require.Error(t, err, params)
 	}
 	assert.Nil(t, operator.redated)
@@ -561,11 +561,14 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 
 	require.Error(
 		t,
-		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 	)
 	assert.Nil(t, operator.paused)
 
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system": "QuickBooksOnline",
 		"reason": "QuickBooks is down for maintenance until 6pm.",
 	})
@@ -609,7 +612,7 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 
 	operator := newSyncOperator()
 	tool := newResumeAccountingSyncTool(operator)
-	params := syncParams(map[string]any{"system": "QuickBooksOnline"})
+	params := agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"})
 
 	require.Error(t, tool.Execute(t.Context(), params))
 	assert.Nil(t, operator.resumed)
@@ -644,7 +647,7 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 
 	operator := newSyncOperator()
 	tool := newRequestAccountingBackfillTool(operator)
-	params := syncParams(map[string]any{
+	params := agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"from":          "2026-01-15",
 		"to":            "2026-02-10",
@@ -674,7 +677,7 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 		accountingsync.SyncObjectCustomerPayment,
 	}, operator.backfilled.ObjectTypes)
 	assert.Equal(t, params.Actor.UserID, operator.backfilled.UserID)
-	agenttoolstest.RequireCreateParity(t, created, operator.savedBackfill, backfillOptions()...)
+	agenttoolstest.RequireCreateParity(t, created, operator.savedBackfill, BackfillOptions()...)
 }
 
 func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
@@ -685,7 +688,10 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 
 	require.NoError(
 		t,
-		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 	)
 	require.NotNil(t, operator.backfilled)
 	assert.Equal(t, syncStartDay, *operator.backfilled.RangeStart)
@@ -704,7 +710,10 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	operator.summary.Connection.DriverSettlementsEnabledAt = &settlementsOn
 	require.NoError(
 		t,
-		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 	)
 	assert.Equal(t, []accountingsync.SyncObjectType{
 		accountingsync.SyncObjectInvoice,
@@ -722,7 +731,10 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	operator.summary.Connection.LedgerGranularity = accountingconnection.LedgerDailySummary
 	require.NoError(
 		t,
-		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 	)
 	assert.Equal(
 		t,
@@ -733,7 +745,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	operator.summary.Connection.SyncMode = accountingprovider.SyncModeDocument
 	operator.summary.Connection.LedgerGranularity = ""
 
-	err := tool.Execute(t.Context(), syncParams(map[string]any{
+	err := tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(map[string]any{
 		"system":        "QuickBooksOnline",
 		"documentTypes": []any{"DriverBill"},
 	}))
@@ -741,7 +753,7 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	operator.summary.Connection.DriverSettlementsEnabledAt = nil
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
-		syncParams(map[string]any{
+		agenttoolstest.AccountingSyncParams(map[string]any{
 			"system":        "QuickBooksOnline",
 			"documentTypes": []any{"DriverBill"},
 		}),
@@ -763,7 +775,11 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 		{"system": "QuickBooksOnline", "from": "15/01/2026"},
 		{"system": "QuickBooksOnline", "documentTypes": []any{"Customer"}},
 	} {
-		require.Error(t, tool.Execute(t.Context(), syncParams(params)), params)
+		require.Error(
+			t,
+			tool.Execute(t.Context(), agenttoolstest.AccountingSyncParams(params)),
+			params,
+		)
 	}
 
 	operator.summary.ActiveBackfill = &accountingbackfill.AccountingBackfill{
@@ -771,11 +787,14 @@ func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {
 	}
 	require.Error(
 		t,
-		tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})),
+		tool.Execute(
+			t.Context(),
+			agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"}),
+		),
 	)
 	operator.summary.ActiveBackfill = nil
 
-	agentParams := syncParams(map[string]any{"system": "QuickBooksOnline"})
+	agentParams := agenttoolstest.AccountingSyncParams(map[string]any{"system": "QuickBooksOnline"})
 	agentParams.Actor.PrincipalType = permissionports.PrincipalTypeAgent
 	require.Error(t, tool.Execute(t.Context(), agentParams), "a backfill is a person's to start")
 	assert.Nil(t, operator.backfilled)

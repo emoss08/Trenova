@@ -1,6 +1,9 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingdrifttools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountinginboundtools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingsynctools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/alerttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/bankreceipttools"
@@ -207,17 +210,17 @@ func ToolProviders() []any {
 		accountingtools.ProvideClearAccountingMappingTool,
 		accountingtools.ProvideCreateAccountingReferenceRecordTool,
 		accountingtools.ProvideRefreshAccountingReferenceDataTool,
-		accountingtools.ProvideRetryAccountingSyncTool,
-		accountingtools.ProvideSkipAccountingSyncTool,
-		accountingtools.ProvideRedateAccountingSyncTool,
-		accountingtools.ProvideApplyAccountingInboundChangeTool,
-		accountingtools.ProvideIgnoreAccountingInboundChangeTool,
-		accountingtools.ProvideResolveAccountingDriftTool,
-		accountingtools.ProvideDismissAccountingDriftTool,
-		accountingtools.ProvideCheckAccountingDriftTool,
-		accountingtools.ProvidePauseAccountingSyncTool,
-		accountingtools.ProvideResumeAccountingSyncTool,
-		accountingtools.ProvideRequestAccountingBackfillTool,
+		accountingsynctools.ProvideRetryAccountingSyncTool,
+		accountingsynctools.ProvideSkipAccountingSyncTool,
+		accountingsynctools.ProvideRedateAccountingSyncTool,
+		accountinginboundtools.ProvideApplyAccountingInboundChangeTool,
+		accountinginboundtools.ProvideIgnoreAccountingInboundChangeTool,
+		accountingdrifttools.ProvideResolveAccountingDriftTool,
+		accountingdrifttools.ProvideDismissAccountingDriftTool,
+		accountingdrifttools.ProvideCheckAccountingDriftTool,
+		accountingsynctools.ProvidePauseAccountingSyncTool,
+		accountingsynctools.ProvideResumeAccountingSyncTool,
+		accountingsynctools.ProvideRequestAccountingBackfillTool,
 		provideMatchBankReceiptTool,
 		providePostCustomerPaymentTool,
 		provideResolveBankReceiptWorkItemTool,

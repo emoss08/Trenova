@@ -1,4 +1,4 @@
-package accountingtools
+package accountingsynctools
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingconnection"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
@@ -99,34 +99,7 @@ type accountingSyncOperator interface {
 	) (*accountingbackfill.AccountingBackfill, error)
 }
 
-type accountingSyncPolicySpec struct {
-	resource   permission.Resource
-	operation  permission.Operation
-	tier       agent.AutonomyTier
-	reversible bool
-	idempotent bool
-	rationale  string
-}
-
-func accountingSyncPolicy(name string, spec accountingSyncPolicySpec) agenttoolports.ToolPolicy {
-	return agenttoolports.ToolPolicy{
-		Name:          name,
-		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      spec.resource,
-		Operation:     spec.operation,
-		Scope:         agenttooltrust.ToolScopeTenant,
-		DefaultTier:   spec.tier,
-		MaxTier:       spec.tier,
-		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agenttooltrust.ToolEffectChange,
-		Reversible:    spec.reversible,
-		Idempotent:    spec.idempotent,
-		ReadsExternal: agenttooltrust.ExternalReadNever,
-		Rationale:     spec.rationale,
-	}
-}
-
-func syncDocumentLabel(record *accountingsync.AccountingSyncRecord) string {
+func SyncDocumentLabel(record *accountingsync.AccountingSyncRecord) string {
 	if record.ObjectNumber == "" {
 		return string(record.ObjectType) + " " + record.ObjectID.String()
 	}
@@ -152,7 +125,7 @@ type accountingSyncSummarizer interface {
 	) (*accountingsyncports.AccountingSyncSummary, error)
 }
 
-func syncingConnectionFor(
+func SyncingConnectionFor(
 	ctx context.Context,
 	sync accountingSyncSummarizer,
 	tenant pagination.TenantInfo,
@@ -263,7 +236,7 @@ func (t *RetryAccountingSyncTool) Prerequisites() []string {
 
 func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		ParamAccountingSystem: accountingSystemSchema(),
+		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
 		ParamSyncRecordIDs: toolschema.KeepEmpty(toolschema.RecordSubset(
 			permission.ResourceAccountingSync.String(),
 			agenttoolschema.OfKinds(jsonschemautils.DescribedArray(
@@ -280,11 +253,11 @@ func (t *RetryAccountingSyncTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("An error category.", agenttoolschema.SyncErrorCategories),
 			len(accountingsync.AllSyncErrorCategories()),
 		),
-	}, ParamAccountingSystem)
+	}, accountingtools.ParamAccountingSystem)
 }
 
 func (t *RetryAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
 		tier:       agent.TierAutoExecute,
@@ -308,7 +281,7 @@ func (t *RetryAccountingSyncTool) plan(
 	if err := toolguard.GuardPreview(t, params); err != nil {
 		return nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +316,7 @@ func (t *RetryAccountingSyncTool) plan(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +330,7 @@ func (t *RetryAccountingSyncTool) plan(
 		if !record.Status.Retryable() {
 			return nil, errortypes.NewBusinessError(
 				"{0} is {1}; only Blocked, DeadLettered and Retrying records are retried",
-				syncDocumentLabel(record),
+				SyncDocumentLabel(record),
 				string(record.Status),
 			)
 		}
@@ -398,7 +371,7 @@ func (t *RetryAccountingSyncTool) ResolveProposalSelection(
 	if err := toolguard.GuardPreview(t, &params); err != nil {
 		return nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +511,7 @@ func (t *SkipAccountingSyncTool) ParamSchema() map[string]any {
 }
 
 func (t *SkipAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
 		tier:      agent.TierActWithApproval,
@@ -577,7 +550,7 @@ func (t *SkipAccountingSyncTool) request(
 	if record.Status.IsFinal() || record.Status == accountingsync.SyncStatusInFlight {
 		return nil, nil, errortypes.NewBusinessError(
 			"{0} is {1} and cannot be skipped",
-			syncDocumentLabel(record),
+			SyncDocumentLabel(record),
 			string(record.Status),
 		)
 	}
@@ -654,7 +627,7 @@ func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
 }
 
 func (t *redateAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
 		tier:      agent.TierActWithApproval,
@@ -744,15 +717,15 @@ func (t *PauseAccountingSyncTool) Prerequisites() []string {
 
 func (t *PauseAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		ParamAccountingSystem: accountingSystemSchema(),
+		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
 		paramSyncReason: jsonschemautils.Text(
 			"Why sending is paused and what would let it resume, in one sentence.",
 		),
-	}, ParamAccountingSystem, paramSyncReason)
+	}, accountingtools.ParamAccountingSystem, paramSyncReason)
 }
 
 func (t *PauseAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:   permission.ResourceAccountingSync,
 		operation:  permission.OpUpdate,
 		tier:       agent.TierAutoExecute,
@@ -769,7 +742,7 @@ func (t *PauseAccountingSyncTool) request(
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -782,7 +755,7 @@ func (t *PauseAccountingSyncTool) request(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -859,13 +832,13 @@ func (t *ResumeAccountingSyncTool) Prerequisites() []string {
 
 func (t *ResumeAccountingSyncTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(
-		map[string]any{ParamAccountingSystem: accountingSystemSchema()},
-		ParamAccountingSystem,
+		map[string]any{accountingtools.ParamAccountingSystem: accountingtools.SystemSchema()},
+		accountingtools.ParamAccountingSystem,
 	)
 }
 
 func (t *ResumeAccountingSyncTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingSync,
 		operation: permission.OpUpdate,
 		tier:      agent.TierActWithApproval,
@@ -882,13 +855,13 @@ func (t *ResumeAccountingSyncTool) request(
 	if err := toolguard.GuardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -961,7 +934,7 @@ func (t *RequestAccountingBackfillTool) Prerequisites() []string {
 
 func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
-		ParamAccountingSystem: accountingSystemSchema(),
+		accountingtools.ParamAccountingSystem: accountingtools.SystemSchema(),
 		paramBackfillFrom: agenttoolschema.Date(
 			"The first document date to send. Defaults to the start date.",
 		),
@@ -973,11 +946,11 @@ func (t *RequestAccountingBackfillTool) ParamSchema() map[string]any {
 			agenttoolschema.Enum("A document type.", agenttoolschema.BackfillObjectTypes),
 			len(accountingbackfill.BackfillObjectTypes()),
 		),
-	}, ParamAccountingSystem)
+	}, accountingtools.ParamAccountingSystem)
 }
 
 func (t *RequestAccountingBackfillTool) Policy() agenttoolports.ToolPolicy {
-	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+	return accountingtools.SyncPolicy(t.Name(), accountingtools.SyncPolicySpec{
 		resource:  permission.ResourceAccountingIntegration,
 		operation: permission.OpManage,
 		tier:      agent.TierActWithApproval,
@@ -1028,7 +1001,7 @@ func (t *RequestAccountingBackfillTool) plan(
 			"A backfill is started by a person who manages the accounting integration",
 		)
 	}
-	system, err := accountingSystemFrom(params.Params)
+	system, err := accountingtools.SystemFrom(params.Params)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,7 +1025,7 @@ func (t *RequestAccountingBackfillTool) plan(
 	}
 
 	tenant := toolparams.TenantFrom(*params)
-	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
+	summary, err := SyncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
 		return nil, err
 	}

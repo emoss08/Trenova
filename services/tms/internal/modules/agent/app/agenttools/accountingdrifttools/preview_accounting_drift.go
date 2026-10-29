@@ -1,10 +1,11 @@
-package accountingtools
+package accountingdrifttools
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingdrift"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingdriftports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -84,7 +85,7 @@ func (t *ResolveAccountingDriftTool) Preview(
 
 	_, fix, err := t.plan(ctx, &params)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	now := timeutils.NowUnix()
@@ -113,7 +114,7 @@ func (t *DismissAccountingDriftTool) Preview(
 
 	req, fix, err := t.plan(ctx, &params)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	now := timeutils.NowUnix()
@@ -142,7 +143,7 @@ func (t *CheckAccountingDriftTool) Preview(
 
 	_, overview, err := t.setup(ctx, &params)
 	if err != nil {
-		return refusedSync(refusedSummary, err)
+		return accountingtools.RefusedSync(refusedSummary, err)
 	}
 
 	preview := toolpreview.Build(

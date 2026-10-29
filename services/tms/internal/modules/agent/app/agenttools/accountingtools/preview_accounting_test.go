@@ -105,7 +105,7 @@ func TestSetAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Nil(t, writer.set)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, &before, writer.row, mappingOptions()...)
+	agenttoolstest.RequireUpdateParity(t, change, &before, writer.row, MappingOptions()...)
 }
 
 func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
@@ -138,7 +138,7 @@ func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, change, &before, writer.row, mappingOptions()...)
+	agenttoolstest.RequireUpdateParity(t, change, &before, writer.row, MappingOptions()...)
 }
 
 func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T) {
@@ -212,7 +212,7 @@ func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *t
 	assert.Equal(t, "Acme Logistics", agenttoolstest.FieldByPath(t, mapping, "externalName").After)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	agenttoolstest.RequireUpdateParity(t, mapping, &before, writer.row, mappingOptions()...)
+	agenttoolstest.RequireUpdateParity(t, mapping, &before, writer.row, MappingOptions()...)
 }
 
 func TestRefreshAccountingReferenceData_PreviewNamesTheConnection(t *testing.T) {
